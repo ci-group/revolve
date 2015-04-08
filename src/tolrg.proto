@@ -1,0 +1,56 @@
+package robogenMessage;
+
+message EvolvableParameter {
+   required float paramValue = 1;
+}
+
+message BodyPart {
+  required string id = 1;
+  required string type = 2;
+  required bool root = 3;
+  repeated EvolvableParameter evolvableParam = 4;
+  required int32 orientation = 5;
+}
+
+message BodyConnection {
+  required string src = 1; 
+  required string dest = 2;
+  required int32 srcSlot = 3;
+  required int32 destSlot = 4;
+}
+
+message Body {
+  repeated BodyPart part = 1;
+  repeated BodyConnection connection = 2;
+}
+
+message NeuralConnection {
+  required string src = 1; 
+  required string dest = 2;
+  required float weight = 3;
+}
+
+message Neuron {
+  required string id = 1;
+  required string layer = 2;
+  required string type = 3;
+  optional float bias = 4;
+  optional string bodyPartId = 5; 
+  optional int32 ioId = 6;
+  optional float tau = 7;
+  optional float phaseOffset = 8;
+  optional float period = 9;  
+  optional float gain = 10; 
+}
+
+message Brain {
+  repeated Neuron neuron = 1;
+  repeated NeuralConnection connection = 2;
+}
+
+message Robot {
+  required int32 id = 1;
+  required Body body = 2; 
+  required Brain brain = 3;
+}
+

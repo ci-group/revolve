@@ -1,0 +1,11 @@
+#!/bin/sh
+# Create build directory
+mkdir -p ../build
+cd ../build
+
+# Run cmake and make to generate C++ files
+cmake ../src
+make
+
+# Generate Python files
+protoc -I=../src --python_out=. ../src/tolrg.proto
