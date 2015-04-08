@@ -9,3 +9,8 @@ make
 
 # Generate Python files
 protoc -I=../src --python_out=. ../src/tolrg.proto
+
+# Copy files to source directories
+cp tolrg.pb.cc ../src/cpp
+cp tolrg.pb.h ../src/cpp
+cp tolrg_pb2.py ../src/python
