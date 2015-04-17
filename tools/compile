@@ -4,13 +4,13 @@ mkdir -p ../build
 cd ../build
 
 # Run cmake and make to generate C++ files
-cmake ../src
+cmake ../spec
 make
 
 # Generate Python files
-protoc -I=../src --python_out=. ../src/tolrg.proto
+protoc -I=../spec --python_out=. ../spec/tol.proto
 
 # Copy files to source directories
-cp tolrg.pb.cc ../src/cpp
-cp tolrg.pb.h ../src/cpp
-cp tolrg_pb2.py ../tolrgspec
+cp tol.pb.cc ../spec/cpp
+cp tol.pb.h ../spec/cpp
+cp tol_pb2.py ../tolspec

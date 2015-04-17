@@ -1,27 +1,25 @@
-package tolrg;
+package tol;
 
-message EvolvableParameter {
+message Parameter {
    required float paramValue = 1;
 }
 
 message BodyPart {
   required string id = 1;
   required string type = 2;
-  required bool root = 3;
-  repeated EvolvableParameter evolvableParam = 4;
-  required int32 orientation = 5;
+  repeated Parameter param = 3;
+  required int32 orientation = 4;
+  repeated BodyConnection children = 5;
 }
 
 message BodyConnection {
-  required string src = 1; 
-  required string dest = 2;
-  required int32 srcSlot = 3;
-  required int32 destSlot = 4;
+  required int32 srcSlot = 1;
+  required int32 destSlot = 2;
+  required BodyPart part = 3;
 }
 
 message Body {
-  repeated BodyPart part = 1;
-  repeated BodyConnection connection = 2;
+  required BodyPart root = 1;
 }
 
 message NeuralConnection {
