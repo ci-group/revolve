@@ -98,21 +98,21 @@ class Parameter : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required float paramValue = 1;
-  inline bool has_paramvalue() const;
-  inline void clear_paramvalue();
-  static const int kParamValueFieldNumber = 1;
-  inline float paramvalue() const;
-  inline void set_paramvalue(float value);
+  // required float value = 1;
+  inline bool has_value() const;
+  inline void clear_value();
+  static const int kValueFieldNumber = 1;
+  inline float value() const;
+  inline void set_value(float value);
 
   // @@protoc_insertion_point(class_scope:tol.Parameter)
  private:
-  inline void set_has_paramvalue();
-  inline void clear_has_paramvalue();
+  inline void set_has_value();
+  inline void clear_has_value();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  float paramvalue_;
+  float value_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
@@ -204,24 +204,24 @@ class BodyPart : public ::google::protobuf::Message {
   inline ::std::string* release_type();
   inline void set_allocated_type(::std::string* type);
 
-  // repeated .tol.Parameter param = 3;
-  inline int param_size() const;
-  inline void clear_param();
-  static const int kParamFieldNumber = 3;
-  inline const ::tol::Parameter& param(int index) const;
-  inline ::tol::Parameter* mutable_param(int index);
-  inline ::tol::Parameter* add_param();
+  // repeated .tol.Parameter params = 3;
+  inline int params_size() const;
+  inline void clear_params();
+  static const int kParamsFieldNumber = 3;
+  inline const ::tol::Parameter& params(int index) const;
+  inline ::tol::Parameter* mutable_params(int index);
+  inline ::tol::Parameter* add_params();
   inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
-      param() const;
+      params() const;
   inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
-      mutable_param();
+      mutable_params();
 
-  // required int32 orientation = 4;
+  // required float orientation = 4;
   inline bool has_orientation() const;
   inline void clear_orientation();
   static const int kOrientationFieldNumber = 4;
-  inline ::google::protobuf::int32 orientation() const;
-  inline void set_orientation(::google::protobuf::int32 value);
+  inline float orientation() const;
+  inline void set_orientation(float value);
 
   // repeated .tol.BodyConnection children = 5;
   inline int children_size() const;
@@ -248,9 +248,9 @@ class BodyPart : public ::google::protobuf::Message {
 
   ::std::string* id_;
   ::std::string* type_;
-  ::google::protobuf::RepeatedPtrField< ::tol::Parameter > param_;
+  ::google::protobuf::RepeatedPtrField< ::tol::Parameter > params_;
   ::google::protobuf::RepeatedPtrField< ::tol::BodyConnection > children_;
-  ::google::protobuf::int32 orientation_;
+  float orientation_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
@@ -318,19 +318,19 @@ class BodyConnection : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required int32 srcSlot = 1;
-  inline bool has_srcslot() const;
-  inline void clear_srcslot();
-  static const int kSrcSlotFieldNumber = 1;
-  inline ::google::protobuf::int32 srcslot() const;
-  inline void set_srcslot(::google::protobuf::int32 value);
+  // required int32 src = 1;
+  inline bool has_src() const;
+  inline void clear_src();
+  static const int kSrcFieldNumber = 1;
+  inline ::google::protobuf::int32 src() const;
+  inline void set_src(::google::protobuf::int32 value);
 
-  // required int32 destSlot = 2;
-  inline bool has_destslot() const;
-  inline void clear_destslot();
-  static const int kDestSlotFieldNumber = 2;
-  inline ::google::protobuf::int32 destslot() const;
-  inline void set_destslot(::google::protobuf::int32 value);
+  // required int32 dest = 2;
+  inline bool has_dest() const;
+  inline void clear_dest();
+  static const int kDestFieldNumber = 2;
+  inline ::google::protobuf::int32 dest() const;
+  inline void set_dest(::google::protobuf::int32 value);
 
   // required .tol.BodyPart part = 3;
   inline bool has_part() const;
@@ -343,17 +343,17 @@ class BodyConnection : public ::google::protobuf::Message {
 
   // @@protoc_insertion_point(class_scope:tol.BodyConnection)
  private:
-  inline void set_has_srcslot();
-  inline void clear_has_srcslot();
-  inline void set_has_destslot();
-  inline void clear_has_destslot();
+  inline void set_has_src();
+  inline void clear_has_src();
+  inline void set_has_dest();
+  inline void clear_has_dest();
   inline void set_has_part();
   inline void clear_has_part();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::google::protobuf::int32 srcslot_;
-  ::google::protobuf::int32 destslot_;
+  ::google::protobuf::int32 src_;
+  ::google::protobuf::int32 dest_;
   ::tol::BodyPart* part_;
 
   mutable int _cached_size_;
@@ -654,59 +654,17 @@ class Neuron : public ::google::protobuf::Message {
   inline ::std::string* release_type();
   inline void set_allocated_type(::std::string* type);
 
-  // optional float bias = 4;
-  inline bool has_bias() const;
-  inline void clear_bias();
-  static const int kBiasFieldNumber = 4;
-  inline float bias() const;
-  inline void set_bias(float value);
-
-  // optional string bodyPartId = 5;
-  inline bool has_bodypartid() const;
-  inline void clear_bodypartid();
-  static const int kBodyPartIdFieldNumber = 5;
-  inline const ::std::string& bodypartid() const;
-  inline void set_bodypartid(const ::std::string& value);
-  inline void set_bodypartid(const char* value);
-  inline void set_bodypartid(const char* value, size_t size);
-  inline ::std::string* mutable_bodypartid();
-  inline ::std::string* release_bodypartid();
-  inline void set_allocated_bodypartid(::std::string* bodypartid);
-
-  // optional int32 ioId = 6;
-  inline bool has_ioid() const;
-  inline void clear_ioid();
-  static const int kIoIdFieldNumber = 6;
-  inline ::google::protobuf::int32 ioid() const;
-  inline void set_ioid(::google::protobuf::int32 value);
-
-  // optional float tau = 7;
-  inline bool has_tau() const;
-  inline void clear_tau();
-  static const int kTauFieldNumber = 7;
-  inline float tau() const;
-  inline void set_tau(float value);
-
-  // optional float phaseOffset = 8;
-  inline bool has_phaseoffset() const;
-  inline void clear_phaseoffset();
-  static const int kPhaseOffsetFieldNumber = 8;
-  inline float phaseoffset() const;
-  inline void set_phaseoffset(float value);
-
-  // optional float period = 9;
-  inline bool has_period() const;
-  inline void clear_period();
-  static const int kPeriodFieldNumber = 9;
-  inline float period() const;
-  inline void set_period(float value);
-
-  // optional float gain = 10;
-  inline bool has_gain() const;
-  inline void clear_gain();
-  static const int kGainFieldNumber = 10;
-  inline float gain() const;
-  inline void set_gain(float value);
+  // repeated .tol.Parameter params = 4;
+  inline int params_size() const;
+  inline void clear_params();
+  static const int kParamsFieldNumber = 4;
+  inline const ::tol::Parameter& params(int index) const;
+  inline ::tol::Parameter* mutable_params(int index);
+  inline ::tol::Parameter* add_params();
+  inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
+      params() const;
+  inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
+      mutable_params();
 
   // @@protoc_insertion_point(class_scope:tol.Neuron)
  private:
@@ -716,36 +674,16 @@ class Neuron : public ::google::protobuf::Message {
   inline void clear_has_layer();
   inline void set_has_type();
   inline void clear_has_type();
-  inline void set_has_bias();
-  inline void clear_has_bias();
-  inline void set_has_bodypartid();
-  inline void clear_has_bodypartid();
-  inline void set_has_ioid();
-  inline void clear_has_ioid();
-  inline void set_has_tau();
-  inline void clear_has_tau();
-  inline void set_has_phaseoffset();
-  inline void clear_has_phaseoffset();
-  inline void set_has_period();
-  inline void clear_has_period();
-  inline void set_has_gain();
-  inline void clear_has_gain();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* id_;
   ::std::string* layer_;
   ::std::string* type_;
-  ::std::string* bodypartid_;
-  float bias_;
-  ::google::protobuf::int32 ioid_;
-  float tau_;
-  float phaseoffset_;
-  float period_;
-  float gain_;
+  ::google::protobuf::RepeatedPtrField< ::tol::Parameter > params_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(10 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
 
   friend void  protobuf_AddDesc_tol_2eproto();
   friend void protobuf_AssignDesc_tol_2eproto();
@@ -965,26 +903,26 @@ class Robot : public ::google::protobuf::Message {
 
 // Parameter
 
-// required float paramValue = 1;
-inline bool Parameter::has_paramvalue() const {
+// required float value = 1;
+inline bool Parameter::has_value() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void Parameter::set_has_paramvalue() {
+inline void Parameter::set_has_value() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void Parameter::clear_has_paramvalue() {
+inline void Parameter::clear_has_value() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void Parameter::clear_paramvalue() {
-  paramvalue_ = 0;
-  clear_has_paramvalue();
+inline void Parameter::clear_value() {
+  value_ = 0;
+  clear_has_value();
 }
-inline float Parameter::paramvalue() const {
-  return paramvalue_;
+inline float Parameter::value() const {
+  return value_;
 }
-inline void Parameter::set_paramvalue(float value) {
-  set_has_paramvalue();
-  paramvalue_ = value;
+inline void Parameter::set_value(float value) {
+  set_has_value();
+  value_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -1131,32 +1069,32 @@ inline void BodyPart::set_allocated_type(::std::string* type) {
   }
 }
 
-// repeated .tol.Parameter param = 3;
-inline int BodyPart::param_size() const {
-  return param_.size();
+// repeated .tol.Parameter params = 3;
+inline int BodyPart::params_size() const {
+  return params_.size();
 }
-inline void BodyPart::clear_param() {
-  param_.Clear();
+inline void BodyPart::clear_params() {
+  params_.Clear();
 }
-inline const ::tol::Parameter& BodyPart::param(int index) const {
-  return param_.Get(index);
+inline const ::tol::Parameter& BodyPart::params(int index) const {
+  return params_.Get(index);
 }
-inline ::tol::Parameter* BodyPart::mutable_param(int index) {
-  return param_.Mutable(index);
+inline ::tol::Parameter* BodyPart::mutable_params(int index) {
+  return params_.Mutable(index);
 }
-inline ::tol::Parameter* BodyPart::add_param() {
-  return param_.Add();
+inline ::tol::Parameter* BodyPart::add_params() {
+  return params_.Add();
 }
 inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
-BodyPart::param() const {
-  return param_;
+BodyPart::params() const {
+  return params_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
-BodyPart::mutable_param() {
-  return &param_;
+BodyPart::mutable_params() {
+  return &params_;
 }
 
-// required int32 orientation = 4;
+// required float orientation = 4;
 inline bool BodyPart::has_orientation() const {
   return (_has_bits_[0] & 0x00000008u) != 0;
 }
@@ -1170,10 +1108,10 @@ inline void BodyPart::clear_orientation() {
   orientation_ = 0;
   clear_has_orientation();
 }
-inline ::google::protobuf::int32 BodyPart::orientation() const {
+inline float BodyPart::orientation() const {
   return orientation_;
 }
-inline void BodyPart::set_orientation(::google::protobuf::int32 value) {
+inline void BodyPart::set_orientation(float value) {
   set_has_orientation();
   orientation_ = value;
 }
@@ -1207,48 +1145,48 @@ BodyPart::mutable_children() {
 
 // BodyConnection
 
-// required int32 srcSlot = 1;
-inline bool BodyConnection::has_srcslot() const {
+// required int32 src = 1;
+inline bool BodyConnection::has_src() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
-inline void BodyConnection::set_has_srcslot() {
+inline void BodyConnection::set_has_src() {
   _has_bits_[0] |= 0x00000001u;
 }
-inline void BodyConnection::clear_has_srcslot() {
+inline void BodyConnection::clear_has_src() {
   _has_bits_[0] &= ~0x00000001u;
 }
-inline void BodyConnection::clear_srcslot() {
-  srcslot_ = 0;
-  clear_has_srcslot();
+inline void BodyConnection::clear_src() {
+  src_ = 0;
+  clear_has_src();
 }
-inline ::google::protobuf::int32 BodyConnection::srcslot() const {
-  return srcslot_;
+inline ::google::protobuf::int32 BodyConnection::src() const {
+  return src_;
 }
-inline void BodyConnection::set_srcslot(::google::protobuf::int32 value) {
-  set_has_srcslot();
-  srcslot_ = value;
+inline void BodyConnection::set_src(::google::protobuf::int32 value) {
+  set_has_src();
+  src_ = value;
 }
 
-// required int32 destSlot = 2;
-inline bool BodyConnection::has_destslot() const {
+// required int32 dest = 2;
+inline bool BodyConnection::has_dest() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void BodyConnection::set_has_destslot() {
+inline void BodyConnection::set_has_dest() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void BodyConnection::clear_has_destslot() {
+inline void BodyConnection::clear_has_dest() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void BodyConnection::clear_destslot() {
-  destslot_ = 0;
-  clear_has_destslot();
+inline void BodyConnection::clear_dest() {
+  dest_ = 0;
+  clear_has_dest();
 }
-inline ::google::protobuf::int32 BodyConnection::destslot() const {
-  return destslot_;
+inline ::google::protobuf::int32 BodyConnection::dest() const {
+  return dest_;
 }
-inline void BodyConnection::set_destslot(::google::protobuf::int32 value) {
-  set_has_destslot();
-  destslot_ = value;
+inline void BodyConnection::set_dest(::google::protobuf::int32 value) {
+  set_has_dest();
+  dest_ = value;
 }
 
 // required .tol.BodyPart part = 3;
@@ -1711,206 +1649,29 @@ inline void Neuron::set_allocated_type(::std::string* type) {
   }
 }
 
-// optional float bias = 4;
-inline bool Neuron::has_bias() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+// repeated .tol.Parameter params = 4;
+inline int Neuron::params_size() const {
+  return params_.size();
 }
-inline void Neuron::set_has_bias() {
-  _has_bits_[0] |= 0x00000008u;
+inline void Neuron::clear_params() {
+  params_.Clear();
 }
-inline void Neuron::clear_has_bias() {
-  _has_bits_[0] &= ~0x00000008u;
+inline const ::tol::Parameter& Neuron::params(int index) const {
+  return params_.Get(index);
 }
-inline void Neuron::clear_bias() {
-  bias_ = 0;
-  clear_has_bias();
+inline ::tol::Parameter* Neuron::mutable_params(int index) {
+  return params_.Mutable(index);
 }
-inline float Neuron::bias() const {
-  return bias_;
+inline ::tol::Parameter* Neuron::add_params() {
+  return params_.Add();
 }
-inline void Neuron::set_bias(float value) {
-  set_has_bias();
-  bias_ = value;
+inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
+Neuron::params() const {
+  return params_;
 }
-
-// optional string bodyPartId = 5;
-inline bool Neuron::has_bodypartid() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void Neuron::set_has_bodypartid() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void Neuron::clear_has_bodypartid() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void Neuron::clear_bodypartid() {
-  if (bodypartid_ != &::google::protobuf::internal::kEmptyString) {
-    bodypartid_->clear();
-  }
-  clear_has_bodypartid();
-}
-inline const ::std::string& Neuron::bodypartid() const {
-  return *bodypartid_;
-}
-inline void Neuron::set_bodypartid(const ::std::string& value) {
-  set_has_bodypartid();
-  if (bodypartid_ == &::google::protobuf::internal::kEmptyString) {
-    bodypartid_ = new ::std::string;
-  }
-  bodypartid_->assign(value);
-}
-inline void Neuron::set_bodypartid(const char* value) {
-  set_has_bodypartid();
-  if (bodypartid_ == &::google::protobuf::internal::kEmptyString) {
-    bodypartid_ = new ::std::string;
-  }
-  bodypartid_->assign(value);
-}
-inline void Neuron::set_bodypartid(const char* value, size_t size) {
-  set_has_bodypartid();
-  if (bodypartid_ == &::google::protobuf::internal::kEmptyString) {
-    bodypartid_ = new ::std::string;
-  }
-  bodypartid_->assign(reinterpret_cast<const char*>(value), size);
-}
-inline ::std::string* Neuron::mutable_bodypartid() {
-  set_has_bodypartid();
-  if (bodypartid_ == &::google::protobuf::internal::kEmptyString) {
-    bodypartid_ = new ::std::string;
-  }
-  return bodypartid_;
-}
-inline ::std::string* Neuron::release_bodypartid() {
-  clear_has_bodypartid();
-  if (bodypartid_ == &::google::protobuf::internal::kEmptyString) {
-    return NULL;
-  } else {
-    ::std::string* temp = bodypartid_;
-    bodypartid_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-    return temp;
-  }
-}
-inline void Neuron::set_allocated_bodypartid(::std::string* bodypartid) {
-  if (bodypartid_ != &::google::protobuf::internal::kEmptyString) {
-    delete bodypartid_;
-  }
-  if (bodypartid) {
-    set_has_bodypartid();
-    bodypartid_ = bodypartid;
-  } else {
-    clear_has_bodypartid();
-    bodypartid_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  }
-}
-
-// optional int32 ioId = 6;
-inline bool Neuron::has_ioid() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
-}
-inline void Neuron::set_has_ioid() {
-  _has_bits_[0] |= 0x00000020u;
-}
-inline void Neuron::clear_has_ioid() {
-  _has_bits_[0] &= ~0x00000020u;
-}
-inline void Neuron::clear_ioid() {
-  ioid_ = 0;
-  clear_has_ioid();
-}
-inline ::google::protobuf::int32 Neuron::ioid() const {
-  return ioid_;
-}
-inline void Neuron::set_ioid(::google::protobuf::int32 value) {
-  set_has_ioid();
-  ioid_ = value;
-}
-
-// optional float tau = 7;
-inline bool Neuron::has_tau() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
-}
-inline void Neuron::set_has_tau() {
-  _has_bits_[0] |= 0x00000040u;
-}
-inline void Neuron::clear_has_tau() {
-  _has_bits_[0] &= ~0x00000040u;
-}
-inline void Neuron::clear_tau() {
-  tau_ = 0;
-  clear_has_tau();
-}
-inline float Neuron::tau() const {
-  return tau_;
-}
-inline void Neuron::set_tau(float value) {
-  set_has_tau();
-  tau_ = value;
-}
-
-// optional float phaseOffset = 8;
-inline bool Neuron::has_phaseoffset() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void Neuron::set_has_phaseoffset() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void Neuron::clear_has_phaseoffset() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void Neuron::clear_phaseoffset() {
-  phaseoffset_ = 0;
-  clear_has_phaseoffset();
-}
-inline float Neuron::phaseoffset() const {
-  return phaseoffset_;
-}
-inline void Neuron::set_phaseoffset(float value) {
-  set_has_phaseoffset();
-  phaseoffset_ = value;
-}
-
-// optional float period = 9;
-inline bool Neuron::has_period() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
-}
-inline void Neuron::set_has_period() {
-  _has_bits_[0] |= 0x00000100u;
-}
-inline void Neuron::clear_has_period() {
-  _has_bits_[0] &= ~0x00000100u;
-}
-inline void Neuron::clear_period() {
-  period_ = 0;
-  clear_has_period();
-}
-inline float Neuron::period() const {
-  return period_;
-}
-inline void Neuron::set_period(float value) {
-  set_has_period();
-  period_ = value;
-}
-
-// optional float gain = 10;
-inline bool Neuron::has_gain() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
-}
-inline void Neuron::set_has_gain() {
-  _has_bits_[0] |= 0x00000200u;
-}
-inline void Neuron::clear_has_gain() {
-  _has_bits_[0] &= ~0x00000200u;
-}
-inline void Neuron::clear_gain() {
-  gain_ = 0;
-  clear_has_gain();
-}
-inline float Neuron::gain() const {
-  return gain_;
-}
-inline void Neuron::set_gain(float value) {
-  set_has_gain();
-  gain_ = value;
+inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
+Neuron::mutable_params() {
+  return &params_;
 }
 
 // -------------------------------------------------------------------

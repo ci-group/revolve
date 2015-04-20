@@ -1,12 +1,15 @@
 from __future__ import print_function
 import sys
-from .tol_pb2 import *
+from ..tol_pb2 import *
 import re
 
 
-class LinesToProtobuf:
+class RobogenToProtobuf:
     """
-
+    This is a half-finished implementation to read the Robogen
+    file format into the ToL protobuf format, will be finished
+    if needed.
+    TODO finish this class
     """
     # Match (optional whitespace)(hash)(anything)
     COMMENT_REGEX = re.compile(r"^\s*#.*$")
@@ -115,7 +118,7 @@ class LinesToProtobuf:
         params = matches.group(6)
         if len(params):
             for raw in re.split(r"\s+", params):
-                param = part.evolvableParam.add()
+                param = part.param.add()
                 param.paramValue = float(raw)
 
         if indent > len(self.parent_stack):
@@ -141,6 +144,7 @@ class LinesToProtobuf:
         :param line:
         :return:
         """
+        raise NotImplementedError()
 
     def _read_params_line(self, line):
         """
@@ -148,6 +152,7 @@ class LinesToProtobuf:
         :param line:
         :return:
         """
+        raise NotImplementedError()
 
     def is_comment_line(self, line):
         """

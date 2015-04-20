@@ -1,20 +1,20 @@
 package tol;
 
 message Parameter {
-   required float paramValue = 1;
+   required float value = 1;
 }
 
 message BodyPart {
   required string id = 1;
   required string type = 2;
-  repeated Parameter param = 3;
-  required int32 orientation = 4;
+  repeated Parameter params = 3;
+  required float orientation = 4;
   repeated BodyConnection children = 5;
 }
 
 message BodyConnection {
-  required int32 srcSlot = 1;
-  required int32 destSlot = 2;
+  required int32 src = 1;
+  required int32 dest = 2;
   required BodyPart part = 3;
 }
 
@@ -32,13 +32,7 @@ message Neuron {
   required string id = 1;
   required string layer = 2;
   required string type = 3;
-  optional float bias = 4;
-  optional string bodyPartId = 5; 
-  optional int32 ioId = 6;
-  optional float tau = 7;
-  optional float phaseOffset = 8;
-  optional float period = 9;  
-  optional float gain = 10; 
+  repeated Parameter params = 4;
 }
 
 message Brain {

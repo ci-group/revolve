@@ -1,0 +1,91 @@
+--- !tol/robot
+# ID of the robot
+id: 0                           # Default
+
+# The body just starts by specifying the properties
+# of the root component.
+body:
+  id          : Core
+  type        : CoreComponent
+  orientation : 0               # Default
+  params      : {}              # Default
+
+  # Children maps
+  children:
+    0:
+      slot        : 0           # Default
+      id          : Hip1
+      type        : ActiveHinge
+      orientation : 90
+      children    :
+        0:
+          id          : UpperLeg1
+          type        : FixedBrick
+          orientation : 90
+          children    :
+            0:
+              id        : Knee1
+              type      : ActiveHinge
+              children  :
+                0:
+                  id  : LowerLeg1
+                  type: FixedBrick
+    1:
+      id          : Hip2
+      type        : ActiveHinge
+      orientation : 90
+      children    :
+        0:
+          id          : UpperLeg2
+          type        : FixedBrick
+          orientation : 90
+          children    :
+            0:
+              id        : Knee2
+              type      : ActiveHinge
+              children  :
+                0:
+                  id  : LowerLeg2
+                  type: FixedBrick
+
+# Here, the brain is specified in neurons and neuron connections
+brain:
+  # Specify only hidden neurons here. The Robot Implementation Specification
+  # tells the system which body parts have input / output neurons. The IDs for these
+  # neurons are composed of the body part ID, "in" or "out", and an index number,
+  # separated by dashes. For instance, the output neuron of a body part "wheel"
+  # will be called "wheel-out-0", if it had more they would be addressable by
+  # "wheel-out-1", "wheel-out-2", etc.
+  # Automatically generating input / output neurons reduces redundancy and the
+  # probability errors will be made.
+  neurons     : []       # Default: no hidden neurons
+
+  # Here you specify the connections between neurons, as
+  # {"src": "src-id", "dest": "dest-id", "weight": float}
+  connections : []       # Default: no connections
+
+  # Params allows you to override the parameters for automatically generated
+  # neurons. In principle you could specify the parameters for hidden neurons
+  # previously specified here as well, but it makes more sense to include those
+  # in the neuron definition directly.
+  params:
+    Hip1-out-0:
+      type        : Oscillator
+      period      : 0.8
+      phaseOffset : -0.8
+      gain        : 1
+    Hip2-out-0:
+      type        : Oscillator
+      period      : 0.8
+      phaseOffset : -0.95
+      gain        : 1
+    Knee1-out-0:
+      type        : Oscillator
+      period      : 0.8
+      phaseOffset : 0.2
+      gain        : 1
+    Knee2-out-0:
+      type        : Oscillator
+      period      : 0.8
+      phaseOffset : -1.0
+      gain        : 1

@@ -56,7 +56,7 @@ void protobuf_AssignDesc_tol_2eproto() {
   GOOGLE_CHECK(file != NULL);
   Parameter_descriptor_ = file->message_type(0);
   static const int Parameter_offsets_[1] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Parameter, paramvalue_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Parameter, value_),
   };
   Parameter_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -73,7 +73,7 @@ void protobuf_AssignDesc_tol_2eproto() {
   static const int BodyPart_offsets_[5] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, type_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, param_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, params_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, orientation_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, children_),
   };
@@ -90,8 +90,8 @@ void protobuf_AssignDesc_tol_2eproto() {
       sizeof(BodyPart));
   BodyConnection_descriptor_ = file->message_type(2);
   static const int BodyConnection_offsets_[3] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyConnection, srcslot_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyConnection, destslot_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyConnection, src_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyConnection, dest_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyConnection, part_),
   };
   BodyConnection_reflection_ =
@@ -138,17 +138,11 @@ void protobuf_AssignDesc_tol_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(NeuralConnection));
   Neuron_descriptor_ = file->message_type(5);
-  static const int Neuron_offsets_[10] = {
+  static const int Neuron_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, layer_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, type_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, bias_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, bodypartid_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, ioid_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, tau_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, phaseoffset_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, period_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, gain_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, params_),
   };
   Neuron_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -252,23 +246,21 @@ void protobuf_AddDesc_tol_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\ttol.proto\022\003tol\"\037\n\tParameter\022\022\n\nparamVa"
-    "lue\030\001 \002(\002\"\177\n\010BodyPart\022\n\n\002id\030\001 \002(\t\022\014\n\004typ"
-    "e\030\002 \002(\t\022\035\n\005param\030\003 \003(\0132\016.tol.Parameter\022\023"
-    "\n\013orientation\030\004 \002(\005\022%\n\010children\030\005 \003(\0132\023."
-    "tol.BodyConnection\"P\n\016BodyConnection\022\017\n\007"
-    "srcSlot\030\001 \002(\005\022\020\n\010destSlot\030\002 \002(\005\022\033\n\004part\030"
-    "\003 \002(\0132\r.tol.BodyPart\"#\n\004Body\022\033\n\004root\030\001 \002"
-    "(\0132\r.tol.BodyPart\"=\n\020NeuralConnection\022\013\n"
-    "\003src\030\001 \002(\t\022\014\n\004dest\030\002 \002(\t\022\016\n\006weight\030\003 \002(\002"
-    "\"\241\001\n\006Neuron\022\n\n\002id\030\001 \002(\t\022\r\n\005layer\030\002 \002(\t\022\014"
-    "\n\004type\030\003 \002(\t\022\014\n\004bias\030\004 \001(\002\022\022\n\nbodyPartId"
-    "\030\005 \001(\t\022\014\n\004ioId\030\006 \001(\005\022\013\n\003tau\030\007 \001(\002\022\023\n\013pha"
-    "seOffset\030\010 \001(\002\022\016\n\006period\030\t \001(\002\022\014\n\004gain\030\n"
-    " \001(\002\"O\n\005Brain\022\033\n\006neuron\030\001 \003(\0132\013.tol.Neur"
-    "on\022)\n\nconnection\030\002 \003(\0132\025.tol.NeuralConne"
-    "ction\"G\n\005Robot\022\n\n\002id\030\001 \002(\005\022\027\n\004body\030\002 \002(\013"
-    "2\t.tol.Body\022\031\n\005brain\030\003 \002(\0132\n.tol.Brain", 678);
+    "\n\ttol.proto\022\003tol\"\032\n\tParameter\022\r\n\005value\030\001"
+    " \002(\002\"\200\001\n\010BodyPart\022\n\n\002id\030\001 \002(\t\022\014\n\004type\030\002 "
+    "\002(\t\022\036\n\006params\030\003 \003(\0132\016.tol.Parameter\022\023\n\013o"
+    "rientation\030\004 \002(\002\022%\n\010children\030\005 \003(\0132\023.tol"
+    ".BodyConnection\"H\n\016BodyConnection\022\013\n\003src"
+    "\030\001 \002(\005\022\014\n\004dest\030\002 \002(\005\022\033\n\004part\030\003 \002(\0132\r.tol"
+    ".BodyPart\"#\n\004Body\022\033\n\004root\030\001 \002(\0132\r.tol.Bo"
+    "dyPart\"=\n\020NeuralConnection\022\013\n\003src\030\001 \002(\t\022"
+    "\014\n\004dest\030\002 \002(\t\022\016\n\006weight\030\003 \002(\002\"Q\n\006Neuron\022"
+    "\n\n\002id\030\001 \002(\t\022\r\n\005layer\030\002 \002(\t\022\014\n\004type\030\003 \002(\t"
+    "\022\036\n\006params\030\004 \003(\0132\016.tol.Parameter\"O\n\005Brai"
+    "n\022\033\n\006neuron\030\001 \003(\0132\013.tol.Neuron\022)\n\nconnec"
+    "tion\030\002 \003(\0132\025.tol.NeuralConnection\"G\n\005Rob"
+    "ot\022\n\n\002id\030\001 \002(\005\022\027\n\004body\030\002 \002(\0132\t.tol.Body\022"
+    "\031\n\005brain\030\003 \002(\0132\n.tol.Brain", 586);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "tol.proto", &protobuf_RegisterTypes);
   Parameter::default_instance_ = new Parameter();
@@ -300,7 +292,7 @@ struct StaticDescriptorInitializer_tol_2eproto {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int Parameter::kParamValueFieldNumber;
+const int Parameter::kValueFieldNumber;
 #endif  // !_MSC_VER
 
 Parameter::Parameter()
@@ -319,7 +311,7 @@ Parameter::Parameter(const Parameter& from)
 
 void Parameter::SharedCtor() {
   _cached_size_ = 0;
-  paramvalue_ = 0;
+  value_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -355,7 +347,7 @@ Parameter* Parameter::New() const {
 
 void Parameter::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    paramvalue_ = 0;
+    value_ = 0;
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -367,14 +359,14 @@ bool Parameter::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required float paramValue = 1;
+      // required float value = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &paramvalue_)));
-          set_has_paramvalue();
+                 input, &value_)));
+          set_has_value();
         } else {
           goto handle_uninterpreted;
         }
@@ -400,9 +392,9 @@ bool Parameter::MergePartialFromCodedStream(
 
 void Parameter::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // required float paramValue = 1;
-  if (has_paramvalue()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->paramvalue(), output);
+  // required float value = 1;
+  if (has_value()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->value(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -413,9 +405,9 @@ void Parameter::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* Parameter::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // required float paramValue = 1;
-  if (has_paramvalue()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->paramvalue(), target);
+  // required float value = 1;
+  if (has_value()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->value(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -429,8 +421,8 @@ int Parameter::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required float paramValue = 1;
-    if (has_paramvalue()) {
+    // required float value = 1;
+    if (has_value()) {
       total_size += 1 + 4;
     }
 
@@ -461,8 +453,8 @@ void Parameter::MergeFrom(const ::google::protobuf::Message& from) {
 void Parameter::MergeFrom(const Parameter& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_paramvalue()) {
-      set_paramvalue(from.paramvalue());
+    if (from.has_value()) {
+      set_value(from.value());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -488,7 +480,7 @@ bool Parameter::IsInitialized() const {
 
 void Parameter::Swap(Parameter* other) {
   if (other != this) {
-    std::swap(paramvalue_, other->paramvalue_);
+    std::swap(value_, other->value_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -509,7 +501,7 @@ void Parameter::Swap(Parameter* other) {
 #ifndef _MSC_VER
 const int BodyPart::kIdFieldNumber;
 const int BodyPart::kTypeFieldNumber;
-const int BodyPart::kParamFieldNumber;
+const int BodyPart::kParamsFieldNumber;
 const int BodyPart::kOrientationFieldNumber;
 const int BodyPart::kChildrenFieldNumber;
 #endif  // !_MSC_VER
@@ -586,7 +578,7 @@ void BodyPart::Clear() {
     }
     orientation_ = 0;
   }
-  param_.Clear();
+  params_.Clear();
   children_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -627,32 +619,32 @@ bool BodyPart::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_param;
+        if (input->ExpectTag(26)) goto parse_params;
         break;
       }
 
-      // repeated .tol.Parameter param = 3;
+      // repeated .tol.Parameter params = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_param:
+         parse_params:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_param()));
+                input, add_params()));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_param;
-        if (input->ExpectTag(32)) goto parse_orientation;
+        if (input->ExpectTag(26)) goto parse_params;
+        if (input->ExpectTag(37)) goto parse_orientation;
         break;
       }
 
-      // required int32 orientation = 4;
+      // required float orientation = 4;
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
          parse_orientation:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
                  input, &orientation_)));
           set_has_orientation();
         } else {
@@ -713,15 +705,15 @@ void BodyPart::SerializeWithCachedSizes(
       2, this->type(), output);
   }
 
-  // repeated .tol.Parameter param = 3;
-  for (int i = 0; i < this->param_size(); i++) {
+  // repeated .tol.Parameter params = 3;
+  for (int i = 0; i < this->params_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, this->param(i), output);
+      3, this->params(i), output);
   }
 
-  // required int32 orientation = 4;
+  // required float orientation = 4;
   if (has_orientation()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->orientation(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->orientation(), output);
   }
 
   // repeated .tol.BodyConnection children = 5;
@@ -758,16 +750,16 @@ void BodyPart::SerializeWithCachedSizes(
         2, this->type(), target);
   }
 
-  // repeated .tol.Parameter param = 3;
-  for (int i = 0; i < this->param_size(); i++) {
+  // repeated .tol.Parameter params = 3;
+  for (int i = 0; i < this->params_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        3, this->param(i), target);
+        3, this->params(i), target);
   }
 
-  // required int32 orientation = 4;
+  // required float orientation = 4;
   if (has_orientation()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(4, this->orientation(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->orientation(), target);
   }
 
   // repeated .tol.BodyConnection children = 5;
@@ -802,20 +794,18 @@ int BodyPart::ByteSize() const {
           this->type());
     }
 
-    // required int32 orientation = 4;
+    // required float orientation = 4;
     if (has_orientation()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->orientation());
+      total_size += 1 + 4;
     }
 
   }
-  // repeated .tol.Parameter param = 3;
-  total_size += 1 * this->param_size();
-  for (int i = 0; i < this->param_size(); i++) {
+  // repeated .tol.Parameter params = 3;
+  total_size += 1 * this->params_size();
+  for (int i = 0; i < this->params_size(); i++) {
     total_size +=
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->param(i));
+        this->params(i));
   }
 
   // repeated .tol.BodyConnection children = 5;
@@ -851,7 +841,7 @@ void BodyPart::MergeFrom(const ::google::protobuf::Message& from) {
 
 void BodyPart::MergeFrom(const BodyPart& from) {
   GOOGLE_CHECK_NE(&from, this);
-  param_.MergeFrom(from.param_);
+  params_.MergeFrom(from.params_);
   children_.MergeFrom(from.children_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_id()) {
@@ -882,8 +872,8 @@ void BodyPart::CopyFrom(const BodyPart& from) {
 bool BodyPart::IsInitialized() const {
   if ((_has_bits_[0] & 0x0000000b) != 0x0000000b) return false;
 
-  for (int i = 0; i < param_size(); i++) {
-    if (!this->param(i).IsInitialized()) return false;
+  for (int i = 0; i < params_size(); i++) {
+    if (!this->params(i).IsInitialized()) return false;
   }
   for (int i = 0; i < children_size(); i++) {
     if (!this->children(i).IsInitialized()) return false;
@@ -895,7 +885,7 @@ void BodyPart::Swap(BodyPart* other) {
   if (other != this) {
     std::swap(id_, other->id_);
     std::swap(type_, other->type_);
-    param_.Swap(&other->param_);
+    params_.Swap(&other->params_);
     std::swap(orientation_, other->orientation_);
     children_.Swap(&other->children_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
@@ -916,8 +906,8 @@ void BodyPart::Swap(BodyPart* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int BodyConnection::kSrcSlotFieldNumber;
-const int BodyConnection::kDestSlotFieldNumber;
+const int BodyConnection::kSrcFieldNumber;
+const int BodyConnection::kDestFieldNumber;
 const int BodyConnection::kPartFieldNumber;
 #endif  // !_MSC_VER
 
@@ -938,8 +928,8 @@ BodyConnection::BodyConnection(const BodyConnection& from)
 
 void BodyConnection::SharedCtor() {
   _cached_size_ = 0;
-  srcslot_ = 0;
-  destslot_ = 0;
+  src_ = 0;
+  dest_ = 0;
   part_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -977,8 +967,8 @@ BodyConnection* BodyConnection::New() const {
 
 void BodyConnection::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    srcslot_ = 0;
-    destslot_ = 0;
+    src_ = 0;
+    dest_ = 0;
     if (has_part()) {
       if (part_ != NULL) part_->::tol::BodyPart::Clear();
     }
@@ -993,30 +983,30 @@ bool BodyConnection::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required int32 srcSlot = 1;
+      // required int32 src = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &srcslot_)));
-          set_has_srcslot();
+                 input, &src_)));
+          set_has_src();
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(16)) goto parse_destSlot;
+        if (input->ExpectTag(16)) goto parse_dest;
         break;
       }
 
-      // required int32 destSlot = 2;
+      // required int32 dest = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_destSlot:
+         parse_dest:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &destslot_)));
-          set_has_destslot();
+                 input, &dest_)));
+          set_has_dest();
         } else {
           goto handle_uninterpreted;
         }
@@ -1056,14 +1046,14 @@ bool BodyConnection::MergePartialFromCodedStream(
 
 void BodyConnection::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // required int32 srcSlot = 1;
-  if (has_srcslot()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->srcslot(), output);
+  // required int32 src = 1;
+  if (has_src()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->src(), output);
   }
 
-  // required int32 destSlot = 2;
-  if (has_destslot()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->destslot(), output);
+  // required int32 dest = 2;
+  if (has_dest()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->dest(), output);
   }
 
   // required .tol.BodyPart part = 3;
@@ -1080,14 +1070,14 @@ void BodyConnection::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* BodyConnection::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // required int32 srcSlot = 1;
-  if (has_srcslot()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->srcslot(), target);
+  // required int32 src = 1;
+  if (has_src()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->src(), target);
   }
 
-  // required int32 destSlot = 2;
-  if (has_destslot()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->destslot(), target);
+  // required int32 dest = 2;
+  if (has_dest()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->dest(), target);
   }
 
   // required .tol.BodyPart part = 3;
@@ -1108,18 +1098,18 @@ int BodyConnection::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required int32 srcSlot = 1;
-    if (has_srcslot()) {
+    // required int32 src = 1;
+    if (has_src()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->srcslot());
+          this->src());
     }
 
-    // required int32 destSlot = 2;
-    if (has_destslot()) {
+    // required int32 dest = 2;
+    if (has_dest()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->destslot());
+          this->dest());
     }
 
     // required .tol.BodyPart part = 3;
@@ -1156,11 +1146,11 @@ void BodyConnection::MergeFrom(const ::google::protobuf::Message& from) {
 void BodyConnection::MergeFrom(const BodyConnection& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_srcslot()) {
-      set_srcslot(from.srcslot());
+    if (from.has_src()) {
+      set_src(from.src());
     }
-    if (from.has_destslot()) {
-      set_destslot(from.destslot());
+    if (from.has_dest()) {
+      set_dest(from.dest());
     }
     if (from.has_part()) {
       mutable_part()->::tol::BodyPart::MergeFrom(from.part());
@@ -1192,8 +1182,8 @@ bool BodyConnection::IsInitialized() const {
 
 void BodyConnection::Swap(BodyConnection* other) {
   if (other != this) {
-    std::swap(srcslot_, other->srcslot_);
-    std::swap(destslot_, other->destslot_);
+    std::swap(src_, other->src_);
+    std::swap(dest_, other->dest_);
     std::swap(part_, other->part_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
@@ -1754,13 +1744,7 @@ void NeuralConnection::Swap(NeuralConnection* other) {
 const int Neuron::kIdFieldNumber;
 const int Neuron::kLayerFieldNumber;
 const int Neuron::kTypeFieldNumber;
-const int Neuron::kBiasFieldNumber;
-const int Neuron::kBodyPartIdFieldNumber;
-const int Neuron::kIoIdFieldNumber;
-const int Neuron::kTauFieldNumber;
-const int Neuron::kPhaseOffsetFieldNumber;
-const int Neuron::kPeriodFieldNumber;
-const int Neuron::kGainFieldNumber;
+const int Neuron::kParamsFieldNumber;
 #endif  // !_MSC_VER
 
 Neuron::Neuron()
@@ -1782,13 +1766,6 @@ void Neuron::SharedCtor() {
   id_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   layer_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   type_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  bias_ = 0;
-  bodypartid_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  ioid_ = 0;
-  tau_ = 0;
-  phaseoffset_ = 0;
-  period_ = 0;
-  gain_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -1805,9 +1782,6 @@ void Neuron::SharedDtor() {
   }
   if (type_ != &::google::protobuf::internal::kEmptyString) {
     delete type_;
-  }
-  if (bodypartid_ != &::google::protobuf::internal::kEmptyString) {
-    delete bodypartid_;
   }
   if (this != default_instance_) {
   }
@@ -1851,20 +1825,8 @@ void Neuron::Clear() {
         type_->clear();
       }
     }
-    bias_ = 0;
-    if (has_bodypartid()) {
-      if (bodypartid_ != &::google::protobuf::internal::kEmptyString) {
-        bodypartid_->clear();
-      }
-    }
-    ioid_ = 0;
-    tau_ = 0;
-    phaseoffset_ = 0;
   }
-  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    period_ = 0;
-    gain_ = 0;
-  }
+  params_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -1921,119 +1883,21 @@ bool Neuron::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(37)) goto parse_bias;
+        if (input->ExpectTag(34)) goto parse_params;
         break;
       }
 
-      // optional float bias = 4;
+      // repeated .tol.Parameter params = 4;
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_bias:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &bias_)));
-          set_has_bias();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(42)) goto parse_bodyPartId;
-        break;
-      }
-
-      // optional string bodyPartId = 5;
-      case 5: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_bodyPartId:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_bodypartid()));
-          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-            this->bodypartid().data(), this->bodypartid().length(),
-            ::google::protobuf::internal::WireFormat::PARSE);
+         parse_params:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_params()));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(48)) goto parse_ioId;
-        break;
-      }
-
-      // optional int32 ioId = 6;
-      case 6: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_ioId:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &ioid_)));
-          set_has_ioid();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(61)) goto parse_tau;
-        break;
-      }
-
-      // optional float tau = 7;
-      case 7: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_tau:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &tau_)));
-          set_has_tau();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(69)) goto parse_phaseOffset;
-        break;
-      }
-
-      // optional float phaseOffset = 8;
-      case 8: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_phaseOffset:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &phaseoffset_)));
-          set_has_phaseoffset();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(77)) goto parse_period;
-        break;
-      }
-
-      // optional float period = 9;
-      case 9: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_period:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &period_)));
-          set_has_period();
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(85)) goto parse_gain;
-        break;
-      }
-
-      // optional float gain = 10;
-      case 10: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
-         parse_gain:
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &gain_)));
-          set_has_gain();
-        } else {
-          goto handle_uninterpreted;
-        }
+        if (input->ExpectTag(34)) goto parse_params;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -2083,43 +1947,10 @@ void Neuron::SerializeWithCachedSizes(
       3, this->type(), output);
   }
 
-  // optional float bias = 4;
-  if (has_bias()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->bias(), output);
-  }
-
-  // optional string bodyPartId = 5;
-  if (has_bodypartid()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->bodypartid().data(), this->bodypartid().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE);
-    ::google::protobuf::internal::WireFormatLite::WriteString(
-      5, this->bodypartid(), output);
-  }
-
-  // optional int32 ioId = 6;
-  if (has_ioid()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->ioid(), output);
-  }
-
-  // optional float tau = 7;
-  if (has_tau()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(7, this->tau(), output);
-  }
-
-  // optional float phaseOffset = 8;
-  if (has_phaseoffset()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(8, this->phaseoffset(), output);
-  }
-
-  // optional float period = 9;
-  if (has_period()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(9, this->period(), output);
-  }
-
-  // optional float gain = 10;
-  if (has_gain()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(10, this->gain(), output);
+  // repeated .tol.Parameter params = 4;
+  for (int i = 0; i < this->params_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      4, this->params(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -2160,44 +1991,11 @@ void Neuron::SerializeWithCachedSizes(
         3, this->type(), target);
   }
 
-  // optional float bias = 4;
-  if (has_bias()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->bias(), target);
-  }
-
-  // optional string bodyPartId = 5;
-  if (has_bodypartid()) {
-    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->bodypartid().data(), this->bodypartid().length(),
-      ::google::protobuf::internal::WireFormat::SERIALIZE);
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        5, this->bodypartid(), target);
-  }
-
-  // optional int32 ioId = 6;
-  if (has_ioid()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->ioid(), target);
-  }
-
-  // optional float tau = 7;
-  if (has_tau()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(7, this->tau(), target);
-  }
-
-  // optional float phaseOffset = 8;
-  if (has_phaseoffset()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(8, this->phaseoffset(), target);
-  }
-
-  // optional float period = 9;
-  if (has_period()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(9, this->period(), target);
-  }
-
-  // optional float gain = 10;
-  if (has_gain()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(10, this->gain(), target);
+  // repeated .tol.Parameter params = 4;
+  for (int i = 0; i < this->params_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        4, this->params(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -2232,48 +2030,15 @@ int Neuron::ByteSize() const {
           this->type());
     }
 
-    // optional float bias = 4;
-    if (has_bias()) {
-      total_size += 1 + 4;
-    }
-
-    // optional string bodyPartId = 5;
-    if (has_bodypartid()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->bodypartid());
-    }
-
-    // optional int32 ioId = 6;
-    if (has_ioid()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->ioid());
-    }
-
-    // optional float tau = 7;
-    if (has_tau()) {
-      total_size += 1 + 4;
-    }
-
-    // optional float phaseOffset = 8;
-    if (has_phaseoffset()) {
-      total_size += 1 + 4;
-    }
-
   }
-  if (_has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    // optional float period = 9;
-    if (has_period()) {
-      total_size += 1 + 4;
-    }
-
-    // optional float gain = 10;
-    if (has_gain()) {
-      total_size += 1 + 4;
-    }
-
+  // repeated .tol.Parameter params = 4;
+  total_size += 1 * this->params_size();
+  for (int i = 0; i < this->params_size(); i++) {
+    total_size +=
+      ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+        this->params(i));
   }
+
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -2299,6 +2064,7 @@ void Neuron::MergeFrom(const ::google::protobuf::Message& from) {
 
 void Neuron::MergeFrom(const Neuron& from) {
   GOOGLE_CHECK_NE(&from, this);
+  params_.MergeFrom(from.params_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_id()) {
       set_id(from.id());
@@ -2308,29 +2074,6 @@ void Neuron::MergeFrom(const Neuron& from) {
     }
     if (from.has_type()) {
       set_type(from.type());
-    }
-    if (from.has_bias()) {
-      set_bias(from.bias());
-    }
-    if (from.has_bodypartid()) {
-      set_bodypartid(from.bodypartid());
-    }
-    if (from.has_ioid()) {
-      set_ioid(from.ioid());
-    }
-    if (from.has_tau()) {
-      set_tau(from.tau());
-    }
-    if (from.has_phaseoffset()) {
-      set_phaseoffset(from.phaseoffset());
-    }
-  }
-  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
-    if (from.has_period()) {
-      set_period(from.period());
-    }
-    if (from.has_gain()) {
-      set_gain(from.gain());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -2351,6 +2094,9 @@ void Neuron::CopyFrom(const Neuron& from) {
 bool Neuron::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000007) != 0x00000007) return false;
 
+  for (int i = 0; i < params_size(); i++) {
+    if (!this->params(i).IsInitialized()) return false;
+  }
   return true;
 }
 
@@ -2359,13 +2105,7 @@ void Neuron::Swap(Neuron* other) {
     std::swap(id_, other->id_);
     std::swap(layer_, other->layer_);
     std::swap(type_, other->type_);
-    std::swap(bias_, other->bias_);
-    std::swap(bodypartid_, other->bodypartid_);
-    std::swap(ioid_, other->ioid_);
-    std::swap(tau_, other->tau_);
-    std::swap(phaseoffset_, other->phaseoffset_);
-    std::swap(period_, other->period_);
-    std::swap(gain_, other->gain_);
+    params_.Swap(&other->params_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
