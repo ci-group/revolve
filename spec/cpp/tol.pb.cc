@@ -73,9 +73,9 @@ void protobuf_AssignDesc_tol_2eproto() {
   static const int BodyPart_offsets_[5] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, type_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, params_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, orientation_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, children_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, child_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyPart, param_),
   };
   BodyPart_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -91,7 +91,7 @@ void protobuf_AssignDesc_tol_2eproto() {
   BodyConnection_descriptor_ = file->message_type(2);
   static const int BodyConnection_offsets_[3] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyConnection, src_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyConnection, dest_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyConnection, dst_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BodyConnection, part_),
   };
   BodyConnection_reflection_ =
@@ -123,7 +123,7 @@ void protobuf_AssignDesc_tol_2eproto() {
   NeuralConnection_descriptor_ = file->message_type(4);
   static const int NeuralConnection_offsets_[3] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeuralConnection, src_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeuralConnection, dest_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeuralConnection, dst_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NeuralConnection, weight_),
   };
   NeuralConnection_reflection_ =
@@ -142,7 +142,7 @@ void protobuf_AssignDesc_tol_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, layer_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, type_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, params_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Neuron, param_),
   };
   Neuron_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -247,20 +247,20 @@ void protobuf_AddDesc_tol_2eproto() {
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
     "\n\ttol.proto\022\003tol\"\032\n\tParameter\022\r\n\005value\030\001"
-    " \002(\002\"\200\001\n\010BodyPart\022\n\n\002id\030\001 \002(\t\022\014\n\004type\030\002 "
-    "\002(\t\022\036\n\006params\030\003 \003(\0132\016.tol.Parameter\022\023\n\013o"
-    "rientation\030\004 \002(\002\022%\n\010children\030\005 \003(\0132\023.tol"
-    ".BodyConnection\"H\n\016BodyConnection\022\013\n\003src"
-    "\030\001 \002(\005\022\014\n\004dest\030\002 \002(\005\022\033\n\004part\030\003 \002(\0132\r.tol"
-    ".BodyPart\"#\n\004Body\022\033\n\004root\030\001 \002(\0132\r.tol.Bo"
-    "dyPart\"=\n\020NeuralConnection\022\013\n\003src\030\001 \002(\t\022"
-    "\014\n\004dest\030\002 \002(\t\022\016\n\006weight\030\003 \002(\002\"Q\n\006Neuron\022"
-    "\n\n\002id\030\001 \002(\t\022\r\n\005layer\030\002 \002(\t\022\014\n\004type\030\003 \002(\t"
-    "\022\036\n\006params\030\004 \003(\0132\016.tol.Parameter\"O\n\005Brai"
-    "n\022\033\n\006neuron\030\001 \003(\0132\013.tol.Neuron\022)\n\nconnec"
-    "tion\030\002 \003(\0132\025.tol.NeuralConnection\"G\n\005Rob"
-    "ot\022\n\n\002id\030\001 \002(\005\022\027\n\004body\030\002 \002(\0132\t.tol.Body\022"
-    "\031\n\005brain\030\003 \002(\0132\n.tol.Brain", 586);
+    " \002(\002\"|\n\010BodyPart\022\n\n\002id\030\001 \002(\t\022\014\n\004type\030\002 \002"
+    "(\t\022\023\n\013orientation\030\003 \002(\002\022\"\n\005child\030\004 \003(\0132\023"
+    ".tol.BodyConnection\022\035\n\005param\030\005 \003(\0132\016.tol"
+    ".Parameter\"G\n\016BodyConnection\022\013\n\003src\030\001 \002("
+    "\005\022\013\n\003dst\030\002 \002(\005\022\033\n\004part\030\003 \002(\0132\r.tol.BodyP"
+    "art\"#\n\004Body\022\033\n\004root\030\001 \002(\0132\r.tol.BodyPart"
+    "\"<\n\020NeuralConnection\022\013\n\003src\030\001 \002(\t\022\013\n\003dst"
+    "\030\002 \002(\t\022\016\n\006weight\030\003 \002(\002\"P\n\006Neuron\022\n\n\002id\030\001"
+    " \002(\t\022\r\n\005layer\030\002 \002(\t\022\014\n\004type\030\003 \002(\t\022\035\n\005par"
+    "am\030\004 \003(\0132\016.tol.Parameter\"O\n\005Brain\022\033\n\006neu"
+    "ron\030\001 \003(\0132\013.tol.Neuron\022)\n\nconnection\030\002 \003"
+    "(\0132\025.tol.NeuralConnection\"G\n\005Robot\022\n\n\002id"
+    "\030\001 \002(\005\022\027\n\004body\030\002 \002(\0132\t.tol.Body\022\031\n\005brain"
+    "\030\003 \002(\0132\n.tol.Brain", 578);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "tol.proto", &protobuf_RegisterTypes);
   Parameter::default_instance_ = new Parameter();
@@ -501,9 +501,9 @@ void Parameter::Swap(Parameter* other) {
 #ifndef _MSC_VER
 const int BodyPart::kIdFieldNumber;
 const int BodyPart::kTypeFieldNumber;
-const int BodyPart::kParamsFieldNumber;
 const int BodyPart::kOrientationFieldNumber;
-const int BodyPart::kChildrenFieldNumber;
+const int BodyPart::kChildFieldNumber;
+const int BodyPart::kParamFieldNumber;
 #endif  // !_MSC_VER
 
 BodyPart::BodyPart()
@@ -578,8 +578,8 @@ void BodyPart::Clear() {
     }
     orientation_ = 0;
   }
-  params_.Clear();
-  children_.Clear();
+  child_.Clear();
+  param_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -619,27 +619,12 @@ bool BodyPart::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(26)) goto parse_params;
+        if (input->ExpectTag(29)) goto parse_orientation;
         break;
       }
 
-      // repeated .tol.Parameter params = 3;
+      // required float orientation = 3;
       case 3: {
-        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
-            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_params:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_params()));
-        } else {
-          goto handle_uninterpreted;
-        }
-        if (input->ExpectTag(26)) goto parse_params;
-        if (input->ExpectTag(37)) goto parse_orientation;
-        break;
-      }
-
-      // required float orientation = 4;
-      case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED32) {
          parse_orientation:
@@ -650,21 +635,36 @@ bool BodyPart::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(42)) goto parse_children;
+        if (input->ExpectTag(34)) goto parse_child;
         break;
       }
 
-      // repeated .tol.BodyConnection children = 5;
-      case 5: {
+      // repeated .tol.BodyConnection child = 4;
+      case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_children:
+         parse_child:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_children()));
+                input, add_child()));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(42)) goto parse_children;
+        if (input->ExpectTag(34)) goto parse_child;
+        if (input->ExpectTag(42)) goto parse_param;
+        break;
+      }
+
+      // repeated .tol.Parameter param = 5;
+      case 5: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_param:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+                input, add_param()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(42)) goto parse_param;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -705,21 +705,21 @@ void BodyPart::SerializeWithCachedSizes(
       2, this->type(), output);
   }
 
-  // repeated .tol.Parameter params = 3;
-  for (int i = 0; i < this->params_size(); i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, this->params(i), output);
-  }
-
-  // required float orientation = 4;
+  // required float orientation = 3;
   if (has_orientation()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->orientation(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->orientation(), output);
   }
 
-  // repeated .tol.BodyConnection children = 5;
-  for (int i = 0; i < this->children_size(); i++) {
+  // repeated .tol.BodyConnection child = 4;
+  for (int i = 0; i < this->child_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      5, this->children(i), output);
+      4, this->child(i), output);
+  }
+
+  // repeated .tol.Parameter param = 5;
+  for (int i = 0; i < this->param_size(); i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      5, this->param(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -750,23 +750,23 @@ void BodyPart::SerializeWithCachedSizes(
         2, this->type(), target);
   }
 
-  // repeated .tol.Parameter params = 3;
-  for (int i = 0; i < this->params_size(); i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteMessageNoVirtualToArray(
-        3, this->params(i), target);
-  }
-
-  // required float orientation = 4;
+  // required float orientation = 3;
   if (has_orientation()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->orientation(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->orientation(), target);
   }
 
-  // repeated .tol.BodyConnection children = 5;
-  for (int i = 0; i < this->children_size(); i++) {
+  // repeated .tol.BodyConnection child = 4;
+  for (int i = 0; i < this->child_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        5, this->children(i), target);
+        4, this->child(i), target);
+  }
+
+  // repeated .tol.Parameter param = 5;
+  for (int i = 0; i < this->param_size(); i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        5, this->param(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -794,26 +794,26 @@ int BodyPart::ByteSize() const {
           this->type());
     }
 
-    // required float orientation = 4;
+    // required float orientation = 3;
     if (has_orientation()) {
       total_size += 1 + 4;
     }
 
   }
-  // repeated .tol.Parameter params = 3;
-  total_size += 1 * this->params_size();
-  for (int i = 0; i < this->params_size(); i++) {
+  // repeated .tol.BodyConnection child = 4;
+  total_size += 1 * this->child_size();
+  for (int i = 0; i < this->child_size(); i++) {
     total_size +=
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->params(i));
+        this->child(i));
   }
 
-  // repeated .tol.BodyConnection children = 5;
-  total_size += 1 * this->children_size();
-  for (int i = 0; i < this->children_size(); i++) {
+  // repeated .tol.Parameter param = 5;
+  total_size += 1 * this->param_size();
+  for (int i = 0; i < this->param_size(); i++) {
     total_size +=
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->children(i));
+        this->param(i));
   }
 
   if (!unknown_fields().empty()) {
@@ -841,8 +841,8 @@ void BodyPart::MergeFrom(const ::google::protobuf::Message& from) {
 
 void BodyPart::MergeFrom(const BodyPart& from) {
   GOOGLE_CHECK_NE(&from, this);
-  params_.MergeFrom(from.params_);
-  children_.MergeFrom(from.children_);
+  child_.MergeFrom(from.child_);
+  param_.MergeFrom(from.param_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_id()) {
       set_id(from.id());
@@ -870,13 +870,13 @@ void BodyPart::CopyFrom(const BodyPart& from) {
 }
 
 bool BodyPart::IsInitialized() const {
-  if ((_has_bits_[0] & 0x0000000b) != 0x0000000b) return false;
+  if ((_has_bits_[0] & 0x00000007) != 0x00000007) return false;
 
-  for (int i = 0; i < params_size(); i++) {
-    if (!this->params(i).IsInitialized()) return false;
+  for (int i = 0; i < child_size(); i++) {
+    if (!this->child(i).IsInitialized()) return false;
   }
-  for (int i = 0; i < children_size(); i++) {
-    if (!this->children(i).IsInitialized()) return false;
+  for (int i = 0; i < param_size(); i++) {
+    if (!this->param(i).IsInitialized()) return false;
   }
   return true;
 }
@@ -885,9 +885,9 @@ void BodyPart::Swap(BodyPart* other) {
   if (other != this) {
     std::swap(id_, other->id_);
     std::swap(type_, other->type_);
-    params_.Swap(&other->params_);
     std::swap(orientation_, other->orientation_);
-    children_.Swap(&other->children_);
+    child_.Swap(&other->child_);
+    param_.Swap(&other->param_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -907,7 +907,7 @@ void BodyPart::Swap(BodyPart* other) {
 
 #ifndef _MSC_VER
 const int BodyConnection::kSrcFieldNumber;
-const int BodyConnection::kDestFieldNumber;
+const int BodyConnection::kDstFieldNumber;
 const int BodyConnection::kPartFieldNumber;
 #endif  // !_MSC_VER
 
@@ -929,7 +929,7 @@ BodyConnection::BodyConnection(const BodyConnection& from)
 void BodyConnection::SharedCtor() {
   _cached_size_ = 0;
   src_ = 0;
-  dest_ = 0;
+  dst_ = 0;
   part_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -968,7 +968,7 @@ BodyConnection* BodyConnection::New() const {
 void BodyConnection::Clear() {
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     src_ = 0;
-    dest_ = 0;
+    dst_ = 0;
     if (has_part()) {
       if (part_ != NULL) part_->::tol::BodyPart::Clear();
     }
@@ -994,19 +994,19 @@ bool BodyConnection::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(16)) goto parse_dest;
+        if (input->ExpectTag(16)) goto parse_dst;
         break;
       }
 
-      // required int32 dest = 2;
+      // required int32 dst = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_VARINT) {
-         parse_dest:
+         parse_dst:
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &dest_)));
-          set_has_dest();
+                 input, &dst_)));
+          set_has_dst();
         } else {
           goto handle_uninterpreted;
         }
@@ -1051,9 +1051,9 @@ void BodyConnection::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->src(), output);
   }
 
-  // required int32 dest = 2;
-  if (has_dest()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->dest(), output);
+  // required int32 dst = 2;
+  if (has_dst()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->dst(), output);
   }
 
   // required .tol.BodyPart part = 3;
@@ -1075,9 +1075,9 @@ void BodyConnection::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->src(), target);
   }
 
-  // required int32 dest = 2;
-  if (has_dest()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->dest(), target);
+  // required int32 dst = 2;
+  if (has_dst()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->dst(), target);
   }
 
   // required .tol.BodyPart part = 3;
@@ -1105,11 +1105,11 @@ int BodyConnection::ByteSize() const {
           this->src());
     }
 
-    // required int32 dest = 2;
-    if (has_dest()) {
+    // required int32 dst = 2;
+    if (has_dst()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->dest());
+          this->dst());
     }
 
     // required .tol.BodyPart part = 3;
@@ -1149,8 +1149,8 @@ void BodyConnection::MergeFrom(const BodyConnection& from) {
     if (from.has_src()) {
       set_src(from.src());
     }
-    if (from.has_dest()) {
-      set_dest(from.dest());
+    if (from.has_dst()) {
+      set_dst(from.dst());
     }
     if (from.has_part()) {
       mutable_part()->::tol::BodyPart::MergeFrom(from.part());
@@ -1183,7 +1183,7 @@ bool BodyConnection::IsInitialized() const {
 void BodyConnection::Swap(BodyConnection* other) {
   if (other != this) {
     std::swap(src_, other->src_);
-    std::swap(dest_, other->dest_);
+    std::swap(dst_, other->dst_);
     std::swap(part_, other->part_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
@@ -1421,7 +1421,7 @@ void Body::Swap(Body* other) {
 
 #ifndef _MSC_VER
 const int NeuralConnection::kSrcFieldNumber;
-const int NeuralConnection::kDestFieldNumber;
+const int NeuralConnection::kDstFieldNumber;
 const int NeuralConnection::kWeightFieldNumber;
 #endif  // !_MSC_VER
 
@@ -1442,7 +1442,7 @@ NeuralConnection::NeuralConnection(const NeuralConnection& from)
 void NeuralConnection::SharedCtor() {
   _cached_size_ = 0;
   src_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
-  dest_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  dst_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   weight_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -1455,8 +1455,8 @@ void NeuralConnection::SharedDtor() {
   if (src_ != &::google::protobuf::internal::kEmptyString) {
     delete src_;
   }
-  if (dest_ != &::google::protobuf::internal::kEmptyString) {
-    delete dest_;
+  if (dst_ != &::google::protobuf::internal::kEmptyString) {
+    delete dst_;
   }
   if (this != default_instance_) {
   }
@@ -1490,9 +1490,9 @@ void NeuralConnection::Clear() {
         src_->clear();
       }
     }
-    if (has_dest()) {
-      if (dest_ != &::google::protobuf::internal::kEmptyString) {
-        dest_->clear();
+    if (has_dst()) {
+      if (dst_ != &::google::protobuf::internal::kEmptyString) {
+        dst_->clear();
       }
     }
     weight_ = 0;
@@ -1519,19 +1519,19 @@ bool NeuralConnection::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(18)) goto parse_dest;
+        if (input->ExpectTag(18)) goto parse_dst;
         break;
       }
 
-      // required string dest = 2;
+      // required string dst = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_dest:
+         parse_dst:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_dest()));
+                input, this->mutable_dst()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-            this->dest().data(), this->dest().length(),
+            this->dst().data(), this->dst().length(),
             ::google::protobuf::internal::WireFormat::PARSE);
         } else {
           goto handle_uninterpreted;
@@ -1583,13 +1583,13 @@ void NeuralConnection::SerializeWithCachedSizes(
       1, this->src(), output);
   }
 
-  // required string dest = 2;
-  if (has_dest()) {
+  // required string dst = 2;
+  if (has_dst()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->dest().data(), this->dest().length(),
+      this->dst().data(), this->dst().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      2, this->dest(), output);
+      2, this->dst(), output);
   }
 
   // required float weight = 3;
@@ -1615,14 +1615,14 @@ void NeuralConnection::SerializeWithCachedSizes(
         1, this->src(), target);
   }
 
-  // required string dest = 2;
-  if (has_dest()) {
+  // required string dst = 2;
+  if (has_dst()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->dest().data(), this->dest().length(),
+      this->dst().data(), this->dst().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        2, this->dest(), target);
+        2, this->dst(), target);
   }
 
   // required float weight = 3;
@@ -1648,11 +1648,11 @@ int NeuralConnection::ByteSize() const {
           this->src());
     }
 
-    // required string dest = 2;
-    if (has_dest()) {
+    // required string dst = 2;
+    if (has_dst()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->dest());
+          this->dst());
     }
 
     // required float weight = 3;
@@ -1690,8 +1690,8 @@ void NeuralConnection::MergeFrom(const NeuralConnection& from) {
     if (from.has_src()) {
       set_src(from.src());
     }
-    if (from.has_dest()) {
-      set_dest(from.dest());
+    if (from.has_dst()) {
+      set_dst(from.dst());
     }
     if (from.has_weight()) {
       set_weight(from.weight());
@@ -1721,7 +1721,7 @@ bool NeuralConnection::IsInitialized() const {
 void NeuralConnection::Swap(NeuralConnection* other) {
   if (other != this) {
     std::swap(src_, other->src_);
-    std::swap(dest_, other->dest_);
+    std::swap(dst_, other->dst_);
     std::swap(weight_, other->weight_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
@@ -1744,7 +1744,7 @@ void NeuralConnection::Swap(NeuralConnection* other) {
 const int Neuron::kIdFieldNumber;
 const int Neuron::kLayerFieldNumber;
 const int Neuron::kTypeFieldNumber;
-const int Neuron::kParamsFieldNumber;
+const int Neuron::kParamFieldNumber;
 #endif  // !_MSC_VER
 
 Neuron::Neuron()
@@ -1826,7 +1826,7 @@ void Neuron::Clear() {
       }
     }
   }
-  params_.Clear();
+  param_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -1883,21 +1883,21 @@ bool Neuron::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(34)) goto parse_params;
+        if (input->ExpectTag(34)) goto parse_param;
         break;
       }
 
-      // repeated .tol.Parameter params = 4;
+      // repeated .tol.Parameter param = 4;
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_params:
+         parse_param:
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-                input, add_params()));
+                input, add_param()));
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(34)) goto parse_params;
+        if (input->ExpectTag(34)) goto parse_param;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -1947,10 +1947,10 @@ void Neuron::SerializeWithCachedSizes(
       3, this->type(), output);
   }
 
-  // repeated .tol.Parameter params = 4;
-  for (int i = 0; i < this->params_size(); i++) {
+  // repeated .tol.Parameter param = 4;
+  for (int i = 0; i < this->param_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      4, this->params(i), output);
+      4, this->param(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -1991,11 +1991,11 @@ void Neuron::SerializeWithCachedSizes(
         3, this->type(), target);
   }
 
-  // repeated .tol.Parameter params = 4;
-  for (int i = 0; i < this->params_size(); i++) {
+  // repeated .tol.Parameter param = 4;
+  for (int i = 0; i < this->param_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        4, this->params(i), target);
+        4, this->param(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -2031,12 +2031,12 @@ int Neuron::ByteSize() const {
     }
 
   }
-  // repeated .tol.Parameter params = 4;
-  total_size += 1 * this->params_size();
-  for (int i = 0; i < this->params_size(); i++) {
+  // repeated .tol.Parameter param = 4;
+  total_size += 1 * this->param_size();
+  for (int i = 0; i < this->param_size(); i++) {
     total_size +=
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
-        this->params(i));
+        this->param(i));
   }
 
   if (!unknown_fields().empty()) {
@@ -2064,7 +2064,7 @@ void Neuron::MergeFrom(const ::google::protobuf::Message& from) {
 
 void Neuron::MergeFrom(const Neuron& from) {
   GOOGLE_CHECK_NE(&from, this);
-  params_.MergeFrom(from.params_);
+  param_.MergeFrom(from.param_);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     if (from.has_id()) {
       set_id(from.id());
@@ -2094,8 +2094,8 @@ void Neuron::CopyFrom(const Neuron& from) {
 bool Neuron::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000007) != 0x00000007) return false;
 
-  for (int i = 0; i < params_size(); i++) {
-    if (!this->params(i).IsInitialized()) return false;
+  for (int i = 0; i < param_size(); i++) {
+    if (!this->param(i).IsInitialized()) return false;
   }
   return true;
 }
@@ -2105,7 +2105,7 @@ void Neuron::Swap(Neuron* other) {
     std::swap(id_, other->id_);
     std::swap(layer_, other->layer_);
     std::swap(type_, other->type_);
-    params_.Swap(&other->params_);
+    param_.Swap(&other->param_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

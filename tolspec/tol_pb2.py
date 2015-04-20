@@ -13,7 +13,7 @@ from google.protobuf import descriptor_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='tol.proto',
   package='tol',
-  serialized_pb='\n\ttol.proto\x12\x03tol\"\x1a\n\tParameter\x12\r\n\x05value\x18\x01 \x02(\x02\"\x80\x01\n\x08\x42odyPart\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0c\n\x04type\x18\x02 \x02(\t\x12\x1e\n\x06params\x18\x03 \x03(\x0b\x32\x0e.tol.Parameter\x12\x13\n\x0borientation\x18\x04 \x02(\x02\x12%\n\x08\x63hildren\x18\x05 \x03(\x0b\x32\x13.tol.BodyConnection\"H\n\x0e\x42odyConnection\x12\x0b\n\x03src\x18\x01 \x02(\x05\x12\x0c\n\x04\x64\x65st\x18\x02 \x02(\x05\x12\x1b\n\x04part\x18\x03 \x02(\x0b\x32\r.tol.BodyPart\"#\n\x04\x42ody\x12\x1b\n\x04root\x18\x01 \x02(\x0b\x32\r.tol.BodyPart\"=\n\x10NeuralConnection\x12\x0b\n\x03src\x18\x01 \x02(\t\x12\x0c\n\x04\x64\x65st\x18\x02 \x02(\t\x12\x0e\n\x06weight\x18\x03 \x02(\x02\"Q\n\x06Neuron\x12\n\n\x02id\x18\x01 \x02(\t\x12\r\n\x05layer\x18\x02 \x02(\t\x12\x0c\n\x04type\x18\x03 \x02(\t\x12\x1e\n\x06params\x18\x04 \x03(\x0b\x32\x0e.tol.Parameter\"O\n\x05\x42rain\x12\x1b\n\x06neuron\x18\x01 \x03(\x0b\x32\x0b.tol.Neuron\x12)\n\nconnection\x18\x02 \x03(\x0b\x32\x15.tol.NeuralConnection\"G\n\x05Robot\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x17\n\x04\x62ody\x18\x02 \x02(\x0b\x32\t.tol.Body\x12\x19\n\x05\x62rain\x18\x03 \x02(\x0b\x32\n.tol.Brain')
+  serialized_pb='\n\ttol.proto\x12\x03tol\"\x1a\n\tParameter\x12\r\n\x05value\x18\x01 \x02(\x02\"|\n\x08\x42odyPart\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0c\n\x04type\x18\x02 \x02(\t\x12\x13\n\x0borientation\x18\x03 \x02(\x02\x12\"\n\x05\x63hild\x18\x04 \x03(\x0b\x32\x13.tol.BodyConnection\x12\x1d\n\x05param\x18\x05 \x03(\x0b\x32\x0e.tol.Parameter\"G\n\x0e\x42odyConnection\x12\x0b\n\x03src\x18\x01 \x02(\x05\x12\x0b\n\x03\x64st\x18\x02 \x02(\x05\x12\x1b\n\x04part\x18\x03 \x02(\x0b\x32\r.tol.BodyPart\"#\n\x04\x42ody\x12\x1b\n\x04root\x18\x01 \x02(\x0b\x32\r.tol.BodyPart\"<\n\x10NeuralConnection\x12\x0b\n\x03src\x18\x01 \x02(\t\x12\x0b\n\x03\x64st\x18\x02 \x02(\t\x12\x0e\n\x06weight\x18\x03 \x02(\x02\"P\n\x06Neuron\x12\n\n\x02id\x18\x01 \x02(\t\x12\r\n\x05layer\x18\x02 \x02(\t\x12\x0c\n\x04type\x18\x03 \x02(\t\x12\x1d\n\x05param\x18\x04 \x03(\x0b\x32\x0e.tol.Parameter\"O\n\x05\x42rain\x12\x1b\n\x06neuron\x18\x01 \x03(\x0b\x32\x0b.tol.Neuron\x12)\n\nconnection\x18\x02 \x03(\x0b\x32\x15.tol.NeuralConnection\"G\n\x05Robot\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x17\n\x04\x62ody\x18\x02 \x02(\x0b\x32\t.tol.Body\x12\x19\n\x05\x62rain\x18\x03 \x02(\x0b\x32\n.tol.Brain')
 
 
 
@@ -68,21 +68,21 @@ _BODYPART = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='params', full_name='tol.BodyPart.params', index=2,
-      number=3, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='orientation', full_name='tol.BodyPart.orientation', index=3,
-      number=4, type=2, cpp_type=6, label=2,
+      name='orientation', full_name='tol.BodyPart.orientation', index=2,
+      number=3, type=2, cpp_type=6, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='children', full_name='tol.BodyPart.children', index=4,
+      name='child', full_name='tol.BodyPart.child', index=3,
+      number=4, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='param', full_name='tol.BodyPart.param', index=4,
       number=5, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -97,8 +97,8 @@ _BODYPART = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=47,
-  serialized_end=175,
+  serialized_start=46,
+  serialized_end=170,
 )
 
 
@@ -117,7 +117,7 @@ _BODYCONNECTION = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='dest', full_name='tol.BodyConnection.dest', index=1,
+      name='dst', full_name='tol.BodyConnection.dst', index=1,
       number=2, type=5, cpp_type=1, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -139,8 +139,8 @@ _BODYCONNECTION = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=177,
-  serialized_end=249,
+  serialized_start=172,
+  serialized_end=243,
 )
 
 
@@ -167,8 +167,8 @@ _BODY = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=251,
-  serialized_end=286,
+  serialized_start=245,
+  serialized_end=280,
 )
 
 
@@ -187,7 +187,7 @@ _NEURALCONNECTION = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='dest', full_name='tol.NeuralConnection.dest', index=1,
+      name='dst', full_name='tol.NeuralConnection.dst', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
@@ -209,8 +209,8 @@ _NEURALCONNECTION = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=288,
-  serialized_end=349,
+  serialized_start=282,
+  serialized_end=342,
 )
 
 
@@ -243,7 +243,7 @@ _NEURON = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='params', full_name='tol.Neuron.params', index=3,
+      name='param', full_name='tol.Neuron.param', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -258,8 +258,8 @@ _NEURON = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=351,
-  serialized_end=432,
+  serialized_start=344,
+  serialized_end=424,
 )
 
 
@@ -293,8 +293,8 @@ _BRAIN = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=434,
-  serialized_end=513,
+  serialized_start=426,
+  serialized_end=505,
 )
 
 
@@ -335,15 +335,15 @@ _ROBOT = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=515,
-  serialized_end=586,
+  serialized_start=507,
+  serialized_end=578,
 )
 
-_BODYPART.fields_by_name['params'].message_type = _PARAMETER
-_BODYPART.fields_by_name['children'].message_type = _BODYCONNECTION
+_BODYPART.fields_by_name['child'].message_type = _BODYCONNECTION
+_BODYPART.fields_by_name['param'].message_type = _PARAMETER
 _BODYCONNECTION.fields_by_name['part'].message_type = _BODYPART
 _BODY.fields_by_name['root'].message_type = _BODYPART
-_NEURON.fields_by_name['params'].message_type = _PARAMETER
+_NEURON.fields_by_name['param'].message_type = _PARAMETER
 _BRAIN.fields_by_name['neuron'].message_type = _NEURON
 _BRAIN.fields_by_name['connection'].message_type = _NEURALCONNECTION
 _ROBOT.fields_by_name['body'].message_type = _BODY

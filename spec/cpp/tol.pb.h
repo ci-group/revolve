@@ -204,36 +204,36 @@ class BodyPart : public ::google::protobuf::Message {
   inline ::std::string* release_type();
   inline void set_allocated_type(::std::string* type);
 
-  // repeated .tol.Parameter params = 3;
-  inline int params_size() const;
-  inline void clear_params();
-  static const int kParamsFieldNumber = 3;
-  inline const ::tol::Parameter& params(int index) const;
-  inline ::tol::Parameter* mutable_params(int index);
-  inline ::tol::Parameter* add_params();
-  inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
-      params() const;
-  inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
-      mutable_params();
-
-  // required float orientation = 4;
+  // required float orientation = 3;
   inline bool has_orientation() const;
   inline void clear_orientation();
-  static const int kOrientationFieldNumber = 4;
+  static const int kOrientationFieldNumber = 3;
   inline float orientation() const;
   inline void set_orientation(float value);
 
-  // repeated .tol.BodyConnection children = 5;
-  inline int children_size() const;
-  inline void clear_children();
-  static const int kChildrenFieldNumber = 5;
-  inline const ::tol::BodyConnection& children(int index) const;
-  inline ::tol::BodyConnection* mutable_children(int index);
-  inline ::tol::BodyConnection* add_children();
+  // repeated .tol.BodyConnection child = 4;
+  inline int child_size() const;
+  inline void clear_child();
+  static const int kChildFieldNumber = 4;
+  inline const ::tol::BodyConnection& child(int index) const;
+  inline ::tol::BodyConnection* mutable_child(int index);
+  inline ::tol::BodyConnection* add_child();
   inline const ::google::protobuf::RepeatedPtrField< ::tol::BodyConnection >&
-      children() const;
+      child() const;
   inline ::google::protobuf::RepeatedPtrField< ::tol::BodyConnection >*
-      mutable_children();
+      mutable_child();
+
+  // repeated .tol.Parameter param = 5;
+  inline int param_size() const;
+  inline void clear_param();
+  static const int kParamFieldNumber = 5;
+  inline const ::tol::Parameter& param(int index) const;
+  inline ::tol::Parameter* mutable_param(int index);
+  inline ::tol::Parameter* add_param();
+  inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
+      param() const;
+  inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
+      mutable_param();
 
   // @@protoc_insertion_point(class_scope:tol.BodyPart)
  private:
@@ -248,8 +248,8 @@ class BodyPart : public ::google::protobuf::Message {
 
   ::std::string* id_;
   ::std::string* type_;
-  ::google::protobuf::RepeatedPtrField< ::tol::Parameter > params_;
-  ::google::protobuf::RepeatedPtrField< ::tol::BodyConnection > children_;
+  ::google::protobuf::RepeatedPtrField< ::tol::BodyConnection > child_;
+  ::google::protobuf::RepeatedPtrField< ::tol::Parameter > param_;
   float orientation_;
 
   mutable int _cached_size_;
@@ -325,12 +325,12 @@ class BodyConnection : public ::google::protobuf::Message {
   inline ::google::protobuf::int32 src() const;
   inline void set_src(::google::protobuf::int32 value);
 
-  // required int32 dest = 2;
-  inline bool has_dest() const;
-  inline void clear_dest();
-  static const int kDestFieldNumber = 2;
-  inline ::google::protobuf::int32 dest() const;
-  inline void set_dest(::google::protobuf::int32 value);
+  // required int32 dst = 2;
+  inline bool has_dst() const;
+  inline void clear_dst();
+  static const int kDstFieldNumber = 2;
+  inline ::google::protobuf::int32 dst() const;
+  inline void set_dst(::google::protobuf::int32 value);
 
   // required .tol.BodyPart part = 3;
   inline bool has_part() const;
@@ -345,15 +345,15 @@ class BodyConnection : public ::google::protobuf::Message {
  private:
   inline void set_has_src();
   inline void clear_has_src();
-  inline void set_has_dest();
-  inline void clear_has_dest();
+  inline void set_has_dst();
+  inline void clear_has_dst();
   inline void set_has_part();
   inline void clear_has_part();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::google::protobuf::int32 src_;
-  ::google::protobuf::int32 dest_;
+  ::google::protobuf::int32 dst_;
   ::tol::BodyPart* part_;
 
   mutable int _cached_size_;
@@ -518,17 +518,17 @@ class NeuralConnection : public ::google::protobuf::Message {
   inline ::std::string* release_src();
   inline void set_allocated_src(::std::string* src);
 
-  // required string dest = 2;
-  inline bool has_dest() const;
-  inline void clear_dest();
-  static const int kDestFieldNumber = 2;
-  inline const ::std::string& dest() const;
-  inline void set_dest(const ::std::string& value);
-  inline void set_dest(const char* value);
-  inline void set_dest(const char* value, size_t size);
-  inline ::std::string* mutable_dest();
-  inline ::std::string* release_dest();
-  inline void set_allocated_dest(::std::string* dest);
+  // required string dst = 2;
+  inline bool has_dst() const;
+  inline void clear_dst();
+  static const int kDstFieldNumber = 2;
+  inline const ::std::string& dst() const;
+  inline void set_dst(const ::std::string& value);
+  inline void set_dst(const char* value);
+  inline void set_dst(const char* value, size_t size);
+  inline ::std::string* mutable_dst();
+  inline ::std::string* release_dst();
+  inline void set_allocated_dst(::std::string* dst);
 
   // required float weight = 3;
   inline bool has_weight() const;
@@ -541,15 +541,15 @@ class NeuralConnection : public ::google::protobuf::Message {
  private:
   inline void set_has_src();
   inline void clear_has_src();
-  inline void set_has_dest();
-  inline void clear_has_dest();
+  inline void set_has_dst();
+  inline void clear_has_dst();
   inline void set_has_weight();
   inline void clear_has_weight();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
   ::std::string* src_;
-  ::std::string* dest_;
+  ::std::string* dst_;
   float weight_;
 
   mutable int _cached_size_;
@@ -654,17 +654,17 @@ class Neuron : public ::google::protobuf::Message {
   inline ::std::string* release_type();
   inline void set_allocated_type(::std::string* type);
 
-  // repeated .tol.Parameter params = 4;
-  inline int params_size() const;
-  inline void clear_params();
-  static const int kParamsFieldNumber = 4;
-  inline const ::tol::Parameter& params(int index) const;
-  inline ::tol::Parameter* mutable_params(int index);
-  inline ::tol::Parameter* add_params();
+  // repeated .tol.Parameter param = 4;
+  inline int param_size() const;
+  inline void clear_param();
+  static const int kParamFieldNumber = 4;
+  inline const ::tol::Parameter& param(int index) const;
+  inline ::tol::Parameter* mutable_param(int index);
+  inline ::tol::Parameter* add_param();
   inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
-      params() const;
+      param() const;
   inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
-      mutable_params();
+      mutable_param();
 
   // @@protoc_insertion_point(class_scope:tol.Neuron)
  private:
@@ -680,7 +680,7 @@ class Neuron : public ::google::protobuf::Message {
   ::std::string* id_;
   ::std::string* layer_;
   ::std::string* type_;
-  ::google::protobuf::RepeatedPtrField< ::tol::Parameter > params_;
+  ::google::protobuf::RepeatedPtrField< ::tol::Parameter > param_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
@@ -1069,40 +1069,15 @@ inline void BodyPart::set_allocated_type(::std::string* type) {
   }
 }
 
-// repeated .tol.Parameter params = 3;
-inline int BodyPart::params_size() const {
-  return params_.size();
-}
-inline void BodyPart::clear_params() {
-  params_.Clear();
-}
-inline const ::tol::Parameter& BodyPart::params(int index) const {
-  return params_.Get(index);
-}
-inline ::tol::Parameter* BodyPart::mutable_params(int index) {
-  return params_.Mutable(index);
-}
-inline ::tol::Parameter* BodyPart::add_params() {
-  return params_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
-BodyPart::params() const {
-  return params_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
-BodyPart::mutable_params() {
-  return &params_;
-}
-
-// required float orientation = 4;
+// required float orientation = 3;
 inline bool BodyPart::has_orientation() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
 inline void BodyPart::set_has_orientation() {
-  _has_bits_[0] |= 0x00000008u;
+  _has_bits_[0] |= 0x00000004u;
 }
 inline void BodyPart::clear_has_orientation() {
-  _has_bits_[0] &= ~0x00000008u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void BodyPart::clear_orientation() {
   orientation_ = 0;
@@ -1116,29 +1091,54 @@ inline void BodyPart::set_orientation(float value) {
   orientation_ = value;
 }
 
-// repeated .tol.BodyConnection children = 5;
-inline int BodyPart::children_size() const {
-  return children_.size();
+// repeated .tol.BodyConnection child = 4;
+inline int BodyPart::child_size() const {
+  return child_.size();
 }
-inline void BodyPart::clear_children() {
-  children_.Clear();
+inline void BodyPart::clear_child() {
+  child_.Clear();
 }
-inline const ::tol::BodyConnection& BodyPart::children(int index) const {
-  return children_.Get(index);
+inline const ::tol::BodyConnection& BodyPart::child(int index) const {
+  return child_.Get(index);
 }
-inline ::tol::BodyConnection* BodyPart::mutable_children(int index) {
-  return children_.Mutable(index);
+inline ::tol::BodyConnection* BodyPart::mutable_child(int index) {
+  return child_.Mutable(index);
 }
-inline ::tol::BodyConnection* BodyPart::add_children() {
-  return children_.Add();
+inline ::tol::BodyConnection* BodyPart::add_child() {
+  return child_.Add();
 }
 inline const ::google::protobuf::RepeatedPtrField< ::tol::BodyConnection >&
-BodyPart::children() const {
-  return children_;
+BodyPart::child() const {
+  return child_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::tol::BodyConnection >*
-BodyPart::mutable_children() {
-  return &children_;
+BodyPart::mutable_child() {
+  return &child_;
+}
+
+// repeated .tol.Parameter param = 5;
+inline int BodyPart::param_size() const {
+  return param_.size();
+}
+inline void BodyPart::clear_param() {
+  param_.Clear();
+}
+inline const ::tol::Parameter& BodyPart::param(int index) const {
+  return param_.Get(index);
+}
+inline ::tol::Parameter* BodyPart::mutable_param(int index) {
+  return param_.Mutable(index);
+}
+inline ::tol::Parameter* BodyPart::add_param() {
+  return param_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
+BodyPart::param() const {
+  return param_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
+BodyPart::mutable_param() {
+  return &param_;
 }
 
 // -------------------------------------------------------------------
@@ -1167,26 +1167,26 @@ inline void BodyConnection::set_src(::google::protobuf::int32 value) {
   src_ = value;
 }
 
-// required int32 dest = 2;
-inline bool BodyConnection::has_dest() const {
+// required int32 dst = 2;
+inline bool BodyConnection::has_dst() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void BodyConnection::set_has_dest() {
+inline void BodyConnection::set_has_dst() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void BodyConnection::clear_has_dest() {
+inline void BodyConnection::clear_has_dst() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void BodyConnection::clear_dest() {
-  dest_ = 0;
-  clear_has_dest();
+inline void BodyConnection::clear_dst() {
+  dst_ = 0;
+  clear_has_dst();
 }
-inline ::google::protobuf::int32 BodyConnection::dest() const {
-  return dest_;
+inline ::google::protobuf::int32 BodyConnection::dst() const {
+  return dst_;
 }
-inline void BodyConnection::set_dest(::google::protobuf::int32 value) {
-  set_has_dest();
-  dest_ = value;
+inline void BodyConnection::set_dst(::google::protobuf::int32 value) {
+  set_has_dst();
+  dst_ = value;
 }
 
 // required .tol.BodyPart part = 3;
@@ -1343,73 +1343,73 @@ inline void NeuralConnection::set_allocated_src(::std::string* src) {
   }
 }
 
-// required string dest = 2;
-inline bool NeuralConnection::has_dest() const {
+// required string dst = 2;
+inline bool NeuralConnection::has_dst() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
-inline void NeuralConnection::set_has_dest() {
+inline void NeuralConnection::set_has_dst() {
   _has_bits_[0] |= 0x00000002u;
 }
-inline void NeuralConnection::clear_has_dest() {
+inline void NeuralConnection::clear_has_dst() {
   _has_bits_[0] &= ~0x00000002u;
 }
-inline void NeuralConnection::clear_dest() {
-  if (dest_ != &::google::protobuf::internal::kEmptyString) {
-    dest_->clear();
+inline void NeuralConnection::clear_dst() {
+  if (dst_ != &::google::protobuf::internal::kEmptyString) {
+    dst_->clear();
   }
-  clear_has_dest();
+  clear_has_dst();
 }
-inline const ::std::string& NeuralConnection::dest() const {
-  return *dest_;
+inline const ::std::string& NeuralConnection::dst() const {
+  return *dst_;
 }
-inline void NeuralConnection::set_dest(const ::std::string& value) {
-  set_has_dest();
-  if (dest_ == &::google::protobuf::internal::kEmptyString) {
-    dest_ = new ::std::string;
+inline void NeuralConnection::set_dst(const ::std::string& value) {
+  set_has_dst();
+  if (dst_ == &::google::protobuf::internal::kEmptyString) {
+    dst_ = new ::std::string;
   }
-  dest_->assign(value);
+  dst_->assign(value);
 }
-inline void NeuralConnection::set_dest(const char* value) {
-  set_has_dest();
-  if (dest_ == &::google::protobuf::internal::kEmptyString) {
-    dest_ = new ::std::string;
+inline void NeuralConnection::set_dst(const char* value) {
+  set_has_dst();
+  if (dst_ == &::google::protobuf::internal::kEmptyString) {
+    dst_ = new ::std::string;
   }
-  dest_->assign(value);
+  dst_->assign(value);
 }
-inline void NeuralConnection::set_dest(const char* value, size_t size) {
-  set_has_dest();
-  if (dest_ == &::google::protobuf::internal::kEmptyString) {
-    dest_ = new ::std::string;
+inline void NeuralConnection::set_dst(const char* value, size_t size) {
+  set_has_dst();
+  if (dst_ == &::google::protobuf::internal::kEmptyString) {
+    dst_ = new ::std::string;
   }
-  dest_->assign(reinterpret_cast<const char*>(value), size);
+  dst_->assign(reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* NeuralConnection::mutable_dest() {
-  set_has_dest();
-  if (dest_ == &::google::protobuf::internal::kEmptyString) {
-    dest_ = new ::std::string;
+inline ::std::string* NeuralConnection::mutable_dst() {
+  set_has_dst();
+  if (dst_ == &::google::protobuf::internal::kEmptyString) {
+    dst_ = new ::std::string;
   }
-  return dest_;
+  return dst_;
 }
-inline ::std::string* NeuralConnection::release_dest() {
-  clear_has_dest();
-  if (dest_ == &::google::protobuf::internal::kEmptyString) {
+inline ::std::string* NeuralConnection::release_dst() {
+  clear_has_dst();
+  if (dst_ == &::google::protobuf::internal::kEmptyString) {
     return NULL;
   } else {
-    ::std::string* temp = dest_;
-    dest_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    ::std::string* temp = dst_;
+    dst_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
     return temp;
   }
 }
-inline void NeuralConnection::set_allocated_dest(::std::string* dest) {
-  if (dest_ != &::google::protobuf::internal::kEmptyString) {
-    delete dest_;
+inline void NeuralConnection::set_allocated_dst(::std::string* dst) {
+  if (dst_ != &::google::protobuf::internal::kEmptyString) {
+    delete dst_;
   }
-  if (dest) {
-    set_has_dest();
-    dest_ = dest;
+  if (dst) {
+    set_has_dst();
+    dst_ = dst;
   } else {
-    clear_has_dest();
-    dest_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    clear_has_dst();
+    dst_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 
@@ -1649,29 +1649,29 @@ inline void Neuron::set_allocated_type(::std::string* type) {
   }
 }
 
-// repeated .tol.Parameter params = 4;
-inline int Neuron::params_size() const {
-  return params_.size();
+// repeated .tol.Parameter param = 4;
+inline int Neuron::param_size() const {
+  return param_.size();
 }
-inline void Neuron::clear_params() {
-  params_.Clear();
+inline void Neuron::clear_param() {
+  param_.Clear();
 }
-inline const ::tol::Parameter& Neuron::params(int index) const {
-  return params_.Get(index);
+inline const ::tol::Parameter& Neuron::param(int index) const {
+  return param_.Get(index);
 }
-inline ::tol::Parameter* Neuron::mutable_params(int index) {
-  return params_.Mutable(index);
+inline ::tol::Parameter* Neuron::mutable_param(int index) {
+  return param_.Mutable(index);
 }
-inline ::tol::Parameter* Neuron::add_params() {
-  return params_.Add();
+inline ::tol::Parameter* Neuron::add_param() {
+  return param_.Add();
 }
 inline const ::google::protobuf::RepeatedPtrField< ::tol::Parameter >&
-Neuron::params() const {
-  return params_;
+Neuron::param() const {
+  return param_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::tol::Parameter >*
-Neuron::mutable_params() {
-  return &params_;
+Neuron::mutable_param() {
+  return &param_;
 }
 
 // -------------------------------------------------------------------

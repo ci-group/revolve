@@ -7,14 +7,14 @@ message Parameter {
 message BodyPart {
   required string id = 1;
   required string type = 2;
-  repeated Parameter params = 3;
-  required float orientation = 4;
-  repeated BodyConnection children = 5;
+  required float orientation = 3;
+  repeated BodyConnection child = 4;
+  repeated Parameter param = 5;
 }
 
 message BodyConnection {
   required int32 src = 1;
-  required int32 dest = 2;
+  required int32 dst = 2;
   required BodyPart part = 3;
 }
 
@@ -24,7 +24,7 @@ message Body {
 
 message NeuralConnection {
   required string src = 1; 
-  required string dest = 2;
+  required string dst = 2;
   required float weight = 3;
 }
 
@@ -32,7 +32,7 @@ message Neuron {
   required string id = 1;
   required string layer = 2;
   required string type = 3;
-  repeated Parameter params = 4;
+  repeated Parameter param = 4;
 }
 
 message Brain {
