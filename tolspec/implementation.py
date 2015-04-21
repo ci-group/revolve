@@ -114,7 +114,7 @@ class Parameterizable(object):
         """
         ret = [0] * self.n_parameters
         for k in self.defaults:
-            ret[self.parameters[k]] = params[k] if k in params else self.defaults[k]
+            ret[self.parameters[k]] = params.get(k, self.defaults[k])
 
         return ret
 

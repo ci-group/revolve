@@ -67,14 +67,14 @@ class YamlToProtobuf:
         if 'id' not in conf:
             err("Missing part ID.")
 
-        part_id = conf['id']
+        part.id = part_id = conf['id']
         if part_id in self.part_ids:
             err("Duplicate part ID '%s'" % part_id)
         self.part_ids.add(part_id)
 
         if 'type' not in conf:
             err("Missing part type.")
-        part_type = conf['type']
+        part.type = part_type = conf['type']
 
         spec = self.spec.get_part(part_type)
         if spec is None:
@@ -87,6 +87,7 @@ class YamlToProtobuf:
 
         # Add part parameters
         part.orientation = conf.get('orientation', 0)
+
         params = spec.serialize_params(conf.get('params', {}))
         for param in params:
             p = part.param.add()
@@ -134,7 +135,7 @@ class YamlToProtobuf:
         conn = part.child.add()
         conn.src = src
         conn.dst = conf['slot'] if 'slot' in conf else 0
-        conn.part = self._process_body_part(conf, conn.dst)
+        conn.part.CopyFrom(self._process_body_part(conf, conn.dst))
 
     def _create_hidden_neurons(self, neurons):
         """

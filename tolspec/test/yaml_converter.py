@@ -122,6 +122,48 @@ brain:
     Core-in-0:
         type: Oscillator
 '''.split("\n")
+# Full
+test_simple_robot = '''\
+---
+body:
+  id: Core
+  type: CoreComponent
+  children:
+    0:
+      id: Sub1
+      type: 2Params
+      orientation: 180
+      slot: 1
+    1:
+      id: Sub2
+      type: 2Params
+      params:
+        param_a: 10
+        param_b: 20
+brain:
+  neurons:
+    Hidden1:
+      type: Oscillator
+      period: 0.1
+      phaseOffset: 0.2
+      amplitude: 0.3
+    Hidden2:
+      type: Oscillator
+    Hidden3: {}
+  params:
+    Sub1-out-1:
+      type: Oscillator
+      phaseOffset: 10
+    Sub2-out-0:
+      type: Oscillator
+  connections:
+    - src: Sub1-out-1
+      dst: Sub1-out-1
+      weight: 2
+    - src: Sub2-in-1
+      dst: Sub1-out-1
+'''.split("\n")
+
 # End of YAML for test cases
 
 # Use this imaginary specification for all the tests
@@ -200,13 +242,73 @@ class TestConvert(unittest.TestCase):
         with self.assertRaisesRegexp(SpecErr, 'Simple'):
             yaml_to_protobuf(spec, test_input_params)
 
-    def test_working_body(self):
+    def test_simple_robot(self):
         """
-        Tests a simple working body with various aspects
+        Tests whether a simple robot is correctly serialized.
         :return:
         """
-        # TODO Implement
+        robot = yaml_to_protobuf(spec, test_simple_robot)
+        self.assertEquals(0, robot.id, "Robot ID not correctly set.")
 
+        root = robot.body.root
+        self.assertEquals("Core", root.id, "Root ID not correctly set. (%s)" % root.id)
+
+        self.assertEquals(2, len(root.child), "Root should have two children.")
+
+        sub1_conn = root.child[0]
+        sub2_conn = root.child[1]
+
+        # Check connection sources / destinations
+        self.assertEquals(0, sub1_conn.src)
+        self.assertEquals(1, sub2_conn.src)
+        self.assertEquals(1, sub1_conn.dst)
+        self.assertEquals(0, sub2_conn.dst)
+
+        sub1 = sub1_conn.part
+        sub2 = sub2_conn.part
+
+        # Check types
+        self.assertEquals("2Params", sub1.type)
+        self.assertEquals("2Params", sub2.type)
+
+        # Check parameter lists
+        sub1params = [p.value for p in sub1.param]
+        sub2params = [p.value for p in sub2.param]
+
+        self.assertEquals([-1, 15], sub1params)
+        self.assertEquals([10, 20], sub2params)
+
+        # Check the brain
+        brain = robot.brain
+
+        # 1 + 2 + 2 output, 2 + 2 + 2 input, 3 hidden
+        self.assertEquals(14, len(brain.neuron))
+        self.assertEquals(len(brain.connection), 2)
+
+        conn0 = brain.connection[0]
+        self.assertEquals("Sub1-out-1", conn0.src)
+        self.assertEquals("Sub1-out-1", conn0.dst)
+        self.assertEquals(2, conn0.weight)
+
+        conn1 = brain.connection[1]
+        self.assertEquals("Sub2-in-1", conn1.src)
+        self.assertEquals("Sub1-out-1", conn1.dst)
+        self.assertEquals(0, conn1.weight)
+
+        hidden1 = [a for a in brain.neuron if a.id == "Hidden1"][0]
+        hidden1params = [p.value for p in hidden1.param]
+        self.assertEquals([0.1, 0.2, 0.3], hidden1params)
+
+        hidden2 = [a for a in brain.neuron if a.id == "Hidden2"][0]
+        hidden2params = [p.value for p in hidden2.param]
+        self.assertEquals([0, 0, 0], hidden2params)
+
+        hidden3 = [a for a in brain.neuron if a.id == "Hidden3"][0]
+        self.assertEquals("Simple", hidden3.type)
+
+        sub1 = [a for a in brain.neuron if a.id == "Sub1-out-1"][0]
+        sub1params = [p.value for p in sub1.param]
+        self.assertEquals([0, 10, 0], sub1params)
 
 if __name__ == '__main__':
     unittest.main()
