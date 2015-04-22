@@ -1,9 +1,9 @@
 from ..spec.protobuf import Robot, BodyPart, NeuralConnection, BodyConnection
-from ..spec import SpecImplementation, Part, Neuron
+from ..spec import SpecImplementation, PartSpec, NeuronSpec
 from ..spec.exception import err
 
 
-def robot_validation_errors(spec, robot):
+def validate_robot(spec, robot):
     """
     :param spec:
     :type spec: SpecImplementation
@@ -17,8 +17,9 @@ def robot_validation_errors(spec, robot):
 
 class SpecValidator:
     """
-
+    Validates a robot protobuf against a spec implementation.
     """
+
     def __init__(self, spec, robot):
         """
 
@@ -47,8 +48,12 @@ class SpecValidator:
         for neuron in self.robot.brain.neuron:
             self._process_neuron(neuron)
 
-        for conn in self.robot.brain.connections:
+        for conn in self.robot.brain.connection:
             self._process_neural_connection(conn)
+
+        missing_neurons = self.expected_neurons.keys()
+        if len(missing_neurons):
+            err("Missing expected neurons: %s" % ', '.join(missing_neurons))
 
     def _process_body_part(self, part, dst_slot=None):
         """
@@ -92,7 +97,7 @@ class SpecValidator:
         :param parent:
         :type parent: BodyPart
         :param spec:
-        :type spec: Part
+        :type spec: PartSpec
         :param conn:
         :type conn: BodyConnection
         :return:
@@ -113,7 +118,7 @@ class SpecValidator:
         """
 
         :param neuron:
-        :type neuron: Neuron
+        :type neuron: NeuronSpec
         :return:
         """
         if neuron.id in self.neurons:
@@ -152,6 +157,9 @@ class SpecValidator:
 
         if conn.dst not in self.neurons:
             err("Unknown destination neuron '%s'." % conn.dat)
+
+        if self.neurons[conn.dst] == "input":
+            err("Destination neuron '%s' is an input neuron." % conn.dst)
 
         connections = self.neural_connections[conn.src]
         if conn.dst in connections:

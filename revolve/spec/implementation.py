@@ -39,15 +39,15 @@ class SpecImplementation(object):
 
         # Add default simple neuron
         if "simple" not in neurons:
-            self.set_neuron("Simple", Neuron(["bias"]))
+            self.set_neuron("Simple", NeuronSpec(["bias"]))
 
     def get_part(self, part_type):
         """
         Returns the part settings corresponding to the given type
         :param part_type:
         :type part_type: str
-        :return: Part implementation spec, or None if not found
-        :rtype: Part
+        :return: PartSpec implementation spec, or None if not found
+        :rtype: PartSpec
         """
         key = self.part_aliases.get(part_type, part_type)
         return self.parts.get(key, None)
@@ -58,8 +58,8 @@ class SpecImplementation(object):
 
         :param neuron_type:
         :type neuron_type: str
-        :return: Neuron implementation spec, or None if not found
-        :rtype: Neuron
+        :return: NeuronSpec implementation spec, or None if not found
+        :rtype: NeuronSpec
         """
         key = self.part_aliases.get(neuron_type, neuron_type)
         return self.neurons.get(key, None)
@@ -69,7 +69,7 @@ class SpecImplementation(object):
         :param neuron_type:
         :type neuron_type: str
         :param neuron:
-        :type neuron: Neuron
+        :type neuron: NeuronSpec
         :return:
         """
         self.neurons[neuron_type] = neuron
@@ -80,7 +80,7 @@ class SpecImplementation(object):
         :param part_type:
         :type part_type: str
         :param part:
-        :type part: Part
+        :type part: PartSpec
         :return:
         """
         self.neurons[part_type] = part
@@ -119,7 +119,7 @@ class Parameterizable(object):
         return ret
 
 
-class Part(Parameterizable):
+class PartSpec(Parameterizable):
     """
     Class used to specify all configurable details about a part.
     """
@@ -138,7 +138,7 @@ class Part(Parameterizable):
         :type output_neurons: int
         :return:
         """
-        super(Part, self).__init__(params, defaults)
+        super(PartSpec, self).__init__(params, defaults)
 
         self.component = component
         self.arity = arity
@@ -146,8 +146,8 @@ class Part(Parameterizable):
         self.output_neurons = output_neurons
 
 
-class Neuron(Parameterizable):
+class NeuronSpec(Parameterizable):
     """
-    Specifies a configurable Neuron
+    Specifies a configurable NeuronSpec
     """
     pass

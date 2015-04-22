@@ -391,7 +391,7 @@ class Neuron(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _NEURON
 
-  # @@protoc_insertion_point(class_scope:tol.Neuron)
+  # @@protoc_insertion_point(class_scope:tol.NeuronSpec)
 
 class Brain(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType

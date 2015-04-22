@@ -1,6 +1,6 @@
 import unittest
 from ...convert import yaml_to_protobuf
-from ...spec import SpecImplementation, Part, Neuron, RobotSpecificationException as SpecErr
+from ...spec import SpecImplementation, PartSpec, NeuronSpec, RobotSpecificationException as SpecErr
 
 # Define YAML for test cases here
 # Body
@@ -168,12 +168,12 @@ brain:
 # Use this imaginary specification for all the tests
 spec = SpecImplementation(
     parts={
-        ("CoreComponent", "E"): Part(
+        ("CoreComponent", "E"): PartSpec(
             arity=2,
             output_neurons=1,
             input_neurons=2
         ),
-        "2Params": Part(
+        "2Params": PartSpec(
             arity=2,
             input_neurons=2,
             output_neurons=2,
@@ -183,14 +183,14 @@ spec = SpecImplementation(
     },
 
     neurons={
-        "Oscillator": Neuron(
+        "Oscillator": NeuronSpec(
             params=["period", "phaseOffset", "amplitude"]
         )
     }
 )
 
 
-class TestConvert(unittest.TestCase):
+class TestConvertYaml(unittest.TestCase):
     """
     Tests a wide range of error cases for the
     YAML converter.
