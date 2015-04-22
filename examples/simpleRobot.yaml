@@ -12,39 +12,39 @@ body:
 
   # Children maps
   children:
-    0:
+    1:
       slot        : 0           # Default
       id          : Hip1
       type        : ActiveHinge
       orientation : 90
       children    :
-        0:
+        1:
           id          : UpperLeg1
           type        : FixedBrick
           orientation : 90
           children    :
-            0:
+            1:
               id        : Knee1
               type      : ActiveHinge
               children  :
-                0:
+                1:
                   id  : LowerLeg1
                   type: FixedBrick
-    1:
+    2:
       id          : Hip2
       type        : ActiveHinge
       orientation : 90
       children    :
-        0:
+        1:
           id          : UpperLeg2
           type        : FixedBrick
           orientation : 90
           children    :
-            0:
+            1:
               id        : Knee2
               type      : ActiveHinge
               children  :
-                0:
+                1:
                   id  : LowerLeg2
                   type: FixedBrick
 

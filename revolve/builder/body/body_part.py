@@ -1,11 +1,15 @@
 from sdfbuilder.base import PosableGroup, Link
+from sdfbuilder.joint import FixedJoint, Axis
 from sdfbuilder.math import Vector3
+from .exception import ArityException
 
 
-class Component(PosableGroup):
+class BodyPart(PosableGroup):
     """
-
+    Base component class
     """
+    # Default arity for classes of this type
+    ARITY = 0
 
     def __init__(self, id, conf, **kwargs):
         """
@@ -15,9 +19,10 @@ class Component(PosableGroup):
         :param conf:
         :return:
         """
-        super(Component, self).__init__(None, **kwargs)
+        super(BodyPart, self).__init__(None, **kwargs)
         self.id = id
         self.conf = conf
+        self.arity = self.ARITY
 
         # Call child initialization function
         self._initialize(**kwargs)
@@ -27,7 +32,7 @@ class Component(PosableGroup):
         Initializes the component, to be implemented by child model.
         :return:
         """
-        raise NotImplementedError("`Component._initialize()` must be implemented by child class.")
+        raise NotImplementedError("`BodyPart._initialize()` must be implemented by child class.")
 
     def get_slot(self, slot_id):
         """
@@ -37,7 +42,7 @@ class Component(PosableGroup):
         :return: Link for given slot ID
         :rtype: Link
         """
-        raise NotImplementedError("`Component.get_slot()` not implemented.")
+        raise NotImplementedError("`BodyPart.get_slot()` not implemented.")
 
     def get_slot_position(self, slot_id):
         """
@@ -47,7 +52,7 @@ class Component(PosableGroup):
         :return: Position for given slot ID in child coordinates
         :rtype: Vector3
         """
-        raise NotImplementedError("`Component.get_slot_position()` not implemented.")
+        raise NotImplementedError("`BodyPart.get_slot_position()` not implemented.")
 
     def get_slot_normal(self, slot_id):
         """
@@ -57,7 +62,7 @@ class Component(PosableGroup):
         :return: Normal direction vector of the given slot ID in this component's frame
         :rtype: Vector3
         """
-        raise NotImplementedError("`Component.get_slot_normal()` not implemented.")
+        raise NotImplementedError("`BodyPart.get_slot_normal()` not implemented.")
 
     def get_slot_tangent(self, slot_id):
         """
@@ -68,7 +73,7 @@ class Component(PosableGroup):
         :return: Slot tangent vector
         :rtype: Vector3
         """
-        raise NotImplementedError("`Component.get_slot_tangent()` not implemented.")
+        raise NotImplementedError("`BodyPart.get_slot_tangent()` not implemented.")
 
     def create_link(self, label=None):
         """
@@ -93,6 +98,8 @@ class Component(PosableGroup):
         :type axis: Vector3
         :return:
         """
+        joint = FixedJoint(parent, child, axis=axis)
+        joint.set_position(anchor)
         # TODO Implement
         raise NotImplementedError("Must implement.")
 
@@ -100,7 +107,7 @@ class Component(PosableGroup):
         """
 
         :param other:
-        :type other: Component
+        :type other: BodyPart
         :param other_slot:
         :type other_slot: int
         :param my_slot:
@@ -148,23 +155,13 @@ class Component(PosableGroup):
         # Attach with a fixed link
         self.fix_links(parent, child, anchor, axis)
 
-    def in_mm(self, x):
+    def check_slot(self, slot):
         """
-        :param x:
+        Checks whether the given slot is valid, raises an
+        ArityException when it is not.
+        :param slot:
+        :type slot: int
         :return:
         """
-        return x / 1000.0
-
-    def in_grams(self, x):
-        """
-        :param x:
-        :return:
-        """
-        return x / 1000.0
-
-    def in_nm(self, x):
-        """
-        :param x:
-        :return:
-        """
-        return x
+        if slot < 0 or slot >= self.arity:
+            raise ArityException("Invalid slot %d for body part." % slot)

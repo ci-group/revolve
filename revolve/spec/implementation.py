@@ -129,7 +129,7 @@ class PartSpec(Parameterizable):
         """
 
         :param component: Builder component
-        :type component: Component
+        :type component: BodyPart
         :param arity: Arity (i.e. number of slots) of the body part
         :type arity: int
         :param input_neurons: Number of input neurons of this body part
