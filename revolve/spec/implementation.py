@@ -111,6 +111,11 @@ class Parameterizable(object):
         """
         Serializes the given parameter object into an array
         that can be used to add to protobuf.
+
+        :param params:
+        :type params: dict
+        :return:
+        :rtype: list
         """
         ret = [0] * self.n_parameters
         for k in self.defaults:
@@ -118,18 +123,27 @@ class Parameterizable(object):
 
         return ret
 
+    def unserialize_params(self, params):
+        """
+        Unserializes a protobuf parameter array into
+        :return: Dictionary of unserialized params
+        :rtype: dict
+        """
+        assert len(params) == len(self.parameters), "Invalid parameter length."
+        return {param: params[self.parameters[param]] for param in self.parameters}
+
 
 class PartSpec(Parameterizable):
     """
     Class used to specify all configurable details about a part.
     """
 
-    def __init__(self, component=None, arity=0, input_neurons=0,
+    def __init__(self, body_part=None, arity=0, input_neurons=0,
                  output_neurons=0, params=None, defaults=None):
         """
 
-        :param component: Builder component
-        :type component: BodyPart
+        :param body_part: Builder component
+        :type body_part: BodyPart
         :param arity: Arity (i.e. number of slots) of the body part
         :type arity: int
         :param input_neurons: Number of input neurons of this body part
@@ -140,7 +154,7 @@ class PartSpec(Parameterizable):
         """
         super(PartSpec, self).__init__(params, defaults)
 
-        self.component = component
+        self.body_part = body_part
         self.arity = arity
         self.input_neurons = input_neurons
         self.output_neurons = output_neurons

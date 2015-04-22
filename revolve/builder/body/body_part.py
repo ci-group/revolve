@@ -1,5 +1,5 @@
-from sdfbuilder.base import PosableGroup, Link
-from sdfbuilder.joint import FixedJoint, Axis
+from sdfbuilder.base import PosableGroup, Link, Model
+from sdfbuilder.joint import FixedJoint
 from sdfbuilder.math import Vector3
 from .exception import ArityException
 
@@ -23,6 +23,16 @@ class BodyPart(PosableGroup):
         self.id = id
         self.conf = conf
         self.arity = self.ARITY
+
+        # Ordered lists of joints which are used to represent motors
+        # This should have the same number of items as the number of
+        # output neurons this part has in the spec.
+        self.motors = []
+
+        # Ordered list of sensors in the body part. Should have the
+        # same number of items as the number of input neurons this
+        # part has in the spec.
+        self.sensors = []
 
         # Call child initialization function
         self._initialize(**kwargs)
@@ -85,27 +95,10 @@ class BodyPart(PosableGroup):
         link = Link("link_"+str(id)+"_"+append)
         self.add_element(link)
 
-    def fix_links(self, parent, child, anchor, axis):
+    def attach(self, model, other, other_slot, my_slot, orientation):
         """
-        Connects two links using a joint.
-        :param parent:
-        :type parent: Link
-        :param child:
-        :type child: Link
-        :param anchor:
-        :type anchor: Vector3
-        :param axis:
-        :type axis: Vector3
-        :return:
-        """
-        joint = FixedJoint(parent, child, axis=axis)
-        joint.set_position(anchor)
-        # TODO Implement
-        raise NotImplementedError("Must implement.")
-
-    def attach(self, other, other_slot, my_slot, orientation):
-        """
-
+        :param model:
+        :type model: Model
         :param other:
         :type other: BodyPart
         :param other_slot:
@@ -153,7 +146,9 @@ class BodyPart(PosableGroup):
         axis = self.to_sibling_frame(a_normal, child)
 
         # Attach with a fixed link
-        self.fix_links(parent, child, anchor, axis)
+        joint = FixedJoint(parent, child, axis=axis)
+        joint.set_position(anchor)
+        model.add_element(joint)
 
     def check_slot(self, slot):
         """
