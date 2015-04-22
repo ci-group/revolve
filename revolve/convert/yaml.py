@@ -1,7 +1,19 @@
+from __future__ import absolute_import
 import yaml
-from ..tol_pb2 import *
-from ..implementation import SpecImplementation, Part, Neuron
-from .exception import err
+from ..spec import SpecImplementation
+from ..spec.protobuf import *
+from ..spec.exception import err
+
+
+def yaml_to_protobuf(spec, yaml):
+    """
+    :param spec:
+    :type spec: SpecImplementation
+    :param yaml:
+    :return:
+    """
+    obj = YamlToProtobuf(spec, yaml)
+    return obj.get_protobuf()
 
 
 class YamlToProtobuf:

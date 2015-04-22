@@ -1,0 +1,1 @@
+from .yaml import yaml_to_protobuf

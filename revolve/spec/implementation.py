@@ -1,4 +1,4 @@
-def process_aliases(obj, alias_map):
+def _process_aliases(obj, alias_map):
     """
     :param obj:
     :type obj: dict
@@ -34,8 +34,8 @@ class SpecImplementation(object):
         self.part_aliases = {}
         self.neuron_aliases = {}
 
-        process_aliases(self.parts, self.part_aliases)
-        process_aliases(self.neurons, self.neuron_aliases)
+        _process_aliases(self.parts, self.part_aliases)
+        _process_aliases(self.neurons, self.neuron_aliases)
 
         # Add default simple neuron
         if "simple" not in neurons:
@@ -73,7 +73,7 @@ class SpecImplementation(object):
         :return:
         """
         self.neurons[neuron_type] = neuron
-        process_aliases(self.parts, self.part_aliases)
+        _process_aliases(self.parts, self.part_aliases)
 
     def set_part(self, part_type, part):
         """
@@ -84,7 +84,7 @@ class SpecImplementation(object):
         :return:
         """
         self.neurons[part_type] = part
-        process_aliases(self.neurons, self.neuron_aliases)
+        _process_aliases(self.neurons, self.neuron_aliases)
 
 
 class Parameterizable(object):

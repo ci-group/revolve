@@ -1,6 +1,6 @@
 from __future__ import print_function
 import sys
-from ..tol_pb2 import *
+from spec.tol_pb2 import *
 import re
 
 

@@ -1,7 +1,6 @@
 import unittest
-from ..convert import yaml_to_protobuf
-from ..convert import RobotSpecificationException as SpecErr
-from ..implementation import SpecImplementation, Part, Neuron
+from ...convert import yaml_to_protobuf
+from ...spec import SpecImplementation, Part, Neuron, RobotSpecificationException as SpecErr
 
 # Define YAML for test cases here
 # Body

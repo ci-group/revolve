@@ -1,4 +1,5 @@
 #!/bin/sh
+# Compiles the protobuf spec
 # Create build directory
 mkdir -p ../build
 cd ../build
@@ -13,4 +14,4 @@ protoc -I=../spec --python_out=. ../spec/tol.proto
 # Copy files to source directories
 cp tol.pb.cc ../spec/cpp
 cp tol.pb.h ../spec/cpp
-cp tol_pb2.py ../tolspec
+cp tol_pb2.py ../revolve/spec/protobuf.py
