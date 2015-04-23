@@ -1,15 +1,14 @@
 from sdfbuilder.base import PosableGroup, Link, Model
 from sdfbuilder.joint import FixedJoint
 from sdfbuilder.math import Vector3
-from .exception import ArityException
+
+from revolve.builder.sdf.body.exception import ArityException
 
 
 class BodyPart(PosableGroup):
     """
     Base component class
     """
-    # Default arity for classes of this type
-    ARITY = 0
 
     def __init__(self, id, conf, **kwargs):
         """
@@ -22,7 +21,9 @@ class BodyPart(PosableGroup):
         super(BodyPart, self).__init__(None, **kwargs)
         self.id = id
         self.conf = conf
-        self.arity = self.ARITY
+
+        # Specifying arity through arguments is optional
+        self.arity = kwargs.get('arity', None)
 
         # Ordered lists of joints which are used to represent motors
         # This should have the same number of items as the number of
@@ -158,5 +159,8 @@ class BodyPart(PosableGroup):
         :type slot: int
         :return:
         """
+        assert self.arity is not None, "Arity of body part was not set, " \
+                                       "make sure your builder derives this from the spec."
+
         if slot < 0 or slot >= self.arity:
             raise ArityException("Invalid slot %d for body part." % slot)

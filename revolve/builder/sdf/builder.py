@@ -1,8 +1,9 @@
+from math import radians
+
+from sdfbuilder.base import Model
+
 from ...spec import SpecImplementation, Robot, BodyPart as PbBodyPart, validate_robot
 from ...spec.exception import err
-from sdfbuilder.base import Model
-from ..body import BodyPart
-from math import radians
 
 
 class Builder(object):
@@ -39,6 +40,8 @@ class Builder(object):
         model = Model(name)
         self._process_body_part(model, robot.body.root)
 
+        # TODO: Brain, motors, sensors
+
         return model
 
     def _process_body_part(self, model, part, parent=None, src_slot=None, dst_slot=None):
@@ -54,9 +57,11 @@ class Builder(object):
             err("Cannot build unknown part type '%s'." % part.type)
 
         body_part = spec.body_part
-        params = spec.unserialize_params(part.params)
+        kwargs = spec.unserialize_params(part.param)
 
-        sdf_part = body_part(part.id, self.conf, **params)
+        # Set the arity
+        kwargs['arity'] = spec.arity
+        sdf_part = body_part(part.id, self.conf, **kwargs)
         """:type : BodyPart"""
 
         if parent:

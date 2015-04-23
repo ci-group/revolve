@@ -7,26 +7,26 @@ from ...spec import SpecImplementation, PartSpec, NeuronSpec, RobotSpecification
 test_missing_body = """\
 ---
 brain: {}
-""".split("\n")
+"""
 
 test_missing_part_id = '''\
 ---
 body:
   type: "CoreComponent"
-'''.split("\n")
+'''
 
 test_missing_part_type = '''\
 ---
 body:
   id: Core
-'''.split("\n")
+'''
 
 test_part_not_in_spec = '''\
 ---
 body:
   id: Core
   type: NotExist
-'''.split("\n")
+'''
 
 test_arity_fail = '''\
 ---
@@ -37,7 +37,7 @@ body:
     2:
       id: "Sub1"
       type: "2Params"
-'''.split("\n")
+'''
 
 test_slot_reuse = '''\
 ---
@@ -52,7 +52,7 @@ body:
         0:
           id: SubSub1
           type: 2Params
-'''.split("\n")
+'''
 
 test_duplicate_part_id = '''\
 ---
@@ -63,7 +63,7 @@ body:
     0:
       id: Core
       type: 2Params
-'''.split("\n")
+'''
 
 # Brain
 test_unknown_neuron_type = '''\
@@ -75,7 +75,7 @@ brain:
   neurons:
     MyNeuron:
       type: Invalid
-'''.split("\n")
+'''
 
 test_duplicate_neuron_id = '''\
 ---
@@ -86,7 +86,7 @@ brain:
   neurons:
     Core-out-0:
       type: Invalid
-'''.split("\n")
+'''
 
 test_unknown_param_neuron = '''\
 ---
@@ -98,7 +98,7 @@ brain:
     SomeNeuron:
         type: Oscillator
         amplitude: 0.0
-'''.split("\n")
+'''
 
 test_input_destination_neuron = '''\
 ---
@@ -109,7 +109,7 @@ brain:
   connections:
     - src: Core-in-0
       dst: Core-in-1
-'''.split("\n")
+'''
 
 test_input_params = '''\
 ---
@@ -120,7 +120,8 @@ brain:
   params:
     Core-in-0:
         type: Oscillator
-'''.split("\n")
+'''
+
 # Full
 test_simple_robot = '''\
 ---
@@ -161,7 +162,7 @@ brain:
       weight: 2
     - src: Sub2-in-1
       dst: Sub1-out-1
-'''.split("\n")
+'''
 
 # End of YAML for test cases
 
@@ -247,6 +248,10 @@ class TestConvertYaml(unittest.TestCase):
         :return:
         """
         robot = yaml_to_protobuf(spec, test_simple_robot)
+
+        # Make sure all required fields are set
+        self.assertTrue(robot.IsInitialized())
+
         self.assertEquals(0, robot.id, "Robot ID not correctly set.")
 
         root = robot.body.root

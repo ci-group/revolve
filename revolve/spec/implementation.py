@@ -1,3 +1,7 @@
+from .exception import err
+from .protobuf import BodyPart
+
+
 def _process_aliases(obj, alias_map):
     """
     :param obj:
@@ -38,7 +42,7 @@ class SpecImplementation(object):
         _process_aliases(self.neurons, self.neuron_aliases)
 
         # Add default simple neuron
-        if "simple" not in neurons:
+        if "simple" not in self.neurons:
             self.set_neuron("Simple", NeuronSpec(["bias"]))
 
     def get_part(self, part_type):
@@ -88,6 +92,13 @@ class SpecImplementation(object):
 
 
 class Parameterizable(object):
+    """
+    Parent class for objects with a parameter list that can be
+    (un)serialized.
+    """
+    # Reserved parameters
+    RESERVED = ['arity', 'type']
+
     def __init__(self, params=None, defaults=None):
         """
         :param params: List of named params for this part
@@ -102,6 +113,10 @@ class Parameterizable(object):
 
         # Map from parameter name to index in list
         self.parameters = {params[i]: i for i in range(l)}
+
+        for p in self.RESERVED:
+            if p in self.parameters:
+                err("'%s' is a reserved parameter and cannot be used as a name." % p)
 
         self.defaults = {k: 0.0 for k in params}
         if defaults is not None:
@@ -142,8 +157,7 @@ class PartSpec(Parameterizable):
                  output_neurons=0, params=None, defaults=None):
         """
 
-        :param body_part: Builder component
-        :type body_part: BodyPart
+        :param body_part: Builder component, for whatever builder is being used
         :param arity: Arity (i.e. number of slots) of the body part
         :type arity: int
         :param input_neurons: Number of input neurons of this body part

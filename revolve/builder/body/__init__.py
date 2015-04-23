@@ -1,1 +1,0 @@
-from .body_part import BodyPart

@@ -22,17 +22,15 @@ class YamlToProtobuf:
     a Protobuf implementation.
     """
 
-    def __init__(self, spec, lines):
+    def __init__(self, spec, stream):
         """
         :param spec:
         :type spec: SpecImplementation
-        :param lines:
-        :type lines: iterable
+        :param stream:
+        :type stream: stream
         :return:
         """
-        # TODO If at all necessary optimize this
-        contents = '\n'.join([l for l in lines])
-        obj = yaml.load(contents)
+        obj = yaml.load(stream)
         self.spec = spec
 
         self.part_ids = set()

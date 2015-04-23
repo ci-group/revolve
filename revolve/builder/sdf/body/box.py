@@ -1,6 +1,7 @@
 from sdfbuilder.base import Link
-from .body_part import BodyPart
 from sdfbuilder.math import Vector3
+
+from .body_part import BodyPart
 
 
 class Box(BodyPart):
@@ -21,12 +22,12 @@ class Box(BodyPart):
         :param kwargs:
         :return:
         """
-        super(Box, self).__init__(id, conf)
-
         # Set class properties here, if desired they can
         # still be overwritten in _initialize.
         self.x, self.y, self.z = self.X, self.Y, self.Z
         self.mass = self.MASS
+
+        super(Box, self).__init__(id, conf, **kwargs)
 
     def _initialize(self, **kwargs):
         """
@@ -35,6 +36,7 @@ class Box(BodyPart):
         """
         self.link = Link("%s-box-link" % self.id)
         self.link.make_box(self.mass, self.x, self.y, self.z)
+        self.add_element(self.link)
 
     def get_slot(self, slot):
         """
@@ -51,16 +53,16 @@ class Box(BodyPart):
         xmax, ymax, zmax = self.x / 2.0, self.y / 2.0, self.z / 2.0
         if slot == 0:
             # Front face
-            return Vector3(0, 0, -zmax)
+            return Vector3(0, -ymax, 0)
         elif slot == 1:
             # Back face
-            return Vector3(0, 0, zmax)
+            return Vector3(0, ymax, 0)
         elif slot == 2:
             # Top face
-            return Vector3(0, ymax, 0)
+            return Vector3(0, 0, zmax)
         elif slot == 3:
             # Bottom face
-            return Vector3(0, -ymax, 0)
+            return Vector3(0, 0, -zmax)
         elif slot == 4:
             # Right face
             return Vector3(xmax, 0, 0)
@@ -80,20 +82,20 @@ class Box(BodyPart):
         """
         self.check_slot(slot)
         if slot == 0:
-            # Front face tangent: left face
-            return Vector3(-1, 0, 0)
-        elif slot == 1:
-            # Back face tangent: right face
-            return Vector3(1, 0, 0)
-        elif slot == 2:
-            # Top face tangent: front face
-            return Vector3(0, 0, -1)
-        elif slot == 3:
-            # Bottom face tangent: bottom face
+            # Front face tangent: top face
             return Vector3(0, 0, 1)
+        elif slot == 1:
+            # Back face tangent: top face
+            return Vector3(0, 0, 1)
+        elif slot == 2:
+            # Top face tangent: right face
+            return Vector3(1, 0, 0)
+        elif slot == 3:
+            # Bottom face tangent: right face
+            return Vector3(1, 0, 0)
         elif slot == 4:
             # Right face tangent: back face
-            return Vector3(0, 0, 1)
+            return Vector3(0, 1, 0)
 
-        # Left face tangent: front face
-        return Vector3(0, 0, -1)
+        # Left face tangent: back face
+        return Vector3(0, 1, 0)
