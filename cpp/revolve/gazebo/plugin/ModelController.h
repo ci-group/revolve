@@ -8,7 +8,14 @@
 #ifndef REVOLVE_GAZEBO_PLUGIN_MODELCONTROLLER_H_
 #define REVOLVE_GAZEBO_PLUGIN_MODELCONTROLLER_H_
 
-#include <gazebo/common/Plugin.hh>
+#include <gazebo/gazebo.hh>
+#include <gazebo/physics/physics.hh>
+#include <gazebo/common/common.hh>
+#include <gazebo/msgs/msgs.hh>
+
+#include <revolve/gazebo/Types.h>
+
+#include <vector>
 
 namespace revolve {
 namespace gazebo {

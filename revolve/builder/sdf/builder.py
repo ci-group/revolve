@@ -41,14 +41,20 @@ class Builder(object):
         model = Model(name)
 
         # Create the model plugin element
-        plugin = Element(tag_name='plugin', attributes={'name': 'robot_controller', 'filename': controller_plugin})
+        plugin = Element(tag_name='plugin', attributes={
+            'name': 'robot_controller',
+            'filename': controller_plugin
+        })
+        config = Element(tag_name='rv:robot_config', attributes={
+            'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
+        })
+        plugin.add_element(config)
 
         # Process the brain
         self._process_brain(plugin, robot.brain)
 
         # Process body parts recursively
-        self._process_body_part(model, robot.body.root, plugin)
-
+        self._process_body_part(model, robot.body.root, config)
         model.add_element(plugin)
 
         return model

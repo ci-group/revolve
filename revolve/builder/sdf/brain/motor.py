@@ -19,26 +19,34 @@ class Motor(Element):
     TAG_NAME = 'rv:motor'
 
     # Probably the case for most motors
-    INPUT_NEURONS = 1
+    OUTPUT_NEURONS = 1
 
     # Override in child class with the adequate motor type
     MOTOR_TYPE = 'motor'
 
-    def __init__(self, joint=None):
+    def __init__(self, part_id, joint=None):
         """
+        :param part_id: ID of the part this motor belongs to. This is required in the XML to identify
+                        the corresponding output neuron.
+        :type part_id: str
         :param joint: It is common for motors to power a joint, this allows you to specify
                       which joint the motor controls if this is the case.
         :type joint: Joint
         """
         super(Motor, self).__init__(self)
         self.joint = joint
+        self.part_id = part_id
 
     def render_attributes(self):
         """
         Adds motor type to attributes
         """
         attrs = super(Motor, self).render_attributes()
-        attrs['type'] = self.MOTOR_TYPE
+        attrs.update({
+            'type': self.MOTOR_TYPE,
+            'part_id': self.part_id,
+            'output_neurons': str(self.OUTPUT_NEURONS)
+        })
 
         if self.joint is not None:
             attrs['joint'] = self.joint.name

@@ -12,10 +12,13 @@ class Sensor(Element):
     TAG_NAME = 'rv:sensor'
 
     # Should be a sensible default for most sensors
-    OUTPUT_NEURONS = 1
+    INPUT_NEURONS = 1
 
-    def __init__(self, link, sensor, driver=False):
+    def __init__(self, part_id, link, sensor, driver=False):
         """
+        :param part_id: ID of the part this sensor belongs to, required to identify
+                        the corresponding input neuron(s).
+        :type part_id: str
         :param link: Link containing the sensor
         :type link: Link
         :param sensor:
@@ -30,6 +33,7 @@ class Sensor(Element):
         super(Sensor, self).__init__()
         self.link = link
         self.sensor = sensor
+        self.part_id = part_id
         self.driver = driver
 
     def render_attributes(self):
@@ -40,7 +44,9 @@ class Sensor(Element):
         attrs.update({
             'link': self.link.name,
             'sensor': self.sensor.name,
-            'driver': str(self.driver)
+            'driver': str(self.driver),
+            'part_id': self.part_id,
+            'input_neurons': str(self.INPUT_NEURONS)
         })
 
         return attrs
