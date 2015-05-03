@@ -25,14 +25,12 @@ class BodyPart(PosableGroup):
         # Specifying arity through arguments is optional
         self.arity = kwargs.get('arity', None)
 
-        # Ordered lists of joints which are used to represent motors
-        # This should have the same number of items as the number of
-        # output neurons this part has in the spec.
+        # Ordered list of motors that this body part implements. These
+        # motors will be rendered to the SDF plugin.
         self.motors = []
 
-        # Ordered list of sensors in the body part. Should have the
-        # same number of items as the number of input neurons this
-        # part has in the spec.
+        # Ordered list of sensors in the body part. These sensors
+        # will be rendered to the SDF plugin.
         self.sensors = []
 
         # Call child initialization function

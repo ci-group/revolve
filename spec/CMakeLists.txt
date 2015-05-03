@@ -2,7 +2,7 @@
 cmake_minimum_required (VERSION 2.8)
 
 # Project Name
-project (ToL_spec)
+project (Revolve)
 find_package(Protobuf REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS})
