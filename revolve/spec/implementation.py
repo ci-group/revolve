@@ -42,7 +42,7 @@ class SpecImplementation(object):
         _process_aliases(self.neurons, self.neuron_aliases)
 
         # Add default simple neuron
-        if "simple" not in self.neurons:
+        if "Simple" not in self.neurons:
             self.set_neuron("Simple", NeuronSpec(["bias"]))
 
     def get_part(self, part_type):
@@ -65,7 +65,7 @@ class SpecImplementation(object):
         :return: NeuronSpec implementation spec, or None if not found
         :rtype: NeuronSpec
         """
-        key = self.part_aliases.get(neuron_type, neuron_type)
+        key = self.neuron_aliases.get(neuron_type, neuron_type)
         return self.neurons.get(key, None)
 
     def set_neuron(self, neuron_type, neuron):
@@ -77,7 +77,7 @@ class SpecImplementation(object):
         :return:
         """
         self.neurons[neuron_type] = neuron
-        _process_aliases(self.parts, self.part_aliases)
+        _process_aliases(self.neurons, self.neuron_aliases)
 
     def set_part(self, part_type, part):
         """
@@ -87,8 +87,8 @@ class SpecImplementation(object):
         :type part: PartSpec
         :return:
         """
-        self.neurons[part_type] = part
-        _process_aliases(self.neurons, self.neuron_aliases)
+        self.parts[part_type] = part
+        _process_aliases(self.parts, self.part_aliases)
 
 
 class Parameterizable(object):
@@ -145,7 +145,7 @@ class Parameterizable(object):
         :rtype: dict
         """
         assert len(params) == len(self.parameters), "Invalid parameter length."
-        return {param: params[self.parameters[param]] for param in self.parameters}
+        return {param: params[self.parameters[param]].value for param in self.parameters}
 
 
 class PartSpec(Parameterizable):

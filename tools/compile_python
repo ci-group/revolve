@@ -1,0 +1,6 @@
+#!/bin/sh
+# Generate Python protobuf files
+protoc -I=../spec --python_out=. ../spec/revolve.proto
+
+# Copy files to source directories
+mv revolve_pb2.py ../revolve/spec/protobuf.py

@@ -70,7 +70,7 @@ proto = yaml_to_protobuf(spec, bot)
 
 # Convert the protobuf to SDF
 builder = SdfBuilder(spec, None)
-model = builder.get_sdf_model(proto, "test_bot", validate=True)
+model = builder.get_sdf_model(proto, "my_plugin.so", "test_bot", validate=True)
 
 # Create SDF and output
 sdf = SDF()

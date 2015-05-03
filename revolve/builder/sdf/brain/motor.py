@@ -12,7 +12,8 @@ from sdfbuilder.util import number_format as nf
 
 class Motor(Element):
     """
-    Motor base class
+    Plugin motor base class, used to communicate motor configuration through
+    the SDF plugin to the model controller in Gazebo.
     """
     # SDF tag name, should not be changed in subclass
     TAG_NAME = 'rv:motor'

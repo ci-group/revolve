@@ -1,9 +1,8 @@
 from math import radians
-
-from sdfbuilder.base import Model
-
+from sdfbuilder.base import Model, Element
 from ...spec import SpecImplementation, Robot, BodyPart as PbBodyPart, validate_robot
 from ...spec.exception import err
+from brain import Neuron, NeuralConnection
 
 
 class Builder(object):
@@ -23,10 +22,12 @@ class Builder(object):
         self.spec = spec
         self.conf = conf
 
-    def get_sdf_model(self, robot, name="sdf_robot", validate=True):
+    def get_sdf_model(self, robot, controller_plugin, name="sdf_robot", validate=True):
         """
         :param robot: Protobuf robot
         :type robot: Robot
+        :param controller_plugin: Name of the shared library of the model plugin
+        :type controller_plugin: str
         :param name: Name of the SDF model
         :type name: str
         :param validate: Whether or not to perform basic robot spec validation
@@ -38,18 +39,48 @@ class Builder(object):
             validate_robot(self.spec, robot)
 
         model = Model(name)
-        self._process_body_part(model, robot.body.root)
 
-        # TODO: Brain, motors, sensors
+        # Create the model plugin element
+        plugin = Element(tag_name='plugin', attributes={'name': 'robot_controller', 'filename': controller_plugin})
+
+        # Process the brain
+        self._process_brain(plugin, robot.brain)
+
+        # Process body parts recursively
+        self._process_body_part(model, robot.body.root, plugin)
+
+        model.add_element(plugin)
 
         return model
 
-    def _process_body_part(self, model, part, parent=None, src_slot=None, dst_slot=None):
+    def _process_brain(self, plugin, brain):
+        """
+        :param plugin:
+        :type plugin: Element
+        :param brain:
+        :return:
+        """
+        # Add neurons
+        for neuron in brain.neuron:
+            spec = self.spec.get_neuron(neuron.type)
+            if spec is None:
+                err("Cannot build unknown neuron type '%s'." % neuron.type)
+
+            params = spec.unserialize_params(neuron.param)
+            plugin.add_element(Neuron(neuron, params))
+
+        # Add connections
+        for conn in brain.connection:
+            plugin.add_element(NeuralConnection(conn))
+
+    def _process_body_part(self, model, part, plugin, parent=None, src_slot=None, dst_slot=None):
         """
         :param model:
         :type model: Model
         :param part:
         :type part: PbBodyPart
+        :param plugin:
+        :type plugin: Element
         :return:
         """
         spec = self.spec.get_part(part.type)
@@ -70,6 +101,10 @@ class Builder(object):
 
         model.add_element(sdf_part)
 
+        # Add sensors and motors
+        plugin.add_elements(sdf_part.get_sensors())
+        plugin.add_elements(sdf_part.get_motors())
+
         # Process body connections
         for conn in part.child:
-            self._process_body_part(model, conn.part, sdf_part, conn.src, conn.dst)
+            self._process_body_part(model, conn.part, plugin, sdf_part, conn.src, conn.dst)

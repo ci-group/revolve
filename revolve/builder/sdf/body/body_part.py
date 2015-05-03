@@ -149,6 +149,20 @@ class BodyPart(PosableGroup):
         joint.set_position(anchor)
         model.add_element(joint)
 
+    def get_motors(self):
+        """
+        :return:
+        :rtype: list
+        """
+        return self.motors
+
+    def get_sensors(self):
+        """
+        :return:
+        :rtype: list
+        """
+        return self.sensors
+
     def check_slot(self, slot):
         """
         Checks whether the given slot is valid, raises an
