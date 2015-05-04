@@ -136,6 +136,12 @@ class SpecValidator:
             if layer == "input" and neuron.type != "Simple":
                 err("Input neuron '%s' should be of type 'Simple'" % neuron.id)
 
+            if not neuron.HasField("partId"):
+                err("Neuron '%s' in layer '%s' should have a part ID." % (neuron.id, layer))
+
+            if neuron.partId not in self.part_slots:
+                err("Unknown part ID '%s' for neuron '%s'." % (neuron.partId, neuron.id))
+
             del self.expected_neurons[neuron.id]
 
         spec = self.spec.get_neuron(neuron.type)

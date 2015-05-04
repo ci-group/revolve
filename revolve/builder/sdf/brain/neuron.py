@@ -32,6 +32,9 @@ class Neuron(Element):
             'id': self.neuron.id
         })
 
+        if self.neuron.HasField("partId"):
+            attrs['part_id'] = self.neuron.partId
+
         return attrs
 
     def render_elements(self):

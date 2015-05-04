@@ -18,13 +18,11 @@ class Motor(Element):
     # SDF tag name, should not be changed in subclass
     TAG_NAME = 'rv:motor'
 
-    # Probably the case for most motors
-    OUTPUT_NEURONS = 1
-
-    # Override in child class with the adequate motor type
+    # Override in child class with the adequate motor type,
+    # alternatively specify `motor_type` in constructor.
     MOTOR_TYPE = 'motor'
 
-    def __init__(self, part_id, joint=None):
+    def __init__(self, part_id, joint=None, motor_type=None):
         """
         :param part_id: ID of the part this motor belongs to. This is required in the XML to identify
                         the corresponding output neuron.
@@ -32,10 +30,13 @@ class Motor(Element):
         :param joint: It is common for motors to power a joint, this allows you to specify
                       which joint the motor controls if this is the case.
         :type joint: Joint
+        :param motor_type:
+        :type motor_type: str
         """
         super(Motor, self).__init__(self)
         self.joint = joint
         self.part_id = part_id
+        self.type = motor_type
 
     def render_attributes(self):
         """
@@ -43,9 +44,8 @@ class Motor(Element):
         """
         attrs = super(Motor, self).render_attributes()
         attrs.update({
-            'type': self.MOTOR_TYPE,
-            'part_id': self.part_id,
-            'output_neurons': str(self.OUTPUT_NEURONS)
+            'type': self.type if self.type is not None else self.MOTOR_TYPE,
+            'part_id': self.part_id
         })
 
         if self.joint is not None:
@@ -110,14 +110,15 @@ class PIDMotor(Motor):
     # PID motors have a general C++ controller
     MOTOR_TYPE = 'pid'
 
-    def __init__(self, joint, pid=None):
+    def __init__(self, part_id, joint, pid=None, motor_type=None):
         """
+        :param part_id:
         :param joint:
         :type joint: Joint
         :param pid:
         :type pid: PID
         """
-        super(PIDMotor, self).__init__(joint)
+        super(PIDMotor, self).__init__(part_id, joint=joint, motor_type=motor_type)
         self.pid = PID() if pid is None else pid
 
     def render_elements(self):

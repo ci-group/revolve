@@ -69,12 +69,12 @@ protected:
 	/**
 	 * Motors in this model
 	 */
-	//std::vector< MotorPtr > motors_;
+	std::vector< MotorPtr > motors_;
 
 	/**
 	 * Sensors in this model
 	 */
-	//std::vector< SensorPtr > sensors_;
+	std::vector< SensorPtr > sensors_;
 
     // Pointer to the model
     ::gazebo::physics::ModelPtr model;
@@ -83,7 +83,7 @@ protected:
 	::gazebo::physics::WorldPtr world;
 
     // Pointer to the driver sensor
-    //SensorPtr driver;
+    SensorPtr driver;
 private:
     // Driver update event pointer
     ::gazebo::event::ConnectionPtr updateConnection_;

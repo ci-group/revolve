@@ -11,10 +11,10 @@ class Sensor(Element):
     # SDF tag name, should not be changed in subclass
     TAG_NAME = 'rv:sensor'
 
-    # Should be a sensible default for most sensors
-    INPUT_NEURONS = 1
+    # Sensor type fallback
+    SENSOR_TYPE = 'default'
 
-    def __init__(self, part_id, link, sensor, driver=False):
+    def __init__(self, part_id, link, sensor, driver=False, sensor_type=None):
         """
         :param part_id: ID of the part this sensor belongs to, required to identify
                         the corresponding input neuron(s).
@@ -28,9 +28,12 @@ class Sensor(Element):
                        of the robot's neural network. When possible, other sensors are updated
                        only at the driver time.
         :type driver: bool
+        :param sensor_type: Type of the sensor
+        :type sensor_type: str
         :return:
         """
         super(Sensor, self).__init__()
+        self.type = sensor_type
         self.link = link
         self.sensor = sensor
         self.part_id = part_id
@@ -46,7 +49,7 @@ class Sensor(Element):
             'sensor': self.sensor.name,
             'driver': str(self.driver),
             'part_id': self.part_id,
-            'input_neurons': str(self.INPUT_NEURONS)
+            'type': self.type if self.type is not None else self.SENSOR_TYPE
         })
 
         return attrs

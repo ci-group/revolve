@@ -13,7 +13,7 @@ from google.protobuf import descriptor_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='revolve.proto',
   package='revolve',
-  serialized_pb='\n\rrevolve.proto\x12\x07revolve\"\x1a\n\tParameter\x12\r\n\x05value\x18\x01 \x02(\x02\"\x84\x01\n\x08\x42odyPart\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0c\n\x04type\x18\x02 \x02(\t\x12\x13\n\x0borientation\x18\x03 \x02(\x02\x12&\n\x05\x63hild\x18\x04 \x03(\x0b\x32\x17.revolve.BodyConnection\x12!\n\x05param\x18\x05 \x03(\x0b\x32\x12.revolve.Parameter\"K\n\x0e\x42odyConnection\x12\x0b\n\x03src\x18\x01 \x02(\x05\x12\x0b\n\x03\x64st\x18\x02 \x02(\x05\x12\x1f\n\x04part\x18\x03 \x02(\x0b\x32\x11.revolve.BodyPart\"\'\n\x04\x42ody\x12\x1f\n\x04root\x18\x01 \x02(\x0b\x32\x11.revolve.BodyPart\"<\n\x10NeuralConnection\x12\x0b\n\x03src\x18\x01 \x02(\t\x12\x0b\n\x03\x64st\x18\x02 \x02(\t\x12\x0e\n\x06weight\x18\x03 \x02(\x02\"T\n\x06Neuron\x12\n\n\x02id\x18\x01 \x02(\t\x12\r\n\x05layer\x18\x02 \x02(\t\x12\x0c\n\x04type\x18\x03 \x02(\t\x12!\n\x05param\x18\x04 \x03(\x0b\x32\x12.revolve.Parameter\"W\n\x05\x42rain\x12\x1f\n\x06neuron\x18\x01 \x03(\x0b\x32\x0f.revolve.Neuron\x12-\n\nconnection\x18\x02 \x03(\x0b\x32\x19.revolve.NeuralConnection\"O\n\x05Robot\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x1b\n\x04\x62ody\x18\x02 \x02(\x0b\x32\r.revolve.Body\x12\x1d\n\x05\x62rain\x18\x03 \x02(\x0b\x32\x0e.revolve.Brain')
+  serialized_pb='\n\rrevolve.proto\x12\x07revolve\"\x1a\n\tParameter\x12\r\n\x05value\x18\x01 \x02(\x02\"\x84\x01\n\x08\x42odyPart\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0c\n\x04type\x18\x02 \x02(\t\x12\x13\n\x0borientation\x18\x03 \x02(\x02\x12&\n\x05\x63hild\x18\x04 \x03(\x0b\x32\x17.revolve.BodyConnection\x12!\n\x05param\x18\x05 \x03(\x0b\x32\x12.revolve.Parameter\"K\n\x0e\x42odyConnection\x12\x0b\n\x03src\x18\x01 \x02(\x05\x12\x0b\n\x03\x64st\x18\x02 \x02(\x05\x12\x1f\n\x04part\x18\x03 \x02(\x0b\x32\x11.revolve.BodyPart\"\'\n\x04\x42ody\x12\x1f\n\x04root\x18\x01 \x02(\x0b\x32\x11.revolve.BodyPart\"<\n\x10NeuralConnection\x12\x0b\n\x03src\x18\x01 \x02(\t\x12\x0b\n\x03\x64st\x18\x02 \x02(\t\x12\x0e\n\x06weight\x18\x03 \x02(\x02\"d\n\x06Neuron\x12\n\n\x02id\x18\x01 \x02(\t\x12\r\n\x05layer\x18\x02 \x02(\t\x12\x0c\n\x04type\x18\x03 \x02(\t\x12\x0e\n\x06partId\x18\x04 \x01(\t\x12!\n\x05param\x18\x05 \x03(\x0b\x32\x12.revolve.Parameter\"W\n\x05\x42rain\x12\x1f\n\x06neuron\x18\x01 \x03(\x0b\x32\x0f.revolve.Neuron\x12-\n\nconnection\x18\x02 \x03(\x0b\x32\x19.revolve.NeuralConnection\"O\n\x05Robot\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x1b\n\x04\x62ody\x18\x02 \x02(\x0b\x32\r.revolve.Body\x12\x1d\n\x05\x62rain\x18\x03 \x02(\x0b\x32\x0e.revolve.Brain')
 
 
 
@@ -243,8 +243,15 @@ _NEURON = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='param', full_name='revolve.Neuron.param', index=3,
-      number=4, type=11, cpp_type=10, label=3,
+      name='partId', full_name='revolve.Neuron.partId', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='param', full_name='revolve.Neuron.param', index=4,
+      number=5, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -259,7 +266,7 @@ _NEURON = _descriptor.Descriptor(
   is_extendable=False,
   extension_ranges=[],
   serialized_start=369,
-  serialized_end=453,
+  serialized_end=469,
 )
 
 
@@ -293,8 +300,8 @@ _BRAIN = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=455,
-  serialized_end=542,
+  serialized_start=471,
+  serialized_end=558,
 )
 
 
@@ -335,8 +342,8 @@ _ROBOT = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=544,
-  serialized_end=623,
+  serialized_start=560,
+  serialized_end=639,
 )
 
 _BODYPART.fields_by_name['child'].message_type = _BODYCONNECTION

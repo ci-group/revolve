@@ -45,13 +45,21 @@ class Builder(object):
             'name': 'robot_controller',
             'filename': controller_plugin
         })
+
+        # Add body config element
         config = Element(tag_name='rv:robot_config', attributes={
             'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
         })
         plugin.add_element(config)
 
+        # Add brain config element
+        brain_config = Element(tag_name='rv:brain', attributes={
+            'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
+        })
+        config.add_element(brain_config)
+
         # Process the brain
-        self._process_brain(plugin, robot.brain)
+        self._process_brain(brain_config, robot.brain)
 
         # Process body parts recursively
         self._process_body_part(model, robot.body.root, config)

@@ -32,7 +32,8 @@ message Neuron {
   required string id = 1;
   required string layer = 2;
   required string type = 3;
-  repeated Parameter param = 4;
+  optional string partId = 4;
+  repeated Parameter param = 5;
 }
 
 message Brain {

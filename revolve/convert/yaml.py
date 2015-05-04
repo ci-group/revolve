@@ -125,7 +125,8 @@ class YamlToProtobuf:
 
                 self.neurons[neuron_id] = {
                     "layer": "%sput" % cat,
-                    "type": "simple"
+                    "type": "simple",
+                    "part_id": part.id
                 }
 
                 self._process_neuron_params(neuron_id, {})
@@ -197,6 +198,9 @@ class YamlToProtobuf:
             neuron.id = neuron_id
             neuron.layer = conf["layer"]
             neuron.type = conf["type"]
+
+            if "part_id" in conf:
+                neuron.partId = conf["part_id"]
 
             for value in conf["params"]:
                 param = neuron.param.add()

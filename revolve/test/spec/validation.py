@@ -163,6 +163,19 @@ class TestValidate(unittest.TestCase):
 
         n[0].layer = "output"
 
+        # Core-out-0 neuron should be assigned to a part
+        with self.assertRaisesRegexp(SpecError, "should have a part"):
+            validate_robot(spec, robot)
+
+        n[0].partId = "Fake"
+
+        # Non-existing part ID
+        with self.assertRaisesRegexp(SpecError, "Unknown part"):
+            validate_robot(spec, robot)
+
+        n[0].partId = n[1].partId = n[2].partId = "Core"
+        n[3].partId = n[4].partId = n[5].partId = n[6].partId = "Part1"
+
         # Input neuron should be "Simple"
         n[1].type = "Oscillator"
         with self.assertRaisesRegexp(SpecError, "Simple"):

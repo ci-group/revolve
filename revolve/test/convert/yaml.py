@@ -311,6 +311,8 @@ class TestConvertYaml(unittest.TestCase):
         self.assertEquals("Simple", hidden3.type)
 
         sub1 = [a for a in brain.neuron if a.id == "Sub1-out-1"][0]
+        self.assertTrue(sub1.HasField("partId"), "Sub1 output neuron should have part ID.")
+        self.assertEquals("Sub1", sub1.partId, "Sub1 output neuron should have `Sub1` part ID.")
         sub1params = [p.value for p in sub1.param]
         self.assertEquals([0, 10, 0], sub1params)
 
