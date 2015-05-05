@@ -183,6 +183,7 @@ spec = SpecImplementation(
     },
 
     neurons={
+        "Simple": NeuronSpec(params=["bias"]),
         "Oscillator": NeuronSpec(
             params=["period", "phaseOffset", "amplitude"]
         )

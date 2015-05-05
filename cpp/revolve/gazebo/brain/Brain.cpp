@@ -166,8 +166,8 @@ Brain::Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector
 				throw std::runtime_error("Robot brain error");
 			}
 
-			// Input neurons can currently not have a type.
-
+			// Input neurons can currently not have a type, so
+			// there is no need to process it.
 			positionMap[neuronId.str()] = inPos;
 			toProcess.erase(neuronId.str());
 			inPos++;

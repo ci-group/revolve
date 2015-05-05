@@ -41,10 +41,7 @@ class SpecImplementation(object):
         _process_aliases(self.parts, self.part_aliases)
         _process_aliases(self.neurons, self.neuron_aliases)
 
-        # Add default simple neuron
-        if "Simple" not in self.neurons:
-            self.set_neuron("Simple", NeuronSpec(["bias"]))
-
+        # Add default input neuron type
         if "Input" not in self.neurons:
             self.set_neuron("Input", NeuronSpec())
 

@@ -21,6 +21,7 @@ spec = SpecImplementation(
     },
 
     neurons={
+        "Simple": NeuronSpec(params=["bias"]),
         "Oscillator": NeuronSpec(
             params=["period", "phaseOffset", "amplitude"]
         )
@@ -149,13 +150,9 @@ class TestValidate(unittest.TestCase):
         with self.assertRaisesRegexp(SpecError, "expected"):
             validate_robot(spec, robot)
 
+        # Add a bunch of input and output neurons
         n = [brain.neuron.add() for _ in range(7)]
-        for neur in n:
-            neur.type = 'Simple'
-            neur.param.add()
-            neur.param[0].value = 0
-
-        n[0].id, n[0].layer = "Core-out-0", "input"
+        n[0].id, n[0].layer = "Core-out-0", "output"
         n[1].id, n[1].layer = "Core-in-0", "input"
         n[2].id, n[2].layer = "Core-in-1", "input"
 
@@ -164,7 +161,15 @@ class TestValidate(unittest.TestCase):
         n[5].id, n[5].layer = "Part1-out-0", "output"
         n[6].id, n[6].layer = "Part1-out-1", "output"
 
+        for neur in n:
+            neur.type = 'Simple' if neur.layer == "output" else "Input"
+
+            if neur.type == 'Simple':
+                neur.param.add()
+                neur.param[0].value = 0
+
         # Layer of Core-out-0 neuron is incorrect
+        n[0].layer = "input"
         with self.assertRaisesRegexp(SpecError, "should be in layer"):
             validate_robot(spec, robot)
 
@@ -183,12 +188,12 @@ class TestValidate(unittest.TestCase):
         n[0].partId = n[1].partId = n[2].partId = "Core"
         n[3].partId = n[4].partId = n[5].partId = n[6].partId = "Part1"
 
-        # Input neuron should be "Simple"
+        # Input neuron should be "Input"
         n[1].type = "Oscillator"
-        with self.assertRaisesRegexp(SpecError, "Simple"):
+        with self.assertRaisesRegexp(SpecError, "Input"):
             validate_robot(spec, robot)
 
-        n[1].type = "Simple"
+        n[1].type = "Input"
 
         # Add hidden neuron with duplicate ID
         hidden = brain.neuron.add()
