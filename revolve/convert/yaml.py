@@ -125,11 +125,10 @@ class YamlToProtobuf:
 
                 self.neurons[neuron_id] = {
                     "layer": "%sput" % cat,
-                    "type": "simple",
                     "part_id": part.id
                 }
 
-                self._process_neuron_params(neuron_id, {})
+                self._process_neuron_params(neuron_id, {"type": "Input"})
 
         return part
 
@@ -159,7 +158,7 @@ class YamlToProtobuf:
 
             self.neurons[neuron_id] = {
                 "layer": "hidden",
-                "type": "simple"
+                "type": "Simple"
             }
 
             self._process_neuron_params(neuron_id, neurons[neuron_id])
@@ -175,13 +174,13 @@ class YamlToProtobuf:
             err("Cannot set parameters for unknown neuron '%s'" % neuron_id)
 
         current = self.neurons[neuron_id]
-        current["type"] = conf.get("type", "Simple")
+        if "type" not in current or "type" in conf:
+            current["type"] = conf.get("type", "Simple")
 
-        if current["type"] != "Simple" and current["layer"] == "input":
-            err("Input neuron '%s' must be of type 'Simple'" % neuron_id)
+        if current["type"] != "Input" and current["layer"] == "input":
+            err("Input neuron '%s' must be of type 'Input'" % neuron_id)
 
         spec = self.spec.get_neuron(current["type"])
-
         if spec is None:
             err("Unknown neuron type '%s'" % current["type"])
 

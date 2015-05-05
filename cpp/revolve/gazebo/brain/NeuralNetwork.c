@@ -29,7 +29,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <tol_robogen/gazebo/brain/NeuralNetwork.h>
+#include <revolve/gazebo/brain/NeuralNetwork.h>
 
 #define PI 3.14159265358979323846
 

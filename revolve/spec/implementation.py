@@ -45,6 +45,9 @@ class SpecImplementation(object):
         if "Simple" not in self.neurons:
             self.set_neuron("Simple", NeuronSpec(["bias"]))
 
+        if "Input" not in self.neurons:
+            self.set_neuron("Input", NeuronSpec())
+
     def get_part(self, part_type):
         """
         Returns the part settings corresponding to the given type

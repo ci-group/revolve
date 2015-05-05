@@ -136,8 +136,8 @@ class SpecValidator:
                 err("Neuron '%s' should be in layer '%s' instead of '%s'" %
                     (neuron.id, layer, neuron.layer))
 
-            if layer == "input" and neuron.type != "Simple":
-                err("Input neuron '%s' should be of type 'Simple'" % neuron.id)
+            if layer == "input" and neuron.type != "Input":
+                err("Input neuron '%s' should be of type 'Input'" % neuron.id)
 
             if not neuron.HasField("partId"):
                 err("Neuron '%s' in layer '%s' should have a part ID." % (neuron.id, layer))

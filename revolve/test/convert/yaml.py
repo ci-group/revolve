@@ -1,6 +1,6 @@
 import unittest
 from ...convert import yaml_to_protobuf
-from ...spec import SpecImplementation, PartSpec, NeuronSpec, RobotSpecificationException as SpecErr
+from ...spec import SpecImplementation, PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
 
 # Define YAML for test cases here
 # Body
@@ -178,8 +178,7 @@ spec = SpecImplementation(
             arity=2,
             input_neurons=2,
             output_neurons=2,
-            params=["param_a", "param_b"],
-            defaults={"param_a": -1, "param_b": 15}
+            params=[ParamSpec("param_a", default=-1), ParamSpec("param_b", default=15)]
         )
     },
 
@@ -239,7 +238,7 @@ class TestConvertYaml(unittest.TestCase):
         with self.assertRaisesRegexp(SpecErr, 'input'):
             yaml_to_protobuf(spec, test_input_destination_neuron)
 
-        with self.assertRaisesRegexp(SpecErr, 'Simple'):
+        with self.assertRaisesRegexp(SpecErr, 'Input'):
             yaml_to_protobuf(spec, test_input_params)
 
     def test_simple_robot(self):
