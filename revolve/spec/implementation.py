@@ -91,20 +91,57 @@ class SpecImplementation(object):
         _process_aliases(self.parts, self.part_aliases)
 
 
+class ParamSpec(object):
+    """
+    Parameter specification class
+    """
+    def __init__(self, name, default=0.0, min_value=None, max_value=None, min_inclusive=True, max_inclusive=True):
+        """
+        :param default:
+        :param min_value:
+        :param max_value:
+        :param min_inclusive:
+        :param max_inclusive:
+        """
+        self.name = name
+        self.min = min_value
+        self.max = max_value
+        self.min_inclusive = min_inclusive
+        self.max_inclusive = max_inclusive
+        self.default = default
+
+    def is_valid(self, value):
+        """
+        Returns whether the given parameter is valid according to this param spec.
+
+        :param value:
+        :type value: float
+        :return:
+        :rtype: bool
+        """
+        min_valid = max_valid = True
+        if self.min is not None:
+            min_valid = value >= self.min and (self.min_inclusive or value > self.min)
+
+        if self.max is not None:
+            max_valid = value <= self.max and (self.max_inclusive or value < self.max)
+
+        return min_valid and max_valid
+
+
 class Parameterizable(object):
     """
     Parent class for objects with a parameter list that can be
     (un)serialized.
     """
     # Reserved parameters
-    RESERVED = ['arity', 'type']
+    RESERVED = {'arity', 'type'}
 
-    def __init__(self, params=None, defaults=None):
+    def __init__(self, params=None):
         """
-        :param params: List of named params for this part
+        :param params: List of named params for this part, in the order in which they
+                       will be serialized.
         :type params: list
-        :param defaults: Dictionary of default parameter values
-        :type defaults: dict
         """
         if params is None:
             params = []
@@ -112,15 +149,15 @@ class Parameterizable(object):
         l = self.n_parameters = len(params)
 
         # Map from parameter name to index in list
-        self.parameters = {params[i]: i for i in range(l)}
+        for i in range(l):
+            if not isinstance(params[i], ParamSpec):
+                params[i] = ParamSpec(params[i])
 
-        for p in self.RESERVED:
-            if p in self.parameters:
-                err("'%s' is a reserved parameter and cannot be used as a name." % p)
+            if params[i].name in self.RESERVED:
+                err("'%s' is a reserved parameter and cannot be used as a name." % params[i].name)
 
-        self.defaults = {k: 0.0 for k in params}
-        if defaults is not None:
-            self.defaults.update(defaults)
+        # Store tuple array index, spec
+        self.parameters = {params[i].name: (i, params[i]) for i in range(l)}
 
     def serialize_params(self, params):
         """
@@ -133,19 +170,38 @@ class Parameterizable(object):
         :rtype: list
         """
         ret = [0] * self.n_parameters
-        for k in self.defaults:
-            ret[self.parameters[k]] = params.get(k, self.defaults[k])
+        for k in self.parameters:
+            ret[self.parameters[k][0]] = params.get(k, self.parameters[k][1].default)
 
         return ret
 
     def unserialize_params(self, params):
         """
-        Unserializes a protobuf parameter array into
+        Unserializes a protobuf parameter array into a dictionary
+        :param: params:
+        :type params: list
         :return: Dictionary of unserialized params
         :rtype: dict
         """
         assert len(params) == len(self.parameters), "Invalid parameter length."
-        return {param: params[self.parameters[param]].value for param in self.parameters}
+        return {param: params[self.parameters[param][0]].value for param in self.parameters}
+
+    def params_validate(self, params):
+        """
+        Check whether the given parameter dict is valid.
+        :param params: Serialized or unserialized parameters
+        :return:
+        """
+        if not isinstance(params, dict):
+            params = self.unserialize_params(params)
+
+        validates = True
+        for param in params:
+            if not self.parameters[param][1].is_valid(params[param]):
+                validates = False
+                break
+
+        return validates
 
 
 class PartSpec(Parameterizable):
@@ -154,7 +210,7 @@ class PartSpec(Parameterizable):
     """
 
     def __init__(self, body_part=None, arity=0, input_neurons=0,
-                 output_neurons=0, params=None, defaults=None):
+                 output_neurons=0, params=None):
         """
 
         :param body_part: Builder component, for whatever builder is being used
@@ -166,7 +222,7 @@ class PartSpec(Parameterizable):
         :type output_neurons: int
         :return:
         """
-        super(PartSpec, self).__init__(params, defaults)
+        super(PartSpec, self).__init__(params)
 
         self.body_part = body_part
         self.arity = arity

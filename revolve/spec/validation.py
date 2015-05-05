@@ -83,6 +83,9 @@ class SpecValidator:
             err("Expecting %d parameters for part '%s', got %d." %
                 (spec.n_parameters, part.id, len(part.param)))
 
+        if not spec.params_validate(part.param):
+            err("Invalid parameter length or ranges.")
+
         for conn in part.child:
             self._process_body_connection(part, spec, conn)
 

@@ -1,5 +1,5 @@
 import unittest
-from ...spec import SpecImplementation, PartSpec, NeuronSpec, Robot, BodyPart
+from ...spec import SpecImplementation, PartSpec, NeuronSpec, ParamSpec, Robot, BodyPart
 from ...spec import RobotSpecificationException as SpecError
 from ...spec.validation import validate_robot
 
@@ -15,8 +15,8 @@ spec = SpecImplementation(
             arity=2,
             input_neurons=2,
             output_neurons=2,
-            params=["param_a", "param_b"],
-            defaults={"param_a": -1, "param_b": 15}
+            params=[ParamSpec("param_a", default=-1, min_value=-2, max_value=0, max_inclusive=False),
+                    ParamSpec("param_b", default=15)]
         )
     },
 
@@ -38,8 +38,8 @@ def _get_simple_part(part_id):
     part.id = part_id
     p1 = part.param.add()
     p2 = part.param.add()
-    p1.value = 0
-    p2.value = 0
+    p1.value = -0.5
+    p2.value = -0.5
     part.type = "2Params"
     return part
 
@@ -100,6 +100,13 @@ class TestValidate(unittest.TestCase):
         p2 = part1.param.add()
         p1.value = 0
         p2.value = 0
+
+        # Parameter count correct, but the parameters are just out of range
+        with self.assertRaisesRegexp(SpecError, "range"):
+            validate_robot(spec, robot)
+
+        p1.value = -0.5
+        p2.value = -0.5
 
         # Add a child at slot connected to parent
         part1conn = part1.child.add()
