@@ -20,8 +20,7 @@ namespace gazebo {
 
 class Motor {
 public:
-	Motor(::gazebo::physics::ModelPtr model, ::gazebo::physics::JointPtr joint,
-			std::string partId, unsigned int outputNeurons);
+	Motor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int outputNeurons);
 	virtual ~Motor();
 
 	/**
@@ -54,11 +53,6 @@ protected:
 	 * The model this motor is part of
 	 */
 	::gazebo::physics::ModelPtr model_;
-
-	/**
-	 * The joint this motor is controlling
-	 */
-	::gazebo::physics::JointPtr joint_;
 
 	/**
 	 * ID of the body part the motor belongs to

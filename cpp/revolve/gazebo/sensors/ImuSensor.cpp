@@ -15,11 +15,11 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-ImuSensor::ImuSensor(::gazebo::physics::ModelPtr model, ::gazebo::sensors::SensorPtr sensor,
+ImuSensor::ImuSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
 		std::string partId):
 		Sensor(model, sensor, partId, 6)
 {
-	this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::ImuSensor>(sensor);
+	this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::ImuSensor>(this->sensor_);
 
 	if (!this->castSensor_) {
 		std::cerr << "Creating an IMU sensor with a non-IMU sensor object." << std::endl;

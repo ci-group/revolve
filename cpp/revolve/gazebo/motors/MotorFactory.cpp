@@ -15,37 +15,35 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-MotorFactory::MotorFactory() {}
+MotorFactory::MotorFactory(::gazebo::physics::ModelPtr model):
+	model_(model)
+{}
 
 MotorFactory::~MotorFactory() {}
 
-MotorPtr MotorFactory::create(sdf::ElementPtr motor,
-		::gazebo::physics::ModelPtr model, unsigned int /*actuationTime*/) {
-	auto typeParam = motor->GetAttribute("type");
-	auto jointNameParam = motor->GetAttribute("joint");
-	auto partIdParam = motor->GetAttribute("part_id");
-
-	if (!typeParam || !jointNameParam || !partIdParam) {
-		std::cerr << "Motor is missing required attributes." << std::endl;
-		throw std::runtime_error("Motor error");
+MotorPtr MotorFactory::getMotor(sdf::ElementPtr motor, const std::string & type, const std::string & partId) {
+	MotorPtr motorObj;
+	if ("servo" == type) {
+		motorObj.reset(new ServoMotor(model_, partId, motor));
 	}
 
-	auto jointName = jointNameParam->GetAsString();
-	gz::physics::JointPtr joint = model->GetJoint(jointName);
+	return motorObj;
+}
 
-	if (!joint) {
-		std::cerr << "Could not locate joint  '" << jointName << "'." << std::endl;
+MotorPtr MotorFactory::create(sdf::ElementPtr motor) {
+	auto typeParam = motor->GetAttribute("type");
+	auto partIdParam = motor->GetAttribute("part_id");
+
+	if (!typeParam || !partIdParam) {
+		std::cerr << "Motor is missing required attributes (`type` or `part_id`)." << std::endl;
 		throw std::runtime_error("Motor error");
 	}
 
 	auto partId = partIdParam->GetAsString();
-
-	MotorPtr motorObj;
 	auto type = typeParam->GetAsString();
+	MotorPtr motorObj = this->getMotor(motor, type, partId);
 
-	if ("servo" == type) {
-		motorObj.reset(new ServoMotor(model, joint, partId, motor));
-	} else {
+	if (!motorObj) {
 		std::cerr << "Motor type '" << type <<
 				"' is unknown." << std::endl;
 		throw std::runtime_error("Motor error");
@@ -55,4 +53,4 @@ MotorPtr MotorFactory::create(sdf::ElementPtr motor,
 }
 
 } /* namespace gazebo */
-} /* namespace tol_robogen */
+} /* namespace revolve */

@@ -14,12 +14,12 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-TouchSensor::TouchSensor(::gazebo::physics::ModelPtr model, ::gazebo::sensors::SensorPtr sensor,
+TouchSensor::TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
 		std::string partId):
 		Sensor(model, sensor, partId, 1),
 		lastValue_(false)
 {
-	this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::ContactSensor>(sensor);
+	this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::ContactSensor>(this->sensor_);
 
 	if (!this->castSensor_) {
 		std::cerr << "Creating a touch sensor with a non-contact sensor object." << std::endl;
@@ -30,7 +30,7 @@ TouchSensor::TouchSensor(::gazebo::physics::ModelPtr model, ::gazebo::sensors::S
 	this->castSensor_->SetActive(true);
 
 	// Add update connection that will produce new value
-	this->updateConnection_ = sensor->ConnectUpdated(boost::bind(&TouchSensor::OnUpdate, this));
+	this->updateConnection_ = this->sensor_->ConnectUpdated(boost::bind(&TouchSensor::OnUpdate, this));
 }
 
 TouchSensor::~TouchSensor()

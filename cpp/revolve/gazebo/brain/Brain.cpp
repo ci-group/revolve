@@ -31,14 +31,22 @@ Brain::Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector
 	// type, and what their properties are. We then iterate all sensors and
 	// motors, creating the adequate neurons in place as we do so.
 
-	// Number of inputs
-	unsigned int nInputs = 0;
+	// Connection weights; we can have connections from
+	// every input / output / hidden neuron to every
+	// output / hidden neuron. We fill weight with zeros immediately
+	float weights[(MAX_INPUT_NEURONS + MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
+	             * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
+	memset(weights, 0, sizeof(weights));
 
-	// Number of outputs
-	unsigned int nOutputs = 0;
+	// Neuron parameters, this is a maximum of 3 per neuron depending
+	// on the type. Input neurons can have no params currently.
+	float params[MAX_PARAMS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
 
-	// Number of hidden neurons
-	unsigned int nHidden = 0;
+	// Neuron types, input neurons are fixed
+	unsigned int types[(MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
+
+	// Neuron counters
+	unsigned int nInputs = 0, nOutputs = 0, nHidden = 0;
 
 	// Map of ID to neuron element
 	std::map<std::string, sdf::ElementPtr> neuronMap;
@@ -52,7 +60,7 @@ Brain::Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector
 	// List of all hidden neurons for convenience
 	std::vector<std::string> hiddenNeurons;
 
-	// Set containing all neurons that should be processed
+	// Set for tracking all collected input/output neurons
 	std::set<std::string> toProcess;
 
 	// Fetch the first neuron; note the HasElement call is necessary to prevent SDF from complaining
@@ -112,20 +120,6 @@ Brain::Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector
 
 		neuron = neuron->GetNextElement("rv:neuron");
 	}
-
-	// Connection weights; we can have connections from
-	// every input / output / hidden neuron to every
-	// output / hidden neuron. We fill weight with zeros immediately
-	float weights[(nInputs + nOutputs + nHidden)
-	             * (nOutputs + nHidden)];
-	memset(weights, 0, sizeof(weights));
-
-	// Neuron parameters, this is a maximum of 3
-	// per neuron depending on the type.
-	float params[MAX_PARAMS * (nOutputs + nHidden)];
-
-	// Neuron types, input neurons are fixed
-	unsigned int types[(nOutputs + nHidden)];
 
 	// Create motor output neurons at the correct position
 	unsigned int outPos = 0;
@@ -197,6 +191,79 @@ Brain::Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector
 		neuronHelper(&params[outPos * MAX_PARAMS], &types[outPos], neuronMap[neuronId]);
 		outPos++;
 	}
+
+	// Decode connections
+	unsigned int nNonInputs = nOutputs + nHidden;
+	auto connection = node->HasElement("rv:connection") ? node->GetElement("rv:connection") : sdf::ElementPtr();
+	while (connection) {
+		if (!connection->HasAttribute("src") || !connection->HasAttribute("dst")
+				|| !connection->HasAttribute("weight")) {
+			std::cerr << "Missing required connection attributes (`src`, `dst` or `weight`)." << std::endl;
+			throw std::runtime_error("Robot brain error");
+		}
+
+		auto src = connection->GetAttribute("src")->GetAsString();
+		auto dst = connection->GetAttribute("dst")->GetAsString();
+
+		if (!layerMap.count(src)) {
+			std::cerr << "Source neuron '" << src << "' is unknown." << std::endl;
+			throw std::runtime_error("Robot brain error");
+		}
+
+		if (!layerMap.count(dst)) {
+			std::cerr << "Destination neuron '" << dst << "' is unknown." << std::endl;
+			throw std::runtime_error("Robot brain error");
+		}
+
+		auto srcLayer = layerMap[src];
+		auto dstLayer = layerMap[dst];
+
+		int srcNeuronPos;
+		int dstNeuronPos;
+
+		srcNeuronPos = positionMap[src];
+		dstNeuronPos = positionMap[dst];
+
+		if ("hidden" == srcLayer) {
+			// Offset by outputs if hidden neuron; nothing
+			// needs to happen for output or input neurons.
+			srcNeuronPos += nOutputs;
+		}
+
+		if ("input" == dstLayer) {
+			std::cerr << "Destination neuron '" << dst << "' is an input neuron." << std::endl;
+			throw std::runtime_error("Robot brain error");
+		} else if ("hidden" == dstLayer) {
+			// Offset by outputs if hidden neuron
+			dstNeuronPos += nOutputs;
+		}
+
+		// Determine the index of the weight.
+		// Each output / hidden neuron can be used as an output, input
+		// neurons can only be used as an input. By default, we offset
+		// the index by the position of the neuron, which is the
+		// correct position for an input neuron:
+		unsigned int idx = (srcNeuronPos * nNonInputs) + dstNeuronPos;
+
+		if ("input" != srcLayer) {
+			// The output neuron list starts after all input neuron
+			// connections, so we need to offset it from all
+			// nInputs * nNonInputs of such connections:
+			idx += (nInputs * nNonInputs);
+		}
+
+		// Set the weight; `Get` has a return argument here
+		connection->GetAttribute("weight")->Get(weights[idx]);
+
+		// Load the next connection
+		connection = connection->GetNextElement("rv:connection");
+	}
+
+	// Create the actual neural network
+	neuralNetwork_.reset(new NeuralNetwork);
+
+	::nn_initNetwork(neuralNetwork_.get(), nInputs, nOutputs, nHidden,
+		&weights[0], &params[0], &types[0]);
 }
 
 Brain::~Brain() {}

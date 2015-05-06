@@ -7,27 +7,42 @@
 
 #include <revolve/gazebo/sensors/Sensor.h>
 
+namespace gz = gazebo;
+
 namespace revolve {
 namespace gazebo {
 
-Sensor::Sensor(::gazebo::physics::ModelPtr model, ::gazebo::sensors::SensorPtr sensor,
+Sensor::Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
 		std::string partId, unsigned int inputNeurons):
-	model_(model),
-	sensor_(sensor),
-	partId_(partId),
-	inputNeurons_(inputNeurons)
-{}
+	VirtualSensor(model, partId, inputNeurons)
+{
+	if (!sensor->HasAttribute("sensor") || !sensor->HasAttribute("link")) {
+		std::cerr << "Sensor is missing required attributes." << std::endl;
+		throw std::runtime_error("Sensor error");
+	}
+
+	auto sensorName = sensor->GetAttribute("sensor")->GetAsString();
+	auto linkName = sensor->GetAttribute("link")->GetAsString();
+
+	auto link = model->GetLink(linkName);
+	if (!link) {
+		std::cerr << "Link '" << linkName << "' for sensor '"
+				<< sensorName << "' is not present in model." << std::endl;
+		throw std::runtime_error("Sensor error");
+	}
+
+	std::string scopedName = link->GetScopedName(true) + "::" + sensorName;
+	this->sensor_ = gz::sensors::get_sensor(scopedName);
+
+	if (!this->sensor_) {
+		std::cerr << "Sensor with scoped name '" << scopedName
+				<< "' could not be found." << std::endl;
+		throw std::runtime_error("Sensor error");
+	}
+}
 
 Sensor::~Sensor()
 {}
-
-std::string Sensor::partId() {
-	return partId_;
-}
-
-unsigned int Sensor::inputNeurons() {
-	return inputNeurons_;
-}
 
 ::gazebo::sensors::SensorPtr Sensor::gzSensor() {
 	return sensor_;

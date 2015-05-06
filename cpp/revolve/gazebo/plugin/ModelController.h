@@ -32,6 +32,16 @@ public:
 	 * Called when the driver sensor updates
 	 */
 	void OnUpdate();
+
+	/**
+	 * @return Factory class that creates motors for this model
+	 */
+	virtual MotorFactoryPtr getMotorFactory(::gazebo::physics::ModelPtr model);
+
+	/**
+	 * @return Factory class that creates motors for this robot
+	 */
+	virtual SensorFactoryPtr getSensorFactory(::gazebo::physics::ModelPtr model);
 protected:
 	/**
 	 * Detects and loads motors in the plugin spec
@@ -48,6 +58,16 @@ protected:
 	 * the neural network.
 	 */
 	void loadBrain(sdf::ElementPtr sdf);
+
+	/**
+	 * Holds an instance of the motor factory
+	 */
+	MotorFactoryPtr motorFactory_;
+
+	/**
+	 * Holds an instance of the sensor factory
+	 */
+	SensorFactoryPtr sensorFactory_;
 
 	/**
 	 * Brain controlling this model

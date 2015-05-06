@@ -8,14 +8,14 @@
 #ifndef REVOLVE_GAZEBO_MOTORS_SERVOMOTOR_H_
 #define REVOLVE_GAZEBO_MOTORS_SERVOMOTOR_H_
 
-#include <revolve/gazebo/motors/Motor.h>
+#include <revolve/gazebo/motors/JointMotor.h>
 
 #include <gazebo/common/common.hh>
 
 namespace revolve {
 namespace gazebo {
 
-class ServoMotor: public Motor {
+class ServoMotor: public JointMotor {
 public:
 	/**
 	 * @param The model the motor is contained in
@@ -24,8 +24,7 @@ public:
 	 * @param Whether the motor is velocity driven (the alternative is position driven)
 	 * @param The derivative gain of the motor's PID controller
 	 */
-	ServoMotor(::gazebo::physics::ModelPtr model, ::gazebo::physics::JointPtr joint,
-			std::string partId, sdf::ElementPtr motor);
+	ServoMotor(::gazebo::physics::ModelPtr model, std::string partId, sdf::ElementPtr motor);
 	virtual ~ServoMotor();
 
 	virtual void update(float * networkOutput, unsigned int step);

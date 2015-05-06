@@ -52,9 +52,11 @@ void ModelController::Load(::gazebo::physics::ModelPtr _parent,
 	auto settings = _sdf->GetElement("rv:robot_config");
 
 	// Load motors
+	this->motorFactory_ = this->getMotorFactory(_parent);
 	this->loadMotors(settings);
 
 	// Load sensors
+	this->sensorFactory_ = this->getSensorFactory(_parent);
 	this->loadSensors(settings);
 
 	// Load brain, this needs to be done after the motors and
@@ -67,6 +69,8 @@ void ModelController::Load(::gazebo::physics::ModelPtr _parent,
 //	}
 }
 
+
+
 void ModelController::loadMotors(sdf::ElementPtr sdf) {
 	if (!sdf->HasElement("rv:motor")) {
 		return;
@@ -74,7 +78,7 @@ void ModelController::loadMotors(sdf::ElementPtr sdf) {
 
 	auto motor = sdf->GetElement("rv:motor");
     while (motor) {
-    	auto motorObj = MotorFactory::create(motor, this->model, actuationTime_);
+    	auto motorObj = this->motorFactory_->create(motor);
     	motors_.push_back(motorObj);
     	motor = motor->GetNextElement("rv:motor");
     }
@@ -87,7 +91,7 @@ void ModelController::loadSensors(sdf::ElementPtr sdf) {
 
 	auto sensor = sdf->GetElement("rv:sensor");
 	while (sensor) {
-		auto sensorObj = SensorFactory::create(sensor, this->model);
+		auto sensorObj = this->sensorFactory_->create(sensor);
 		sensors_.push_back(sensorObj);
 
 		if (sensor->HasAttribute("driver")) {
@@ -101,6 +105,11 @@ void ModelController::loadSensors(sdf::ElementPtr sdf) {
 
 		sensor = sensor->GetNextElement("rv:sensor");
 	}
+}
+
+MotorFactoryPtr ModelController::getMotorFactory(
+		::gazebo::physics::ModelPtr model) {
+	return MotorFactoryPtr(new MotorFactory(model));
 }
 
 void ModelController::loadBrain(sdf::ElementPtr sdf) {

@@ -16,18 +16,18 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-ServoMotor::ServoMotor(gz::physics::ModelPtr model, gz::physics::JointPtr joint,
-		std::string partId, sdf::ElementPtr motor):
-	Motor(model, joint, partId, 1),
-	lowerLimit_(joint->GetLowerLimit(0).Radian()),
-	upperLimit_(joint->GetUpperLimit(0).Radian()),
+ServoMotor::ServoMotor(gz::physics::ModelPtr model, std::string partId, sdf::ElementPtr motor):
+	JointMotor(model, partId, motor, 1),
 	jointController_(model->GetJointController()),
-	jointName_(joint->GetScopedName()),
 	minVelocity_(0),
 	maxVelocity_(0),
 	velocityDriven_(false),
 	noise_(0)
 {
+	// Retrieve upper / lower limit from joint set in parent constructor
+	upperLimit_ = joint_->GetUpperLimit(0).Radian();
+	lowerLimit_ = joint_->GetLowerLimit(0).Radian();
+
 	auto veloParam = motor->GetAttribute("velocity_driven");
 	if (veloParam) {
 		veloParam->Get(velocityDriven_);
@@ -37,7 +37,6 @@ ServoMotor::ServoMotor(gz::physics::ModelPtr model, gz::physics::JointPtr joint,
 		auto pidElem = motor->GetElement("rv:pid");
 		auto pid = Motor::createPid(pidElem);
 
-		// TODO Velocity driven PID
 		if (velocityDriven_) {
 			jointController_->SetVelocityPID(jointName_, pid);
 		} else {

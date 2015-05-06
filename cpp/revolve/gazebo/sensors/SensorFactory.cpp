@@ -16,54 +16,40 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-SensorFactory::SensorFactory()
+SensorFactory::SensorFactory(gz::physics::ModelPtr model):
+	model_(model)
 {}
 
 SensorFactory::~SensorFactory()
 {}
 
-SensorPtr SensorFactory::create(sdf::ElementPtr sensor,
-		::gazebo::physics::ModelPtr model) {
-	auto typeParam = sensor->GetAttribute("type");
-	auto nameParam = sensor->GetAttribute("sensor");
-	auto partIdParam = sensor->GetAttribute("part_id");
-	auto linkParam = sensor->GetAttribute("link");
+SensorPtr SensorFactory::getSensor(sdf::ElementPtr sensor,
+		const std::string& type, const std::string& partId) {
+	SensorPtr out;
+	if ("imu" == type) {
+		out.reset(new ImuSensor(this->model_, sensor, partId));
+	} else if ("light" == type) {
+		out.reset(new LightSensor(this->model_, sensor, partId));
+	} else if ("touch" == type) {
+		out.reset(new TouchSensor(this->model_, sensor, partId));
+	}
 
-	if (!typeParam || !nameParam || !partIdParam || !linkParam) {
-		std::cerr << "Sensor is missing required attributes." << std::endl;
+	return out;
+}
+
+SensorPtr SensorFactory::create(sdf::ElementPtr sensor) {
+	auto typeParam = sensor->GetAttribute("type");
+	auto partIdParam = sensor->GetAttribute("part_id");
+
+	if (!typeParam || !partIdParam) {
+		std::cerr << "Sensor is missing required attributes (`type` or `part_id`)." << std::endl;
 		throw std::runtime_error("Sensor error");
 	}
 
 	auto partId = partIdParam->GetAsString();
-	auto sensorName = nameParam->GetAsString();
-	auto linkName = linkParam->GetAsString();
-	auto link = model->GetLink(linkName);
-	if (!link) {
-		std::cerr << "Link '" << linkName << "' for sensor '"
-				<< sensorName << "' is not present in model." << std::endl;
-		throw std::runtime_error("Sensor error");
-	}
-
-	std::string scopedName = link->GetScopedName(true) + "::" + sensorName;
-	gz::sensors::SensorPtr gzSensor = gz::sensors::get_sensor(scopedName);
-
-	if (!gzSensor) {
-		std::cerr << "Sensor with scoped name '" << scopedName
-				<< "' could not be found." << std::endl;
-		throw std::runtime_error("Sensor error");
-	}
-
-	SensorPtr out;
-
 	auto type = typeParam->GetAsString();
-	if ("imu" == type) {
-		out.reset(new ImuSensor(model, gzSensor, partId));
-	} else if ("light" == type) {
-		out.reset(new LightSensor(model, gzSensor, partId));
-	} else if ("touch" == type) {
-		out.reset(new TouchSensor(model, gzSensor, partId));
-	}
 
+	SensorPtr out = this->getSensor(sensor, type, partId);
 	if (!out) {
 		std::cerr << "Sensor type '" << type << "' is not supported." << std::endl;
 		throw std::runtime_error("Sensor error");

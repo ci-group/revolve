@@ -12,10 +12,8 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-Motor::Motor(::gazebo::physics::ModelPtr model, ::gazebo::physics::JointPtr joint,
-		std::string partId, unsigned int outputNeurons):
+Motor::Motor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int outputNeurons):
 	model_(model),
-	joint_(joint),
 	outputNeurons_(outputNeurons),
 	partId_(partId)
 {}

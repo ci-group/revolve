@@ -14,14 +14,14 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-LightSensor::LightSensor(::gazebo::physics::ModelPtr model, ::gazebo::sensors::SensorPtr sensor,
+LightSensor::LightSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
 		std::string partId):
 	Sensor(model, sensor, partId, 1),
 
 	// Initialize light sensor to full intensity
 	lastValue_(1.0)
 {
-	this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::CameraSensor>(sensor);
+	this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::CameraSensor>(this->sensor_);
 
 	if (!this->castSensor_) {
 		std::cerr << "Creating a light sensor with a non-camera sensor object." << std::endl;
@@ -35,7 +35,7 @@ LightSensor::LightSensor(::gazebo::physics::ModelPtr model, ::gazebo::sensors::S
 	this->dataSize_ = 3 * this->castSensor_->GetImageWidth() * this->castSensor_->GetImageHeight();
 
 	// Add update connection that will produce new value
-	this->updateConnection_ = sensor->ConnectUpdated(boost::bind(&LightSensor::OnUpdate, this));
+	this->updateConnection_ = this->sensor_->ConnectUpdated(boost::bind(&LightSensor::OnUpdate, this));
 }
 
 LightSensor::~LightSensor()
