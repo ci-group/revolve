@@ -1,5 +1,5 @@
-from sdfbuilder.base import PosableGroup, Link, Model
-from sdfbuilder.joint import FixedJoint
+from sdfbuilder import PosableGroup, Link, Model
+from sdfbuilder.joint import Joint, FixedJoint
 from sdfbuilder.math import Vector3
 
 from revolve.builder.sdf.body.exception import ArityException
@@ -22,8 +22,14 @@ class BodyPart(PosableGroup):
         self.id = id
         self.conf = conf
 
-        # Specifying arity through arguments is optional
+        # Specifying arity through arguments is optional. Since the arity
+        # is defined in the spec, there is usually no need to set it
+        # in the body part itself.
         self.arity = kwargs.get('arity', None)
+
+        # Since body parts do not have direct access to the model, they
+        # must list joints separately. They can be added to this list.
+        self.joints = []
 
         # Ordered list of motors that this body part implements. These
         # motors will be rendered to the SDF plugin.
@@ -94,10 +100,8 @@ class BodyPart(PosableGroup):
         link = Link("link_"+str(id)+"_"+append)
         self.add_element(link)
 
-    def attach(self, model, other, other_slot, my_slot, orientation):
+    def attach(self, other, other_slot, my_slot, orientation):
         """
-        :param model:
-        :type model: Model
         :param other:
         :type other: BodyPart
         :param other_slot:
@@ -145,9 +149,44 @@ class BodyPart(PosableGroup):
         axis = self.to_sibling_frame(a_normal, child)
 
         # Attach with a fixed link
+        self.fix_links(parent, child, anchor, axis)
+
+    def add_joint(self, joint):
+        """
+        Adds a joint to this model
+        :param joint:
+        :type joint: Joint
+        :return:
+        """
+        self.joints.append(joint)
+
+    def get_joints(self):
+        """
+        Returns the defined joints for this body part. There is
+        usually no need to override this method.
+        :return:
+        :rtype: list
+        """
+        return self.joints
+
+    def fix_links(self, parent, child, anchor, axis):
+        """
+        Creates an immovable joint between the two given links,
+        at the given position and around the specified axis. The
+        joint is added to this body part's joint list.
+        :param parent:
+        :type parent: Link
+        :param child:
+        :type child: Link
+        :param anchor:
+        :type anchor: Vector3
+        :param axis:
+        :type axis: Vector3
+        :return:
+        """
         joint = FixedJoint(parent, child, axis=axis)
         joint.set_position(anchor)
-        model.add_element(joint)
+        self.add_joint(joint)
 
     def get_motors(self):
         """

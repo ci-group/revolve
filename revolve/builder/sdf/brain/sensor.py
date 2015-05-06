@@ -1,4 +1,4 @@
-from sdfbuilder.base import Element, Link
+from sdfbuilder import Element, Link
 from sdfbuilder.sensor import Sensor as SdfSensor
 
 

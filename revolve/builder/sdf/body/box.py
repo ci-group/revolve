@@ -1,6 +1,5 @@
-from sdfbuilder.base import Link
+from sdfbuilder import Link
 from sdfbuilder.math import Vector3
-
 from .body_part import BodyPart
 
 

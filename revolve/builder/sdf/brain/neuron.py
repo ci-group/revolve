@@ -1,4 +1,4 @@
-from sdfbuilder.base import Element
+from sdfbuilder import Element
 from sdfbuilder.util import number_format as nf
 from ....spec import SpecImplementation, Neuron as ProtoNeuron, NeuralConnection as ProtoNeuralConnection
 

@@ -1,5 +1,5 @@
 from math import radians
-from sdfbuilder.base import Model, Element
+from sdfbuilder import Model, Element
 from ...spec import SpecImplementation, Robot, BodyPart as PbBodyPart, validate_robot
 from ...spec.exception import err
 from brain import Neuron, NeuralConnection
@@ -111,9 +111,10 @@ class Builder(object):
 
         if parent:
             # Attach to parent
-            sdf_part.attach(model, parent, src_slot, dst_slot, radians(part.orientation))
+            sdf_part.attach(parent, src_slot, dst_slot, radians(part.orientation))
 
         model.add_element(sdf_part)
+        model.add_elements(sdf_part.joints)
 
         # Add sensors and motors
         plugin.add_elements(sdf_part.get_sensors())
