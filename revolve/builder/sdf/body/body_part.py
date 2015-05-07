@@ -133,7 +133,7 @@ class BodyPart(PosableGroup):
         )
 
         if orientation:
-            self.rotate_around(a_normal, orientation)
+            self.rotate_around(a_normal, orientation, relative_to_child=True)
 
         child = self.get_slot(my_slot)
         parent = other.get_slot(other_slot)
