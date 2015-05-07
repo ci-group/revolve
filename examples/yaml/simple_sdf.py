@@ -1,3 +1,4 @@
+from __future__ import print_function
 """
 Demonstrates creating a simple SDF bot from a spec and a YAML file.
 """
@@ -24,15 +25,9 @@ from revolve.builder.sdf import Builder as SdfBuilder
 # The first is a simple box that serves as the core
 class Core(Box):
     X = 0.5
-    Y = 0.5
+    Y = 0.8
     Z = 0.5
     MASS = 1.0
-
-
-class SimpleWheel(Cylinder):
-    RADIUS = 0.6
-    MASS = 0.5
-    LENGTH = 0.2
 
 
 # The second is a motorized wheel. For this, we start
@@ -97,7 +92,7 @@ spec = SpecImplementation(
             input_neurons=0
         ),
         ("Wheel", "W"): PartSpec(
-            body_part=SimpleWheel,
+            body_part=Wheel,
             arity=1,
             output_neurons=1
         ),
@@ -114,21 +109,9 @@ body:
     0:
       id: Sub1
       type: W
-      orientation: 45
     1:
       id: Sub2
       type: Wheel
-'''
-
-bot = '''\
----
-body:
-  id: Core
-  type: C
-  children:
-    0:
-      id: Sub1
-      type: W
 '''
 
 # Convert the YAML file to protobuf
