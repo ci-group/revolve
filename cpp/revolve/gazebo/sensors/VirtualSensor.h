@@ -1,8 +1,9 @@
 /*
- * VirtualSensor.h
+ * The `VirtualSensor` is the base class for all Sensors, it defines
+ * the sensor interface but is not necessarily connected to anything
+ * concrete in the simulation.
  *
- *  Created on: May 6, 2015
- *      Author: elte
+ * @author Elte Hupkes
  */
 
 #ifndef REVOLVE_GAZEBO_SENSORS_VIRTUALSENSOR_H_
@@ -18,16 +19,16 @@ namespace gazebo {
 
 class VirtualSensor {
 public:
-	VirtualSensor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int inputNeurons);
+	VirtualSensor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int inputs);
 	virtual ~VirtualSensor();
 
 	/**
 	 * Reads the current value of this sensor into the given network
 	 * output array. This should fill the number of input neurons
 	 * the sensor specifies to have, i.e. if the sensor specifies 2
-	 * input neurons it should fill `networkInput[0]` and `networkInput[1]`
+	 * input neurons it should fill `input[0]` and `input[1]`
 	 */
-	virtual void read(float * networkInput) = 0;
+	virtual void read(float * input) = 0;
 
 	/**
 	 * @return The part ID
@@ -35,9 +36,9 @@ public:
 	std::string partId();
 
 	/**
-	 * @return Number of output neurons on this sensor
+	 * @return Number of inputs this sensor generates
 	 */
-	unsigned int inputNeurons();
+	unsigned int inputs();
 
 protected:
 	/**
@@ -51,9 +52,9 @@ protected:
 	std::string partId_;
 
 	/**
-	 * Number of output neurons on this sensor
+	 * Number of inputs this sensor generates
 	 */
-	unsigned int inputNeurons_;
+	unsigned int inputs_;
 };
 
 } /* namespace gazebo */

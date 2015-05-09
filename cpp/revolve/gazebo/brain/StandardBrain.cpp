@@ -1,11 +1,10 @@
 /*
- * NeuralNetwork.cpp
+ * Standard Neural Network brain.
  *
- *  Created on: Mar 16, 2015
- *      Author: elte
+ * @author Elte Hupkes
  */
 
-#include <revolve/gazebo/brain/Brain.h>
+#include <revolve/gazebo/brain/StandardBrain.h>
 #include <revolve/gazebo/motors/Motor.h>
 #include <revolve/gazebo/sensors/Sensor.h>
 
@@ -23,7 +22,7 @@ namespace gazebo {
 // Internal helper function to build neuron params
 void neuronHelper(float* params, unsigned int* types, sdf::ElementPtr neuron);
 
-Brain::Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors) {
+StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors) {
 	// We now setup the neural network and its parameters. The end result
 	// of this operation should be that we can iterate/update all sensors in
 	// a straightforward manner, likewise for the motors. We therefore first
@@ -125,7 +124,7 @@ Brain::Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector
 	unsigned int outPos = 0;
 	for (auto it = motors.begin(); it != motors.end(); ++it) {
 		auto motor = *it;
-		for (unsigned int i = 0, l = motor->outputNeurons(); i < l; ++i) {
+		for (unsigned int i = 0, l = motor->outputs(); i < l; ++i) {
 			std::stringstream neuronId;
 			neuronId << motor->partId() << "-out-" << i;
 
@@ -148,7 +147,7 @@ Brain::Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector
 	unsigned int inPos = 0;
 	for (auto it = sensors.begin(); it != sensors.end(); ++it) {
 		auto sensor = *it;
-		for (unsigned int i = 0, l = sensor->inputNeurons(); i < l; ++i) {
+		for (unsigned int i = 0, l = sensor->inputs(); i < l; ++i) {
 			std::stringstream neuronId;
 			neuronId << sensor->partId() << "-in-" << i;
 
@@ -266,7 +265,7 @@ Brain::Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector
 		&weights[0], &params[0], &types[0]);
 }
 
-Brain::~Brain() {}
+StandardBrain::~StandardBrain() {}
 
 // TODO Check for erroneous / missing parameters
 void neuronHelper(float* params, unsigned int* types, sdf::ElementPtr neuron) {
@@ -294,7 +293,7 @@ void neuronHelper(float* params, unsigned int* types, sdf::ElementPtr neuron) {
 	}
 }
 
-void Brain::update(const std::vector<MotorPtr>& motors,
+void StandardBrain::update(const std::vector<MotorPtr>& motors,
 		const std::vector<SensorPtr>& sensors,
 		double t, unsigned int step) {
 
@@ -303,7 +302,7 @@ void Brain::update(const std::vector<MotorPtr>& motors,
 	for (auto it = sensors.begin(); it != sensors.end(); ++it) {
 		auto sensor = *it;
 		sensor->read(&networkInputs_[p]);
-		p += sensor->inputNeurons();
+		p += sensor->inputs();
 		//std::cout << "Sensor " << i << ", " << networkInputs_[i] << std::endl;
 	}
 
@@ -320,7 +319,7 @@ void Brain::update(const std::vector<MotorPtr>& motors,
 	for (auto it = motors.begin(); it != motors.end(); ++it) {
 		auto motor = *it;
 		motor->update(&networkOutputs_[p], step);
-		p += motor->outputNeurons();
+		p += motor->outputs();
 	}
 }
 

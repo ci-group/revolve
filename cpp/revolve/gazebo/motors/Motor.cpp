@@ -14,7 +14,7 @@ namespace gazebo {
 
 Motor::Motor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int outputNeurons):
 	model_(model),
-	outputNeurons_(outputNeurons),
+	outputs_(outputNeurons),
 	partId_(partId)
 {}
 
@@ -24,8 +24,8 @@ std::string Motor::partId() {
 	return partId_;
 }
 
-unsigned int Motor::outputNeurons() {
-	return outputNeurons_;
+unsigned int Motor::outputs() {
+	return outputs_;
 }
 
 gz::common::PID Motor::createPid(sdf::ElementPtr pidElem) {

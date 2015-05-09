@@ -1,8 +1,5 @@
 /*
- * Sensor.h
- *
- *  Created on: Mar 24, 2015
- *      Author: elte
+ * Sensor class that is connected to an actual Gazebo sensor
  */
 
 #ifndef REVOLVE_GAZEBO_SENSORS_SENSOR_H_
@@ -16,7 +13,7 @@ namespace gazebo {
 class Sensor : public VirtualSensor {
 public:
 	Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-			std::string partId, unsigned int inputNeurons);
+			std::string partId, unsigned int inputs);
 	virtual ~Sensor();
 
 	/**

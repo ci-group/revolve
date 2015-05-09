@@ -32,7 +32,8 @@ set(SPEC_DIR "${CMAKE_SOURCE_DIR}/../spec")
 
 include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${SPEC_DIR}/revolve.proto)
+file(GLOB_RECURSE REVOLVE_PROTO ${SPEC_DIR}/*.proto) 
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${REVOLVE_PROTO})
 
 # Generate spec library
 add_library(revolve-spec STATIC ${PROTO_SRCS} )

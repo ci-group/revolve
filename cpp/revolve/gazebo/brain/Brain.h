@@ -1,54 +1,34 @@
 /*
- * NeuralNetwork.h
- *
- *  Created on: Mar 16, 2015
- *      Author: elte
+ * Specifies a utility `Brain` base class. If your brain doesn't
+ * fit this model, something else can easily be used by simply
+ * ignoring the default brain behavior in the `RobotController`.
  */
 
 #ifndef REVOLVE_GAZEBO_BRAIN_BRAIN_H_
 #define REVOLVE_GAZEBO_BRAIN_BRAIN_H_
 
 #include <revolve/gazebo/Types.h>
-
 #include <boost/shared_ptr.hpp>
-
 #include <gazebo/common/common.hh>
-
-extern "C" {
-	#include <revolve/gazebo/brain/NeuralNetwork.h>
-}
 
 namespace revolve {
 namespace gazebo {
 
 class Brain {
 public:
-	/**
-	 * @param The brain node
-	 * @param Reference to motor list, will be reordered
-	 * @param Reference to the sensor list, will be reordered
-	 */
-	Brain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors);
+	Brain();
 	virtual ~Brain();
 
 	/**
-	* @param Reference to motor list
-	* TODO sensors
-	*/
-	void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
-			double t, unsigned int step);
-
-	// Input / output arrays used for the neural network,
-	// these are stored with the object so they do not need
-	// to be reallocated every time.
-	float networkInputs_[MAX_INPUT_NEURONS];
-	float networkOutputs_[MAX_OUTPUT_NEURONS];
-
-protected:
-	/**
-	 * The neural network that controls the brain
+	 * Update step called for the brain.
+	 *
+	 * @param List of motors
+	 * @param List of sensors
+	 * @param Current simulation time
+	 * @param Step size in nanoseconds
 	 */
-	boost::shared_ptr< NeuralNetwork > neuralNetwork_;
+	virtual void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
+				double t, unsigned int step);
 };
 
 } /* namespace gazebo */

@@ -63,9 +63,9 @@ ServoMotor::ServoMotor(gz::physics::ModelPtr model, std::string partId, sdf::Ele
 
 ServoMotor::~ServoMotor() {}
 
-void ServoMotor::update(float * networkOutputs, unsigned int /*step*/) {
+void ServoMotor::update(float * outputs, unsigned int /*step*/) {
 	// Just one network output, which is the first
-	float networkOutput = networkOutputs[0];
+	float networkOutput = outputs[0];
 
 	// Motor noise in range +/- noiseLevel * actualValue
 	networkOutput += ((2 * gz::math::Rand::GetDblUniform() * noise_) -

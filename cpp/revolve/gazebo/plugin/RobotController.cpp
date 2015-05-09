@@ -5,16 +5,16 @@
  *      Author: elte
  */
 
-#include <revolve/gazebo/plugin/ModelController.h>
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
-//#include <revolve/gazebo/brain/Brain.h>
+#include <revolve/gazebo/brain/StandardBrain.h>
 
 #include <gazebo/transport/transport.hh>
 #include <gazebo/sensors/sensors.hh>
 
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <revolve/gazebo/plugin/RobotController.h>
 
 #include <iostream>
 #include <stdexcept>
@@ -24,7 +24,7 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-ModelController::ModelController():
+RobotController::RobotController():
 	// Default actuation time, this will be overwritten
 	// by the plugin config in Load.
 	actuationTime_(0),
@@ -32,10 +32,10 @@ ModelController::ModelController():
 	lastActuationNsec_(0)
 {}
 
-ModelController::~ModelController()
+RobotController::~RobotController()
 {}
 
-void ModelController::Load(::gazebo::physics::ModelPtr _parent,
+void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 		sdf::ElementPtr _sdf) {
 	// Store the pointer to the model
 	this->model = _parent;
@@ -71,7 +71,7 @@ void ModelController::Load(::gazebo::physics::ModelPtr _parent,
 
 
 
-void ModelController::loadMotors(sdf::ElementPtr sdf) {
+void RobotController::loadMotors(sdf::ElementPtr sdf) {
 	if (!sdf->HasElement("rv:motor")) {
 		return;
 	}
@@ -84,7 +84,7 @@ void ModelController::loadMotors(sdf::ElementPtr sdf) {
     }
 }
 
-void ModelController::loadSensors(sdf::ElementPtr sdf) {
+void RobotController::loadSensors(sdf::ElementPtr sdf) {
 	if (!sdf->HasElement("rv:sensor")) {
 		return;
 	}
@@ -107,20 +107,18 @@ void ModelController::loadSensors(sdf::ElementPtr sdf) {
 	}
 }
 
-MotorFactoryPtr ModelController::getMotorFactory(
+MotorFactoryPtr RobotController::getMotorFactory(
 		::gazebo::physics::ModelPtr model) {
 	return MotorFactoryPtr(new MotorFactory(model));
 }
 
-void ModelController::loadBrain(sdf::ElementPtr sdf) {
-	auto brain = sdf->GetElement("rv:brain");
-
-	if (!brain) {
+void RobotController::loadBrain(sdf::ElementPtr sdf) {
+	if (!sdf->HasElement("rv:brain")) {
 		std::cerr << "No robot brain detected, this is probably an error." << std::endl;
 		return;
 	}
-
-//	brain_.reset(new Brain(brain, motors_, sensors_));
+	auto brain = sdf->GetElement("rv:brain");
+	brain_.reset(new StandardBrain(brain, motors_, sensors_));
 }
 
 } /* namespace gazebo */

@@ -5,8 +5,8 @@
  *      Author: elte
  */
 
-#ifndef REVOLVE_GAZEBO_PLUGIN_MODELCONTROLLER_H_
-#define REVOLVE_GAZEBO_PLUGIN_MODELCONTROLLER_H_
+#ifndef REVOLVE_GAZEBO_PLUGIN_ROBOTCONTROLLER_H_
+#define REVOLVE_GAZEBO_PLUGIN_ROBOTCONTROLLER_H_
 
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
@@ -20,13 +20,13 @@
 namespace revolve {
 namespace gazebo {
 
-class ModelController: public ::gazebo::ModelPlugin {
+class RobotController: public ::gazebo::ModelPlugin {
 public:
-	ModelController();
-	virtual ~ModelController();
+	RobotController();
+	virtual ~RobotController();
 
 public:
-	void Load(::gazebo::physics::ModelPtr _parent, sdf::ElementPtr _sdf);
+	virtual void Load(::gazebo::physics::ModelPtr _parent, sdf::ElementPtr _sdf);
 
 	/**
 	 * Called when the driver sensor updates
@@ -46,18 +46,18 @@ protected:
 	/**
 	 * Detects and loads motors in the plugin spec
 	 */
-	void loadMotors(sdf::ElementPtr sdf);
+	virtual void loadMotors(sdf::ElementPtr sdf);
 
 	/**
 	 * Detects and loads sensors in the plugin spec.
 	 */
-	void loadSensors(sdf::ElementPtr sdf);
+	virtual void loadSensors(sdf::ElementPtr sdf);
 
 	/**
-	 * Loads the brain specification and creates
-	 * the neural network.
+	 * Loads the brain from the `rv:brain` element. By default this
+	 * tries to construct a `StandardNeuralNetwork`.
 	 */
-	void loadBrain(sdf::ElementPtr sdf);
+	virtual void loadBrain(sdf::ElementPtr sdf);
 
 	/**
 	 * Holds an instance of the motor factory
@@ -72,7 +72,7 @@ protected:
 	/**
 	 * Brain controlling this model
 	 */
-	//BrainPtr brain_;
+	BrainPtr brain_;
 
 	/**
 	 * Actuation time, in nanoseconds
@@ -112,4 +112,4 @@ private:
 } /* namespace gazebo */
 } /* namespace revolve */
 
-#endif /* REVOLVE_GAZEBO_PLUGIN_MODELCONTROLLER_H_ */
+#endif /* REVOLVE_GAZEBO_PLUGIN_ROBOTCONTROLLER_H_ */

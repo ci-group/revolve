@@ -10,16 +10,16 @@
 namespace revolve {
 namespace gazebo {
 
-VirtualSensor::VirtualSensor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int inputNeurons):
+VirtualSensor::VirtualSensor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int inputs):
 	model_(model),
 	partId_(partId),
-	inputNeurons_(inputNeurons)
+	inputs_(inputs)
 {}
 
 VirtualSensor::~VirtualSensor() {}
 
-unsigned int VirtualSensor::inputNeurons() {
-	return inputNeurons_;
+unsigned int VirtualSensor::inputs() {
+	return inputs_;
 }
 
 } /* namespace gazebo */

@@ -20,10 +20,10 @@ public:
 	virtual ~ImuSensor();
 
 	/**
-	 * Read the value of this IMU sensor corresponding
-	 * to the set IO ID
+	 * Read the value of this IMU sensor into the
+	 * input array.
 	 */
-	virtual void read(float * networkOutput);
+	virtual void read(float * input);
 
 private:
 	/**

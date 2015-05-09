@@ -16,7 +16,7 @@ namespace gazebo {
 class JointMotor: public Motor {
 public:
 	JointMotor(::gazebo::physics::ModelPtr model, std::string partId,
-			sdf::ElementPtr motor, unsigned int outputNeurons);
+			sdf::ElementPtr motor, unsigned int outputs);
 	virtual ~JointMotor();
 protected:
 	/**
