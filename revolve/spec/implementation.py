@@ -26,26 +26,18 @@ class SpecImplementation(object):
     body parts / neuron types there are, and what their parameters are.
     """
 
-    def __init__(self, parts=None, neurons=None):
+    def __init__(self, spec=None):
         """
-        :param parts:
-        :param neurons:
+        :param spec:
+        :type spec: dict
         :return:
         """
-        self.parts = {} if parts is None else parts
-        self.neurons = {} if neurons is None else neurons
+        self.spec = {} if spec is None else spec
+        self.aliases = {}
 
-        self.part_aliases = {}
-        self.neuron_aliases = {}
+        _process_aliases(self.spec, self.aliases)
 
-        _process_aliases(self.parts, self.part_aliases)
-        _process_aliases(self.neurons, self.neuron_aliases)
-
-        # Add default input neuron type
-        if "Input" not in self.neurons:
-            self.set_neuron("Input", NeuronSpec())
-
-    def get_part(self, part_type):
+    def get(self, part_type):
         """
         Returns the part settings corresponding to the given type
         :param part_type:
@@ -53,42 +45,64 @@ class SpecImplementation(object):
         :return: PartSpec implementation spec, or None if not found
         :rtype: PartSpec
         """
-        key = self.part_aliases.get(part_type, part_type)
-        return self.parts.get(key, None)
+        key = self.aliases.get(part_type, part_type)
+        return self.spec.get(key, None)
 
-    def get_neuron(self, neuron_type):
+    def set(self, type_name, spec):
         """
-        Returns the neuron settings corresponding to the given type.
-
-        :param neuron_type:
-        :type neuron_type: str
-        :return: NeuronSpec implementation spec, or None if not found
-        :rtype: NeuronSpec
-        """
-        key = self.neuron_aliases.get(neuron_type, neuron_type)
-        return self.neurons.get(key, None)
-
-    def set_neuron(self, neuron_type, neuron):
-        """
-        :param neuron_type:
-        :type neuron_type: str
-        :param neuron:
-        :type neuron: NeuronSpec
+        :param type_name:
+        :type type_name: str
+        :param spec:
+        :type spec: Parameterizable
         :return:
         """
-        self.neurons[neuron_type] = neuron
-        _process_aliases(self.neurons, self.neuron_aliases)
+        self.spec[type_name] = spec
+        _process_aliases(self.spec, self.aliases)
 
-    def set_part(self, part_type, part):
+
+class BodyImplementation(SpecImplementation):
+    """
+    The BodyImplementation just inhertits from `SpecImplementation`
+    verbatim.
+    """
+
+
+class NeuralNetImplementation(SpecImplementation):
+    """
+    This is the sample Neural Network implementation, which
+    requires knowledge of the body to function.
+    """
+    def __init__(self, spec=None):
         """
-        :param part_type:
-        :type part_type: str
-        :param part:
-        :type part: PartSpec
+        :param spec:
+        :type spec: dict
         :return:
         """
-        self.parts[part_type] = part
-        _process_aliases(self.parts, self.part_aliases)
+        super(NeuralNetImplementation, self).__init__(spec)
+
+        # Add default input neuron type
+        if "Input" not in self.spec:
+            self.set("Input", NeuronSpec())
+
+
+def default_neural_net():
+    """
+    Returns the neural net implementation for the default
+    neural net shipped with Revolve
+    :return:
+    :rtype: NeuralNetImplementation
+    """
+    return NeuralNetImplementation({
+        "Sigmoid": NeuronSpec(
+            params=["bias", "gain"]
+        ),
+        "Simple": NeuronSpec(
+            params=["bias", "gain"]
+        ),
+        "Oscillator": NeuronSpec(
+            params=["period", "phase_offset", "amplitude"]
+        )
+    })
 
 
 class ParamSpec(object):
@@ -209,29 +223,28 @@ class PartSpec(Parameterizable):
     Class used to specify all configurable details about a part.
     """
 
-    def __init__(self, body_part=None, arity=0, input_neurons=0,
-                 output_neurons=0, params=None):
+    def __init__(self, body_part=None, arity=0, inputs=0,
+                 outputs=0, params=None):
         """
 
         :param body_part: Builder component, for whatever builder is being used
         :param arity: Arity (i.e. number of connection slots) of the body part
         :type arity: int
-        :param input_neurons: Number of input neurons of this body part
-        :type input_neurons: int
-        :param output_neurons: Number of output neurons of this part
-        :type output_neurons: int
+        :param inputs: Number of input neurons of this body part
+        :type inputs: int
+        :param outputs: Number of output neurons of this part
+        :type outputs: int
         :return:
         """
         super(PartSpec, self).__init__(params)
 
         self.body_part = body_part
         self.arity = arity
-        self.input_neurons = input_neurons
-        self.output_neurons = output_neurons
+        self.inputs = inputs
+        self.outputs = outputs
 
 
 class NeuronSpec(Parameterizable):
     """
     Specifies a configurable Neuron
     """
-    pass

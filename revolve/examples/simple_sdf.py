@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 """
 Demonstrates creating a simple SDF bot from a spec and a YAML file.
 """
@@ -15,10 +16,10 @@ module_path = os.path.join(cur_path, '..', '..')
 sys.path.append(module_path)
 
 # Module imports
-from revolve.spec import SpecImplementation, PartSpec
+from revolve.spec import BodyImplementation, default_neural_net, PartSpec
 from revolve.builder.sdf.body import Box, Cylinder
-from revolve.convert.yaml import yaml_to_protobuf
-from revolve.builder.sdf import Builder as SdfBuilder
+from revolve.convert.yaml import yaml_to_robot
+from revolve.builder.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder
 
 
 # Define two simple body parts
@@ -84,20 +85,22 @@ class Wheel(Cylinder):
 
 
 # Define a spec with a simple block, with two aliases
-spec = SpecImplementation(
-    parts={
+body_spec = BodyImplementation(
+    {
         ("Core", "C"): PartSpec(
             body_part=Core,
             arity=6,
-            input_neurons=0
+            inputs=0
         ),
         ("Wheel", "W"): PartSpec(
             body_part=Wheel,
             arity=1,
-            output_neurons=1
+            outputs=1
         ),
     }
 )
+
+brain_spec = default_neural_net()
 
 # Create bot YAML
 bot = '''\
@@ -115,11 +118,11 @@ body:
 '''
 
 # Convert the YAML file to protobuf
-proto = yaml_to_protobuf(spec, bot)
+proto = yaml_to_robot(body_spec, brain_spec, bot)
 
 # Convert the protobuf to SDF
-builder = SdfBuilder(spec, None)
-model = builder.get_sdf_model(proto, "rvgzmodelcontrol.so", "test_bot", validate=True)
+builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
+model = builder.get_sdf_model(proto, "rvgzmodelcontrol.so", "test_bot")
 
 # Create SDF and output
 sdf = SDF()

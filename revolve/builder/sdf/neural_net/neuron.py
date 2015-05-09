@@ -1,6 +1,6 @@
 from sdfbuilder import Element
 from sdfbuilder.util import number_format as nf
-from ....spec import SpecImplementation, Neuron as ProtoNeuron, NeuralConnection as ProtoNeuralConnection
+from ....spec import Neuron as ProtoNeuron, NeuralConnection as ProtoNeuralConnection
 
 
 class Neuron(Element):
@@ -11,10 +11,9 @@ class Neuron(Element):
 
     def __init__(self, neuron, params):
         """
-        :param spec:
-        :type spec: SpecImplementation
         :param neuron: Protobuf neuron
         :type neuron: ProtoNeuron
+        :param params:
         :return:
         """
         super(Neuron, self).__init__()

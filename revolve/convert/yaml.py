@@ -1,37 +1,44 @@
+"""
+Sample
+"""
 from __future__ import absolute_import
 import yaml
-from ..spec import SpecImplementation
+from ..spec import BodyImplementation, NeuralNetImplementation
 from ..spec.protobuf import *
 from ..spec.exception import err
 
 
-def yaml_to_protobuf(spec, yaml):
+def yaml_to_robot(body_spec, nn_spec, yaml):
     """
-    :param spec:
-    :type spec: SpecImplementation
+    :param body_spec:
+    :type body_spec: BodyImplementation
+    :param nn_spec:
+    :type nn_spec: NeuralNetImplementation
     :param yaml:
+    :type yaml: stream
     :return:
     """
-    obj = YamlToProtobuf(spec, yaml)
+    obj = YamlToRobot(body_spec, nn_spec, yaml)
     return obj.get_protobuf()
 
 
-class YamlToProtobuf:
+class YamlToRobot:
     """
-    Takes the ToL YAML format and creates from it
-    a Protobuf implementation.
+    Sample converter creates a Robot protobuf message
+    from a YAML stream and a body / neural net spec.
     """
 
-    def __init__(self, spec, stream):
+    def __init__(self, body_spec, nn_spec, stream):
         """
-        :param spec:
-        :type spec: SpecImplementation
+        :param body_spec:
+        :type body_spec: BodyImplementation
         :param stream:
         :type stream: stream
         :return:
         """
         obj = yaml.load(stream)
-        self.spec = spec
+        self.body_spec = body_spec
+        self.nn_spec = nn_spec
 
         self.part_ids = set()
         self.robot = Robot()
@@ -86,7 +93,7 @@ class YamlToProtobuf:
             err("Missing part type.")
         part.type = part_type = conf['type']
 
-        spec = self.spec.get_part(part_type)
+        spec = self.body_spec.get(part_type)
         if spec is None:
             err("Part type '%s' not in implementation spec." % part_type)
 
@@ -116,7 +123,7 @@ class YamlToProtobuf:
             self._process_body_connection(part, src, children[src])
 
         # Add automatic input / output neurons
-        cats = {"in": spec.input_neurons, "out": spec.output_neurons}
+        cats = {"in": spec.inputs, "out": spec.outputs}
         for cat in cats:
             for i in range(cats[cat]):
                 neuron_id = "%s-%s-%d" % (part_id, cat, i)
@@ -180,7 +187,7 @@ class YamlToProtobuf:
         if current["type"] != "Input" and current["layer"] == "input":
             err("Input neuron '%s' must be of type 'Input'" % neuron_id)
 
-        spec = self.spec.get_neuron(current["type"])
+        spec = self.nn_spec.get(current["type"])
         if spec is None:
             err("Unknown neuron type '%s'" % current["type"])
 

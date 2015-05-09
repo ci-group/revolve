@@ -1,91 +1,46 @@
 from math import radians
 from sdfbuilder import Model, Element
-from ...spec import SpecImplementation, Robot, BodyPart as PbBodyPart, validate_robot
+from ...spec import Robot, BodyPart as PbBodyPart, BodyImplementation, NeuralNetImplementation
 from ...spec.exception import err
-from brain import Neuron, NeuralConnection
+from neural_net import Neuron, NeuralConnection
 
 
-class Builder(object):
+class AspectBuilder(object):
     """
-    Constructor class to create an SDF model from a protobuf
-    robot and a specification.
+    Builder interface class, a subclass can be passed to the `RobotBuilder`
+    as either a builder for a body or a builder for a brain.
     """
 
-    def __init__(self, spec, conf):
+    def build(self, robot, model, plugin):
         """
+        :param robot: Robot in whatever message type is applicable
+        :param model:
+        :type model: Model
+        :param plugin:
+        :type plugin: Element
+        """
+        raise NotImplementedError("Interface method.")
 
+
+class BodyBuilder(AspectBuilder):
+    """
+    Default robot body builder. Assumes the example protobuf robot message,
+    where a `robot.body.root` is present - any message that follows this
+    convention will work as well.
+    """
+
+    def __init__(self, spec, conf=None):
+        """
         :param spec:
-        :type spec: SpecImplementation
+        :type spec: BodyImplementation
         :param conf:
         :return:
         """
-        self.spec = spec
         self.conf = conf
+        self.spec = spec
 
-    def get_sdf_model(self, robot, controller_plugin, name="sdf_robot", validate=True):
-        """
-        :param robot: Protobuf robot
-        :type robot: Robot
-        :param controller_plugin: Name of the shared library of the model plugin
-        :type controller_plugin: str
-        :param name: Name of the SDF model
-        :type name: str
-        :param validate: Whether or not to perform basic robot spec validation
-        :type validate: bool
-        :return: The sdfbuilder Model
-        :rtype: Model
-        """
-        if validate:
-            validate_robot(self.spec, robot)
-
-        model = Model(name)
-
-        # Create the model plugin element
-        plugin = Element(tag_name='plugin', attributes={
-            'name': 'robot_controller',
-            'filename': controller_plugin
-        })
-
-        # Add body config element
-        config = Element(tag_name='rv:robot_config', attributes={
-            'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
-        })
-        plugin.add_element(config)
-
-        # Add brain config element
-        brain_config = Element(tag_name='rv:brain', attributes={
-            'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
-        })
-        config.add_element(brain_config)
-
-        # Process the brain
-        self._process_brain(brain_config, robot.brain)
-
-        # Process body parts recursively
-        self._process_body_part(model, robot.body.root, config)
-        model.add_element(plugin)
-
-        return model
-
-    def _process_brain(self, plugin, brain):
-        """
-        :param plugin:
-        :type plugin: Element
-        :param brain:
-        :return:
-        """
-        # Add neurons
-        for neuron in brain.neuron:
-            spec = self.spec.get_neuron(neuron.type)
-            if spec is None:
-                err("Cannot build unknown neuron type '%s'." % neuron.type)
-
-            params = spec.unserialize_params(neuron.param)
-            plugin.add_element(Neuron(neuron, params))
-
-        # Add connections
-        for conn in brain.connection:
-            plugin.add_element(NeuralConnection(conn))
+    def build(self, robot, model, plugin):
+        self._process_body_part(model, robot.body.root, plugin)
 
     def _process_body_part(self, model, part, plugin, parent=None, src_slot=None, dst_slot=None):
         """
@@ -97,7 +52,7 @@ class Builder(object):
         :type plugin: Element
         :return:
         """
-        spec = self.spec.get_part(part.type)
+        spec = self.spec.get(part.type)
         if spec is None:
             err("Cannot build unknown part type '%s'." % part.type)
 
@@ -123,3 +78,93 @@ class Builder(object):
         # Process body connections
         for conn in part.child:
             self._process_body_part(model, conn.part, plugin, sdf_part, conn.src, conn.dst)
+
+
+class NeuralNetBuilder(AspectBuilder):
+    """
+    Default neural network builder. Assumes the neural net construction as specified
+    in the example protobuf message.
+    """
+
+    def __init__(self, spec):
+        """
+        :param spec:
+        :type spec: NeuralNetImplementation
+        :return:
+        """
+        self.spec = spec
+
+    def build(self, robot, model, plugin):
+        self._process_brain(plugin, robot.brain)
+
+    def _process_brain(self, plugin, brain):
+        """
+        :param plugin:
+        :type plugin: Element
+        :param brain:
+        :return:
+        """
+        # Add neurons
+        for neuron in brain.neuron:
+            spec = self.spec.get(neuron.type)
+            if spec is None:
+                err("Cannot build unknown neuron type '%s'." % neuron.type)
+
+            params = spec.unserialize_params(neuron.param)
+            plugin.add_element(Neuron(neuron, params))
+
+        # Add connections
+        for conn in brain.connection:
+            plugin.add_element(NeuralConnection(conn))
+
+
+class RobotBuilder(object):
+    """
+    Creates a Robot builder which consists of something that builds a body
+    and something that builds a brain.
+    """
+
+    def __init__(self, body_builder, brain_builder):
+        """
+        :param body_builder:
+        :type body_builder: Builder
+        :param brain_builder:
+        :type brain_builder: Builder
+        """
+        self.body_builder = body_builder
+        self.brain_builder = brain_builder
+
+    def get_sdf_model(self, robot, controller_plugin, name="sdf_robot"):
+        """
+        :param robot: Protobuf robot
+        :type robot: Robot
+        :param controller_plugin: Name of the shared library of the model plugin
+        :type controller_plugin: str
+        :param name: Name of the SDF model
+        :type name: str
+        :return: The sdfbuilder Model
+        :rtype: Model
+        """
+        model = Model(name)
+
+        # Create the model plugin element
+        plugin = Element(tag_name='plugin', attributes={
+            'name': 'robot_controller',
+            'filename': controller_plugin
+        })
+
+        # Add body config element
+        config = Element(tag_name='rv:robot_config', attributes={
+            'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
+        })
+        plugin.add_element(config)
+
+        # Add brain config element
+        brain_config = Element(tag_name='rv:brain')
+        config.add_element(brain_config)
+
+        self.brain_builder.build(robot, model, brain_config)
+        self.body_builder.build(robot, model, config)
+
+        model.add_element(plugin)
+        return model

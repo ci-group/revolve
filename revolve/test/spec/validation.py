@@ -1,32 +1,42 @@
 import unittest
-from ...spec import SpecImplementation, PartSpec, NeuronSpec, ParamSpec, Robot, BodyPart
-from ...spec import RobotSpecificationException as SpecError
-from ...spec.validation import validate_robot
+from ...spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec, ParamSpec, Robot, BodyPart
+from ...spec import RobotSpecificationException as SpecError, RobotValidator
 
 # Imaginary specification for the tests
-spec = SpecImplementation(
-    parts={
+body_spec = BodyImplementation(
+    {
         ("CoreComponent", "E"): PartSpec(
             arity=2,
-            output_neurons=1,
-            input_neurons=2
+            outputs=1,
+            inputs=2
         ),
         "2Params": PartSpec(
             arity=2,
-            input_neurons=2,
-            output_neurons=2,
+            inputs=2,
+            outputs=2,
             params=[ParamSpec("param_a", default=-1, min_value=-2, max_value=0, max_inclusive=False),
                     ParamSpec("param_b", default=15)]
         )
-    },
+    }
+)
 
-    neurons={
+brain_spec = NeuralNetImplementation(
+    {
         "Simple": NeuronSpec(params=["bias"]),
         "Oscillator": NeuronSpec(
             params=["period", "phaseOffset", "amplitude"]
         )
     }
 )
+
+
+def validate_robot(robot):
+    """
+    :param robot:
+    :return:
+    """
+    validator = RobotValidator(robot, body_spec, brain_spec)
+    validator.validate()
 
 
 def _get_simple_part(part_id):
@@ -62,7 +72,7 @@ class TestValidate(unittest.TestCase):
         root.type = "InvalidType"
 
         with self.assertRaisesRegexp(SpecError, "part type"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         # Make type valid, add invalid connection
         root.type = "CoreComponent"
@@ -71,11 +81,11 @@ class TestValidate(unittest.TestCase):
         conn1.dst = 5
 
         with self.assertRaisesRegexp(SpecError, "source slot"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         conn1.src = 2
         with self.assertRaisesRegexp(SpecError, "source slot"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         conn1.src = 1
         part1 = conn1.part
@@ -84,18 +94,18 @@ class TestValidate(unittest.TestCase):
         part1.orientation = 0
 
         with self.assertRaisesRegexp(SpecError, "Duplicate"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         # Make the ID valid, connection dst slot is not
         part1.id = "Part1"
         with self.assertRaisesRegexp(SpecError, "destination slot"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         conn1.dst = 0
 
         # Parameter count is now wrong
         with self.assertRaisesRegexp(SpecError, "parameters"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         p1 = part1.param.add()
         p2 = part1.param.add()
@@ -104,7 +114,7 @@ class TestValidate(unittest.TestCase):
 
         # Parameter count correct, but the parameters are just out of range
         with self.assertRaisesRegexp(SpecError, "range"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         p1.value = -0.5
         p2.value = -0.5
@@ -116,7 +126,7 @@ class TestValidate(unittest.TestCase):
         part1conn.dst = 1
 
         with self.assertRaisesRegexp(SpecError, "occupied"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         part1conn.src = 1
 
@@ -126,7 +136,7 @@ class TestValidate(unittest.TestCase):
         part1conn2.dst = 0
 
         with self.assertRaisesRegexp(SpecError, "occupied"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
     def test_brain_errors(self):
         """
@@ -148,7 +158,7 @@ class TestValidate(unittest.TestCase):
         # The first error we'll get is we're missing
         # expected neurons.
         with self.assertRaisesRegexp(SpecError, "expected"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         # Add a bunch of input and output neurons
         n = [brain.neuron.add() for _ in range(7)]
@@ -171,19 +181,19 @@ class TestValidate(unittest.TestCase):
         # Layer of Core-out-0 neuron is incorrect
         n[0].layer = "input"
         with self.assertRaisesRegexp(SpecError, "should be in layer"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         n[0].layer = "output"
 
         # Core-out-0 neuron should be assigned to a part
         with self.assertRaisesRegexp(SpecError, "should have a part"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         n[0].partId = "Fake"
 
         # Non-existing part ID
         with self.assertRaisesRegexp(SpecError, "Unknown part"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         n[0].partId = n[1].partId = n[2].partId = "Core"
         n[3].partId = n[4].partId = n[5].partId = n[6].partId = "Part1"
@@ -191,7 +201,7 @@ class TestValidate(unittest.TestCase):
         # Input neuron should be "Input"
         n[1].type = "Oscillator"
         with self.assertRaisesRegexp(SpecError, "Input"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         n[1].type = "Input"
 
@@ -200,27 +210,27 @@ class TestValidate(unittest.TestCase):
         hidden.id, hidden.layer = "Core-out-0", "hidden"
 
         with self.assertRaisesRegexp(SpecError, "Duplicate"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         hidden.type = "Fake"
         hidden.param.add()
         hidden.id = "hidden"
 
         with self.assertRaisesRegexp(SpecError, "Unspecified"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         hidden.type = "Oscillator"
 
         # Wrong number of parameters for oscillator
         with self.assertRaisesRegexp(SpecError, "parameters"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         hidden.param.add()
         hidden.param.add()
         hidden.param[0].value = hidden.param[1].value = hidden.param[2].value = 0
 
         # This should be fine now, do nothing to assert it doesn't raise
-        validate_robot(spec, robot)
+        validate_robot(robot)
 
         # Test some connections
         a = brain.connection.add()
@@ -229,7 +239,7 @@ class TestValidate(unittest.TestCase):
 
         # Wrong number of parameters for oscillator
         with self.assertRaisesRegexp(SpecError, "input"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         a.dst = "Part1-out-1"
 
@@ -239,12 +249,12 @@ class TestValidate(unittest.TestCase):
         b.dst = "Part1-out-1"
 
         with self.assertRaisesRegexp(SpecError, "Duplicate"):
-            validate_robot(spec, robot)
+            validate_robot(robot)
 
         b.dst = "Part1-out-0"
 
         # Again, this should be fine
-        validate_robot(spec, robot)
+        validate_robot(robot)
 
 if __name__ == '__main__':
     unittest.main()

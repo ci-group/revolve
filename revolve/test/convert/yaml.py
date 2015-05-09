@@ -1,6 +1,7 @@
 import unittest
-from ...convert import yaml_to_protobuf
-from ...spec import SpecImplementation, PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
+from ...convert import yaml_to_robot
+from ...spec import PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
+from ...spec import BodyImplementation, NeuralNetImplementation
 
 # Define YAML for test cases here
 # Body
@@ -166,23 +167,24 @@ brain:
 
 # End of YAML for test cases
 
-# Use this imaginary specification for all the tests
-spec = SpecImplementation(
-    parts={
+body_spec = BodyImplementation(
+    {
         ("CoreComponent", "E"): PartSpec(
             arity=2,
-            output_neurons=1,
-            input_neurons=2
+            outputs=1,
+            inputs=2
         ),
         "2Params": PartSpec(
             arity=2,
-            input_neurons=2,
-            output_neurons=2,
+            inputs=2,
+            outputs=2,
             params=[ParamSpec("param_a", default=-1), ParamSpec("param_b", default=15)]
         )
-    },
+    }
+)
 
-    neurons={
+brain_spec = NeuralNetImplementation(
+    {
         "Simple": NeuronSpec(params=["bias"]),
         "Oscillator": NeuronSpec(
             params=["period", "phaseOffset", "amplitude"]
@@ -191,36 +193,41 @@ spec = SpecImplementation(
 )
 
 
+def ytr(yaml):
+    return yaml_to_robot(body_spec, brain_spec, yaml)
+
+
 class TestConvertYaml(unittest.TestCase):
     """
     Tests a wide range of error cases for the
     YAML converter.
     """
+    
     def test_simple_body_exceptions(self):
         """
         Tests some body part exceptions
         :return:
         """
         with self.assertRaisesRegexp(SpecErr, 'body'):
-            yaml_to_protobuf(spec, test_missing_body)
+            ytr(test_missing_body)
 
         with self.assertRaisesRegexp(SpecErr, 'ID'):
-            yaml_to_protobuf(spec, test_missing_part_id)
+            ytr(test_missing_part_id)
 
         with self.assertRaisesRegexp(SpecErr, 'type'):
-            yaml_to_protobuf(spec, test_missing_part_type)
+            ytr(test_missing_part_type)
 
         with self.assertRaisesRegexp(SpecErr, 'spec'):
-            yaml_to_protobuf(spec, test_part_not_in_spec)
+            ytr(test_part_not_in_spec)
 
         with self.assertRaisesRegexp(SpecErr, 'arity'):
-            yaml_to_protobuf(spec, test_arity_fail)
+            ytr(test_arity_fail)
 
         with self.assertRaisesRegexp(SpecErr, 'attached'):
-            yaml_to_protobuf(spec, test_slot_reuse)
+            ytr(test_slot_reuse)
 
         with self.assertRaisesRegexp(SpecErr, 'Duplicate'):
-            yaml_to_protobuf(spec, test_duplicate_part_id)
+            ytr(test_duplicate_part_id)
 
     def test_simple_brain_exceptions(self):
         """
@@ -228,26 +235,26 @@ class TestConvertYaml(unittest.TestCase):
         :return:
         """
         with self.assertRaisesRegexp(SpecErr, 'Unknown'):
-            yaml_to_protobuf(spec, test_unknown_neuron_type)
+            ytr(test_unknown_neuron_type)
 
         with self.assertRaisesRegexp(SpecErr, 'Duplicate'):
-            yaml_to_protobuf(spec, test_duplicate_neuron_id)
+            ytr(test_duplicate_neuron_id)
 
         with self.assertRaisesRegexp(SpecErr, 'unknown'):
-            yaml_to_protobuf(spec, test_unknown_param_neuron)
+            ytr(test_unknown_param_neuron)
 
         with self.assertRaisesRegexp(SpecErr, 'input'):
-            yaml_to_protobuf(spec, test_input_destination_neuron)
+            ytr(test_input_destination_neuron)
 
         with self.assertRaisesRegexp(SpecErr, 'Input'):
-            yaml_to_protobuf(spec, test_input_params)
+            ytr(test_input_params)
 
     def test_simple_robot(self):
         """
         Tests whether a simple robot is correctly serialized.
         :return:
         """
-        robot = yaml_to_protobuf(spec, test_simple_robot)
+        robot = ytr(test_simple_robot)
 
         # Make sure all required fields are set
         self.assertTrue(robot.IsInitialized())

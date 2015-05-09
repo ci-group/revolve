@@ -1,0 +1,20 @@
+package revolve;
+import "parameter.proto";
+
+message BodyPart {
+  required string id = 1;
+  required string type = 2;
+  required float orientation = 3;
+  repeated BodyConnection child = 4;
+  repeated Parameter param = 5;
+}
+
+message BodyConnection {
+  required int32 src = 1;
+  required int32 dst = 2;
+  required BodyPart part = 3;
+}
+
+message Body {
+  required BodyPart root = 1;
+}

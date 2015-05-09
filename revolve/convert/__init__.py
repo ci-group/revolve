@@ -1,1 +1,1 @@
-from .yaml import yaml_to_protobuf
+from .yaml import yaml_to_robot

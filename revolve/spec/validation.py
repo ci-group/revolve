@@ -1,63 +1,37 @@
 from ..spec.protobuf import Robot, BodyPart, NeuralConnection, BodyConnection
-from ..spec import SpecImplementation, PartSpec, NeuronSpec
+from ..spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec
 from ..spec.exception import err
 
 
-def validate_robot(spec, robot):
+class Validator(object):
     """
-    :param spec:
-    :type spec: SpecImplementation
-    :param robot:
-    :type robot: Robot
-    :return:
+    Validator class interface
     """
-    validator = SpecValidator(spec, robot)
-    validator.validate()
-
-
-class SpecValidator:
-    """
-    Validates a robot protobuf against a spec implementation.
-    """
-
-    def __init__(self, spec, robot):
-        """
-
-        :param spec:
-        :type spec: SpecImplementation
-        :param robot:
-        :type robot: Robot
-        :return:
-        """
-        self.spec = spec
-        self.robot = robot
-
-        self.part_slots = {}
-        self.neurons = {}
-        self.expected_neurons = {}
-        self.neural_connections = {}
-
     def validate(self):
         """
-        Validates the robot specification against the implementation,
-        raises a RobotSpecificationException if an error occurs.
-        :return:
+        Validate method, should raise exceptions when errors
+        are found.
         """
-        self._process_body_part(self.robot.body.root)
+        raise NotImplementedError("Interface method.")
 
-        for neuron in self.robot.brain.neuron:
-            self._process_neuron(neuron)
 
-        for conn in self.robot.brain.connection:
-            self._process_neural_connection(conn)
-
-        missing_neurons = self.expected_neurons.keys()
-        if len(missing_neurons):
-            err("Missing expected neurons: %s" % ', '.join(missing_neurons))
+class BodyValidator(Validator):
+    """
+    Validates the basic structure of the given robot body.
+    """
+    def __init__(self, spec, body):
+        """
+        :param spec:
+        :type spec: BodyImplementation
+        :param body:
+        :type body: Body
+        """
+        self.spec = spec
+        self.body = body
+        self.part_slots = {}
 
     def _process_body_part(self, part, dst_slot=None):
         """
-
         :param part:
         :return:
         """
@@ -66,7 +40,7 @@ class SpecValidator:
 
         self.part_slots[part.id] = set()
 
-        spec = self.spec.get_part(part.type)
+        spec = self.spec.get(part.type)
         if spec is None:
             err("Unregistered part type '%s'" % part.type)
 
@@ -88,12 +62,6 @@ class SpecValidator:
 
         for conn in part.child:
             self._process_body_connection(part, spec, conn)
-
-        cats = {"in": spec.input_neurons, "out": spec.output_neurons}
-        for cat in cats:
-            for i in range(cats[cat]):
-                neuron_id = "%s-%s-%d" % (part.id, cat, i)
-                self.expected_neurons[neuron_id] = "%sput" % cat
 
     def _process_body_connection(self, parent, spec, conn):
         """
@@ -117,9 +85,78 @@ class SpecValidator:
         slots.add(conn.src)
         self._process_body_part(conn.part, conn.dst)
 
+    def validate(self):
+        """
+        Validates the robot body.
+        """
+        # Start processing at body root
+        self._process_body_part(self.body.root)
+
+
+class NeuralNetValidator(Validator):
+    """
+    Validates a neural net against a spec -
+    this requires knowledge of the body as well.
+    """
+
+    def __init__(self, spec, body_spec, body, brain):
+        """
+        :param spec:
+        :type spec: NeuralNetImplementation
+        :param body_spec:
+        :type spec: BodyImplementation
+        :param body:
+        :param brain:
+        """
+        self.spec = spec
+        self.body_spec = body_spec
+        self.body = body
+        self.brain = brain
+
+        self.expected_neurons = {}
+        self.neurons = {}
+        self.neural_connections = {}
+        self.parts = set()
+
+    def validate(self):
+        """
+        Validates the neural network, raises exceptions
+        of something's wrong.
+        """
+        # Process body parts to get expected neurons, this
+        # should not raise any errors.
+        self._process_body_part(self.body.root)
+
+        for neuron in self.brain.neuron:
+            self._process_neuron(neuron)
+
+        for conn in self.brain.connection:
+            self._process_neural_connection(conn)
+
+        missing_neurons = self.expected_neurons.keys()
+        if len(missing_neurons):
+            err("Missing expected neurons: %s" % ', '.join(missing_neurons))
+
+    def _process_body_part(self, part):
+        """
+        Process body parts to get expected neurons.
+        :param part:
+        :return:
+        """
+        self.parts.add(part.id)
+        spec = self.body_spec.get(part.type)
+
+        for conn in part.child:
+            self._process_body_part(conn.part)
+
+        cats = {"in": spec.inputs, "out": spec.outputs}
+        for cat in cats:
+            for i in range(cats[cat]):
+                neuron_id = "%s-%s-%d" % (part.id, cat, i)
+                self.expected_neurons[neuron_id] = "%sput" % cat
+
     def _process_neuron(self, neuron):
         """
-
         :param neuron:
         :type neuron: NeuronSpec
         :return:
@@ -142,12 +179,12 @@ class SpecValidator:
             if not neuron.HasField("partId"):
                 err("Neuron '%s' in layer '%s' should have a part ID." % (neuron.id, layer))
 
-            if neuron.partId not in self.part_slots:
+            if neuron.partId not in self.parts:
                 err("Unknown part ID '%s' for neuron '%s'." % (neuron.partId, neuron.id))
 
             del self.expected_neurons[neuron.id]
 
-        spec = self.spec.get_neuron(neuron.type)
+        spec = self.spec.get(neuron.type)
         if spec is None:
             err("Unspecified neuron type '%s'." % neuron.type)
 
@@ -175,3 +212,29 @@ class SpecValidator:
             err("Duplicate neural connection %s -> %s" % (conn.src, conn.dst))
 
         connections.add(conn.dst)
+
+
+class RobotValidator(Validator):
+    """
+    Validator for the default robot, with standard body spec
+    and neural net.
+    """
+    def __init__(self, robot, body_spec, nn_spec):
+        """
+        :param robot:
+        :type robot: Robot
+        :param body_spec:
+        :type body_spec: BodyImplementation
+        :param nn_spec:
+        :type nn_spec: NeuralNetImplementation
+        :return:
+        """
+        self.body_validator = BodyValidator(body_spec, robot.body)
+        self.brain_validator = NeuralNetValidator(nn_spec, body_spec, robot.body, robot.brain)
+
+    def validate(self):
+        """
+        Validates the robot.
+        """
+        self.body_validator.validate()
+        self.brain_validator.validate()
