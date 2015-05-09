@@ -15,7 +15,7 @@ message Neuron {
   repeated Parameter param = 5;
 }
 
-message Brain {
+message NeuralNetwork {
   repeated Neuron neuron = 1;
   repeated NeuralConnection connection = 2;
 }

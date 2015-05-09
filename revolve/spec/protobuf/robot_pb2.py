@@ -15,7 +15,7 @@ import neural_net_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='robot.proto',
   package='revolve',
-  serialized_pb='\n\x0brobot.proto\x12\x07revolve\x1a\nbody.proto\x1a\x10neural_net.proto\"O\n\x05Robot\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x1b\n\x04\x62ody\x18\x02 \x02(\x0b\x32\r.revolve.Body\x12\x1d\n\x05\x62rain\x18\x03 \x02(\x0b\x32\x0e.revolve.Brain')
+  serialized_pb='\n\x0brobot.proto\x12\x07revolve\x1a\nbody.proto\x1a\x10neural_net.proto\"W\n\x05Robot\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x1b\n\x04\x62ody\x18\x02 \x02(\x0b\x32\r.revolve.Body\x12%\n\x05\x62rain\x18\x03 \x02(\x0b\x32\x16.revolve.NeuralNetwork')
 
 
 
@@ -58,11 +58,11 @@ _ROBOT = _descriptor.Descriptor(
   is_extendable=False,
   extension_ranges=[],
   serialized_start=54,
-  serialized_end=133,
+  serialized_end=141,
 )
 
 _ROBOT.fields_by_name['body'].message_type = body_pb2._BODY
-_ROBOT.fields_by_name['brain'].message_type = neural_net_pb2._BRAIN
+_ROBOT.fields_by_name['brain'].message_type = neural_net_pb2._NEURALNETWORK
 DESCRIPTOR.message_types_by_name['Robot'] = _ROBOT
 
 class Robot(_message.Message):

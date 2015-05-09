@@ -14,7 +14,7 @@ import parameter_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='neural_net.proto',
   package='revolve',
-  serialized_pb='\n\x10neural_net.proto\x12\x07revolve\x1a\x0fparameter.proto\"<\n\x10NeuralConnection\x12\x0b\n\x03src\x18\x01 \x02(\t\x12\x0b\n\x03\x64st\x18\x02 \x02(\t\x12\x0e\n\x06weight\x18\x03 \x02(\x02\"d\n\x06Neuron\x12\n\n\x02id\x18\x01 \x02(\t\x12\r\n\x05layer\x18\x02 \x02(\t\x12\x0c\n\x04type\x18\x03 \x02(\t\x12\x0e\n\x06partId\x18\x04 \x01(\t\x12!\n\x05param\x18\x05 \x03(\x0b\x32\x12.revolve.Parameter\"W\n\x05\x42rain\x12\x1f\n\x06neuron\x18\x01 \x03(\x0b\x32\x0f.revolve.Neuron\x12-\n\nconnection\x18\x02 \x03(\x0b\x32\x19.revolve.NeuralConnection')
+  serialized_pb='\n\x10neural_net.proto\x12\x07revolve\x1a\x0fparameter.proto\"<\n\x10NeuralConnection\x12\x0b\n\x03src\x18\x01 \x02(\t\x12\x0b\n\x03\x64st\x18\x02 \x02(\t\x12\x0e\n\x06weight\x18\x03 \x02(\x02\"d\n\x06Neuron\x12\n\n\x02id\x18\x01 \x02(\t\x12\r\n\x05layer\x18\x02 \x02(\t\x12\x0c\n\x04type\x18\x03 \x02(\t\x12\x0e\n\x06partId\x18\x04 \x01(\t\x12!\n\x05param\x18\x05 \x03(\x0b\x32\x12.revolve.Parameter\"_\n\rNeuralNetwork\x12\x1f\n\x06neuron\x18\x01 \x03(\x0b\x32\x0f.revolve.Neuron\x12-\n\nconnection\x18\x02 \x03(\x0b\x32\x19.revolve.NeuralConnection')
 
 
 
@@ -117,22 +117,22 @@ _NEURON = _descriptor.Descriptor(
 )
 
 
-_BRAIN = _descriptor.Descriptor(
-  name='Brain',
-  full_name='revolve.Brain',
+_NEURALNETWORK = _descriptor.Descriptor(
+  name='NeuralNetwork',
+  full_name='revolve.NeuralNetwork',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='neuron', full_name='revolve.Brain.neuron', index=0,
+      name='neuron', full_name='revolve.NeuralNetwork.neuron', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='connection', full_name='revolve.Brain.connection', index=1,
+      name='connection', full_name='revolve.NeuralNetwork.connection', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -148,15 +148,15 @@ _BRAIN = _descriptor.Descriptor(
   is_extendable=False,
   extension_ranges=[],
   serialized_start=210,
-  serialized_end=297,
+  serialized_end=305,
 )
 
 _NEURON.fields_by_name['param'].message_type = parameter_pb2._PARAMETER
-_BRAIN.fields_by_name['neuron'].message_type = _NEURON
-_BRAIN.fields_by_name['connection'].message_type = _NEURALCONNECTION
+_NEURALNETWORK.fields_by_name['neuron'].message_type = _NEURON
+_NEURALNETWORK.fields_by_name['connection'].message_type = _NEURALCONNECTION
 DESCRIPTOR.message_types_by_name['NeuralConnection'] = _NEURALCONNECTION
 DESCRIPTOR.message_types_by_name['Neuron'] = _NEURON
-DESCRIPTOR.message_types_by_name['Brain'] = _BRAIN
+DESCRIPTOR.message_types_by_name['NeuralNetwork'] = _NEURALNETWORK
 
 class NeuralConnection(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
@@ -170,11 +170,11 @@ class Neuron(_message.Message):
 
   # @@protoc_insertion_point(class_scope:revolve.Neuron)
 
-class Brain(_message.Message):
+class NeuralNetwork(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
-  DESCRIPTOR = _BRAIN
+  DESCRIPTOR = _NEURALNETWORK
 
-  # @@protoc_insertion_point(class_scope:revolve.Brain)
+  # @@protoc_insertion_point(class_scope:revolve.NeuralNetwork)
 
 
 # @@protoc_insertion_point(module_scope)

@@ -5,6 +5,6 @@ import "neural_net.proto";
 message Robot {
   required int32 id = 1;
   required Body body = 2; 
-  required Brain brain = 3;
+  required NeuralNetwork brain = 3;
 }
 

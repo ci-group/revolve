@@ -1,3 +1,7 @@
+"""
+Tests the `BodyDecoder` and the `NeuralNetworkDecoder` using a little help from
+the YAML converter.
+"""
 import unittest
 from ...convert import yaml_to_robot
 from ...spec import PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
@@ -167,30 +171,26 @@ brain:
 
 # End of YAML for test cases
 
-body_spec = BodyImplementation(
-    {
-        ("CoreComponent", "E"): PartSpec(
-            arity=2,
-            outputs=1,
-            inputs=2
-        ),
-        "2Params": PartSpec(
-            arity=2,
-            inputs=2,
-            outputs=2,
-            params=[ParamSpec("param_a", default=-1), ParamSpec("param_b", default=15)]
-        )
-    }
-)
+body_spec = BodyImplementation({
+    ("CoreComponent", "E"): PartSpec(
+        arity=2,
+        outputs=1,
+        inputs=2
+    ),
+    "2Params": PartSpec(
+        arity=2,
+        inputs=2,
+        outputs=2,
+        params=[ParamSpec("param_a", default=-1), ParamSpec("param_b", default=15)]
+    )
+})
 
-brain_spec = NeuralNetImplementation(
-    {
-        "Simple": NeuronSpec(params=["bias"]),
-        "Oscillator": NeuronSpec(
-            params=["period", "phaseOffset", "amplitude"]
-        )
-    }
-)
+brain_spec = NeuralNetImplementation({
+    "Simple": NeuronSpec(params=["bias"]),
+    "Oscillator": NeuronSpec(
+        params=["period", "phaseOffset", "amplitude"]
+    )
+})
 
 
 def ytr(yaml):
