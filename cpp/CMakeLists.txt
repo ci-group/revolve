@@ -59,8 +59,8 @@ file(GLOB_RECURSE
 	 revolve/gazebo/*.cpp
 )
 
-add_library(rvgzmodelcontrol SHARED ${REVOLVE_GZ_SRC})
-target_link_libraries(rvgzmodelcontrol ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+add_library(revolve-gazebo ${REVOLVE_GZ_SRC})
+target_link_libraries(revolve-gazebo ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
 
 
 

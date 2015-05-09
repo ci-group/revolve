@@ -31,7 +31,7 @@ public:
 	/**
 	 * Called when the driver sensor updates
 	 */
-	void OnUpdate();
+//	void OnUpdate();
 
 	/**
 	 * @return Factory class that creates motors for this model

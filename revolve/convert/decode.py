@@ -163,6 +163,8 @@ class NeuralNetworkDecoder(object):
         # Add automatic input / output neurons
         cats = {"in": spec.inputs, "out": spec.outputs}
         for cat in cats:
+            default_type = "Input" if cat == "in" else "Simple"
+
             for i in range(cats[cat]):
                 neuron_id = "%s-%s-%d" % (part_id, cat, i)
                 if neuron_id in self.neurons:
@@ -173,7 +175,7 @@ class NeuralNetworkDecoder(object):
                     "part_id": part_id
                 }
 
-                self._process_neuron_params(neuron_id, {"type": "Input"})
+                self._process_neuron_params(neuron_id, {"type": default_type})
 
     def _process_neuron_params(self, neuron_id, conf):
         """

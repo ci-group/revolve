@@ -16,8 +16,8 @@ namespace gazebo {
 
 class Brain {
 public:
-	Brain();
-	virtual ~Brain();
+	Brain() {};
+	virtual ~Brain() {};
 
 	/**
 	 * Update step called for the brain.
@@ -28,7 +28,7 @@ public:
 	 * @param Step size in nanoseconds
 	 */
 	virtual void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
-				double t, unsigned int step);
+				double t, unsigned int step) = 0;
 };
 
 } /* namespace gazebo */

@@ -36,7 +36,7 @@ public:
 	* @param Motor list
 	* @param Sensor list
 	*/
-	void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
+	virtual void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
 			double t, unsigned int step);
 
 	// Input / output arrays used for the neural network,
