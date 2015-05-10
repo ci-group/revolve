@@ -17,7 +17,7 @@ module_path = os.path.join(cur_path, '..', '..')
 sys.path.append(module_path)
 
 # Module imports
-from revolve.spec import BodyImplementation, default_neural_net, PartSpec
+from revolve.spec import BodyImplementation, default_neural_net, PartSpec, ParamSpec
 from revolve.builder.sdf.body import Box, Cylinder
 from revolve.convert.yaml import yaml_to_robot
 from revolve.builder.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder
@@ -68,6 +68,7 @@ class Wheel(Cylinder):
 
         # Register the servo motor
         self.motors.append(ServoMotor(self.id, motor_joint))
+        self.make_color(kwargs["red"], kwargs["green"], kwargs["blue"])
 
     def get_slot(self, slot_id):
         """
@@ -89,6 +90,7 @@ class Wheel(Cylinder):
 
 
 # Define a spec with a simple block, with two aliases
+channel_func = lambda channel: ParamSpec(channel, min_value=0, max_value=1, default=0.5)
 body_spec = BodyImplementation(
     {
         ("Core", "C"): PartSpec(
@@ -99,7 +101,10 @@ body_spec = BodyImplementation(
         ("Wheel", "W"): PartSpec(
             body_part=Wheel,
             arity=1,
-            outputs=1
+            outputs=1,
+
+            # Add color parameters to this part
+            params=[channel_func("red"), channel_func("green"), channel_func("blue")]
         ),
     }
 )
@@ -119,6 +124,10 @@ body:
     1:
       id: Sub2
       type: Wheel
+      params:
+        red: 1
+        green: 0
+        blue: 0
 '''
 
 # Convert the YAML file to protobuf

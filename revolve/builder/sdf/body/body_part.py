@@ -49,6 +49,19 @@ class BodyPart(PosableGroup):
         """
         raise NotImplementedError("`BodyPart._initialize()` must be implemented by child class.")
 
+    def make_color(self, r, g, b, a=1.0):
+        """
+        Applies `make_color` with the given arguments to every
+        link in this body part.
+        :param r:
+        :param g:
+        :param b:
+        :param a:
+        :return:
+        """
+        for link in self.get_elements_of_type(Link):
+            link.make_color(r, g, b, a)
+
     def get_slot(self, slot_id):
         """
         Returns the link for the given slot ID
