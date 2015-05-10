@@ -33,7 +33,7 @@ class Motor(Element):
         :param motor_type:
         :type motor_type: str
         """
-        super(Motor, self).__init__(self)
+        super(Motor, self).__init__()
         self.joint = joint
         self.part_id = part_id
         self.type = motor_type
@@ -84,22 +84,14 @@ class PID(Element):
         self.cmd_max = cmd_max
         self.cmd_min = cmd_min
 
-    def render_attributes(self):
-        """
-        """
-        attrs = super(PID, self).render_attributes()
-        attrs.update({
-            'p': nf(self.p),
-            'i': nf(self.i),
-            'd': nf(self.d)
-        })
-
-        for attr in ['i_max', 'i_min', 'cmd_max', 'cmd_min']:
+    def render_elements(self):
+        sub = []
+        for attr in ['p', 'i', 'd', 'i_max', 'i_min', 'cmd_max', 'cmd_min']:
             v = getattr(self, attr, None)
             if v is not None:
-                attrs[attr] = nf(v)
+                sub.append(Element(tag_name='rv:'+attr, body=nf(v)))
 
-        return attrs
+        return super(PID, self).render_elements() + sub
 
 
 class PIDMotor(Motor):

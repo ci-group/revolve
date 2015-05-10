@@ -28,7 +28,7 @@ public:
 	 * the sensor specifies to have, i.e. if the sensor specifies 2
 	 * input neurons it should fill `input[0]` and `input[1]`
 	 */
-	virtual void read(float * input) = 0;
+	virtual void read(double * input) = 0;
 
 	/**
 	 * @return The part ID

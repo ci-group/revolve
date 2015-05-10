@@ -30,7 +30,7 @@ public:
 	 * @param Raw motor update value, it is up to the motor to decide how to interpret this.
 	 * @param Actuation time in nanoseconds
 	 */
-	virtual void update(float * output, unsigned int step) = 0;
+	virtual void update(double * output, unsigned int step) = 0;
 
 	/**
 	 * @return The part ID

@@ -22,7 +22,7 @@ public:
 	/**
 	 * Returns a float intensity between 0 and 1
 	 */
-	virtual void read(float * input);
+	virtual void read(double * input);
 
 	/**
 	 * Called when the camera sensor is updated

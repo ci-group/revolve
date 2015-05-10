@@ -29,7 +29,7 @@ ImuSensor::ImuSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
 
 ImuSensor::~ImuSensor() {}
 
-void ImuSensor::read(float * input) {
+void ImuSensor::read(double * input) {
 	auto acc = this->castSensor_->GetLinearAcceleration();
 	auto velo = this->castSensor_->GetAngularVelocity();
 	input[0] = acc[0];

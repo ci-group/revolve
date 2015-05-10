@@ -1,4 +1,5 @@
 from __future__ import print_function
+from revolve.builder.sdf.motor import ServoMotor
 
 """
 Demonstrates creating a simple SDF bot from a spec and a YAML file.
@@ -65,6 +66,9 @@ class Wheel(Cylinder):
         self.add_joint(motor_joint)
         self.add_element(self.attachment)
 
+        # Register the servo motor
+        self.motors.append(ServoMotor(self.id, motor_joint))
+
     def get_slot(self, slot_id):
         """
         Override get_slot, because we should return the attachment.
@@ -122,7 +126,7 @@ proto = yaml_to_robot(body_spec, brain_spec, bot)
 
 # Convert the protobuf to SDF
 builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
-model = builder.get_sdf_model(proto, "rvgzmodelcontrol.so", "test_bot")
+model = builder.get_sdf_model(proto, "libtolmodelcontrol.so", "test_bot")
 
 # Create SDF and output
 sdf = SDF()

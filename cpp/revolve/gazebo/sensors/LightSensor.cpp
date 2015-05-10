@@ -69,7 +69,7 @@ void LightSensor::OnUpdate() {
  * case that would force the sensor update here on the IMU driver
  * thread, which might be detrimental to performance.
  */
-void LightSensor::read(float * input) {
+void LightSensor::read(double * input) {
 	input[0] = lastValue_;
 }
 

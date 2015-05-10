@@ -27,7 +27,7 @@ public:
 	ServoMotor(::gazebo::physics::ModelPtr model, std::string partId, sdf::ElementPtr motor);
 	virtual ~ServoMotor();
 
-	virtual void update(float * outputs, unsigned int step);
+	virtual void update(double * outputs, unsigned int step);
 
 protected:
 	// Uper and lower position limits

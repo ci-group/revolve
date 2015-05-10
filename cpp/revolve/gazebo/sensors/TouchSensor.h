@@ -25,7 +25,7 @@ public:
 	 * the NN works with floats, we return 0.0
 	 * or 1.0.
 	 */
-	virtual void read(float * input);
+	virtual void read(double * input);
 
 	/**
 	 * Called when the camera sensor is updated

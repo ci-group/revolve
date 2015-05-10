@@ -1,10 +1,8 @@
 /*
- * Standard Neural Network brain.
  *
- * @author Elte Hupkes
  */
 
-#include <revolve/gazebo/brain/StandardBrain.h>
+#include <revolve/gazebo/brain/NeuralNetwork.h>
 #include <revolve/gazebo/motors/Motor.h>
 #include <revolve/gazebo/sensors/Sensor.h>
 
@@ -15,37 +13,34 @@
 #include <map>
 #include <string>
 #include <sstream>
+#include <cmath>
 
 namespace revolve {
 namespace gazebo {
 
 // Internal helper function to build neuron params
-void neuronHelper(float* params, unsigned int* types, sdf::ElementPtr neuron);
+void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron);
 
-StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors) {
+NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & motors,
+		std::vector< SensorPtr > & sensors):
+	nInputs_(0),
+	nOutputs_(0),
+	nHidden_(0),
+	nNonInputs_(0),
+	flipState_(false)
+{
+	// Initialize weights, input and states to zero by default
+	memset(weights_, 0, sizeof(weights_));
+	memset(state1_, 0, sizeof(state1_));
+	memset(state2_, 0, sizeof(state2_));
+	memset(input_, 0, sizeof(input_));
+
 	// We now setup the neural network and its parameters. The end result
 	// of this operation should be that we can iterate/update all sensors in
 	// a straightforward manner, likewise for the motors. We therefore first
 	// create a map of all neurons, telling us how many there are for each
 	// type, and what their properties are. We then iterate all sensors and
 	// motors, creating the adequate neurons in place as we do so.
-
-	// Connection weights; we can have connections from
-	// every input / output / hidden neuron to every
-	// output / hidden neuron. We fill weight with zeros immediately
-	float weights[(MAX_INPUT_NEURONS + MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
-	             * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
-	memset(weights, 0, sizeof(weights));
-
-	// Neuron parameters, this is a maximum of 3 per neuron depending
-	// on the type. Input neurons can have no params currently.
-	float params[MAX_PARAMS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
-
-	// Neuron types, input neurons are fixed
-	unsigned int types[(MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
-
-	// Neuron counters
-	unsigned int nInputs = 0, nOutputs = 0, nHidden = 0;
 
 	// Map of ID to neuron element
 	std::map<std::string, sdf::ElementPtr> neuronMap;
@@ -83,25 +78,25 @@ StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 		neuronMap[neuronId] = neuron;
 
 		if ("input" == layer) {
-			if (nInputs >= MAX_INPUT_NEURONS) {
-				std::cerr << "The number of input neurons(" << (nInputs + 1)
+			if (nInputs_ >= MAX_INPUT_NEURONS) {
+				std::cerr << "The number of input neurons(" << (nInputs_ + 1)
 						<< ") is greater than the maximum allowed one ("
 						<< MAX_INPUT_NEURONS << ")" << std::endl;
 				throw std::runtime_error("Robot brain error");
 			}
 
 			toProcess.insert(neuronId);
-			nInputs++;
+			nInputs_++;
 		} else if ("output" == layer) {
-			if (nOutputs >= MAX_OUTPUT_NEURONS) {
-				std::cerr << "The number of output neurons(" << (nOutputs + 1)
+			if (nOutputs_ >= MAX_OUTPUT_NEURONS) {
+				std::cerr << "The number of output neurons(" << (nOutputs_ + 1)
 						<< ") is greater than the maximum allowed one ("
 						<< MAX_OUTPUT_NEURONS << ")" << std::endl;
 				throw std::runtime_error("Robot brain error");
 			}
 
 			toProcess.insert(neuronId);
-			nOutputs++;
+			nOutputs_++;
 		} else if ("hidden" == layer) {
 			if (hiddenNeurons.size() >= MAX_HIDDEN_NEURONS) {
 				std::cerr << "The number of hidden neurons(" << (hiddenNeurons.size() + 1)
@@ -111,7 +106,7 @@ StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 			}
 
 			hiddenNeurons.push_back(neuronId);
-			nHidden++;
+			nHidden_++;
 		} else {
 			std::cerr << "Unknown neuron layer '" << layer << "'." << std::endl;
 			throw std::runtime_error("Robot brain error");
@@ -136,7 +131,7 @@ StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 				throw std::runtime_error("Robot brain error");
 			}
 
-			neuronHelper(&params[outPos * MAX_PARAMS], &types[outPos], neuron);
+			neuronHelper(&params_[outPos * MAX_NEURON_PARAMS], &types_[outPos], details->second);
 			positionMap[neuronId.str()] = outPos;
 			toProcess.erase(neuronId.str());
 			outPos++;
@@ -178,7 +173,7 @@ StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 			std::cerr << (*it) << std::endl;
 		}
 
-		std::cerr << "Create virtual motors / sensors for input / output"
+		std::cerr << "Create virtual sensor and motors for input / output"
 				" neurons that you would like to control manually.";
 		throw std::runtime_error("Robot brain error");
 	}
@@ -187,12 +182,12 @@ StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 	for (auto it = hiddenNeurons.begin(); it != hiddenNeurons.end(); ++it) {
 		auto neuronId = *it;
 		positionMap[neuronId] = outPos;
-		neuronHelper(&params[outPos * MAX_PARAMS], &types[outPos], neuronMap[neuronId]);
+		neuronHelper(&params_[outPos * MAX_NEURON_PARAMS], &types_[outPos], neuronMap[neuronId]);
 		outPos++;
 	}
 
 	// Decode connections
-	unsigned int nNonInputs = nOutputs + nHidden;
+	nNonInputs_ = nOutputs_ + nHidden_;
 	auto connection = node->HasElement("rv:connection") ? node->GetElement("rv:connection") : sdf::ElementPtr();
 	while (connection) {
 		if (!connection->HasAttribute("src") || !connection->HasAttribute("dst")
@@ -226,7 +221,7 @@ StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 		if ("hidden" == srcLayer) {
 			// Offset by outputs if hidden neuron; nothing
 			// needs to happen for output or input neurons.
-			srcNeuronPos += nOutputs;
+			srcNeuronPos += nOutputs_;
 		}
 
 		if ("input" == dstLayer) {
@@ -234,7 +229,7 @@ StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 			throw std::runtime_error("Robot brain error");
 		} else if ("hidden" == dstLayer) {
 			// Offset by outputs if hidden neuron
-			dstNeuronPos += nOutputs;
+			dstNeuronPos += nOutputs_;
 		}
 
 		// Determine the index of the weight.
@@ -242,58 +237,96 @@ StandardBrain::StandardBrain(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 		// neurons can only be used as an input. By default, we offset
 		// the index by the position of the neuron, which is the
 		// correct position for an input neuron:
-		unsigned int idx = (srcNeuronPos * nNonInputs) + dstNeuronPos;
+		unsigned int idx = (srcNeuronPos * nNonInputs_) + dstNeuronPos;
 
 		if ("input" != srcLayer) {
 			// The output neuron list starts after all input neuron
 			// connections, so we need to offset it from all
 			// nInputs * nNonInputs of such connections:
-			idx += (nInputs * nNonInputs);
+			idx += (nInputs_ * nNonInputs_);
 		}
 
 		// Set the weight; `Get` has a return argument here
-		connection->GetAttribute("weight")->Get(weights[idx]);
+		connection->GetAttribute("weight")->Get(weights_[idx]);
 
 		// Load the next connection
 		connection = connection->GetNextElement("rv:connection");
 	}
-
-	// Create the actual neural network
-	neuralNetwork_.reset(new NeuralNetwork);
-
-	::nn_initNetwork(neuralNetwork_.get(), nInputs, nOutputs, nHidden,
-		&weights[0], &params[0], &types[0]);
 }
 
-StandardBrain::~StandardBrain() {}
+NeuralNetwork::~NeuralNetwork()
+{}
 
-// TODO Check for erroneous / missing parameters
-void neuronHelper(float* params, unsigned int* types, sdf::ElementPtr neuron) {
-	if (!neuron->HasAttribute("type")) {
-		std::cout << "Missing required `type` attribute for neuron." << std::endl;
-				throw std::runtime_error("Robot brain error");
+void NeuralNetwork::step(double time) {
+	unsigned int i = 0;
+	unsigned int j = 0;
+
+	if (nOutputs_ == 0) {
+		return;
 	}
-	auto type = neuron->GetAttribute("type")->GetAsString();
-	if ("sigmoid" == type || "simple" == type) {
-		types[0] = "simple" == type ? SIMPLE : SIGMOID;
 
-		// Set bias and gain parameters
-		params[0] = neuron->GetElement("rv:bias")->Get< float >();
-		params[1] = neuron->GetElement("rv:gain")->Get< float >();
-	} else if ("oscillator" == type) {
-		types[0] = OSCILLATOR;
-
-		// Set period, phase offset and gain
-		params[0] = neuron->GetElement("rv:period")->Get< float >();
-		params[1] = neuron->GetElement("rv:phase_offset")->Get< float >();
-		params[2] = neuron->GetElement("rv:gain")->Get< float >();
+	double *curState, *nextState;
+	if (flipState_) {
+		curState = &state2_[0];
+		nextState = &state1_[0];
 	} else {
-		std::cout << "Only sigmoid and oscillator neurons supported currently." << std::endl;
-		throw std::runtime_error("Robot brain error");
+		curState = &state1_[0];
+		nextState = &state2_[0];
 	}
+
+
+	unsigned int baseIndexOutputWeights = nNonInputs_ * nInputs_;
+	for (i = 0; i < nNonInputs_; ++i) {
+		double curNeuronActivation = 0;
+
+		for (j = 0; j < nInputs_; ++j) {
+			curNeuronActivation += weights_[nNonInputs_ * j + i]
+					* input_[j];
+		}
+
+		for (j = 0; j < nNonInputs_; ++j) {
+			curNeuronActivation += weights_[baseIndexOutputWeights
+					+ nNonInputs_ * j + i] * curState[j];
+		}
+
+		switch (types_[i]) {
+		case SIGMOID:
+			/* params are bias, gain */
+			curNeuronActivation -= params_[MAX_NEURON_PARAMS*i];
+			nextState[i] = 1.0
+				/ (1.0 + exp(-params_[MAX_NEURON_PARAMS*i+1] *
+						curNeuronActivation));
+			break;
+		case SIMPLE:
+			/* linear, params are bias, gain */
+			curNeuronActivation -= params_[MAX_NEURON_PARAMS*i];
+			nextState[i] = params_[MAX_NEURON_PARAMS*i+1] *
+					curNeuronActivation;
+			break;
+		case OSCILLATOR: { // Use the block to prevent "crosses initialization" error
+			/* TODO should this consider inputs too?? */
+			/* params are period, phase offset, gain (amplitude) */
+			double period = params_[MAX_NEURON_PARAMS*i];
+			double phaseOffset = params_[MAX_NEURON_PARAMS*i + 1];
+			double gain = params_[MAX_NEURON_PARAMS*i + 2];
+			nextState[i] = ((sin( (2.0*M_PI/period) *
+				 (time - period * phaseOffset))) + 1.0) / 2.0;
+
+			/* set output to be in [0.5 - gain/2, 0.5 + gain/2] */
+			nextState[i] = (0.5 - (gain/2.0) +
+					nextState[i] * gain);
+		} break;
+		default:
+			// Unsupported type will have been caught in the
+			// constructor.
+			break;
+		}
+	}
+
+	flipState_ = !flipState_;
 }
 
-void StandardBrain::update(const std::vector<MotorPtr>& motors,
+void NeuralNetwork::update(const std::vector<MotorPtr>& motors,
 		const std::vector<SensorPtr>& sensors,
 		double t, unsigned int step) {
 
@@ -301,28 +334,63 @@ void StandardBrain::update(const std::vector<MotorPtr>& motors,
 	unsigned int p = 0;
 	for (auto it = sensors.begin(); it != sensors.end(); ++it) {
 		auto sensor = *it;
-		sensor->read(&networkInputs_[p]);
+		sensor->read(&input_[p]);
 		p += sensor->inputs();
-		//std::cout << "Sensor " << i << ", " << networkInputs_[i] << std::endl;
 	}
 
-	::nn_feed(neuralNetwork_.get(), &networkInputs_[0]);
+	this->step(t);
 
-	// Progress the neural network
-	::nn_step(neuralNetwork_.get(), t);
-
-	// Fetch the new output values
-	::nn_fetch(neuralNetwork_.get(), &networkOutputs_[0]);
+	// Since the output neurons are the first in the state
+	// array we can just use it to update the motors directly.
+	double * output = flipState_ ? &state2_[0] : &state1_[0];
 
 	// Send new signals to the motors
 	p = 0;
 	for (auto it = motors.begin(); it != motors.end(); ++it) {
 		auto motor = *it;
-		motor->update(&networkOutputs_[p], step);
+		motor->update(&output[p], step);
 		p += motor->outputs();
 	}
 }
 
+// TODO Check for erroneous / missing parameters
+void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
+	if (!neuron->HasAttribute("type")) {
+		std::cerr << "Missing required `type` attribute for neuron." << std::endl;
+				throw std::runtime_error("Robot brain error");
+	}
+
+	auto type = neuron->GetAttribute("type")->GetAsString();
+	if ("Sigmoid" == type || "Simple" == type) {
+		types[0] = "Simple" == type ? SIMPLE : SIGMOID;
+
+		if (!neuron->HasElement("rv:bias") || !neuron->HasElement("rv:gain")) {
+			std::cerr << "A `Simple` neuron requires `rv:bias` and `rv:gain` elements." << std::endl;
+			throw std::runtime_error("Robot brain error");
+		}
+
+		// Set bias and gain parameters
+		params[0] = neuron->GetElement("rv:bias")->Get< double >();
+		params[1] = neuron->GetElement("rv:gain")->Get< double >();
+	} else if ("Oscillator" == type) {
+		types[0] = OSCILLATOR;
+
+		if (!neuron->HasElement("rv:period") || !neuron->HasElement("rv:phase_offset") ||
+				!neuron->HasElement("rv:gain")) {
+			std::cerr << "A `Simple` neuron requires `rv:period`, `rv:phase_offset` and `rv:gain` elements." << std::endl;
+			throw std::runtime_error("Robot brain error");
+		}
+
+		// Set period, phase offset and gain
+		params[0] = neuron->GetElement("rv:period")->Get< double >();
+		params[1] = neuron->GetElement("rv:phase_offset")->Get< double >();
+		params[2] = neuron->GetElement("rv:gain")->Get< double >();
+	} else {
+		std::cerr << "Only `Sigmoid` and `Oscillator` neurons supported currently, "
+				"given type is `" << type << '`' << std::endl;
+		throw std::runtime_error("Robot brain error");
+	}
+}
 
 } /* namespace gazebo */
-} /* namespace revolve_robogen */
+} /* namespace revolve */

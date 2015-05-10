@@ -23,7 +23,7 @@ public:
 	 * Read the value of this IMU sensor into the
 	 * input array.
 	 */
-	virtual void read(float * input);
+	virtual void read(double * input);
 
 private:
 	/**

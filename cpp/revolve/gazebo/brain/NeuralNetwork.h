@@ -1,70 +1,69 @@
 /*
- * @(#) NeuralNetwork.h   1.0   March 5, 2013
+ * Brain class for the default Neural Network as specified by
+ * Revolve. This is loosely based on the neural network
+ * code provided with the Robogen framework.
  *
- * Andrea Maesani (andrea.maesani@epfl.ch)
- * Joshua Auerbach (joshua.auerbach@epfl.ch)
+ * TODO Proper license attribution
  *
- * The ROBOGEN Framework
- * Copyright © 2012-2014 Andrea Maesani, Joshua Auerbach
- *
- * Laboratory of Intelligent Systems, EPFL
- *
- * This file is part of the ROBOGEN Framework.
- *
- * The ROBOGEN Framework is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License (GPL)
- * as published by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * @(#) $Id$
+ * @author Elte Hupkes
  */
-#ifndef ROBOGEN_NEURAL_NETWORK_H_
-#define ROBOGEN_NEURAL_NETWORK_H_
 
+#ifndef REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
+#define REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
+
+#include <revolve/gazebo/brain/Brain.h>
+
+// TODO This was true for Arduino, but we can change this
 #define MAX_INPUT_NEURONS 13
 #define MAX_OUTPUT_NEURONS 8
 
-/*
- * set arbitrarily
- */
-#define MAX_HIDDEN_NEURONS 20
+// Arbitrary value
+#define MAX_HIDDEN_NEURONS 30
 
-/*
- * max is either (bias, tau, gain) or (phase offset, period, gain)
- */
-#define MAX_PARAMS 3
+// (bias, tau, gain) or (phase offset, period, gain)
+#define MAX_NEURON_PARAMS 3
 
-
-/* HEADER_FOOTER_BREAK */
-
-
-/*
- * No namespace here on purpose ;-)
- */
+namespace revolve {
+namespace gazebo {
 
 /*
  * Copied from NeuronRepresentation.h
  */
 enum neuronType{
-		SIMPLE, /* corresponds to inputs */
-		SIGMOID,
-		CTRNN_SIGMOID,
-		OSCILLATOR,
-		SUPG
+	INPUT,
+	SIMPLE,
+	SIGMOID,
+	CTRNN_SIGMOID,
+	OSCILLATOR,
+	SUPG
 };
 
+class NeuralNetwork: public Brain {
+public:
+	/**
+	 * @param The brain node
+	 * @param Reference to motor list, which might be reordered
+	 * @param Reference to the sensor list, which might be reordered
+	 */
+	NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors);
+	virtual ~NeuralNetwork();
 
-typedef struct {
+   /**
+	* @param Motor list
+	* @param Sensor list
+	*/
+	virtual void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
+			double t, unsigned int step);
+
+protected:
+	/**
+	 * Steps the neural network
+	 */
+	void step(double time);
 
 	/*
+	 * Connection weights.
+	 *
 	 * Given m input neurons and n output neurons
 	 * m <= MAX_INPUT_NEURONS
 	 * n <= MAX_OUTPUT_NEURONS
@@ -83,105 +82,59 @@ typedef struct {
 	 * ...  ...  ... ....
 	 * wo_n0 wo_n1 ... wo_nn
 	 */
-	#ifndef ARDUINO
-	float weight[(MAX_INPUT_NEURONS + MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
-	             * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
-	#endif
-	/*
-	 * Params for hidden and output neurons, quantity depends on the type of
-	 * neuron
-	 */
-	#ifndef ARDUINO
-	float params[MAX_PARAMS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
-	#endif
-	/*
-	 * One state for each output and hidden neuron
-	 * The state has double the space to store also the next
-	 * value.
-	 */
-	float state[(MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)*2];
-
-	/**
-	 * Indicates at which index of the state array the current state starts
-	 * (alternatively curStateStart = 0 or curStateStart = n/2)
-	 */
-	int curStateStart;
-
-	/**
-	 * One input state for each input neuron
-	 */
-	float input[MAX_INPUT_NEURONS];
-
+	double weights_[(MAX_INPUT_NEURONS + MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
+		             * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
 
 	/**
 	 * Type of each non-input neuron
 	 */
-	#ifndef ARDUINO
-	unsigned int types[(MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
-	#endif
+	unsigned int types_[(MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
+
+	/*
+	 * Params for hidden and output neurons, quantity depends on the type of
+	 * neuron
+	 */
+	double params_[MAX_NEURON_PARAMS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
+
+	/**
+	 * One input state for each input neuron
+	 */
+	double input_[MAX_INPUT_NEURONS];
+
+	/*
+	 * Output states arrays for the current state and the next state.
+	 */
+	double state1_[MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS];
+	double state2_[MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS];
+
+	/**
+	 * Used to determine the current state array. False = state1,
+	 * true = state2.
+	 */
+	bool flipState_;
+
 	/**
 	 * The number of inputs
 	 */
-	unsigned int nInputs;
+	unsigned int nInputs_;
 
 	/**
 	 * The number of outputs
 	 */
-	unsigned int nOutputs;
+	unsigned int nOutputs_;
 
 	/**
 	 * The number of hidden units
 	 */
-	unsigned int nHidden;
+	unsigned int nHidden_;
 
 	/**
 	 * The number of non-inputs (i.e. nOutputs + nHidden)
 	 */
-	unsigned int nNonInputs;
+	unsigned int nNonInputs_;
+};
 
-} NeuralNetwork;
+} /* namespace gazebo */
+} /* namespace revolve */
 
-/* Note (Elte): I've prefixed all these methods with nn_, to prevent name clashes
-   (`step` in particular was causing a mysterious segfault, I'm assuming there is a
-   symbol in gazebo with the same name that takes priority). */
-
-/**
- * TODO update this doc
- * Initializes a NeuralNetwork data structure
- * @param network the neural network
- * @param nInputs the number of inputs of the neural network
- * @param nOutputs the number of outputs of the neural network
- * @param weight weights of the neural network. Weights must be provided in the same order as
- *               specified in the NeuralNetwork structure
- * @param bias the bias of each output neuron
- * @param gain the gain of each output neuron
- */
-void nn_initNetwork(NeuralNetwork* network, unsigned int nInputs,
-		unsigned int nOutputs, unsigned int nHidden,
-		const float *weights, const float* params,
-		const unsigned int *types);
-
-/**
- * Feed the neural network with input values
- * @param network the neural network
- * @param input the input values, must be an array of m inputs
- */
-void nn_feed(NeuralNetwork* network, const float *input);
-
-/**
- * Step the neural network of 1 timestep
- * @param network the neural network
- * @param time, amount of time elapsed since brain turned on
- * 				(needed for oscillators)
- */
-void nn_step(NeuralNetwork* network, float time);
-
-/**
- * Read the output of the neural network
- * @param network the neural network
- * @param output the output of the neural network, must point to an area of memory of at least size n
- */
-void nn_fetch(const NeuralNetwork* network, float *output);
-
-
-#endif /* ROBOGEN_NEURAL_NETWORK_H_ */
+#endif /* REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_ */

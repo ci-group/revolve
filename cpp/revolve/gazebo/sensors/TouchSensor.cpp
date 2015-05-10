@@ -41,7 +41,7 @@ void TouchSensor::OnUpdate() {
 	this->lastValue_ = contacts.contact_size() > 0;
 }
 
-void TouchSensor::read(float * input) {
+void TouchSensor::read(double * input) {
 	input[0] = lastValue_ ? 1 : 0;
 }
 

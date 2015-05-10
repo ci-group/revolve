@@ -29,24 +29,16 @@ unsigned int Motor::outputs() {
 }
 
 gz::common::PID Motor::createPid(sdf::ElementPtr pidElem) {
-	auto pParam = pidElem->GetAttribute("p");
-	auto iParam = pidElem->GetAttribute("i");
-	auto dParam = pidElem->GetAttribute("d");
-	auto iMaxParam = pidElem->GetAttribute("i_max");
-	auto iMinParam = pidElem->GetAttribute("i_min");
-	auto cmdMaxParam = pidElem->GetAttribute("cmd_max");
-	auto cmdMinParam = pidElem->GetAttribute("cmd_min");
-
 	double pv = 0, iv = 0, dv = 0, iMax = 0, iMin = 0,
 			cmdMax = 0, cmdMin = 0;
 
-	if (pParam) pParam->Get(pv);
-	if (iParam) iParam->Get(iv);
-	if (dParam) dParam->Get(dv);
-	if (iMaxParam) iMaxParam->Get(iMax);
-	if (iMinParam) iMinParam->Get(iMin);
-	if (cmdMaxParam) cmdMaxParam->Get(cmdMax);
-	if (cmdMinParam) cmdMinParam->Get(cmdMin);
+	if (pidElem->HasElement("rv:p")) pv = pidElem->GetElement("rv:p")->Get<double>();
+	if (pidElem->HasElement("rv:i")) iv = pidElem->GetElement("rv:i")->Get<double>();
+	if (pidElem->HasElement("rv:d")) dv = pidElem->GetElement("rv:d")->Get<double>();
+	if (pidElem->HasElement("rv:i_max")) iMax = pidElem->GetElement("rv:i_max")->Get<double>();
+	if (pidElem->HasElement("rv:i_min")) iMin = pidElem->GetElement("rv:i_min")->Get<double>();
+	if (pidElem->HasElement("rv:cmd_max")) cmdMax = pidElem->GetElement("rv:cmd_max")->Get<double>();
+	if (pidElem->HasElement("rv:cmd_min")) cmdMin = pidElem->GetElement("rv:cmd_min")->Get<double>();
 
 	return gz::common::PID(pv, iv, dv, iMax, iMin, cmdMax, cmdMin);
 }

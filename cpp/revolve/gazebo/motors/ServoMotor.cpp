@@ -28,9 +28,8 @@ ServoMotor::ServoMotor(gz::physics::ModelPtr model, std::string partId, sdf::Ele
 	upperLimit_ = joint_->GetUpperLimit(0).Radian();
 	lowerLimit_ = joint_->GetLowerLimit(0).Radian();
 
-	auto veloParam = motor->GetAttribute("velocity_driven");
-	if (veloParam) {
-		veloParam->Get(velocityDriven_);
+	if (motor->HasAttribute("velocity_driven")) {
+		motor->GetAttribute("velocity_driven")->Get(velocityDriven_);
 	}
 
 	if (motor->HasElement("rv:pid")) {
@@ -49,23 +48,22 @@ ServoMotor::ServoMotor(gz::physics::ModelPtr model, std::string partId, sdf::Ele
 		noiseParam->Get(noise_);
 	}
 
-	auto minVParam = motor->GetAttribute("min_velocity");
-	auto maxVParam = motor->GetAttribute("max_velocity");
-
-	if (!minVParam || !maxVParam) {
-		std::cerr << "Missing servo min/max velocity parameters, "
-				"velocity will be zero." << std::endl;
-	} else {
-		minVParam->Get(minVelocity_);
-		maxVParam->Get(maxVelocity_);
+	if (velocityDriven_) {
+		if (!motor->HasAttribute("min_velocity") || !motor->HasAttribute("max_velocity")) {
+			std::cerr << "Missing servo min/max velocity parameters, "
+					"velocity will be zero." << std::endl;
+		} else {
+			motor->GetAttribute("min_velocity")->Get(minVelocity_);
+			motor->GetAttribute("max_velocity")->Get(maxVelocity_);
+		}
 	}
 }
 
 ServoMotor::~ServoMotor() {}
 
-void ServoMotor::update(float * outputs, unsigned int /*step*/) {
+void ServoMotor::update(double * outputs, unsigned int /*step*/) {
 	// Just one network output, which is the first
-	float networkOutput = outputs[0];
+	double networkOutput = outputs[0];
 
 	// Motor noise in range +/- noiseLevel * actualValue
 	networkOutput += ((2 * gz::math::Rand::GetDblUniform() * noise_) -

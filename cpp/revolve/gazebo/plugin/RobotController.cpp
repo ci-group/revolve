@@ -7,7 +7,7 @@
 
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
-#include <revolve/gazebo/brain/StandardBrain.h>
+#include <revolve/gazebo/brain/NeuralNetwork.h>
 
 #include <gazebo/transport/transport.hh>
 #include <gazebo/sensors/sensors.hh>
@@ -61,7 +61,7 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 
 	// Load brain, this needs to be done after the motors and
 	// sensors so they can be reordered.
-	//this->loadBrain(settings);
+	this->loadBrain(settings);
 
 //	if (!this->driver) {
 //		std::cerr << "No driving sensor was found, robot will not be actuated." << std::endl;
@@ -123,7 +123,7 @@ void RobotController::loadBrain(sdf::ElementPtr sdf) {
 		return;
 	}
 	auto brain = sdf->GetElement("rv:brain");
-	brain_.reset(new StandardBrain(brain, motors_, sensors_));
+	brain_.reset(new NeuralNetwork(brain, motors_, sensors_));
 }
 
 } /* namespace gazebo */
