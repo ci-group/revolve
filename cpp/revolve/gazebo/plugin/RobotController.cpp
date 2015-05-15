@@ -41,8 +41,6 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 	this->model = _parent;
 	this->world = _parent->GetWorld();
 
-	std::cout << "Plugin loaded." << std::endl;
-
 	if (!_sdf->HasElement("rv:robot_config")) {
 		std::cerr << "No `rv:robot_config` element found, controller not initialized."
 			  << std::endl;
