@@ -28,10 +28,7 @@ public:
 public:
 	virtual void Load(::gazebo::physics::ModelPtr _parent, sdf::ElementPtr _sdf);
 
-	/**
-	 * Called when the driver sensor updates
-	 */
-//	void OnUpdate();
+
 
 	/**
 	 * @return Factory class that creates motors for this model
@@ -42,6 +39,13 @@ public:
 	 * @return Factory class that creates motors for this robot
 	 */
 	virtual SensorFactoryPtr getSensorFactory(::gazebo::physics::ModelPtr model);
+
+	/**
+	 * Update event which, by default, is called periodically according to the
+	 * update rate specified in the robot plugin.
+	 */
+	virtual void DoUpdate(const ::gazebo::common::UpdateInfo info);
+
 protected:
 	/**
 	 * Detects and loads motors in the plugin spec
@@ -58,6 +62,20 @@ protected:
 	 * tries to construct a `StandardNeuralNetwork`.
 	 */
 	virtual void loadBrain(sdf::ElementPtr sdf);
+
+	/**
+	 * Method that is called at the end of the default `Load` function. This
+	 * should be used to initialize robot actuation, i.e. register some update
+	 * event. By default, this grabs the `update_rate` from the robot config
+	 * pointer, and binds
+	 */
+	virtual void startup(::gazebo::physics::ModelPtr _parent, sdf::ElementPtr _sdf);
+
+	/**
+	 * Default method bound to world update event, checks whether the
+	 * actuation time has passed and updates if required.
+	 */
+	void CheckUpdate(const ::gazebo::common::UpdateInfo info);
 
 	/**
 	 * Holds an instance of the motor factory
@@ -102,8 +120,6 @@ protected:
     // Pointer to the world
 	::gazebo::physics::WorldPtr world;
 
-    // Pointer to the driver sensor
-    SensorPtr driver;
 private:
     // Driver update event pointer
     ::gazebo::event::ConnectionPtr updateConnection_;

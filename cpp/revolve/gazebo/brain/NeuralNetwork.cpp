@@ -376,15 +376,15 @@ void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
 		types[0] = OSCILLATOR;
 
 		if (!neuron->HasElement("rv:period") || !neuron->HasElement("rv:phase_offset") ||
-				!neuron->HasElement("rv:gain")) {
-			std::cerr << "A `Simple` neuron requires `rv:period`, `rv:phase_offset` and `rv:gain` elements." << std::endl;
+				!neuron->HasElement("rv:amplitude")) {
+			std::cerr << "An `Oscillator` neuron requires `rv:period`, `rv:phase_offset` and `rv:amplitude` elements." << std::endl;
 			throw std::runtime_error("Robot brain error");
 		}
 
 		// Set period, phase offset and gain
 		params[0] = neuron->GetElement("rv:period")->Get< double >();
 		params[1] = neuron->GetElement("rv:phase_offset")->Get< double >();
-		params[2] = neuron->GetElement("rv:gain")->Get< double >();
+		params[2] = neuron->GetElement("rv:amplitude")->Get< double >();
 	} else {
 		std::cerr << "Only `Sigmoid` and `Oscillator` neurons supported currently, "
 				"given type is `" << type << '`' << std::endl;

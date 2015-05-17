@@ -1,5 +1,6 @@
 from math import radians
 from sdfbuilder import Model, Element
+from sdfbuilder.util import number_format as nf
 from ...spec import Robot, BodyPart as PbBodyPart, BodyImplementation, NeuralNetImplementation
 from ...spec.exception import err
 from neural_net import Neuron, NeuralConnection
@@ -134,12 +135,14 @@ class RobotBuilder(object):
         self.body_builder = body_builder
         self.brain_builder = brain_builder
 
-    def get_sdf_model(self, robot, controller_plugin, name="sdf_robot"):
+    def get_sdf_model(self, robot, controller_plugin, update_rate=5, name="sdf_robot"):
         """
         :param robot: Protobuf robot
         :type robot: Robot
         :param controller_plugin: Name of the shared library of the model plugin
         :type controller_plugin: str
+        :param update_rate: Update rate as used by the default controller
+        :type update_rate: float
         :param name: Name of the SDF model
         :type name: str
         :return: The sdfbuilder Model
@@ -157,6 +160,7 @@ class RobotBuilder(object):
         config = Element(tag_name='rv:robot_config', attributes={
             'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
         })
+        config.add_element(Element(tag_name='rv:update_rate', body=nf(update_rate)))
         plugin.add_element(config)
 
         # Add brain config element

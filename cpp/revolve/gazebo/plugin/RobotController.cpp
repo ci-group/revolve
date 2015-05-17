@@ -13,7 +13,6 @@
 #include <gazebo/sensors/sensors.hh>
 
 #include <boost/bind.hpp>
-#include <boost/algorithm/string/replace.hpp>
 #include <revolve/gazebo/plugin/RobotController.h>
 
 #include <iostream>
@@ -41,6 +40,8 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 	this->model = _parent;
 	this->world = _parent->GetWorld();
 
+	std::cout << "Plugin loaded" << std::endl;
+
 	if (!_sdf->HasElement("rv:robot_config")) {
 		std::cerr << "No `rv:robot_config` element found, controller not initialized."
 			  << std::endl;
@@ -48,6 +49,11 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 	}
 
 	auto settings = _sdf->GetElement("rv:robot_config");
+
+	if (settings->HasElement("rv:update_rate")) {
+		int updateRate = settings->GetElement("rv:update_rate")->Get< double >();
+		actuationTime_ = (unsigned int)((1.0e9 / updateRate));
+	}
 
 	// Load motors
 	this->motorFactory_ = this->getMotorFactory(_parent);
@@ -58,16 +64,12 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 	this->loadSensors(settings);
 
 	// Load brain, this needs to be done after the motors and
-	// sensors so they can be reordered.
+	// sensors so they can potentially be reordered.
 	this->loadBrain(settings);
 
-//	if (!this->driver) {
-//		std::cerr << "No driving sensor was found, robot will not be actuated." << std::endl;
-//		return;
-//	}
+	// Call startup function which decides on actuation
+	this->startup(_parent, _sdf);
 }
-
-
 
 void RobotController::loadMotors(sdf::ElementPtr sdf) {
 	if (!sdf->HasElement("rv:motor")) {
@@ -91,16 +93,6 @@ void RobotController::loadSensors(sdf::ElementPtr sdf) {
 	while (sensor) {
 		auto sensorObj = this->sensorFactory_->create(sensor);
 		sensors_.push_back(sensorObj);
-
-		if (sensor->HasAttribute("driver")) {
-			bool isDriver;
-			sensor->GetAttribute("driver")->Get(isDriver);
-
-			if (isDriver) {
-				this->driver = sensorObj;
-			}
-		}
-
 		sensor = sensor->GetNextElement("rv:sensor");
 	}
 }
@@ -122,6 +114,29 @@ void RobotController::loadBrain(sdf::ElementPtr sdf) {
 	}
 	auto brain = sdf->GetElement("rv:brain");
 	brain_.reset(new NeuralNetwork(brain, motors_, sensors_));
+}
+
+// Default startup, bind to CheckUpdate
+void RobotController::startup(::gazebo::physics::ModelPtr /*_parent*/, sdf::ElementPtr /*_sdf*/) {
+	this->updateConnection_ = gz::event::Events::ConnectWorldUpdateBegin(
+		boost::bind(&RobotController::CheckUpdate, this, _1));
+}
+
+void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo info) {
+	auto simTime = info.simTime;
+	unsigned int nsecPassed = (simTime.sec - lastActuationSec_) * 1000000000 +
+			(simTime.nsec - lastActuationNsec_);
+
+	if (nsecPassed >= actuationTime_) {
+		lastActuationNsec_ = simTime.nsec;
+		lastActuationSec_ = simTime.sec;
+		this->DoUpdate(info);
+	}
+}
+
+// Default update function simply tells the brain to perform an update
+void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo info) {
+	brain_->update(motors_, sensors_, info.simTime.Double(), actuationTime_);
 }
 
 } /* namespace gazebo */

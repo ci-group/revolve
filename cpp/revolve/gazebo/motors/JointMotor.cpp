@@ -27,6 +27,8 @@ JointMotor::JointMotor(gz::physics::ModelPtr model, std::string partId, sdf::Ele
 		std::cerr << "Cannot locate joint motor `" << jointName << "`" << std::endl;
 		throw std::runtime_error("Motor error");
 	}
+
+	jointName_ = joint_->GetScopedName();
 }
 
 JointMotor::~JointMotor() {}

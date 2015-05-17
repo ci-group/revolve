@@ -75,20 +75,20 @@ brain:
     Hip1-out-0:
       type        : Oscillator
       period      : 0.8
-      phaseOffset : -0.8
+      phase_offset : -0.8
       gain        : 1
     Hip2-out-0:
       type        : Oscillator
       period      : 0.8
-      phaseOffset : -0.95
+      phase_offset : -0.95
       gain        : 1
     Knee1-out-0:
       type        : Oscillator
       period      : 0.8
-      phaseOffset : 0.2
+      phase_offset : 0.2
       gain        : 1
     Knee2-out-0:
       type        : Oscillator
       period      : 0.8
-      phaseOffset : -1.0
+      phase_offset : -1.0
       gain        : 1

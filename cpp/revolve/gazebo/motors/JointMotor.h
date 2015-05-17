@@ -23,6 +23,11 @@ protected:
 	 * The joint this motor is controlling
 	 */
 	::gazebo::physics::JointPtr joint_;
+
+	/**
+	 * Scoped name of the controlled joint
+	 */
+	std::string jointName_;
 };
 
 } /* namespace gazebo */

@@ -1,12 +1,9 @@
-/*
- * ServoMotor.h
- *
- *  Created on: Mar 5, 2015
- *      Author: elte
+/**
+ * Position based (servo) motor
  */
 
-#ifndef REVOLVE_GAZEBO_MOTORS_SERVOMOTOR_H_
-#define REVOLVE_GAZEBO_MOTORS_SERVOMOTOR_H_
+#ifndef REVOLVE_GAZEBO_POSITIONMOTOR_H_
+#define REVOLVE_GAZEBO_POSITIONMOTOR_H_
 
 #include <revolve/gazebo/motors/JointMotor.h>
 
@@ -15,7 +12,7 @@
 namespace revolve {
 namespace gazebo {
 
-class ServoMotor: public JointMotor {
+class PositionMotor : public JointMotor {
 public:
 	/**
 	 * @param The model the motor is contained in
@@ -24,20 +21,15 @@ public:
 	 * @param Whether the motor is velocity driven (the alternative is position driven)
 	 * @param The derivative gain of the motor's PID controller
 	 */
-	ServoMotor(::gazebo::physics::ModelPtr model, std::string partId, sdf::ElementPtr motor);
-	virtual ~ServoMotor();
+	PositionMotor(::gazebo::physics::ModelPtr model, std::string partId, sdf::ElementPtr motor);
+	virtual ~PositionMotor();
 
 	virtual void update(double * outputs, unsigned int step);
 
 protected:
-	// Uper and lower position limits
+	// Upper and lower position limits
 	double lowerLimit_;
 	double upperLimit_;
-
-	// Velocity limits
-	double minVelocity_;
-	double maxVelocity_;
-	bool velocityDriven_;
 
 	// Motor noise
 	double noise_;
@@ -46,14 +38,9 @@ protected:
 	 * The joint controller of the attaching model
 	 */
 	::gazebo::physics::JointControllerPtr jointController_;
-
-	/**
-	 * Store string joint name for repeated use
-	 */
-	std::string jointName_;
 };
 
 } /* namespace gazebo */
 } /* namespace revolve */
 
-#endif /* REVOLVE_GAZEBO_MOTORS_SERVOMOTOR_H_ */
+#endif /* REVOLVE_GAZEBO_POSITIONMOTOR_H_ */

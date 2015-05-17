@@ -97,7 +97,11 @@ class PID(Element):
 class PIDMotor(Motor):
     """
     General class for a motor controlled by
-    a PID.
+    a PID. The C++ code contains logic to use this PID to
+    control either a joint's position or its velocity using
+    this PID controller. To model for instance a servo which
+    can exert a certain maximum force, add these force limits
+    to the joint being controlled.
     """
     # PID motors have a general C++ controller
     MOTOR_TYPE = 'pid'
@@ -120,9 +124,36 @@ class PIDMotor(Motor):
         return super(PIDMotor, self).render_elements() + [self.pid]
 
 
-class ServoMotor(PIDMotor):
+class PositionMotor(PIDMotor):
     """
-    Servo motor class, is identical to the PID motor
-    except for the type.
+    A position based PID motor. The positional limits
+    of this motor are generally derived from the
+    corresponding joint.
     """
-    MOTOR_TYPE = 'servo'
+    MOTOR_TYPE = 'position'
+
+
+class VelocityMotor(PIDMotor):
+    """
+    A velocity based PDI motor
+    """
+    MOTOR_TYPE = 'velocity'
+
+    def __init__(self, part_id, joint, pid=None, motor_type=None, min_velocity=-100, max_velocity=100):
+        """
+
+        :param min_velocity:
+        :param max_velocity:
+        :return:
+        """
+        super(VelocityMotor, self).__init__(part_id, joint, pid, motor_type)
+        self.min_velocity = min_velocity
+        self.max_velocity = max_velocity
+
+    def render_attributes(self):
+        """
+        :return:
+        """
+        attrs = super(VelocityMotor, self).render_attributes()
+        attrs.update({'min_velocity': nf(self.min_velocity), 'max_velocity': nf(self.max_velocity)})
+        return attrs

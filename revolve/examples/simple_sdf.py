@@ -1,26 +1,27 @@
-from __future__ import print_function
-from revolve.builder.sdf.motor import ServoMotor
-
 """
 Demonstrates creating a simple SDF bot from a spec and a YAML file.
 """
+from __future__ import print_function
+import math
+from sdfbuilder.physics import Friction
+from revolve.builder.sdf.motor import VelocityMotor, PID
 import sys
 import os
 from sdfbuilder.joint import Joint
 from sdfbuilder.math import Vector3
-from sdfbuilder import SDF, Link
-
-
-# Add module to path
-cur_path = os.path.dirname(os.path.realpath(__file__))
-module_path = os.path.join(cur_path, '..', '..')
-sys.path.append(module_path)
+from sdfbuilder import SDF, Link, Element
 
 # Module imports
 from revolve.spec import BodyImplementation, default_neural_net, PartSpec, ParamSpec
 from revolve.builder.sdf.body import Box, Cylinder
 from revolve.convert.yaml import yaml_to_robot
 from revolve.builder.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder
+
+# Some configuration
+# This is the number of times per second we will call our
+# robot's brain update (in the default controller). We'll
+# also use it as
+UPDATE_RATE = 5
 
 
 # Define two simple body parts
@@ -66,8 +67,12 @@ class Wheel(Cylinder):
         self.add_joint(motor_joint)
         self.add_element(self.attachment)
 
-        # Register the servo motor
-        self.motors.append(ServoMotor(self.id, motor_joint))
+        # Register a joint motor with a maximum velocity of
+        # 50 rounds per minute (the speed is in radians per second)
+        # We also give it a simple PID controller
+        pid = PID(proportional_gain=1.0, integral_gain=0.1)
+        max_speed = 2 * math.pi * 50.0 / 60
+        self.motors.append(VelocityMotor(self.id, motor_joint, pid=pid, min_velocity=-max_speed, max_velocity=max_speed))
         self.make_color(kwargs["red"], kwargs["green"], kwargs["blue"])
 
     def get_slot(self, slot_id):
@@ -128,6 +133,18 @@ body:
         red: 1
         green: 0
         blue: 0
+brain:
+  params:
+    Sub1-out-0:
+      type: Oscillator
+      period: 4.0
+      phase_offset: 0
+      amplitude: 1
+    Sub2-out-0:
+      type: Oscillator
+      period: 4.0
+      phase_offset: 2.0
+      amplitude: 1
 '''
 
 # Convert the YAML file to protobuf
@@ -135,7 +152,8 @@ proto = yaml_to_robot(body_spec, brain_spec, bot)
 
 # Convert the protobuf to SDF
 builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
-model = builder.get_sdf_model(proto, "libtolmodelcontrol.so", "test_bot")
+model = builder.get_sdf_model(proto, "libtolmodelcontrol.so", update_rate=UPDATE_RATE, name="test_bot")
+model.translate(Vector3(0, 0, Wheel.RADIUS))
 
 # Create SDF and output
 sdf = SDF()

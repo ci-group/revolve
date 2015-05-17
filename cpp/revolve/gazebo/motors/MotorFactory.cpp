@@ -23,8 +23,10 @@ MotorFactory::~MotorFactory() {}
 
 MotorPtr MotorFactory::getMotor(sdf::ElementPtr motor, const std::string & type, const std::string & partId) {
 	MotorPtr motorObj;
-	if ("servo" == type) {
-		motorObj.reset(new ServoMotor(model_, partId, motor));
+	if ("position" == type) {
+		motorObj.reset(new PositionMotor(model_, partId, motor));
+	} else if ("velocity" == type) {
+		motorObj.reset(new VelocityMotor(model_, partId, motor));
 	}
 
 	return motorObj;

@@ -1,6 +1,7 @@
 from sdfbuilder import PosableGroup, Link, Model
 from sdfbuilder.joint import Joint, FixedJoint
 from sdfbuilder.math import Vector3
+from sdfbuilder.structure import Collision
 
 from revolve.builder.sdf.body.exception import ArityException
 
@@ -112,6 +113,17 @@ class BodyPart(PosableGroup):
         append = "__"+str(len(self.elements)) if label is None else "_"+str(label)
         link = Link("link_"+str(id)+"_"+append)
         self.add_element(link)
+
+    def add_surface_all(self, surface):
+        """
+        Adds the given surface element to all link collision
+        objects in this body part.
+        :param surface:
+        :return:
+        """
+        for link in self.get_elements_of_type(Link):
+            for collision in link.get_elements_of_type(Collision):
+                collision.add_element(surface)
 
     def attach(self, other, other_slot, my_slot, orientation):
         """
