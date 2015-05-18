@@ -21,12 +21,13 @@ MotorFactory::MotorFactory(::gazebo::physics::ModelPtr model):
 
 MotorFactory::~MotorFactory() {}
 
-MotorPtr MotorFactory::getMotor(sdf::ElementPtr motor, const std::string & type, const std::string & partId) {
+MotorPtr MotorFactory::getMotor(sdf::ElementPtr motor, const std::string & type,
+								const std::string & partId, const std::string & motorId) {
 	MotorPtr motorObj;
 	if ("position" == type) {
-		motorObj.reset(new PositionMotor(model_, partId, motor));
+		motorObj.reset(new PositionMotor(model_, partId, motorId, motor));
 	} else if ("velocity" == type) {
-		motorObj.reset(new VelocityMotor(model_, partId, motor));
+		motorObj.reset(new VelocityMotor(model_, partId, motorId, motor));
 	}
 
 	return motorObj;
@@ -35,15 +36,17 @@ MotorPtr MotorFactory::getMotor(sdf::ElementPtr motor, const std::string & type,
 MotorPtr MotorFactory::create(sdf::ElementPtr motor) {
 	auto typeParam = motor->GetAttribute("type");
 	auto partIdParam = motor->GetAttribute("part_id");
+	auto idParam = motor->GetAttribute("id");
 
-	if (!typeParam || !partIdParam) {
-		std::cerr << "Motor is missing required attributes (`type` or `part_id`)." << std::endl;
+	if (!typeParam || !partIdParam || !idParam) {
+		std::cerr << "Motor is missing required attributes (`id`, `type` or `part_id`)." << std::endl;
 		throw std::runtime_error("Motor error");
 	}
 
 	auto partId = partIdParam->GetAsString();
 	auto type = typeParam->GetAsString();
-	MotorPtr motorObj = this->getMotor(motor, type, partId);
+	auto id = idParam->GetAsString();
+	MotorPtr motorObj = this->getMotor(motor, type, partId, id);
 
 	if (!motorObj) {
 		std::cerr << "Motor type '" << type <<

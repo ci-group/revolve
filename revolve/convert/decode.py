@@ -250,6 +250,8 @@ class NeuralNetworkDecoder(object):
     def _process_neurons(self, brain):
         """
         Processes neuron data into protobuf neurons.
+        :param brain:
+        :type brain: NeuralNetwork
         :return:
         """
         for neuron_id in self.neurons:

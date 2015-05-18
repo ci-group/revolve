@@ -1,5 +1,11 @@
+import random
 from .exception import err
 from .protobuf import BodyPart
+
+try:
+    basestring
+except NameError:
+    basestring = str
 
 
 def _process_aliases(obj, alias_map):
@@ -42,8 +48,8 @@ class SpecImplementation(object):
         Returns the part settings corresponding to the given type
         :param part_type:
         :type part_type: str
-        :return: PartSpec implementation spec, or None if not found
-        :rtype: PartSpec
+        :return: Implementation spec, or None if not found
+        :rtype: Parameterizable
         """
         key = self.aliases.get(part_type, part_type)
         return self.spec.get(key, None)
@@ -58,6 +64,15 @@ class SpecImplementation(object):
         """
         self.spec[type_name] = spec
         _process_aliases(self.spec, self.aliases)
+
+    def get_all_types(self):
+        """
+        Returns a list of (the first aliases of) all
+        spec identifiers.
+        :return: A list of all spec identifiers
+        :rtype list:
+        """
+        return [(a if isinstance(a, basestring) else a[0]) for a in self.spec.keys()]
 
 
 class BodyImplementation(SpecImplementation):
@@ -120,6 +135,10 @@ class ParamSpec(object):
         self.name = name
         self.min = min_value
         self.max = max_value
+
+        if self.min is not None and self.max is not None and self.min > self.max:
+            raise ValueError("Parameter min value is larger than parameter max value.")
+
         self.min_inclusive = min_inclusive
         self.max_inclusive = max_inclusive
         self.default = default
@@ -141,6 +160,53 @@ class ParamSpec(object):
             max_valid = value <= self.max and (self.max_inclusive or value < self.max)
 
         return min_valid and max_valid
+
+    def get_random_value(self, epsilon=1e-9):
+        """
+        Returns a random value according to this parameter spec. By default, this
+        returns a uniformly distributed value between the minimum and the maximum
+        value. If no minimum or maximum are supplied, the default value is returned.
+
+        The uniform distribution has a small chance of generating a boundary value,
+        if this happens while the boundary should not be included, the given epsilon
+        value is added or subtracted to get the value within range.
+
+        :param epsilon: See method description.
+        :type epsilon: float
+        :return: The generated value
+        :rtype: float
+        """
+        if self.min is None or self.max is None:
+            return self.default
+
+        value = random.uniform(self.min, self.max)
+        if value == self.min and not self.min_inclusive:
+            value += epsilon
+        elif value == self.max and not self.max_inclusive:
+            value -= epsilon
+
+        return value
+
+
+class NormalDistParamSpec(ParamSpec):
+    """
+    Parameter spec for a normally distributed parameter, mostly serves
+    generation purposes. No min / max values can be specified in the
+    constructor (because that generally makes no sense for a normally
+    distributed var).
+    """
+    def __init__(self, name, mean=0.0, stddev=1.0, default=0.0):
+        """
+        """
+        super(NormalDistParamSpec, self).__init__(name, default=default)
+        self.mean = mean
+        self.stddev = stddev
+
+    def get_random_value(self, epsilon=1e-9):
+        """
+        Random initialisation with mean and standard deviation.
+        """
+        return random.gauss(self.mean, self.stddev)
 
 
 class Parameterizable(object):

@@ -12,10 +12,11 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-Motor::Motor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int outputNeurons):
+Motor::Motor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, unsigned int outputNeurons):
 	model_(model),
 	outputs_(outputNeurons),
-	partId_(partId)
+	partId_(partId),
+	motorId_(motorId)
 {}
 
 Motor::~Motor() {}
@@ -41,6 +42,10 @@ gz::common::PID Motor::createPid(sdf::ElementPtr pidElem) {
 	if (pidElem->HasElement("rv:cmd_min")) cmdMin = pidElem->GetElement("rv:cmd_min")->Get<double>();
 
 	return gz::common::PID(pv, iv, dv, iMax, iMin, cmdMax, cmdMin);
+}
+
+std::string Motor::motorId() {
+	return motorId_;
 }
 
 } /* namespace gazebo */

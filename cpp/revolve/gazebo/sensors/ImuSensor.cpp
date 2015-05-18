@@ -16,8 +16,8 @@ namespace revolve {
 namespace gazebo {
 
 ImuSensor::ImuSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-		std::string partId):
-		Sensor(model, sensor, partId, 6)
+		std::string partId, std::string sensorId):
+		Sensor(model, sensor, partId, sensorId, 6)
 {
 	this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::ImuSensor>(this->sensor_);
 

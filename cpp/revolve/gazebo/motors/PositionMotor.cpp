@@ -15,8 +15,9 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId, sdf::ElementPtr motor):
-	JointMotor(model, partId, motor, 1),
+PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
+							 std::string motorId, sdf::ElementPtr motor):
+	JointMotor(model, partId, motorId, motor, 1),
 	jointController_(model->GetJointController()),
 	noise_(0) {
 	// Retrieve upper / lower limit from joint set in parent constructor

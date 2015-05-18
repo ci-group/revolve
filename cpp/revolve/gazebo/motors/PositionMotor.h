@@ -21,7 +21,7 @@ public:
 	 * @param Whether the motor is velocity driven (the alternative is position driven)
 	 * @param The derivative gain of the motor's PID controller
 	 */
-	PositionMotor(::gazebo::physics::ModelPtr model, std::string partId, sdf::ElementPtr motor);
+	PositionMotor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, sdf::ElementPtr motor);
 	virtual ~PositionMotor();
 
 	virtual void update(double * outputs, unsigned int step);

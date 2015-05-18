@@ -72,7 +72,8 @@ class Wheel(Cylinder):
         # We also give it a simple PID controller
         pid = PID(proportional_gain=1.0, integral_gain=0.1)
         max_speed = 2 * math.pi * 50.0 / 60
-        self.motors.append(VelocityMotor(self.id, motor_joint, pid=pid, min_velocity=-max_speed, max_velocity=max_speed))
+        self.motors.append(VelocityMotor(self.id, "rotate", motor_joint, pid=pid,
+                                         min_velocity=-max_speed, max_velocity=max_speed))
         self.make_color(kwargs["red"], kwargs["green"], kwargs["blue"])
 
     def get_slot(self, slot_id):

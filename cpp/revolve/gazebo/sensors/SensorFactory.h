@@ -24,7 +24,8 @@ public:
 	 * This is the convenience wrapper over `create` that has required attributes
 	 * already checked, usually you should override this when adding new sensor types.
 	 */
-	virtual SensorPtr getSensor(sdf::ElementPtr sensor, const std::string & type, const std::string & partId);
+	virtual SensorPtr getSensor(sdf::ElementPtr sensor, const std::string & type,
+								const std::string & partId, const std::string & sensorId);
 
 	/**
 	 * Creates a new sensor in the given model, from the

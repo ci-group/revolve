@@ -68,6 +68,9 @@ class BodyBuilder(AspectBuilder):
         if parent:
             # Attach to parent
             sdf_part.attach(parent, src_slot, dst_slot, radians(part.orientation))
+        else:
+            # Just apply specified rotation arount zero slot
+            sdf_part.rotate_around(sdf_part.get_slot_normal(0), part.orientation, relative_to_child=True)
 
         model.add_element(sdf_part)
         model.add_elements(sdf_part.joints)

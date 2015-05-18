@@ -11,8 +11,8 @@ namespace gazebo {
 
 
 VelocityMotor::VelocityMotor(::gazebo::physics::ModelPtr model, std::string partId,
-                                        sdf::ElementPtr motor):
-    JointMotor(model, partId, motor, 1),
+                             std::string motorId, sdf::ElementPtr motor):
+    JointMotor(model, partId, motorId, motor, 1),
     jointController_(model->GetJointController()),
     noise_(0)
 {

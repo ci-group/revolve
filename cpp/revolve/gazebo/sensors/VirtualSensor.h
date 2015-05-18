@@ -19,7 +19,7 @@ namespace gazebo {
 
 class VirtualSensor {
 public:
-	VirtualSensor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int inputs);
+	VirtualSensor(::gazebo::physics::ModelPtr model, std::string partId, std::string sensorId, unsigned int inputs);
 	virtual ~VirtualSensor();
 
 	/**
@@ -36,6 +36,11 @@ public:
 	std::string partId();
 
 	/**
+	 * @return The ID of the sensor
+	 */
+	std::string sensorId();
+
+	/**
 	 * @return Number of inputs this sensor generates
 	 */
 	unsigned int inputs();
@@ -50,6 +55,11 @@ protected:
 	 * ID of the body part the motor belongs to
 	 */
 	std::string partId_;
+
+	/**
+	 * ID of the sensor
+	 */
+	std::string sensorId_;
 
 	/**
 	 * Number of inputs this sensor generates

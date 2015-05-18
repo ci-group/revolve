@@ -22,11 +22,16 @@ class Motor(Element):
     # alternatively specify `motor_type` in constructor.
     MOTOR_TYPE = 'motor'
 
-    def __init__(self, part_id, joint=None, motor_type=None):
+    def __init__(self, part_id, motor_id, joint=None, motor_type=None):
         """
         :param part_id: ID of the part this motor belongs to. This is required in the XML to identify
                         the corresponding output neuron.
         :type part_id: str
+        :param motor_id: Motor identifier that should be unique within the
+                         body part. It is combined with the part id to create
+                         an identifier which is unique for the robot, allowing
+                         you to target motors directly in the controller.
+        :type motor_id: str
         :param joint: It is common for motors to power a joint, this allows you to specify
                       which joint the motor controls if this is the case.
         :type joint: Joint
@@ -36,6 +41,7 @@ class Motor(Element):
         super(Motor, self).__init__()
         self.joint = joint
         self.part_id = part_id
+        self.motor_id = motor_id
         self.type = motor_type
 
     def render_attributes(self):
@@ -45,7 +51,8 @@ class Motor(Element):
         attrs = super(Motor, self).render_attributes()
         attrs.update({
             'type': self.type if self.type is not None else self.MOTOR_TYPE,
-            'part_id': self.part_id
+            'part_id': self.part_id,
+            'id': '%s:%s' % (self.part_id, self.motor_id)
         })
 
         if self.joint is not None:
@@ -106,15 +113,16 @@ class PIDMotor(Motor):
     # PID motors have a general C++ controller
     MOTOR_TYPE = 'pid'
 
-    def __init__(self, part_id, joint, pid=None, motor_type=None):
+    def __init__(self, part_id, motor_id, joint, pid=None, motor_type=None):
         """
         :param part_id:
+        :param motor_id:
         :param joint:
         :type joint: Joint
         :param pid:
         :type pid: PID
         """
-        super(PIDMotor, self).__init__(part_id, joint=joint, motor_type=motor_type)
+        super(PIDMotor, self).__init__(part_id, motor_id, joint=joint, motor_type=motor_type)
         self.pid = PID() if pid is None else pid
 
     def render_elements(self):
@@ -139,14 +147,14 @@ class VelocityMotor(PIDMotor):
     """
     MOTOR_TYPE = 'velocity'
 
-    def __init__(self, part_id, joint, pid=None, motor_type=None, min_velocity=-100, max_velocity=100):
+    def __init__(self, part_id, motor_id, joint, pid=None, motor_type=None, min_velocity=-100, max_velocity=100):
         """
 
         :param min_velocity:
         :param max_velocity:
         :return:
         """
-        super(VelocityMotor, self).__init__(part_id, joint, pid, motor_type)
+        super(VelocityMotor, self).__init__(part_id, motor_id, joint=joint, pid=pid, motor_type=motor_type)
         self.min_velocity = min_velocity
         self.max_velocity = max_velocity
 

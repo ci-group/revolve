@@ -1,8 +1,5 @@
 /*
- * Motor.h
- *
- *  Created on: Mar 5, 2015
- *      Author: elte
+ * Motor base class
  */
 
 #ifndef REVOLVE_GAZEBO_MOTORS_MOTOR_H_
@@ -20,14 +17,16 @@ namespace gazebo {
 
 class Motor {
 public:
-	Motor(::gazebo::physics::ModelPtr model, std::string partId, unsigned int outputs);
+	Motor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, unsigned int outputs);
 	virtual ~Motor();
 
 	/**
 	 * Updates the motor based on the attached output
 	 * of the neural network.
 	 *
-	 * @param Raw motor update value, it is up to the motor to decide how to interpret this.
+	 * @param Raw motor update value(s), it is up to the motor to decide how to interpret this.
+	 * 		  This is a pointer to an array of values, out of which the motor should read the
+	 * 		  first `n` values if it specifies `n` outputs.
 	 * @param Actuation time in nanoseconds
 	 */
 	virtual void update(double * output, unsigned int step) = 0;
@@ -36,6 +35,11 @@ public:
 	 * @return The part ID
 	 */
 	std::string partId();
+
+	/**
+	 * @return The full ID of the motor (should be unique in the robot)
+	 */
+	std::string motorId();
 
 	/**
 	 * @return Number of output neurons connected to this motor
@@ -58,6 +62,11 @@ protected:
 	 * ID of the body part the motor belongs to
 	 */
 	std::string partId_;
+
+	/**
+	 * Robot-wide unique motor ID
+	 */
+	std::string motorId_;
 
 	/**
 	 * Number of output neurons that should be connected

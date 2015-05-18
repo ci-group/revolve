@@ -14,7 +14,7 @@ class Sensor(Element):
     # Sensor type fallback
     SENSOR_TYPE = 'default'
 
-    def __init__(self, part_id, link, sensor, sensor_type=None):
+    def __init__(self, part_id, sensor_id, link, sensor, sensor_type=None):
         """
         :param part_id: ID of the part this sensor belongs to, required to identify
                         the corresponding input neuron(s).
@@ -32,6 +32,7 @@ class Sensor(Element):
         self.link = link
         self.sensor = sensor
         self.part_id = part_id
+        self.sensor_id = sensor_id
 
     def render_attributes(self):
         """
@@ -42,6 +43,7 @@ class Sensor(Element):
             'link': self.link.name,
             'sensor': self.sensor.name,
             'part_id': self.part_id,
+            'id': '%s:%s' % (self.part_id, self.sensor_id),
             'type': self.type if self.type is not None else self.SENSOR_TYPE
         })
 

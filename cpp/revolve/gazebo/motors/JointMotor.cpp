@@ -12,9 +12,9 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-JointMotor::JointMotor(gz::physics::ModelPtr model, std::string partId, sdf::ElementPtr motor,
-		unsigned int outputs):
-	Motor(model, partId, outputs)
+JointMotor::JointMotor(gz::physics::ModelPtr model, std::string partId,
+					   std::string motorId, sdf::ElementPtr motor, unsigned int outputs):
+	Motor(model, partId, motorId, outputs)
 {
 	if (!motor->HasAttribute("joint")) {
 		std::cerr << "JointMotor requires a `joint` attribute." << std::endl;

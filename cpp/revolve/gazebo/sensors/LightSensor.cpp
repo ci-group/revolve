@@ -15,8 +15,8 @@ namespace revolve {
 namespace gazebo {
 
 LightSensor::LightSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-		std::string partId):
-	Sensor(model, sensor, partId, 1),
+		std::string partId, std::string sensorId):
+	Sensor(model, sensor, partId, sensorId, 1),
 
 	// Initialize light sensor to full intensity
 	lastValue_(1.0)
