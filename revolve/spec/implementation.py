@@ -108,15 +108,20 @@ def default_neural_net():
     :rtype: NeuralNetImplementation
     """
     return NeuralNetImplementation({
-        "Input": NeuronSpec(),
+        "Input": NeuronSpec(
+            layers=["input"]
+        ),
         "Sigmoid": NeuronSpec(
-            params=["bias", "gain"]
+            params=["bias", "gain"],
+            layers=["output", "hidden"]
         ),
         "Simple": NeuronSpec(
-            params=["bias", "gain"]
+            params=["bias", "gain"],
+            layers=["output", "hidden"]
         ),
         "Oscillator": NeuronSpec(
-            params=["period", "phase_offset", "amplitude"]
+            params=["period", "phase_offset", "amplitude"],
+            layers=["output", "hidden"]
         )
     })
 
