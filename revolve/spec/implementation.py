@@ -1,3 +1,4 @@
+from __future__ import print_function
 import random
 from .exception import err
 from .protobuf import BodyPart
@@ -112,15 +113,25 @@ def default_neural_net():
             layers=["input"]
         ),
         "Sigmoid": NeuronSpec(
-            params=["bias", "gain"],
+            params=[
+                ParamSpec("bias", min_value=-10, max_value=10),
+                ParamSpec("gain", min_value=-10, max_value=10)
+            ],
             layers=["output", "hidden"]
         ),
         "Simple": NeuronSpec(
-            params=["bias", "gain"],
+            params=[
+                ParamSpec("bias", min_value=-10, max_value=10),
+                ParamSpec("gain", min_value=-10, max_value=10)
+            ],
             layers=["output", "hidden"]
         ),
         "Oscillator": NeuronSpec(
-            params=["period", "phase_offset", "amplitude"],
+            params=[
+                ParamSpec("period", min_value=0, max_value=50),
+                ParamSpec("phase_offset", min_value=0, max_value=3.14),
+                ParamSpec("amplitude", min_value=0, max_value=10)
+            ],
             layers=["output", "hidden"]
         )
     })

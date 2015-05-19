@@ -1,6 +1,7 @@
 """
 Random generator for the default neural network
 """
+from __future__ import print_function
 import random
 import itertools
 from ..spec import NeuralNetwork, Neuron, NeuralNetImplementation, NeuronSpec, Body, BodyImplementation
@@ -145,6 +146,7 @@ class NeuralNetworkGenerator(object):
         :return:
         """
         # Initialize random parameters
+        import sys
         for p in spec.get_random_parameters(serialize=True):
             new_param = neuron.param.add()
             new_param.value = p
