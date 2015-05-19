@@ -31,11 +31,11 @@ class BodyGenerator(object):
     """
 
     def __init__(self, spec, root_parts=None, attach_parts=None, max_parts=50,
-                 fix_parts=False, max_inputs=None, max_outputs=None):
+                 fix_num_parts=False, max_inputs=None, max_outputs=None):
         """
 
-        :param fix_parts:
-        :type fix_parts: If true, fixes the number of parts to `max_parts` rather than
+        :param fix_num_parts:
+        :type fix_num_parts: If true, fixes the number of parts to `max_parts` rather than
                          picking a random value (the number of parts might still be lower
                          if other constraints apply).
         :param spec: The body implementation spec
@@ -55,7 +55,7 @@ class BodyGenerator(object):
         :type max_outputs: int
         :return:
         """
-        self.fix_parts = fix_parts
+        self.fix_parts = fix_num_parts
         self.spec = spec
         self.root_parts = root_parts if root_parts is not None else spec.get_all_types()
         self.attach_parts = attach_parts if attach_parts is not None else spec.get_all_types()
@@ -71,6 +71,8 @@ class BodyGenerator(object):
     def generate(self):
         """
         Generates a robot body
+        :return: The robot body
+        :rtype: Body
         """
         body = Body()
         root_specs, attach_specs = self.root_specs, self.attach_specs
@@ -100,10 +102,7 @@ class BodyGenerator(object):
 
             # Construct a list of parts we can use that
             # would not break the constraints
-            usable = [item for item in attach_specs if (
-                inputs + attach_specs[item].inputs <= self.max_inputs and
-                outputs + attach_specs[item].outputs <= self.max_outputs
-            )]
+            usable = self.get_allowed_parts(attach_specs, counter, inputs, outputs)
 
             if not usable:
                 break
@@ -132,6 +131,23 @@ class BodyGenerator(object):
             free += [(conn.part, i) for i in range(new_part.arity) if i != target_slot]
 
         return body
+
+    def get_allowed_parts(self, attach_specs, num_parts, inputs, outputs):
+        """
+        Overridable function that creates a list of allowed parts for a specific
+        stage of robot generation.
+        :param attach_specs: Map of part identifiers to `PartSpec`s
+        :param num_parts: Current number of parts
+        :param inputs: Current number of inputs
+        :param outputs: Current number of outputs
+        :return: List of identifiers of parts that when added do not violate some robot rules.
+                 By default, this checks for maximum inputs / outputs.
+        :rtype: list
+        """
+        return [item for item in attach_specs if (
+            inputs + attach_specs[item].inputs <= self.max_inputs and
+            outputs + attach_specs[item].outputs <= self.max_outputs
+        )]
 
     def initialize_part(self, spec, part, root=False):
         """

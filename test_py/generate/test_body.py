@@ -57,7 +57,7 @@ class TestBodyGenerator(unittest.TestCase):
             max_inputs=2,
             max_outputs=10,
             max_parts=100,
-            fix_parts=True
+            fix_num_parts=True
         )
 
         body = gen.generate()
@@ -100,7 +100,7 @@ class TestBodyGenerator(unittest.TestCase):
             max_inputs=100,
             max_outputs=100,
             max_parts=10,
-            fix_parts=True
+            fix_num_parts=True
         )
 
         body = gen.generate()

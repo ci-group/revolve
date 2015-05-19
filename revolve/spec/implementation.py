@@ -97,7 +97,7 @@ class NeuralNetImplementation(SpecImplementation):
 
         # Add default input neuron type
         if "Input" not in self.spec:
-            self.set("Input", NeuronSpec())
+            self.set("Input", NeuronSpec(layers=("input",)))
 
 
 def default_neural_net():
@@ -108,6 +108,7 @@ def default_neural_net():
     :rtype: NeuralNetImplementation
     """
     return NeuralNetImplementation({
+        "Input": NeuronSpec(),
         "Sigmoid": NeuronSpec(
             params=["bias", "gain"]
         ),
@@ -329,3 +330,18 @@ class NeuronSpec(Parameterizable):
     """
     Specifies a configurable Neuron
     """
+
+    def __init__(self, layers=None, params=None):
+        """
+
+        :param layers: Allowed layers for this neuron, should be a tuple or
+                       set with the "input"/"output"/"hidden" strings. Defaults
+                       to ("output", "hidden"), meaning you need to explicitly
+                       specify input layer neuron types.
+        :type layers: tuple[str]|list[str]
+        :param params:
+        :type params: list[ParamSpec|str]
+        :return:
+        """
+        super(NeuronSpec, self).__init__(params=params)
+        self.layers = ("output", "hidden") if layers is None else layers

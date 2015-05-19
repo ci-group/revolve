@@ -200,7 +200,7 @@ class TestValidate(unittest.TestCase):
 
         # Input neuron should be "Input"
         n[1].type = "Oscillator"
-        with self.assertRaisesRegexp(SpecError, "Input"):
+        with self.assertRaisesRegexp(SpecError, "layer 'input'"):
             validate_robot(robot)
 
         n[1].type = "Input"

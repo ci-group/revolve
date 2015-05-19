@@ -173,9 +173,6 @@ class NeuralNetValidator(Validator):
                 err("Neuron '%s' should be in layer '%s' instead of '%s'" %
                     (neuron.id, layer, neuron.layer))
 
-            if layer == "input" and neuron.type != "Input":
-                err("Input neuron '%s' should be of type 'Input'" % neuron.id)
-
             if not neuron.HasField("partId"):
                 err("Neuron '%s' in layer '%s' should have a part ID." % (neuron.id, layer))
 
@@ -187,6 +184,9 @@ class NeuralNetValidator(Validator):
         spec = self.spec.get(neuron.type)
         if spec is None:
             err("Unspecified neuron type '%s'." % neuron.type)
+
+        if neuron.layer not in spec.layers:
+            err("Neuron of type '%s' is not allowed to be in layer '%s'." % (neuron.type, neuron.layer))
 
         if spec.n_parameters != len(neuron.param):
             err("Expecting %d parameters for neuron '%s', got %d." %

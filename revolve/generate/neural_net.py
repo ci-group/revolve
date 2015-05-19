@@ -3,21 +3,25 @@ Random generator for the default neural network
 """
 import random
 import itertools
-from ..spec.protobuf import NeuralNetwork, Neuron
-from ..spec import NeuralNetImplementation, NeuronSpec
+from ..spec import NeuralNetwork, Neuron, NeuralNetImplementation, NeuronSpec, Body, BodyImplementation
 
-
-def _init_neuron_list(spec, neurons):
-    specs = {neuron_type: spec.get(neuron_type) for neuron_type in neurons}
-    none_values = [k for k in specs if specs[k] is None]
-    if none_values:
-        raise ValueError("Invalid neuron type(s): %s"
-                         % ', '.join(none_values))
-
-    return specs
 
 # Epsilon value below which neuron weights are discarded
 EPSILON = 1e-11
+
+def _extract_io(body_spec, part):
+    spec = body_spec.get(part.type)
+    inputs = ["%s-in-%d" % (part.id, i) for i in range(spec.inputs)]
+    outputs = ["%s-out-%d" % (part.id, i) for i in range(spec.outputs)]
+    part_ids = {neuron_id: part.id for neuron_id in inputs + outputs}
+
+    for child in part.child:
+        ci, co, cp = _extract_io(body_spec, child.part)
+        inputs += ci
+        outputs += co
+        part_ids.update(cp)
+
+    return inputs, outputs, part_ids
 
 
 class NeuralNetworkGenerator(object):
@@ -26,56 +30,55 @@ class NeuralNetworkGenerator(object):
     hidden neurons and connections with a certain probability
     from a specified input / output interface.
     """
-    def __init__(self, spec, inputs=None, outputs=None, max_hidden=20, input_types=None, output_types=None,
-                 hidden_types=None, conn_prob=0.1):
+    def __init__(self, spec, max_hidden=20, conn_prob=0.1):
         """
         :param conn_prob: Probability of creating a weight between two neurons.
         :type conn_prob: float
-        :param input_types: Allowed types for input layer
-        :type input_types: list
-        :param output_types: Allowed types for output layer
-        :type output_types: list
-        :param hidden_types: Allowed types for hidden layer
-        :type hidden_types: list
         :param spec:
         :type spec: NeuralNetImplementation
-        :param inputs: A list of IDs of all input neurons that should
-                       be generated.
-        :type inputs: list
-        :param outputs: List of output IDs to be generated
-        :type outputs: list
         :param max_hidden:
         :return:
         """
         self.conn_prob = conn_prob
         self.spec = spec
-        self.inputs = [] if inputs is None else inputs
-        self.outputs = [] if outputs is None else outputs
-        self.hidden = []
-        self.input_types = ['Input'] if input_types is None else input_types
-        self.output_types = [] if output_types is None else output_types
-        self.hidden_types = self.output_types if hidden_types is None else hidden_types
 
-        # Validate neuron types
-        _init_neuron_list(spec, self.input_types)
-        _init_neuron_list(spec, self.output_types)
-        _init_neuron_list(spec, self.hidden_types)
+        types = spec.get_all_types()
+        self.layer_types = {
+            layer: [t for t in types if layer in spec.get(t).layers]
+            for layer in ("input", "output", "hidden")
+        }
 
         self.max_hidden = max_hidden
 
-    def generate(self):
+    def generate(self, inputs, outputs, part_ids=None):
         """
-        :return:
+        Generates a neural network from the provided interface.
+        :param inputs: A list of IDs of all input neurons that should
+               be generated.
+        :type inputs: list
+        :param outputs: List of output IDs to be generated
+        :type outputs: list
+        :param part_ids: Maps neuron ID to corresponding part ID
+        :type part_ids: dict
+        :return: The generated NeuralNetwork protobuf
         :rtype: NeuralNetwork
         """
         net = NeuralNetwork()
+        hidden = []
 
-        # Initialize neurons in all layers
-        for layer, ids in (("input", self.inputs), ("output", self.outputs)):
+        if part_ids is None:
+            part_ids = {}
+
+        # Initialize network interface, i.e. inputs and outputs
+        for layer, ids in (("input", inputs), ("output", outputs)):
             for neuron_id in ids:
                 neuron = net.neuron.add()
                 neuron.id = neuron_id
                 neuron.layer = layer
+
+                if neuron_id in part_ids:
+                    neuron.partId = part_ids[neuron_id]
+
                 neuron.type = self.choose_neuron_type(layer)
                 spec = self.spec.get(neuron.type)
                 self.initialize_neuron(spec, neuron)
@@ -83,16 +86,16 @@ class NeuralNetworkGenerator(object):
         num_hidden = self.choose_num_hidden()
         for i in range(num_hidden):
             neuron = net.neuron.add()
-            neuron.id = 'brian-gen-hidden-%s' % len(self.hidden)
-            self.hidden.append(neuron.id)
+            neuron.id = 'brian-gen-hidden-%s' % len(hidden)
+            hidden.append(neuron.id)
             neuron.layer = "hidden"
             neuron.type = self.choose_neuron_type(neuron.layer)
             spec = self.spec.get(neuron.type)
             self.initialize_neuron(spec, neuron)
 
         # Initialize neuron connections
-        conn_start = self.inputs + self.hidden + self.outputs
-        conn_end = self.hidden + self.outputs
+        conn_start = inputs + hidden + outputs
+        conn_end = hidden + outputs
 
         for src, dst in itertools.izip(conn_start, conn_end):
             weight = self.choose_weight(src, dst)
@@ -106,6 +109,19 @@ class NeuralNetworkGenerator(object):
             conn.weight = weight
 
         return net
+
+    def generate_from_body(self, body, body_spec):
+        """
+        Convenience wrapper over `generate` to fetch the network
+        interface from a robot body.
+        :param body:
+        :type body: Body
+        :param body_spec:
+        :type body_spec: BodyImplementation
+        :return: NeuralNetwork
+        """
+        inputs, outputs, part_ids = _extract_io(body_spec, body.root)
+        return self.generate(inputs, outputs, part_ids)
 
     def choose_weight(self, src, dst):
         """
@@ -139,16 +155,7 @@ class NeuralNetworkGenerator(object):
         :param layer:
         :return:
         """
-        if layer == "input":
-           values = self.input_types
-        elif layer == "output":
-            values = self.output_types
-        elif layer == "hidden":
-            values = self.hidden_types
-        else:
-            raise ValueError("Unknown layer '%s'" % layer)
-
-        return random.choice(values)
+        return random.choice(self.layer_types[layer])
 
     def choose_num_hidden(self):
         """
