@@ -52,9 +52,9 @@ class NeuralNetworkGenerator(object):
         self.inputs = [] if inputs is None else inputs
         self.outputs = [] if outputs is None else outputs
         self.hidden = []
-        self.input_types = [] if input_types is None else input_types
+        self.input_types = ['Input'] if input_types is None else input_types
         self.output_types = [] if output_types is None else output_types
-        self.hidden_types = [] if hidden_types is None else hidden_types
+        self.hidden_types = self.output_types if hidden_types is None else hidden_types
 
         # Validate neuron types
         _init_neuron_list(spec, self.input_types)
