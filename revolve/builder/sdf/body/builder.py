@@ -1,4 +1,0 @@
-class BodyBuilder(object):
-    """
-
-    """

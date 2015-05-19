@@ -7,6 +7,19 @@ from ..spec.protobuf import NeuralNetwork, Neuron
 from ..spec import NeuralNetImplementation, NeuronSpec
 
 
+def _init_neuron_list(spec, neurons):
+    specs = {neuron_type: spec.get(neuron_type) for neuron_type in neurons}
+    none_values = [k for k in specs if specs[k] is None]
+    if none_values:
+        raise ValueError("Invalid neuron type(s): %s"
+                         % ', '.join(none_values))
+
+    return specs
+
+# Epsilon value below which neuron weights are discarded
+EPSILON = 1e-11
+
+
 class NeuralNetworkGenerator(object):
     """
     Simple random neural network generator, generates
@@ -29,7 +42,7 @@ class NeuralNetworkGenerator(object):
         :param inputs: A list of IDs of all input neurons that should
                        be generated.
         :type inputs: list
-        :param outputs:
+        :param outputs: List of output IDs to be generated
         :type outputs: list
         :param max_hidden:
         :return:
@@ -42,6 +55,12 @@ class NeuralNetworkGenerator(object):
         self.input_types = [] if input_types is None else input_types
         self.output_types = [] if output_types is None else output_types
         self.hidden_types = [] if hidden_types is None else hidden_types
+
+        # Validate neuron types
+        _init_neuron_list(spec, self.input_types)
+        _init_neuron_list(spec, self.output_types)
+        _init_neuron_list(spec, self.hidden_types)
+
         self.max_hidden = max_hidden
 
     def generate(self):
@@ -52,22 +71,14 @@ class NeuralNetworkGenerator(object):
         net = NeuralNetwork()
 
         # Initialize neurons in all layers
-        # TODO this is ugly repeated code, clean this up
-        for neuron_id in self.inputs:
-            neuron = net.neuron.add()
-            neuron.id = neuron_id
-            neuron.layer = "input"
-            neuron.type = self.choose_neuron_type(neuron.layer)
-            spec = self.spec.get(neuron.type)
-            self.initialize_neuron(spec, neuron)
-
-        for neuron_id in self.outputs:
-            neuron = net.neuron.add()
-            neuron.id = neuron_id
-            neuron.layer = "output"
-            neuron.type = self.choose_neuron_type(neuron.layer)
-            spec = self.spec.get(neuron.type)
-            self.initialize_neuron(spec, neuron)
+        for layer, ids in (("input", self.inputs), ("output", self.outputs)):
+            for neuron_id in ids:
+                neuron = net.neuron.add()
+                neuron.id = neuron_id
+                neuron.layer = layer
+                neuron.type = self.choose_neuron_type(layer)
+                spec = self.spec.get(neuron.type)
+                self.initialize_neuron(spec, neuron)
 
         num_hidden = self.choose_num_hidden()
         for i in range(num_hidden):
@@ -86,7 +97,7 @@ class NeuralNetworkGenerator(object):
         for src, dst in itertools.izip(conn_start, conn_end):
             weight = self.choose_weight(src, dst)
 
-            if weight < 1e-11:
+            if weight < EPSILON:
                 continue
 
             conn = net.connection.add()
@@ -108,7 +119,7 @@ class NeuralNetworkGenerator(object):
         """
         return random.random() if random.random() <= self.conn_prob else 0
 
-    def initialize_neuron(self, spec, neuron, root=False):
+    def initialize_neuron(self, spec, neuron):
         """
         Initializes a neuron's parameters
         :param spec:
@@ -118,9 +129,9 @@ class NeuralNetworkGenerator(object):
         :return:
         """
         # Initialize random parameters
-        for p in spec.parameters:
+        for p in spec.get_random_parameters(serialize=True):
             new_param = neuron.param.add()
-            new_param.value = p.get_random_value()
+            new_param.value = p
 
     def choose_neuron_type(self, layer):
         """

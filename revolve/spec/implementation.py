@@ -283,6 +283,21 @@ class Parameterizable(object):
 
         return validates
 
+    def get_random_parameters(self, serialize=False):
+        """
+        Initializes all parameters with their `get_random_value()` method
+        and returns the dictionary representing that.
+        :param serialize:
+        :type serialize: bool
+        :return:
+        :rtype: dict|list
+        """
+        params = {}
+        for name, (_, spec) in self.parameters.items():
+            params[name] = spec.get_random_value()
+
+        return self.serialize_params(params) if serialize else params
+
 
 class PartSpec(Parameterizable):
     """

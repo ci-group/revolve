@@ -3,9 +3,9 @@ Tests the `BodyDecoder` and the `NeuralNetworkDecoder` using a little help from
 the YAML converter.
 """
 import unittest
-from ...convert import yaml_to_robot
-from ...spec import PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
-from ...spec import BodyImplementation, NeuralNetImplementation
+from revolve.convert import yaml_to_robot
+from revolve.spec import PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
+from revolve.spec import BodyImplementation, NeuralNetImplementation
 
 # Define YAML for test cases here
 # Body

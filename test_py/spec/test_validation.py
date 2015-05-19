@@ -1,6 +1,6 @@
 import unittest
-from ...spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec, ParamSpec, Robot, BodyPart
-from ...spec import RobotSpecificationException as SpecError, RobotValidator
+from revolve.spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec, ParamSpec, Robot, BodyPart
+from revolve.spec import RobotSpecificationException as SpecError, RobotValidator
 
 # Imaginary specification for the tests
 body_spec = BodyImplementation(

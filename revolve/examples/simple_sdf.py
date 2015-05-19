@@ -13,9 +13,9 @@ from sdfbuilder import SDF, Link, Element
 
 # Module imports
 from revolve.spec import BodyImplementation, default_neural_net, PartSpec, ParamSpec
-from revolve.builder.sdf.body import Box, Cylinder
+from revolve.build.sdf.body import Box, Cylinder
 from revolve.convert.yaml import yaml_to_robot
-from revolve.builder.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder
+from revolve.build.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder
 
 # Some configuration
 # This is the number of times per second we will call our
@@ -47,6 +47,7 @@ class Wheel(Cylinder):
         :param kwargs:
         :return:
         """
+        # Call super to initialize the cylinder part of the wheel
         super(Wheel, self)._initialize(**kwargs)
 
         # Create the small box that serves as the motor
