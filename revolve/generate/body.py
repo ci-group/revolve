@@ -3,7 +3,7 @@ Body generation utilities,
 """
 import random
 from ..spec import BodyImplementation, PartSpec, BodyPart
-from ..spec.protobuf import Body
+from ..spec.msgs import Body
 
 
 def _init_part_list(spec, parts):

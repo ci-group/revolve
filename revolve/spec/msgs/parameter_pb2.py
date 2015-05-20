@@ -12,22 +12,22 @@ from google.protobuf import descriptor_pb2
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='parameter.proto',
-  package='revolve',
-  serialized_pb='\n\x0fparameter.proto\x12\x07revolve\"\x1a\n\tParameter\x12\r\n\x05value\x18\x01 \x02(\x02')
+  package='revolve.msgs',
+  serialized_pb='\n\x0fparameter.proto\x12\x0crevolve.msgs\"\x1a\n\tParameter\x12\r\n\x05value\x18\x01 \x02(\x01')
 
 
 
 
 _PARAMETER = _descriptor.Descriptor(
   name='Parameter',
-  full_name='revolve.Parameter',
+  full_name='revolve.msgs.Parameter',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='value', full_name='revolve.Parameter.value', index=0,
-      number=1, type=2, cpp_type=6, label=2,
+      name='value', full_name='revolve.msgs.Parameter.value', index=0,
+      number=1, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -41,8 +41,8 @@ _PARAMETER = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=28,
-  serialized_end=54,
+  serialized_start=33,
+  serialized_end=59,
 )
 
 DESCRIPTOR.message_types_by_name['Parameter'] = _PARAMETER
@@ -51,7 +51,7 @@ class Parameter(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _PARAMETER
 
-  # @@protoc_insertion_point(class_scope:revolve.Parameter)
+  # @@protoc_insertion_point(class_scope:revolve.msgs.Parameter)
 
 
 # @@protoc_insertion_point(module_scope)

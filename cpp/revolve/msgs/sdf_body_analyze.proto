@@ -1,0 +1,24 @@
+package revolve.msgs;
+import "body.proto";
+
+message SdfBodyAnalyzeRequest {
+	required string id = 1;
+	required string sdf = 2;
+}
+
+message Contact {
+	required string collision1 = 1;
+	required string collision2 = 2;
+}
+
+message BoundingBox {
+	required double x = 1;
+	required double y = 2;
+	required double z = 3;
+}
+
+message SdfBodyAnalyzeResponse {
+	required string id = 1;
+	required BoundingBox boundingBox = 2;
+	repeated Contact contact = 3;
+}

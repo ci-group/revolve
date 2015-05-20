@@ -1,10 +1,10 @@
-package revolve;
+package revolve.msgs;
 import "parameter.proto";
 
 message BodyPart {
   required string id = 1;
   required string type = 2;
-  required float orientation = 3;
+  required double orientation = 3;
   repeated BodyConnection child = 4;
   repeated Parameter param = 5;
 }

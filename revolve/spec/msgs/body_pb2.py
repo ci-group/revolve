@@ -13,49 +13,49 @@ import parameter_pb2
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='body.proto',
-  package='revolve',
-  serialized_pb='\n\nbody.proto\x12\x07revolve\x1a\x0fparameter.proto\"\x84\x01\n\x08\x42odyPart\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0c\n\x04type\x18\x02 \x02(\t\x12\x13\n\x0borientation\x18\x03 \x02(\x02\x12&\n\x05\x63hild\x18\x04 \x03(\x0b\x32\x17.revolve.BodyConnection\x12!\n\x05param\x18\x05 \x03(\x0b\x32\x12.revolve.Parameter\"K\n\x0e\x42odyConnection\x12\x0b\n\x03src\x18\x01 \x02(\x05\x12\x0b\n\x03\x64st\x18\x02 \x02(\x05\x12\x1f\n\x04part\x18\x03 \x02(\x0b\x32\x11.revolve.BodyPart\"\'\n\x04\x42ody\x12\x1f\n\x04root\x18\x01 \x02(\x0b\x32\x11.revolve.BodyPart')
+  package='revolve.msgs',
+  serialized_pb='\n\nbody.proto\x12\x0crevolve.msgs\x1a\x0fparameter.proto\"\x8e\x01\n\x08\x42odyPart\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0c\n\x04type\x18\x02 \x02(\t\x12\x13\n\x0borientation\x18\x03 \x02(\x01\x12+\n\x05\x63hild\x18\x04 \x03(\x0b\x32\x1c.revolve.msgs.BodyConnection\x12&\n\x05param\x18\x05 \x03(\x0b\x32\x17.revolve.msgs.Parameter\"P\n\x0e\x42odyConnection\x12\x0b\n\x03src\x18\x01 \x02(\x05\x12\x0b\n\x03\x64st\x18\x02 \x02(\x05\x12$\n\x04part\x18\x03 \x02(\x0b\x32\x16.revolve.msgs.BodyPart\",\n\x04\x42ody\x12$\n\x04root\x18\x01 \x02(\x0b\x32\x16.revolve.msgs.BodyPart')
 
 
 
 
 _BODYPART = _descriptor.Descriptor(
   name='BodyPart',
-  full_name='revolve.BodyPart',
+  full_name='revolve.msgs.BodyPart',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='id', full_name='revolve.BodyPart.id', index=0,
+      name='id', full_name='revolve.msgs.BodyPart.id', index=0,
       number=1, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='type', full_name='revolve.BodyPart.type', index=1,
+      name='type', full_name='revolve.msgs.BodyPart.type', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='orientation', full_name='revolve.BodyPart.orientation', index=2,
-      number=3, type=2, cpp_type=6, label=2,
+      name='orientation', full_name='revolve.msgs.BodyPart.orientation', index=2,
+      number=3, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='child', full_name='revolve.BodyPart.child', index=3,
+      name='child', full_name='revolve.msgs.BodyPart.child', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='param', full_name='revolve.BodyPart.param', index=4,
+      name='param', full_name='revolve.msgs.BodyPart.param', index=4,
       number=5, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -70,34 +70,34 @@ _BODYPART = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=41,
-  serialized_end=173,
+  serialized_start=46,
+  serialized_end=188,
 )
 
 
 _BODYCONNECTION = _descriptor.Descriptor(
   name='BodyConnection',
-  full_name='revolve.BodyConnection',
+  full_name='revolve.msgs.BodyConnection',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='src', full_name='revolve.BodyConnection.src', index=0,
+      name='src', full_name='revolve.msgs.BodyConnection.src', index=0,
       number=1, type=5, cpp_type=1, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='dst', full_name='revolve.BodyConnection.dst', index=1,
+      name='dst', full_name='revolve.msgs.BodyConnection.dst', index=1,
       number=2, type=5, cpp_type=1, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='part', full_name='revolve.BodyConnection.part', index=2,
+      name='part', full_name='revolve.msgs.BodyConnection.part', index=2,
       number=3, type=11, cpp_type=10, label=2,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -112,20 +112,20 @@ _BODYCONNECTION = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=175,
-  serialized_end=250,
+  serialized_start=190,
+  serialized_end=270,
 )
 
 
 _BODY = _descriptor.Descriptor(
   name='Body',
-  full_name='revolve.Body',
+  full_name='revolve.msgs.Body',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='root', full_name='revolve.Body.root', index=0,
+      name='root', full_name='revolve.msgs.Body.root', index=0,
       number=1, type=11, cpp_type=10, label=2,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -140,8 +140,8 @@ _BODY = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=252,
-  serialized_end=291,
+  serialized_start=272,
+  serialized_end=316,
 )
 
 _BODYPART.fields_by_name['child'].message_type = _BODYCONNECTION
@@ -156,19 +156,19 @@ class BodyPart(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _BODYPART
 
-  # @@protoc_insertion_point(class_scope:revolve.BodyPart)
+  # @@protoc_insertion_point(class_scope:revolve.msgs.BodyPart)
 
 class BodyConnection(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _BODYCONNECTION
 
-  # @@protoc_insertion_point(class_scope:revolve.BodyConnection)
+  # @@protoc_insertion_point(class_scope:revolve.msgs.BodyConnection)
 
 class Body(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _BODY
 
-  # @@protoc_insertion_point(class_scope:revolve.Body)
+  # @@protoc_insertion_point(class_scope:revolve.msgs.Body)
 
 
 # @@protoc_insertion_point(module_scope)

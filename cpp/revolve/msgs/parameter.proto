@@ -1,0 +1,5 @@
+package revolve.msgs;
+
+message Parameter {
+   required double value = 1;
+}

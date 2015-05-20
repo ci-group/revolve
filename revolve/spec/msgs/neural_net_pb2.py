@@ -13,36 +13,36 @@ import parameter_pb2
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='neural_net.proto',
-  package='revolve',
-  serialized_pb='\n\x10neural_net.proto\x12\x07revolve\x1a\x0fparameter.proto\"<\n\x10NeuralConnection\x12\x0b\n\x03src\x18\x01 \x02(\t\x12\x0b\n\x03\x64st\x18\x02 \x02(\t\x12\x0e\n\x06weight\x18\x03 \x02(\x02\"d\n\x06Neuron\x12\n\n\x02id\x18\x01 \x02(\t\x12\r\n\x05layer\x18\x02 \x02(\t\x12\x0c\n\x04type\x18\x03 \x02(\t\x12\x0e\n\x06partId\x18\x04 \x01(\t\x12!\n\x05param\x18\x05 \x03(\x0b\x32\x12.revolve.Parameter\"_\n\rNeuralNetwork\x12\x1f\n\x06neuron\x18\x01 \x03(\x0b\x32\x0f.revolve.Neuron\x12-\n\nconnection\x18\x02 \x03(\x0b\x32\x19.revolve.NeuralConnection')
+  package='revolve.msgs',
+  serialized_pb='\n\x10neural_net.proto\x12\x0crevolve.msgs\x1a\x0fparameter.proto\"<\n\x10NeuralConnection\x12\x0b\n\x03src\x18\x01 \x02(\t\x12\x0b\n\x03\x64st\x18\x02 \x02(\t\x12\x0e\n\x06weight\x18\x03 \x02(\x01\"i\n\x06Neuron\x12\n\n\x02id\x18\x01 \x02(\t\x12\r\n\x05layer\x18\x02 \x02(\t\x12\x0c\n\x04type\x18\x03 \x02(\t\x12\x0e\n\x06partId\x18\x04 \x01(\t\x12&\n\x05param\x18\x05 \x03(\x0b\x32\x17.revolve.msgs.Parameter\"i\n\rNeuralNetwork\x12$\n\x06neuron\x18\x01 \x03(\x0b\x32\x14.revolve.msgs.Neuron\x12\x32\n\nconnection\x18\x02 \x03(\x0b\x32\x1e.revolve.msgs.NeuralConnection')
 
 
 
 
 _NEURALCONNECTION = _descriptor.Descriptor(
   name='NeuralConnection',
-  full_name='revolve.NeuralConnection',
+  full_name='revolve.msgs.NeuralConnection',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='src', full_name='revolve.NeuralConnection.src', index=0,
+      name='src', full_name='revolve.msgs.NeuralConnection.src', index=0,
       number=1, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='dst', full_name='revolve.NeuralConnection.dst', index=1,
+      name='dst', full_name='revolve.msgs.NeuralConnection.dst', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='weight', full_name='revolve.NeuralConnection.weight', index=2,
-      number=3, type=2, cpp_type=6, label=2,
+      name='weight', full_name='revolve.msgs.NeuralConnection.weight', index=2,
+      number=3, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -56,48 +56,48 @@ _NEURALCONNECTION = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=46,
-  serialized_end=106,
+  serialized_start=51,
+  serialized_end=111,
 )
 
 
 _NEURON = _descriptor.Descriptor(
   name='Neuron',
-  full_name='revolve.Neuron',
+  full_name='revolve.msgs.Neuron',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='id', full_name='revolve.Neuron.id', index=0,
+      name='id', full_name='revolve.msgs.Neuron.id', index=0,
       number=1, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='layer', full_name='revolve.Neuron.layer', index=1,
+      name='layer', full_name='revolve.msgs.Neuron.layer', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='type', full_name='revolve.Neuron.type', index=2,
+      name='type', full_name='revolve.msgs.Neuron.type', index=2,
       number=3, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='partId', full_name='revolve.Neuron.partId', index=3,
+      name='partId', full_name='revolve.msgs.Neuron.partId', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='param', full_name='revolve.Neuron.param', index=4,
+      name='param', full_name='revolve.msgs.Neuron.param', index=4,
       number=5, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -112,27 +112,27 @@ _NEURON = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=108,
-  serialized_end=208,
+  serialized_start=113,
+  serialized_end=218,
 )
 
 
 _NEURALNETWORK = _descriptor.Descriptor(
   name='NeuralNetwork',
-  full_name='revolve.NeuralNetwork',
+  full_name='revolve.msgs.NeuralNetwork',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='neuron', full_name='revolve.NeuralNetwork.neuron', index=0,
+      name='neuron', full_name='revolve.msgs.NeuralNetwork.neuron', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='connection', full_name='revolve.NeuralNetwork.connection', index=1,
+      name='connection', full_name='revolve.msgs.NeuralNetwork.connection', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -147,8 +147,8 @@ _NEURALNETWORK = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=210,
-  serialized_end=305,
+  serialized_start=220,
+  serialized_end=325,
 )
 
 _NEURON.fields_by_name['param'].message_type = parameter_pb2._PARAMETER
@@ -162,19 +162,19 @@ class NeuralConnection(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _NEURALCONNECTION
 
-  # @@protoc_insertion_point(class_scope:revolve.NeuralConnection)
+  # @@protoc_insertion_point(class_scope:revolve.msgs.NeuralConnection)
 
 class Neuron(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _NEURON
 
-  # @@protoc_insertion_point(class_scope:revolve.Neuron)
+  # @@protoc_insertion_point(class_scope:revolve.msgs.Neuron)
 
 class NeuralNetwork(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
   DESCRIPTOR = _NEURALNETWORK
 
-  # @@protoc_insertion_point(class_scope:revolve.NeuralNetwork)
+  # @@protoc_insertion_point(class_scope:revolve.msgs.NeuralNetwork)
 
 
 # @@protoc_insertion_point(module_scope)

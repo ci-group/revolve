@@ -35,17 +35,19 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
 find_package(Protobuf REQUIRED)
 
 # Directory where the .proto file resides
-set(SPEC_DIR "${CMAKE_SOURCE_DIR}/../spec")
+set(SPEC_DIR "${CMAKE_SOURCE_DIR}/revolve/msgs")
 
 include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS})
+
+# Include the binary dir since that is where the protobuf files are
+# going to be placed.
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-file(GLOB_RECURSE REVOLVE_PROTO ${SPEC_DIR}/*.proto) 
+file(GLOB_RECURSE REVOLVE_PROTO ${SPEC_DIR}/*.proto)
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${REVOLVE_PROTO})
 
 # Generate spec library
 add_library(revolve-spec STATIC ${PROTO_SRCS} )
 target_link_libraries(revolve-spec ${PROTOBUF_LIBRARIES})
-
 
 #### Other sources #######
 # Find Boost and add to include dirs
@@ -63,11 +65,21 @@ include_directories(${GAZEBO_INCLUDE_DIRS})
 # Plugin CPP files
 file(GLOB_RECURSE
 	 REVOLVE_GZ_SRC
-	 revolve/gazebo/*.cpp
+	 revolve/gazebo/brain/*.cpp
+	 revolve/gazebo/motors/*.cpp
+	 revolve/gazebo/sensors/*.cpp
+	 revolve/gazebo/plugin/BodyAnalyzer.cpp
+	 revolve/gazebo/plugin/RobotController.cpp
 )
 
+# Create the library containing the Revolve API
 add_library(revolve-gazebo ${REVOLVE_GZ_SRC})
 target_link_libraries(revolve-gazebo ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+
+# Add the file that registers the body analyzer as a separate library that
+# can be used as a world plugin directly.
+add_library(revolve-body-analyzer SHARED revolve/gazebo/plugin/register_analyzer.cpp)
+target_link_libraries(revolve-body-analyzer revolve-gazebo revolve-spec ${GAZEBO_LIBRARIES})
 
 # Install libraries into "lib", header files into "include"
 install(
@@ -80,4 +92,6 @@ install(
    DESTINATION include
    FILES_MATCHING PATTERN "*.h"
 )
+
+
 

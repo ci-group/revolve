@@ -1,3 +1,3 @@
 #!/bin/sh
 # Generate Python protobuf files
-protoc -I=../spec --python_out=../revolve/spec/protobuf/ ../spec/*.proto
+protoc -I=../cpp/revolve/msgs --python_out=../revolve/spec/msgs/ ../cpp/revolve/msgs/*.proto

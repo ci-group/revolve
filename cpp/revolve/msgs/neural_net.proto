@@ -1,10 +1,10 @@
-package revolve;
+package revolve.msgs;
 import "parameter.proto";
 
 message NeuralConnection {
   required string src = 1;
   required string dst = 2;
-  required float weight = 3;
+  required double weight = 3;
 }
 
 message Neuron {

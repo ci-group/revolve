@@ -1,4 +1,4 @@
-package revolve;
+package revolve.msgs;
 import "body.proto";
 import "neural_net.proto";
 
