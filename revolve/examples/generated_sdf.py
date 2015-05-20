@@ -294,9 +294,10 @@ robot.brain.CopyFrom(brain)
 
 # Convert the protobuf to SDF
 builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
-model = builder.get_sdf_model(robot, "libtolmodelcontrol.so", update_rate=UPDATE_RATE, name="test_bot")
 
-# Create SDF and output
-sdf = SDF()
-sdf.add_element(model)
-print(str(sdf))
+if __name__ == "__main__":
+    # Create SDF and output
+    model = builder.get_sdf_model(robot, "libtolmodelcontrol.so", update_rate=UPDATE_RATE, name="test_bot")
+    sdf = SDF()
+    sdf.add_element(model)
+    print(str(sdf))

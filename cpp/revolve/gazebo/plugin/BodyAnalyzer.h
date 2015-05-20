@@ -21,6 +21,7 @@
 #include <gazebo/gazebo.hh>
 
 #include <queue>
+#include <boost/thread/mutex.hpp>
 
 // Protobuf analysis messages
 #include "sdf_body_analyze.pb.h"
@@ -34,24 +35,48 @@ class BodyAnalyzer : public ::gazebo::WorldPlugin {
 public:
 	void Load(::gazebo::physics::WorldPtr _parent, sdf::ElementPtr _sdf);
 
-	// Listener for analysis requests
-	void AnalyzeRequest(ConstAnalyzeRequestPtr &request);
-
 private:
+	// HACK: Use this as an ID "prefix" to make sure we don't
+	// erroneously identify other response messages as our
+	// delete requests.
+	const int DELETE_BASE = 888888;
+
+	// In case message handling is fully threaded (I'm not 100% certain
+	// at this point) no two threads should be allowed to modify the
+	// queue at the same time, so we protect methods doing this with
+	// a mutex.
+	boost::mutex queueMutex_;
+
+	// We add another mutex that is only released once a next item
+	// can be processed.
+	bool processing_ = false;
+	boost::mutex processingMutex_;
+
+	// Internal counter for the number of analyzed models
+	int counter_ = 0;
+
 	// Processes the items in the queue if possible
 	void ProcessQueue();
+
+	/// Callback for contact messages from the physics engine.
+	void OnContacts(ConstContactsPtr &_msg);
+
+	// Callback for model insertion
+	void OnModel(ConstModelPtr &_msg);
+
+	// Callback for model insertion
+	void OnModelDelete(ConstResponsePtr &_msg);
+
+	// Listener for analysis requests
+	void AnalyzeRequest(ConstAnalyzeRequestPtr &request);
 
 	/**
 	 * Analyze request queue.
 	 */
 	std::queue<msgs::SdfBodyAnalyzeRequest> requests_;
 
-	// ID of the current robot being evaluated, set to
-	// an empty string once analysis is complete.
-	std::string currentBot_;
-
-	/// \brief Callback for contact messages from the physics engine.
-	void OnContacts(ConstContactsPtr &_msg);
+	// ID of the current request being evaluated
+	std::string currentRequest_;
 
 	// Pointer to the world
 	::gazebo::physics::WorldPtr world_;
@@ -65,8 +90,13 @@ private:
 	// Subscriber for contacts messages
 	::gazebo::transport::SubscriberPtr contactsSub_;
 
+	// Subscriber for model insertion
+	::gazebo::transport::SubscriberPtr modelSub_;
+
 	// Publisher for the responses
 	::gazebo::transport::PublisherPtr responsePub_;
+	::gazebo::transport::PublisherPtr deletePub_;
+	::gazebo::transport::SubscriberPtr deleteSub_;
 };
 
 }
