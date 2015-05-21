@@ -1,3 +1,9 @@
+"""
+Generates a bot using the code in `generated_sdf`,
+and sends it to the body analyzer to have it analyzed.
+
+Requires an instance of the body analyzer to be running.
+"""
 from .generated_sdf import generate_sdf_robot
 from ..analyze.sdf import analyze_body
 

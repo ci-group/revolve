@@ -5,13 +5,18 @@ from revolve.spec import SdfBodyAnalyzeRequest, SdfBodyAnalyzeResponse
 from sdfbuilder import SDF, Link
 import trollius
 from trollius import From
+import logging
 
 import pygazebo
 
 # Message ID counter
 _counter = 0
 
-def analyze_body(sdf, address=("127.0.0.1", 11345)):
+# Prevent the trollius logging warning
+kl = logging.getLogger("trollius")
+kl.addHandler(logging.NullHandler())
+
+def analyze_body(sdf, address=("127.0.0.1", 11346)):
     """
     Single body analyzer. Opens a new connection, analyzes the
     body, and returns the result.
@@ -19,8 +24,10 @@ def analyze_body(sdf, address=("127.0.0.1", 11345)):
     :param sdf: SDF object consisting of BodyPart
                 instances.
     :type sdf: SDF
-    :param address: Tuple of the hostname and port where the analyzer resides.
-    :type address: tuple[str,int]
+    :param address: Tuple of the hostname and port where the analyzer resides. Note
+                    that the default is one up from the default Gazebo port,
+                    since it is meant to be used with the `run-analyzer.sh` tool.
+    :type address: tuple(str,int)
     :return:
     """
     global _counter

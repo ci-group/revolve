@@ -11,7 +11,7 @@ namespace revolve {
 namespace gazebo {
 
 void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
-	std::cout << "Body analyzer loaded." << std::endl;
+	std::cout << "Body analyzer loaded, accepting requests..." << std::endl;
 
 	// Store pointer to the world
 	world_ = world;

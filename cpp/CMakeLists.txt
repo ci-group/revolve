@@ -5,10 +5,11 @@ cmake_minimum_required (VERSION 2.8.12)
 project (Revolve)
 
 # CMake flag to help local projects find the build dir
-if (${LOCAL_LIB_DIR})
+if (${LOCAL_BUILD_DIR})
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
-    message("Using local library directory: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build")
+    message("Using local build directory.")
 endif()
 
 # Pass source dir to preprocessor
@@ -80,6 +81,10 @@ target_link_libraries(revolve-gazebo ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
 # can be used as a world plugin directly.
 add_library(revolve-body-analyzer SHARED revolve/gazebo/plugin/register_analyzer.cpp)
 target_link_libraries(revolve-body-analyzer revolve-gazebo revolve-spec ${GAZEBO_LIBRARIES})
+
+# Add the analyzer server standalone
+add_executable(body-analyzer revolve/gazebo/standalone/body_analyzer_server.cpp)
+target_link_libraries(body-analyzer revolve-body-analyzer ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
 
 # Install libraries into "lib", header files into "include"
 install(
