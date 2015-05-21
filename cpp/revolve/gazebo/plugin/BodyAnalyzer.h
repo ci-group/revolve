@@ -35,11 +35,13 @@ class BodyAnalyzer : public ::gazebo::WorldPlugin {
 public:
 	void Load(::gazebo::physics::WorldPtr _parent, sdf::ElementPtr _sdf);
 
+	// Maximum size of request queue, if more requests come in they are discarded
+	static const int MAX_QUEUE_SIZE = 100;
 private:
 	// HACK: Use this as an ID "prefix" to make sure we don't
 	// erroneously identify other response messages as our
 	// delete requests.
-	const int DELETE_BASE = 888888;
+	static const int DELETE_BASE = 888888;
 
 	// In case message handling is fully threaded (I'm not 100% certain
 	// at this point) no two threads should be allowed to modify the
@@ -69,6 +71,9 @@ private:
 
 	// Listener for analysis requests
 	void AnalyzeRequest(ConstAnalyzeRequestPtr &request);
+
+	// Advances the request queue
+	void Advance();
 
 	/**
 	 * Analyze request queue.

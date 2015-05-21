@@ -250,10 +250,6 @@ body_spec = BodyImplementation(
 # For the brain, we use the default neural network
 brain_spec = default_neural_net()
 
-# Create a protobuf robot
-robot = Robot()
-robot.id = 0
-
 # Specify a body generator for the specification
 body_gen = BodyGenerator(
     body_spec,
@@ -281,23 +277,34 @@ body_gen = BodyGenerator(
 # Also get a brain generator
 brain_gen = NeuralNetworkGenerator(
     brain_spec,
-
+    max_hidden=10
 )
 
-# Generate a body
-body = body_gen.generate()
-robot.body.CopyFrom(body)
-
-# The neural network generator can get the interface from the body
-brain = brain_gen.generate_from_body(body, body_spec)
-robot.brain.CopyFrom(brain)
-
-# Convert the protobuf to SDF
+# Create a builder to convert the protobuf to SDF
 builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
+
+def generate_robot(robot_id=0):
+    # Create a protobuf robot
+    robot = Robot()
+    robot.id = robot_id
+
+    # Generate a body
+    body = body_gen.generate()
+    robot.body.CopyFrom(body)
+
+    # The neural network generator can get the interface from the body
+    brain = brain_gen.generate_from_body(body, body_spec)
+    robot.brain.CopyFrom(brain)
+
+    return robot
+
+def generate_sdf_robot(robot_id=0, plugin_controller=None, name="test_bot"):
+    model = builder.get_sdf_model(generate_robot(), plugin_controller, update_rate=UPDATE_RATE, name=name)
+    sdf = SDF()
+    sdf.add_element(model)
+    return sdf
 
 if __name__ == "__main__":
     # Create SDF and output
-    model = builder.get_sdf_model(robot, "libtolmodelcontrol.so", update_rate=UPDATE_RATE, name="test_bot")
-    sdf = SDF()
-    sdf.add_element(model)
+    sdf = generate_sdf_robot()
     print(str(sdf))

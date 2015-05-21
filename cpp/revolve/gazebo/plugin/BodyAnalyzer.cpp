@@ -1,4 +1,5 @@
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "BodyAnalyzer.h"
 #include <sstream>
@@ -10,7 +11,7 @@ namespace revolve {
 namespace gazebo {
 
 void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
-	std::cout << "Plugin loaded." << std::endl;
+	std::cout << "Body analyzer loaded." << std::endl;
 
 	// Store pointer to the world
 	world_ = world;
@@ -43,44 +44,40 @@ void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 	responsePub_ = node_->Advertise<msgs::SdfBodyAnalyzeResponse>("~/analyze_body/result");
 }
 
-// Unpauses the world once the model has been inserted
 void BodyAnalyzer::OnModel(ConstModelPtr & msg) {
-	std::cout << "Model inserted: " << msg->name() << std::endl;
-	std::cout << "Num models in OnModel: " << world_->GetModels().size() << std::endl;
-
 	if (world_->GetModels().size() > 1) {
 		throw std::runtime_error("Too many models.");
 	}
 
+	// Unpause the world so contacts will be handled
 	world_->SetPaused(false);
 }
 
 void BodyAnalyzer::OnModelDelete(ConstResponsePtr & msg) {
-	std::cout << "Response: " << msg->id() << ":" << msg->request()
-	 		  << ":" << msg->response() << std::endl;
-
 	if (msg->request() == "entity_delete" && msg->id() == (DELETE_BASE + counter_)) {
 		// We're going to check the processing state, so acquire the mutex
-		std::cout << "Before processing lock" << std::endl;
-		processingMutex_.lock();
-
-		// Clear current request to indicate nothing is being
-		// processed, and move on to the next item if there is one.
-		counter_++;
-		processing_ = false;
-		currentRequest_ = "";
-
-		// ProcessQueue needs the processing mutex, release it
-		processingMutex_.unlock();
-		this->ProcessQueue();
+		std::cout << "Completed analysis request " << currentRequest_ << '.' << std::endl;
+		this->Advance();
 	}
+}
+
+void BodyAnalyzer::Advance() {
+	processingMutex_.lock();
+
+	// Clear current request to indicate nothing is being
+	// processed, and move on to the next item if there is one.
+	counter_++;
+	processing_ = false;
+	currentRequest_ = "";
+
+	// ProcessQueue needs the processing mutex, release it
+	processingMutex_.unlock();
+	this->ProcessQueue();
 }
 
 void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	// Pause the world so no new contacts will come in
 	world_->SetPaused(true);
-
-	std::cout << "Contacts." << std::endl;
 
 	// Create a response
 	msgs::SdfBodyAnalyzeResponse response;
@@ -93,26 +90,31 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 		msgContact->set_collision2(contact.collision2());
 	}
 
-	// Add the bounding box to the message
-	auto box = response.mutable_boundingbox();
-	std::stringstream name;
-	name << "analyze_bot_" << counter_;
-	gz::physics::ModelPtr model = world_->GetModel(name.str());
+	std::string name = "analyze_bot_"+boost::lexical_cast<std::string>(counter_);
+	gz::physics::ModelPtr model = world_->GetModel(name);
 
 	if (!model) {
 		std::cerr << "------------------------------------" << std::endl;
-		std::cerr << "No such model man: " << name.str() << std::endl;
+		std::cerr << "INTERNAL ERROR, contact model not found: " << name << std::endl;
+		std::cerr << "Please retry this request." << std::endl;
 		std::cerr << "------------------------------------" << std::endl;
-		world_->SetPaused(false);
+		response.set_success(false);
+		responsePub_->Publish(response);
+
+		// Advance manually
+		this->Advance();
 		return;
 	}
 
+	// Add the bounding box to the message
+	auto box = response.mutable_boundingbox();
 	auto bbox = model->GetBoundingBox();
 	box->set_x(bbox.GetXLength());
 	box->set_y(bbox.GetYLength());
 	box->set_z(bbox.GetZLength());
 
 	// Publish the message
+	response.set_success(true);
 	responsePub_->Publish(response);
 
 	// Delete the model. Directly doing this causes a null pointer
@@ -123,15 +125,16 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	del.set_data(model->GetScopedName());
 	del.set_request("entity_delete");
 	deletePub_->Publish(del);
-
-	std::cout << "Messages sent." << std::endl;
 }
 
 void BodyAnalyzer::AnalyzeRequest(ConstAnalyzeRequestPtr &request) {
-	std::cout << "Before queue mutex lock (AnalyzeRequest)" << std::endl;
-	queueMutex_.lock();
+	boost::mutex::scoped_lock lock(queueMutex_);
+	std::cout << "Received request " << request->id() << std::endl;
 
-	std::cout << "New request." << std::endl;
+	if (requests_.size() >= MAX_QUEUE_SIZE) {
+		std::cerr << "Ignoring request " << request->id() << ": maximum queue size ("
+				  << MAX_QUEUE_SIZE <<") reached." << std::endl;
+	}
 
 	// This actually copies the message, but since everything is const
 	// we don't really have a choice in that regard. This shouldn't
@@ -139,32 +142,25 @@ void BodyAnalyzer::AnalyzeRequest(ConstAnalyzeRequestPtr &request) {
 	requests_.push(*request);
 
 	// Release the lock explicitly to prevent deadlock in ProcessQueue
-	queueMutex_.unlock();
+	lock.unlock();
 	this->ProcessQueue();
 }
 
 void BodyAnalyzer::ProcessQueue() {
 	// Acquire mutex on queue
-	std::cout << "Before queue mutex lock (ProcessQueue)" << std::endl;
 	boost::mutex::scoped_lock lock(queueMutex_);
-
-	std::cout << "Try queue." << std::endl;
 
 	if (requests_.empty()) {
 		// No requests to handle
-		std::cout << "Nothing to process." << std::endl;
 		return;
 	}
 
-	std::cout << "Before processing lock (ProcessQueue)" << std::endl;
 	boost::mutex::scoped_lock plock(processingMutex_);
 	if (processing_) {
 		// Another item is being processed, wait for it
-		std::cout << "Currently processing: " << currentRequest_ << std::endl;
 		return;
 	}
 
-	std::cout << "++++Pop request+++++" << std::endl;
 	processing_ = true;
 
 	// Pop one request off the queue and set the
@@ -178,15 +174,15 @@ void BodyAnalyzer::ProcessQueue() {
 	}
 
 	currentRequest_ = request.id();
+	std::cout << "Now handling request: " << currentRequest_ << std::endl;
 
 	// Create model SDF
 	sdf::SDF robotSDF;
 	robotSDF.SetFromString(request.sdf());
 
-	// Force the model name to `analyze_bot`
-	std::stringstream name;
-	name << "analyze_bot_" << counter_;
-	robotSDF.root->GetElement("model")->GetAttribute("name")->SetFromString(name.str());
+	// Force the model name to something we know
+	std::string name = "analyze_bot_"+boost::lexical_cast<std::string>(counter_);
+	robotSDF.root->GetElement("model")->GetAttribute("name")->SetFromString(name);
 
 	// Insert the model into the world
 	world_->InsertModelSDF(robotSDF);
@@ -195,4 +191,4 @@ void BodyAnalyzer::ProcessQueue() {
 }
 
 } // namespace gazebo
-} // namespace gevolve
+} // namespace revolve

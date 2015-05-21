@@ -19,6 +19,7 @@ message BoundingBox {
 
 message SdfBodyAnalyzeResponse {
 	required string id = 1;
-	required BoundingBox boundingBox = 2;
-	repeated Contact contact = 3;
+	required bool success = 2;
+	optional BoundingBox boundingBox = 3;
+	repeated Contact contact = 4;
 }
