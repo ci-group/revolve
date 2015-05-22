@@ -99,7 +99,7 @@ class PassiveHinge(Box, ColorMixin):
         passive_joint = Joint("revolute", self.link, self.var_block, axis=axis)
 
         # Set some movement limits on the joint
-        # passive_joint.axis.limit = Limit(lower=math.radians(-45), upper=math.radians(45))
+        passive_joint.axis.limit = Limit(lower=math.radians(-45), upper=math.radians(45), effort=1.0)
 
         # Set the joint position - in the child frame!
         passive_joint.set_position(Vector3(-0.5 * length + self.JOINT_OFFSET, 0, 0))
@@ -194,6 +194,10 @@ class Wheel(Cylinder, ColorMixin):
         # Create revolute joint. Remember: joint position is in child frame
         motor_joint = Joint("revolute", self.link, self.attachment, axis=axis)
         motor_joint.set_position(Vector3(0, 0, -0.5 * box_size))
+
+        # Set a force limit on the joint
+        motor_joint.axis.limit = Limit(effort=1.0)
+
         self.add_joint(motor_joint)
 
         # Register a joint motor with a maximum velocity of

@@ -27,8 +27,9 @@ def analyze_body(sdf, address=("127.0.0.1", 11346)):
     :param address: Tuple of the hostname and port where the analyzer resides. Note
                     that the default is one up from the default Gazebo port,
                     since it is meant to be used with the `run-analyzer.sh` tool.
-    :type address: tuple(str,int)
+    :type address: (str, int)
     :return:
+    :rtype: (bool, (float, float, float))
     """
     global _counter
     msg_id = "analyze_body_%d" % _counter
@@ -112,8 +113,6 @@ def _connector(sdf, msg_id, response_obj, address):
 
     # Make sure someone is listening
     yield From(publisher.wait_for_listener())
-
-    print("Publishing %s" % msg_id)
     yield From(publisher.publish(message))
 
     while not response_obj['analyzed']:

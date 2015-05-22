@@ -45,8 +45,14 @@ void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 }
 
 void BodyAnalyzer::OnModel(ConstModelPtr & msg) {
+	std::string expectedName = "analyze_bot_"+boost::lexical_cast<std::string>(counter_);
+	if (msg->name() != expectedName) {
+		throw std::runtime_error("INTERNAL ERROR: Expecting model with name '" + expectedName +
+										 "', created model was '" + msg->name() + "'.");
+	}
+
 	if (world_->GetModels().size() > 1) {
-		throw std::runtime_error("Too many models.");
+		throw std::runtime_error("INERNAL ERROR: Too many models in analyzer.");
 	}
 
 	// Unpause the world so contacts will be handled
@@ -107,8 +113,9 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	}
 
 	// Add the bounding box to the message
+	// TODO This is currently just wrong in most cases. Must file bug.
+	auto bbox = model->GetCollisionBoundingBox();
 	auto box = response.mutable_boundingbox();
-	auto bbox = model->GetBoundingBox();
 	box->set_x(bbox.GetXLength());
 	box->set_y(bbox.GetYLength());
 	box->set_z(bbox.GetZLength());
