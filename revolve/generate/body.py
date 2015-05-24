@@ -163,8 +163,21 @@ class BodyGenerator(object):
             new_param.value = p
 
         # Set random orientation in degrees
-        part.orientation = random.uniform(0, 360)
+        part.orientation = self.choose_orientation(part, root)
         return part
+
+    def choose_orientation(self, part, root=False):
+        """
+        Overridable method to choose the degrees of orientation of the
+        new part.
+        :param part:
+        :type part: BodyPart
+        :param root: Whether the given part is the root part.
+        :type root: bool
+        :return: Degrees of orientation
+        :rtype: float
+        """
+        return random.uniform(0, 360)
 
     def choose_part(self, parts, root=False):
         """

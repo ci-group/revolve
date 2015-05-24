@@ -11,6 +11,16 @@ import sys
 from sdfbuilder.math import Vector3
 from .generated_sdf import generate_sdf_robot
 from ..analyze.sdf import analyze_body
+import random
+
+
+if len(sys.argv) > 1:
+    seed = int(sys.argv[1])
+else:
+    seed = random.randint(0, 10000)
+
+random.seed(seed)
+print("Seed: %d" % seed, file=sys.stderr)
 
 # Try a maximum of 100 times
 for i in range(100):
