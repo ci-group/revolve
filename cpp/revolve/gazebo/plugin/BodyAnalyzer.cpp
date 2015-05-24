@@ -113,8 +113,23 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	}
 
 	// Add the bounding box to the message
-	// TODO This is currently just wrong in most cases. Must file bug.
-	auto bbox = model->GetCollisionBoundingBox();
+	// Model collision bounding box is currently broken in Gazebo:
+	// https://bitbucket.org/osrf/gazebo/issue/1325/getboundingbox-returns-the-models-last is fixed
+	// Fortunately we can fix this by calculating it ourselves here.
+	gz::math::Vector3 min(FLT_MAX, FLT_MAX, FLT_MAX);
+	gz::math::Vector3 max(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	for (gz::physics::LinkPtr link : model->GetLinks()) {
+		for (gz::physics::CollisionPtr col : link->GetCollisions()) {
+			auto colBox = col->GetBoundingBox();
+			min.SetToMin(colBox.min);
+			max.SetToMax(colBox.max);
+		}
+	}
+
+	// TODO Use this once aforementioned issue is fixed
+	// auto bbox = model->GetCollisionBoundingBox()
+	gz::math::Box bbox(min, max);
+
 	auto box = response.mutable_boundingbox();
 	box->set_x(bbox.GetXLength());
 	box->set_y(bbox.GetYLength());
