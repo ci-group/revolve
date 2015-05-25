@@ -8,7 +8,7 @@
 #ifndef REVOLVE_GAZEBO_SENSORS_IMUSENSOR_H_
 #define REVOLVE_GAZEBO_SENSORS_IMUSENSOR_H_
 
-#include <revolve/gazebo/sensors/Sensor.h>
+#include "Sensor.h"
 
 namespace revolve {
 namespace gazebo {
@@ -25,12 +25,22 @@ public:
 	 */
 	virtual void read(double * input);
 
+	/**
+	 * Called when the IMU sensor is updated
+	 */
+	void OnUpdate();
 private:
 	/**
 	 * Sensor dynamically casted to correct type,
 	 * so it needs to happen only once.
 	 */
 	::gazebo::sensors::ImuSensorPtr castSensor_;
+
+	// Pointer to the update connection
+	::gazebo::event::ConnectionPtr updateConnection_;
+
+	// Last read sensor values
+	double lastValues_[6];
 };
 
 } /* namespace gazebo */

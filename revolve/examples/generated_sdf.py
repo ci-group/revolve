@@ -3,7 +3,7 @@ Demonstrates creating a simple SDF bot from a spec and a YAML file.
 """
 from __future__ import print_function
 import math
-from revolve.build.sdf.motor import VelocityMotor, PID
+from sdfbuilder.sensor import Sensor as SdfSensor
 from sdfbuilder.joint import Joint, Limit
 from sdfbuilder.math import Vector3
 from sdfbuilder import SDF, Link
@@ -12,7 +12,8 @@ from sdfbuilder import SDF, Link
 from revolve.generate import BodyGenerator, NeuralNetworkGenerator
 from revolve.spec import BodyImplementation, default_neural_net, PartSpec, ParamSpec, Robot
 from revolve.build.sdf.body import Box, Cylinder
-from revolve.build.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder
+from revolve.build.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder, \
+    VelocityMotor, PID, Sensor
 
 # Some configuration
 # This is the number of times per second we will call our
@@ -42,6 +43,8 @@ class ColorMixin(object):
 
 # Below, we define some body parts
 # The first is a simple box that serves as a root component
+# We have the box include an IMU Sensor that registers the
+# component's acceleration
 class Core(Box, ColorMixin):
     X = 0.5
     Y = 0.8
@@ -53,7 +56,28 @@ class Core(Box, ColorMixin):
         We override the default box's initialize method to
         include the color of the box.
         """
+        # Don't forget to call super when a parent class actually
+        # does something (Box, in this case).
         super(Core, self)._initialize(**kwargs)
+
+        # Now we will add the IMU sensor. First, we must
+        # create a sensor in SDF. Be careful to give the
+        # sensor a name which is unique for the entire
+        # robot, adding the ID will help us do that.
+        sensor_id = "%s_imu_sensor" % self.id
+        imu = SdfSensor(sensor_id, "imu", update_rate=UPDATE_RATE)
+
+        # `self.link` is set by `Box`
+        self.link.add_element(imu)
+
+        # Now, we need to register the sensor so it will be communicated
+        # to the CPP plugin. There is a default handler available for
+        # a few sensors, which can be overridden by replacing / extending
+        # the sensor factory in the model plugin
+        sensor = Sensor(self.id, self.link, imu)
+        self.sensors.append(sensor)
+
+        # Apply generated color
         self.apply_color()
 
 
@@ -232,7 +256,7 @@ body_spec = BodyImplementation(
         ("Core", "C"): PartSpec(
             body_part=Core,
             arity=6,
-            inputs=0,
+            inputs=6,
             params=color_params
         ),
         ("Wheel", "W"): PartSpec(

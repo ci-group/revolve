@@ -125,7 +125,7 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 
 			auto details = neuronMap.find(neuronId.str());
 			if (details == neuronMap.end()) {
-				std::cerr << "Required output neuron " << neuronId <<
+				std::cerr << "Required output neuron " << neuronId.str() <<
 						" for motor could not be located"
 						<< std::endl;
 				throw std::runtime_error("Robot brain error");
@@ -148,8 +148,8 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 
 			auto details = neuronMap.find(neuronId.str());
 			if (details == neuronMap.end()) {
-				std::cerr << "Required input neuron " << neuronId <<
-						" for motor could not be located"
+				std::cerr << "Required input neuron " << neuronId.str() <<
+						" for sensor could not be located"
 						<< std::endl;
 				throw std::runtime_error("Robot brain error");
 			}

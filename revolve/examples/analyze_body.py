@@ -25,7 +25,7 @@ print("Seed: %d" % seed, file=sys.stderr)
 # Try a maximum of 100 times
 for i in range(100):
     # Generate a new robot
-    sdf = generate_sdf_robot()
+    sdf = generate_sdf_robot(plugin_controller="libtolmodelcontrol.so")
 
     # Find out its intersections and bounding box
     intersections, bbox = analyze_body(sdf)

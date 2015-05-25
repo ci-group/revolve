@@ -66,7 +66,7 @@ void LightSensor::OnUpdate() {
  * which may or may not be an issue. The alternative is to force
  * the sensor to update while we are here in the read method -
  * although I have to check whether this is even possible. In any
- * case that would force the sensor update here on the IMU driver
+ * case that would force the sensor update here on the "driver"
  * thread, which might be detrimental to performance.
  */
 void LightSensor::read(double * input) {
