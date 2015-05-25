@@ -37,8 +37,6 @@ void VelocityMotor::update(double * outputs, unsigned int /*step*/) {
     // Just one network output, which is the first
     double output = outputs[0];
 
-	std::cout << output << std::endl;
-
     // Motor noise in range +/- noiseLevel * actualValue
     output += ((2 * gz::math::Rand::GetDblUniform() * noise_) -
                       noise_) * output;

@@ -327,7 +327,7 @@ def generate_robot(robot_id=0):
     return robot
 
 def generate_sdf_robot(robot_id=0, plugin_controller=None, name="test_bot"):
-    model = builder.get_sdf_model(generate_robot(), plugin_controller, update_rate=UPDATE_RATE, name=name)
+    model = builder.get_sdf_model(generate_robot(robot_id), plugin_controller, update_rate=UPDATE_RATE, name=name)
     sdf = SDF()
     sdf.add_element(model)
     return sdf

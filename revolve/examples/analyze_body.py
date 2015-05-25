@@ -37,11 +37,11 @@ for i in range(100):
         if bbox:
             # Translate the model in z direction so it won't land
             # "in" the ground.
-            # TODO Bounding box of body analyzer is incorrect
+            # TODO Bounding box of body analyzer is incorrect, so we add a little space
             # I cannot fully solve that by myself so will have to report
             print("Model bounding box: (%f, %f, %f)" % bbox, file=sys.stderr)
             model = sdf.elements[0]
-            model.translate(Vector3(0, 0, 0.5 * bbox[2]))
+            model.translate(Vector3(0, 0, 0.5 * bbox[2] + 1))
 
         print(str(sdf))
         break
