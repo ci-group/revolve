@@ -267,11 +267,11 @@ void NeuralNetwork::step(double time) {
 
 	double *curState, *nextState;
 	if (flipState_) {
-		curState = &state2_[0];
-		nextState = &state1_[0];
+		curState = state2_;
+		nextState = state1_;
 	} else {
-		curState = &state1_[0];
-		nextState = &state2_[0];
+		curState = state1_;
+		nextState = state2_;
 	}
 
 

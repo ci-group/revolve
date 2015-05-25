@@ -48,11 +48,8 @@ void ImuSensor::OnUpdate() {
 }
 
 void ImuSensor::read(double * input) {
-	// Copy our six values to the input array
-	// TODO memcpy?
-	for (unsigned int i = 0; i < 6; ++i) {
-		input[i] = lastValues_[i];
-	}
+	// Copy our values to the input array
+	memcpy(input, lastValues_, sizeof(lastValues_));
 }
 
 } /* namespace gazebo */
