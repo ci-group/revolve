@@ -8,15 +8,52 @@ from ..body.exception import ArityException
 
 class BodyPart(PosableGroup):
     """
-    Base component class
+    Base component class. A `BodyPart` is in essence an sdfbuilder `PosableGroup`
+    extended with the concept of slots. A slot is a position on which a body
+    part can attach to another body part. A slot is defined by four things:
+
+    - The `Link` on which the slot lies (slot `Link`s are fixed with a joint
+      on attachment).
+    - The position of the slot
+    - A vector normal to the slot
+    - A vector tangent to the slot
+
+    When two body parts are connected, their slots' normal vectors are aligned
+    in opposite directions, and their slots tangent vectors are aligned to
+    determine the zero orientation (after which rotation may be applied for
+    another orientation). The slot positions are then translated to touch
+    each other to finish alignment of the body parts.
+
+    A body part has a predefined number of slots, as given by the arity
+    of the body part. Since this arity is generally stated in the
+    `BodyImplementation`, you do not have to define it again in the
+    body part (though it might help to state it in a comment).
+
+    In order to implement a `BodyPart`, you must extend this class, and
+    implement the following methods:
+
+    - `_initialize`: Build the SDF model in this method. This involves
+                     creating all links, joints and sensors, and registering
+                     them with the body part.
+    - `get_slot(slot)`: Should return the link for the given slot.
+    - `get_slot_position(slot)`: Return the x, y, z position of the slot,
+                                 in the frame of the body part.
+    - `get_slot_normal(slot)`: Return a vector normal to the slot, in the frame
+                               of the body part.
+    - `get_slot_tangent(slot)`: Return a vector tangent to the slot, in the frame of
+                                the body part. This vector should be orthogonal to
+                                the normal vector.
     """
 
     def __init__(self, id, conf, **kwargs):
         """
-
+        Body part constructor. Note that the `BodyPart` constructor does
+        not accept a pose - allowing an initial pose would complicate
+        body part initialization and is thus disabled.
         :param id:
         :type id: string
-        :param conf:
+        :param conf: A configuration object that can be passed around
+                     by your construction mechanism.
         :return:
         """
         super(BodyPart, self).__init__(None, **kwargs)
