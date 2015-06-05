@@ -10,7 +10,7 @@ from __future__ import print_function
 import sys
 from sdfbuilder.math import Vector3
 from .generated_sdf import generate_sdf_robot
-from ..analyze.sdf import analyze_body
+from ..gazebo import analyze_body
 import random
 
 
