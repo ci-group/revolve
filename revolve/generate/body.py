@@ -217,3 +217,21 @@ class BodyGenerator(object):
         :return:
         """
         return random.randint(1, self.max_parts)
+
+
+class FixedOrientationBodyGenerator(BodyGenerator):
+    """
+    Convenience body generator that supports only a  limited number of
+    orientations. By default, increments of 90 degrees are used. This
+    type of custom generator is trivial to create, this class serves
+    also as a simple example on how to to such a thing.
+    """
+    ORIENTATIONS = [0, 90, 180, 270]
+
+    def choose_orientation(self, part, root=False):
+        """
+        :param part:
+        :param root:
+        :return:
+        """
+        return random.choice(self.ORIENTATIONS)
