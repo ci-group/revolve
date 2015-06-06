@@ -83,13 +83,14 @@ class RequestHandler(object):
         Coroutine to perform a request.
 
         :param msg_id:
+        :type msg_id: int
         :param data:
         :param dbl_data:
         :param callback:
         :return:
         """
         if msg_id in self.responses:
-            raise RuntimeError("Duplicate request ID: %s" % msg_id)
+            raise RuntimeError("Duplicate request ID: %d" % msg_id)
 
         yield From(self._initialize())
         req = request_pb2.Request()
