@@ -10,7 +10,7 @@ default_address = ["127.0.0.1", 11345]
 
 @trollius.coroutine
 def connect(address=default_address):
-    manager = yield From(pygazebo.connect(address=address))
+    manager = yield From(pygazebo.connect(address=tuple(address)))
     raise Return(manager)
 
 
