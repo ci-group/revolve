@@ -41,7 +41,7 @@ class RequestHandler(object):
                                'gazebo.msgs.Response',
                                self._callback)
         self.publisher = yield From(self.manager.advertise(
-            '/gazebo/default/request'))
+            '/gazebo/default/request', 'gazebo.msgs.Request'))
 
     def _callback(self, data):
         """
