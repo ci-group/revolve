@@ -37,7 +37,9 @@ class RequestHandler(object):
         if self.publisher is not None:
             raise Return(None)
 
-        self.manager.subscribe('/gazebo/default/response', self._callback)
+        self.manager.subscribe('/gazebo/default/response',
+                               'gazebo.msgs.Response',
+                               self._callback)
         self.publisher = yield From(self.manager.advertise(
             '/gazebo/default/request'))
 
