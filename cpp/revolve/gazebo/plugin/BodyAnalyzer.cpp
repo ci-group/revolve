@@ -144,6 +144,7 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 
 	// Publish the message
 	response.set_success(true);
+	std::cout << "Response has connections: " << responsePub_->HasConnections() << std::endl;
 	responsePub_->Publish(response);
 
 	// Delete the model. Directly doing this causes a null pointer

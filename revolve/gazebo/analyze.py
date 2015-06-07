@@ -14,7 +14,7 @@ _counter = 0
 
 # Prevent the trollius logging warning
 kl = logging.getLogger("trollius")
-kl.addHandler(logging.NullHandler())
+kl.addHandler(logging.StreamHandler(sys.stdout))
 
 def analyze_body(sdf, address=("127.0.0.1", 11346)):
     """
