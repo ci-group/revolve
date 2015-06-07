@@ -1,0 +1,9 @@
+PyYAML==3.11
+argparse==1.2.1
+futures==3.0.2
+numpy==1.9.2
+protobuf==2.6.1
+git+git://github.com/jpieper/pygazebo.git@develop
+-e git+git@github.com:ElteHupkes/sdf-builder.git@f241819ebe2def41b2395096a4c451067e67af54#egg=sdfbuilder-master
+trollius==1.0.4
+wsgiref==0.1.2
