@@ -1,6 +1,6 @@
 from sdfbuilder import PosableGroup, Link
 from sdfbuilder.joint import Joint, FixedJoint
-from sdfbuilder.math import Vector3
+from sdfbuilder.math import Vector3, Quaternion
 from sdfbuilder.structure import Collision
 
 from ..body.exception import ArityException
@@ -190,6 +190,14 @@ class BodyPart(PosableGroup):
         a_tangent = self.get_slot_tangent(my_slot)
         b_tangent = other.get_slot_tangent(other_slot)
 
+        if orientation:
+            # Rotate the a_tangent vector over the normal
+            # with the given number of radians to apply
+            # the rotation. Rotating this vector around
+            # the normal should not break their orthogonality.
+            rot = Quaternion.from_angle_axis(orientation, a_normal)
+            a_tangent = rot * a_tangent
+
         self.align(
             a_slot,
             a_normal,
@@ -203,8 +211,9 @@ class BodyPart(PosableGroup):
             relative_to_child=True
         )
 
-        if orientation:
-            self.rotate_around(a_normal, orientation, relative_to_child=True)
+        # Internal sanity check
+        norm = (self.to_parent_frame(a_slot) - other.to_parent_frame(b_slot)).norm()
+        assert norm < 1e-5, "Incorrect attachment positions!"
 
         child = self.get_slot(my_slot)
         parent = other.get_slot(other_slot)
