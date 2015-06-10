@@ -217,7 +217,7 @@ class BodyPart(PosableGroup):
         anchor = self.to_sibling_frame(a_slot, child)
 
         # The same thing holds for the joint axis, which is the normal
-        axis = self.to_sibling_frame(a_normal, child)
+        axis = self.to_sibling_direction(a_normal, child)
 
         # Attach with a fixed link
         self.fix_links(parent, child, anchor, axis)
