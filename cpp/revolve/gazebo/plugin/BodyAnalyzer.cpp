@@ -1,5 +1,7 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread/thread.hpp>
 
 #include "BodyAnalyzer.h"
 #include <sstream>
@@ -25,6 +27,11 @@ void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 	// Pause the world if it is not already paused
 	world->SetPaused(true);
 
+	// Set initial state values
+	processing_ = false;
+	counter_ = 0;
+	currentRequest_ = -1;
+
 	// Create a new transport node for advertising / subscribing
 	node_.reset(new gz::transport::Node());
 	node_->Init();
@@ -41,20 +48,18 @@ void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 	// We do this using a model info subscriber.
 	modelSub_ = node_->Subscribe("~/model/info", &BodyAnalyzer::OnModel, this);
 
-	// Removing models from the world directly results in weird errors, so we
-	// also do this with a publisher.
-	deletePub_ = node_->Advertise<gz::msgs::Request>("~/request");
-	deleteSub_ = node_->Subscribe("~/response", &BodyAnalyzer::OnModelDelete, this);
-
 	// Publisher for the results
-	responsePub_ = node_->Advertise<msgs::SdfBodyAnalyzeResponse>("~/analyze_body/result");
+	responsePub_ = node_->Advertise<msgs::BodyAnalysisResponse>("~/analyze_body/response");
+
+	// Subscribe to model delete events
+	deleteSub_ = node_->Subscribe("~/response", &BodyAnalyzer::OnModelDelete, this);
 }
 
 void BodyAnalyzer::OnModel(ConstModelPtr & msg) {
 	std::string expectedName = "analyze_bot_"+boost::lexical_cast<std::string>(counter_);
 	if (msg->name() != expectedName) {
 		throw std::runtime_error("INTERNAL ERROR: Expecting model with name '" + expectedName +
-										 "', created model was '" + msg->name() + "'.");
+								 "', created model was '" + msg->name() + "'.");
 	}
 
 	if (world_->GetModels().size() > 1) {
@@ -66,10 +71,9 @@ void BodyAnalyzer::OnModel(ConstModelPtr & msg) {
 }
 
 void BodyAnalyzer::OnModelDelete(ConstResponsePtr & msg) {
-	if (msg->request() == "entity_delete" && msg->id() == (DELETE_BASE + counter_)) {
-		// We're going to check the processing state, so acquire the mutex
-		std::cout << "Completed analysis request " << currentRequest_ << '.' << std::endl;
-		this->Advance();
+	if (msg->request() == "entity_delete") {
+		// This might have cleared the world
+		this->ProcessQueue();
 	}
 }
 
@@ -80,7 +84,7 @@ void BodyAnalyzer::Advance() {
 	// processed, and move on to the next item if there is one.
 	counter_++;
 	processing_ = false;
-	currentRequest_ = "";
+	currentRequest_ = -1;
 
 	// ProcessQueue needs the processing mutex, release it
 	processingMutex_.unlock();
@@ -91,8 +95,18 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	// Pause the world so no new contacts will come in
 	world_->SetPaused(true);
 
+	boost::mutex::scoped_lock plock(processingMutex_);
+	if (!processing_) {
+		return;
+	}
+	plock.unlock();
+
+	if (world_->GetModelCount() > 1) {
+		std::cerr << "WARNING: Too many models in the world." << std::endl;
+	}
+
 	// Create a response
-	msgs::SdfBodyAnalyzeResponse response;
+	msgs::BodyAnalysisResponse response;
 	response.set_id(currentRequest_);
 
 	// Add contact info
@@ -145,33 +159,46 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	// Publish the message
 	response.set_success(true);
 	responsePub_->Publish(response);
+	std::cout << "Response for request " << currentRequest_ << " sent." << std::endl;
 
-	// Delete the model. Directly doing this causes a null pointer
-	// error somehow, so we use a message instead.
-	// created.
-	gz::msgs::Request del;
-	del.set_id(DELETE_BASE + counter_);
-	del.set_data(model->GetScopedName());
-	del.set_request("entity_delete");
-	deletePub_->Publish(del);
+	// Remove all models from the world and advance
+	world_->Clear();
+	this->Advance();
 }
 
-void BodyAnalyzer::AnalyzeRequest(ConstAnalyzeRequestPtr &request) {
-	boost::mutex::scoped_lock lock(queueMutex_);
+void BodyAnalyzer::AnalyzeRequest(ConstRequestPtr &request) {
+	if (request->request() != "analyze_body") {
+		std::cerr << "The request of an robot analysis message should be `analyze_body`, not "
+		<< request->request() << std::endl;
+		return;
+	}
+
+	if (!request->has_data()) {
+		std::cerr << "An `analyze_body` request should have data." << std::endl;
+		return;
+	}
+
+	// Create the request pair before locking the mutex - this seems
+	// to prevent threading and "unknown message type" problems.
+	std::pair<int, std::string> req(request->id(), request->data());
 	std::cout << "Received request " << request->id() << std::endl;
+
+	boost::mutex::scoped_lock lock(queueMutex_);
 
 	if (requests_.size() >= MAX_QUEUE_SIZE) {
 		std::cerr << "Ignoring request " << request->id() << ": maximum queue size ("
-				  << MAX_QUEUE_SIZE <<") reached." << std::endl;
+		<< MAX_QUEUE_SIZE <<") reached." << std::endl;
+		return;
 	}
 
 	// This actually copies the message, but since everything is const
 	// we don't really have a choice in that regard. This shouldn't
 	// be the performance bottleneck anyway.
-	requests_.push(*request);
+	requests_.push(req);
 
 	// Release the lock explicitly to prevent deadlock in ProcessQueue
 	lock.unlock();
+
 	this->ProcessQueue();
 }
 
@@ -190,6 +217,12 @@ void BodyAnalyzer::ProcessQueue() {
 		return;
 	}
 
+	if (world_->GetModelCount()) {
+		// There are still some items in the world, wait until
+		// `Clear()` has done its job.
+		return;
+	}
+
 	processing_ = true;
 
 	// Pop one request off the queue and set the
@@ -197,17 +230,12 @@ void BodyAnalyzer::ProcessQueue() {
 	auto request = requests_.front();
 	requests_.pop();
 
-	if (request.id().empty()) {
-		std::cerr << "Ignoring analysis request with empty ID." << std::endl;
-		return;
-	}
-
-	currentRequest_ = request.id();
+	currentRequest_ = request.first;
 	std::cout << "Now handling request: " << currentRequest_ << std::endl;
 
 	// Create model SDF
 	sdf::SDF robotSDF;
-	robotSDF.SetFromString(request.sdf());
+	robotSDF.SetFromString(request.second);
 
 	// Force the model name to something we know
 	std::string name = "analyze_bot_"+boost::lexical_cast<std::string>(counter_);

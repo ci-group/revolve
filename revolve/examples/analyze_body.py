@@ -9,8 +9,8 @@ stdout, statistics are written to stderr.
 from __future__ import print_function
 import sys
 from sdfbuilder.math import Vector3
-from .generated_sdf import generate_sdf_robot
-from ..gazebo import analyze_body, analysis_coroutine, connect
+from .generated_sdf import generate_robot, builder, robot_to_sdf
+from ..gazebo import analysis_coroutine, connect, get_analysis_robot
 import random
 
 import trollius
@@ -31,11 +31,11 @@ def analysis_func():
     # Try a maximum of 100 times
     for i in range(100):
         # Generate a new robot
-        sdf = generate_sdf_robot(plugin_controller="libtolmodelcontrol.so")
+        robot = generate_robot()
+        sdf = get_analysis_robot(robot, builder)
 
         # Find out its intersections and bounding box
-        msg_id = "test_%d" % i
-        intersections, bbox = yield From(analysis_coroutine(sdf, msg_id, manager))
+        intersections, bbox = yield From(analysis_coroutine(sdf, manager))
 
         if intersections:
             print("Invalid model - intersections detected.", file=sys.stderr)
@@ -50,7 +50,7 @@ def analysis_func():
                 model = sdf.elements[0]
                 model.translate(Vector3(0, 0, 0.5 * bbox[2] + 1))
 
-            print(str(sdf))
+            print(str(robot_to_sdf(robot, "test_bot", "controllerplugin.so")))
             break
 
 loop = trollius.get_event_loop()

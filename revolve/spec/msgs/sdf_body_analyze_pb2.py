@@ -14,44 +14,9 @@ import body_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='sdf_body_analyze.proto',
   package='revolve.msgs',
-  serialized_pb='\n\x16sdf_body_analyze.proto\x12\x0crevolve.msgs\x1a\nbody.proto\"0\n\x15SdfBodyAnalyzeRequest\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0b\n\x03sdf\x18\x02 \x02(\t\"1\n\x07\x43ontact\x12\x12\n\ncollision1\x18\x01 \x02(\t\x12\x12\n\ncollision2\x18\x02 \x02(\t\".\n\x0b\x42oundingBox\x12\t\n\x01x\x18\x01 \x02(\x01\x12\t\n\x01y\x18\x02 \x02(\x01\x12\t\n\x01z\x18\x03 \x02(\x01\"\x8d\x01\n\x16SdfBodyAnalyzeResponse\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0f\n\x07success\x18\x02 \x02(\x08\x12.\n\x0b\x62oundingBox\x18\x03 \x01(\x0b\x32\x19.revolve.msgs.BoundingBox\x12&\n\x07\x63ontact\x18\x04 \x03(\x0b\x32\x15.revolve.msgs.Contact')
+  serialized_pb='\n\x16sdf_body_analyze.proto\x12\x0crevolve.msgs\x1a\nbody.proto\"1\n\x07\x43ontact\x12\x12\n\ncollision1\x18\x01 \x02(\t\x12\x12\n\ncollision2\x18\x02 \x02(\t\".\n\x0b\x42oundingBox\x12\t\n\x01x\x18\x01 \x02(\x01\x12\t\n\x01y\x18\x02 \x02(\x01\x12\t\n\x01z\x18\x03 \x02(\x01\"\x8b\x01\n\x14\x42odyAnalysisResponse\x12\n\n\x02id\x18\x01 \x02(\x05\x12\x0f\n\x07success\x18\x02 \x02(\x08\x12.\n\x0b\x62oundingBox\x18\x03 \x01(\x0b\x32\x19.revolve.msgs.BoundingBox\x12&\n\x07\x63ontact\x18\x04 \x03(\x0b\x32\x15.revolve.msgs.Contact')
 
 
-
-
-_SDFBODYANALYZEREQUEST = _descriptor.Descriptor(
-  name='SdfBodyAnalyzeRequest',
-  full_name='revolve.msgs.SdfBodyAnalyzeRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='id', full_name='revolve.msgs.SdfBodyAnalyzeRequest.id', index=0,
-      number=1, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=unicode("", "utf-8"),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='sdf', full_name='revolve.msgs.SdfBodyAnalyzeRequest.sdf', index=1,
-      number=2, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=unicode("", "utf-8"),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  options=None,
-  is_extendable=False,
-  extension_ranges=[],
-  serialized_start=52,
-  serialized_end=100,
-)
 
 
 _CONTACT = _descriptor.Descriptor(
@@ -84,8 +49,8 @@ _CONTACT = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=102,
-  serialized_end=151,
+  serialized_start=52,
+  serialized_end=101,
 )
 
 
@@ -126,41 +91,41 @@ _BOUNDINGBOX = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=153,
-  serialized_end=199,
+  serialized_start=103,
+  serialized_end=149,
 )
 
 
-_SDFBODYANALYZERESPONSE = _descriptor.Descriptor(
-  name='SdfBodyAnalyzeResponse',
-  full_name='revolve.msgs.SdfBodyAnalyzeResponse',
+_BODYANALYSISRESPONSE = _descriptor.Descriptor(
+  name='BodyAnalysisResponse',
+  full_name='revolve.msgs.BodyAnalysisResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='id', full_name='revolve.msgs.SdfBodyAnalyzeResponse.id', index=0,
-      number=1, type=9, cpp_type=9, label=2,
-      has_default_value=False, default_value=unicode("", "utf-8"),
+      name='id', full_name='revolve.msgs.BodyAnalysisResponse.id', index=0,
+      number=1, type=5, cpp_type=1, label=2,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='success', full_name='revolve.msgs.SdfBodyAnalyzeResponse.success', index=1,
+      name='success', full_name='revolve.msgs.BodyAnalysisResponse.success', index=1,
       number=2, type=8, cpp_type=7, label=2,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='boundingBox', full_name='revolve.msgs.SdfBodyAnalyzeResponse.boundingBox', index=2,
+      name='boundingBox', full_name='revolve.msgs.BodyAnalysisResponse.boundingBox', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='contact', full_name='revolve.msgs.SdfBodyAnalyzeResponse.contact', index=3,
+      name='contact', full_name='revolve.msgs.BodyAnalysisResponse.contact', index=3,
       number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -175,22 +140,15 @@ _SDFBODYANALYZERESPONSE = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=202,
-  serialized_end=343,
+  serialized_start=152,
+  serialized_end=291,
 )
 
-_SDFBODYANALYZERESPONSE.fields_by_name['boundingBox'].message_type = _BOUNDINGBOX
-_SDFBODYANALYZERESPONSE.fields_by_name['contact'].message_type = _CONTACT
-DESCRIPTOR.message_types_by_name['SdfBodyAnalyzeRequest'] = _SDFBODYANALYZEREQUEST
+_BODYANALYSISRESPONSE.fields_by_name['boundingBox'].message_type = _BOUNDINGBOX
+_BODYANALYSISRESPONSE.fields_by_name['contact'].message_type = _CONTACT
 DESCRIPTOR.message_types_by_name['Contact'] = _CONTACT
 DESCRIPTOR.message_types_by_name['BoundingBox'] = _BOUNDINGBOX
-DESCRIPTOR.message_types_by_name['SdfBodyAnalyzeResponse'] = _SDFBODYANALYZERESPONSE
-
-class SdfBodyAnalyzeRequest(_message.Message):
-  __metaclass__ = _reflection.GeneratedProtocolMessageType
-  DESCRIPTOR = _SDFBODYANALYZEREQUEST
-
-  # @@protoc_insertion_point(class_scope:revolve.msgs.SdfBodyAnalyzeRequest)
+DESCRIPTOR.message_types_by_name['BodyAnalysisResponse'] = _BODYANALYSISRESPONSE
 
 class Contact(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
@@ -204,11 +162,11 @@ class BoundingBox(_message.Message):
 
   # @@protoc_insertion_point(class_scope:revolve.msgs.BoundingBox)
 
-class SdfBodyAnalyzeResponse(_message.Message):
+class BodyAnalysisResponse(_message.Message):
   __metaclass__ = _reflection.GeneratedProtocolMessageType
-  DESCRIPTOR = _SDFBODYANALYZERESPONSE
+  DESCRIPTOR = _BODYANALYSISRESPONSE
 
-  # @@protoc_insertion_point(class_scope:revolve.msgs.SdfBodyAnalyzeResponse)
+  # @@protoc_insertion_point(class_scope:revolve.msgs.BodyAnalysisResponse)
 
 
 # @@protoc_insertion_point(module_scope)

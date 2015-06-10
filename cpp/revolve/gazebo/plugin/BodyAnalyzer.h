@@ -21,6 +21,7 @@
 #include <gazebo/gazebo.hh>
 
 #include <queue>
+#include <utility>
 #include <boost/thread/mutex.hpp>
 
 // Protobuf analysis messages
@@ -28,8 +29,6 @@
 
 namespace revolve {
 namespace gazebo {
-
-typedef const boost::shared_ptr<const msgs::SdfBodyAnalyzeRequest> ConstAnalyzeRequestPtr;
 
 class BodyAnalyzer : public ::gazebo::WorldPlugin {
 public:
@@ -41,7 +40,30 @@ private:
 	// HACK: Use this as an ID "prefix" to make sure we don't
 	// erroneously identify other response messages as our
 	// delete requests.
-	static const int DELETE_BASE = 888888;
+	static const int DELETE_BASE = 8888888;
+
+	// Processes the items in the queue if possible
+	void ProcessQueue();
+
+	/// Callback for contact messages from the physics engine.
+	void OnContacts(ConstContactsPtr &_msg);
+
+	// Callback for model insertion
+	void OnModel(ConstModelPtr &_msg);
+
+	// Callback for model insertion
+	void OnModelDelete(ConstResponsePtr &_msg);
+
+	// Listener for analysis requests
+	void AnalyzeRequest(ConstRequestPtr &request);
+
+	// Advances the request queue
+	void Advance();
+
+	/**
+	 * Analyze request queue.
+	 */
+	std::queue<std::pair<int, std::string>> requests_;
 
 	// In case message handling is fully threaded (I'm not 100% certain
 	// at this point) no two threads should be allowed to modify the
@@ -57,31 +79,8 @@ private:
 	// Internal counter for the number of analyzed models
 	int counter_ = 0;
 
-	// Processes the items in the queue if possible
-	void ProcessQueue();
-
-	/// Callback for contact messages from the physics engine.
-	void OnContacts(ConstContactsPtr &_msg);
-
-	// Callback for model insertion
-	void OnModel(ConstModelPtr &_msg);
-
-	// Callback for model insertion
-	void OnModelDelete(ConstResponsePtr &_msg);
-
-	// Listener for analysis requests
-	void AnalyzeRequest(ConstAnalyzeRequestPtr &request);
-
-	// Advances the request queue
-	void Advance();
-
-	/**
-	 * Analyze request queue.
-	 */
-	std::queue<msgs::SdfBodyAnalyzeRequest> requests_;
-
 	// ID of the current request being evaluated
-	std::string currentRequest_;
+	int currentRequest_;
 
 	// Pointer to the world
 	::gazebo::physics::WorldPtr world_;
@@ -100,7 +99,8 @@ private:
 
 	// Publisher for the responses
 	::gazebo::transport::PublisherPtr responsePub_;
-	::gazebo::transport::PublisherPtr deletePub_;
+
+	// Listen to delete responses
 	::gazebo::transport::SubscriberPtr deleteSub_;
 };
 

@@ -1,20 +1,45 @@
 from __future__ import print_function
 import sys
 from pygazebo import Manager
-from ..spec import SdfBodyAnalyzeResponse, SdfBodyAnalyzeRequest
+from pygazebo.msg.request_pb2 import Request as AnalyzeRequest
+from ..spec import BodyAnalysisResponse
 from ..build.sdf import BodyPart
-from sdfbuilder import SDF, Link
+from sdfbuilder import SDF, Link, Model
+from sdfbuilder.sensor import Sensor
 import trollius
 from trollius import From, Return
 import logging
 from .connect import connect
 
-# Message ID counter
-_counter = 0
+# Message ID sequencer, start at some high value to
+# prevent ID clashes (don't know if this would ever be
+# a problem though).
+_counter = 1234321000
+def _msg_id():
+    global _counter
+    r = _counter
+    _counter += 1
+    return r
 
 # Prevent the trollius logging warning
 kl = logging.getLogger("trollius")
 kl.addHandler(logging.StreamHandler(sys.stdout))
+
+def get_analysis_robot(robot, builder):
+    """
+    Creates an SDF model suitable for analysis from a robot object
+    and a builder.
+    :param robot:
+    :type robot: Robot
+    :param builder:
+    :type builder: BodyBuilder
+    :return:
+    """
+    model = builder.get_sdf_model(robot, controller_plugin=None, name="analyze_bot")
+    model.remove_elements_of_type(Sensor, recursive=True)
+    sdf = SDF()
+    sdf.add_element(model)
+    return sdf
 
 def analyze_body(sdf, address=("127.0.0.1", 11346)):
     """
@@ -33,10 +58,7 @@ def analyze_body(sdf, address=("127.0.0.1", 11346)):
     :return:
     :rtype: (bool, (float, float, float))
     """
-    global _counter
-    msg_id = "analyze_body_%d" % _counter
-    _counter += 1
-
+    msg_id = _msg_id()
     response_obj = [None]
 
     @trollius.coroutine
@@ -60,35 +82,35 @@ def attach_analyzer(manager):
     analyzer = getattr(manager, 'rvgz_analyzer', None)
 
     if analyzer:
-        # Analyzer already attached
+        # _Analyzer already attached
         raise Return(analyzer)
 
-    analyzer = Analyzer(manager)
+    analyzer = _Analyzer(manager)
     setattr(manager, 'rvgz_analyzer', analyzer)
-    yield From(analyzer.make_publisher())
+    yield From(analyzer.initialize())
     raise Return(analyzer)
 
 @trollius.coroutine
-def message_coroutine(sdf, msg_id, manager):
+def message_coroutine(sdf, manager):
     """
     Coroutine that connects to Gazebo, performs analysis, and
     returns the result of the analysis message.
     :param sdf:
-    :param msg_id:
     :param manager:
     :type manager: Manager
     :return:
     """
-    message = SdfBodyAnalyzeRequest()
-    message.id = msg_id
-    message.sdf = str(sdf)
-
     # Attach the analyzer if not already attached
     analyzer = yield From(attach_analyzer(manager))
     publisher = analyzer.publisher
 
+    msg_id = _msg_id()
+    message = AnalyzeRequest()
+    message.id = msg_id
+    message.request = "analyze_body"
+    message.data = str(sdf)
+
     # Make sure someone is listening
-    yield From(publisher.wait_for_listener())
     yield From(publisher.publish(message))
 
     response = analyzer.get_response(msg_id)
@@ -102,20 +124,19 @@ def message_coroutine(sdf, msg_id, manager):
 
 
 @trollius.coroutine
-def analysis_coroutine(sdf, msg_id, manager, max_attempts=5):
+def analysis_coroutine(sdf, manager, max_attempts=5):
     """
     Coroutine that returns with a (collisions, bounding box) tuple,
     assuming analysis succeeds.
     :param sdf:
-    :param msg_id:
-    :param manager:
+    :param manager: A pygazebo manager connected to a body analyzer
     :type manager: Manager
     :param max_attempts: Maximum number of analysis attempts
     :return:
     """
     msg = None
     for _ in range(max_attempts):
-        msg = yield From(message_coroutine(sdf, msg_id, manager))
+        msg = yield From(message_coroutine(sdf, manager))
 
         if msg and msg.success:
             break
@@ -156,7 +177,7 @@ def analysis_coroutine(sdf, msg_id, manager, max_attempts=5):
 
     raise Return(internal_collisions, bbox)
 
-class Analyzer(object):
+class _Analyzer(object):
     """
     Analyzer class attached to the manager for internal callbacks.
     Internal use only.
@@ -173,15 +194,17 @@ class Analyzer(object):
         self.manager = manager
 
         # Subscribe to the analyzer message
-        manager.subscribe('/gazebo/default/analyze_body/result',
-                          'revolve.msgs.SdfBodyAnalyzeResponse',
-                          self._callback)
+        self.subscriber = manager.subscribe(
+            '/gazebo/default/analyze_body/response',
+            'revolve.msgs.BodyAnalysisResponse',
+            self._callback
+        )
 
     def _callback(self, data):
         """
         Subscriber callback
         """
-        response = SdfBodyAnalyzeResponse()
+        response = BodyAnalysisResponse()
         response.ParseFromString(data)
         self.analyzed[response.id] = response
 
@@ -201,8 +224,12 @@ class Analyzer(object):
         return self.analyzed.get(msg_id, None)
 
     @trollius.coroutine
-    def make_publisher(self):
+    def initialize(self):
         self.publisher = yield From(
             self.manager.advertise('/gazebo/default/analyze_body/request',
-                                   'revolve.msgs.SdfBodyAnalyzeRequest')
+                                   'gazebo.msgs.request')
         )
+
+        # Make sure someone is listening
+        yield From(self.publisher.wait_for_listener())
+        yield From(self.subscriber.wait_for_connection())
