@@ -24,6 +24,9 @@ PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
 	upperLimit_ = joint_->GetUpperLimit(0).Radian();
 	lowerLimit_ = joint_->GetLowerLimit(0).Radian();
 
+	std::cout << "Upper: " << upperLimit_ << std::endl;
+	std::cout << "Lower: " << lowerLimit_ << std::endl;
+
 	if (motor->HasElement("rv:pid")) {
 		auto pidElem = motor->GetElement("rv:pid");
 		auto pid = Motor::createPid(pidElem);
@@ -42,6 +45,8 @@ PositionMotor::~PositionMotor() { }
 void PositionMotor::update(double *outputs, unsigned int /*step*/) {
 	// Just one network output, which is the first
 	double networkOutput = outputs[0];
+
+	std::cout << "Output: " << networkOutput << std::endl;
 
 	// Motor noise in range +/- noiseLevel * actualValue
 	networkOutput += ((2 * gz::math::Rand::GetDblUniform() * noise_) -

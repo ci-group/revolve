@@ -115,14 +115,14 @@ def default_neural_net():
         "Sigmoid": NeuronSpec(
             params=[
                 ParamSpec("bias", min_value=-10, max_value=10),
-                ParamSpec("gain", min_value=-10, max_value=10)
+                ParamSpec("gain", min_value=-10, max_value=10, default=1.0)
             ],
             layers=["output", "hidden"]
         ),
         "Simple": NeuronSpec(
             params=[
                 ParamSpec("bias", min_value=-10, max_value=10),
-                ParamSpec("gain", min_value=-10, max_value=10)
+                ParamSpec("gain", min_value=-10, max_value=10, default=1.0)
             ],
             layers=["output", "hidden"]
         ),

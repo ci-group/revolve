@@ -42,6 +42,9 @@ void VelocityMotor::update(double * outputs, unsigned int /*step*/) {
                       noise_) * output;
 
     double velocity = minVelocity_ + output * (maxVelocity_ - minVelocity_);
+    std::cout << "Output: " << output << std::endl;
+    std::cout << "Velocity: " << velocity << std::endl;
+
     jointController_->SetVelocityTarget(jointName_, velocity);
 }
 
