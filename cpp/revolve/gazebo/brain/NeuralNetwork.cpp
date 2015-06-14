@@ -116,12 +116,21 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 	}
 
 	// Create motor output neurons at the correct position
+	// We iterate a part's motors and just assign every
+	// neuron we find in order.
+	std::map<std::string, unsigned int> outputCountMap;
 	unsigned int outPos = 0;
 	for (auto it = motors.begin(); it != motors.end(); ++it) {
 		auto motor = *it;
+		auto partId = motor->partId();
+		if (!outputCountMap.count(partId)) {
+			outputCountMap[partId] = 0;
+		}
+
 		for (unsigned int i = 0, l = motor->outputs(); i < l; ++i) {
 			std::stringstream neuronId;
-			neuronId << motor->partId() << "-out-" << i;
+			neuronId << partId << "-out-" << outputCountMap[partId];
+			outputCountMap[partId]++;
 
 			auto details = neuronMap.find(neuronId.str());
 			if (details == neuronMap.end()) {
@@ -139,12 +148,20 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 	}
 
 	// Create sensor input neurons
+	std::map<std::string, unsigned int> inputCountMap;
 	unsigned int inPos = 0;
 	for (auto it = sensors.begin(); it != sensors.end(); ++it) {
 		auto sensor = *it;
+		auto partId = sensor->partId();
+
+		if (!inputCountMap.count(partId)) {
+			inputCountMap[partId] = 0;
+		}
+
 		for (unsigned int i = 0, l = sensor->inputs(); i < l; ++i) {
 			std::stringstream neuronId;
-			neuronId << sensor->partId() << "-in-" << i;
+			neuronId << partId << "-in-" << inputCountMap[partId];
+			inputCountMap[partId]++;
 
 			auto details = neuronMap.find(neuronId.str());
 			if (details == neuronMap.end()) {

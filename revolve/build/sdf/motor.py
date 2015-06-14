@@ -147,16 +147,16 @@ class VelocityMotor(PIDMotor):
     """
     MOTOR_TYPE = 'velocity'
 
-    def __init__(self, part_id, motor_id, joint, pid=None, motor_type=None, min_velocity=-100, max_velocity=100):
+    def __init__(self, part_id, motor_id, joint, pid=None, motor_type=None, max_velocity=10, min_velocity=None):
         """
 
-        :param min_velocity:
-        :param max_velocity:
+        :param max_velocity: Maximum velocity in radians / second
+        :param min_velocity: Minimum velocity in radians / second. Defaults to -max_velocity.
         :return:
         """
         super(VelocityMotor, self).__init__(part_id, motor_id, joint=joint, pid=pid, motor_type=motor_type)
-        self.min_velocity = min_velocity
         self.max_velocity = max_velocity
+        self.min_velocity = min_velocity is min_velocity if min_velocity is not None else -max_velocity
 
     def render_attributes(self):
         """

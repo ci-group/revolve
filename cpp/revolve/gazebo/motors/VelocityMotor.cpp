@@ -1,7 +1,3 @@
-//
-// Created by elte on 17-5-15.
-//
-
 #include <revolve/gazebo/motors/VelocityMotor.h>
 
 namespace gz = gazebo;
@@ -41,9 +37,10 @@ void VelocityMotor::update(double * outputs, unsigned int /*step*/) {
     output += ((2 * gz::math::Rand::GetDblUniform() * noise_) -
                       noise_) * output;
 
+	// Truncate output to [0, 1]
+	output = fmax(fmin(output, 1), 0);
+
     double velocity = minVelocity_ + output * (maxVelocity_ - minVelocity_);
-    std::cout << "Output: " << output << std::endl;
-    std::cout << "Velocity: " << velocity << std::endl;
 
     jointController_->SetVelocityTarget(jointName_, velocity);
 }
