@@ -1,4 +1,4 @@
-from sdfbuilder import Link
+from sdfbuilder.structure import Box as BoxGeom
 from sdfbuilder.math import Vector3
 from .body_part import BodyPart
 
@@ -33,15 +33,14 @@ class Box(BodyPart):
         :param kwargs:
         :return:
         """
-        self.link = self.create_link("%s-box-link" % self.id)
-        self.link.make_box(self.mass, self.x, self.y, self.z)
+        self.component = self.create_component(BoxGeom(self.x, self.y, self.z, self.mass), "box")
 
     def get_slot(self, slot):
         """
         There's only one slot, return the link.
         """
         self.check_slot(slot)
-        return self.link
+        return self.component
 
     def get_slot_position(self, slot):
         """

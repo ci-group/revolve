@@ -1,5 +1,5 @@
-from sdfbuilder import Link
 from sdfbuilder.math import Vector3
+from sdfbuilder.structure import Cylinder as CylinderGeom
 from .body_part import BodyPart
 
 
@@ -34,8 +34,8 @@ class Cylinder(BodyPart):
         :param kwargs:
         :return:
         """
-        self.link = self.create_link("%s-cylinder-link" % self.id)
-        self.link.make_cylinder(self.mass, self.radius, self.length)
+        self.component = self.create_component(CylinderGeom(
+            self.radius, self.length, self.mass), "cylinder")
 
     def get_slot(self, slot_id):
         """
@@ -43,7 +43,7 @@ class Cylinder(BodyPart):
         :return:
         """
         self.check_slot(slot_id)
-        return self.link
+        return self.component
 
     def get_slot_position(self, slot_id):
         """

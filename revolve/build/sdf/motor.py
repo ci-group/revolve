@@ -6,8 +6,9 @@ When writing a new motor, this often involves creating a corresponding
 C++ motor class.
 """
 from sdfbuilder import Element
-from sdfbuilder.joint import Joint
 from sdfbuilder.util import number_format as nf
+
+from .body.joint import ComponentJoint
 
 
 class Motor(Element):
@@ -34,7 +35,7 @@ class Motor(Element):
         :type motor_id: str
         :param joint: It is common for motors to power a joint, this allows you to specify
                       which joint the motor controls if this is the case.
-        :type joint: Joint
+        :type joint: ComponentJoint
         :param motor_type:
         :type motor_type: str
         """
@@ -143,7 +144,7 @@ class PositionMotor(PIDMotor):
 
 class VelocityMotor(PIDMotor):
     """
-    A velocity based PDI motor
+    A velocity based PID motor
     """
     MOTOR_TYPE = 'velocity'
 

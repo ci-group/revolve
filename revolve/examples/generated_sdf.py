@@ -1,17 +1,17 @@
 """
 Demonstrates creating a simple SDF bot from a spec and a YAML file.
 """
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 import math
 from sdfbuilder.sensor import Sensor as SdfSensor
-from sdfbuilder.joint import Joint, Limit
 from sdfbuilder.math import Vector3
-from sdfbuilder import SDF, Link
+from sdfbuilder import SDF, Limit
+from sdfbuilder.structure import Box as BoxGeom, Cylinder as CylinderGeom
 
 # Module imports
 from revolve.generate import BodyGenerator, NeuralNetworkGenerator
 from revolve.spec import BodyImplementation, default_neural_net, PartSpec, ParamSpec, Robot
-from revolve.build.sdf.body import Box, Cylinder
+from revolve.build.sdf.body import Box, Cylinder, ComponentJoint as Joint
 from revolve.build.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder, \
     VelocityMotor, PID, Sensor
 
@@ -68,14 +68,14 @@ class Core(Box, ColorMixin):
         imu = SdfSensor(sensor_id, "imu", update_rate=UPDATE_RATE)
 
         # `self.link` is set by `Box`
-        self.link.add_element(imu)
+        # self.component.add_element(imu)
 
         # Now, we need to register the sensor so it will be communicated
         # to the CPP plugin. There is a default handler available for
         # a few sensors, which can be overridden by replacing / extending
         # the sensor factory in the model plugin
-        sensor = Sensor(self.id, self.link, imu)
-        self.sensors.append(sensor)
+        # sensor = Sensor(self.id, self.component, imu)
+        # self.sensors.append(sensor)
 
         # Apply generated color
         self.apply_color()
@@ -109,8 +109,7 @@ class PassiveHinge(Box, ColorMixin):
         # way of doing this, because it sets some non-default link properties
         # (such as self_collide) which you generally need.
         length = kwargs["length"]
-        self.var_block = self.create_link("%s-var-block" % self.id)
-        self.var_block.make_box(0.1, length, self.y, self.z)
+        self.var_block = self.create_component(BoxGeom(length, self.y, self.z, 0.1), "var-block")
 
         # We move the block in the x-direction so that it
         # just about overlaps with the other block (to
@@ -120,7 +119,7 @@ class PassiveHinge(Box, ColorMixin):
         # Now create a revolute joint at this same position. The
         # joint axis is in the y-direction.
         axis = Vector3(0, 1, 0)
-        passive_joint = Joint("revolute", self.link, self.var_block, axis=axis)
+        passive_joint = Joint("revolute", self.component, self.var_block, axis=axis)
 
         # Set some movement limits on the joint
         passive_joint.axis.limit = Limit(lower=math.radians(-45), upper=math.radians(45), effort=1.0)
@@ -143,7 +142,7 @@ class PassiveHinge(Box, ColorMixin):
         self.check_slot(slot)
 
         # Slot 0 is the fixed box, slot 1 is the variable sized block
-        return self.link if slot == 0 else self.var_block
+        return self.component if slot == 0 else self.var_block
 
     def get_slot_position(self, slot):
         """
@@ -204,24 +203,23 @@ class Wheel(Cylinder, ColorMixin):
         super(Wheel, self)._initialize(**kwargs)
 
         # Create the small box that serves as the motor
-        self.attachment = self.create_link("%s-cylinder-attach" % self.id)
         box_size = self.MOTOR_SIZE
+        self.attachment = self.create_component(
+            BoxGeom(box_size, box_size, box_size, 0.01), "cylinder-attach")
 
         # Get attachment position and axis of the motor joint
         anchor = Vector3(0, 0, 0.5 * self.LENGTH)
-        axis = self.get_slot_normal(0)
+        axis = Vector3(0, 0, 1)
 
         # Size and position the box
-        self.attachment.make_box(0.01, box_size, box_size, box_size)
         self.attachment.set_position(anchor + Vector3(0, 0, 0.5 * box_size))
 
         # Create revolute joint. Remember: joint position is in child frame
-        motor_joint = Joint("revolute", self.link, self.attachment, axis=axis)
+        motor_joint = Joint("revolute", self.component, self.attachment, axis=axis)
         motor_joint.set_position(Vector3(0, 0, -0.5 * box_size))
 
         # Set a force limit on the joint
-        motor_joint.axis.limit = Limit(effort=1.0)
-
+        motor_joint.axis.limit = Limit(effort=0.01)
         self.add_joint(motor_joint)
 
         # Register a joint motor with a maximum velocity of

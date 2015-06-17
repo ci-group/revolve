@@ -1,22 +1,25 @@
 from sdfbuilder import PosableGroup, Link
-from sdfbuilder.joint import Joint, FixedJoint
 from sdfbuilder.math import Vector3, Quaternion
-from sdfbuilder.structure import Collision
+from sdfbuilder.structure import Collision, Visual
 
-from ..body.exception import ArityException
-
+from .exception import ArityException, ComponentException
+from .component import Component
+from .joint import ComponentJoint
 
 class BodyPart(PosableGroup):
     """
-    Base component class. A `BodyPart` is in essence an sdfbuilder `PosableGroup`
-    extended with the concept of slots. A slot is a position on which a body
-    part can attach to another body part. A slot is defined by four things:
+    Base body part class. A body part is defined by several things:
 
-    - The `Link` on which the slot lies (slot `Link`s are fixed with a joint
-      on attachment).
-    - The position of the slot
-    - A vector normal to the slot
-    - A vector tangent to the slot
+    - A set of components, defining visual / collision properties. Components
+      are either fixed statically or by a joint, which you can indicate
+      with the `self.fix` and `self.add_joint` methods.
+    - A set of "slots", which are attachment positions on which this body
+      part can be connected to another. Slots are defined by:
+      -- The `Component` on which the slot lies, i.e. the component
+         the other body part attaches to.
+      -- The position of the slot
+      -- A vector normal to the slot
+      -- A vector tangent to the slot
 
     When two body parts are connected, their slots' normal vectors are aligned
     in opposite directions, and their slots tangent vectors are aligned to
@@ -35,7 +38,7 @@ class BodyPart(PosableGroup):
     - `_initialize`: Build the SDF model in this method. This involves
                      creating all links, joints and sensors, and registering
                      them with the body part.
-    - `get_slot(slot)`: Should return the link for the given slot.
+    - `get_slot(slot)`: Should return the component for the given slot.
     - `get_slot_position(slot)`: Return the x, y, z position of the slot,
                                  in the frame of the body part.
     - `get_slot_normal(slot)`: Return a vector normal to the slot, in the frame
@@ -65,9 +68,8 @@ class BodyPart(PosableGroup):
         # in the body part itself.
         self.arity = kwargs.get('arity', None)
 
-        # Since body parts do not have direct access to the model, they
-        # must list joints separately. They can be added to this list.
-        self.joints = []
+        # List of components which have been added thusfar
+        self.components = []
 
         # Ordered list of motors that this body part implements. These
         # motors will be rendered to the SDF plugin.
@@ -91,6 +93,49 @@ class BodyPart(PosableGroup):
         """
         raise NotImplementedError("`BodyPart._initialize()` must be implemented by child class.")
 
+    def create_component(self, geometry, label=None, collision=True, visual=True):
+        """
+        :param geometry:
+        :param label:
+        :return:
+        """
+        append = "__"+str(len(self.elements)) if label is None else "_"+str(label)
+        component = Component(
+            "component_"+str(self.id)+"_"+append,
+            geometry, collision, visual
+        )
+
+        self.add_element(component)
+        return component
+
+    def get_components(self):
+        """
+        Since only `Component`s can be added to a body part,
+
+        :return:
+        """
+        return self.get_elements_of_type(Component)
+
+    def fix(self, a, b):
+        """
+        Marks two components as fixed to each other.
+        :param a:
+        :type a: Component
+        :param b:
+        :type b: Component
+        :return:
+        """
+        a.create_connection(b)
+
+    def add_joint(self, joint):
+        """
+        Adds a joint to this model
+        :param joint:
+        :type joint: ComponentJoint
+        :return:
+        """
+        joint.parent.create_connection(joint.child, joint)
+
     def make_color(self, r, g, b, a=1.0):
         """
         Applies `make_color` with the given arguments to every
@@ -101,16 +146,26 @@ class BodyPart(PosableGroup):
         :param a:
         :return:
         """
-        for link in self.get_elements_of_type(Link):
-            link.make_color(r, g, b, a)
+        for visual in self.get_elements_of_type(Visual, recursive=True):
+            visual.add_color(r, g, b, a)
+
+    def add_surface_all(self, surface):
+        """
+        Adds the given surface element to all link collision
+        objects in this body part.
+        :param surface:
+        :return:
+        """
+        for collision in self.get_elements_of_type(Collision, recursive=True):
+            collision.add_element(surface)
 
     def get_slot(self, slot_id):
         """
         Returns the link for the given slot ID
         :param slot_id: Slot ID
         :type slot_id: int
-        :return: Link for given slot ID
-        :rtype: Link
+        :return: Component for the given slot ID
+        :rtype: Component
         """
         raise NotImplementedError("`BodyPart.get_slot()` not implemented.")
 
@@ -145,34 +200,11 @@ class BodyPart(PosableGroup):
         """
         raise NotImplementedError("`BodyPart.get_slot_tangent()` not implemented.")
 
-    def create_link(self, label=None):
-        """
-        Creates a new link and adds it to the list of elements. This method is preferred
-        over creating sdfbuilder links directly, because it saves you the hassle
-        of setting self collide and possibly other options in the future.
-        :param label:
-        :type label: str
-        :return:
-        :rtype: Link
-        """
-        append = "__"+str(len(self.elements)) if label is None else "_"+str(label)
-        link = Link("link_"+str(self.id)+"_"+append, self_collide=True)
-        self.add_element(link)
-        return link
-
-    def add_surface_all(self, surface):
-        """
-        Adds the given surface element to all link collision
-        objects in this body part.
-        :param surface:
-        :return:
-        """
-        for link in self.get_elements_of_type(Link):
-            for collision in link.get_elements_of_type(Collision):
-                collision.add_element(surface)
-
     def attach(self, other, other_slot, my_slot, orientation):
         """
+        Positions all the elements in this body part to align slots
+        with another body part.
+
         :param other:
         :type other: BodyPart
         :param other_slot:
@@ -215,58 +247,12 @@ class BodyPart(PosableGroup):
         norm = (self.to_parent_frame(a_slot) - other.to_parent_frame(b_slot)).norm()
         assert norm < 1e-5, "Incorrect attachment positions!"
 
-        child = self.get_slot(my_slot)
-        parent = other.get_slot(other_slot)
+        my_component = self.get_slot(my_slot)
+        at_component = other.get_slot(other_slot)
 
-        # We need to specify the joint position in the child frame,
-        # but the slot position is in the component frame. Because
-        # of the posable group's semantics, the component and the
-        # child are actually in the same frame (the component root
-        # is an imaginary sibling) so we can use sibling translation.
-        anchor = self.to_sibling_frame(a_slot, child)
-
-        # The same thing holds for the joint axis, which is the normal
-        axis = self.to_sibling_direction(a_normal, child)
-
-        # Attach with a fixed link
-        self.fix_links(parent, child, anchor, axis)
-
-    def add_joint(self, joint):
-        """
-        Adds a joint to this model
-        :param joint:
-        :type joint: Joint
-        :return:
-        """
-        self.joints.append(joint)
-
-    def get_joints(self):
-        """
-        Returns the defined joints for this body part. There is
-        usually no need to override this method.
-        :return:
-        :rtype: list
-        """
-        return self.joints
-
-    def fix_links(self, parent, child, anchor, axis):
-        """
-        Creates an immovable joint between the two given links,
-        at the given position and around the specified axis. The
-        joint is added to this body part's joint list.
-        :param parent:
-        :type parent: Link
-        :param child:
-        :type child: Link
-        :param anchor:
-        :type anchor: Vector3
-        :param axis:
-        :type axis: Vector3
-        :return:
-        """
-        joint = FixedJoint(parent, child, axis=axis)
-        joint.set_position(anchor)
-        self.add_joint(joint)
+        # Create a connection between these two slots to complete
+        # the body graph.
+        at_component.create_connection_one_way(my_component)
 
     def get_motors(self):
         """
