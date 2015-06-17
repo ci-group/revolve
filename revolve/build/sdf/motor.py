@@ -57,7 +57,7 @@ class Motor(Element):
         })
 
         if self.joint is not None:
-            attrs['joint'] = self.joint.name
+            attrs['joint'] = self.joint.created_joint.name
 
         return attrs
 
@@ -157,7 +157,7 @@ class VelocityMotor(PIDMotor):
         """
         super(VelocityMotor, self).__init__(part_id, motor_id, joint=joint, pid=pid, motor_type=motor_type)
         self.max_velocity = max_velocity
-        self.min_velocity = min_velocity is min_velocity if min_velocity is not None else -max_velocity
+        self.min_velocity = -max_velocity if min_velocity is None else min_velocity
 
     def render_attributes(self):
         """

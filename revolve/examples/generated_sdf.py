@@ -60,22 +60,17 @@ class Core(Box, ColorMixin):
         # does something (Box, in this case).
         super(Core, self)._initialize(**kwargs)
 
-        # Now we will add the IMU sensor. First, we must
-        # create a sensor in SDF. Be careful to give the
-        # sensor a name which is unique for the entire
-        # robot, adding the ID will help us do that.
+        # Now we will add the IMU sensor. First, we create the
+        # sensor as we would like to have it in SDF...
         sensor_id = "%s_imu_sensor" % self.id
         imu = SdfSensor(sensor_id, "imu", update_rate=UPDATE_RATE)
 
-        # `self.link` is set by `Box`
-        # self.component.add_element(imu)
-
-        # Now, we need to register the sensor so it will be communicated
-        # to the CPP plugin. There is a default handler available for
-        # a few sensors, which can be overridden by replacing / extending
-        # the sensor factory in the model plugin
-        # sensor = Sensor(self.id, self.component, imu)
-        # self.sensors.append(sensor)
+        # .. we then add this to a specific component using `add_sensor`.
+        # The second argument to this function allows us to override
+        # the name of the sensor handler that will be loaded. It defaults
+        # to the sensor type, so specifying "imu" here has the same
+        # result as leaving it empty.
+        self.component.add_sensor(imu, "imu")
 
         # Apply generated color
         self.apply_color()

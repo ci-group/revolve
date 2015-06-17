@@ -1,14 +1,17 @@
 from sdfbuilder import PosableGroup
 from sdfbuilder.structure import Visual, Collision, Geometry
-
+from sdfbuilder.sensor import Sensor as SdfSensor
+from ..sensor import Sensor
 
 class Component(PosableGroup):
     """
 
     """
 
-    def __init__(self, name, geometry, collision=True, visual=True):
+    def __init__(self, part_id, name, geometry, collision=True, visual=True):
         """
+
+        :param part_id:
         :param name:
         :param geometry:
         :type geometry: Geometry
@@ -17,6 +20,10 @@ class Component(PosableGroup):
         :return:
         """
         super(Component, self).__init__(name)
+
+        # Holds the list of sensors registered with this component
+        self.part_id = part_id
+        self.sensors = []
 
         if visual:
             self.visual = Visual(name+"_visual", geometry.copy())
@@ -29,6 +36,24 @@ class Component(PosableGroup):
         # List of connections from this component to other components
         self.connections = []
         """ :type : list[Connection] """
+
+    def add_sensor(self, sensor, sensor_type=None):
+        """
+        :param sensor:
+        :type sensor: SdfSensor
+        :param sensor_type:
+        :type sensor_type: str
+        :return:
+        """
+        self.sensors.append((sensor, sensor_type))
+        self.add_element(sensor)
+
+    def get_plugin_sensors(self, link):
+        """
+        :return:
+        """
+        return [Sensor(self.part_id, link, sensor, sensor_type)
+                for sensor, sensor_type in self.sensors]
 
     def create_connection(self, other, joint=None):
         """

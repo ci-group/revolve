@@ -45,10 +45,7 @@ class BodyBuilder(AspectBuilder):
 
     def build(self, robot, model, plugin):
         # First, align all the body parts and create the full graph
-        components = self._process_body_part(robot.body.root)
-        # link = Link("only_link")
-        # link.add_elements(components)
-        # model.add_element(link)
+        components, motors = self._process_body_part(robot.body.root)
 
         # Assuming all components were correctly connected (which we
         # can check later on), we can now traverse the component tree
@@ -60,12 +57,17 @@ class BodyBuilder(AspectBuilder):
         if len(diff):
             diff_list = ", ".join(skipped.name for skipped in diff)
             raise ComponentException("The following components were defined but not traversed:\n%s\n"
-                                     "Make sure all components are propertly fixed or joined." % diff_list)
+                                     "Make sure all components are properly fixed or joined." % diff_list)
+
+        # Sensors have been added in _build_body.
+        # Adding motors should work just fine as-is since they render
+        # the ID of the generated joint.
+        plugin.add_elements(motors)
 
     def _build_body(self, traversed, model, plugin, component, link=None):
         """
         :param traversed: Set of components that were already traversed,
-                          prevents loops may these be present.
+                          prevents loops (since all connections are two-sided).
         :type traversed: set
         :param component:
         :type component: Component
@@ -99,6 +101,9 @@ class BodyBuilder(AspectBuilder):
         component.set_rotation(rotation)
         link.add_element(component)
 
+        # Add sensors registered on this component
+        plugin.add_elements(component.get_plugin_sensors(link))
+
         for conn in component.connections:
             if conn.joint:
                 # Create the subtree after the joint
@@ -114,9 +119,8 @@ class BodyBuilder(AspectBuilder):
                 if conn.joint.parent is not component:
                     parent_link, child_link = child_link, parent_link
 
-                joint = conn.joint.create_joint(parent_link, child_link, conn.joint.parent, conn.joint.child)
-
-
+                joint = conn.joint.create_joint(parent_link, child_link,
+                                                conn.joint.parent, conn.joint.child)
                 model.add_element(joint)
             else:
                 # Just add this element to the current link
@@ -131,6 +135,9 @@ class BodyBuilder(AspectBuilder):
 
     def _process_body_part(self, part, parent=None, src_slot=None, dst_slot=None):
         """
+        Traverses and positions all body parts, creates connections between connected
+        slots such that `_build_body` can later generate the actual robot body.
+
         :param part:
         :type part: PbBodyPart
         :return: List of body part components
@@ -146,9 +153,10 @@ class BodyBuilder(AspectBuilder):
         # Set the arity
         kwargs['arity'] = spec.arity
         body_part = body_part_class(part.id, self.conf, **kwargs)
-        """:type : BodyPart"""
+        """ :type : BodyPart"""
 
         components = body_part.get_components()
+        motors = body_part.get_motors()[:]
 
         if parent:
             # Attach to parent
@@ -159,9 +167,11 @@ class BodyBuilder(AspectBuilder):
 
         # Process body connections
         for conn in part.child:
-            components += self._process_body_part(conn.part, body_part, conn.src, conn.dst)
+            cmp, mtr = self._process_body_part(conn.part, body_part, conn.src, conn.dst)
+            components += cmp
+            motors += mtr
 
-        return components
+        return components, motors
 
 
 class NeuralNetBuilder(AspectBuilder):
@@ -254,7 +264,7 @@ class RobotBuilder(object):
         self.body_builder.build(robot, model, config)
 
         if controller_plugin:
-            # Only add the plugin element if desired
+            # Only add the plugin element when required
             model.add_element(plugin)
 
         return model

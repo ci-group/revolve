@@ -17,7 +17,7 @@ Sensor::Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
 	VirtualSensor(model, partId, sensorId, inputs)
 {
 	if (!sensor->HasAttribute("sensor") || !sensor->HasAttribute("link")) {
-		std::cerr << "Sensor is missing required attributes." << std::endl;
+		std::cerr << "Sensor is missing required attributes (`link` or `sensor`)." << std::endl;
 		throw std::runtime_error("Sensor error");
 	}
 

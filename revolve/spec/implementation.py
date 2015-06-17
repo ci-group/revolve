@@ -130,7 +130,7 @@ def default_neural_net():
             params=[
                 ParamSpec("period", min_value=0, max_value=50),
                 ParamSpec("phase_offset", min_value=0, max_value=3.14),
-                ParamSpec("amplitude", min_value=0, max_value=10)
+                ParamSpec("amplitude", min_value=0, default=1, max_value=10)
             ],
             layers=["output", "hidden"]
         )

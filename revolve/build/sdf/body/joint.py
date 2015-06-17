@@ -16,7 +16,7 @@ class ComponentJoint(Posable):
     PARENT_FRAME = False
 
     def __init__(self, joint_type, parent, child, pose=None, axis=None,
-                 axis2=None, name=None, after_create=None, **kwargs):
+                 axis2=None, after_create=None, **kwargs):
         """
         :param joint_type: Type of the joint
         :param parent: Parent component
@@ -36,7 +36,6 @@ class ComponentJoint(Posable):
         self.axis, self.axis2 = axis, axis2
         self.created_joint = None
         self.kwargs = kwargs
-        self.name = name
 
     def create_joint(self, parent_link, child_link, parent, child):
         """
@@ -53,8 +52,9 @@ class ComponentJoint(Posable):
         :type child: Posable
         :return:
         """
-        joint = Joint(self.type, parent_link, child_link, axis=self.axis, axis2=self.axis2,
-                      name=self.name, **self.kwargs)
+        # Not specifying the joint name ensures it will be unique
+        joint = Joint(self.type, parent_link, child_link,
+                      axis=self.axis, axis2=self.axis2, **self.kwargs)
 
         # Translate the joint with the child. Afterwards we need only to rotate
         # the joint with the child (i.e. set it's rotation in the parent frame

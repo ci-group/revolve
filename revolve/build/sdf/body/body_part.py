@@ -75,10 +75,6 @@ class BodyPart(PosableGroup):
         # motors will be rendered to the SDF plugin.
         self.motors = []
 
-        # Ordered list of sensors in the body part. These sensors
-        # will be rendered to the SDF plugin.
-        self.sensors = []
-
         # Store the dictionary of arguments so other
         # functions can access it.
         self.part_params = kwargs
@@ -101,6 +97,7 @@ class BodyPart(PosableGroup):
         """
         append = "__"+str(len(self.elements)) if label is None else "_"+str(label)
         component = Component(
+            self.id,
             "component_"+str(self.id)+"_"+append,
             geometry, collision, visual
         )
@@ -129,7 +126,7 @@ class BodyPart(PosableGroup):
 
     def add_joint(self, joint):
         """
-        Adds a joint to this model
+        Adds a joint to this model.
         :param joint:
         :type joint: ComponentJoint
         :return:

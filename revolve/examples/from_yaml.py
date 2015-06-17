@@ -25,11 +25,26 @@ body:
         red: 0.0
         green: 1.0
         blue: 0.0
+    5:
+      id: Wheel2
+      type: Wheel
+      params:
+        red: 0.0
+        green: 1.0
+        blue: 0.0
+brain:
+  params:
+    Wheel-out-0:
+      type: Oscillator
+      period: 3
+    Wheel2-out-0:
+      type: Oscillator
+      period: 3
 '''
 
 bot = yaml_to_robot(body_spec, brain_spec, bot_yaml)
 builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
-model = builder.get_sdf_model(bot, None)
+model = builder.get_sdf_model(bot, "libtolrobotcontrol.so")
 model.translate(Vector3(0, 0, 0.5))
 sdf = SDF()
 sdf.add_element(model)
