@@ -35,7 +35,7 @@ def get_analysis_robot(robot, builder):
     :type builder: BodyBuilder
     :return:
     """
-    model = builder.get_sdf_model(robot, controller_plugin=None, name="analyze_bot")
+    model = builder.get_sdf_model(robot, analyzer_mode=True, controller_plugin=None, name="analyze_bot")
     model.remove_elements_of_type(Sensor, recursive=True)
     sdf = SDF()
     sdf.add_element(model)
@@ -151,30 +151,7 @@ def analysis_coroutine(sdf, manager, max_attempts=5):
     else:
         bbox = None
 
-    body_parts = sdf.get_elements_of_type(BodyPart, recursive=True)
-    link_map = {link.name: body_part
-                for body_part in body_parts
-                for link in body_part.get_elements_of_type(Link)}
-
-    internal_collisions = False
-    for contact in msg.contact:
-        # Contacts are of form model_name::link_name::collision_name.
-        # We are only interested in link contacts.
-        link1 = contact.collision1.split("::")[1]
-        link2 = contact.collision2.split("::")[1]
-
-        if link1 not in link_map:
-            print("Unknown contact link: '%s'" % link1, file=sys.stderr)
-            continue
-
-        if link2 not in link_map:
-            print("Unknown contact link: '%s'" % link2, file=sys.stderr)
-            continue
-
-        if link_map[link1] is not link_map[link2]:
-            internal_collisions = True
-            break
-
+    internal_collisions = len(msg.contact)
     raise Return(internal_collisions, bbox)
 
 class _Analyzer(object):

@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from math import radians
-from sdfbuilder import Model, Element, Link
+from sdfbuilder import Model, Element, Link, FixedJoint
+from sdfbuilder.math import Quaternion, Vector3
 from sdfbuilder.util import number_format as nf
 from ...spec import Robot, BodyPart as PbBodyPart, BodyImplementation, NeuralNetImplementation
 from ...spec.exception import err
 from .neural_net import Neuron, NeuralConnection
-from .body import Component
+from .body import Component, BodyPart
 from .body.exception import ComponentException
 
 
@@ -15,13 +16,15 @@ class AspectBuilder(object):
     as either a builder for a body or a builder for a brain.
     """
 
-    def build(self, robot, model, plugin):
+    def build(self, robot, model, plugin, analyzer_mode):
         """
         :param robot: Robot in whatever message type is applicable
         :param model:
         :type model: Model
         :param plugin:
         :type plugin: Element
+        :param analyzer_mode:
+        :type analyzer_mode: bool
         """
         raise NotImplementedError("Interface method.")
 
@@ -35,6 +38,7 @@ class BodyBuilder(AspectBuilder):
 
     def __init__(self, spec, conf=None):
         """
+
         :param spec:
         :type spec: BodyImplementation
         :param conf:
@@ -43,32 +47,63 @@ class BodyBuilder(AspectBuilder):
         self.conf = conf
         self.spec = spec
 
-    def build(self, robot, model, plugin):
+    def build(self, robot, model, plugin, analyzer_mode):
         # First, align all the body parts and create the full graph
-        components, motors = self._process_body_part(robot.body.root)
+        connections, body_parts, components, motors = self._process_body_part(robot.body.root)
 
-        # Assuming all components were correctly connected (which we
-        # can check later on), we can now traverse the component tree
-        # to build the body starting from any component
-        traversed = set()
-        self._build_body(traversed, model, plugin, components[0])
+        if analyzer_mode:
+            self._build_analyzer_body(model, body_parts, connections)
+        else:
+            # Assuming all components were correctly connected (which we
+            # can check later on), we can now traverse the component tree
+            # to build the body starting from any component
+            traversed = set()
+            self._build_body(traversed, model, plugin, components[0])
 
-        diff = traversed.difference(components)
-        if len(diff):
-            diff_list = ", ".join(skipped.name for skipped in diff)
-            raise ComponentException("The following components were defined but not traversed:\n%s\n"
-                                     "Make sure all components are properly fixed or joined." % diff_list)
+            diff = traversed.difference(components)
+            if len(diff):
+                diff_list = ", ".join(skipped.name for skipped in diff)
+                raise ComponentException("The following components were defined but not traversed:\n%s\n"
+                                         "Make sure all components are properly fixed or joined." % diff_list)
 
-        # Sensors have been added in _build_body.
-        # Adding motors should work just fine as-is since they render
-        # the ID of the generated joint.
-        plugin.add_elements(motors)
+            # Sensors have been added in _build_body.
+            # Adding motors should work just fine as-is since they render
+            # the ID of the generated joint.
+            plugin.add_elements(motors)
+
+    def _build_analyzer_body(self, model, body_parts, connections):
+        """
+        Builds a model from body parts in analyzer mode - i.e.
+        one link per body part to allow collision detection.
+        :param model:
+        :param body_parts:
+        :type body_parts: list[BodyPart]
+        :return:
+        """
+        part_map = {}
+        for body_part in body_parts:
+            link = Link("link_"+body_part.id, self_collide=True)
+            link.set_position(body_part.get_position())
+            link.set_rotation(body_part.get_rotation())
+            body_part.set_position(Vector3())
+            body_part.set_rotation(Quaternion())
+            link.add_element(body_part)
+            model.add_element(link)
+            part_map[body_part.id] = link
+
+        # Create fake joints for all connections so they will
+        # not trigger collisions.
+        for a, b in connections:
+            joint = FixedJoint(part_map[a], part_map[b])
+            model.add_element(joint)
 
     def _build_body(self, traversed, model, plugin, component, link=None):
         """
         :param traversed: Set of components that were already traversed,
                           prevents loops (since all connections are two-sided).
         :type traversed: set
+        :param model:
+        :param plugin:
         :param component:
         :type component: Component
         :param link:
@@ -85,7 +120,7 @@ class BodyBuilder(AspectBuilder):
             # New tree, create a link. The component name
             # should contain the body part ID so this name should
             # be unique.
-            link = Link("link_%s" % component.name)
+            link = Link("link_%s" % component.name, self_collide=True)
 
             # To have link poses make any sense, we give the link
             # the pose of the component that was first added to it.
@@ -141,7 +176,7 @@ class BodyBuilder(AspectBuilder):
         :param part:
         :type part: PbBodyPart
         :return: List of body part components
-        :rtype: list[Component]
+        :rtype: tuple(list[BodyPart], list[Component], list[Motor])
         """
         spec = self.spec.get(part.type)
         if spec is None:
@@ -157,6 +192,8 @@ class BodyBuilder(AspectBuilder):
 
         components = body_part.get_components()
         motors = body_part.get_motors()[:]
+        body_parts = [body_part]
+        connections = set()
 
         if parent:
             # Attach to parent
@@ -167,11 +204,14 @@ class BodyBuilder(AspectBuilder):
 
         # Process body connections
         for conn in part.child:
-            cmp, mtr = self._process_body_part(conn.part, body_part, conn.src, conn.dst)
+            connections.add((part.id, conn.part.id))
+            cn, bp, cmp, mtr = self._process_body_part(conn.part, body_part, conn.src, conn.dst)
             components += cmp
             motors += mtr
+            body_parts += bp
+            connections.update(cn)
 
-        return components, motors
+        return connections, body_parts, components, motors
 
 
 class NeuralNetBuilder(AspectBuilder):
@@ -188,7 +228,7 @@ class NeuralNetBuilder(AspectBuilder):
         """
         self.spec = spec
 
-    def build(self, robot, model, plugin):
+    def build(self, robot, model, plugin, analyzer_mode):
         self._process_brain(plugin, robot.brain)
 
     def _process_brain(self, plugin, brain):
@@ -221,14 +261,14 @@ class RobotBuilder(object):
     def __init__(self, body_builder, brain_builder):
         """
         :param body_builder:
-        :type body_builder: Builder
+        :type body_builder: AspectBuilder
         :param brain_builder:
-        :type brain_builder: Builder
+        :type brain_builder: AspectBuilder
         """
         self.body_builder = body_builder
         self.brain_builder = brain_builder
 
-    def get_sdf_model(self, robot, controller_plugin=None, update_rate=5, name="sdf_robot"):
+    def get_sdf_model(self, robot, controller_plugin=None, update_rate=5, name="sdf_robot", analyzer_mode=False):
         """
         :param robot: Protobuf robot
         :type robot: Robot
@@ -238,6 +278,8 @@ class RobotBuilder(object):
         :type update_rate: float
         :param name: Name of the SDF model
         :type name: str
+        :param analyzer_mode:
+        :type analyzer_mode: bool
         :return: The sdfbuilder Model
         :rtype: Model
         """
@@ -260,8 +302,8 @@ class RobotBuilder(object):
         brain_config = Element(tag_name='rv:brain')
         config.add_element(brain_config)
 
-        self.brain_builder.build(robot, model, brain_config)
-        self.body_builder.build(robot, model, config)
+        self.brain_builder.build(robot, model, brain_config, analyzer_mode)
+        self.body_builder.build(robot, model, config, analyzer_mode)
 
         if controller_plugin:
             # Only add the plugin element when required

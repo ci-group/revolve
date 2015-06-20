@@ -1,8 +1,8 @@
-from sdfbuilder import PosableGroup, Link
+from sdfbuilder import PosableGroup
 from sdfbuilder.math import Vector3, Quaternion
 from sdfbuilder.structure import Collision, Visual
 
-from .exception import ArityException, ComponentException
+from .exception import ArityException
 from .component import Component
 from .joint import ComponentJoint
 
