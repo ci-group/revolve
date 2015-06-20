@@ -1,4 +1,6 @@
-from sdfbuilder import Posable, Joint, Link
+from sdfbuilder import Posable, Joint, Link, Axis
+from sdfbuilder.math import Vector3
+
 
 class ComponentJoint(Posable):
     """
@@ -10,10 +12,11 @@ class ComponentJoint(Posable):
     final positioning when used in an actual link. Any elements added
     to this joint are also added to the finally created joint.
     """
-
-    # Like the normal joint, this joint should not be moved with
-    # its parent.
-    PARENT_FRAME = False
+    # Like the regular joint, we do not move the component joint with
+    # the parent posable group, though it needs to be positioned in the
+    # link frame rather than the component frame. We take care of this
+    # in `create_joint` currently.
+    PARENT_FRAME = True
 
     def __init__(self, joint_type, parent, child, pose=None, axis=None,
                  axis2=None, after_create=None, **kwargs):
@@ -33,6 +36,13 @@ class ComponentJoint(Posable):
         self.parent = parent
         self.child = child
         self.type = joint_type
+
+        if isinstance(axis, Vector3):
+            axis = Axis(axis=axis)
+
+        if isinstance(axis2, Vector3):
+            axis2 = Axis(axis=axis2, tag_name='axis2')
+
         self.axis, self.axis2 = axis, axis2
         self.created_joint = None
         self.kwargs = kwargs
