@@ -27,9 +27,9 @@ public:
 	 * @param Raw motor update value(s), it is up to the motor to decide how to interpret this.
 	 * 		  This is a pointer to an array of values, out of which the motor should read the
 	 * 		  first `n` values if it specifies `n` outputs.
-	 * @param Actuation time in nanoseconds
+	 * @param Actuation time in seconds
 	 */
-	virtual void update(double * output, unsigned int step) = 0;
+	virtual void update(double * output, double step) = 0;
 
 	/**
 	 * @return The part ID

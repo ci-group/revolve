@@ -73,13 +73,13 @@ class PID(Element):
     TAG_NAME = 'rv:pid'
 
     def __init__(self, proportional_gain=0.0, integral_gain=0.0, derivative_gain=0.0,
-                 integral_max=None, integral_min=None, cmd_max=None, cmd_min=None):
+                 integral_max=0.0, integral_min=None, cmd_max=None, cmd_min=None):
         """
         :param proportional_gain:
         :param integral_gain:
         :param derivative_gain:
         :param integral_max:
-        :param integral_min:
+        :param integral_min: Defaults to `-integral_max` if not specified and max is specified.
         :param cmd_max:
         :param cmd_min:
         """
@@ -89,6 +89,10 @@ class PID(Element):
         self.d = derivative_gain
         self.i_max = integral_max
         self.i_min = integral_min
+
+        if integral_min is None and integral_max is not None:
+            self.i_min = -integral_max
+
         self.cmd_max = cmd_max
         self.cmd_min = cmd_min
 
@@ -141,6 +145,29 @@ class PositionMotor(PIDMotor):
     """
     MOTOR_TYPE = 'position'
 
+    def __init__(self, part_id, motor_id, joint, pid=None, motor_type=None, max_velocity=None, min_velocity=None):
+        """
+
+        :param max_velocity: Maximum velocity above which no force should be applied
+        :param min_velocity: Minimum velocity below which no force should be applied
+        :return:
+        """
+        super(PositionMotor, self).__init__(part_id, motor_id, joint=joint, pid=pid, motor_type=motor_type)
+        self.max_velocity = max_velocity
+        self.min_velocity = min_velocity
+
+    def render_attributes(self):
+        """
+        :return:
+        """
+        attrs = super(PositionMotor, self).render_attributes()
+        if self.min_velocity is not None:
+            attrs['min_velocity'] = nf(self.min_velocity)
+
+        if self.max_velocity is not None:
+            attrs['max_velocity'] = nf(self.max_velocity)
+
+        return attrs
 
 class VelocityMotor(PIDMotor):
     """

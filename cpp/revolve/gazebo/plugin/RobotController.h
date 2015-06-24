@@ -93,16 +93,15 @@ protected:
 	BrainPtr brain_;
 
 	/**
-	 * Actuation time, in nanoseconds
+	 * Actuation time, in seconds
 	 */
-	unsigned int actuationTime_;
+	double actuationTime_;
 
 	/**
 	 * Time of the last actuation, in
 	 * seconds and nanoseconds
 	 */
-	unsigned int lastActuationSec_;
-	unsigned int lastActuationNsec_;
+	::gazebo::common::Time lastActuationTime_;
 
 	/**
 	 * Motors in this model

@@ -2,9 +2,9 @@
  *
  */
 
-#include <revolve/gazebo/brain/NeuralNetwork.h>
-#include <revolve/gazebo/motors/Motor.h>
-#include <revolve/gazebo/sensors/Sensor.h>
+#include "NeuralNetwork.h"
+#include "../motors/Motor.h"
+#include "../sensors/Sensor.h"
 
 #include <iostream>
 #include <algorithm>
@@ -345,12 +345,11 @@ void NeuralNetwork::step(double time) {
 
 void NeuralNetwork::update(const std::vector<MotorPtr>& motors,
 		const std::vector<SensorPtr>& sensors,
-		double t, unsigned int step) {
+		double t, double step) {
 
 	// Read sensor data and feed the neural network
 	unsigned int p = 0;
-	for (auto it = sensors.begin(); it != sensors.end(); ++it) {
-		auto sensor = *it;
+	for (auto sensor : sensors) {
 		sensor->read(&input_[p]);
 		p += sensor->inputs();
 	}
@@ -363,8 +362,7 @@ void NeuralNetwork::update(const std::vector<MotorPtr>& motors,
 
 	// Send new signals to the motors
 	p = 0;
-	for (auto it = motors.begin(); it != motors.end(); ++it) {
-		auto motor = *it;
+	for (auto motor: motors) {
 		motor->update(&output[p], step);
 		p += motor->outputs();
 	}

@@ -21,23 +21,33 @@ public:
 	 * @param Whether the motor is velocity driven (the alternative is position driven)
 	 * @param The derivative gain of the motor's PID controller
 	 */
-	PositionMotor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, sdf::ElementPtr motor);
+	PositionMotor(::gazebo::physics::ModelPtr model, std::string partId,
+				  std::string motorId, sdf::ElementPtr motor);
 	virtual ~PositionMotor();
 
-	virtual void update(double * outputs, unsigned int step);
+	virtual void update(double * outputs, double step);
 
 protected:
 	// Upper and lower position limits
 	double lowerLimit_;
 	double upperLimit_;
 
+	// Velocity limits. For the position motor these may be used
+	// to prevent unstable behavior by not applying any force when
+	// the current velocity exceeds these values.
+	double minVelocity_;
+	double maxVelocity_;
+
+	// Whether this joint can achieve a full range of motion, meaning
+	// it can flip from a positive to a negative angle. This is set
+	// to true whenever the total range is >/ 2 pi.
+	bool fullRange_;
+
 	// Motor noise
 	double noise_;
 
-	/**
-	 * The joint controller of the attaching model
-	 */
-	::gazebo::physics::JointControllerPtr jointController_;
+	// PID that controls this motor
+	::gazebo::common::PID pid_;
 };
 
 } /* namespace gazebo */

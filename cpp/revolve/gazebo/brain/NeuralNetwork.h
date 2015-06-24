@@ -11,7 +11,7 @@
 #ifndef REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
 #define REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
 
-#include <revolve/gazebo/brain/Brain.h>
+#include "Brain.h"
 
 // TODO This was true for Arduino, but we can change this
 #define MAX_INPUT_NEURONS 13
@@ -53,7 +53,7 @@ public:
 	* @param Sensor list
 	*/
 	virtual void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
-			double t, unsigned int step);
+			double t, double step);
 
 protected:
 	/**

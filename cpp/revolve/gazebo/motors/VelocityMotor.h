@@ -29,7 +29,7 @@ public:
      * converts it to a velocity target between the minimum and maximum
      * velocity set by the motor.
      */
-    virtual void update(double *outputs, unsigned int step);
+    virtual void update(double *outputs, double step);
 
 protected:
     // Velocity limits
@@ -40,9 +40,9 @@ protected:
     double noise_;
 
     /**
-     * The joint controller of the attaching model
+     * PID for this velocity motor
      */
-    ::gazebo::physics::JointControllerPtr jointController_;
+    ::gazebo::common::PID pid_;
 };
 
 } // namespace gazebo

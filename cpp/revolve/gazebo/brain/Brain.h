@@ -25,10 +25,10 @@ public:
 	 * @param List of motors
 	 * @param List of sensors
 	 * @param Current simulation time
-	 * @param Step size in nanoseconds
+	 * @param Actuation step size in seconds
 	 */
 	virtual void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
-				double t, unsigned int step) = 0;
+				double t, double step) = 0;
 };
 
 } /* namespace gazebo */

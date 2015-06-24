@@ -13,7 +13,7 @@
 #include <gazebo/sensors/sensors.hh>
 
 #include <boost/bind.hpp>
-#include <revolve/gazebo/plugin/RobotController.h>
+#include "RobotController.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -26,9 +26,7 @@ namespace gazebo {
 RobotController::RobotController():
 	// Default actuation time, this will be overwritten
 	// by the plugin config in Load.
-	actuationTime_(0),
-	lastActuationSec_(0),
-	lastActuationNsec_(0)
+	actuationTime_(0)
 {}
 
 RobotController::~RobotController()
@@ -50,7 +48,7 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 
 	if (settings->HasElement("rv:update_rate")) {
 		int updateRate = settings->GetElement("rv:update_rate")->Get< double >();
-		actuationTime_ = (unsigned int)((1.0e9 / updateRate));
+		actuationTime_ = 1.0 / updateRate;
 	}
 
 	// Load motors
@@ -121,13 +119,10 @@ void RobotController::startup(::gazebo::physics::ModelPtr /*_parent*/, sdf::Elem
 }
 
 void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo info) {
-	auto simTime = info.simTime;
-	unsigned int nsecPassed = (simTime.sec - lastActuationSec_) * 1000000000 +
-			(simTime.nsec - lastActuationNsec_);
+	auto diff = info.simTime - lastActuationTime_;
 
-	if (nsecPassed >= actuationTime_) {
-		lastActuationNsec_ = simTime.nsec;
-		lastActuationSec_ = simTime.sec;
+	if (diff.Double() > actuationTime_) {
+		lastActuationTime_ = info.simTime;
 		this->DoUpdate(info);
 	}
 }
