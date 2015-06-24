@@ -10,8 +10,7 @@ namespace gazebo {
 PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
 							 std::string motorId, sdf::ElementPtr motor):
 	JointMotor(model, partId, motorId, motor, 1),
-	minVelocity_(-10e5),
-	maxVelocity_(10e5),
+	velocityLimit_(0),
 	noise_(0) {
 
 	// Retrieve upper / lower limit from joint set in parent constructor
@@ -30,12 +29,9 @@ PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
 		noiseParam->Get(noise_);
 	}
 
-	if (motor->HasAttribute("min_velocity")) {
-		motor->GetAttribute("min_velocity")->Get(minVelocity_);
-	}
-
-	if (motor->HasAttribute("max_velocity")) {
-		motor->GetAttribute("max_velocity")->Get(maxVelocity_);
+	if (motor->HasAttribute("velocity_limit")) {
+		motor->GetAttribute("velocity_limit")->Get(velocityLimit_);
+		joint_->SetVelocityLimit(0, velocityLimit_);
 	}
 }
 
@@ -53,6 +49,7 @@ void PositionMotor::update(double *outputs, double step) {
 	output = fmin(fmax(0, output), 1);
 
 	double positionTarget = lowerLimit_ + output * (upperLimit_ - lowerLimit_);
+	positionTarget = 0;
 	auto positionAngle = joint_->GetAngle(0);
 	positionAngle.Normalize();
 	double position = positionAngle.Radian();
@@ -68,18 +65,12 @@ void PositionMotor::update(double *outputs, double step) {
 	gz::common::Time dt(step);
 	double cmd = pid_.Update(position - positionTarget, dt);
 
-	// Protection mechanism - don't apply additional force if the joint
-	// velocity is already above the given values.
-	double velocity = joint_->GetVelocity(0);
-	if ((velocity > maxVelocity_ && cmd > 0) || (velocity < minVelocity_ && cmd < 0)) {
-		cmd = 0;
-	}
+//	if (pid_.GetPGain() > 0) {
+//		std::cout << "Diff: " << (position - positionTarget) << std::endl;
+//		std::cout << cmd << std::endl;
+//	}
 
 	joint_->SetForce(0, cmd);
-
-	if (pid_.GetPGain() > 0) {
-		std::cout << position << "/" << positionTarget << ": " << cmd << std::endl;
-	}
 }
 
 } /* namespace gazebo */

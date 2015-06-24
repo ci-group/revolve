@@ -32,11 +32,8 @@ protected:
 	double lowerLimit_;
 	double upperLimit_;
 
-	// Velocity limits. For the position motor these may be used
-	// to prevent unstable behavior by not applying any force when
-	// the current velocity exceeds these values.
-	double minVelocity_;
-	double maxVelocity_;
+	// Speed limit for the position motor
+	double velocityLimit_;
 
 	// Whether this joint can achieve a full range of motion, meaning
 	// it can flip from a positive to a negative angle. This is set
