@@ -10,7 +10,7 @@ namespace gazebo {
 PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
 							 std::string motorId, sdf::ElementPtr motor):
 	JointMotor(model, partId, motorId, motor, 1),
-	velocityLimit_(0),
+	velocityLimit_(1e15),
 	noise_(0) {
 
 	// Retrieve upper / lower limit from joint set in parent constructor
@@ -49,7 +49,6 @@ void PositionMotor::update(double *outputs, double step) {
 	output = fmin(fmax(0, output), 1);
 
 	double positionTarget = lowerLimit_ + output * (upperLimit_ - lowerLimit_);
-	positionTarget = 0;
 	auto positionAngle = joint_->GetAngle(0);
 	positionAngle.Normalize();
 	double position = positionAngle.Radian();
@@ -64,12 +63,6 @@ void PositionMotor::update(double *outputs, double step) {
 
 	gz::common::Time dt(step);
 	double cmd = pid_.Update(position - positionTarget, dt);
-
-//	if (pid_.GetPGain() > 0) {
-//		std::cout << "Diff: " << (position - positionTarget) << std::endl;
-//		std::cout << cmd << std::endl;
-//	}
-
 	joint_->SetForce(0, cmd);
 }
 
