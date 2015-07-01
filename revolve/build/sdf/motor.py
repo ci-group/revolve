@@ -145,27 +145,6 @@ class PositionMotor(PIDMotor):
     """
     MOTOR_TYPE = 'position'
 
-    def __init__(self, part_id, motor_id, joint, pid=None, motor_type=None, velocity_limit=None):
-        """
-
-        :param velocity_limit: Limit to this motor's absolute velocity, generally corresponds to the
-                               servo's speed rating. Not setting this value may quickly lead to unstable
-                               simulation.
-        :return:
-        """
-        super(PositionMotor, self).__init__(part_id, motor_id, joint=joint, pid=pid, motor_type=motor_type)
-        self.velocity_limit = velocity_limit
-
-    def render_attributes(self):
-        """
-        :return:
-        """
-        attrs = super(PositionMotor, self).render_attributes()
-
-        if self.velocity_limit is not None:
-            attrs['velocity_limit'] = nf(self.velocity_limit)
-
-        return attrs
 
 class VelocityMotor(PIDMotor):
     """

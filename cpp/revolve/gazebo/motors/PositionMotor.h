@@ -35,6 +35,9 @@ protected:
 	// Speed limit for the position motor
 	double velocityLimit_;
 
+	//
+	bool tmpTest_;
+
 	// Whether this joint can achieve a full range of motion, meaning
 	// it can flip from a positive to a negative angle. This is set
 	// to true whenever the total range is >/ 2 pi.
