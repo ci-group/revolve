@@ -32,6 +32,18 @@ public:
     virtual void update(double *outputs, double step);
 
 protected:
+    // World update event function
+    void OnUpdate(const ::gazebo::common::UpdateInfo info);
+
+    // Store update event pointer
+    ::gazebo::event::ConnectionPtr updateConnection_;
+
+    // Last update time, used to determine update step time
+    ::gazebo::common::Time prevUpdateTime_;
+
+	// The current velocity target
+	double velocityTarget_;
+
     // Velocity limits
     double minVelocity_;
     double maxVelocity_;

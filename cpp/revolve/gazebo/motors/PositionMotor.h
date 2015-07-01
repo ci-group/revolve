@@ -28,15 +28,21 @@ public:
 	virtual void update(double * outputs, double step);
 
 protected:
+	// World update event function
+	void OnUpdate(const ::gazebo::common::UpdateInfo info);
+
+	// Store update event pointer
+	::gazebo::event::ConnectionPtr updateConnection_;
+
+	// Last update time, used to determine update step time
+	::gazebo::common::Time prevUpdateTime_;
+
+	// Current position target
+	double positionTarget_;
+
 	// Upper and lower position limits
 	double lowerLimit_;
 	double upperLimit_;
-
-	// Speed limit for the position motor
-	double velocityLimit_;
-
-	//
-	bool tmpTest_;
 
 	// Whether this joint can achieve a full range of motion, meaning
 	// it can flip from a positive to a negative angle. This is set

@@ -10,10 +10,8 @@ namespace gazebo {
 PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
 							 std::string motorId, sdf::ElementPtr motor):
 	JointMotor(model, partId, motorId, motor, 1),
-	velocityLimit_(1e15),
-	tmpTest_(false),
+	positionTarget_(0),
 	noise_(0) {
-
 	// Retrieve upper / lower limit from joint set in parent constructor
 	// Truncate ranges to [-pi, pi]
 	upperLimit_ = fmin(M_PI, joint_->GetUpperLimit(0).Radian());
@@ -30,15 +28,38 @@ PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
 		noiseParam->Get(noise_);
 	}
 
-	if (motor->HasAttribute("velocity_limit")) {
-		motor->GetAttribute("velocity_limit")->Get(velocityLimit_);
-		joint_->SetVelocityLimit(0, velocityLimit_);
-	}
+	updateConnection_ = gz::event::Events::ConnectWorldUpdateBegin(boost::bind(
+			&PositionMotor::OnUpdate, this, _1));
 }
 
 PositionMotor::~PositionMotor() { }
 
-void PositionMotor::update(double *outputs, double step) {
+void PositionMotor::OnUpdate(const ::gazebo::common::UpdateInfo info) {
+	gz::common::Time stepTime = info.simTime - prevUpdateTime_;
+
+	if (stepTime <= 0) {
+		// Only respond to positive step times
+		return;
+	}
+
+	prevUpdateTime_ = info.simTime;
+	auto positionAngle = joint_->GetAngle(0);
+	positionAngle.Normalize();
+	double position = positionAngle.Radian();
+
+	if (fullRange_ && fabs(position - positionTarget_) > M_PI) {
+		// Both the position and the position target will be in the range [-pi, pi]
+		// For a full range of motion joint, using an angle +- 2 PI might result
+		// in a much shorter required movement. In this case we best correct the
+		// current position to something outside the range.
+		position += (position > 0 ? -2 * M_PI : 2 * M_PI);
+	}
+
+	double cmd = pid_.Update(position - positionTarget_, stepTime);
+	joint_->SetForce(0, cmd);
+}
+
+void PositionMotor::update(double *outputs, double /*step*/) {
 	// Just one network output, which is the first
 	double output = outputs[0];
 
@@ -48,35 +69,7 @@ void PositionMotor::update(double *outputs, double step) {
 
 	// Truncate output to [0, 1]
 	output = fmin(fmax(0, output), 1);
-
-	double positionTarget = lowerLimit_ + output * (upperLimit_ - lowerLimit_);
-	positionTarget = -0.25;
-	auto positionAngle = joint_->GetAngle(0);
-	positionAngle.Normalize();
-	double position = positionAngle.Radian();
-
-	if (fullRange_ && fabs(position - positionTarget) > M_PI) {
-		// Both the position and the position target will be in the range [-pi, pi]
-		// For a full range of motion joint, using an angle +- 2 PI might result
-		// in a much shorter required movement. In this case we best correct the
-		// current position to something outside the range.
-		position += (position > 0 ? -2 * M_PI : 2 * M_PI);
-	}
-
-	gz::common::Time dt(step);
-	double cmd = pid_.Update(position - positionTarget, dt);
-
-	if (pid_.GetPGain() > 0) {
-		if (!tmpTest_) {
-			std::cout << cmd << std::endl;
-			joint_->SetForce(0, cmd);
-			tmpTest_ = true;
-		} else {
-			std::cout << "Force: " << joint_->GetForce(0) << std::endl;
-			std::cout << "Velocity: " << joint_->GetVelocity(0) << std::endl;
-			joint_->SetForce(0, 0);
-		}
-	}
+	positionTarget_ = lowerLimit_ + output * (upperLimit_ - lowerLimit_);
 }
 
 } /* namespace gazebo */
