@@ -146,7 +146,6 @@ class NeuralNetworkGenerator(object):
         :return:
         """
         # Initialize random parameters
-        import sys
         for p in spec.get_random_parameters(serialize=True):
             new_param = neuron.param.add()
             new_param.value = p

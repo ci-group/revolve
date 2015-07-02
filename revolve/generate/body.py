@@ -18,7 +18,7 @@ def _init_part_list(spec, parts):
 
 class BodyGenerator(object):
     """
-    generates a randomized robot body from
+    Generates a randomized robot body from
     a spec implementation and some configuration.
 
     This works as follows:
@@ -30,10 +30,12 @@ class BodyGenerator(object):
       be attached
     """
 
-    def __init__(self, spec, root_parts=None, attach_parts=None, max_parts=50,
+    def __init__(self, spec, root_parts=None, attach_parts=None, min_parts=1, max_parts=50,
                  fix_num_parts=False, max_inputs=None, max_outputs=None):
         """
 
+        :param min_parts: Minimum number of parts in each robot
+        :type min_parts: int
         :param fix_num_parts:
         :type fix_num_parts: If true, fixes the number of parts to `max_parts` rather than
                          picking a random value (the number of parts might still be lower
@@ -55,6 +57,7 @@ class BodyGenerator(object):
         :type max_outputs: int
         :return:
         """
+        self.min_parts = min_parts
         self.fix_parts = fix_num_parts
         self.spec = spec
         self.root_parts = root_parts if root_parts is not None else spec.get_all_types()
@@ -216,7 +219,7 @@ class BodyGenerator(object):
         the robot to be generated.
         :return:
         """
-        return random.randint(1, self.max_parts)
+        return random.randint(self.min_parts, self.max_parts)
 
 
 class FixedOrientationBodyGenerator(BodyGenerator):
