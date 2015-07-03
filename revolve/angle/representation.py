@@ -23,7 +23,6 @@ def _process_body_part(part, node, brain):
         counters[nw.layer] += 1
 
     # Process neuron connections
-    # TODO Check for duplicates, currently implementation will probably override
     for src, dst, weight in node.get_neural_connections():
         conn = brain.connection.add()
         conn.src = src
@@ -31,9 +30,7 @@ def _process_body_part(part, node, brain):
         conn.weight = weight
 
     # Process children
-    for (from_slot, (to_slot, child, parent)) in node.connections:
-        if not parent:
-            continue
+    for from_slot, (to_slot, child, _) in node.parent_connections():
 
         conn = part.child.add()
         conn.src = from_slot
@@ -52,6 +49,9 @@ class Tree(object):
         super(Tree, self).__init__()
         self.root = root
 
+        # Maps node IDs to nodes for looked up nodes
+        self._nodes = {}
+
     def to_robot(self, robot_id=0):
         """
         Turns this tree representation into a protobuf robot.
@@ -60,6 +60,42 @@ class Tree(object):
         robot.id = robot_id
         _process_body_part(robot.body.root, self.root, robot.brain)
         return robot
+
+    def get_node(self, node_id):
+        """
+        Returns the node with the given ID from this
+        tree.
+
+        :param node_id:
+        :type node_id: str
+        :return:
+        :rtype: Node
+        """
+        if node_id in self._nodes:
+            return self._nodes[node_id]
+
+        return self._get_node(node_id, self.root)
+
+    def _get_node(self, node_id, current):
+        """
+        Recursion helper for get_node.
+        """
+        if current.id == node_id:
+            return current
+
+        for conn in current.parent_connections():
+            self._nodes[conn.node.id] = conn.node
+            node = self._get_node(node_id, conn.node)
+            if node:
+                return node
+
+        return None
+
+    def __len__(self):
+        """
+        Counts the total number of nodes in the tree
+        """
+        return len(self.root)
 
 class Node(object):
     """
@@ -71,7 +107,8 @@ class Node(object):
         """
         :param part:
         :type part: BodyPart
-        :param neurons: List of `Neuron` objects
+        :param neurons: List of `Neuron` objects. Only types and params are relevant,
+                        IDs are overwritten when a robot object is generated.
         :type neurons: list[Neuron]
         :return:
         """
@@ -110,7 +147,7 @@ class Node(object):
         """
         Adds a bidirectional node body connection.
         """
-        self.connections[from_slot] = (to_slot, node, parent)
+        self.connections[from_slot] = BodyConnection(from_slot, to_slot, node, parent)
         if parent:
             node.add_connection(to_slot, from_slot, self, parent=False)
 
@@ -126,6 +163,30 @@ class Node(object):
         slot = path[0]
         other = self.connections.get(slot, None)
         return other.get_target(path[1:]) if other else None
+
+    def get_path(self, target, origin=None):
+        """
+        Tries to find the path to the given target
+        node. If an origin node is given, paths to
+        that node are not followed.
+        :param target:
+        :type target: Node
+        :param origin:
+        :type origin: Node
+        :return: list|bool
+        """
+        for conn in self.connections.values():
+            if conn.node is origin:
+                continue
+
+            if conn.node is target:
+                return [conn.from_slot]
+
+            path = conn.node.get_path(target, self)
+            if path:
+                return [conn.from_slot] + path
+
+        return False
 
     def has_neuron(self, neuron_type, offset):
         """
@@ -144,10 +205,30 @@ class Node(object):
     def get_neuron_id(self, neuron_type, offset):
         """
         Convenience function to return the id corresponding to
-        a neuron of a given type / offset.
+        a neuron of a given type / offset. Note that this
+        does not use the IDs of the current neurons, but rather
+        returns the neuron ID as it will be after the robot
+        has been generated.
         """
         t = {"input": "in", "output": "out", "hidden": "hidden"}[neuron_type]
         return "%s-%s-%d" % (self.part.id, t, offset)
+
+    def get_neuron_offset(self, neuron):
+        """
+        Returns the type offset of the given neuron.
+        :param neuron:
+        :type neuron: Neuron
+        :return:
+        """
+        offset = 0
+        for other in self.neurons:
+            if other is neuron:
+                return offset
+
+            if other.type == neuron.type:
+                offset += 1
+
+        return False
 
     def get_neural_connections(self):
         """
@@ -155,6 +236,7 @@ class Node(object):
         of the ones that are valid.
         """
         results = []
+        taken = set()
         for conn in self.neural_connections:
             src_type, src_idx = conn.src
             if not self.has_neuron(src_type, src_idx):
@@ -168,14 +250,91 @@ class Node(object):
             if not target.has_neuron(dst_type, dst_idx):
                 continue
 
-            # Connection exists
-            results.append((
-                self.get_neuron_id(src_type, src_idx),
-                target.get_neuron_id(dst_type, dst_idx),
-                conn.weight
-            ))
+            # Connection is possible
+            src_id = self.get_neuron_id(src_type, src_idx)
+            dst_id = target.get_neuron_id(dst_type, dst_idx)
+
+            # Ignore duplicates
+            # Duplicates could happen because paths aren't unique - it's possible to
+            # go back and forth between two nodes.
+            pair = (src_id, dst_id)
+            if pair in taken:
+                continue
+
+            taken.add(pair)
+            results.append((src_id, dst_id, conn.weight))
 
         return results
+
+    def parent_connections(self):
+        """
+        Returns a generator for connections for which
+        this node is the parent.
+        """
+        for v in self.connections.values():
+            if not v.parent:
+                continue
+
+            yield v
+
+    def is_root(self):
+        """
+        Returns true if this node has no non-parent connections
+        :return:
+        """
+        for v in self.connections.values():
+            if v.parent:
+                return False
+
+        return True
+
+    def __len__(self):
+        """
+        Returns the total number of nodes in the subtree for which
+        this node is the root.
+
+        :rtype: int
+        :return: Subtree size
+        """
+        return sum(len(v.node) for v in self.parent_connections()) + 1
+
+    def add_neural_connection(self, src, dst, dst_part, weight):
+        """
+        :param src:
+        :type src: Neuron
+        :param dst:
+        :type dst: Neuron
+        :param dst_part:
+        :type dst_part: Node
+        :param weight:
+        """
+        path = self.get_path(dst_part)
+        src_offset = self.get_neuron_offset(src)
+        dst_offset = dst_part.get_neuron_offset(dst)
+        self.neural_connections.append(NeuralConnection(
+            (src.type, src_offset),
+            (dst.type, dst_offset),
+            path,
+            weight
+        ))
+
+
+class BodyConnection(object):
+    """
+    Body connection
+    """
+    def __init__(self, from_slot, to_slot, node, parent):
+        """
+
+        :param from_slot:
+        :param to_slot:
+        :param node:
+        :param parent:
+        """
+        self.parent = parent
+        self.node = node
+        self.to_slot = to_slot
+        self.from_slot = from_slot
 
 
 class NeuralConnection(object):

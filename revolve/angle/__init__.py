@@ -24,3 +24,4 @@ free to choose what types of body parts and neurons are used.
 Revolve.Angle is still very much a work in progress.
 """
 __author__ = 'Elte Hupkes'
+from .generate import TreeGenerator
