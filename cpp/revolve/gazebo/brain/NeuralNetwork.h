@@ -13,9 +13,12 @@
 
 #include "Brain.h"
 
-// TODO This was true for Arduino, but we can change this
-#define MAX_INPUT_NEURONS 13
-#define MAX_OUTPUT_NEURONS 8
+// These numbers are quite arbitrary. It used to be in:13 out:8
+// for the Arduino, but I upped them both to 20 to accomodate other
+// scenarios. Should really be enforced in the Python code, this
+// implementation should not be the limit.
+#define MAX_INPUT_NEURONS 20
+#define MAX_OUTPUT_NEURONS 20
 
 // Arbitrary value
 #define MAX_HIDDEN_NEURONS 30

@@ -18,7 +18,7 @@ def _get_node_list(body_part):
     :return:
     """
     ids = [body_part.id]
-    for conn in body_part.connections:
+    for conn in body_part.child:
         ids += _get_node_list(conn.part)
 
     return ids
@@ -56,13 +56,16 @@ class TreeGenerator(object):
         ids = _get_node_list(body.root)
         neuron_map = {}
         for neuron in brain.neuron:
-            if neuron.type == "hidden" and not neuron.HasField("partId"):
+            if neuron.layer == "hidden" and not neuron.HasField("partId"):
                 neuron.partId = random.choice(ids)
 
-            neuron_map[neuron.id] = neuron.partId
+            if not neuron.HasField("partId"):
+                raise Exception("Neuron %s not associated with part." % neuron.id)
+
+            neuron_map[neuron.id] = neuron
 
         # Create the tree without neural net connections
-        root = self._create_subtree(body.root)
+        root = self._create_subtree(body.root, brain)
         tree = Tree(root)
 
         # Create the neural net connections. We only
@@ -72,9 +75,9 @@ class TreeGenerator(object):
         for conn in brain.connection:
             src_neuron = neuron_map[conn.src]
             dst_neuron = neuron_map[conn.dst]
-            src_part = tree.get_node(src_neuron)
-            dst_part = tree.get_node(dst_neuron)
-            src_part.add_neural_connection(src_neuron, dst_neuron, dst_part, conn.weight)
+            src_node = tree.get_node(src_neuron.partId)
+            dst_node = tree.get_node(dst_neuron.partId)
+            src_node.add_neural_connection(src_neuron, dst_neuron, dst_node, conn.weight)
 
         return tree
 
@@ -87,7 +90,7 @@ class TreeGenerator(object):
         # Gather neurons for this part
         neurons = [neuron for neuron in brain.neuron if neuron.partId == body_part.id]
         node = Node(body_part, neurons, self.body_gen.spec)
-        for conn in body_part.connection:
+        for conn in body_part.child:
             subtree = self._create_subtree(conn.part, brain)
             node.add_connection(conn.src, conn.dst, subtree)
 

@@ -18,7 +18,7 @@ def _process_body_part(part, node, brain):
     for neuron in node.neurons:
         nw = brain.neuron.add()
         nw.CopyFrom(neuron)
-        nw.part_id = part.id
+        nw.partId = part.id
         nw.id = node.get_neuron_id(neuron.layer, counters[nw.layer])
         counters[nw.layer] += 1
 
@@ -30,12 +30,11 @@ def _process_body_part(part, node, brain):
         conn.weight = weight
 
     # Process children
-    for from_slot, (to_slot, child, _) in node.parent_connections():
-
+    for connection in node.parent_connections():
         conn = part.child.add()
-        conn.src = from_slot
-        conn.dst = to_slot
-        _process_body_part(conn.part, child, brain)
+        conn.src = connection.from_slot
+        conn.dst = connection.to_slot
+        _process_body_part(conn.part, connection.node, brain)
 
 class Tree(object):
     """
@@ -135,11 +134,11 @@ class Node(object):
 
         # Neurons specified for this node
         self.neurons = neurons
-        self.num_hidden = len([n for n in neurons if n.type == "hidden"])
+        self.num_hidden = len([n for n in neurons if n.type == "Hidden"])
 
         # Check if given number of inputs / outputs matches spec
-        inputs = len([n for n in neurons if n.type == "input"])
-        outputs = len([n for n in neurons if n.type == "output"])
+        inputs = len([n for n in neurons if n.layer == "input"])
+        outputs = len([n for n in neurons if n.layer == "output"])
         if inputs != self.spec.inputs or outputs != self.spec.outputs:
             raise Exception("Part input / output mismatch.")
 
@@ -162,7 +161,7 @@ class Node(object):
 
         slot = path[0]
         other = self.connections.get(slot, None)
-        return other.get_target(path[1:]) if other else None
+        return other.node.get_target(path[1:]) if other else None
 
     def get_path(self, target, origin=None):
         """
@@ -175,15 +174,15 @@ class Node(object):
         :type origin: Node
         :return: list|bool
         """
+        if target is self:
+            return []
+
         for conn in self.connections.values():
             if conn.node is origin:
                 continue
 
-            if conn.node is target:
-                return [conn.from_slot]
-
             path = conn.node.get_path(target, self)
-            if path:
+            if path is not False:
                 return [conn.from_slot] + path
 
         return False
@@ -202,7 +201,7 @@ class Node(object):
         else:
             return offset < self.spec.outputs
 
-    def get_neuron_id(self, neuron_type, offset):
+    def get_neuron_id(self, neuron_layer, offset):
         """
         Convenience function to return the id corresponding to
         a neuron of a given type / offset. Note that this
@@ -210,12 +209,12 @@ class Node(object):
         returns the neuron ID as it will be after the robot
         has been generated.
         """
-        t = {"input": "in", "output": "out", "hidden": "hidden"}[neuron_type]
+        t = {"input": "in", "output": "out", "hidden": "hidden"}[neuron_layer]
         return "%s-%s-%d" % (self.part.id, t, offset)
 
     def get_neuron_offset(self, neuron):
         """
-        Returns the type offset of the given neuron.
+        Returns the layer offset of the given neuron.
         :param neuron:
         :type neuron: Neuron
         :return:
@@ -225,7 +224,7 @@ class Node(object):
             if other is neuron:
                 return offset
 
-            if other.type == neuron.type:
+            if other.layer == neuron.layer:
                 offset += 1
 
         return False
@@ -233,26 +232,29 @@ class Node(object):
     def get_neural_connections(self):
         """
         Attempts to traverse neural connections and returns list
-        of the ones that are valid.
+        of the ones that are valid as `src_id`, `dst_id`, weight triples.
+
+        :return:
+        :rtype: (str, str, float)
         """
         results = []
         taken = set()
         for conn in self.neural_connections:
-            src_type, src_idx = conn.src
-            if not self.has_neuron(src_type, src_idx):
+            src_layer, src_idx = conn.src
+            if not self.has_neuron(src_layer, src_idx):
                 continue
 
             target = self.get_target(conn.path)
             if not target:
                 continue
 
-            dst_type, dst_idx = conn.dst
-            if not target.has_neuron(dst_type, dst_idx):
+            dst_layer, dst_idx = conn.dst
+            if not target.has_neuron(dst_layer, dst_idx):
                 continue
 
             # Connection is possible
-            src_id = self.get_neuron_id(src_type, src_idx)
-            dst_id = target.get_neuron_id(dst_type, dst_idx)
+            src_id = self.get_neuron_id(src_layer, src_idx)
+            dst_id = target.get_neuron_id(dst_layer, dst_idx)
 
             # Ignore duplicates
             # Duplicates could happen because paths aren't unique - it's possible to
@@ -270,6 +272,9 @@ class Node(object):
         """
         Returns a generator for connections for which
         this node is the parent.
+
+        :return:
+        :rtype: list[BodyConnection]
         """
         for v in self.connections.values():
             if not v.parent:
@@ -309,11 +314,12 @@ class Node(object):
         :param weight:
         """
         path = self.get_path(dst_part)
+
         src_offset = self.get_neuron_offset(src)
         dst_offset = dst_part.get_neuron_offset(dst)
         self.neural_connections.append(NeuralConnection(
-            (src.type, src_offset),
-            (dst.type, dst_offset),
+            (src.layer, src_offset),
+            (dst.layer, dst_offset),
             path,
             weight
         ))
@@ -344,8 +350,8 @@ class NeuralConnection(object):
 
     def __init__(self, src, dst, path, weight):
         """
-        :param src: type, index tuple
-        :param dst: type, index tuple
+        :param src: (layer, offset) tuple
+        :param dst: (layer, offset) tuple
         :param weight: Connection weight
         :param path: An iterable of slots to follow. This path
                      needs to be followed from the source node
