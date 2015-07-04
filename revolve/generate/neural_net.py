@@ -10,6 +10,7 @@ from ..spec import NeuralNetwork, Neuron, NeuralNetImplementation, NeuronSpec, B
 # Epsilon value below which neuron weights are discarded
 EPSILON = 1e-11
 
+# Helper function to extract the network interface from a body part and subtree
 def _extract_io(body_spec, part):
     spec = body_spec.get(part.type)
     inputs = ["%s-in-%d" % (part.id, i) for i in range(spec.inputs)]
@@ -33,7 +34,7 @@ class NeuralNetworkGenerator(object):
     """
     def __init__(self, spec, max_hidden=20, conn_prob=0.1):
         """
-        :param conn_prob: Probability of creating a weight between two neurons.
+        :param conn_prob: Probability of creating a connection (i.e. nonzero weight) between two neurons.
         :type conn_prob: float
         :param spec:
         :type spec: NeuralNetImplementation
@@ -54,12 +55,17 @@ class NeuralNetworkGenerator(object):
     def generate(self, inputs, outputs, part_ids=None):
         """
         Generates a neural network from the provided interface.
+
+        Note that hidden neurons will get a randomly assigned part ID from
+        the specified `part_ids` map, provided it isn't empty.
+
         :param inputs: A list of IDs of all input neurons that should
                be generated.
         :type inputs: list
         :param outputs: List of output IDs to be generated
         :type outputs: list
-        :param part_ids: Maps neuron ID to corresponding part ID
+        :param part_ids: Maps neuron ID to corresponding part ID. This is
+                         required to set the `partId` field on a neuron.
         :type part_ids: dict
         :return: The generated NeuralNetwork protobuf
         :rtype: NeuralNetwork
@@ -69,6 +75,10 @@ class NeuralNetworkGenerator(object):
 
         if part_ids is None:
             part_ids = {}
+
+        # Create a list of part IDs to choose hidden neuron
+        # part IDs from.
+        part_list = set(part_ids.values())
 
         # Initialize network interface, i.e. inputs and outputs
         for layer, ids in (("input", inputs), ("output", outputs)):
@@ -88,6 +98,12 @@ class NeuralNetworkGenerator(object):
         for i in range(num_hidden):
             neuron = net.neuron.add()
             neuron.id = 'brian-gen-hidden-%s' % len(hidden)
+
+            # Assign a part ID to each hidden neuron, provided we
+            # have a map.
+            if part_list:
+                neuron.partId = random.choice(part_list)
+
             hidden.append(neuron.id)
             neuron.layer = "hidden"
             neuron.type = self.choose_neuron_type(neuron.layer)

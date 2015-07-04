@@ -1,5 +1,22 @@
-from ..spec.msgs import Robot, BodyPart, Neuron
+import copy
+from ..spec.msgs import Robot, BodyPart, Neuron, NeuralNetwork, Body
 
+
+def _create_subtree(body_part, brain, body_spec):
+    """
+    :param body_part:
+    :param brain:
+    :param body_spec:
+    :return:
+    """
+    # Gather neurons for this part
+    neurons = [neuron for neuron in brain.neuron if neuron.partId == body_part.id]
+    node = Node(body_part, neurons, body_spec)
+    for conn in body_part.child:
+        subtree = _create_subtree(conn.part, brain, body_spec)
+        node.set_connection(conn.src, conn.dst, subtree)
+
+    return node
 
 def _process_body_part(part, node, brain):
     """
@@ -59,6 +76,45 @@ class Tree(object):
         robot.id = robot_id
         _process_body_part(robot.body.root, self.root, robot.brain)
         return robot
+
+    @staticmethod
+    def from_body_brain(body, brain, body_spec):
+        """
+        Creates a tree from a body and a brain. Every neuron will need
+        to have an assigned part ID in order for this to work.
+
+        :param body:
+        :type body: Body
+        :param brain:
+        :type brain: NeuralNetwork
+        :type body_spec: BodyImplementation
+        :param body_spec:
+        :return:
+        """
+        # Generate neuron map, make sure every neuron is assigned to a part
+        neuron_map = {}
+        for neuron in brain.neuron:
+            if not neuron.HasField("partId"):
+                raise Exception("Neuron %s not associated with part." % neuron.id)
+
+            neuron_map[neuron.id] = neuron
+
+        # Create the tree without neural net connections
+        root = _create_subtree(body.root, brain, body_spec)
+        tree = Tree(root)
+
+        # Create the neural net connections. We only
+        # have the id <-> id paths, so we'll have to
+        # locate the neurons in the tree and then
+        # build the paths.
+        for conn in brain.connection:
+            src_neuron = neuron_map[conn.src]
+            dst_neuron = neuron_map[conn.dst]
+            src_node = tree.get_node(src_neuron.partId)
+            dst_node = tree.get_node(dst_neuron.partId)
+            src_node.add_neural_connection(src_neuron, dst_neuron, dst_node, conn.weight)
+
+        return tree
 
     def get_node(self, node_id):
         """
@@ -142,13 +198,38 @@ class Node(object):
         if inputs != self.spec.inputs or outputs != self.spec.outputs:
             raise Exception("Part input / output mismatch.")
 
-    def add_connection(self, from_slot, to_slot, node, parent=True):
+    def copy(self):
         """
-        Adds a bidirectional node body connection.
+        Returns a deep copy of this subtree
+        :return:
+        :rtype: Node
         """
+        return copy.deepcopy(self)
+
+    def set_connection(self, from_slot, to_slot, node, parent=True):
+        """
+        Adds a bidirectional node body connection, removing any connection
+        that was currently there.
+        """
+        self.remove_connection(from_slot)
         self.connections[from_slot] = BodyConnection(from_slot, to_slot, node, parent)
         if parent:
-            node.add_connection(to_slot, from_slot, self, parent=False)
+            node.set_connection(to_slot, from_slot, self, parent=False)
+
+    def remove_connection(self, from_slot):
+        """
+        Remove the connection at the given slot
+        :param from_slot:
+        :return:
+        """
+        conn = self.connections.get(from_slot, None)
+        if not conn:
+            return
+
+        if conn.parent:
+            conn.node.remove_connection(conn.to_slot)
+
+        del self.connections[from_slot]
 
     def get_target(self, path):
         """
@@ -282,16 +363,25 @@ class Node(object):
 
             yield v
 
+    def child_connection(self):
+        """
+        Returns the connection this node uses to attach to
+        its parent, or `None` if this node is the root node.
+        :return:
+        :rtype: BodyConnection
+        """
+        for v in self.connections.values():
+            if not v.parent:
+                return v
+
+        return None
+
     def is_root(self):
         """
         Returns true if this node has no non-parent connections
         :return:
         """
-        for v in self.connections.values():
-            if v.parent:
-                return False
-
-        return True
+        return self.child_connection() is None
 
     def __len__(self):
         """
@@ -302,6 +392,23 @@ class Node(object):
         :return: Subtree size
         """
         return sum(len(v.node) for v in self.parent_connections()) + 1
+
+    def io_count(self):
+        """
+        Returns the number of inputs, outputs and hidden neurons
+        specified by the subtree starting with this node.
+
+        :return:
+        :rtype: (int, int, int)
+        """
+        inputs, outputs, hidden = self.spec.inputs, self.spec.outputs, self.num_hidden
+        for conn in self.parent_connections():
+            i, o, h = conn.node.io_count()
+            inputs += i
+            outputs += o
+            hidden += h
+
+        return inputs, outputs, hidden
 
     def add_neural_connection(self, src, dst, dst_part, weight):
         """
