@@ -43,9 +43,9 @@ class Crossover(object):
         limits are still required knowledge for crossover choices. It is because
         of this the body / brain generators are passed here.
 
-        :param body_gen: A body generator for this robot.
+        :param body_gen: A body generator for this robot spec.
         :type body_gen: BodyGenerator
-        :param brain_gen: A neural net generator for this robot
+        :param brain_gen: A neural net generator for this robot spec.
         :type brain_gen: NeuralNetworkGenerator
         :return:
         """
@@ -144,3 +144,57 @@ class Crossover(object):
         result.set_connection(from_slot, to_slot, r, parent=True)
 
         return True, Tree(result)
+
+
+class Mutator(object):
+    """
+    Parameter mutation class. Mutation is achieved by generating
+    a new value for each parameter and combining it with the
+    old parameter in the ratio specified by the parameter's
+    epsilon value.
+    """
+
+    def __init__(self, body_gen, brain_gen):
+        """
+        :param body_gen: A body generator for this robot.
+        :type body_gen: BodyGenerator
+        :param brain_gen: A neural net generator for this robot
+        :type brain_gen: NeuralNetworkGenerator
+        :return:
+        """
+        self.brain_gen = brain_gen
+        self.body_gen = body_gen
+
+    def mutate(self, tree, in_place=True):
+        """
+
+        :param tree:
+        :type tree: Tree
+        :param in_place:
+        :return:
+        """
+        root = tree.root if in_place else tree.root.copy()
+        for node in _node_list(root):
+            self.mutate_node_body(node)
+            # TODO Brain mutate
+
+    def mutate_node_body(self, node):
+        """
+        Mutate a single node's body parameters.
+        This generates a new random set of parameters for the node, and
+        changes the value of each parameter to
+
+        `(1 - e) * old_value + e * new_value`
+
+        Here `e` is the epsilon value defined in the parameter spec, which
+        gives an upper bound for the percentual change in parameter value.
+        :param node:
+        :return:
+        """
+        spec = self.body_gen.spec.get(node.part.type)
+        nw_params = spec.get_random_parameters(serialize=False)
+        obj = spec.unserialize_params(node.part.param)
+
+        for param in obj:
+            epsilon = spec.get_spec(param).epsilon
+            obj[param] = (1.0 - epsilon) * obj[param] + epsilon * nw_params[param]

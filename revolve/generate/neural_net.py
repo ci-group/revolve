@@ -76,9 +76,9 @@ class NeuralNetworkGenerator(object):
         if part_ids is None:
             part_ids = {}
 
-        # Create a list of part IDs to choose hidden neuron
+        # Create a list of unique part IDs to choose hidden neuron
         # part IDs from.
-        part_list = set(part_ids.values())
+        part_list = list(set(part_ids.values()))
 
         # Initialize network interface, i.e. inputs and outputs
         for layer, ids in (("input", inputs), ("output", outputs)):

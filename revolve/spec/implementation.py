@@ -141,14 +141,18 @@ class ParamSpec(object):
     """
     Parameter specification class
     """
-    def __init__(self, name, default=0.0, min_value=None, max_value=None, min_inclusive=True, max_inclusive=True):
+    def __init__(self, name, default=0.0, min_value=None, max_value=None,
+                 min_inclusive=True, max_inclusive=True, epsilon=0):
         """
         :param default:
         :param min_value:
         :param max_value:
         :param min_inclusive:
         :param max_inclusive:
+        :param epsilon: The maximum fraction of mutation that may happen
+                        to this parameter's value at any given time.
         """
+        self.epsilon = epsilon
         self.name = name
         self.min = min_value
         self.max = max_value
@@ -255,6 +259,16 @@ class Parameterizable(object):
 
         # Store tuple array index, spec
         self.parameters = {params[i].name: (i, params[i]) for i in range(l)}
+
+    def get_spec(self, param_name):
+        """
+        Returns the ParamSpec for the given parameter.
+        :param param_name:
+        :type param_name: str
+        :return:
+        :rtype: ParamSpec
+        """
+        return self.parameters[param_name][1]
 
     def serialize_params(self, params):
         """
