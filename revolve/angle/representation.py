@@ -56,10 +56,16 @@ def _process_body_part(part, node, brain):
 class Tree(object):
     """
     A tree to represent a robot that can be used for evolution.
+
+    The tree class should really only be used to wrap frozen node
+    structures, i.e. robot trees that will no longer be mutated.
+    It maintains an internal
     """
 
     def __init__(self, root):
         """
+        :param root:
+        :type root: Node
         :return:
         """
         super(Tree, self).__init__()
@@ -198,13 +204,26 @@ class Node(object):
         if inputs != self.spec.inputs or outputs != self.spec.outputs:
             raise Exception("Part input / output mismatch.")
 
-    def copy(self):
+    def copy(self, copy_parent=True):
         """
         Returns a deep copy of this subtree
+        :param copy_parent: If set to false, the parent connection of this node
+                       is temporarily removed before copying to prevent it
+                       from being copied as well. Useful if only the subtree
+                       is needed. Note that this will result in the returned
+                       copy being a root node.
+        :type copy_parent: bool
         :return:
         :rtype: Node
         """
-        return copy.deepcopy(self)
+        old_conn = self.connections
+        if not copy_parent:
+            self.connections = {slot: self.connections[slot] for slot in self.connections
+                                if self.connections[slot].parent}
+
+        result = copy.deepcopy(self)
+        self.connections = old_conn
+        return result
 
     def set_connection(self, from_slot, to_slot, node, parent=True):
         """
