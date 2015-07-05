@@ -138,7 +138,7 @@ class Crossover(object):
 
         # Update node IDs, duplicates are quite likely at this point
         base = _renumber(result)
-        _renumber(r)
+        _renumber(r, base)
 
         # Set the actual connection and return the tree
         result.set_connection(from_slot, to_slot, r, parent=True)
