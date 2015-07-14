@@ -260,6 +260,17 @@ class Parameterizable(object):
         # Store tuple array index, spec
         self.parameters = {params[i].name: (i, params[i]) for i in range(l)}
 
+    def get_param_index(self, name):
+        """
+        Returns the index of the given parameter in the serialized
+        parameter array.
+        :param name:
+        :type name: str
+        :return:
+        :rtype: int
+        """
+        return self.parameters[name][0]
+
     def get_spec(self, param_name):
         """
         Returns the ParamSpec for the given parameter.
@@ -329,6 +340,38 @@ class Parameterizable(object):
 
         return self.serialize_params(params) if serialize else params
 
+    def get_epsilon_mutated_parameters(self, params, serialize=False):
+        """
+        Mutates the given parameters by generating a new set of
+        values and modifying them according to their epsilon value.
+        :param params:
+        :param serialize:
+        :return: Mutated parameters
+        :rtype: dict|list
+        """
+        if not isinstance(params, dict):
+            params = self.unserialize_params(params)
+
+        nw_params = {}
+        for name, (_, spec) in self.parameters.items():
+            epsilon = spec.epsilon
+            nw_params[name] = (1.0 - epsilon) * params[name] + epsilon * spec.get_random_value()
+
+        return self.serialize_params(nw_params) if serialize else nw_params
+
+    def set_parameters(self, container, params):
+        """
+        Convenience method to set parameters on a container.
+        :param container: Protobuf parameter container
+        :param params: Serialized or listed parameters
+        """
+        if isinstance(params, dict):
+            params = self.serialize_params(params)
+
+        del container[:]
+        for param in params:
+            p = container.add()
+            p.value = param
 
 class PartSpec(Parameterizable):
     """

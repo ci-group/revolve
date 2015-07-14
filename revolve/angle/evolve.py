@@ -3,18 +3,32 @@ from .representation import Tree, Node
 from ..generate import BodyGenerator, NeuralNetworkGenerator
 
 
-def _node_list(node):
+def decide(probability):
+    """
+    Returns True with the given probability
+    :param probability:
+    :return:
+    """
+    return random.random() < probability
+
+
+def _node_list(node, root=True):
     """
     Recursively builds a linear node list
     from a root node.
 
     :param node:
     :type node: Node
+    :param root: Include the given node or not
     :return:
     """
-    lst = [node]
+    if root:
+        lst = [node]
+    else:
+        lst = []
+
     for conn in node.parent_connections():
-        lst += _node_list(conn.node)
+        lst += _node_list(conn.node, root=True)
 
     return lst
 
@@ -79,7 +93,7 @@ class Crossover(object):
 
         # Create list of valid crossover points from `b`
         # Get the total list of nodes excluding the root
-        b_nodes = _node_list(b.root)[1:]
+        b_nodes = _node_list(b.root, root=False)
 
         # Determine the current robot statistics, subtracting
         # everything after the crossover point.
@@ -154,7 +168,11 @@ class Mutator(object):
     epsilon value.
     """
 
-    def __init__(self, body_gen, brain_gen):
+    def __init__(self, body_gen, brain_gen,
+                 p_remove_hidden_neuron=0.05,
+                 p_remove_brain_connection=0.05,
+                 p_delete_subtree=0.05,
+                 p_swap_subtree=0.05):
         """
         :param body_gen: A body generator for this robot.
         :type body_gen: BodyGenerator
@@ -162,11 +180,24 @@ class Mutator(object):
         :type brain_gen: NeuralNetworkGenerator
         :return:
         """
+        self.p_swap_subtree = p_swap_subtree
+        self.p_delete_subtree = p_delete_subtree
+        self.p_remove_brain_connection = p_remove_brain_connection
+        self.p_remove_hidden_neuron = p_remove_hidden_neuron
         self.brain_gen = brain_gen
         self.body_gen = body_gen
 
     def mutate(self, tree, in_place=True):
         """
+        Mutates the robot tree. This performs the following operations:
+
+        - Body parameters are mutated
+        - Brain parameters are mutated
+        - A subtree might be removed
+        - A subtree might be duplicated
+        - Two subtrees might be swapped
+        - Subtrees are duplicated at random
+        - Body parts are added at random
 
         :param tree:
         :type tree: Tree
@@ -174,11 +205,62 @@ class Mutator(object):
         :return:
         """
         root = tree.root if in_place else tree.root.copy()
-        for node in _node_list(root):
-            self.mutate_node_body(node)
-            # TODO Brain mutate
 
-    def mutate_node_body(self, node):
+        # We first perform all destructive operations, then
+        # all modifying operations, and finally all additive operations
+        self.delete_random_subtree(root)
+        self.swap_random_subtrees(root)
+
+        for node in _node_list(root, root=True):
+            # Remove neurons / connections at random
+            # TODO Delete hidden neurons
+            # TODO Delete brain connections
+
+            # Mutate body and brain parameters
+            self.mutate_node_body_parameters(node)
+            self.mutate_node_brain_parameters(node)
+
+        # Next, we perform additive changes to the body
+        self.add_random_body_part(root)
+
+        # We then add new hidden neurons
+        # TODO Select a new number of hidden neurons and add them
+
+    def delete_random_subtree(self, root):
+        """
+        :param root: Root node of the tree
+        :return: Whether or not a subtree was removed
+        :rtype: bool
+        """
+        node_list = _node_list(root, root=False)
+        if not decide(self.p_delete_subtree):
+            return False
+
+        max_remove_size = len(node_list) - self.body_gen.min_parts
+        items = [node for node in node_list if len(node) <= max_remove_size]
+        if not items:
+            return False
+
+        subtree = random.choice(items)
+        self.remove_subtree(subtree)
+
+    def swap_random_subtrees(self, root):
+        """
+
+        :param root:
+        :return:
+        """
+        raise NotImplementedError("TODO Implement")
+
+    def add_random_body_part(self, root):
+        """
+
+        :param root:
+        :return:
+        """
+        raise NotImplementedError("TODO Implement")
+
+    def mutate_node_body_parameters(self, node):
         """
         Mutate a single node's body parameters.
         This generates a new random set of parameters for the node, and
@@ -192,9 +274,26 @@ class Mutator(object):
         :return:
         """
         spec = self.body_gen.spec.get(node.part.type)
-        nw_params = spec.get_random_parameters(serialize=False)
-        obj = spec.unserialize_params(node.part.param)
+        nw_params = spec.get_epsilon_mutated_parameters(node.part.param, serialize=False)
+        spec.set_parameters(node.part.param, nw_params)
 
-        for param in obj:
-            epsilon = spec.get_spec(param).epsilon
-            obj[param] = (1.0 - epsilon) * obj[param] + epsilon * nw_params[param]
+    def mutate_node_brain_parameters(self, node):
+        """
+        :param node:
+        :type node: Node
+        :return:
+        """
+        for neuron in node.neurons:
+            spec = self.brain_gen.spec.get(neuron.type)
+            nw_params = spec.get_epsilon_mutated_parameters(neuron.param, serialize=False)
+            spec.set_parameters(neuron.param, nw_params)
+
+    def remove_subtree(self, node):
+        """
+        Removes the subtree starting from the given node
+        :param node:
+        :type node: Node
+        :return:
+        """
+        conn = node.child_connection()
+        node.remove_connection(conn.from_slot)

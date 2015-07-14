@@ -1,5 +1,6 @@
 import copy
 from ..spec.msgs import Robot, BodyPart, Neuron, NeuralNetwork, Body
+from ..spec import BodyImplementation
 
 
 def _create_subtree(body_part, brain, body_spec):
@@ -171,6 +172,8 @@ class Node(object):
         :param neurons: List of `Neuron` objects. Only types and params are relevant,
                         IDs are overwritten when a robot object is generated.
         :type neurons: list[Neuron]
+        :param body_spec:
+        :type body_spec: BodyImplementation
         :return:
         """
         super(Node, self).__init__()
@@ -225,30 +228,37 @@ class Node(object):
         self.connections = old_conn
         return result
 
-    def set_connection(self, from_slot, to_slot, node, parent=True):
+    def set_connection(self, from_slot, to_slot, node, parent=True, bidirectional=True):
         """
         Adds a bidirectional node body connection, removing any connection
         that was currently there.
         """
         self.remove_connection(from_slot)
         self.connections[from_slot] = BodyConnection(from_slot, to_slot, node, parent)
-        if parent:
-            node.set_connection(to_slot, from_slot, self, parent=False)
+        if bidirectional:
+            node.set_connection(to_slot, from_slot, self, parent=not parent, bidirectional=False)
 
-    def remove_connection(self, from_slot):
+    def remove_connection(self, from_slot, bidirectional=True):
         """
         Remove the connection at the given slot
         :param from_slot:
+        :param bidirectional: Removes both sides of the connection
         :return:
         """
         conn = self.connections.get(from_slot, None)
         if not conn:
             return
 
-        if conn.parent:
-            conn.node.remove_connection(conn.to_slot)
-
         del self.connections[from_slot]
+        if bidirectional:
+            conn.node.remove_connection(conn.to_slot, bidirectional=False)
+
+    def get_free_slots(self):
+        """
+        Returns the free slots on this node
+        :return:
+        """
+        return [i for i in xrange(self.spec.arity) if i not in self.connections]
 
     def get_target(self, path):
         """
