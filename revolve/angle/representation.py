@@ -54,6 +54,7 @@ def _process_body_part(part, node, brain):
         conn.dst = connection.to_slot
         _process_body_part(conn.part, connection.node, brain)
 
+
 class Tree(object):
     """
     A tree to represent a robot that can be used for evolution.
@@ -159,6 +160,7 @@ class Tree(object):
         """
         return len(self.root)
 
+
 class Node(object):
     """
     Single body part node, stores the body part as well as neural
@@ -207,6 +209,29 @@ class Node(object):
         if inputs != self.spec.inputs or outputs != self.spec.outputs:
             raise Exception("Part input / output mismatch.")
 
+        # Performance caches
+        self._paths = {}
+        self._len = -1
+        self._io = None
+
+    def clear_caches(self, origin=None):
+        """
+        Clears the length / path / io caches of the entire tree, except
+        for the direction of `origin`.
+
+        :param origin:
+        :return:
+        """
+        self._paths = {}
+        self._len = -1
+        self._io = None
+
+        for conn in self.connections.values():
+            if conn.node is origin:
+                continue
+
+            conn.node.clear_caches(self)
+
     def copy(self, copy_parent=True):
         """
         Returns a deep copy of this subtree
@@ -224,6 +249,7 @@ class Node(object):
             self.connections = {slot: self.connections[slot] for slot in self.connections
                                 if self.connections[slot].parent}
 
+        self.clear_caches()
         result = copy.deepcopy(self)
         self.connections = old_conn
         return result
@@ -233,6 +259,7 @@ class Node(object):
         Adds a bidirectional node body connection, removing any connection
         that was currently there.
         """
+        self.clear_caches()
         self.remove_connection(from_slot)
         self.connections[from_slot] = BodyConnection(from_slot, to_slot, node, parent)
         if bidirectional:
@@ -245,6 +272,7 @@ class Node(object):
         :param bidirectional: Removes both sides of the connection
         :return:
         """
+        self.clear_caches()
         conn = self.connections.get(from_slot, None)
         if not conn:
             return
@@ -420,7 +448,10 @@ class Node(object):
         :rtype: int
         :return: Subtree size
         """
-        return sum(len(v.node) for v in self.parent_connections()) + 1
+        if self._len < 0:
+            self._len = sum(len(v.node) for v in self.parent_connections()) + 1
+
+        return self._len
 
     def io_count(self):
         """
@@ -430,14 +461,17 @@ class Node(object):
         :return:
         :rtype: (int, int, int)
         """
-        inputs, outputs, hidden = self.spec.inputs, self.spec.outputs, self.num_hidden
-        for conn in self.parent_connections():
-            i, o, h = conn.node.io_count()
-            inputs += i
-            outputs += o
-            hidden += h
+        if self._io is None:
+            inputs, outputs, hidden = self.spec.inputs, self.spec.outputs, self.num_hidden
+            for conn in self.parent_connections():
+                i, o, h = conn.node.io_count()
+                inputs += i
+                outputs += o
+                hidden += h
 
-        return inputs, outputs, hidden
+            self._io = inputs, outputs, hidden
+
+        return self._io
 
     def add_neural_connection(self, src, dst, dst_part, weight):
         """
@@ -449,6 +483,7 @@ class Node(object):
         :type dst_part: Node
         :param weight:
         """
+        self.clear_caches()
         path = self.get_path(dst_part)
 
         src_offset = self.get_neuron_offset(src)

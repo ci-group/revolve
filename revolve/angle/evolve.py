@@ -160,6 +160,17 @@ class Crossover(object):
         return True, Tree(result)
 
 
+def _delete_subtree(node):
+    """
+    Removes the subtree starting from the given node
+    :param node:
+    :type node: Node
+    :return:
+    """
+    conn = node.child_connection()
+    node.remove_connection(conn.from_slot)
+
+
 class Mutator(object):
     """
     Parameter mutation class. Mutation is achieved by generating
@@ -169,10 +180,11 @@ class Mutator(object):
     """
 
     def __init__(self, body_gen, brain_gen,
-                 p_remove_hidden_neuron=0.05,
+                 p_delete_hidden_neuron=0.05,
                  p_remove_brain_connection=0.05,
                  p_delete_subtree=0.05,
-                 p_swap_subtree=0.05):
+                 p_swap_subtree=0.05,
+                 p_duplicate_subtree=0.05):
         """
         :param body_gen: A body generator for this robot.
         :type body_gen: BodyGenerator
@@ -180,10 +192,11 @@ class Mutator(object):
         :type brain_gen: NeuralNetworkGenerator
         :return:
         """
+        self.p_duplicate_subtree = p_duplicate_subtree
         self.p_swap_subtree = p_swap_subtree
         self.p_delete_subtree = p_delete_subtree
-        self.p_remove_brain_connection = p_remove_brain_connection
-        self.p_remove_hidden_neuron = p_remove_hidden_neuron
+        self.p_delete_brain_connection = p_remove_brain_connection
+        self.p_delete_hidden_neuron = p_delete_hidden_neuron
         self.brain_gen = brain_gen
         self.body_gen = body_gen
 
@@ -199,50 +212,105 @@ class Mutator(object):
         - Subtrees are duplicated at random
         - Body parts are added at random
 
+        Mutation operations are designed to make changes to the robot
+        whilst keeping it at roughly the same complexity. This means that:
+
+        - The probability of a new body part being added is proportional
+          to the average number of body parts being removed in a single
+          step.
+        - The number of newly created hidden neurons and neural connections
+          equals the average number of neurons and connections removed in
+          each step.
+
         :param tree:
         :type tree: Tree
         :param in_place:
         :return:
         """
         root = tree.root if in_place else tree.root.copy()
+        nodes = _node_list(root, root=False)
+        initial_length = len(nodes) + 1
+        subtrees = [len(node) for node in nodes]
 
-        # We first perform all destructive operations, then
-        # all modifying operations, and finally all additive operations
-        self.delete_random_subtree(root)
-        self.swap_random_subtrees(root)
+        # First, we delete a random subtree (this might make some space)
+        deleted, avg_del_len = self.delete_random_subtree(root)
 
-        for node in _node_list(root, root=True):
-            # Remove neurons / connections at random
-            # TODO Delete hidden neurons
-            # TODO Delete brain connections
+        # Next, we duplicate a random subtree
+        duplicated, avg_dup_len = self.duplicate_random_subtree(root)
+
+        # We then swap two random subtrees
+        if decide(self.p_swap_subtree):
+            self.swap_random_subtrees(root)
+
+        hidden_before = 0
+        hidden_after = 0
+        conn_before = 0
+        conn_after = 0
+        node_list = _node_list(root, root=True)
+        for node in node_list:
+            # Delete hidden neurons at random
+            hidden_before += len(node.neurons)
+            node.neurons[:] = [neuron for neuron in node.neurons
+                               if neuron.type != "hidden" or decide(1.0 - self.p_delete_hidden_neuron)]
+            hidden_after += len(node.neurons)
+
+            # Delete brain connections at random
+            conn_before += len(node.neural_connections)
+            node.neural_connections[:] = [conn for conn in node.neural_connections
+                                          if decide(1.0 - self.p_delete_brain_connection)]
+            conn_after += len(node.neural_connections)
 
             # Mutate body and brain parameters
             self.mutate_node_body_parameters(node)
             self.mutate_node_brain_parameters(node)
 
         # Next, we perform additive changes to the body
-        self.add_random_body_part(root)
+        # First, we add a body part at random. To roughly maintain
+        # robot complexity, the probability of doing this is proportional
+        # to the average number of body parts that have been previously
+        # removed, minus the ones that have been added by duplication.
+        p_add_body_part = avg_dup_len * self.p_duplicate_subtree - avg_del_len * self.p_delete_subtree
+        added = self.add_random_body_part(p_add_body_part, root)
 
-        # We then add new hidden neurons
+        # We then add new hidden neurons. We don't want to bias
+        # the number of hidden neurons through this procedure,
+        # so we want to add, on average, as many as we remove -
+        # though we don't want it to remain strictly the same.
+        # We thus take the number of hidden neurons before
+        # they were removed and multiply it by the deletion
+        # probability, and correct for the nodes that may
+        # have been added.
+        nodes = _node_list(root, root=True)
         # TODO Select a new number of hidden neurons and add them
+
+        # Finally, we add new neural connections
+        # TODO Add new neural net connections
 
     def delete_random_subtree(self, root):
         """
+        Deletes a subtree at random, assuming this is possible within
+        the boundaries of the robot specification.
         :param root: Root node of the tree
-        :return: Whether or not a subtree was removed
-        :rtype: bool
+        :return: The removed subtree (or None if no subtree was removed)
+        :rtype: Node
         """
         node_list = _node_list(root, root=False)
-        if not decide(self.p_delete_subtree):
-            return False
-
         max_remove_size = len(node_list) - self.body_gen.min_parts
         items = [node for node in node_list if len(node) <= max_remove_size]
-        if not items:
-            return False
+        avg_del_len = sum(len(node) for node in items) / float(len(items))
+        if not items or not decide(self.p_delete_subtree):
+            return None, avg_del_len
 
         subtree = random.choice(items)
-        self.remove_subtree(subtree)
+        _delete_subtree(subtree)
+        return subtree, avg_del_len
+
+    def duplicate_random_subtree(self, root):
+        """
+
+        :param root:
+        :return:
+        """
 
     def swap_random_subtrees(self, root):
         """
@@ -252,12 +320,16 @@ class Mutator(object):
         """
         raise NotImplementedError("TODO Implement")
 
-    def add_random_body_part(self, root):
+    def add_random_body_part(self, prob, root):
         """
 
+        :param prob:
         :param root:
         :return:
         """
+        if not decide(prob):
+            return None
+
         raise NotImplementedError("TODO Implement")
 
     def mutate_node_body_parameters(self, node):
@@ -287,13 +359,3 @@ class Mutator(object):
             spec = self.brain_gen.spec.get(neuron.type)
             nw_params = spec.get_epsilon_mutated_parameters(neuron.param, serialize=False)
             spec.set_parameters(neuron.param, nw_params)
-
-    def remove_subtree(self, node):
-        """
-        Removes the subtree starting from the given node
-        :param node:
-        :type node: Node
-        :return:
-        """
-        conn = node.child_connection()
-        node.remove_connection(conn.from_slot)
