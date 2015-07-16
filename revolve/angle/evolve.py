@@ -1,7 +1,8 @@
 import random
+import itertools
 from .representation import Tree, Node
 from ..generate import BodyGenerator, NeuralNetworkGenerator
-from ..spec.msgs import BodyPart
+from ..spec.msgs import BodyPart, Neuron
 
 
 def decide(probability):
@@ -411,8 +412,9 @@ class Mutator(object):
             return None
 
         nodes = _node_list(root, root=True)
+        n_nodes = len(nodes)
         inputs, outputs, hidden = root.io_count(nodes)
-        usable = self.body_gen.get_allowed_parts(self.body_gen.attach_specs, len(nodes), inputs, outputs)
+        usable = self.body_gen.get_allowed_parts(self.body_gen.attach_specs, n_nodes, inputs, outputs)
         if not usable:
             return None
 
@@ -427,16 +429,41 @@ class Mutator(object):
         part.type = self.body_gen.choose_part(usable, root=False)
         type_spec = self.body_gen.spec.get(part.type)
         self.body_gen.initialize_part(type_spec, part, root=False)
-        # nw_node = Node(part, , self.body_gen.spec)
-        #
-        # # Pick a random attachment position
-        # node, slot = random.choice(free)
-        # """ :type : Node, int """
-        # target_slot = self.body_gen.choose_target_slot(type_spec)
-        #
-        # node.set_connection(slot, target_slot, )
 
-        raise NotImplementedError("TODO Finish implementation")
+        # Decide the initial hidden neurons this part will have
+        # by getting the average of an expected number from
+        # the brain generator. Cap it to the maximum allowed number.
+        n_hidden = int(round(self.brain_gen.choose_num_hidden() / float(n_nodes)))
+        n_hidden = max(self.brain_gen.max_hidden - hidden, n_hidden)
+
+        # We can hijack brain generation to generate a neural network for
+        # just this part. We then only have to generate the network connections.
+        inputs = ["input-%d" % i for i in range(type_spec.inputs)]
+        outputs = ["output-%d" % i for i in range(type_spec.inputs)]
+        network = self.brain_gen.generate(inputs, outputs, num_hidden=n_hidden)
+        neurons = [neuron for neuron in network.neuron]
+
+        # Create the new node object
+        nw_node = Node(part, neurons, self.body_gen.spec)
+        nodes.append(nw_node)
+
+        # Pick a random attachment position and attach the new node
+        node, slot = random.choice(free)
+        target_slot = self.body_gen.choose_target_slot(type_spec)
+        node.set_connection(slot, target_slot, nw_node)
+
+        # Now we add network where this node is the source
+        sources = neurons
+        destinations = [(neuron, node) for node in nodes
+                        for neuron in node.neurons if neuron.layer in ("hidden", "output")]
+        for src, (dst, dst_node) in itertools.izip(sources, destinations):
+            weight = self.brain_gen.choose_weight(src, dst)
+            if weight < 10e-3:
+                continue
+
+            nw_node.add_neural_connection(src, dst, dst_node, weight)
+
+        return nw_node
 
     def mutate_node_body_parameters(self, node):
         """

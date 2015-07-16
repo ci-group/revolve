@@ -52,7 +52,7 @@ class NeuralNetworkGenerator(object):
 
         self.max_hidden = max_hidden
 
-    def generate(self, inputs, outputs, part_ids=None):
+    def generate(self, inputs, outputs, part_ids=None, num_hidden=None,):
         """
         Generates a neural network from the provided interface.
 
@@ -67,6 +67,8 @@ class NeuralNetworkGenerator(object):
         :param part_ids: Maps neuron ID to corresponding part ID. This is
                          required to set the `partId` field on a neuron.
         :type part_ids: dict
+        :param num_hidden: If specified, this number of hidden neurons will
+                           be generated for the brain.
         :return: The generated NeuralNetwork protobuf
         :rtype: NeuralNetwork
         """
@@ -94,7 +96,7 @@ class NeuralNetworkGenerator(object):
                 spec = self.spec.get(neuron.type)
                 self.initialize_neuron(spec, neuron)
 
-        num_hidden = self.choose_num_hidden()
+        num_hidden = self.choose_num_hidden() if num_hidden is None else num_hidden
         for i in range(num_hidden):
             neuron = net.neuron.add()
             neuron.id = 'brian-gen-hidden-%s' % len(hidden)

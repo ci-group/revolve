@@ -505,14 +505,19 @@ class Node(object):
 
         return self._len
 
-    def io_count(self):
+    def io_count(self, recursive=True):
         """
         Returns the number of inputs, outputs and hidden neurons
-        specified by the subtree starting with this node.
+        specified by this node or its entire subtree.
 
+        :param recursive: If true, returns the numbers for the subtree that
+                          starts with this node.
         :return:
         :rtype: (int, int, int)
         """
+        if not recursive:
+            return self.spec.inputs, self.spec.outputs, self.num_hidden
+
         if self._io is None:
             inputs, outputs, hidden = self.spec.inputs, self.spec.outputs, self.num_hidden
             for conn in self.child_connections():
