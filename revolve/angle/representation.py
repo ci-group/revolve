@@ -19,6 +19,7 @@ def _create_subtree(body_part, brain, body_spec):
 
     return node
 
+
 def _process_body_part(part, node, brain):
     """
     :param part:
@@ -48,7 +49,9 @@ def _process_body_part(part, node, brain):
         conn.weight = weight
 
     # Process children
-    for connection in node.parent_connections():
+    # Delete existing just in case there were any
+    del node.child[:]
+    for connection in node.child_connections():
         conn = part.child.add()
         conn.src = connection.from_slot
         conn.dst = connection.to_slot
@@ -146,7 +149,7 @@ class Tree(object):
         if current.id == node_id:
             return current
 
-        for conn in current.parent_connections():
+        for conn in current.child_connections():
             self._nodes[conn.node.id] = conn.node
             node = self._get_node(node_id, conn.node)
             if node:
@@ -259,7 +262,10 @@ class Node(object):
         Adds a bidirectional node body connection, removing any connection
         that was currently there.
         """
-        self.clear_caches()
+        if bidirectional:
+            # Clear tree cache only for main call
+            self.clear_caches()
+
         self.remove_connection(from_slot)
         self.connections[from_slot] = BodyConnection(from_slot, to_slot, node, parent)
         if bidirectional:
@@ -272,10 +278,14 @@ class Node(object):
         :param bidirectional: Removes both sides of the connection
         :return:
         """
-        self.clear_caches()
         conn = self.connections.get(from_slot, None)
         if not conn:
             return
+
+        if bidirectional:
+            # Clear tree cache only for main call, and only
+            # if the connection existed.
+            self.clear_caches()
 
         del self.connections[from_slot]
         if bidirectional:
@@ -324,6 +334,50 @@ class Node(object):
                 return [conn.from_slot] + path
 
         return False
+
+    def has_child(self, node):
+        """
+        :param node:
+        :type node: Node
+        :return:
+        :rtype bool:
+        """
+        for conn in self.child_connections():
+            if conn.node is node or conn.node.has_child(node):
+                return True
+
+        return False
+
+    def has_parent(self, node):
+        """
+        :param node:
+        :type node: Node
+        :return:
+        :rtype: bool
+        """
+        parent = self.parent_connection()
+        return parent and (parent.node is node or parent.node.has_parent(node))
+
+    def get_parents(self):
+        """
+        Recursively return all nodes which are parents to this node
+        :return:
+        :rtype: list[Node]
+        """
+        parent = self.parent_connection()
+        return [parent.node] + parent.node.get_parents() if parent else []
+
+    def get_children(self):
+        """
+        Recursively return all nodes which are children of this node
+        :return:
+        :rtype: list[Node]
+        """
+        children = []
+        for conn in self.child_connections():
+            children += [conn.node] + conn.node.get_children()
+
+        return children
 
     def has_neuron(self, neuron_type, offset):
         """
@@ -406,7 +460,7 @@ class Node(object):
 
         return results
 
-    def parent_connections(self):
+    def child_connections(self):
         """
         Returns a generator for connections for which
         this node is the parent.
@@ -415,12 +469,10 @@ class Node(object):
         :rtype: list[BodyConnection]
         """
         for v in self.connections.values():
-            if not v.parent:
-                continue
+            if v.parent:
+                yield v
 
-            yield v
-
-    def child_connection(self):
+    def parent_connection(self):
         """
         Returns the connection this node uses to attach to
         its parent, or `None` if this node is the root node.
@@ -438,7 +490,7 @@ class Node(object):
         Returns true if this node has no non-parent connections
         :return:
         """
-        return self.child_connection() is None
+        return self.parent_connection() is None
 
     def __len__(self):
         """
@@ -449,7 +501,7 @@ class Node(object):
         :return: Subtree size
         """
         if self._len < 0:
-            self._len = sum(len(v.node) for v in self.parent_connections()) + 1
+            self._len = sum(len(v.node) for v in self.child_connections()) + 1
 
         return self._len
 
@@ -463,7 +515,7 @@ class Node(object):
         """
         if self._io is None:
             inputs, outputs, hidden = self.spec.inputs, self.spec.outputs, self.num_hidden
-            for conn in self.parent_connections():
+            for conn in self.child_connections():
                 i, o, h = conn.node.io_count()
                 inputs += i
                 outputs += o

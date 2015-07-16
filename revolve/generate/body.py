@@ -145,7 +145,7 @@ class BodyGenerator(object):
         :param outputs: Current number of outputs
         :return: List of identifiers of parts that when added do not violate some robot rules.
                  By default, this checks for maximum inputs / outputs.
-        :rtype: list
+        :rtype: list[str]
         """
         return [item for item in attach_specs if (
             inputs + attach_specs[item].inputs <= self.max_inputs and
@@ -161,9 +161,7 @@ class BodyGenerator(object):
         :return:
         """
         # Initialize random parameters
-        for p in spec.get_random_parameters(serialize=True):
-            new_param = part.param.add()
-            new_param.value = p
+        spec.set_parameters(part.param, spec.get_random_parameters())
 
         # Set random orientation in degrees
         part.orientation = self.choose_orientation(part, root)
@@ -185,11 +183,12 @@ class BodyGenerator(object):
     def choose_part(self, parts, root=False):
         """
         Overridable method to choose a body part from a list
-        of parts.
+        of part type identifiers.
         :param parts:
+        :type parts: list[str]
         :param root:
         :return: The chosen part
-        :rtype: PartSpec
+        :rtype: str
         """
         return random.choice(parts)
 

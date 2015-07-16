@@ -1,6 +1,7 @@
 import random
 from .representation import Tree, Node
 from ..generate import BodyGenerator, NeuralNetworkGenerator
+from ..spec.msgs import BodyPart
 
 
 def decide(probability):
@@ -27,7 +28,7 @@ def _node_list(node, root=True):
     else:
         lst = []
 
-    for conn in node.parent_connections():
+    for conn in node.child_connections():
         lst += _node_list(conn.node, root=True)
 
     return lst
@@ -137,10 +138,10 @@ class Crossover(object):
         # the node defining the connection. We thus need the `to_slot`
         # of the parent connection of the original node, and connect it
         # to the `from_slot` on the new node.
-        conn = q.child_connection()
+        conn = q.parent_connection()
         start_node = conn.node
         from_slot = conn.to_slot
-        to_slot = r.child_connection().from_slot
+        to_slot = r.parent_connection().from_slot
 
         # Remove the existing connection. `set_connection` will also do this,
         # but this way we make sure the trees never contain duplicate IDs
@@ -167,7 +168,7 @@ def _delete_subtree(node):
     :type node: Node
     :return:
     """
-    conn = node.child_connection()
+    conn = node.parent_connection()
     node.remove_connection(conn.from_slot)
 
 
@@ -239,8 +240,7 @@ class Mutator(object):
         duplicated, avg_dup_len = self.duplicate_random_subtree(root)
 
         # We then swap two random subtrees
-        if decide(self.p_swap_subtree):
-            self.swap_random_subtrees(root)
+        self.swap_random_subtrees(root)
 
         hidden_before = 0
         hidden_after = 0
@@ -280,11 +280,13 @@ class Mutator(object):
         # they were removed and multiply it by the deletion
         # probability, and correct for the nodes that may
         # have been added.
-        nodes = _node_list(root, root=True)
         # TODO Select a new number of hidden neurons and add them
 
         # Finally, we add new neural connections
         # TODO Add new neural net connections
+
+        # Renumber the entire tree
+        _renumber(root)
 
     def delete_random_subtree(self, root):
         """
@@ -295,7 +297,7 @@ class Mutator(object):
         :rtype: Node
         """
         node_list = _node_list(root, root=False)
-        max_remove_size = len(node_list) - self.body_gen.min_parts
+        max_remove_size = len(node_list) + 1 - self.body_gen.min_parts
         items = [node for node in node_list if len(node) <= max_remove_size]
         avg_del_len = sum(len(node) for node in items) / float(len(items))
         if not items or not decide(self.p_delete_subtree):
@@ -307,30 +309,134 @@ class Mutator(object):
 
     def duplicate_random_subtree(self, root):
         """
-
+        Picks a random subtree that can be duplicated within the robot
+        boundaries, copies it and attaches it to a random free slot.
         :param root:
+        :type root: Node
         :return:
         """
+        node_list = _node_list(root, root=False)
+        inputs, outputs, hidden = root.io_count()
+        max_add_size = len(node_list) + 1 - self.body_gen.max_parts
+
+        # Create a list of subtrees that
+        # - Is not larger than max_add_size
+        # - Does not violate I/O constraints when added
+        mi, mo, mh = self.body_gen.max_inputs, self.body_gen.max_outputs, self.brain_gen.max_hidden
+
+        def valid_part(node):
+            """
+            :type node: Node
+            """
+            if len(node) > max_add_size:
+                return False
+
+            i, o, h = node.io_count()
+            return (i + inputs) <= mi and (o + outputs) <= mo and (h + hidden) <= mh
+
+        # If there are no valid nodes or attachment positions, duplication will
+        # never happen and the average duplication length is 0. Deciding this
+        # in parts cuts the calculation short making it faster.
+        nodes = [node for node in node_list if valid_part(node)]
+        if not nodes:
+            return None, 0
+
+        # Generate a list of attachment points
+        node_list.append(root)
+        attachments = [(node, slot) for node in node_list
+                       for slot in node.get_free_slots()]
+
+        if not attachments:
+            return None, 0
+
+        # Only duplicate with the given probability
+        avg_dup_len = sum(len(node) for node in nodes)
+        if not decide(self.p_duplicate_subtree):
+            return None, avg_dup_len
+
+        # Pick a random node to duplicate
+        dup = random.choice(nodes)
+        """ :type : Node """
+
+        attach_node, attach_slot = self.body_gen.choose_attachment(attachments)
+        dup_new = dup.copy(copy_parent=False)
+        dup_new.set_connection(dup.parent_connection().from_slot, attach_slot, attach_node, parent=False)
+        return dup_new, avg_dup_len
 
     def swap_random_subtrees(self, root):
         """
-
+        Picks to random subtrees (which are not parents / children of each other)
+        and swaps them.
         :param root:
-        :return:
+        :return: The two body parts on which swapping was performed, or (None, None)
+                 if this did not happen.
         """
-        raise NotImplementedError("TODO Implement")
+        if not decide(self.p_swap_subtree):
+            return None, None
+
+        nodes = _node_list(root, root=False)
+        if not nodes:
+            return None, None
+
+        a = random.choice(nodes)
+        """ :type : Node """
+
+        related = set([a] + a.get_parents() + a.get_children())
+        swaps = [node for node in nodes if node not in related]
+        if not swaps:
+            return None, None
+
+        b = random.choice(swaps)
+        """ :type : Node """
+
+        a_conn = a.parent_connection()
+        b_conn = b.parent_connection()
+
+        # Sever existing connections
+        a.remove_connection(a_conn.from_slot)
+        b.remove_connection(b_conn.from_slot)
+
+        # Create new connections
+        a.set_connection(a_conn.from_slot, b_conn.to_slot, b_conn.node, parent=False)
+        b.set_connection(b_conn.from_slot, a_conn.to_slot, a_conn.node, parent=False)
 
     def add_random_body_part(self, prob, root):
         """
-
-        :param prob:
+        Generates a new random body part
+        :param prob: The calculated probability with which the part should be added
         :param root:
-        :return:
+        :return: The added body part
         """
         if not decide(prob):
             return None
 
-        raise NotImplementedError("TODO Implement")
+        nodes = _node_list(root, root=True)
+        inputs, outputs, hidden = root.io_count(nodes)
+        usable = self.body_gen.get_allowed_parts(self.body_gen.attach_specs, len(nodes), inputs, outputs)
+        if not usable:
+            return None
+
+        free = [(node, slot) for node in nodes
+                for slot in node.get_free_slots()]
+
+        if not free:
+            return None
+
+        # Choose a body part type
+        part = BodyPart()
+        part.type = self.body_gen.choose_part(usable, root=False)
+        type_spec = self.body_gen.spec.get(part.type)
+        self.body_gen.initialize_part(type_spec, part, root=False)
+        # nw_node = Node(part, , self.body_gen.spec)
+        #
+        # # Pick a random attachment position
+        # node, slot = random.choice(free)
+        # """ :type : Node, int """
+        # target_slot = self.body_gen.choose_target_slot(type_spec)
+        #
+        # node.set_connection(slot, target_slot, )
+
+        raise NotImplementedError("TODO Finish implementation")
 
     def mutate_node_body_parameters(self, node):
         """

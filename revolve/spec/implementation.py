@@ -81,6 +81,16 @@ class BodyImplementation(SpecImplementation):
     The BodyImplementation just inhertits from `SpecImplementation`
     verbatim.
     """
+    def get(self, part_type):
+        """
+        Returns the part settings corresponding to the given type. Only
+        overriding for the return type.
+        :param part_type:
+        :type part_type: str
+        :return: Implementation spec, or None if not found
+        :rtype: PartSpec
+        """
+        return super(BodyImplementation, self).get(part_type)
 
 
 class NeuralNetImplementation(SpecImplementation):

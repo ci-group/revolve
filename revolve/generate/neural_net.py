@@ -162,9 +162,7 @@ class NeuralNetworkGenerator(object):
         :return:
         """
         # Initialize random parameters
-        for p in spec.get_random_parameters(serialize=True):
-            new_param = neuron.param.add()
-            new_param.value = p
+        spec.set_parameters(neuron.param, spec.get_random_parameters())
 
     def choose_neuron_type(self, layer):
         """
