@@ -3,15 +3,7 @@ import itertools
 from .representation import Tree, Node
 from ..generate import BodyGenerator, NeuralNetworkGenerator
 from ..spec.msgs import BodyPart, Neuron
-
-
-def decide(probability):
-    """
-    Returns True with the given probability
-    :param probability:
-    :return:
-    """
-    return random.random() < probability
+from ..util import decide
 
 
 def _node_list(node, root=True):
@@ -230,9 +222,6 @@ class Mutator(object):
         :return:
         """
         root = tree.root if in_place else tree.root.copy()
-        nodes = _node_list(root, root=False)
-        initial_length = len(nodes) + 1
-        subtrees = [len(node) for node in nodes]
 
         # First, we delete a random subtree (this might make some space)
         deleted, avg_del_len = self.delete_random_subtree(root)
@@ -243,48 +232,68 @@ class Mutator(object):
         # We then swap two random subtrees
         self.swap_random_subtrees(root)
 
-        hidden_before = 0
-        hidden_after = 0
-        conn_before = 0
-        conn_after = 0
+        hidden_before = hidden_after = conn_before = conn_after = 0
         node_list = _node_list(root, root=True)
+        p_keep_hidden_neuron = 1.0 - self.p_delete_hidden_neuron
+        p_keep_neural_connection = 1.0 - self.p_delete_brain_connection
         for node in node_list:
             # Delete hidden neurons at random
-            hidden_before += len(node.neurons)
-            node.neurons[:] = [neuron for neuron in node.neurons
-                               if neuron.type != "hidden" or decide(1.0 - self.p_delete_hidden_neuron)]
-            hidden_after += len(node.neurons)
+            hidden_before += node.io_count(recursive=False)[2]
+            node.set_neurons([neuron for neuron in node.get_neurons()
+                              if neuron.type != "hidden" or decide(p_keep_hidden_neuron)])
+            hidden_after += node.io_count(recursive=False)[2]
 
             # Delete brain connections at random
-            conn_before += len(node.neural_connections)
-            node.neural_connections[:] = [conn for conn in node.neural_connections
-                                          if decide(1.0 - self.p_delete_brain_connection)]
-            conn_after += len(node.neural_connections)
+            connections = node.get_neural_connections()
+            conn_before += len(connections)
+            node.set_neural_connections([conn for conn in connections
+                                         if decide(p_keep_neural_connection)])
+            conn_after += len(node.get_neural_connections())
 
             # Mutate body and brain parameters
             self.mutate_node_body_parameters(node)
             self.mutate_node_brain_parameters(node)
 
-        # Next, we perform additive changes to the body
-        # First, we add a body part at random. To roughly maintain
-        # robot complexity, the probability of doing this is proportional
-        # to the average number of body parts that have been previously
-        # removed, minus the ones that have been added by duplication.
-        p_add_body_part = avg_dup_len * self.p_duplicate_subtree - avg_del_len * self.p_delete_subtree
-        added = self.add_random_body_part(p_add_body_part, root)
-
         # We then add new hidden neurons. We don't want to bias
         # the number of hidden neurons through this procedure,
-        # so we want to add, on average, as many as we remove -
+        # so we want to add, on average, as many as we remove,
         # though we don't want it to remain strictly the same.
         # We thus take the number of hidden neurons before
         # they were removed and multiply it by the deletion
-        # probability, and correct for the nodes that may
-        # have been added.
-        # TODO Select a new number of hidden neurons and add them
+        # probability. Cap to the maximum number we can add to
+        # not violate robot properties
+        n_new_hidden = min(hidden_before * self.p_delete_hidden_neuron,
+                           self.brain_gen.max_hidden - hidden_after)
+        nodes = _node_list(root, root=True)
+        for i in range(n_new_hidden):
+            target = random.choice(nodes)
+            nw = Neuron()
+            nw.layer = "hidden"
+            nw.type = self.brain_gen.choose_neuron_type(nw.layer)
+            spec = self.brain_gen.spec.get(nw.type)
+            self.brain_gen.initialize_neuron(spec, nw)
+            target.set_neurons(target.get_neurons() + [nw])
 
-        # Finally, we add new neural connections
-        # TODO Add new neural net connections
+        # Finally, we add new neural connections, applying the same logic
+        # as before for the count.
+        n_new_connections = conn_before * self.p_delete_brain_connection
+        sources = [(node, neuron) for node in nodes for neuron in node.get_neurons()]
+        targets = [(node, neuron) for node in nodes
+                   for neuron in node.get_neurons() if neuron.layer in ("hidden", "output")]
+
+        for i in range(n_new_connections):
+            source_node, source_neuron = random.choice(sources)
+            target_node, target_neuron = random.choice(targets)
+            weight = self.brain_gen.choose_weight()
+            source_node.add_neural_connection(source_neuron, target_neuron,
+                                              target_node, weight)
+
+        # Next, we add a body part at random. To roughly maintain
+        # robot complexity, the probability of doing this is proportional
+        # to the average number of body parts that have been removed
+        # by previous operations.
+        p_add_body_part = avg_dup_len * self.p_duplicate_subtree - avg_del_len * self.p_delete_subtree
+        self.add_random_body_part(p_add_body_part, root)
 
         # Renumber the entire tree
         _renumber(root)
@@ -434,7 +443,7 @@ class Mutator(object):
         # by getting the average of an expected number from
         # the brain generator. Cap it to the maximum allowed number.
         n_hidden = int(round(self.brain_gen.choose_num_hidden() / float(n_nodes)))
-        n_hidden = max(self.brain_gen.max_hidden - hidden, n_hidden)
+        n_hidden = min(self.brain_gen.max_hidden - hidden, n_hidden)
 
         # We can hijack brain generation to generate a neural network for
         # just this part. We then only have to generate the network connections.
@@ -452,15 +461,17 @@ class Mutator(object):
         target_slot = self.body_gen.choose_target_slot(type_spec)
         node.set_connection(slot, target_slot, nw_node)
 
-        # Now we add network where this node is the source
+        # Now we add network where this node is the source. We don't add
+        # connections towards this node since, assuming valid paths,
+        # these connections already exist in other nodes.
         sources = neurons
         destinations = [(neuron, node) for node in nodes
-                        for neuron in node.neurons if neuron.layer in ("hidden", "output")]
+                        for neuron in node.get_neurons() if neuron.layer in ("hidden", "output")]
         for src, (dst, dst_node) in itertools.izip(sources, destinations):
-            weight = self.brain_gen.choose_weight(src, dst)
-            if weight < 10e-3:
+            if not decide(self.brain_gen.conn_prob):
                 continue
 
+            weight = self.brain_gen.choose_weight()
             nw_node.add_neural_connection(src, dst, dst_node, weight)
 
         return nw_node
@@ -488,7 +499,7 @@ class Mutator(object):
         :type node: Node
         :return:
         """
-        for neuron in node.neurons:
+        for neuron in node.get_neurons():
             spec = self.brain_gen.spec.get(neuron.type)
             nw_params = spec.get_epsilon_mutated_parameters(neuron.param, serialize=False)
             spec.set_parameters(neuron.param, nw_params)

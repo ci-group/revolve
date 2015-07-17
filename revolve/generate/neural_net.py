@@ -5,10 +5,8 @@ from __future__ import print_function
 import random
 import itertools
 from ..spec import NeuralNetwork, Neuron, NeuralNetImplementation, NeuronSpec, Body, BodyImplementation
+from ..util import decide
 
-
-# Epsilon value below which neuron weights are discarded
-EPSILON = 1e-11
 
 # Helper function to extract the network interface from a body part and subtree
 def _extract_io(body_spec, part):
@@ -117,10 +115,10 @@ class NeuralNetworkGenerator(object):
         conn_end = hidden + outputs
 
         for src, dst in itertools.izip(conn_start, conn_end):
-            weight = self.choose_weight(src, dst)
-
-            if weight < EPSILON:
+            if not decide(self.conn_prob):
                 continue
+
+            weight = self.choose_weight()
 
             conn = net.connection.add()
             conn.src = src
@@ -142,17 +140,14 @@ class NeuralNetworkGenerator(object):
         inputs, outputs, part_ids = _extract_io(body_spec, body.root)
         return self.generate(inputs, outputs, part_ids)
 
-    def choose_weight(self, src, dst):
+    def choose_weight(self):
         """
         Overridable function to pick a neural connection weight.
-        By default, 0 is returned with probability 1 - `conn_prob` and
-        a weight between 0 and 1 is returned with probability `conn_prob`.
-        :param src:
-        :param dst:
+        By default, this returns a value between 0 and 1
         :return:
         :rtype: float
         """
-        return random.random() if random.random() <= self.conn_prob else 0
+        return random.random()
 
     def initialize_neuron(self, spec, neuron):
         """

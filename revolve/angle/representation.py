@@ -22,6 +22,8 @@ def _create_subtree(body_part, brain, body_spec):
 
 def _process_body_part(part, node, brain):
     """
+    Used to turn a node into an actual robot.
+
     :param part:
     :type part: BodyPart
     :param node:
@@ -32,9 +34,15 @@ def _process_body_part(part, node, brain):
     """
     part.CopyFrom(node.part)
 
+    inputs, outputs, _ = node.io_count(recursive=False)
+    input_count, output_count = node.neuron_count("input"), node.neuron_count("output")
+
+    if inputs != input_count or outputs != output_count:
+        raise Exception("Part interface does not match presence of neurons.")
+
     # Process neurons
     counters = {"input": 0, "output": 0, "hidden": 0}
-    for neuron in node.neurons:
+    for neuron in node._neurons:
         nw = brain.neuron.add()
         nw.CopyFrom(neuron)
         nw.partId = part.id
@@ -42,7 +50,7 @@ def _process_body_part(part, node, brain):
         counters[nw.layer] += 1
 
     # Process neuron connections
-    for src, dst, weight in node.get_neural_connections():
+    for src, dst, weight in node.get_traversed_neural_connections():
         conn = brain.connection.add()
         conn.src = src
         conn.dst = dst
@@ -200,11 +208,10 @@ class Node(object):
         self.connections = {}
 
         # Neural net connection paths plus weights
-        self.neural_connections = []
+        self._neural_connections = []
 
         # Neurons specified for this node
-        self.neurons = neurons
-        self.num_hidden = len([n for n in neurons if n.type == "Hidden"])
+        self._neurons = neurons
 
         # Check if given number of inputs / outputs matches spec
         inputs = len([n for n in neurons if n.layer == "input"])
@@ -387,7 +394,7 @@ class Node(object):
         :type neuron_type: str
         """
         if neuron_type == "hidden":
-            return offset < self.num_hidden
+            return offset < self.neuron_count("hidden")
         elif neuron_type == "input":
             return offset < self.spec.inputs
         else:
@@ -412,7 +419,7 @@ class Node(object):
         :return:
         """
         offset = 0
-        for other in self.neurons:
+        for other in self._neurons:
             if other is neuron:
                 return offset
 
@@ -421,17 +428,16 @@ class Node(object):
 
         return False
 
-    def get_neural_connections(self):
+    def get_traversed_neural_connections(self):
         """
-        Attempts to traverse neural connections and returns list
+        Attempts to traverse neural connections and returns a generator
         of the ones that are valid as `src_id`, `dst_id`, weight triples.
 
         :return:
-        :rtype: (str, str, float)
+        :rtype: list[(str, str, float)]
         """
-        results = []
         taken = set()
-        for conn in self.neural_connections:
+        for conn in self._neural_connections:
             src_layer, src_idx = conn.src
             if not self.has_neuron(src_layer, src_idx):
                 continue
@@ -456,9 +462,7 @@ class Node(object):
                 continue
 
             taken.add(pair)
-            results.append((src_id, dst_id, conn.weight))
-
-        return results
+            yield (src_id, dst_id, conn.weight)
 
     def child_connections(self):
         """
@@ -484,6 +488,21 @@ class Node(object):
                 return v
 
         return None
+
+    def set_neurons(self, neurons):
+        """
+        :param neurons:
+        :return:
+        """
+        self._io = None
+        self._neurons = neurons
+
+    def get_neurons(self):
+        """
+        :return:
+        :rtype: list[Neuron]
+        """
+        return self._neurons
 
     def is_root(self):
         """
@@ -516,10 +535,10 @@ class Node(object):
         :rtype: (int, int, int)
         """
         if not recursive:
-            return self.spec.inputs, self.spec.outputs, self.num_hidden
+            return self.spec.inputs, self.spec.outputs, self.neuron_count("hidden")
 
         if self._io is None:
-            inputs, outputs, hidden = self.spec.inputs, self.spec.outputs, self.num_hidden
+            inputs, outputs, hidden = self.spec.inputs, self.spec.outputs, self.neuron_count("hidden")
             for conn in self.child_connections():
                 i, o, h = conn.node.io_count()
                 inputs += i
@@ -529,6 +548,15 @@ class Node(object):
             self._io = inputs, outputs, hidden
 
         return self._io
+
+    def neuron_count(self, neuron_type="hidden"):
+        """
+        Returns the number of neurons of the given type.
+        :param neuron_type:
+        :type neuron_type: str
+        :return:
+        """
+        return sum(1 for neuron in self._neurons if neuron.type == neuron_type)
 
     def add_neural_connection(self, src, dst, dst_part, weight):
         """
@@ -545,13 +573,27 @@ class Node(object):
 
         src_offset = self.get_neuron_offset(src)
         dst_offset = dst_part.get_neuron_offset(dst)
-        self.neural_connections.append(NeuralConnection(
+        self._neural_connections.append(NeuralConnection(
             (src.layer, src_offset),
             (dst.layer, dst_offset),
             path,
             weight
         ))
 
+    def set_neural_connections(self, connections):
+        """
+
+        :param connections:
+        :return:
+        """
+        self._neural_connections = connections
+
+    def get_neural_connections(self):
+        """
+        :return:
+        :rtype: list[NeuralConnection]
+        """
+        return self._neural_connections
 
 class BodyConnection(object):
     """
