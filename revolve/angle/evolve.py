@@ -1,3 +1,5 @@
+from __future__ import print_function
+import sys
 import random
 import itertools
 from .representation import Tree, Node
@@ -262,8 +264,8 @@ class Mutator(object):
         # they were removed and multiply it by the deletion
         # probability. Cap to the maximum number we can add to
         # not violate robot properties
-        n_new_hidden = min(hidden_before * self.p_delete_hidden_neuron,
-                           self.brain_gen.max_hidden - hidden_after)
+        n_new_hidden = int(min(round(hidden_before * self.p_delete_hidden_neuron),
+                           self.brain_gen.max_hidden - hidden_after))
         nodes = _node_list(root, root=True)
         for i in range(n_new_hidden):
             target = random.choice(nodes)
@@ -276,7 +278,7 @@ class Mutator(object):
 
         # Finally, we add new neural connections, applying the same logic
         # as before for the count.
-        n_new_connections = conn_before * self.p_delete_brain_connection
+        n_new_connections = int(round(conn_before * self.p_delete_brain_connection))
         sources = [(node, neuron) for node in nodes for neuron in node.get_neurons()]
         targets = [(node, neuron) for node in nodes
                    for neuron in node.get_neurons() if neuron.layer in ("hidden", "output")]
@@ -309,10 +311,14 @@ class Mutator(object):
         node_list = _node_list(root, root=False)
         max_remove_size = len(node_list) + 1 - self.body_gen.min_parts
         items = [node for node in node_list if len(node) <= max_remove_size]
+        if not items:
+            return None, 0
+
         avg_del_len = sum(len(node) for node in items) / float(len(items))
-        if not items or not decide(self.p_delete_subtree):
+        if not decide(self.p_delete_subtree):
             return None, avg_del_len
 
+        print("Deleted subtree.", file=sys.stderr)
         subtree = random.choice(items)
         _delete_subtree(subtree)
         return subtree, avg_del_len
@@ -327,7 +333,7 @@ class Mutator(object):
         """
         node_list = _node_list(root, root=False)
         inputs, outputs, hidden = root.io_count()
-        max_add_size = len(node_list) + 1 - self.body_gen.max_parts
+        max_add_size = self.body_gen.max_parts - len(node_list) - 1
 
         # Create a list of subtrees that
         # - Is not larger than max_add_size
@@ -371,6 +377,7 @@ class Mutator(object):
         attach_node, attach_slot = self.body_gen.choose_attachment(attachments)
         dup_new = dup.copy(copy_parent=False)
         dup_new.set_connection(dup.parent_connection().from_slot, attach_slot, attach_node, parent=False)
+        print("Duplicated subtree.", file=sys.stderr)
         return dup_new, avg_dup_len
 
     def swap_random_subtrees(self, root):
@@ -448,7 +455,7 @@ class Mutator(object):
         # We can hijack brain generation to generate a neural network for
         # just this part. We then only have to generate the network connections.
         inputs = ["input-%d" % i for i in range(type_spec.inputs)]
-        outputs = ["output-%d" % i for i in range(type_spec.inputs)]
+        outputs = ["output-%d" % i for i in range(type_spec.outputs)]
         network = self.brain_gen.generate(inputs, outputs, num_hidden=n_hidden)
         neurons = [neuron for neuron in network.neuron]
 
@@ -474,6 +481,7 @@ class Mutator(object):
             weight = self.brain_gen.choose_weight()
             nw_node.add_neural_connection(src, dst, dst_node, weight)
 
+        print("Added body part.", file=sys.stderr)
         return nw_node
 
     def mutate_node_body_parameters(self, node):

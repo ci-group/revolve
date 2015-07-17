@@ -37,12 +37,19 @@ def _process_body_part(part, node, brain):
     inputs, outputs, _ = node.io_count(recursive=False)
     input_count, output_count = node.neuron_count("input"), node.neuron_count("output")
 
-    if inputs != input_count or outputs != output_count:
-        raise Exception("Part interface does not match presence of neurons.")
+    if inputs != input_count:
+        raise Exception("Number of node input neurons (%d) does not match"
+                        " part specification of %d neurons." %
+                        (input_count, inputs))
+
+    if outputs != output_count:
+        raise Exception("Number of node input neurons (%d) does not match"
+                        " part specification of %d neurons." %
+                        (output_count, outputs))
 
     # Process neurons
     counters = {"input": 0, "output": 0, "hidden": 0}
-    for neuron in node._neurons:
+    for neuron in node.get_neurons():
         nw = brain.neuron.add()
         nw.CopyFrom(neuron)
         nw.partId = part.id
@@ -58,7 +65,7 @@ def _process_body_part(part, node, brain):
 
     # Process children
     # Delete existing just in case there were any
-    del node.child[:]
+    del part.child[:]
     for connection in node.child_connections():
         conn = part.child.add()
         conn.src = connection.from_slot
@@ -214,8 +221,8 @@ class Node(object):
         self._neurons = neurons
 
         # Check if given number of inputs / outputs matches spec
-        inputs = len([n for n in neurons if n.layer == "input"])
-        outputs = len([n for n in neurons if n.layer == "output"])
+        inputs = sum(1 for n in neurons if n.layer == "input")
+        outputs = sum(1 for n in neurons if n.layer == "output")
         if inputs != self.spec.inputs or outputs != self.spec.outputs:
             raise Exception("Part input / output mismatch.")
 
@@ -549,14 +556,14 @@ class Node(object):
 
         return self._io
 
-    def neuron_count(self, neuron_type="hidden"):
+    def neuron_count(self, neuron_layer="hidden"):
         """
-        Returns the number of neurons of the given type.
-        :param neuron_type:
-        :type neuron_type: str
+        Returns the number of neurons in the given layer.
+        :param neuron_layer:
+        :type neuron_layer: str
         :return:
         """
-        return sum(1 for neuron in self._neurons if neuron.type == neuron_type)
+        return sum(1 for neuron in self._neurons if neuron.layer == neuron_layer)
 
     def add_neural_connection(self, src, dst, dst_part, weight):
         """
