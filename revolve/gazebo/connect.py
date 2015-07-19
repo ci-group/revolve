@@ -68,7 +68,7 @@ class RequestHandler(object):
         msg = self.response_class()
         msg.ParseFromString(data)
 
-        msg_id = self.get_id_from_msg(msg)
+        msg_id = str(self.get_id_from_msg(msg))
         if msg_id not in self.responses:
             # Message was not requested here, ignore it
             return
@@ -144,9 +144,9 @@ class RequestHandler(object):
         :param callback:
         :return:
         """
-        msg_id = self.get_id_from_msg(msg)
+        msg_id = str(self.get_id_from_msg(msg))
         if msg_id in self.responses:
-            raise RuntimeError("Duplicate request ID: %d" % msg_id)
+            raise RuntimeError("Duplicate request ID: %s" % msg_id)
 
         yield From(self._initialize())
         self.responses[msg_id] = None
