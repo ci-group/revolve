@@ -25,7 +25,7 @@
 #include <boost/thread/mutex.hpp>
 
 // Protobuf analysis messages
-#include "sdf_body_analyze.pb.h"
+#include <revolve/msgs/sdf_body_analyze.pb.h>
 
 namespace revolve {
 namespace gazebo {

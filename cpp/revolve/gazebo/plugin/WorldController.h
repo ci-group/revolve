@@ -10,7 +10,7 @@
 #include <gazebo/common/common.hh>
 #include <gazebo/msgs/msgs.hh>
 
-#include "insert_sdf_robot.pb.h"
+#include <revolve/msgs/insert_sdf_robot.pb.h>
 
 namespace revolve {
 namespace gazebo {
