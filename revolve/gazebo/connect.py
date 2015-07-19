@@ -27,11 +27,13 @@ class RequestHandler(object):
                  response_class=response_pb2.Response,
                  response_type='gazebo.msgs.Response',
                  advertise='/gazebo/default/request',
-                 subscribe='/gazebo/default/response'):
+                 subscribe='/gazebo/default/response',
+                 id_attr='id'):
         """
         :param manager:
         :return:
         """
+        self.id_attr = id_attr
         self.response_type = response_type
         self.request_type = request_type
         self.request_class = request_class
@@ -83,7 +85,7 @@ class RequestHandler(object):
         :param msg:
         :return:
         """
-        return msg.id
+        return getattr(msg, self.id_attr)
 
     def get_response(self, msg_id):
         """
