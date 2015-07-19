@@ -32,6 +32,11 @@ void WorldController::InsertRequest(ConstInsertSdfRobotRequestPtr & request) {
 
 	sdf::SDF robotSDF;
 	robotSDF.SetFromString(request->sdf_contents());
+
+	// Fix the name in case it doesn't match
+	sdf::ElementPtr model = robotSDF.root->GetElement("model");
+	model->GetAttribute("name")->SetFromString(request->name());
+
 	world_->InsertModelSDF(robotSDF);
 }
 

@@ -1,5 +1,6 @@
 package revolve.msgs;
 
 message InsertSdfRobotRequest {
+	required string name = 1;
 	required string sdf_contents = 2;
 }

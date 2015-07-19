@@ -13,7 +13,7 @@ from google.protobuf import descriptor_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='insert_sdf_robot.proto',
   package='tol.msgs',
-  serialized_pb='\n\x16insert_sdf_robot.proto\x12\x08tol.msgs\"-\n\x15InsertSdfRobotRequest\x12\x14\n\x0csdf_contents\x18\x02 \x02(\t')
+  serialized_pb='\n\x16insert_sdf_robot.proto\x12\x08tol.msgs\";\n\x15InsertSdfRobotRequest\x12\x0c\n\x04name\x18\x01 \x02(\t\x12\x14\n\x0csdf_contents\x18\x02 \x02(\t')
 
 
 
@@ -26,7 +26,14 @@ _INSERTSDFROBOTREQUEST = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='sdf_contents', full_name='tol.msgs.InsertSdfRobotRequest.sdf_contents', index=0,
+      name='name', full_name='tol.msgs.InsertSdfRobotRequest.name', index=0,
+      number=1, type=9, cpp_type=9, label=2,
+      has_default_value=False, default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='sdf_contents', full_name='tol.msgs.InsertSdfRobotRequest.sdf_contents', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=unicode("", "utf-8"),
       message_type=None, enum_type=None, containing_type=None,
@@ -42,7 +49,7 @@ _INSERTSDFROBOTREQUEST = _descriptor.Descriptor(
   is_extendable=False,
   extension_ranges=[],
   serialized_start=36,
-  serialized_end=81,
+  serialized_end=95,
 )
 
 DESCRIPTOR.message_types_by_name['InsertSdfRobotRequest'] = _INSERTSDFROBOTREQUEST
