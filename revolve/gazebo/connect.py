@@ -28,7 +28,8 @@ class RequestHandler(object):
                  response_type='gazebo.msgs.Response',
                  advertise='/gazebo/default/request',
                  subscribe='/gazebo/default/response',
-                 id_attr='id'):
+                 id_attr='id',
+                 msg_id_base=0):
         """
         :param manager:
         :return:
@@ -44,6 +45,7 @@ class RequestHandler(object):
         self.responses = {}
         self.callbacks = {}
         self.publisher = None
+        self.msg_id = msg_id_base
 
     def _initialize(self):
         """
@@ -66,7 +68,7 @@ class RequestHandler(object):
         msg = self.response_class()
         msg.ParseFromString(data)
 
-        msg_id = self.get_msg_id(msg)
+        msg_id = self.get_id_from_msg(msg)
         if msg_id not in self.responses:
             # Message was not requested here, ignore it
             return
@@ -77,15 +79,21 @@ class RequestHandler(object):
         if self.callbacks[msg_id] is not None:
             self.callbacks[msg_id](msg)
 
-    def get_msg_id(self, msg):
+    def get_id_from_msg(self, msg):
         """
-        Returns the ID given a protobuf message, can be
-        used in subclasses to support different attributes
-        than `id`.
+        Returns the ID given a protobuf message.
         :param msg:
         :return:
         """
         return getattr(msg, self.id_attr)
+
+    def get_msg_id(self):
+        """
+        Message ID sequencer.
+        :return:
+        """
+        self.msg_id += 1
+        return self.msg_id
 
     def get_response(self, msg_id):
         """
@@ -136,7 +144,7 @@ class RequestHandler(object):
         :param callback:
         :return:
         """
-        msg_id = self.get_msg_id(msg)
+        msg_id = self.get_id_from_msg(msg)
         if msg_id in self.responses:
             raise RuntimeError("Duplicate request ID: %d" % msg_id)
 
