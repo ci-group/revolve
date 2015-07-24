@@ -20,20 +20,22 @@ class RequestHandler(object):
     Utility class to send `Request` messages and accept
     responses to them.
     """
+    # Object used to make constructor private
+    _PRIVATE = object()
 
-    def __init__(self, manager,
-                 request_class=request_pb2.Request,
-                 request_type='gazebo.msgs.Request',
-                 response_class=response_pb2.Response,
-                 response_type='gazebo.msgs.Response',
-                 advertise='/gazebo/default/request',
-                 subscribe='/gazebo/default/response',
-                 id_attr='id',
-                 msg_id_base=0):
+    def __init__(self, manager, request_class, request_type,
+                 response_class, response_type,
+                 advertise, subscribe, id_attr, msg_id_base,
+                 _private=None):
         """
+        Private constructor, use the `create` coroutine instead.
         :param manager:
         :return:
         """
+        if _private is not self._PRIVATE:
+            raise ValueError("The RequestHandler cannot be directly constructed,"
+                             "rather the `create` coroutine should be used.")
+
         self.id_attr = id_attr
         self.response_type = response_type
         self.request_type = request_type
@@ -48,12 +50,41 @@ class RequestHandler(object):
         self.msg_id = msg_id_base
 
     @trollius.coroutine
-    def _initialize(self):
+    @classmethod
+    def create(cls, manager,
+               request_class=request_pb2.Request,
+               request_type='gazebo.msgs.Request',
+               response_class=response_pb2.Response,
+               response_type='gazebo.msgs.Response',
+               advertise='/gazebo/default/request',
+               subscribe='/gazebo/default/response',
+               id_attr='id',
+               msg_id_base=0):
+        """
+
+        :param manager:
+        :param request_class:
+        :param request_type:
+        :param response_class:
+        :param response_type:
+        :param advertise:
+        :param subscribe:
+        :param id_attr:
+        :param msg_id_base:
+        :return:
+        """
+        handler = cls(manager, request_class, request_type, response_class, response_type,
+                      advertise, subscribe, id_attr, msg_id_base, cls._PRIVATE)
+        yield From(handler._init())
+        raise Return(handler)
+
+    @trollius.coroutine
+    def _init(self):
         """
         :return:
         """
         if self.publisher is not None:
-            raise Return(None)
+            return
 
         self.manager.subscribe(self.subscribe,
                                self.response_type,
@@ -112,7 +143,6 @@ class RequestHandler(object):
         del self.responses[msg_id]
         del self.callbacks[msg_id]
 
-    @trollius.coroutine
     def do_gazebo_request(self, msg_id, data=None, dbl_data=None, callback=None):
         """
         Convenience wrapper to use `do_request` with a default Gazebo
@@ -133,13 +163,15 @@ class RequestHandler(object):
         if dbl_data is not None:
             req.dbl_data = dbl_data
 
-        yield From(self.do_request(req, callback))
+        return self.do_request(req, callback)
 
-    @trollius.coroutine
     def do_request(self, msg, callback=None):
         """
-        Coroutine to perform a request. The only requirement
+        Performs a request. The only requirement
         of `msg` is that it has an `id` attribute.
+
+        Returns a future, you should yield this to make
+        sure the request is completed.
 
         :param msg: Message object to publish
         :param callback:
@@ -149,7 +181,6 @@ class RequestHandler(object):
         if msg_id in self.responses:
             raise RuntimeError("Duplicate request ID: %s" % msg_id)
 
-        yield From(self._initialize())
         self.responses[msg_id] = None
         self.callbacks[msg_id] = callback
-        yield From(self.publisher.publish(msg))
+        return self.publisher.publish(msg)
