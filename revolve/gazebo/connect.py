@@ -47,6 +47,7 @@ class RequestHandler(object):
         self.publisher = None
         self.msg_id = msg_id_base
 
+    @trollius.coroutine
     def _initialize(self):
         """
         :return:
