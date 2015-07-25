@@ -49,8 +49,8 @@ class RequestHandler(object):
         self.publisher = None
         self.msg_id = msg_id_base
 
-    @trollius.coroutine
     @classmethod
+    @trollius.coroutine
     def create(cls, manager,
                request_class=request_pb2.Request,
                request_type='gazebo.msgs.Request',
