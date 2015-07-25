@@ -140,6 +140,7 @@ class RequestHandler(object):
         :param msg_id:
         :return:
         """
+        msg_id = str(msg_id)
         del self.responses[msg_id]
         del self.callbacks[msg_id]
 
