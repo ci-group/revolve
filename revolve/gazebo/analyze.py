@@ -25,6 +25,7 @@ def _msg_id():
 kl = logging.getLogger("trollius")
 kl.addHandler(logging.StreamHandler(sys.stdout))
 
+
 def get_analysis_robot(robot, builder):
     """
     Creates an SDF model suitable for analysis from a robot object
@@ -40,6 +41,7 @@ def get_analysis_robot(robot, builder):
     sdf = SDF()
     sdf.add_element(model)
     return sdf
+
 
 def analyze_body(sdf, address=("127.0.0.1", 11346)):
     """
@@ -89,6 +91,7 @@ def attach_analyzer(manager):
     setattr(manager, 'rvgz_analyzer', analyzer)
     yield From(analyzer.initialize())
     raise Return(analyzer)
+
 
 @trollius.coroutine
 def message_coroutine(sdf, manager):
@@ -153,6 +156,7 @@ def analysis_coroutine(sdf, manager, max_attempts=5):
 
     internal_collisions = len(msg.contact)
     raise Return(internal_collisions, bbox)
+
 
 class _Analyzer(object):
     """
