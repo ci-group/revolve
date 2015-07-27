@@ -33,10 +33,13 @@ public:
 
 protected:
     // World update event function
-    void OnUpdate(const ::gazebo::common::UpdateInfo info);
+//    void OnUpdate(const ::gazebo::common::UpdateInfo info);
+
+    // Perform the actual update given the step size
+    void DoUpdate(const ::gazebo::common::Time &simTime);
 
     // Store update event pointer
-    ::gazebo::event::ConnectionPtr updateConnection_;
+//    ::gazebo::event::ConnectionPtr updateConnection_;
 
     // Last update time, used to determine update step time
     ::gazebo::common::Time prevUpdateTime_;
