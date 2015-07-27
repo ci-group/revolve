@@ -57,20 +57,22 @@ void VelocityMotor::update(double * outputs, double /*step*/) {
 	DoUpdate(joint_->GetWorld()->GetSimTime());
 }
 
-void VelocityMotor::DoUpdate(const ::gazebo::common::Time &simTime) {
-	gz::common::Time stepTime = simTime - prevUpdateTime_;
-
-	if (stepTime <= 0) {
-		// Only respond to positive step times
-		return;
-	}
-
-	double currentVelocity = joint_->GetVelocity(0);
-	double cmd = pid_.Update(currentVelocity - velocityTarget_, stepTime);
-
+void VelocityMotor::DoUpdate(const ::gazebo::common::Time &/*simTime*/) {
 	// I'm caving for now and am setting ODE parameters directly.
 	// See http://answers.gazebosim.org/question/9071/joint-target-velocity-with-maximum-force/
-	joint_->SetParam("vel", 0, cmd);
+	joint_->SetParam("vel", 0, velocityTarget_);
+	
+//	gz::common::Time stepTime = simTime - prevUpdateTime_;
+//
+//	if (stepTime <= 0) {
+//		// Only respond to positive step times
+//		return;
+//	}
+//
+//	double currentVelocity = joint_->GetVelocity(0);
+//	double cmd = pid_.Update(currentVelocity - velocityTarget_, stepTime);
+//
+//	joint_->SetParam("vel", 0, cmd);
 }
 
 } // namespace gazebo
