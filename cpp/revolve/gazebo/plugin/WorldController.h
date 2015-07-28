@@ -10,12 +10,12 @@
 #include <gazebo/common/common.hh>
 #include <gazebo/msgs/msgs.hh>
 
-#include <revolve/msgs/insert_sdf_robot.pb.h>
+#include <revolve/msgs/insert_sdf_model.pb.h>
 
 namespace revolve {
 namespace gazebo {
 
-typedef const boost::shared_ptr<const ::revolve::msgs::InsertSdfRobotRequest> ConstInsertSdfRobotRequestPtr;
+typedef const boost::shared_ptr<const ::revolve::msgs::InsertSdfModelRequest> ConstInsertSdfModelRequestPtr;
 
 class WorldController : public ::gazebo::WorldPlugin {
 public:
@@ -23,7 +23,7 @@ public:
 
 protected:
 	// Listener for analysis requests
-	void InsertRequest(ConstInsertSdfRobotRequestPtr &request);
+	void InsertRequest(ConstInsertSdfModelRequestPtr &request);
 
 	// Stores the world
 	::gazebo::physics::WorldPtr world_;
