@@ -86,11 +86,14 @@ class RequestHandler(object):
         if self.publisher is not None:
             return
 
-        self.manager.subscribe(self.subscribe,
+        self.subscriber = self.manager.subscribe(self.subscribe,
                                self.response_type,
                                self._callback)
         self.publisher = yield From(self.manager.advertise(
             self.advertise, self.request_type))
+
+        yield From(self.subscriber.wait_for_connection())
+        yield From(self.publisher.wait_for_listener())
 
     def _callback(self, data):
         """

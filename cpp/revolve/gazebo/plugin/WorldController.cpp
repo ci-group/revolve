@@ -28,7 +28,7 @@ void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/
 }
 
 void WorldController::InsertRequest(ConstInsertSdfModelRequestPtr & request) {
-	std::cout << "Attempting to create and insert robot `" << request->name() << "`." << std::endl;
+	std::cout << "Attempting to create and insert model `" << request->name() << "`." << std::endl;
 	sdf::SDF robotSDF;
 	robotSDF.SetFromString(request->sdf_contents());
 
