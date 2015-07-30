@@ -33,6 +33,7 @@ def _renumber(node, base=0):
     """
     :param base:
     :param node:
+    :type node: Node
     :return:
     """
     for node in _node_list(node):

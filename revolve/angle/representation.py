@@ -24,7 +24,7 @@ def _process_body_part(part, node, brain):
     """
     Used to turn a node into an actual robot.
 
-    :param part:
+    :param part: The body part to copy properties into
     :type part: BodyPart
     :param node:
     :type node: Node
@@ -52,6 +52,7 @@ def _process_body_part(part, node, brain):
     for neuron in node.get_neurons():
         nw = brain.neuron.add()
         nw.CopyFrom(neuron)
+
         nw.partId = part.id
         nw.id = node.get_neuron_id(neuron.layer, counters[nw.layer])
         counters[nw.layer] += 1
@@ -121,7 +122,7 @@ class Tree(object):
         neuron_map = {}
         for neuron in brain.neuron:
             if not neuron.HasField("partId"):
-                raise Exception("Neuron %s not associated with part." % neuron.id)
+                raise Exception("Neuron %s not associated with any part." % neuron.id)
 
             neuron_map[neuron.id] = neuron
 
@@ -199,7 +200,6 @@ class Node(object):
         super(Node, self).__init__()
 
         # Copy the node ID as the part ID
-        self.id = part.id
         self.spec = body_spec.get(part.type)
 
         # Copy the given body part without the connections
@@ -230,6 +230,18 @@ class Node(object):
         self._paths = {}
         self._len = -1
         self._io = None
+
+    @property
+    def id(self):
+        """
+        ID getter, refers to the part.
+        :return:
+        """
+        return self.part.id
+
+    @id.setter
+    def id(self, value):
+        self.part.id = value
 
     def clear_caches(self, origin=None):
         """
@@ -416,7 +428,7 @@ class Node(object):
         has been generated.
         """
         t = {"input": "in", "output": "out", "hidden": "hidden"}[neuron_layer]
-        return "%s-%s-%d" % (self.part.id, t, offset)
+        return "%s-%s-%d" % (self.id, t, offset)
 
     def get_neuron_offset(self, neuron):
         """
