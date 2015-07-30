@@ -3,6 +3,7 @@ from sdfbuilder.structure import Visual, Collision, Geometry
 from sdfbuilder.sensor import Sensor as SdfSensor
 from ..sensor import Sensor
 
+
 class Component(PosableGroup):
     """
 
@@ -73,6 +74,7 @@ class Component(PosableGroup):
         Creates a one-way connection, only used internally.
         """
         self.connections.append(Connection(other, joint))
+
 
 class Connection(object):
     """
