@@ -38,7 +38,7 @@ and evolution of robots that fit within the defined body space and have a neural
 in the `revolve.angle` folder for details.
  
 ## Work in progress
-I am writing revolve, as well as the related library [sdfbuilder](https://github.com/ElteHupkes/sdfbuilder) as part
+I am writing revolve, as well as the related library [sdfbuilder](https://github.com/ElteHupkes/sdf-builder) as part
 of my Master's thesis research. The actual code that is going to be running my experiments is currently being
 constructed in my [Triangle of Life repository](https://github.com/ElteHupkes/tol-revolve). This repo also serves
 as the currently only and therefore best way to see Revolve in action. All of this is still very much a work in
