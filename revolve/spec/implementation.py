@@ -394,6 +394,7 @@ class Parameterizable(object):
             p = container.add()
             p.value = param
 
+
 class PartSpec(Parameterizable):
     """
     Class used to specify all configurable details about a part.
