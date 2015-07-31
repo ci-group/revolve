@@ -41,6 +41,13 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
 # Release flags
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -funroll-loops -finline-functions -fomit-frame-pointer -DNDEBUG")
 
+# Find and include Gazebo
+include (FindPkgConfig)
+if (PKG_CONFIG_FOUND)
+  pkg_check_modules(GAZEBO gazebo)
+endif()
+include_directories(${GAZEBO_INCLUDE_DIRS})
+
 #### Protobuf ####
 # This part is currently a mess, but it works for what I need it to
 # (which is have includes that work in this project and in the other
@@ -48,10 +55,22 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
 # Get protobuf library
 find_package(Protobuf REQUIRED)
 
-# Directory where the .proto file resides
+# Find the protobuf import directory for Gazebo. Found in this
+# tutorial: http://gazebosim.org/tutorials?tut=custom_messages&cat=transport
+set(GAZEBO_PROTOBUF_DIR)
+foreach(ITR ${GAZEBO_INCLUDE_DIRS})
+  if(ITR MATCHES ".*gazebo-[0-9.]+$")
+    set(GAZEBO_PROTO_PATH "${ITR}/gazebo/msgs/proto")
+    set(GAZEBO_PROTO_INCLUDE "${ITR}/gazebo/msgs")
+  endif()
+endforeach()
+
+include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS} ${GAZEBO_PROTO_INCLUDE})
+
+# Directory where the .proto files reside within revolve
 set(SPEC_DIR "${CMAKE_SOURCE_DIR}/revolve/msgs")
 
-include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS})
+# All protobuf files we need, including the Gazebo ones
 file(GLOB_RECURSE REVOLVE_PROTO ${SPEC_DIR}/*.proto)
 
 # Do the protobuf generation by hand for more flexibility. I'm generating
@@ -77,6 +96,7 @@ file(MAKE_DIRECTORY ${PROTO_OUTPUT_BASE}/revolve/msgs)
 foreach(FIL ${REVOLVE_PROTO})
     get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
     get_filename_component(FIL_WE ${FIL} NAME_WE)
+    get_filename_component(FILE_DIR ${FIL} DIRECTORY)
 
     list(APPEND PROTO_SRCS "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.cc")
     list(APPEND PROTO_HDRS "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.h")
@@ -85,7 +105,9 @@ foreach(FIL ${REVOLVE_PROTO})
       OUTPUT "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.cc"
              "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.h"
       COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-      ARGS -I ${SPEC_DIR} --cpp_out  ${PROTO_OUTPUT_BASE}/revolve/msgs ${ABS_FIL}
+      ARGS -I ${FILE_DIR}
+           -I ${GAZEBO_PROTO_PATH}
+           --cpp_out ${PROTO_OUTPUT_BASE}/revolve/msgs ${ABS_FIL}
       DEPENDS ${ABS_FIL}
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
       VERBATIM )
@@ -104,12 +126,6 @@ find_package(Boost REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Gazebo control plugins
-# Find and include Gazebo
-include (FindPkgConfig)
-if (PKG_CONFIG_FOUND)
-  pkg_check_modules(GAZEBO gazebo)
-endif()
-include_directories(${GAZEBO_INCLUDE_DIRS})
 
 # Plugin CPP files
 file(GLOB_RECURSE

@@ -25,7 +25,7 @@ class RequestHandler(object):
 
     def __init__(self, manager, request_class, request_type,
                  response_class, response_type,
-                 advertise, subscribe, id_attr, msg_id_base,
+                 advertise, subscribe, id_attr, request_attr, msg_id_base,
                  _private=None):
         """
         Private constructor, use the `create` coroutine instead.
@@ -37,6 +37,7 @@ class RequestHandler(object):
                              "rather the `create` coroutine should be used.")
 
         self.id_attr = id_attr
+        self.request_attr = request_attr
         self.response_type = response_type
         self.request_type = request_type
         self.request_class = request_class
@@ -47,7 +48,7 @@ class RequestHandler(object):
         self.responses = {}
         self.callbacks = {}
         self.publisher = None
-        self.msg_id = msg_id_base
+        self.msg_id = int(msg_id_base)
 
     @classmethod
     @trollius.coroutine
@@ -59,6 +60,7 @@ class RequestHandler(object):
                advertise='/gazebo/default/request',
                subscribe='/gazebo/default/response',
                id_attr='id',
+               request_attr='request',
                msg_id_base=0):
         """
 
@@ -74,7 +76,7 @@ class RequestHandler(object):
         :return:
         """
         handler = cls(manager, request_class, request_type, response_class, response_type,
-                      advertise, subscribe, id_attr, msg_id_base, cls._PRIVATE)
+                      advertise, subscribe, id_attr, request_attr, msg_id_base, cls._PRIVATE)
         yield From(handler._init())
         raise Return(handler)
 
@@ -86,9 +88,11 @@ class RequestHandler(object):
         if self.publisher is not None:
             return
 
-        self.subscriber = self.manager.subscribe(self.subscribe,
-                               self.response_type,
-                               self._callback)
+        self.subscriber = self.manager.subscribe(
+            self.subscribe,
+            self.response_type,
+            self._callback
+        )
         self.publisher = yield From(self.manager.advertise(
             self.advertise, self.request_type))
 
@@ -104,15 +108,18 @@ class RequestHandler(object):
         msg.ParseFromString(data)
 
         msg_id = str(self.get_id_from_msg(msg))
-        if msg_id not in self.responses:
+        request_type = str(self.get_request_type_from_msg(msg))
+        req, cb = self._get_response_map(request_type)
+
+        if msg_id not in req:
             # Message was not requested here, ignore it
             return
 
-        self.responses[msg_id] = msg
+        req[msg_id] = msg
 
         # If a callback is registered, use it
-        if self.callbacks[msg_id] is not None:
-            self.callbacks[msg_id](msg)
+        if cb[msg_id] is not None:
+            cb[msg_id](msg)
 
     def get_id_from_msg(self, msg):
         """
@@ -122,6 +129,14 @@ class RequestHandler(object):
         """
         return getattr(msg, self.id_attr)
 
+    def get_request_type_from_msg(self, msg):
+        """
+        Returns the request type from a protobuf message.
+        :param msg:
+        :return:
+        """
+        return getattr(msg, self.request_attr)
+
     def get_msg_id(self):
         """
         Message ID sequencer.
@@ -130,36 +145,47 @@ class RequestHandler(object):
         self.msg_id += 1
         return self.msg_id
 
-    def get_response(self, msg_id):
+    def get_response(self, msg_type, msg_id):
         """
         :param msg_id:
         :return:
         """
-        return self.responses.get(msg_id, None)
+        return self._get_response_map(msg_type).get(msg_id, None)
 
-    def handled(self, msg_id):
+    def handled(self, msg_type, msg_id):
         """
         Deletes a message from the current response history.
+        :param msg_type:
         :param msg_id:
         :return:
         """
         msg_id = str(msg_id)
-        del self.responses[msg_id]
-        del self.callbacks[msg_id]
+        msg_type = str(msg_type)
+        req, cb = self._get_response_map(msg_type)
 
-    def do_gazebo_request(self, msg_id, data=None, dbl_data=None, callback=None):
+        del req[msg_id]
+        del cb[msg_id]
+
+    def do_gazebo_request(self, request, data=None, dbl_data=None, callback=None, msg_id=None):
         """
         Convenience wrapper to use `do_request` with a default Gazebo
         `Request` message.
-        :param msg_id:
-        :type msg_id: int
+        :param request:
+        :type request: str
         :param data:
         :param dbl_data:
         :param callback:
+        :param msg_id: Force the message to use this ID. Sequencer is used if no message
+                       ID is specified.
+        :type msg_id: int
         :return:
         """
+        if msg_id is None:
+            msg_id = self.get_msg_id()
+
         req = request_pb2.Request()
         req.id = msg_id
+        req.request = request
 
         if data is not None:
             req.data = data
@@ -168,6 +194,19 @@ class RequestHandler(object):
             req.dbl_data = dbl_data
 
         return self.do_request(req, callback)
+
+    def _get_response_map(self, request_type):
+        """
+
+        :param request_type:
+        :return:
+        :rtype: dict
+        """
+        if request_type not in self.responses:
+            self.responses[request_type] = {}
+            self.callbacks[request_type] = {}
+
+        return self.responses[request_type], self.callbacks[request_type]
 
     def do_request(self, msg, callback=None):
         """
@@ -182,9 +221,12 @@ class RequestHandler(object):
         :return:
         """
         msg_id = str(self.get_id_from_msg(msg))
-        if msg_id in self.responses:
-            raise RuntimeError("Duplicate request ID: %s" % msg_id)
+        request_type = str(self.get_request_type_from_msg(msg))
+        req, cb = self._get_response_map(request_type)
 
-        self.responses[msg_id] = None
-        self.callbacks[msg_id] = callback
+        if msg_id in req:
+            raise RuntimeError("Duplicate request ID: `%s` for type `%s`" % (msg_id, request_type))
+
+        req[msg_id] = None
+        cb[msg_id] = callback
         return self.publisher.publish(msg)

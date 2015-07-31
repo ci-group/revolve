@@ -1,6 +1,0 @@
-package revolve.msgs;
-
-message InsertSdfModelRequest {
-	required string name = 1;
-	required string sdf_contents = 2;
-}
