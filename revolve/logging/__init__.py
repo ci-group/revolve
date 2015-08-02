@@ -1,1 +1,2 @@
-__author__ = 'elte'
+__author__ = 'Elte Hupkes'
+from logger import logger
