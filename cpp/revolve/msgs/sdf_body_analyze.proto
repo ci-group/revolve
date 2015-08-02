@@ -13,8 +13,6 @@ message BoundingBox {
 }
 
 message BodyAnalysisResponse {
-	required int32 id = 1;
-	required bool success = 2;
-	optional BoundingBox boundingBox = 3;
-	repeated Contact contact = 4;
+	optional BoundingBox boundingBox = 1;
+	repeated Contact contact = 2;
 }

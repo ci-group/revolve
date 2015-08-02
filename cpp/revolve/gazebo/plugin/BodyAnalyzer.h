@@ -19,6 +19,7 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
 #include <gazebo/gazebo.hh>
+#include <gazebo/msgs/msgs.hh>
 
 #include <queue>
 #include <utility>

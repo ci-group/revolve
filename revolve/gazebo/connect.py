@@ -1,5 +1,5 @@
 import trollius
-from trollius import From, Return
+from trollius import From, Return, Future
 import pygazebo
 from pygazebo.msg import request_pb2, response_pb2
 
@@ -117,9 +117,9 @@ class RequestHandler(object):
 
         req[msg_id] = msg
 
-        # If a callback is registered, use it
-        if cb[msg_id] is not None:
-            cb[msg_id](msg)
+        # Call the future's set_result
+        cb[msg_id].set_result(msg)
+        self._handled(request_type, msg_id)
 
     def get_id_from_msg(self, msg):
         """
@@ -145,14 +145,7 @@ class RequestHandler(object):
         self.msg_id += 1
         return self.msg_id
 
-    def get_response(self, msg_type, msg_id):
-        """
-        :param msg_id:
-        :return:
-        """
-        return self._get_response_map(msg_type).get(msg_id, None)
-
-    def handled(self, msg_type, msg_id):
+    def _handled(self, msg_type, msg_id):
         """
         Deletes a message from the current response history.
         :param msg_type:
@@ -166,15 +159,16 @@ class RequestHandler(object):
         del req[msg_id]
         del cb[msg_id]
 
-    def do_gazebo_request(self, request, data=None, dbl_data=None, callback=None, msg_id=None):
+    @trollius.coroutine
+    def do_gazebo_request(self, request, data=None, dbl_data=None, msg_id=None):
         """
         Convenience wrapper to use `do_request` with a default Gazebo
-        `Request` message.
+        `Request` message. See that method for more info.
+
         :param request:
         :type request: str
         :param data:
         :param dbl_data:
-        :param callback:
         :param msg_id: Force the message to use this ID. Sequencer is used if no message
                        ID is specified.
         :type msg_id: int
@@ -193,7 +187,8 @@ class RequestHandler(object):
         if dbl_data is not None:
             req.dbl_data = dbl_data
 
-        return self.do_request(req, callback)
+        future = yield From(self.do_request(req))
+        raise Return(future)
 
     def _get_response_map(self, request_type):
         """
@@ -208,16 +203,16 @@ class RequestHandler(object):
 
         return self.responses[request_type], self.callbacks[request_type]
 
-    def do_request(self, msg, callback=None):
+    @trollius.coroutine
+    def do_request(self, msg):
         """
         Performs a request. The only requirement
         of `msg` is that it has an `id` attribute.
 
-        Returns a future, you should yield this to make
-        sure the request is completed.
+        Publishing of the request is always yielded to prevent multiple messages
+        from going over the same pipe. The returned future is for the response.
 
         :param msg: Message object to publish
-        :param callback:
         :return:
         """
         msg_id = str(self.get_id_from_msg(msg))
@@ -227,6 +222,8 @@ class RequestHandler(object):
         if msg_id in req:
             raise RuntimeError("Duplicate request ID: `%s` for type `%s`" % (msg_id, request_type))
 
+        future = Future()
         req[msg_id] = None
-        cb[msg_id] = callback
-        return self.publisher.publish(msg)
+        cb[msg_id] = future
+        yield From(self.publisher.publish(msg))
+        raise Return(future)

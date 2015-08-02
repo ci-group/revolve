@@ -42,14 +42,14 @@ void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 	contactsSub_ = node_->Subscribe("~/physics/contacts", &BodyAnalyzer::OnContacts, this);
 
 	// Subscribe to analysis request messages
-	requestSub_ = node_->Subscribe("~/analyze_body/request", &BodyAnalyzer::AnalyzeRequest, this);
+	requestSub_ = node_->Subscribe("~/request", &BodyAnalyzer::AnalyzeRequest, this);
 
 	// Since models are added asynchronously, we need some way of detecting our model add.
 	// We do this using a model info subscriber.
 	modelSub_ = node_->Subscribe("~/model/info", &BodyAnalyzer::OnModel, this);
 
 	// Publisher for the results
-	responsePub_ = node_->Advertise<msgs::BodyAnalysisResponse>("~/analyze_body/response");
+	responsePub_ = node_->Advertise<gz::msgs::Response>("~/response");
 
 	// Subscribe to model delete events
 	deleteSub_ = node_->Subscribe("~/response", &BodyAnalyzer::OnModelDelete, this);
@@ -107,7 +107,9 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 
 	// Create a response
 	msgs::BodyAnalysisResponse response;
-	response.set_id(currentRequest_);
+	gz::msgs::Response wrapper;
+	wrapper.set_id(currentRequest_);
+	wrapper.set_request("analyze_body");
 
 	// Add contact info
 	for (auto contact : msg->contact()) {
@@ -124,8 +126,9 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 		std::cerr << "INTERNAL ERROR, contact model not found: " << name << std::endl;
 		std::cerr << "Please retry this request." << std::endl;
 		std::cerr << "------------------------------------" << std::endl;
-		response.set_success(false);
-		responsePub_->Publish(response);
+		wrapper.set_response("error");
+		response.SerializeToString(wrapper.mutable_serialized_data());
+		responsePub_->Publish(wrapper);
 
 		// Advance manually
 		this->Advance();
@@ -156,9 +159,10 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	box->set_y(bbox.GetYLength());
 	box->set_z(bbox.GetZLength());
 
-	// Publish the message
-	response.set_success(true);
-	responsePub_->Publish(response);
+	// Publish the message, serializing the response message in the wrapper data
+	response.SerializeToString(wrapper.mutable_serialized_data());
+	wrapper.set_response("success");
+	responsePub_->Publish(wrapper);
 	std::cout << "Response for request " << currentRequest_ << " sent." << std::endl;
 
 	// Remove all models from the world and advance
@@ -168,8 +172,7 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 
 void BodyAnalyzer::AnalyzeRequest(ConstRequestPtr &request) {
 	if (request->request() != "analyze_body") {
-		std::cerr << "The request of an robot analysis message should be `analyze_body`, not "
-		<< request->request() << std::endl;
+		// Request is not meant for us
 		return;
 	}
 
