@@ -10,7 +10,7 @@ from __future__ import print_function
 import sys
 from sdfbuilder.math import Vector3
 from .generated_sdf import generate_robot, builder, robot_to_sdf
-from ..gazebo import analysis_coroutine, connect, get_analysis_robot
+from ..gazebo import connect, get_analysis_robot, BodyAnalyzer
 import random
 
 import trollius
@@ -26,16 +26,17 @@ print("Seed: %d" % seed, file=sys.stderr)
 
 @trollius.coroutine
 def analysis_func():
-    manager = yield From(connect(("127.0.0.1", 11346)))
+    analyzer = yield From(BodyAnalyzer.create(address=("127.0.0.1", 11346)))
 
     # Try a maximum of 100 times
     for i in range(100):
         # Generate a new robot
         robot = generate_robot()
+
         sdf = get_analysis_robot(robot, builder)
 
         # Find out its intersections and bounding box
-        intersections, bbox = yield From(analysis_coroutine(sdf, manager))
+        intersections, bbox = yield From(analyzer.analyze_robot(robot, builder=builder))
 
         if intersections:
             print("Invalid model - intersections detected.", file=sys.stderr)

@@ -319,7 +319,6 @@ class Mutator(object):
         if not decide(self.p_delete_subtree):
             return None, avg_del_len
 
-        print("Deleted subtree.", file=sys.stderr)
         subtree = random.choice(items)
         _delete_subtree(subtree)
         return subtree, avg_del_len
@@ -378,7 +377,6 @@ class Mutator(object):
         attach_node, attach_slot = self.body_gen.choose_attachment(attachments)
         dup_new = dup.copy(copy_parent=False)
         dup_new.set_connection(dup.parent_connection().from_slot, attach_slot, attach_node, parent=False)
-        print("Duplicated subtree.", file=sys.stderr)
         return dup_new, avg_dup_len
 
     def swap_random_subtrees(self, root):
@@ -482,7 +480,6 @@ class Mutator(object):
             weight = self.brain_gen.choose_weight()
             nw_node.add_neural_connection(src, dst, dst_node, weight)
 
-        print("Added body part.", file=sys.stderr)
         return nw_node
 
     def mutate_node_body_parameters(self, node):
