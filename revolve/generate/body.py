@@ -70,6 +70,7 @@ class BodyGenerator(object):
         self.max_parts = max_parts
         self.max_inputs = max_inputs
         self.max_outputs = max_outputs
+        self.label_counter = 0
 
     def generate(self):
         """
@@ -165,7 +166,16 @@ class BodyGenerator(object):
 
         # Set random orientation in degrees
         part.orientation = self.choose_orientation(part, root)
+        part.label = "part-%d" % self.get_label_counter()
         return part
+
+    def get_label_counter(self):
+        """
+        Simple incremental counter for part labels.
+        :return:
+        """
+        self.label_counter += 1
+        return self.label_counter
 
     def choose_orientation(self, part, root=False):
         """
