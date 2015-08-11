@@ -6,6 +6,7 @@ from .exception import ArityException
 from .component import Component
 from .joint import ComponentJoint
 
+
 class BodyPart(PosableGroup):
     """
     Base body part class. A body part is defined by several things:

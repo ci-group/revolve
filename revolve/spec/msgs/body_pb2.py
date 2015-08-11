@@ -14,7 +14,7 @@ import parameter_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='body.proto',
   package='revolve.msgs',
-  serialized_pb='\n\nbody.proto\x12\x0crevolve.msgs\x1a\x0fparameter.proto\"\x8e\x01\n\x08\x42odyPart\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0c\n\x04type\x18\x02 \x02(\t\x12\x13\n\x0borientation\x18\x03 \x02(\x01\x12+\n\x05\x63hild\x18\x04 \x03(\x0b\x32\x1c.revolve.msgs.BodyConnection\x12&\n\x05param\x18\x05 \x03(\x0b\x32\x17.revolve.msgs.Parameter\"P\n\x0e\x42odyConnection\x12\x0b\n\x03src\x18\x01 \x02(\x05\x12\x0b\n\x03\x64st\x18\x02 \x02(\x05\x12$\n\x04part\x18\x03 \x02(\x0b\x32\x16.revolve.msgs.BodyPart\",\n\x04\x42ody\x12$\n\x04root\x18\x01 \x02(\x0b\x32\x16.revolve.msgs.BodyPart')
+  serialized_pb='\n\nbody.proto\x12\x0crevolve.msgs\x1a\x0fparameter.proto\"\x9d\x01\n\x08\x42odyPart\x12\n\n\x02id\x18\x01 \x02(\t\x12\x0c\n\x04type\x18\x02 \x02(\t\x12\x13\n\x0borientation\x18\x03 \x02(\x01\x12+\n\x05\x63hild\x18\x04 \x03(\x0b\x32\x1c.revolve.msgs.BodyConnection\x12&\n\x05param\x18\x05 \x03(\x0b\x32\x17.revolve.msgs.Parameter\x12\r\n\x05label\x18\x06 \x01(\t\"P\n\x0e\x42odyConnection\x12\x0b\n\x03src\x18\x01 \x02(\x05\x12\x0b\n\x03\x64st\x18\x02 \x02(\x05\x12$\n\x04part\x18\x03 \x02(\x0b\x32\x16.revolve.msgs.BodyPart\",\n\x04\x42ody\x12$\n\x04root\x18\x01 \x02(\x0b\x32\x16.revolve.msgs.BodyPart')
 
 
 
@@ -61,6 +61,13 @@ _BODYPART = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='label', full_name='revolve.msgs.BodyPart.label', index=5,
+      number=6, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=unicode("", "utf-8"),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -71,7 +78,7 @@ _BODYPART = _descriptor.Descriptor(
   is_extendable=False,
   extension_ranges=[],
   serialized_start=46,
-  serialized_end=188,
+  serialized_end=203,
 )
 
 
@@ -112,8 +119,8 @@ _BODYCONNECTION = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=190,
-  serialized_end=270,
+  serialized_start=205,
+  serialized_end=285,
 )
 
 
@@ -140,8 +147,8 @@ _BODY = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=272,
-  serialized_end=316,
+  serialized_start=287,
+  serialized_end=331,
 )
 
 _BODYPART.fields_by_name['child'].message_type = _BODYCONNECTION

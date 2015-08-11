@@ -7,6 +7,7 @@ message BodyPart {
   required double orientation = 3;
   repeated BodyConnection child = 4;
   repeated Parameter param = 5;
+  optional string label = 6;
 }
 
 message BodyConnection {
