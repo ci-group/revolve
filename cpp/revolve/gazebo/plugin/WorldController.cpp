@@ -3,17 +3,20 @@
 //
 
 #include "WorldController.h"
+#include "revolve/gazebo/gzsensors/FixedContactSensor.h"
+
 #include <iostream>
 
 namespace gz = gazebo;
 
+void RegisterFixedContactSensor();
+
 namespace revolve {
 namespace gazebo {
 
-
-
 void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 	std::cout << "World plugin loaded." << std::endl;
+	RegisterFixedContactSensor();
 
 	// Store the world
 	world_ = world;
@@ -43,7 +46,7 @@ void WorldController::InsertRequest(ConstRequestPtr & request) {
 	robotSDF.SetFromString(request->data());
 
 	// Get the model name, store in the expected map
-	auto name = robotSDF.root->GetElement("model")->GetAttribute("name")->GetAsString();
+	auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")->GetAsString();
 
 	insertMutex_.lock();
 	insertMap_[name] = request->id();

@@ -42,10 +42,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -funroll-loops -finline-functions -fomit-frame-pointer -DNDEBUG")
 
 # Find and include Gazebo
-include (FindPkgConfig)
-if (PKG_CONFIG_FOUND)
-  pkg_check_modules(GAZEBO gazebo)
-endif()
+find_package(gazebo REQUIRED)
 include_directories(${GAZEBO_INCLUDE_DIRS})
 
 #### Protobuf ####
@@ -133,6 +130,7 @@ file(GLOB_RECURSE
 	 revolve/gazebo/brain/*.cpp
 	 revolve/gazebo/motors/*.cpp
 	 revolve/gazebo/sensors/*.cpp
+	 revolve/gazebo/gzsensors/*.cpp
 	 revolve/gazebo/plugin/BodyAnalyzer.cpp
 	 revolve/gazebo/plugin/RobotController.cpp
 	 revolve/gazebo/plugin/WorldController.cpp

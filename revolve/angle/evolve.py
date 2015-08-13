@@ -295,6 +295,7 @@ class Mutator(object):
         # robot complexity, the probability of doing this is proportional
         # to the average number of body parts that have been removed
         # by previous operations.
+        # TODO Should this be a loop with the rounded number, rather than a probability?
         p_add_body_part = avg_dup_len * self.p_duplicate_subtree - avg_del_len * self.p_delete_subtree
         self.add_random_body_part(p_add_body_part, root)
 
