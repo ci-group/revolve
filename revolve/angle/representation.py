@@ -207,6 +207,10 @@ class Node(object):
         self.part.id = part.id
         self.part.type = part.type
         self.part.orientation = part.orientation
+
+        if part.HasField("label"):
+            self.part.label = part.label
+
         for param in part.param:
             new_param = self.part.param.add()
             new_param.CopyFrom(param)
