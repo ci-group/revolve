@@ -135,23 +135,23 @@ def default_neural_net():
         ),
         "Sigmoid": NeuronSpec(
             params=[
-                ParamSpec("bias", min_value=-10, max_value=10),
-                ParamSpec("gain", min_value=-10, max_value=10, default=1.0)
+                ParamSpec("bias", min_value=-1, max_value=1, default=0),
+                ParamSpec("gain", min_value=0, max_value=1, default=.5)
             ],
             layers=["output", "hidden"]
         ),
         "Simple": NeuronSpec(
             params=[
-                ParamSpec("bias", min_value=-10, max_value=10),
-                ParamSpec("gain", min_value=-10, max_value=10, default=1.0)
+                ParamSpec("bias", min_value=-1, max_value=1),
+                ParamSpec("gain", min_value=0, max_value=1, default=.5)
             ],
             layers=["output", "hidden"]
         ),
         "Oscillator": NeuronSpec(
             params=[
-                ParamSpec("period", min_value=0, max_value=50),
+                ParamSpec("period", min_value=0, max_value=10),
                 ParamSpec("phase_offset", min_value=0, max_value=3.14),
-                ParamSpec("amplitude", min_value=0, default=1, max_value=10)
+                ParamSpec("amplitude", min_value=0, default=0.5, max_value=1)
             ],
             layers=["output", "hidden"]
         )
