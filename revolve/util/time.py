@@ -73,6 +73,38 @@ class Time(object):
         """
         return not self.__eq__(other)
 
+    def __gt__(self, other):
+        """
+        Greater than
+        :param other:
+        :return:
+        """
+        return float(self) > float(other)
+
+    def __lt__(self, other):
+        """
+        Smaller than
+        :param other:
+        :return:
+        """
+        return float(self) < float(other)
+
+    def __ge__(self, other):
+        """
+        Greater than or equal to
+        :param other:
+        :return:
+        """
+        return float(self) >= float(other)
+
+    def __le__(self, other):
+        """
+        Less than or equal to
+        :param other:
+        :return:
+        """
+        return float(self) <= float(other)
+
     def __add__(self, other):
         """
         Add two times

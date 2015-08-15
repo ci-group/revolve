@@ -70,4 +70,23 @@ class TestTime(unittest.TestCase):
         self.assertEqual(a, Time(5, 5*10e8))
         self.assertNotEqual(a, Time(5, 6*10e8))
 
+    def test_cmp(self):
+        a = Time(dbl=1.0)
+        b = Time(dbl=2.0)
+        c = Time(dbl=1.0)
+
+        self.assertTrue(a < b)
+        self.assertFalse(a > b)
+        self.assertTrue(b > a)
+        self.assertFalse(b < a)
+        self.assertTrue(b >= a)
+        self.assertFalse(b <= a)
+        self.assertTrue(a <= b)
+        self.assertFalse(a >= b)
+
+        self.assertTrue(a <= c)
+        self.assertTrue(a >= c)
+        self.assertTrue(c >= a)
+        self.assertTrue(a >= c)
+
 
