@@ -242,7 +242,7 @@ void BodyAnalyzer::ProcessQueue() {
 
 	// Force the model name to something we know
 	std::string name = "analyze_bot_"+boost::lexical_cast<std::string>(counter_);
-	robotSDF.root->GetElement("model")->GetAttribute("name")->SetFromString(name);
+	robotSDF.Root()->GetElement("model")->GetAttribute("name")->SetFromString(name);
 
 	// Insert the model into the world
 	world_->InsertModelSDF(robotSDF);
