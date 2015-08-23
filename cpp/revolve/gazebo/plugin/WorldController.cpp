@@ -52,7 +52,11 @@ void WorldController::InsertRequest(ConstRequestPtr & request) {
 	insertMap_[name] = request->id();
 	insertMutex_.unlock();
 
-	world_->InsertModelSDF(robotSDF);
+	world_->InsertModelString(robotSDF.ToString());
+
+	// Don't leak memory
+	// https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
+	robotSDF.Root()->Reset();
 }
 
 void WorldController::OnModel(ConstModelPtr &msg) {

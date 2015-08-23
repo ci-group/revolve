@@ -244,8 +244,14 @@ void BodyAnalyzer::ProcessQueue() {
 	std::string name = "analyze_bot_"+boost::lexical_cast<std::string>(counter_);
 	robotSDF.Root()->GetElement("model")->GetAttribute("name")->SetFromString(name);
 
-	// Insert the model into the world
-	world_->InsertModelSDF(robotSDF);
+	// Insert the model into the world. For clarity we use `InsertModelString` directly,
+	// this is actually also what `InsertModelSdf` does.
+	world_->InsertModelString(robotSDF.ToString());
+
+	// The contents of the SDF element are *not* cleared automatically
+	// when robotSDF goes out of scope.
+	// https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
+	robotSDF.Root()->Reset();
 
 	// Analysis will proceed once the model insertion message comes through
 }
