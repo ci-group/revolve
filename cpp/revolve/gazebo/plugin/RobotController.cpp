@@ -47,7 +47,7 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 	auto settings = _sdf->GetElement("rv:robot_config");
 
 	if (settings->HasElement("rv:update_rate")) {
-		int updateRate = settings->GetElement("rv:update_rate")->Get< double >();
+		double updateRate = settings->GetElement("rv:update_rate")->Get< double >();
 		actuationTime_ = 1.0 / updateRate;
 	}
 

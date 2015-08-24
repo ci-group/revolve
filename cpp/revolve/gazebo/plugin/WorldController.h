@@ -23,13 +23,19 @@ public:
 
 protected:
 	// Listener for analysis requests
-	void InsertRequest(ConstRequestPtr &request);
+	void HandleRequest(ConstRequestPtr &request);
+
+	// Listener for entity delete responses
+	void HandleResponse(ConstResponsePtr &request);
 
 	// Callback for model insertion
 	void OnModel(ConstModelPtr &msg);
 
 	// Maps model names to insert request IDs
 	std::map<std::string, int> insertMap_;
+
+	// Maps `entity_delete` IDs to `delete_robot` ids
+	std::map<int, int> deleteMap_;
 
 	// Stores the world
 	::gazebo::physics::WorldPtr world_;
@@ -40,11 +46,20 @@ protected:
 	// Mutex for the insertMap_
 	boost::mutex insertMutex_;
 
-	// Model insert request subscriber
-	::gazebo::transport::SubscriberPtr insertSub_;
+	// Mutex for the deleteMap_
+	boost::mutex deleteMutex_;
 
-	// Model insert publisher
-	::gazebo::transport::PublisherPtr insertedPub_;
+	// Request subscriber
+	::gazebo::transport::SubscriberPtr requestSub_;
+
+	// Request publisher
+	::gazebo::transport::PublisherPtr requestPub_;
+
+	// Response subscriber
+	::gazebo::transport::SubscriberPtr responseSub_;
+
+	// Response publisher
+	::gazebo::transport::PublisherPtr responsePub_;
 
 	// Subscriber for actual model insertion
 	::gazebo::transport::SubscriberPtr modelSub_;
