@@ -59,8 +59,7 @@ void WorldController::HandleRequest(ConstRequestPtr & request) {
 			// Using the simple approach below crashes the transport library, the
 			// cause of which I've yet to figure out.
 			// Instead, we'll use an `entity_delete` request, catch it later on
-			// and
-			// TODO Check for `entity_delete` response.
+			// and respond
 			// world_->RemoveModel(model);
 			gz::msgs::Request deleteReq;
 			int id = gz::physics::getUniqueId();
