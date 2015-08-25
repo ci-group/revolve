@@ -38,14 +38,22 @@ class Component(PosableGroup):
         self.connections = []
         """ :type : list[Connection] """
 
-    def add_sensor(self, sensor, sensor_type=None):
+    def add_sensor(self, sensor, sensor_type=None, prefix=True):
         """
         :param sensor:
         :type sensor: SdfSensor
         :param sensor_type:
         :type sensor_type: str
+        :param prefix: Sensor names need to be unique within a model, so
+                        by default the name of the SDF sensor is prefixed
+                        with the component ID for convenience. Set this
+                        parameter to `False` to disable this behavior.
+        :type prefix: bool
         :return:
         """
+        if prefix:
+            sensor.name = "%s-%s" % str(self.part_id), sensor.name
+
         self.sensors.append((sensor, sensor_type))
         self.add_element(sensor)
 
