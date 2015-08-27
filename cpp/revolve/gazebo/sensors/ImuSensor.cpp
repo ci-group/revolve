@@ -37,8 +37,8 @@ ImuSensor::~ImuSensor() {}
 
 void ImuSensor::OnUpdate() {
 	// Store the recorded values
-	auto acc = this->castSensor_->GetLinearAcceleration();
-	auto velo = this->castSensor_->GetAngularVelocity();
+	auto acc = this->castSensor_->LinearAcceleration();
+	auto velo = this->castSensor_->AngularVelocity();
 	lastValues_[0] = acc[0];
 	lastValues_[1] = acc[1];
 	lastValues_[2] = acc[2];
