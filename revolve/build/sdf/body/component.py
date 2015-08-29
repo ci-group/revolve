@@ -52,7 +52,7 @@ class Component(PosableGroup):
         :return:
         """
         if prefix:
-            sensor.name = "%s-%s" % str(self.part_id), sensor.name
+            sensor.name = "%s-%s" % (str(self.part_id), sensor.name)
 
         self.sensors.append((sensor, sensor_type))
         self.add_element(sensor)
