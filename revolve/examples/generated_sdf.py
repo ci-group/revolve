@@ -62,8 +62,7 @@ class Core(Box, ColorMixin):
 
         # Now we will add the IMU sensor. First, we create the
         # sensor as we would like to have it in SDF...
-        sensor_id = "%s_imu_sensor" % self.id
-        imu = SdfSensor(sensor_id, "imu", update_rate=UPDATE_RATE)
+        imu = SdfSensor("imu_sensor", "imu", update_rate=UPDATE_RATE)
 
         # .. we then add this to a specific component using `add_sensor`.
         # The second argument to this function allows us to override
