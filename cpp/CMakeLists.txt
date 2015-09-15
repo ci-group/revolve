@@ -44,11 +44,14 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
 # Find and include Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
-    find_package(gazebo 6.1 REQUIRED
-            PATHS ${LOCAL_GAZEBO_DIR})
+    find_package(gazebo 6.1 REQUIRED CONFIG
+            PATHS "${LOCAL_GAZEBO_DIR}"
+            NO_DEFAULT_PATH)
+    message(WARNING "Using local Gazebo @ ${gazebo_DIR}")
 else()
     find_package(gazebo 6.1 REQUIRED)
 endif()
+include_directories(${GAZEBO_INCLUDE_DIRS})
 
 #### Protobuf ####
 # This part is currently a mess, but it works for what I need it to
@@ -135,7 +138,6 @@ file(GLOB_RECURSE
 	 revolve/gazebo/brain/*.cpp
 	 revolve/gazebo/motors/*.cpp
 	 revolve/gazebo/sensors/*.cpp
-	 revolve/gazebo/gzsensors/*.cpp
 	 revolve/gazebo/plugin/BodyAnalyzer.cpp
 	 revolve/gazebo/plugin/RobotController.cpp
 	 revolve/gazebo/plugin/WorldController.cpp

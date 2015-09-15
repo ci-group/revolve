@@ -3,20 +3,16 @@
 //
 
 #include "WorldController.h"
-#include "revolve/gazebo/gzsensors/FixedContactSensor.h"
 
 #include <iostream>
 
 namespace gz = gazebo;
-
-void RegisterFixedContactSensor();
 
 namespace revolve {
 namespace gazebo {
 
 void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 	std::cout << "World plugin loaded." << std::endl;
-	RegisterFixedContactSensor();
 
 	// Store the world
 	world_ = world;
@@ -51,16 +47,13 @@ void WorldController::HandleRequest(ConstRequestPtr & request) {
 
 		gz::physics::ModelPtr model = world_->GetModel(name);
 		if (model) {
-			// Call `Reset` on the SDF pointer to prevent segfault
-			// https://bitbucket.org/osrf/gazebo/issues/1629/removing-model-from-plugin-crashes-with#comment-21184816
-			model->GetSDF()->Reset();
-
 			// Tell the world to remove the model
-			// Using the simple approach below crashes the transport library, the
-			// cause of which I've yet to figure out.
-			// Instead, we'll use an `entity_delete` request, catch it later on
-			// and respond
-			// world_->RemoveModel(model);
+			// Using `World::RemoveModel()` from here crashes the transport library, the
+			// cause of which I've yet to figure out - it has something to do
+			// with race conditions where the model is used by the world while
+			// it is being updated. Fixing this completely appears to be a rather
+			// involved process, instead, we'll use an `entity_delete` request,
+			// which will make sure deleting the model happens on the world thread.
 			gz::msgs::Request deleteReq;
 			int id = gz::physics::getUniqueId();
 			deleteReq.set_id(id);

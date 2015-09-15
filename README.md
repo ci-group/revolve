@@ -43,3 +43,17 @@ of my Master's thesis research. The actual code that is going to be running my e
 constructed in my [Triangle of Life repository](https://github.com/ElteHupkes/tol-revolve). This repo also serves
 as the currently only and therefore best way to see Revolve in action. All of this is still very much a work in
 progress, though I do have large parts of Revolve and ToL working at this point.
+
+# Installation
+To use Revolve, you need Gazebo. Since some common scenarios (mostly involving deleting models) cause
+some very serious bugs in Gazebo, currently a patched version of Gazebo is required (and will have to
+be compiled from source, unfortunately). To get this version, clone the Gazebo fork from 
+https://bitbucket.org/ElteHupkes/gazebo and checkout the `gazebo6-revolve` branch. Follow the steps
+found [at this page](http://gazebosim.org/tutorials?tut=install_from_source&ver=default&cat=install) to
+install Gazebo from source.
+
+## TODO
+Given a working Gazebo installation, Revolve can be compiled using cmake followed by make also. The easiest way
+to use the Python libraries right now is by using `pip install -e /path/to/revolve`. I'll update these instructions
+with more details as soon as I find the time.
+
