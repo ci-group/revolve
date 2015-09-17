@@ -27,8 +27,13 @@ class Component(PosableGroup):
         self.sensors = []
 
         if visual:
-            visual_geom = visual.copy() if isinstance(visual, Geometry) else geometry.copy()
-            self.visual = Visual(name+"_visual", visual_geom)
+            if isinstance(visual, Geometry):
+                self.visual = Visual(name+"_visual", visual.copy())
+            elif isinstance(visual, Visual):
+                self.visual = visual.copy()
+            else:
+                self.visual = Visual(name+"_visual", geometry.copy())
+
             self.add_element(self.visual)
 
         if collision:
