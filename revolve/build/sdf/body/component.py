@@ -31,6 +31,10 @@ class Component(PosableGroup):
                 self.visual = Visual(name+"_visual", visual.copy())
             elif isinstance(visual, Visual):
                 self.visual = visual.copy()
+
+                # Make sure the name is unique, or the visual might not get rendered
+                # (it might collide with another within the same link)
+                self.visual.name = name+"_"+self.visual.name
             else:
                 self.visual = Visual(name+"_visual", geometry.copy())
 
