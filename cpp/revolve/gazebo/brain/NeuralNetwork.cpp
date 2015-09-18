@@ -326,6 +326,8 @@ void NeuralNetwork::step(double time) {
 			double period = params_[MAX_NEURON_PARAMS*i];
 			double phaseOffset = params_[MAX_NEURON_PARAMS*i + 1];
 			double gain = params_[MAX_NEURON_PARAMS*i + 2];
+
+			/* Value in [0, 1] */
 			nextState[i] = ((sin( (2.0*M_PI/period) *
 				 (time - period * phaseOffset))) + 1.0) / 2.0;
 

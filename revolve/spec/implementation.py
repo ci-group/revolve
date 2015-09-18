@@ -151,7 +151,11 @@ def default_neural_net():
             params=[
                 ParamSpec("period", min_value=0, max_value=10),
                 ParamSpec("phase_offset", min_value=0, max_value=3.14),
-                ParamSpec("amplitude", min_value=0, default=0.5, max_value=1)
+                # Output range is in [0.5 - amplitude/2, 0.5 + amplitude/2],
+                # truncated to [0, 1] for all practical purposes. Having a value
+                # larger than 1 thus won't give a bigger gain but does allow for
+                # different behaviors (more erratic and stuck at max for a while).
+                ParamSpec("amplitude", min_value=0, default=1, max_value=2)
             ],
             layers=["output", "hidden"]
         )
