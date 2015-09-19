@@ -119,6 +119,9 @@ protected:
     // Pointer to the world
 	::gazebo::physics::WorldPtr world;
 
+	// Time of initialisation
+	::gazebo::common::Time initTime;
+
 private:
     // Driver update event pointer
     ::gazebo::event::ConnectionPtr updateConnection_;
