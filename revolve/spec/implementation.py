@@ -122,10 +122,12 @@ class NeuralNetImplementation(SpecImplementation):
         return super(NeuralNetImplementation, self).get(part_type)
 
 
-def default_neural_net():
+def default_neural_net(epsilon=0.05):
     """
     Returns the neural net implementation for the default
     neural net shipped with Revolve
+    :param epsilon: Parameter mutation epsilon
+    :type epsilon: float
     :return:
     :rtype: NeuralNetImplementation
     """
@@ -135,27 +137,27 @@ def default_neural_net():
         ),
         "Sigmoid": NeuronSpec(
             params=[
-                ParamSpec("bias", min_value=-1, max_value=1, default=0),
-                ParamSpec("gain", min_value=0, max_value=1, default=.5)
+                ParamSpec("bias", min_value=-1, max_value=1, default=0, epsilon=epsilon),
+                ParamSpec("gain", min_value=0, max_value=1, default=.5, epsilon=epsilon)
             ],
             layers=["output", "hidden"]
         ),
         "Simple": NeuronSpec(
             params=[
-                ParamSpec("bias", min_value=-1, max_value=1),
-                ParamSpec("gain", min_value=0, max_value=1, default=.5)
+                ParamSpec("bias", min_value=-1, max_value=1, epsilon=epsilon),
+                ParamSpec("gain", min_value=0, max_value=1, default=.5, epsilon=epsilon)
             ],
             layers=["output", "hidden"]
         ),
         "Oscillator": NeuronSpec(
             params=[
-                ParamSpec("period", min_value=0, max_value=10),
-                ParamSpec("phase_offset", min_value=0, max_value=3.14),
+                ParamSpec("period", min_value=0, max_value=10, epsilon=epsilon),
+                ParamSpec("phase_offset", min_value=0, max_value=3.14, epsilon=epsilon),
                 # Output range is in [0.5 - amplitude/2, 0.5 + amplitude/2],
                 # truncated to [0, 1] for all practical purposes. Having a value
                 # larger than 1 thus won't give a bigger gain but does allow for
                 # different behaviors (more erratic and stuck at max for a while).
-                ParamSpec("amplitude", min_value=0, default=1, max_value=2)
+                ParamSpec("amplitude", min_value=0, default=1, max_value=2, epsilon=epsilon)
             ],
             layers=["output", "hidden"]
         )
@@ -167,7 +169,7 @@ class ParamSpec(object):
     Parameter specification class
     """
     def __init__(self, name, default=0.0, min_value=None, max_value=None,
-                 min_inclusive=True, max_inclusive=True, epsilon=0):
+                 min_inclusive=True, max_inclusive=True, epsilon=0.0):
         """
         :param default:
         :param min_value:
