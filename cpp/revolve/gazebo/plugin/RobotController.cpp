@@ -37,7 +37,7 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 	// Store the pointer to the model
 	this->model = _parent;
 	this->world = _parent->GetWorld();
-	this->initTime = this->world->GetSimTime();
+	this->initTime_ = this->world->GetSimTime().Double();
 
 	if (!_sdf->HasElement("rv:robot_config")) {
 		std::cerr << "No `rv:robot_config` element found, controller not initialized."
@@ -130,7 +130,7 @@ void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo info) {
 
 // Default update function simply tells the brain to perform an update
 void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo info) {
-	brain_->update(motors_, sensors_, (info.simTime - this->initTime).Double(), actuationTime_);
+	brain_->update(motors_, sensors_, info.simTime.Double() - initTime_, actuationTime_);
 }
 
 } /* namespace gazebo */

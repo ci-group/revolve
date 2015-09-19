@@ -97,6 +97,9 @@ protected:
 	 */
 	double actuationTime_;
 
+	// Time of initialisation
+	double initTime_;
+
 	/**
 	 * Time of the last actuation, in
 	 * seconds and nanoseconds
@@ -118,9 +121,6 @@ protected:
 
     // Pointer to the world
 	::gazebo::physics::WorldPtr world;
-
-	// Time of initialisation
-	::gazebo::common::Time initTime;
 
 private:
     // Driver update event pointer
