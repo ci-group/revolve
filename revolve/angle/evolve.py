@@ -152,7 +152,9 @@ class Crossover(object):
         _renumber(r, base)
 
         # Set the actual connection and return the tree
-        result.set_connection(from_slot, to_slot, r, parent=True)
+        # Note that we have already correctly renumbered both the root tree
+        # and the child above.
+        start_node.set_connection(from_slot, to_slot, r, parent=True)
 
         return True, Tree(result)
 
