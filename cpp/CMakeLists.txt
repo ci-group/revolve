@@ -32,8 +32,8 @@ add_definitions(-pedantic -Wno-long-long -Wall -Wextra -Wformat=2
                 -Wswitch-enum -Wuninitialized 
                 -Wswitch-default -Winit-self -Wfloat-equal -fPIC )
 
-# Use C++11
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+# Use C++11 (removed - the Gazebo flags below do this)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # Debug Flags 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
@@ -69,8 +69,10 @@ foreach(ITR ${GAZEBO_INCLUDE_DIRS})
     set(GAZEBO_PROTO_INCLUDE "${ITR}/gazebo/msgs")
   endif()
 endforeach()
-
 include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS} ${GAZEBO_PROTO_INCLUDE})
+
+# Add Gazebo C++ flags (this includes c++11)
+list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 # Directory where the .proto files reside within revolve
 set(SPEC_DIR "${CMAKE_SOURCE_DIR}/revolve/msgs")
