@@ -3,7 +3,7 @@ argparse==1.2.1
 futures==3.0.2
 numpy==1.9.2
 protobuf==2.6.1
-git+git://github.com/jpieper/pygazebo.git@develop
-git+git@github.com:ElteHupkes/sdf-builder.git@master
+-e git+git://github.com/jpieper/pygazebo.git@develop#egg=pygazebo
+-e git+git@github.com:ElteHupkes/sdf-builder.git@master#egg=sdfbuilder
 trollius==2.0
 wsgiref==0.1.2
