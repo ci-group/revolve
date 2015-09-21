@@ -7,7 +7,8 @@ setup(name='revolve',
       author='Elte Hupkes',
       author_email='elte@hupkes.org',
       url='https://github.com/ElteHupkes/revolve',
-      packages=['revolve', 'revolve.analyze', 'revolve.build', 'revolve.build.sdf',
-                'revolve.convert', 'revolve.generate', 'revolve.spec', 'revolve.angle'],
-      install_requires=['PyYAML', 'pygazebo', 'protobuf', 'sdfbuilder']
+      packages=['revolve', 'revolve.gazebo', 'revolve.build', 'revolve.build.sdf',
+                'revolve.convert', 'revolve.generate', 'revolve.spec', 'revolve.angle',
+                'revolve.util'],
+      install_requires=['PyYAML', 'pygazebo', 'protobuf', 'sdfbuilder', 'numpy']
       )
