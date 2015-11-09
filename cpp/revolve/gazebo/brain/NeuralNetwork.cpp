@@ -23,11 +23,11 @@ void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron);
 
 NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & motors,
 		std::vector< SensorPtr > & sensors):
+	flipState_(false),
 	nInputs_(0),
 	nOutputs_(0),
 	nHidden_(0),
-	nNonInputs_(0),
-	flipState_(false)
+	nNonInputs_(0)
 {
 	// Initialize weights, input and states to zero by default
 	memset(weights_, 0, sizeof(weights_));

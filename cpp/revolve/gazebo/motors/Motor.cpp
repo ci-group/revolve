@@ -14,9 +14,9 @@ namespace gazebo {
 
 Motor::Motor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, unsigned int outputNeurons):
 	model_(model),
-	outputs_(outputNeurons),
 	partId_(partId),
-	motorId_(motorId)
+	motorId_(motorId),
+	outputs_(outputNeurons)
 {}
 
 Motor::~Motor() {}
