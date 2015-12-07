@@ -50,7 +50,7 @@ class WorldManager(object):
         :param world_address:
         :return:
         """
-        self = cls(world_address=world_address, analyzer_address=analyzer_address)
+        self = cls(_private=cls._PRIVATE, world_address=world_address, analyzer_address=analyzer_address)
         yield From(self._init())
         raise Return(self)
 
