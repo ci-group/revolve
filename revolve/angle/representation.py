@@ -618,6 +618,7 @@ class Node(object):
         """
         return self._neural_connections
 
+
 class BodyConnection(object):
     """
     Body connection
