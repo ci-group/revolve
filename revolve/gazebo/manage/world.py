@@ -24,7 +24,7 @@ class WorldManager(object):
     # Object used to make constructor private
     _PRIVATE = object()
 
-    def __init__(self, _private=None, world_address=None, analyzer_address=None,):
+    def __init__(self, _private=None, world_address=None, analyzer_address=None):
         """
 
         :param _private:
