@@ -24,12 +24,10 @@ class WorldManager(manage.WorldManager):
     """
 
     def __init__(self, builder, generator, world_address=None, analyzer_address=None,
-                 subscribe_stats=False, output_directory=None, _private=None):
+                 output_directory=None, _private=None):
         """
 
         :param generator:
-        :param subscribe_stats:
-        :param robot_cls: Class used for single robot management
         :param _private:
         :param world_address:
         :param analyzer_address:
@@ -59,9 +57,6 @@ class WorldManager(manage.WorldManager):
         self.start_time = None
         self.last_time = None
 
-        self.subscribe_stats = subscribe_stats
-        self.stats_subscriber = None
-
         # List of functions called when the local state updates
         self.update_triggers = []
 
@@ -88,17 +83,14 @@ class WorldManager(manage.WorldManager):
 
     @classmethod
     @trollius.coroutine
-    def create(cls, world_address=("127.0.0.1", 11345), analyzer_address=("127.0.0.1", 11346),
-               subscribe_stats=False):
+    def create(cls, world_address=("127.0.0.1", 11345), analyzer_address=("127.0.0.1", 11346)):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager
         :param world_address:
         :param analyzer_address:
-        :param subscribe_stats:
         :return:
         """
-        self = cls(_private=cls._PRIVATE, world_address=world_address,
-                   analyzer_address=analyzer_address, subscribe_stats=subscribe_stats)
+        self = cls(_private=cls._PRIVATE, world_address=world_address, analyzer_address=analyzer_address)
         yield From(self._init())
         raise Return(self)
 
@@ -124,21 +116,26 @@ class WorldManager(manage.WorldManager):
 
         # Subscribe to pose updates
         self.pose_subscriber = self.manager.subscribe(
-            '/gazebo/default/pose/info',
+            '/gazebo/default/revolve/robot_poses',
             'gazebo.msgs.PosesStamped',
             self._update_poses
         )
 
-        if self.subscribe_stats:
-            self.stats_subscriber = self.manager.subscribe(
-                '/gazebo/default/world_stats',
-                'gazebo.msgs.WorldStatistics',
-                self._update_stats
-            )
-            yield From(self.stats_subscriber.wait_for_connection())
+        fut = yield From(self.set_pose_update_frequency())
+        yield From(fut)
 
         # Wait for connections
         yield From(self.pose_subscriber.wait_for_connection())
+
+    def set_pose_update_frequency(self, freq=60):
+        """
+        Sets the pose update frequency. Defaults to 60 times per second.
+        :param freq:
+        :type freq: int
+        :return:
+        """
+        fut = yield From(self.request_handler.do_gazebo_request("set_robot_pose_update_frequency", str(freq)))
+        raise Return(fut)
 
     def get_robot_id(self):
         """
@@ -378,16 +375,6 @@ class WorldManager(manage.WorldManager):
             robot.update_position(t, position, self.write_poses)
 
         self.call_update_triggers()
-
-    def _update_stats(self, msg):
-        """
-        Handles the WorldStatistics message if subscribed to it.
-        :param msg:
-        :return:
-        """
-        stats = world_stats_pb2.WorldStatistics()
-        stats.ParseFromString(msg)
-        self.last_time = Time(msg=stats.sim_time)
 
     def add_update_trigger(self, callback):
         """

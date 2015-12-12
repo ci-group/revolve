@@ -11,6 +11,12 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
+WorldController::WorldController():
+	robotPosesPubFreq_(0),
+	lastRobotPosesUpdateTime_(0)
+{
+}
+
 void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 	std::cout << "World plugin loaded." << std::endl;
 
@@ -36,6 +42,38 @@ void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/
 	// Since models are added asynchronously, we need some way of detecting our model add.
 	// We do this using a model info subscriber.
 	modelSub_ = node_->Subscribe("~/model/info", &WorldController::OnModel, this);
+
+	// Bind to the world update event to perform some logic
+	updateConnection_ = gz::event::Events::ConnectWorldUpdateBegin(
+			boost::bind(&WorldController::OnUpdate, this, _1));
+
+	// Robot pose publisher
+	robotPosesPub_ = node_->Advertise<gz::msgs::PosesStamped>("~/revolve/robot_poses");
+}
+
+void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info) {
+	if (!robotPosesPubFreq_) {
+		return;
+	}
+
+	double secs = 1.0 / robotPosesPubFreq_;
+	double time = _info.simTime.Double();
+	if ((time - lastRobotPosesUpdateTime_) >= secs) {
+		// Send robot info update message, this only sends the
+		// main pose of the robot (which is all we need for now)
+		gz::msgs::PosesStamped msg;
+		gz::msgs::Set(msg.mutable_time(), _info.simTime);
+
+		for (auto model : world_->GetModels()) {
+			gz::msgs::Pose *poseMsg = msg.add_pose();
+			poseMsg->set_name(model->GetScopedName());
+			poseMsg->set_id(model->GetId());
+			gz::msgs::Set(poseMsg, model->GetRelativePose().Ign());
+		}
+
+		robotPosesPub_->Publish(msg);
+		lastRobotPosesUpdateTime_ = time;
+	}
 }
 
 // Process insert and delete requests
@@ -90,6 +128,16 @@ void WorldController::HandleRequest(ConstRequestPtr & request) {
 		// Don't leak memory
 		// https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
 		robotSDF.Root()->Reset();
+	} else if (request->request() == "set_robot_pose_update_frequency") {
+		robotPosesPubFreq_ = boost::lexical_cast<unsigned int>(request->data());
+		std::cout << "Setting robot pose update frequency to " << robotPosesPubFreq_ << "." << std::endl;
+
+		gz::msgs::Response resp;
+		resp.set_id(request->id());
+		resp.set_request("set_robot_pose_update_frequency");
+		resp.set_response("success");
+
+		responsePub_->Publish(resp);
 	}
 }
 
