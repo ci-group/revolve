@@ -13,14 +13,6 @@ namespace revolve {
 namespace gazebo {
 
 void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
-	std::cout << "Body analyzer loaded, accepting requests..." << std::endl;
-	std::cout << "------------------ Bounding box warning ------------------" << std::endl;
-	std::cout << "Please note that due to limitations in Gazebo, bounding box data is as of yet "
-			"*very* unreliable. It is included to be fixed in the future but I strongly advise against "
-			"using it in its current state for anything but simple situations without "
-			"rotated links." << std::endl;
-	std::cout << "-----------------------------------------------------------" << std::endl;
-
 	// Store pointer to the world
 	world_ = world;
 
@@ -138,26 +130,11 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	// Add the bounding box to the message
 	// Model collision bounding box is currently broken in Gazebo:
 	// https://bitbucket.org/osrf/gazebo/issue/1325/getboundingbox-returns-the-models-last is fixed
-	// The manual summing code below doesn't fix this entirely - unfortunately col->GetBoundingBox()
-	// just returns wrong values in a lot of cases.
-	gz::math::Vector3 min(FLT_MAX, FLT_MAX, FLT_MAX);
-	gz::math::Vector3 max(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-	for (gz::physics::LinkPtr link : model->GetLinks()) {
-		for (gz::physics::CollisionPtr col : link->GetCollisions()) {
-			auto colBox = col->GetBoundingBox();
-			min.SetToMin(colBox.min);
-			max.SetToMax(colBox.max);
-		}
-	}
-
-	// TODO Use this once aforementioned issue is fixed
-	// auto bbox = model->GetCollisionBoundingBox()
-	gz::math::Box bbox(min, max);
-
+	// My suggested fixes are present in the gazebo6-revolve branch
+	auto bbox = model->GetBoundingBox();
 	auto box = response.mutable_boundingbox();
-	box->set_x(bbox.GetXLength());
-	box->set_y(bbox.GetYLength());
-	box->set_z(bbox.GetZLength());
+	gz::msgs::Set(box->mutable_min(), bbox.min);
+	gz::msgs::Set(box->mutable_max(), bbox.max);
 
 	// Publish the message, serializing the response message in the wrapper data
 	response.SerializeToString(wrapper.mutable_serialized_data());

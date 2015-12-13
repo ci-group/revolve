@@ -9,12 +9,13 @@ from google.protobuf import descriptor_pb2
 
 
 import body_pb2
+from pygazebo.msg import vector3d_pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='sdf_body_analyze.proto',
   package='revolve.msgs',
-  serialized_pb='\n\x16sdf_body_analyze.proto\x12\x0crevolve.msgs\x1a\nbody.proto\"1\n\x07\x43ontact\x12\x12\n\ncollision1\x18\x01 \x02(\t\x12\x12\n\ncollision2\x18\x02 \x02(\t\".\n\x0b\x42oundingBox\x12\t\n\x01x\x18\x01 \x02(\x01\x12\t\n\x01y\x18\x02 \x02(\x01\x12\t\n\x01z\x18\x03 \x02(\x01\"n\n\x14\x42odyAnalysisResponse\x12.\n\x0b\x62oundingBox\x18\x01 \x01(\x0b\x32\x19.revolve.msgs.BoundingBox\x12&\n\x07\x63ontact\x18\x02 \x03(\x0b\x32\x15.revolve.msgs.Contact')
+  serialized_pb='\n\x16sdf_body_analyze.proto\x12\x0crevolve.msgs\x1a\nbody.proto\x1a\x0evector3d.proto\"1\n\x07\x43ontact\x12\x12\n\ncollision1\x18\x01 \x02(\t\x12\x12\n\ncollision2\x18\x02 \x02(\t\"U\n\x0b\x42oundingBox\x12\"\n\x03min\x18\x01 \x02(\x0b\x32\x15.gazebo.msgs.Vector3d\x12\"\n\x03max\x18\x02 \x02(\x0b\x32\x15.gazebo.msgs.Vector3d\"n\n\x14\x42odyAnalysisResponse\x12.\n\x0b\x62oundingBox\x18\x01 \x01(\x0b\x32\x19.revolve.msgs.BoundingBox\x12&\n\x07\x63ontact\x18\x02 \x03(\x0b\x32\x15.revolve.msgs.Contact')
 
 
 
@@ -49,8 +50,8 @@ _CONTACT = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=52,
-  serialized_end=101,
+  serialized_start=68,
+  serialized_end=117,
 )
 
 
@@ -62,23 +63,16 @@ _BOUNDINGBOX = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='x', full_name='revolve.msgs.BoundingBox.x', index=0,
-      number=1, type=1, cpp_type=5, label=2,
-      has_default_value=False, default_value=0,
+      name='min', full_name='revolve.msgs.BoundingBox.min', index=0,
+      number=1, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='y', full_name='revolve.msgs.BoundingBox.y', index=1,
-      number=2, type=1, cpp_type=5, label=2,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
-    _descriptor.FieldDescriptor(
-      name='z', full_name='revolve.msgs.BoundingBox.z', index=2,
-      number=3, type=1, cpp_type=5, label=2,
-      has_default_value=False, default_value=0,
+      name='max', full_name='revolve.msgs.BoundingBox.max', index=1,
+      number=2, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -91,8 +85,8 @@ _BOUNDINGBOX = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=103,
-  serialized_end=149,
+  serialized_start=119,
+  serialized_end=204,
 )
 
 
@@ -126,10 +120,12 @@ _BODYANALYSISRESPONSE = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=151,
-  serialized_end=261,
+  serialized_start=206,
+  serialized_end=316,
 )
 
+_BOUNDINGBOX.fields_by_name['min'].message_type = vector3d_pb2._VECTOR3D
+_BOUNDINGBOX.fields_by_name['max'].message_type = vector3d_pb2._VECTOR3D
 _BODYANALYSISRESPONSE.fields_by_name['boundingBox'].message_type = _BOUNDINGBOX
 _BODYANALYSISRESPONSE.fields_by_name['contact'].message_type = _CONTACT
 DESCRIPTOR.message_types_by_name['Contact'] = _CONTACT

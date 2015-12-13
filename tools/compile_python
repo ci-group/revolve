@@ -1,3 +1,3 @@
 #!/bin/sh
 # Generate Python protobuf files
-protoc -I ../cpp/revolve/msgs -I /usr/include/gazebo-5.1/gazebo/msgs/proto --python_out=../revolve/spec/msgs/ ../cpp/revolve/msgs/*.proto
+protoc -I ../cpp/revolve/msgs -I /usr/local/include/gazebo-6.5/gazebo/msgs/proto --python_out=../revolve/spec/msgs/ ../cpp/revolve/msgs/*.proto

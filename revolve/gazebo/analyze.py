@@ -138,6 +138,7 @@ class BodyAnalyzer(object):
         Coroutine that returns with a (collisions, bounding box) tuple,
         assuming analysis succeeds.
 
+        :param max_attempts:
         :param sdf:
         :type sdf: SDF
         :return:
@@ -159,8 +160,7 @@ class BodyAnalyzer(object):
             raise Return(None)
 
         if msg.HasField("boundingBox"):
-            b = msg.boundingBox
-            bbox = (b.x, b.y, b.z)
+            bbox = msg.boundingBox
         else:
             bbox = None
 

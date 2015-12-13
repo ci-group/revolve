@@ -1,5 +1,6 @@
 package revolve.msgs;
 import "body.proto";
+import "vector3d.proto";
 
 message Contact {
 	required string collision1 = 1;
@@ -7,9 +8,8 @@ message Contact {
 }
 
 message BoundingBox {
-	required double x = 1;
-	required double y = 2;
-	required double z = 3;
+	required gazebo.msgs.Vector3d min = 1;
+	required gazebo.msgs.Vector3d max = 2;
 }
 
 message BodyAnalysisResponse {

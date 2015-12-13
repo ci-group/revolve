@@ -24,6 +24,7 @@ else:
 random.seed(seed)
 print("Seed: %d" % seed, file=sys.stderr)
 
+
 @trollius.coroutine
 def analysis_func():
     analyzer = yield From(BodyAnalyzer.create(address=("127.0.0.1", 11346)))
@@ -43,13 +44,12 @@ def analysis_func():
         else:
             print("No model intersections detected!", file=sys.stderr)
             if bbox:
-                # Translate the model in z direction so it won't land
-                # "in" the ground.
-                # TODO Bounding box of body analyzer is incorrect, so we add a little space
-                # I cannot fully solve that by myself so will have to report
-                print("Model bounding box: (%f, %f, %f)" % bbox, file=sys.stderr)
+                # Translate the model in z direction so it stands directly on the ground
+                print("Model bounding box: (%f, %f, %f), (%f, %f, %f)" % (
+                    bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x, bbox.max.y, bbox.max.z
+                ), file=sys.stderr)
                 model = sdf.elements[0]
-                model.translate(Vector3(0, 0, 0.5 * bbox[2] + 1))
+                model.translate(Vector3(0, 0, -bbox.min.z))
 
             print(str(robot_to_sdf(robot, "test_bot", "controllerplugin.so")))
             break
