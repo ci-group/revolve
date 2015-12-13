@@ -133,8 +133,8 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	// My suggested fixes are present in the gazebo6-revolve branch
 	auto bbox = model->GetBoundingBox();
 	auto box = response.mutable_boundingbox();
-	gz::msgs::Set(box->mutable_min(), bbox.min);
-	gz::msgs::Set(box->mutable_max(), bbox.max);
+	gz::msgs::Set(box->mutable_min(), bbox.min.Ign());
+	gz::msgs::Set(box->mutable_max(), bbox.max.Ign());
 
 	// Publish the message, serializing the response message in the wrapper data
 	response.SerializeToString(wrapper.mutable_serialized_data());
