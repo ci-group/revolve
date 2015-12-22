@@ -24,9 +24,10 @@ class WorldManager(manage.WorldManager):
     """
 
     def __init__(self, builder, generator, world_address=None, analyzer_address=None,
-                 output_directory=None, _private=None):
+                 output_directory=None, pose_update_frequency=None, _private=None):
         """
 
+        :param pose_update_frequency:
         :param generator:
         :param _private:
         :param world_address:
@@ -45,6 +46,7 @@ class WorldManager(manage.WorldManager):
         self.write_poses = None
         self.output_directory = None
 
+        self.pose_update_frequency = pose_update_frequency
         self.builder = builder
         self.generator = generator
 
@@ -83,14 +85,17 @@ class WorldManager(manage.WorldManager):
 
     @classmethod
     @trollius.coroutine
-    def create(cls, world_address=("127.0.0.1", 11345), analyzer_address=("127.0.0.1", 11346)):
+    def create(cls, world_address=("127.0.0.1", 11345), analyzer_address=("127.0.0.1", 11346),
+               pose_update_frequency=60):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager
+        :param pose_update_frequency:
         :param world_address:
         :param analyzer_address:
         :return:
         """
-        self = cls(_private=cls._PRIVATE, world_address=world_address, analyzer_address=analyzer_address)
+        self = cls(_private=cls._PRIVATE, world_address=world_address, analyzer_address=analyzer_address,
+                   pose_update_frequency=pose_update_frequency)
         yield From(self._init())
         raise Return(self)
 
@@ -121,13 +126,13 @@ class WorldManager(manage.WorldManager):
             self._update_poses
         )
 
-        fut = yield From(self.set_pose_update_frequency())
+        fut = yield From(self.set_pose_update_frequency(self.pose_update_frequency))
         yield From(fut)
 
         # Wait for connections
         yield From(self.pose_subscriber.wait_for_connection())
 
-    def set_pose_update_frequency(self, freq=60):
+    def set_pose_update_frequency(self, freq):
         """
         Sets the pose update frequency. Defaults to 60 times per second.
         :param freq:
@@ -135,6 +140,7 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         fut = yield From(self.request_handler.do_gazebo_request("set_robot_pose_update_frequency", str(freq)))
+        self.pose_update_frequency = freq
         raise Return(fut)
 
     def get_robot_id(self):
