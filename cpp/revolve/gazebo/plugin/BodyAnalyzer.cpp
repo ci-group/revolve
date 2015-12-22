@@ -45,6 +45,9 @@ void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 
 	// Subscribe to model delete events
 	deleteSub_ = node_->Subscribe("~/response", &BodyAnalyzer::OnModelDelete, this);
+
+	// Hello world!
+	std::cout << "Body analyzer ready" << std::endl;
 }
 
 void BodyAnalyzer::OnModel(ConstModelPtr & msg) {

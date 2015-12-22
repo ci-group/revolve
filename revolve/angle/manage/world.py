@@ -70,11 +70,11 @@ class WorldManager(manage.WorldManager):
             os.mkdir(self.output_directory)
 
             # Open poses file, this is written *a lot* so use default OS buffering
-            self.poses_file = open('%s/poses.csv' % self.output_directory, 'wb')
+            self.poses_file = open(os.path.join(self.output_directory, 'poses.csv'), 'wb')
 
             # Open robots file line buffered so we can see it on the fly, isn't written
             # too often.
-            self.robots_file = open('%s/robots.csv' % self.output_directory, 'wb', buffering=1)
+            self.robots_file = open(os.path.join(self.output_directory, 'robots.csv'), 'wb', buffering=1)
             self.write_robots = csv.writer(self.robots_file, delimiter=',')
             self.write_poses = csv.writer(self.poses_file, delimiter=',')
 
