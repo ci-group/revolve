@@ -11,7 +11,10 @@
 #ifndef REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
 #define REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
 
+
 #include "Brain.h"
+#include <gazebo/gazebo.hh>
+#include <revolve/msgs/neural_net.pb.h>
 
 // These numbers are quite arbitrary. It used to be in:13 out:8
 // for the Arduino, but I upped them both to 20 to accomodate other
@@ -29,6 +32,8 @@
 namespace revolve {
 namespace gazebo {
 
+typedef const boost::shared_ptr<revolve::msgs::ModifyNeuralNetwork const> ConstModifyNeuralNetworkPtr;
+
 /*
  * Copied from NeuronRepresentation.h
  */
@@ -44,11 +49,13 @@ enum neuronType{
 class NeuralNetwork: public Brain {
 public:
 	/**
+	 * @param Name of the robot
 	 * @param The brain node
 	 * @param Reference to motor list, which might be reordered
 	 * @param Reference to the sensor list, which might be reordered
 	 */
-	NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors);
+	NeuralNetwork(std::string modelName, sdf::ElementPtr node,
+				  std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors);
 	virtual ~NeuralNetwork();
 
    /**
@@ -63,6 +70,24 @@ protected:
 	 * Steps the neural network
 	 */
 	void step(double time);
+
+	/**
+	 * Request handler to modify the neural network
+	 */
+	void modify(ConstModifyNeuralNetworkPtr &req);
+
+	// Mutex for stepping / updating the network
+	boost::mutex networkMutex_;
+
+	/**
+	 * Transport node
+	 */
+	::gazebo::transport::NodePtr node_;
+
+	/**
+	 * Network modification subscriber
+	 */
+	::gazebo::transport::SubscriberPtr alterSub_;
 
 	/*
 	 * Connection weights.
@@ -117,6 +142,16 @@ protected:
 	bool flipState_;
 
 	/**
+	 * Stores the type of each neuron ID
+	 */
+	std::map<std::string, std::string> layerMap_;
+
+	/**
+	 * Stores the position of each neuron ID, relative to its type
+	 */
+	std::map<std::string, unsigned int> positionMap_;
+
+	/**
 	 * The number of inputs
 	 */
 	unsigned int nInputs_;
@@ -135,6 +170,8 @@ protected:
 	 * The number of non-inputs (i.e. nOutputs + nHidden)
 	 */
 	unsigned int nNonInputs_;
+private:
+	void connectionHelper(const std::string & src, const std::string & dst, double weight);
 };
 
 } /* namespace gazebo */

@@ -110,7 +110,7 @@ void RobotController::loadBrain(sdf::ElementPtr sdf) {
 		return;
 	}
 	auto brain = sdf->GetElement("rv:brain");
-	brain_.reset(new NeuralNetwork(brain, motors_, sensors_));
+	brain_.reset(new NeuralNetwork(this->model->GetName(), brain, motors_, sensors_));
 }
 
 // Default startup, bind to CheckUpdate

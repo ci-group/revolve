@@ -15,13 +15,17 @@
 #include <sstream>
 #include <cmath>
 
+namespace gz = gazebo;
+
 namespace revolve {
 namespace gazebo {
 
 // Internal helper function to build neuron params
 void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron);
+void neuronHelper(double* params, unsigned int* types, const revolve::msgs::Neuron & neuron);
 
-NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & motors,
+NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
+							 std::vector< MotorPtr > & motors,
 		std::vector< SensorPtr > & sensors):
 	flipState_(false),
 	nInputs_(0),
@@ -29,6 +33,14 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 	nHidden_(0),
 	nNonInputs_(0)
 {
+	// Create transport node
+	node_.reset(new gz::transport::Node());
+	node_->Init();
+
+	// Listen to network modification requests
+	alterSub_ = node_->Subscribe("~/"+modelName+"/modify_neural_network",
+								 &NeuralNetwork::modify, this);
+
 	// Initialize weights, input and states to zero by default
 	memset(weights_, 0, sizeof(weights_));
 	memset(state1_, 0, sizeof(state1_));
@@ -44,12 +56,6 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 
 	// Map of ID to neuron element
 	std::map<std::string, sdf::ElementPtr> neuronMap;
-
-	// Stores the type of each neuron ID
-	std::map<std::string, std::string> layerMap;
-
-	// Stores the position of each neuron ID, relative to its type
-	std::map<std::string, unsigned int> positionMap;
 
 	// List of all hidden neurons for convenience
 	std::vector<std::string> hiddenNeurons;
@@ -68,13 +74,13 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 		auto layer = neuron->GetAttribute("layer")->GetAsString();
 		auto neuronId = neuron->GetAttribute("id")->GetAsString();
 
-		if (layerMap.count(neuronId)) {
+		if (layerMap_.count(neuronId)) {
 			std::cerr << "Duplicate neuron ID '"
 					<< neuronId << "'" << std::endl;
 			throw std::runtime_error("Robot brain error");
 		}
 
-		layerMap[neuronId] = layer;
+		layerMap_[neuronId] = layer;
 		neuronMap[neuronId] = neuron;
 
 		if ("input" == layer) {
@@ -141,7 +147,7 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 			}
 
 			neuronHelper(&params_[outPos * MAX_NEURON_PARAMS], &types_[outPos], details->second);
-			positionMap[neuronId.str()] = outPos;
+			positionMap_[neuronId.str()] = outPos;
 			toProcess.erase(neuronId.str());
 			outPos++;
 		}
@@ -173,7 +179,7 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 
 			// Input neurons can currently not have a type, so
 			// there is no need to process it.
-			positionMap[neuronId.str()] = inPos;
+			positionMap_[neuronId.str()] = inPos;
 			toProcess.erase(neuronId.str());
 			inPos++;
 		}
@@ -198,7 +204,7 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 	// Add hidden neurons
 	for (auto it = hiddenNeurons.begin(); it != hiddenNeurons.end(); ++it) {
 		auto neuronId = *it;
-		positionMap[neuronId] = outPos;
+		positionMap_[neuronId] = outPos;
 		neuronHelper(&params_[outPos * MAX_NEURON_PARAMS], &types_[outPos], neuronMap[neuronId]);
 		outPos++;
 	}
@@ -215,56 +221,11 @@ NeuralNetwork::NeuralNetwork(sdf::ElementPtr node, std::vector< MotorPtr > & mot
 
 		auto src = connection->GetAttribute("src")->GetAsString();
 		auto dst = connection->GetAttribute("dst")->GetAsString();
+		double weight;
+		connection->GetAttribute("weight")->Get(weight);
 
-		if (!layerMap.count(src)) {
-			std::cerr << "Source neuron '" << src << "' is unknown." << std::endl;
-			throw std::runtime_error("Robot brain error");
-		}
-
-		if (!layerMap.count(dst)) {
-			std::cerr << "Destination neuron '" << dst << "' is unknown." << std::endl;
-			throw std::runtime_error("Robot brain error");
-		}
-
-		auto srcLayer = layerMap[src];
-		auto dstLayer = layerMap[dst];
-
-		int srcNeuronPos;
-		int dstNeuronPos;
-
-		srcNeuronPos = positionMap[src];
-		dstNeuronPos = positionMap[dst];
-
-		if ("hidden" == srcLayer) {
-			// Offset by outputs if hidden neuron; nothing
-			// needs to happen for output or input neurons.
-			srcNeuronPos += nOutputs_;
-		}
-
-		if ("input" == dstLayer) {
-			std::cerr << "Destination neuron '" << dst << "' is an input neuron." << std::endl;
-			throw std::runtime_error("Robot brain error");
-		} else if ("hidden" == dstLayer) {
-			// Offset by outputs if hidden neuron
-			dstNeuronPos += nOutputs_;
-		}
-
-		// Determine the index of the weight.
-		// Each output / hidden neuron can be used as an output, input
-		// neurons can only be used as an input. By default, we offset
-		// the index by the position of the neuron, which is the
-		// correct position for an input neuron:
-		unsigned int idx = (srcNeuronPos * nNonInputs_) + dstNeuronPos;
-
-		if ("input" != srcLayer) {
-			// The output neuron list starts after all input neuron
-			// connections, so we need to offset it from all
-			// nInputs * nNonInputs of such connections:
-			idx += (nInputs_ * nNonInputs_);
-		}
-
-		// Set the weight; `Get` has a return argument here
-		connection->GetAttribute("weight")->Get(weights_[idx]);
+		// Use connection helper to set the weight
+		connectionHelper(src, dst, weight);
 
 		// Load the next connection
 		connection = connection->GetNextElement("rv:connection");
@@ -348,6 +309,7 @@ void NeuralNetwork::step(double time) {
 void NeuralNetwork::update(const std::vector<MotorPtr>& motors,
 		const std::vector<SensorPtr>& sensors,
 		double t, double step) {
+	boost::mutex::scoped_lock lock(networkMutex_);
 
 	// Read sensor data and feed the neural network
 	unsigned int p = 0;
@@ -370,6 +332,45 @@ void NeuralNetwork::update(const std::vector<MotorPtr>& motors,
 	}
 }
 
+void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
+	boost::mutex::scoped_lock lock(networkMutex_);
+
+	unsigned int i;
+	for (i = 0; i < req->remove_hidden_size(); ++i) {
+		// Find the neuron + position
+		// Set its parameters and weights to zero
+		//
+		std::cerr << "Removing neurons is currently not supported." << std::endl;
+		throw std::runtime_error("Robot brain error");
+	}
+
+	for (i = 0; i < req->set_parameters_size(); ++i) {
+		auto neuron = req->set_parameters(i);
+		auto id = neuron.id();
+		if (!positionMap_.count(id)) {
+			throw std::runtime_error("Unknown neuron ID `"+id+"`");
+		}
+
+		auto pos = positionMap_[id];
+		auto layer = layerMap_[id];
+
+		if ("input" == layer) {
+			std::cerr << "Input neurons cannot be modified." << std::endl;
+			throw std::runtime_error("Robot brain error");
+		}
+
+		neuronHelper(&params_[pos * MAX_NEURON_PARAMS], &types_[pos], neuron);
+	}
+
+	for (i = 0; i < req->set_weights_size(); ++i) {
+		auto conn = req->set_weights(i);
+		auto src = conn.src();
+		auto dst = conn.dst();
+
+
+	}
+}
+
 // TODO Check for erroneous / missing parameters
 void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
 	if (!neuron->HasAttribute("type")) {
@@ -382,7 +383,7 @@ void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
 		types[0] = "Simple" == type ? SIMPLE : SIGMOID;
 
 		if (!neuron->HasElement("rv:bias") || !neuron->HasElement("rv:gain")) {
-			std::cerr << "A `Simple` neuron requires `rv:bias` and `rv:gain` elements." << std::endl;
+			std::cerr << "A `" << type << "` neuron requires `rv:bias` and `rv:gain` elements." << std::endl;
 			throw std::runtime_error("Robot brain error");
 		}
 
@@ -403,10 +404,89 @@ void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
 		params[1] = neuron->GetElement("rv:phase_offset")->Get< double >();
 		params[2] = neuron->GetElement("rv:amplitude")->Get< double >();
 	} else {
-		std::cerr << "Only `Sigmoid` and `Oscillator` neurons supported currently, "
-				"given type is `" << type << '`' << std::endl;
+		std::cerr << "Unsupported neuron type `" << type << '`' << std::endl;
 		throw std::runtime_error("Robot brain error");
 	}
+}
+
+void neuronHelper(double* params, unsigned int* types, const revolve::msgs::Neuron & neuron) {
+	auto type = neuron->type();
+	if ("Sigmoid" == type || "Simple" == type) {
+		types[0] = "Simple" == type ? SIMPLE : SIGMOID;
+		if (neuron.param_size() != 2) {
+			std::cerr << "A `" << type << "` neuron requires exactly two parameters." << std::endl;
+			throw std::runtime_error("Robot brain error");
+		}
+
+		// Set bias and gain parameters
+		params[0] = neuron.param(0).value();
+		params[1] = neuron.param(1).value();
+	} else if ("Oscillator" == type) {
+		types[0] = OSCILLATOR;
+
+		if (neuron->param_size() != 3) {
+			std::cerr << "A `" << type << "` neuron requires exactly three parameters." << std::endl;
+			throw std::runtime_error("Robot brain error");
+		}
+
+		params[0] = neuron.param(0).value();
+		params[1] = neuron.param(1).value();
+		params[2] = neuron.param(2).value();
+	} else {
+		std::cerr << "Unsupported neuron type `" << type << '`' << std::endl;
+		throw std::runtime_error("Robot brain error");
+	}
+}
+
+void NeuralNetwork::connectionHelper(const std::string & src, const std::string & dst, double weight) {
+	if (!layerMap_.count(src)) {
+		std::cerr << "Source neuron '" << src << "' is unknown." << std::endl;
+		throw std::runtime_error("Robot brain error");
+	}
+
+	if (!layerMap_.count(dst)) {
+		std::cerr << "Destination neuron '" << dst << "' is unknown." << std::endl;
+		throw std::runtime_error("Robot brain error");
+	}
+
+	auto srcLayer = layerMap_[src];
+	auto dstLayer = layerMap_[dst];
+
+	int srcNeuronPos;
+	int dstNeuronPos;
+
+	srcNeuronPos = positionMap_[src];
+	dstNeuronPos = positionMap_[dst];
+
+	if ("hidden" == srcLayer) {
+		// Offset by outputs if hidden neuron; nothing
+		// needs to happen for output or input neurons.
+		srcNeuronPos += nOutputs_;
+	}
+
+	if ("input" == dstLayer) {
+		std::cerr << "Destination neuron '" << dst << "' is an input neuron." << std::endl;
+		throw std::runtime_error("Robot brain error");
+	} else if ("hidden" == dstLayer) {
+		// Offset by outputs if hidden neuron
+		dstNeuronPos += nOutputs_;
+	}
+
+	// Determine the index of the weight.
+	// Each output / hidden neuron can be used as an output, input
+	// neurons can only be used as an input. By default, we offset
+	// the index by the position of the neuron, which is the
+	// correct position for an input neuron:
+	unsigned int idx = (srcNeuronPos * nNonInputs_) + dstNeuronPos;
+
+	if ("input" != srcLayer) {
+		// The output neuron list starts after all input neuron
+		// connections, so we need to offset it from all
+		// nInputs * nNonInputs of such connections:
+		idx += (nInputs_ * nNonInputs_);
+	}
+
+	weights_[idx] = weight;
 }
 
 } /* namespace gazebo */

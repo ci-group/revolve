@@ -19,3 +19,10 @@ message NeuralNetwork {
   repeated Neuron neuron = 1;
   repeated NeuralConnection connection = 2;
 }
+
+message ModifyNeuralNetwork {
+  repeated string remove_hidden = 1;
+  repeated Neuron add_hidden = 2;
+  repeated Neuron set_parameters = 4;
+  repeated NeuralConnection set_weights = 3;
+}
