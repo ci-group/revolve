@@ -92,23 +92,14 @@ protected:
 	/*
 	 * Connection weights.
 	 *
-	 * Given m input neurons and n output neurons
-	 * m <= MAX_INPUT_NEURONS
-	 * n <= MAX_OUTPUT_NEURONS
+	 * All neurons can be connection sources, only hidden and
+	 * output neurons can be connection targets. The first
+	 * MAX_INPUT_NEURONS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
+	 * entries are weights from input neurons to output / hidden neurons, then follow
+	 * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS) * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
+	 * weights for output/hidden to output/hidden connections.
 	 *
-	 * One weight for each input-output connection (w_ij, input neuron i, 0 <= i <= m, output neuron j, 0 <= j <= n
-	 * One weight for each output-output connection (wr_ij, output neuron i,j, 0 <= i,j <= n )
-	 *
-	 * The weights are saved as the concatenation by row of the following:
-	 * w_00 w_01 ... w_0n
-	 * w_10 w_11 ... w_1n
-	 * ...  ...  ... ...
-	 * w_m0 w_m1 ... w_mn
-	 *
-	 * wo_00 wo_01 ... wo_0n
-	 * wo_10 wo_11 ... wo_1n
-	 * ...  ...  ... ....
-	 * wo_n0 wo_n1 ... wo_nn
+	 * To look up a connection weight from input i to a non input o,
 	 */
 	double weights_[(MAX_INPUT_NEURONS + MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
 		             * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
