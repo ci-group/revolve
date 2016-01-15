@@ -42,7 +42,9 @@ NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
 								 &NeuralNetwork::modify, this);
 
 	// Initialize weights, input and states to zero by default
-	memset(weights_, 0, sizeof(weights_));
+	memset(inputWeights_, 0, sizeof(inputWeights_));
+	memset(outputWeights_, 0, sizeof(outputWeights_));
+	memset(hiddenWeights_, 0, sizeof(hiddenWeights_));
 	memset(state1_, 0, sizeof(state1_));
 	memset(state2_, 0, sizeof(state2_));
 	memset(input_, 0, sizeof(input_));
@@ -259,18 +261,24 @@ void NeuralNetwork::step(double time) {
 	}
 
 
-	unsigned int baseIndexOutputWeights = nNonInputs_ * nInputs_;
+	unsigned int maxNonInputs = MAX_HIDDEN_NEURONS + MAX_OUTPUT_NEURONS;
 	for (i = 0; i < nNonInputs_; ++i) {
 		double curNeuronActivation = 0;
 
+		// Add input neuron values
 		for (j = 0; j < nInputs_; ++j) {
-			curNeuronActivation += weights_[nNonInputs_ * j + i]
+			curNeuronActivation += inputWeights_[maxNonInputs * j + i]
 					* input_[j];
 		}
 
-		for (j = 0; j < nNonInputs_; ++j) {
-			curNeuronActivation += weights_[baseIndexOutputWeights
-					+ nNonInputs_ * j + i] * curState[j];
+		// Add output neuron values
+		for (j = 0; j < nOutputs_; ++j) {
+			curNeuronActivation += outputWeights_[maxNonInputs * j + i] * curState[j];
+		}
+
+		// Add hidden neuron values
+		for (j = 0; j < nHidden_; ++j) {
+			curNeuronActivation += hiddenWeights_[maxNonInputs * j + i] * curState[nOutputs_ + j];
 		}
 
 		unsigned int base = MAX_NEURON_PARAMS * i;
@@ -343,11 +351,8 @@ void NeuralNetwork::update(const std::vector<MotorPtr>& motors,
 void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
 	boost::mutex::scoped_lock lock(networkMutex_);
 
-	unsigned int i;
-	for (i = 0; i < req->remove_hidden_size(); ++i) {
-		std::cerr << "Removing neurons is currently not supported." << std::endl;
-		throw std::runtime_error("Robot brain error");
-
+	unsigned int i, j;
+	for (i = 0; i < (unsigned int)req->remove_hidden_size(); ++i) {
 		// Find the neuron + position
 		auto id = req->remove_hidden(i);
 		if (!positionMap_.count(id)) {
@@ -379,8 +384,8 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
 
 		// Shift parameters
 		s = sizeof(params_[0]);
-		std::memmove(
-			// Position shifted one type to the left
+		memmove(
+			// Position of item to remove
 			params_ + (pos + nOutputs_) * MAX_NEURON_PARAMS * s,
 
 			// Position of next neuron type
@@ -390,15 +395,52 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
 			(nHidden_ - pos - 1) * MAX_NEURON_PARAMS * s
 		);
 
-		// TODO shift weights
-		// This is a rather cumbersome operation, because we
-		// have to both remove the entire block of weights allocated
-		// to this neuron as well as removing the weight entry
-		// for each source target separately. This is also quite
-		// an intensive operation, but storing things in a more
-		// convenient matter would disrupt stepping the neural net
-		// which is of course a much more active code path.
-		// TODO This may not be true, probably can make this more convenient
+		// Reposition items in weight arrays. We start with the weights
+		// of connections pointing *to* the neuron to be removed.
+		// For each entry in each of the three weights arrays we have to
+		// move all hidden connection weights down, then zero out the last entry
+		s = sizeof(inputWeights_[0]);
+		double* weightArrays[] = {inputWeights_, outputWeights_, hiddenWeights_};
+		unsigned int sizes[] = {nInputs_, nOutputs_, nHidden_};
+
+		for (unsigned int k = 0; k < 3; ++k) {
+			auto * weights = weightArrays[k];
+			auto size = sizes[k];
+
+			for (j = 0; j < size; ++j) {
+				memmove(
+					// Position of item to remove
+					weights + (nOutputs_ + pos) * s,
+
+					// Position of next item
+					weights + (nOutputs_ + pos + 1) * s,
+
+					// # of possible hidden neurons beyond this one
+					(MAX_HIDDEN_NEURONS - pos - 1) * s
+				);
+
+				// Zero out the last item in case a connection that corresponds
+				// to it is ever added.
+				weights[nOutputs_ + pos] = 0;
+			}
+		}
+
+		// Now the weights where the removed neuron is the source
+		// The block of weights corresponding to the neuron that is being
+		// removed needs to be removed by shifting down all items beyond it.
+		memmove(
+			// Position of the item to remove
+			hiddenWeights_ + pos * MAX_NON_INPUT_NEURONS * s,
+
+			// Position of the next item
+			hiddenWeights_ + (pos + 1) * MAX_NON_INPUT_NEURONS * s,
+
+			// Remaining number of memory items
+			(MAX_HIDDEN_NEURONS - pos - 1) * MAX_NON_INPUT_NEURONS * s
+		);
+
+		// Zero the remaining entries at the end
+		memset(hiddenWeights_ + (MAX_HIDDEN_NEURONS - 1) * s, 0, MAX_NON_INPUT_NEURONS * s);
 
 		// Decrement the entry in the `positionMap` for all
 		// hidden neurons above this one.
@@ -414,7 +456,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
 	}
 
 	// Add new requested hidden neurons
-	for (i = 0; i < req->add_hidden_size(); ++i) {
+	for (i = 0; i < (unsigned int)req->add_hidden_size(); ++i) {
 		if (nHidden_ >= MAX_HIDDEN_NEURONS) {
 			std::cerr << "Cannot add hidden neuron; the max ("
 			<< MAX_HIDDEN_NEURONS << ") is already reached." << std::endl;
@@ -438,7 +480,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
 	}
 
 	// Update parameters of existing neurons
-	for (i = 0; i < req->set_parameters_size(); ++i) {
+	for (i = 0; i < (unsigned int)req->set_parameters_size(); ++i) {
 		auto neuron = req->set_parameters(i);
 		auto id = neuron.id();
 		if (!positionMap_.count(id)) {
@@ -458,7 +500,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
 	}
 
 	// Set weights of new or existing connections
-	for (i = 0; i < req->set_weights_size(); ++i) {
+	for (i = 0; i < (unsigned int)req->set_weights_size(); ++i) {
 		auto conn = req->set_weights(i);
 		auto src = conn.src();
 		auto dst = conn.dst();
@@ -482,11 +524,8 @@ void NeuralNetwork::connectionHelper(const std::string & src, const std::string 
 	auto srcLayer = layerMap_[src];
 	auto dstLayer = layerMap_[dst];
 
-	int srcNeuronPos;
-	int dstNeuronPos;
-
-	srcNeuronPos = positionMap_[src];
-	dstNeuronPos = positionMap_[dst];
+	unsigned int srcNeuronPos = positionMap_[src],
+				 dstNeuronPos = positionMap_[dst];
 
 	if ("input" == dstLayer) {
 		std::cerr << "Destination neuron '" << dst << "' is an input neuron." << std::endl;
@@ -497,20 +536,14 @@ void NeuralNetwork::connectionHelper(const std::string & src, const std::string 
 	}
 
 	// Determine the index of the weight.
-	// Each output / hidden neuron can be used as an output, input
-	// neurons can only be used as an input. By default, we offset
-	// the index by the position of the neuron, which is the
-	// correct position for an input neuron:
-	unsigned int idx = (srcNeuronPos * nNonInputs_) + dstNeuronPos;
-
-	if ("input" != srcLayer) {
-		// The output neuron list starts after all input neuron
-		// connections, so we need to offset it from all
-		// nInputs * nNonInputs of such connections:
-		idx += (nInputs_ * nNonInputs_);
+	unsigned int idx = (srcNeuronPos * MAX_NON_INPUT_NEURONS) + dstNeuronPos;
+	if ("input" == srcLayer) {
+		inputWeights_[idx] = weight;
+	} else if ("output" == srcLayer) {
+		outputWeights_[idx] = weight;
+	} else {
+		hiddenWeights_[idx] = weight;
 	}
-
-	weights_[idx] = weight;
 }
 
 /////////////////////////////////////////////////

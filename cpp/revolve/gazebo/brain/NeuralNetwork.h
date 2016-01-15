@@ -26,6 +26,9 @@
 // Arbitrary value
 #define MAX_HIDDEN_NEURONS 30
 
+// Convenience
+#define MAX_NON_INPUT_NEURONS (MAX_INPUT_NEURONS + MAX_OUTPUT_NEURONS)
+
 // (bias, tau, gain) or (phase offset, period, gain)
 #define MAX_NEURON_PARAMS 3
 
@@ -90,20 +93,21 @@ protected:
 	::gazebo::transport::SubscriberPtr alterSub_;
 
 	/*
-	 * Connection weights.
+	 * Connection weights, separated into three arrays for convenience. Note
+	 * that only output and hidden neurons are weight targets.
 	 *
-	 * All neurons can be connection sources, only hidden and
-	 * output neurons can be connection targets. The first
-	 * MAX_INPUT_NEURONS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
-	 * entries are weights from input neurons to output / hidden neurons, then follow
-	 * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS) * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
-	 * weights for output/hidden to output/hidden connections.
-	 *
-	 * To look up a connection weight from input i to a non input o,
+	 * Weights are stored with gaps, meaning that every neuron holds entries for
+	 * the maximum possible number of connections. This makes restructuring the
+	 * weights arrays when a hidden neuron is removed slightly less cumbersome.
 	 */
-	double weights_[(MAX_INPUT_NEURONS + MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)
-		             * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
+	double inputWeights_[MAX_INPUT_NEURONS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
+	double outputWeights_[MAX_OUTPUT_NEURONS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
+	double hiddenWeights_[MAX_HIDDEN_NEURONS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
 
+	// Unlike weights, types, params and current states are stored without
+	// gaps, meaning the first `m` entries are for output neurons, followed
+	// by `n` entries for hidden neurons. If a hidden neuron is removed,
+	// the items beyond it are moved back.
 	/**
 	 * Type of each non-input neuron
 	 */
@@ -115,16 +119,16 @@ protected:
 	 */
 	double params_[MAX_NEURON_PARAMS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
 
-	/**
-	 * One input state for each input neuron
-	 */
-	double input_[MAX_INPUT_NEURONS];
-
 	/*
 	 * Output states arrays for the current state and the next state.
 	 */
 	double state1_[MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS];
 	double state2_[MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS];
+
+	/**
+	 * One input state for each input neuron
+	 */
+	double input_[MAX_INPUT_NEURONS];
 
 	/**
 	 * Used to determine the current state array. False = state1,
