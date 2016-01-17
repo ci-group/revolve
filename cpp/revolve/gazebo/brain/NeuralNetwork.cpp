@@ -311,9 +311,9 @@ void NeuralNetwork::step(double time) {
 					nextState[i] * gain);
 		} break;
 		default:
-			// Unsupported type will have been caught in the
-			// constructor.
-			break;
+			// Unsupported type should never happen
+			std::cerr << "Invalid neuron type during processing, must be a bug." << std::endl;
+			throw std::runtime_error("Robot brain error");
 		}
 	}
 
