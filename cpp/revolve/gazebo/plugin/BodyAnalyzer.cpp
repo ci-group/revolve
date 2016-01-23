@@ -58,7 +58,7 @@ void BodyAnalyzer::OnModel(ConstModelPtr & msg) {
 	}
 
 	if (world_->GetModels().size() > 1) {
-		throw std::runtime_error("INERNAL ERROR: Too many models in analyzer.");
+		throw std::runtime_error("INTERNAL ERROR: Too many models in analyzer.");
 	}
 
 	// Unpause the world so contacts will be handled
@@ -132,7 +132,7 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 
 	// Add the bounding box to the message
 	// Model collision bounding box is currently broken in Gazebo:
-	// https://bitbucket.org/osrf/gazebo/issue/1325/getboundingbox-returns-the-models-last is fixed
+	// https://bitbucket.org/osrf/gazebo/issue/1325/getboundingbox-returns-the-models-last
 	// My suggested fixes are present in the gazebo6-revolve branch
 	auto bbox = model->GetBoundingBox();
 	auto box = response.mutable_boundingbox();

@@ -167,6 +167,9 @@ void WorldController::OnModel(ConstModelPtr &msg) {
 	inserted.SerializeToString(resp.mutable_serialized_data());
 
 	responsePub_->Publish(resp);
+
+	std::cout << "Model `" << name << "` inserted, world now contains " <<
+			world_->GetModelCount() << " models." << std::endl;
 }
 
 void WorldController::HandleResponse(ConstResponsePtr &response) {
