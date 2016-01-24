@@ -48,7 +48,7 @@ void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/
 			boost::bind(&WorldController::OnUpdate, this, _1));
 
 	// Robot pose publisher
-	robotPosesPub_ = node_->Advertise<gz::msgs::PosesStamped>("~/revolve/robot_poses");
+	robotPosesPub_ = node_->Advertise<gz::msgs::PosesStamped>("~/revolve/robot_poses", 50);
 }
 
 void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info) {
@@ -65,14 +65,21 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info) {
 		gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
 		for (auto model : world_->GetModels()) {
+			if (model->IsStatic()) {
+				// Ignore static models such as the ground and obstacles
+				continue;
+			}
+
 			gz::msgs::Pose *poseMsg = msg.add_pose();
 			poseMsg->set_name(model->GetScopedName());
 			poseMsg->set_id(model->GetId());
 			gz::msgs::Set(poseMsg, model->GetRelativePose().Ign());
 		}
 
-		robotPosesPub_->Publish(msg);
-		lastRobotPosesUpdateTime_ = time;
+		if (msg.pose_size() > 0) {
+			robotPosesPub_->Publish(msg);
+			lastRobotPosesUpdateTime_ = time;
+		}
 	}
 }
 

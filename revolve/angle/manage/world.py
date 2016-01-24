@@ -86,7 +86,7 @@ class WorldManager(manage.WorldManager):
     @classmethod
     @trollius.coroutine
     def create(cls, world_address=("127.0.0.1", 11345), analyzer_address=("127.0.0.1", 11346),
-               pose_update_frequency=60):
+               pose_update_frequency=10):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager
         :param pose_update_frequency:
@@ -134,7 +134,7 @@ class WorldManager(manage.WorldManager):
 
     def set_pose_update_frequency(self, freq):
         """
-        Sets the pose update frequency. Defaults to 60 times per second.
+        Sets the pose update frequency. Defaults to 10 times per second.
         :param freq:
         :type freq: int
         :return:
