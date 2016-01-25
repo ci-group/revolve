@@ -1,19 +1,21 @@
 # Global imports
 import os
+import shutil
+import pickle
 from datetime import datetime
 import csv
 import trollius
 from trollius import From, Return, Future
 from sdfbuilder import SDF
 from sdfbuilder.math import Vector3
-from pygazebo.msg import poses_stamped_pb2, world_stats_pb2
+from pygazebo.msg import poses_stamped_pb2, gz_string_pb2
 
 # Local imports
 from ...gazebo import manage
 from ...spec import Robot as PbRobot
 from .robot import Robot
 from ...logging import logger
-from ...util import multi_future, Time
+from ...util import multi_future, Time, wait_for
 from revolve.spec.msgs import ModelInserted
 
 
@@ -24,9 +26,12 @@ class WorldManager(manage.WorldManager):
     """
 
     def __init__(self, builder, generator, world_address=None, analyzer_address=None,
-                 output_directory=None, pose_update_frequency=None, _private=None):
+                 output_directory=None, pose_update_frequency=None,
+                 restore=None, _private=None):
         """
 
+        :param restore: Restore the world from this directory, if available. Only works
+                         if `output_directory` is also specified.
         :param pose_update_frequency:
         :param generator:
         :param _private:
@@ -45,13 +50,14 @@ class WorldManager(manage.WorldManager):
         self.write_robots = None
         self.write_poses = None
         self.output_directory = None
+        self.robots_filename = None
+        self.poses_filename = None
+        self.snapshot_filename = None
+        self.world_snapshot_filename = None
 
         self.pose_update_frequency = pose_update_frequency
         self.builder = builder
         self.generator = generator
-
-        self.robots = {}
-        self.robot_id = 0
 
         self.robots = {}
         self.robot_id = 0
@@ -62,26 +68,48 @@ class WorldManager(manage.WorldManager):
         # List of functions called when the local state updates
         self.update_triggers = []
 
+        self.do_restore = None
+
         if output_directory:
-            self.output_directory = os.path.join(output_directory,
-                                                 datetime.now().strftime('%Y%m%d%H%M%S'))
+            if not restore:
+                restore = datetime.now().strftime(datetime.now().strftime('%Y%m%d%H%M%S'))
 
-            # These all raise exceptions on failure, no need to further check
+            self.output_directory = os.path.join(output_directory, restore)
 
-            # Create timestamped directory within output directory
-            os.mkdir(self.output_directory)
+            if not os.path.exists(self.output_directory):
+                os.mkdir(self.output_directory)
 
-            # Open poses file, this is written *a lot* so use default OS buffering
-            self.poses_file = open(os.path.join(self.output_directory, 'poses.csv'), 'wb')
+            self.snapshot_filename = os.path.join(self.output_directory, 'snapshot.pickle')
+            if os.path.exists(self.snapshot_filename):
+                # Snapshot exists - restore from it
+                with open(self.snapshot_filename, 'rb') as snapshot_file:
+                    self.do_restore = pickle.load(snapshot_file)
 
-            # Open robots file line buffered so we can see it on the fly, isn't written
-            # too often.
-            self.robots_file = open(os.path.join(self.output_directory, 'robots.csv'), 'wb', buffering=1)
-            self.write_robots = csv.writer(self.robots_file, delimiter=',')
-            self.write_poses = csv.writer(self.poses_file, delimiter=',')
+            self.world_snapshot_filename = os.path.join(self.output_directory, 'snapshot.world')
 
-            self.write_robots.writerow(['id', 'parent1', 'parent2'])
-            self.write_poses.writerow(['id', 'sec', 'nsec', 'x', 'y', 'z'])
+            self.robots_filename = os.path.join(self.output_directory, 'robots.csv')
+            self.poses_filename = os.path.join(self.output_directory, 'poses.csv')
+
+            if self.do_restore:
+                # Copy snapshot files and open created files in append mode
+                # TODO Delete robot sdf / pb files that were created after the snapshot
+                shutil.copy(self.poses_filename+'.snapshot', self.poses_filename)
+                shutil.copy(self.robots_filename+'.snapshot', self.robots_filename)
+
+                self.robots_file = open(self.robots_filename, 'ab')
+                self.poses_file = open(self.poses_filename, 'ab')
+            else:
+                # Open poses file, this is written *a lot* so use default OS buffering
+                self.poses_file = open(os.path.join(self.output_directory, 'poses.csv'), 'wb')
+
+                # Open robots file line buffered so we can see it on the fly, isn't written
+                # too often.
+                self.robots_file = open(os.path.join(self.output_directory, 'robots.csv'), 'wb', buffering=1)
+                self.write_robots = csv.writer(self.robots_file, delimiter=',')
+                self.write_poses = csv.writer(self.poses_file, delimiter=',')
+
+                self.write_robots.writerow(['id', 'parent1', 'parent2'])
+                self.write_poses.writerow(['id', 'sec', 'nsec', 'x', 'y', 'z'])
 
     @classmethod
     @trollius.coroutine
@@ -109,6 +137,7 @@ class WorldManager(manage.WorldManager):
             self.robots_file.close()
             self.poses_file.close()
 
+    @trollius.coroutine
     def _init(self):
         """
         Initializes the world manager
@@ -131,6 +160,76 @@ class WorldManager(manage.WorldManager):
 
         # Wait for connections
         yield From(self.pose_subscriber.wait_for_connection())
+
+        if self.do_restore:
+            with open(self.snapshot_filename, 'rb') as f:
+                data = pickle.load(f)
+
+            yield From(self.restore_snapshot(data))
+
+    @trollius.coroutine
+    def create_snapshot(self):
+        """
+        Creates a snapshot of the world in the output directory. This pauses the world.
+        :return:
+        """
+        if not self.output_directory:
+            logger.warning("No output directory - no snapshot will be created.")
+            raise Return(False)
+
+        # Pause the world
+        yield From(wait_for(self.pause()))
+
+        # Obtain a copy of the current world SDF from Gazebo and write it to file
+        response = yield From(wait_for(self.request_handler.do_gazebo_request("world_sdf")))
+        if response.response == "error":
+            logger.warning("WARNING: requesting world state resulted in error. Snapshot failed.")
+            raise Return(False)
+
+        msg = gz_string_pb2.GzString()
+        msg.ParseFromString(response.serialized_data)
+        with open(self.world_snapshot_filename, 'wb') as f:
+            f.write(msg.data)
+
+        # Get the snapshot data and pickle to file
+        data = yield From(self.get_snapshot_data())
+
+        with open(self.snapshot_filename, 'wb') as f:
+            pickle.dump(data, f)
+
+        # Flush statistic files and copy them
+        self.poses_file.flush()
+        self.robots_file.flush()
+        shutil.copy(self.poses_filename, self.poses_filename+'.snapshot')
+        shutil.copy(self.robots_filename, self.robots_filename+'.snapshot')
+
+    @trollius.coroutine
+    def restore_snapshot(self, data):
+        """
+        Called with the data object created and pickled in `get_snapshot_data`,
+        should restore the state of the world manager to where
+        it can continue the way it left off.
+        :param data:
+        :return:
+        """
+        self.robots = data['robots']
+        self.robot_id = data['robot_id']
+        self.start_time = data['start_time']
+        self.last_time = data['last_time']
+
+    @trollius.coroutine
+    def get_snapshot_data(self):
+        """
+        Returns a data object to be pickled into a snapshot file.
+        This should contain
+        :return:
+        """
+        return {
+            "robots": self.robots,
+            "robot_id": self.robot_id,
+            "start_time": self.start_time,
+            "last_time": self.last_time
+        }
 
     def set_pose_update_frequency(self, freq):
         """
@@ -165,11 +264,7 @@ class WorldManager(manage.WorldManager):
         :return:
         :rtype: Robot|None
         """
-        for r in self.robots:
-            if self.robots[r].name == name:
-                return self.robots[r]
-
-        return None
+        return self.robots.get(name, None)
 
     @trollius.coroutine
     def generate_valid_robot(self, max_attempts=100):
@@ -311,18 +406,16 @@ class WorldManager(manage.WorldManager):
         inserted = ModelInserted()
         inserted.ParseFromString(msg.serialized_data)
         model = inserted.model
-        gazebo_id = model.id
         time = Time(msg=inserted.time)
         p = model.pose.position
         position = Vector3(p.x, p.y, p.z)
 
-        robot = self.create_robot_manager(gazebo_id, robot_name, tree, robot, position, time, parents)
+        robot = self.create_robot_manager(robot_name, tree, robot, position, time, parents)
         self.register_robot(robot)
         return_future.set_result(robot)
 
-    def create_robot_manager(self, gazebo_id, robot_name, tree, robot, position, time, parents):
+    def create_robot_manager(self, robot_name, tree, robot, position, time, parents):
         """
-        :param gazebo_id:
         :param robot_name:
         :param tree:
         :param robot:
@@ -332,7 +425,7 @@ class WorldManager(manage.WorldManager):
         :return:
         :rtype: Robot
         """
-        return Robot(gazebo_id, robot_name, tree, robot, position, time, parents)
+        return Robot(robot_name, tree, robot, position, time, parents)
 
     def register_robot(self, robot):
         """
@@ -342,7 +435,11 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         logger.debug("Registering robot %s." % robot.name)
-        self.robots[robot.gazebo_id] = robot
+
+        if robot.name in self.robots:
+            raise ValueError("Duplicate robot: %s" % robot.name)
+
+        self.robots[robot.name] = robot
         if self.output_directory:
             # Write robot details and CSV row to files
             robot.write_robot('%s/robot_%d.pb' % (self.output_directory, robot.robot.id),
@@ -357,7 +454,7 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         logger.debug("Unregistering robot %s." % robot.name)
-        del self.robots[robot.gazebo_id]
+        del self.robots[robot.name]
 
     def _update_poses(self, msg):
         """
@@ -373,8 +470,9 @@ class WorldManager(manage.WorldManager):
             self.start_time = t
 
         for pose in poses.pose:
-            robot = self.robots.get(pose.id, None)
+            robot = self.robots.get(pose.name, None)
             if not robot:
+                print("POSE IGNORED: %s" % pose.name)
                 continue
 
             position = Vector3(pose.position.x, pose.position.y, pose.position.z)

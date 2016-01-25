@@ -93,7 +93,8 @@ class WorldManager(object):
 
         msg = world_control_pb2.WorldControl()
         msg.pause = pause
-        yield From(self.world_control.publish(msg))
+        fut = yield From(self.world_control.publish(msg))
+        raise Return(fut)
 
     @trollius.coroutine
     def reset(self):
@@ -104,7 +105,8 @@ class WorldManager(object):
         logger.debug("Resetting the world state.")
         msg = world_control_pb2.WorldControl()
         msg.reset.all = True
-        yield From(self.world_control.publish(msg))
+        fut = yield From(self.world_control.publish(msg))
+        raise Return(fut)
 
     @trollius.coroutine
     def insert_model(self, sdf):

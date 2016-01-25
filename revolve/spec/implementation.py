@@ -131,6 +131,11 @@ def default_neural_net(epsilon=0.05):
     :return:
     :rtype: NeuralNetImplementation
     """
+    # Looking at the gains below, the output range is in
+    # [0.5 - amplitude/2, 0.5 + amplitude/2],
+    # truncated to [0, 1] for all practical purposes. Having a value
+    # larger than 1 thus won't give a bigger gain but does allow for
+    # different behaviors (more erratic and stuck at max for a while).
     return NeuralNetImplementation({
         "Input": NeuronSpec(
             layers=["input"]
@@ -153,10 +158,6 @@ def default_neural_net(epsilon=0.05):
             params=[
                 ParamSpec("period", min_value=0, max_value=10, epsilon=epsilon),
                 ParamSpec("phase_offset", min_value=0, max_value=3.14, epsilon=epsilon),
-                # Output range is in [0.5 - amplitude/2, 0.5 + amplitude/2],
-                # truncated to [0, 1] for all practical purposes. Having a value
-                # larger than 1 thus won't give a bigger gain but does allow for
-                # different behaviors (more erratic and stuck at max for a while).
                 ParamSpec("amplitude", min_value=0, default=1, max_value=2, epsilon=epsilon)
             ],
             layers=["output", "hidden"]

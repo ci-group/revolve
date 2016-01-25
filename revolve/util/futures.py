@@ -3,7 +3,7 @@ Multi-future function to amend that missing functionality
 in Trollius. Code taken mostly from Tornado.
 """
 from __future__ import print_function
-from trollius import Future
+from trollius import Future, From, Return
 import sys
 
 
@@ -50,3 +50,30 @@ def multi_future(children, quiet_exceptions=()):
             f.add_done_callback(callback)
 
     return future
+
+
+def wait_for(coro):
+    """
+    This function was created to counter the common
+    pattern where you do this:
+
+    ```
+    fut = yield From(some_func())
+    result = yield From(fut)
+    ```
+
+    which can instead now be done like this:
+
+    ```
+    result = yield From(wait_for(some_func())
+    ```
+
+    saving an annoying couple of lines of code
+    every time.
+
+    :param coro: A coroutine
+    :return:
+    """
+    fut = yield From(coro)
+    result = yield From(fut)
+    raise Return(result)

@@ -8,11 +8,10 @@ class Robot(object):
     Class to manage a single robot with the WorldManager
     """
 
-    def __init__(self, gazebo_id, name, tree, robot, position, time,
-                 speed_window=600, parents=None):
+    def __init__(self, name, tree, robot, position, time,
+                 speed_window=60, parents=None):
         """
         :param speed_window:
-        :param gazebo_id:
         :param name:
         :param tree:
         :param robot: Protobuf robot
@@ -28,7 +27,6 @@ class Robot(object):
         self.tree = tree
         self.robot = robot
         self.name = name
-        self.gazebo_id = gazebo_id
         self.starting_position = position
         self.starting_time = time
 

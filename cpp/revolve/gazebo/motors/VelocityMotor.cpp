@@ -30,18 +30,12 @@ VelocityMotor::VelocityMotor(::gazebo::physics::ModelPtr model, std::string part
 	// http://answers.gazebosim.org/question/9071/joint-target-velocity-with-maximum-force/
 	// Until it is answered I'm resorting to calling ODE functions directly to get this
 	// to work. This will result in some deprecation warnings. The update connection
-	// is no longer needed though.
-	//	updateConnection_ = gz::event::Events::ConnectWorldUpdateBegin(boost::bind(
-//			&VelocityMotor::OnUpdate, this, _1));
+	// is no longer needed though.;
 	double maxEffort = joint_->GetEffortLimit(0);
 	joint_->SetParam("fmax", 0, maxEffort);
 }
 
 VelocityMotor::~VelocityMotor() {}
-
-//void VelocityMotor::OnUpdate(const ::gazebo::common::UpdateInfo info) {
-//	this->DoUpdate(info.simTime);
-//}
 
 void VelocityMotor::update(double * outputs, double /*step*/) {
     // Just one network output, which is the first
@@ -61,18 +55,6 @@ void VelocityMotor::DoUpdate(const ::gazebo::common::Time &/*simTime*/) {
 	// I'm caving for now and am setting ODE parameters directly.
 	// See http://answers.gazebosim.org/question/9071/joint-target-velocity-with-maximum-force/
 	joint_->SetParam("vel", 0, velocityTarget_);
-	
-//	gz::common::Time stepTime = simTime - prevUpdateTime_;
-//
-//	if (stepTime <= 0) {
-//		// Only respond to positive step times
-//		return;
-//	}
-//
-//	double currentVelocity = joint_->GetVelocity(0);
-//	double cmd = pid_.Update(currentVelocity - velocityTarget_, stepTime);
-//
-//	joint_->SetParam("vel", 0, cmd);
 }
 
 } // namespace gazebo
