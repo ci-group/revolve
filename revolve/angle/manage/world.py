@@ -98,6 +98,8 @@ class WorldManager(manage.WorldManager):
 
                 self.robots_file = open(self.robots_filename, 'ab')
                 self.poses_file = open(self.poses_filename, 'ab')
+                self.write_robots = csv.writer(self.robots_file, delimiter=',')
+                self.write_poses = csv.writer(self.poses_file, delimiter=',')
             else:
                 # Open poses file, this is written *a lot* so use default OS buffering
                 self.poses_file = open(os.path.join(self.output_directory, 'poses.csv'), 'wb')
@@ -162,10 +164,7 @@ class WorldManager(manage.WorldManager):
         yield From(self.pose_subscriber.wait_for_connection())
 
         if self.do_restore:
-            with open(self.snapshot_filename, 'rb') as f:
-                data = pickle.load(f)
-
-            yield From(self.restore_snapshot(data))
+            yield From(self.restore_snapshot(self.do_restore))
 
     @trollius.coroutine
     def create_snapshot(self):
@@ -202,6 +201,7 @@ class WorldManager(manage.WorldManager):
         self.robots_file.flush()
         shutil.copy(self.poses_filename, self.poses_filename+'.snapshot')
         shutil.copy(self.robots_filename, self.robots_filename+'.snapshot')
+        raise Return(True)
 
     @trollius.coroutine
     def restore_snapshot(self, data):
@@ -472,7 +472,6 @@ class WorldManager(manage.WorldManager):
         for pose in poses.pose:
             robot = self.robots.get(pose.name, None)
             if not robot:
-                print("POSE IGNORED: %s" % pose.name)
                 continue
 
             position = Vector3(pose.position.x, pose.position.y, pose.position.z)

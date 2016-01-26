@@ -7,3 +7,4 @@ protobuf==2.6.1
 -e git+https://github.com:ElteHupkes/sdf-builder.git@master#egg=sdfbuilder
 trollius==2.0
 wsgiref==0.1.2
+psutil==3.4.2

@@ -10,5 +10,5 @@ setup(name='revolve',
       packages=['revolve', 'revolve.gazebo', 'revolve.build', 'revolve.build.sdf',
                 'revolve.convert', 'revolve.generate', 'revolve.spec', 'revolve.angle',
                 'revolve.util'],
-      install_requires=['PyYAML', 'pygazebo', 'protobuf', 'sdfbuilder', 'numpy']
+      install_requires=['PyYAML', 'pygazebo', 'protobuf', 'sdfbuilder', 'numpy', 'psutil']
       )
