@@ -5,7 +5,7 @@ from datetime import datetime
 import time
 import sys
 import atexit
-from fcntl import fcntl, F_GETFL, F_SETFL
+from .nbsr import NonBlockingStreamReader as NBSR
 
 
 def terminate_process(proc):
@@ -77,10 +77,8 @@ class Supervisor(object):
         self.world_file = os.path.abspath(world_file)
         self.manager_cmd = manager_cmd if isinstance(manager_cmd, list) else [manager_cmd]
 
-        self.analyzer_proc = None
-        self.gazebo_proc = None
-        self.manager_proc = None
-        self._tmp_proc = None
+        self.streams = {}
+        self.procs = {}
 
         # Terminate all processes when the supervisor exits
         atexit.register(self._terminate_all)
@@ -101,46 +99,42 @@ class Supervisor(object):
             self._launch_manager()
 
             while True:
-                # Write out all recieved stdout
+                # Write out all received stdout
                 self._pass_through_stdout()
-                success = (self.manager_proc.poll() == 0)
+                manager_code = self.procs['manager'].poll()
+                success = (manager_code == 0)
 
-                if self.analyzer_proc and self.analyzer_proc.poll() is not None:
+                if manager_code and not success:
+                    print("Manager has exited with status code %d, restarting experiment..." % int(manager_code))
+                    break
+
+                if 'analyzer' in self.procs and self.procs['analyzer'].poll() is not None:
                     print("Analyzer has exited, restarting experiment...")
                     break
 
-                if self.gazebo_proc and self.gazebo_proc.poll() is not None:
+                if 'gazebo' in self.procs and self.procs['gazebo'].poll() is not None:
                     print("Gazebo has exited, restarting experiment...")
                     break
 
-                # Every second is more than enough, but this way we also
-                # get some stdout regularly.
+                # We could do this a lot less often, but this way we get
+                # output once every second.
                 time.sleep(1.0)
 
             print("Stop condition reached.")
             self._terminate_all()
 
-    def _set_pipe_flags(self, p):
-        """
-        http://eyalarubas.com/python-subproc-nonblock.html
-        :return:
-        """
-        flags = fcntl(p.stdout, F_GETFL)
-        fcntl(p.stdout, F_SETFL, flags | os.O_NONBLOCK)
+        print("Experiment successful, shutting down.")
 
     def _pass_through_stdout(self):
         """
         Passes process piped standard out through to normal stdout
         :return:
         """
-        i = 0
-        for proc in [self.manager_proc, self.analyzer_proc, self.gazebo_proc]:
-            if not proc:
-                continue
-
-            i += 1
+        for stream in self.streams.values():
             try:
-                sys.stdout.write(os.read(proc.stdout.fileno(), 1024))
+                output = stream.readline(0.1)
+                if output:
+                    sys.stdout.write(output)
             except:
                 pass
 
@@ -150,14 +144,21 @@ class Supervisor(object):
         :return:
         """
         print("Terminating processes...")
-        for proc in [self._tmp_proc, self.manager_proc, self.analyzer_proc, self.gazebo_proc]:
-            if not proc:
-                continue
-
+        for proc in self.procs.values():
             if proc.poll() is None:
                 terminate_process(proc)
 
-        self._tmp_proc = self.manager_proc = self.analyzer_proc = self.gazebo_proc = None
+        self.procs = {}
+
+    def _add_output_stream(self, name):
+        """
+        Creates a non blocking stream reader for the process with
+        the given name, and adds it to the streams that are passed
+        through.
+        :param name:
+        :return:
+        """
+        self.streams[name] = NBSR(self.procs[name].stdout)
 
     def _launch_analyzer(self, ready_str="Body analyzer ready"):
         """
@@ -168,7 +169,8 @@ class Supervisor(object):
             return
 
         print("Launching analyzer...")
-        self.analyzer_proc = self._launch_with_ready_str(self.analyzer_cmd, ready_str)
+        self.procs['analyzer'] = self._launch_with_ready_str(self.analyzer_cmd, ready_str)
+        self._add_output_stream('analyzer')
 
     def _launch_gazebo(self, ready_str="World plugin loaded"):
         """
@@ -180,7 +182,8 @@ class Supervisor(object):
         snapshot_world = os.path.join(self.snapshot_directory, self.snapshot_world_file)
         world = snapshot_world if os.path.exists(snapshot_world) else self.world_file
         gz_args.append(world)
-        self.gazebo_proc = self._launch_with_ready_str(gz_args, ready_str)
+        self.procs['gazebo'] = self._launch_with_ready_str(gz_args, ready_str)
+        self._add_output_stream('gazebo')
 
     def _launch_manager(self):
         """
@@ -189,8 +192,8 @@ class Supervisor(object):
         print("Launching experiment manager...")
         args = self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
-        self.manager_proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-        self._set_pipe_flags(self.manager_proc)
+        self.procs['manager'] = subprocess.Popen(args, stdout=subprocess.PIPE)
+        self._add_output_stream('manager')
 
     def _launch_with_ready_str(self, cmd, ready_str):
         """
@@ -198,7 +201,8 @@ class Supervisor(object):
         :param ready_str:
         :return:
         """
-        self._tmp_proc = proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        self.procs['_tmp'] = proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+
         ready = False
         while not ready:
             out = proc.stdout.readline()
@@ -208,6 +212,5 @@ class Supervisor(object):
 
             time.sleep(0.1)
 
-        self._set_pipe_flags(proc)
-        self._tmp_proc = None
+        del self.procs['_tmp']
         return proc

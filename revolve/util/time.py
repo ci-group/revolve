@@ -55,6 +55,13 @@ class Time(object):
             self.sec += n
             self.nsec -= n * 10e9
 
+    def is_zero(self):
+        """
+        Check if this time is zero.
+        :return:
+        """
+        return self.sec == 0 and self.nsec == 0
+
     def __eq__(self, other):
         """
         :param other:

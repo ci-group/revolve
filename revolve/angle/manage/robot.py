@@ -1,3 +1,5 @@
+from collections import deque
+
 from sdfbuilder.math import Vector3
 from revolve.util import Time
 import numpy as np
@@ -36,11 +38,15 @@ class Robot(object):
 
         self.parents = set() if parents is None else parents
 
-        self._distances = np.zeros(self.speed_window)
-        self._times = np.zeros(self.speed_window)
+        self._ds = deque(maxlen=speed_window)
+        self._dt = deque(maxlen=speed_window)
+        self._positions = deque(maxlen=speed_window)
+        self._times = deque(maxlen=speed_window)
+
         self._dist = 0
         self._time = 0
         self._idx = 0
+        self._count = 0
 
     def write_robot(self, details_file, csv_writer):
         """
@@ -87,19 +93,23 @@ class Robot(object):
         # Velocity is of course sum(distance) / sum(time)
         # Storing all separate distance and time values allows us to
         # efficiently calculate the new speed over the window without
-        # having to sum the entire arrays each time.
-        idx = self._idx
-        self._dist += ds - self._distances[idx]
-        self._time += dt - self._times[idx]
+        # having to sum the entire arrays each time, by subtracting
+        # the values we're about to remove from the _dist / _time values.
+        self._dist += ds
+        self._time += dt
 
-        self._distances[idx] = ds
-        self._times[idx] = dt
-
-        # Update the slot for the next value in the sliding window
-        self._idx = (self._idx + 1) % len(self._distances)
+        if len(self._dt) >= self.speed_window:
+            # Subtract oldest values if we're about to override it
+            self._dist -= self._ds[-1]
+            self._time -= self._dt[-1]
 
         self.last_position = position
         self.last_update = time
+
+        self._positions.append(position)
+        self._times.append(time)
+        self._ds.append(ds)
+        self._dt.append(dt)
 
         if poses_file:
             poses_file.writerow([self.robot.id, time.sec, time.nsec,
@@ -111,6 +121,37 @@ class Robot(object):
         :return:
         """
         return self._dist / self._time if self._time > 0 else 0
+
+    def displacement(self):
+        """
+        Returns a tuple of the displacement in both time and space
+        between the first and last registered element in the speed
+        window.
+        :return: Tuple where the first item is a displacement vector
+                 and the second a `Time` instance.
+        :rtype: tuple(Vector3, Time)
+        """
+        if self.last_position is None:
+            return Vector3(0, 0, 0), Time()
+
+        return (
+            self._positions[-1] - self._positions[0],
+            self._times[-1] - self._times[0]
+        )
+
+    def displacement_velocity(self):
+        """
+        Returns the displacement velocity, i.e. the velocity
+        between the first and last recorded position of the
+        robot in the speed window over a straight line,
+        ignoring the path that was taken.
+        :return:
+        """
+        dist, time = self.displacement()
+        if time.is_zero():
+            return 0.0
+
+        return np.sqrt(dist.x**2 + dist.y**2) / float(time)
 
     def age(self):
         """
