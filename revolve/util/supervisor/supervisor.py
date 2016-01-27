@@ -132,9 +132,12 @@ class Supervisor(object):
         """
         for stream in self.streams.values():
             try:
-                output = stream.readline(0.1)
-                if output:
-                    sys.stdout.write(output)
+                while True:
+                    output = stream.readline(0.01)
+                    if output:
+                        sys.stdout.write(output)
+                    else:
+                        break
             except:
                 pass
 
