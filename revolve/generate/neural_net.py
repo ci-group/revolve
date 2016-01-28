@@ -114,7 +114,7 @@ class NeuralNetworkGenerator(object):
         conn_start = inputs + hidden + outputs
         conn_end = hidden + outputs
 
-        for src, dst in itertools.izip(conn_start, conn_end):
+        for src, dst in itertools.product(conn_start, conn_end):
             if not decide(self.conn_prob):
                 continue
 
