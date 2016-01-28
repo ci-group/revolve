@@ -98,7 +98,7 @@ class Supervisor(object):
             self._launch_gazebo()
             self._launch_manager()
 
-            while True:
+            while not success:
                 # Write out all received stdout
                 self._pass_through_stdout()
                 manager_code = self.procs['manager'].poll()
