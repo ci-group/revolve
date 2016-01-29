@@ -2,7 +2,7 @@
 from distutils.core import setup
 
 setup(name='revolve',
-      version=0.1,
+      version=0.2,
       description='Revolve: robot evolution framework',
       author='Elte Hupkes',
       author_email='elte@hupkes.org',

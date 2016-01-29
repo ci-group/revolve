@@ -120,16 +120,12 @@ class BodyBuilder(AspectBuilder):
             # New tree, create a link. The component name
             # should contain the body part ID so this name should
             # be unique.
+            # The position of the link is determined later when we decide
+            # its center of mass.
             link = Link("link_%s" % component.name, self_collide=True)
-
-            # To have link poses make any sense, we give the link
-            # the pose of the component that was first added to it.
-            link.set_position(component.get_position())
-            link.set_rotation(component.get_rotation())
             model.add_element(link)
 
-        # Add this component to the link. Its position is in the global
-        # frame, so we must use sibling frame conversion.
+        # Add this component to the link.
         position = link.to_local_frame(component.get_position())
         rotation = link.to_local_direction(component.get_rotation())
         component.set_position(position)
@@ -164,6 +160,12 @@ class BodyBuilder(AspectBuilder):
         if create_link:
             # Give the link the inertial properties of the combined collision,
             # only calculated by the item which created the link.
+            # Note that we need to align the center of mass with the link's origin,
+            # which will move the internal components around. In order to compensate
+            # for this in the internal position we need to reposition the link according
+            # to this change.
+            translation = -link.align_center_of_mass()
+            link.translate(translation)
             link.calculate_inertial()
 
         return link
