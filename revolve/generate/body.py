@@ -84,11 +84,11 @@ class BodyGenerator(object):
         # First, pick a number of body parts (this will be an upper limit)
         max_parts = self.max_parts if self.fix_parts else self.choose_max_parts()
 
-        root_part_type = self.choose_part(self.root_parts, True)
+        root_part_type = self.choose_part(self.root_parts, None, None, root=True)
         root_part = root_specs[root_part_type]
         body.root.id = "bodygen-root"
         body.root.type = root_part_type
-        self.initialize_part(root_part, body.root, root=True)
+        self.initialize_part(root_part, body.root, body.root, root=True)
 
         # A body part counter
         counter = 1
@@ -100,33 +100,42 @@ class BodyGenerator(object):
         # List of (body part, slot) tuples for free part slots
         free = [(body.root, i) for i in range(root_part.arity)]
 
-        while True:
+        attempts = 0
+        while attempts < 5:
             if counter >= max_parts or not free:
                 break
 
             # Construct a list of parts we can use that
             # would not break the constraints
-            usable = self.get_allowed_parts(attach_specs, counter, inputs, outputs)
+            usable = self.get_allowed_parts(attach_specs, counter, inputs, outputs, body.root)
 
             if not usable:
                 break
 
             # Pick a free parent / slot
-            combination = self.choose_attachment(free)
+            combination = self.choose_attachment(free, body.root)
             free.remove(combination)
             parent, slot = combination
 
             # Pick a new body part and target slot
-            new_part_type = self.choose_part(usable)
+            new_part_type = self.choose_part(usable, parent, body.root)
+            if not new_part_type:
+                attempts += 1
+                continue
+
             new_part = attach_specs[new_part_type]
-            target_slot = self.choose_target_slot(new_part)
+            target_slot = self.choose_target_slot(new_part, parent, body.root)
+
+            if target_slot is False:
+                attempts += 1
+                continue
 
             conn = parent.child.add()
             conn.src = slot
             conn.dst = target_slot
             conn.part.id = "bodygen-%d" % counter
             conn.part.type = new_part_type
-            self.initialize_part(new_part, conn.part)
+            self.initialize_part(new_part, conn.part, body.root)
 
             # Update counters and free list
             inputs += new_part.inputs
@@ -136,7 +145,7 @@ class BodyGenerator(object):
 
         return body
 
-    def get_allowed_parts(self, attach_specs, num_parts, inputs, outputs):
+    def get_allowed_parts(self, attach_specs, num_parts, inputs, outputs, root_part):
         """
         Overridable function that creates a list of allowed parts for a specific
         stage of robot generation.
@@ -144,6 +153,7 @@ class BodyGenerator(object):
         :param num_parts: Current number of parts
         :param inputs: Current number of inputs
         :param outputs: Current number of outputs
+        :param root_part: The current body root part
         :return: List of identifiers of parts that when added do not violate some robot rules.
                  By default, this checks for maximum inputs / outputs.
         :rtype: list[str]
@@ -153,12 +163,13 @@ class BodyGenerator(object):
             outputs + attach_specs[item].outputs <= self.max_outputs
         )]
 
-    def initialize_part(self, spec, part, root=False):
+    def initialize_part(self, spec, part, root_part, root=False):
         """
         :param spec:
         :type spec: PartSpec
         :param part:
         :type part: BodyPart
+        :param root_part: The current body root part
         :return:
         """
         # Initialize random parameters
@@ -177,7 +188,7 @@ class BodyGenerator(object):
         self.label_counter += 1
         return self.label_counter
 
-    def choose_orientation(self, part, root=False):
+    def choose_orientation(self, part, root_part, root=False):
         """
         Overridable method to choose the degrees of orientation of the
         new part.
@@ -185,39 +196,48 @@ class BodyGenerator(object):
         :type part: BodyPart
         :param root: Whether the given part is the root part.
         :type root: bool
+        :param root_part: The current robot body root part
         :return: Degrees of orientation
         :rtype: float
         """
         return random.uniform(0, 360)
 
-    def choose_part(self, parts, root=False):
+    def choose_part(self, parts, parent, root_part, root=False):
         """
         Overridable method to choose a body part from a list
-        of part type identifiers.
-        :param parts:
+        of part type identifiers. This method may return
+        false to indicate that no suitable part is available
+        to be chosen for the given parent.
+        :param parts: List of part types that are currently possible
+                      within robot constraints.
         :type parts: list[str]
-        :param root:
-        :return: The chosen part
-        :rtype: str
+        :param parent: Parent body part
+        :param root_part: The robot body
+        :param root: Whether the part is root
+        :return: The chosen part or `False`
+        :rtype: str|bool
         """
         return random.choice(parts)
 
-    def choose_attachment(self, attachments):
+    def choose_attachment(self, attachments, root_part):
         """
         Overridable method to choose a parent/slot combination
         from a list of attachments.
         :param attachments:
+        :param root_part: The current root of the tree with connections, for inspection
         :return: The chosen parent / slot tuple
         :rtype: tuple
         """
         return random.choice(attachments)
 
-    def choose_target_slot(self, new_part):
+    def choose_target_slot(self, new_part, parent, root_part):
         """
         Overridable method to choose a target attachment
         slot for a new part.
         :param new_part:
         :type new_part: PartSpec
+        :param parent: Part parent
+        :param root_part: Current robot body root
         :return:
         """
         return random.randint(0, new_part.arity - 1)
@@ -240,8 +260,9 @@ class FixedOrientationBodyGenerator(BodyGenerator):
     """
     ORIENTATIONS = [0, 90, 180, 270]
 
-    def choose_orientation(self, part, root=False):
+    def choose_orientation(self, part, root_part, root=False):
         """
+        :param root_part:
         :param part:
         :param root:
         :return:

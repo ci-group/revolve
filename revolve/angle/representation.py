@@ -20,60 +20,6 @@ def _create_subtree(body_part, brain, body_spec):
     return node
 
 
-def _process_body_part(part, node, brain):
-    """
-    Used to turn a node into an actual robot.
-
-    :param part: The body part to copy properties into
-    :type part: BodyPart
-    :param node:
-    :type node: Node
-    :param brain:
-    :type brain: NeuralNetwork
-    :return:
-    """
-    part.CopyFrom(node.part)
-
-    inputs, outputs, _ = node.io_count(recursive=False)
-    input_count, output_count = node.neuron_count("input"), node.neuron_count("output")
-
-    if inputs != input_count:
-        raise Exception("Number of node input neurons (%d) does not match"
-                        " part specification of %d neurons." %
-                        (input_count, inputs))
-
-    if outputs != output_count:
-        raise Exception("Number of node input neurons (%d) does not match"
-                        " part specification of %d neurons." %
-                        (output_count, outputs))
-
-    # Process neurons
-    counters = {"input": 0, "output": 0, "hidden": 0}
-    for neuron in node.get_neurons():
-        nw = brain.neuron.add()
-        nw.CopyFrom(neuron)
-
-        nw.partId = part.id
-        nw.id = node.get_neuron_id(neuron.layer, counters[nw.layer])
-        counters[nw.layer] += 1
-
-    # Process neuron connections
-    for src, dst, weight in node.get_traversed_neural_connections():
-        conn = brain.connection.add()
-        conn.src = src
-        conn.dst = dst
-        conn.weight = weight
-
-    # Process children
-    # Delete existing just in case there were any
-    del part.child[:]
-    for connection in node.child_connections():
-        conn = part.child.add()
-        conn.src = connection.from_slot
-        conn.dst = connection.to_slot
-        _process_body_part(conn.part, connection.node, brain)
-
-
 class Tree(object):
     """
     A tree to represent a robot that can be used for evolution.
@@ -97,12 +43,22 @@ class Tree(object):
 
     def to_robot(self, robot_id=0):
         """
-        Turns this tree representation into a protobuf robot.
+        Turns this tree representation into a protobuf robot. This
+        first calls `build` on the root node so its internal structure
+        will represent an actual protobuf bot, it then copies that bot
+        into an output robot.
+        :param robot_id:
+
         """
+        # Build the node tree into a new robot object
         robot = Robot()
         robot.id = robot_id
-        _process_body_part(robot.body.root, self.root, robot.brain)
-        return robot
+        self.root.build(robot.body.root, robot.brain)
+
+        # Return a copy of the robot so changes won't affect it
+        ret = Robot()
+        ret.CopyFrom(robot)
+        return ret
 
     @staticmethod
     def from_body_brain(body, brain, body_spec):
@@ -246,6 +202,71 @@ class Node(object):
     @id.setter
     def id(self, value):
         self.part.id = value
+
+    def build(self, into_part, brain, internalize=True):
+        """
+        Processes this node into the given part so that
+        the structure is appropriately represented.
+        In addition, brain data is loaded into the given
+        `brain` argument.
+
+        :param into_part: The body part this part will be built into. Replaces
+                          the current node's part with this part after setting
+                          the appropriate data.
+        :type into_part: BodyPart
+        :param brain:
+        :type brain: NeuralNetwork
+        :param internalize: If set to true, `self.part = into_part` is called so
+                            that this node's part actually represents the generated
+                            structure in protobuf as well.
+        :return:
+        """
+        into_part.CopyFrom(self.part)
+
+        # Build the network into the given brain node
+        inputs, outputs, _ = self.io_count(recursive=False)
+        input_count, output_count = self.neuron_count("input"), self.neuron_count("output")
+
+        if inputs != input_count:
+            raise Exception("Number of node input neurons (%d) does not match"
+                            " part specification of %d neurons." %
+                            (input_count, inputs))
+
+        if outputs != output_count:
+            raise Exception("Number of node input neurons (%d) does not match"
+                            " part specification of %d neurons." %
+                            (output_count, outputs))
+
+        # Process neurons
+        counters = {"input": 0, "output": 0, "hidden": 0}
+        for neuron in self.get_neurons():
+            nw = brain.neuron.add()
+            nw.CopyFrom(neuron)
+
+            nw.partId = self.part.id
+            nw.id = self.get_neuron_id(neuron.layer, counters[nw.layer])
+            counters[nw.layer] += 1
+
+        # Process neuron connections
+        for src, dst, weight in self.get_traversed_neural_connections():
+            conn = brain.connection.add()
+            conn.src = src
+            conn.dst = dst
+            conn.weight = weight
+
+        # Delete any present body child connections,
+        # they will be recreated from node connections
+        del into_part.child[:]
+
+        # Process body part children recursively
+        for connection in self.child_connections():
+            conn = into_part.child.add()
+            conn.src = connection.from_slot
+            conn.dst = connection.to_slot
+            connection.node.build(conn.part, brain, internalize=internalize)
+
+        if internalize:
+            self.part = into_part
 
     def clear_caches(self, origin=None):
         """

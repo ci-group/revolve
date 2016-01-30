@@ -1,10 +1,9 @@
 from __future__ import print_function
-import sys
 import random
 import itertools
 from .representation import Tree, Node
 from ..generate import BodyGenerator, NeuralNetworkGenerator
-from ..spec.msgs import BodyPart, Neuron
+from ..spec.msgs import BodyPart, Neuron, Robot
 from ..util import decide
 
 
@@ -228,7 +227,7 @@ class Mutator(object):
         """
         root = tree.root if in_place else tree.root.copy()
 
-        # First, we delete a random subtree (this might make some space)
+        # First, we delete a random subtree (this might create some space)
         deleted, avg_del_len = self.delete_random_subtree(root)
 
         # Next, we duplicate a random subtree
@@ -377,7 +376,12 @@ class Mutator(object):
         dup = random.choice(nodes)
         """ :type : Node """
 
-        attach_node, attach_slot = self.body_gen.choose_attachment(attachments)
+        # We need a current protobuf body to call `choose_attachment`, generate it here
+        robot = Robot()
+        _renumber(root)
+        root.build(robot.body.root, robot.brain)
+
+        attach_node, attach_slot = self.body_gen.choose_attachment(attachments, root.part)
         dup_new = dup.copy(copy_parent=False)
         dup_new.set_connection(dup.parent_connection().from_slot, attach_slot, attach_node, parent=False)
         return dup_new, avg_dup_len
@@ -429,10 +433,18 @@ class Mutator(object):
         if not decide(prob):
             return None
 
+        # Generator functions need the robot body, so we call renumber
+        # and `build` in order to have the internal node structure represent
+        # the final structure. We ignore the built brain.
+        _renumber(root)
+        robot = Robot()
+        root.build(robot.body.root, robot.brain)
+
         nodes = _node_list(root, root=True)
         n_nodes = len(nodes)
         inputs, outputs, hidden = root.io_count(nodes)
-        usable = self.body_gen.get_allowed_parts(self.body_gen.attach_specs, n_nodes, inputs, outputs)
+        usable = self.body_gen.get_allowed_parts(self.body_gen.attach_specs, n_nodes,
+                                                 inputs, outputs, root.part)
         if not usable:
             return None
 
@@ -442,11 +454,14 @@ class Mutator(object):
         if not free:
             return None
 
-        # Choose a body part type
+        # Pick a random attachment position to attach the new node
+        parent_node, slot = random.choice(free)
+
+        # Choose a body part type and initialize its parameters
         part = BodyPart()
-        part.type = self.body_gen.choose_part(usable, root=False)
+        part.type = self.body_gen.choose_part(usable, parent_node.part, root.part, root=False)
         type_spec = self.body_gen.spec.get(part.type)
-        self.body_gen.initialize_part(type_spec, part, root=False)
+        self.body_gen.initialize_part(type_spec, part, root.part, root=False)
 
         # Decide the initial hidden neurons this part will have
         # by getting the average of an expected number from
@@ -465,12 +480,11 @@ class Mutator(object):
         nw_node = Node(part, neurons, self.body_gen.spec)
         nodes.append(nw_node)
 
-        # Pick a random attachment position and attach the new node
-        node, slot = random.choice(free)
-        target_slot = self.body_gen.choose_target_slot(type_spec)
-        node.set_connection(slot, target_slot, nw_node)
+        # Pick a target slot
+        target_slot = self.body_gen.choose_target_slot(type_spec, parent_node.part, root.part)
+        parent_node.set_connection(slot, target_slot, nw_node)
 
-        # Now we add network where this node is the source. We don't add
+        # Now we add network connections where this node is the source. We don't add
         # connections towards this node since, assuming valid paths,
         # these connections already exist in other nodes.
         sources = neurons
