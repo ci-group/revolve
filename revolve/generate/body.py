@@ -88,7 +88,7 @@ class BodyGenerator(object):
         root_part = root_specs[root_part_type]
         body.root.id = "bodygen-root"
         body.root.type = root_part_type
-        self.initialize_part(root_part, body.root, body.root, root=True)
+        self.initialize_part(root_part, body.root, None, body.root, root=True)
 
         # A body part counter
         counter = 1
@@ -135,7 +135,7 @@ class BodyGenerator(object):
             conn.dst = target_slot
             conn.part.id = "bodygen-%d" % counter
             conn.part.type = new_part_type
-            self.initialize_part(new_part, conn.part, body.root)
+            self.initialize_part(new_part, conn.part, parent, body.root)
 
             # Update counters and free list
             inputs += new_part.inputs
@@ -163,22 +163,24 @@ class BodyGenerator(object):
             outputs + attach_specs[item].outputs <= self.max_outputs
         )]
 
-    def initialize_part(self, spec, part, root_part, root=False):
+    def initialize_part(self, spec, new_part, parent_part, root_part, root=False):
         """
         :param spec:
         :type spec: PartSpec
-        :param part:
-        :type part: BodyPart
+        :param new_part:
+        :type new_part: BodyPart
+        :param parent_part: The parent of the new part
         :param root_part: The current body root part
+        :param root:
         :return:
         """
         # Initialize random parameters
-        spec.set_parameters(part.param, spec.get_random_parameters())
+        spec.set_parameters(new_part.param, spec.get_random_parameters())
 
         # Set random orientation in degrees
-        part.orientation = self.choose_orientation(part, root)
-        part.label = "part-%d" % self.get_label_counter()
-        return part
+        new_part.orientation = self.choose_orientation(new_part, parent_part, root_part, root)
+        new_part.label = "part-%d" % self.get_label_counter()
+        return new_part
 
     def get_label_counter(self):
         """
@@ -188,21 +190,22 @@ class BodyGenerator(object):
         self.label_counter += 1
         return self.label_counter
 
-    def choose_orientation(self, part, root_part, root=False):
+    def choose_orientation(self, new_part, parent_part, root_part, root=False):
         """
         Overridable method to choose the degrees of orientation of the
         new part.
-        :param part:
-        :type part: BodyPart
+        :param new_part:
+        :type new_part: BodyPart
+        :param parent_part:
+        :param root_part: The current robot body root part
         :param root: Whether the given part is the root part.
         :type root: bool
-        :param root_part: The current robot body root part
         :return: Degrees of orientation
         :rtype: float
         """
         return random.uniform(0, 360)
 
-    def choose_part(self, parts, parent, root_part, root=False):
+    def choose_part(self, parts, parent_part, root_part, root=False):
         """
         Overridable method to choose a body part from a list
         of part type identifiers. This method may return
@@ -211,7 +214,7 @@ class BodyGenerator(object):
         :param parts: List of part types that are currently possible
                       within robot constraints.
         :type parts: list[str]
-        :param parent: Parent body part
+        :param parent_part: Parent body part
         :param root_part: The robot body
         :param root: Whether the part is root
         :return: The chosen part or `False`
@@ -260,10 +263,10 @@ class FixedOrientationBodyGenerator(BodyGenerator):
     """
     ORIENTATIONS = [0, 90, 180, 270]
 
-    def choose_orientation(self, part, root_part, root=False):
+    def choose_orientation(self, new_part, root_part, root=False):
         """
         :param root_part:
-        :param part:
+        :param new_part:
         :param root:
         :return:
         """

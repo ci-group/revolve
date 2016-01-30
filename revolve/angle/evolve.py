@@ -461,7 +461,7 @@ class Mutator(object):
         part = BodyPart()
         part.type = self.body_gen.choose_part(usable, parent_node.part, root.part, root=False)
         type_spec = self.body_gen.spec.get(part.type)
-        self.body_gen.initialize_part(type_spec, part, root.part, root=False)
+        self.body_gen.initialize_part(type_spec, part, parent_node.part, root.part, root=False)
 
         # Decide the initial hidden neurons this part will have
         # by getting the average of an expected number from
