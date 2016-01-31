@@ -79,7 +79,7 @@ class Crossover(object):
         :param b:
         :type b: Tree
         :return:
-        :rtype: Tree
+        :rtype: tuple(bool, Tree)
         """
         result = a.root.copy()
 
@@ -302,6 +302,7 @@ class Mutator(object):
 
         # Renumber the entire tree
         _renumber(root)
+        return tree if in_place else Tree(root)
 
     def delete_random_subtree(self, root):
         """

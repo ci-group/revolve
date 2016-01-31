@@ -97,7 +97,7 @@ class BodyBuilder(AspectBuilder):
             joint = FixedJoint(part_map[a], part_map[b])
             model.add_element(joint)
 
-    def _build_body(self, traversed, model, plugin, component, link=None):
+    def _build_body(self, traversed, model, plugin, component, link=None, child_joints=None):
         """
         :param traversed: Set of components that were already traversed,
                           prevents loops (since all connections are two-sided).
@@ -123,6 +123,7 @@ class BodyBuilder(AspectBuilder):
             # The position of the link is determined later when we decide
             # its center of mass.
             link = Link("link_%s" % component.name, self_collide=True)
+            child_joints = []
             model.add_element(link)
 
         # Add this component to the link.
@@ -144,18 +145,34 @@ class BodyBuilder(AspectBuilder):
                     # from the other side.
                     continue
 
+                # Check whether this component is the parent or the child
+                # of the joint connection (it is the parent by default)
+                # This is relevant for another reason, because we will
+                # be moving the internals of the current joint around
+                # to center the inertia later on. This means that for
+                # joints for which the current link is the child we need
+                # to move the joint as well since the joint position is
+                # expressed in the child frame. If the current link is
+                # the parent there is no need to move it with this one,
+                # and since `create_joint` is called after everything
+                # within the child link has been fully neither does
+                # the other link code.
                 parent_link = link
                 child_link = other_link
+                is_child = conn.joint.parent is not component
 
-                if conn.joint.parent is not component:
-                    parent_link, child_link = child_link, parent_link
+                if is_child:
+                    parent_link, child_link = other_link, link
 
                 joint = conn.joint.create_joint(parent_link, child_link,
                                                 conn.joint.parent, conn.joint.child)
                 model.add_element(joint)
+
+                if is_child:
+                    child_joints.append(joint)
             else:
                 # Just add this element to the current link
-                self._build_body(traversed, model, plugin, conn.other, link)
+                self._build_body(traversed, model, plugin, conn.other, link, child_joints)
 
         if create_link:
             # Give the link the inertial properties of the combined collision,
@@ -164,9 +181,16 @@ class BodyBuilder(AspectBuilder):
             # which will move the internal components around. In order to compensate
             # for this in the internal position we need to reposition the link according
             # to this change.
-            translation = -link.align_center_of_mass()
-            link.translate(translation)
+            translation = link.align_center_of_mass()
+            link.translate(-translation)
             link.calculate_inertial()
+
+            # Translate all the joints expressed in this link's frame that
+            # were created before repositioning
+            # Note that the joints need the same translation as the child elements
+            # rather than the counter translation of the link.
+            for joint in child_joints:
+                joint.translate(translation)
 
         return link
 
