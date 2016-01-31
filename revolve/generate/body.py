@@ -263,8 +263,9 @@ class FixedOrientationBodyGenerator(BodyGenerator):
     """
     ORIENTATIONS = [0, 90, 180, 270]
 
-    def choose_orientation(self, new_part, root_part, root=False):
+    def choose_orientation(self, new_part, parent_part, root_part, root=False):
         """
+        :param parent_part:
         :param root_part:
         :param new_part:
         :param root:
