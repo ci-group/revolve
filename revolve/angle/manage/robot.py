@@ -43,6 +43,9 @@ class Robot(object):
         self._positions = deque(maxlen=speed_window)
         self._times = deque(maxlen=speed_window)
 
+        self._positions.append(position)
+        self._times.append(time)
+
         self._dist = 0
         self._time = 0
         self._idx = 0
