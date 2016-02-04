@@ -55,7 +55,10 @@ void PositionMotor::update(double *outputs, double /*step*/) {
 					  noise_) * output;
 
 	// Truncate output to [0, 1]
-	output = fmin(fmax(0, output), 1);
+	// HACK Don't actually target the full joint range, this way
+	// a low update rate won't mess with the joint constraints as much leading
+	// to a more stable system.
+	output = fmin(fmax(1e-5, output), 0.99999);
 	positionTarget_ = lowerLimit_ + output * (upperLimit_ - lowerLimit_);
 
 	// Perform the actual motor update
@@ -71,6 +74,11 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &simTime) {
 
 	prevUpdateTime_ = simTime;
 	auto positionAngle = joint_->GetAngle(0);
+
+	// TODO Make sure normalized angle lies within possible range
+	// I get the feeling we might be moving motors outside their
+	// allowed range. Also something to be aware of when setting
+	// the direction.
 	positionAngle.Normalize();
 	double position = positionAngle.Radian();
 
@@ -85,7 +93,6 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &simTime) {
 	double error = position - positionTarget_;
 	double cmd = pid_.Update(error, stepTime);
 
-	// This currently only works with ODE. See the comment at the bottom of the constructor.
 	joint_->SetParam("vel", 0, cmd);
 }
 
