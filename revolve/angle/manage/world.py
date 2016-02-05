@@ -110,8 +110,22 @@ class WorldManager(manage.WorldManager):
                 self.write_robots = csv.writer(self.robots_file, delimiter=',')
                 self.write_poses = csv.writer(self.poses_file, delimiter=',')
 
-                self.write_robots.writerow(['id', 'parent1', 'parent2'])
-                self.write_poses.writerow(['id', 'sec', 'nsec', 'x', 'y', 'z'])
+                self.write_robots.writerow(self.robots_header())
+                self.write_poses.writerow(self.poses_header())
+
+    def robots_header(self):
+        """
+        Returns the header to be written to the robots file
+        :return:
+        """
+        return ['id', 'parent1', 'parent2']
+
+    def poses_header(self):
+        """
+        Returns the header to be written to the poses file
+        :return:
+        """
+        return ['id', 'sec', 'nsec', 'x', 'y', 'z']
 
     @classmethod
     @trollius.coroutine
