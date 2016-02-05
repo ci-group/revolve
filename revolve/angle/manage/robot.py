@@ -11,7 +11,7 @@ class Robot(object):
     """
 
     def __init__(self, name, tree, robot, position, time,
-                 speed_window=60, parents=None):
+                 speed_window=60, warmup_time=0, parents=None):
         """
         :param speed_window:
         :param name:
@@ -25,6 +25,7 @@ class Robot(object):
         :type parents: set
         :return:
         """
+        self.warmup_time = warmup_time
         self.speed_window = speed_window
         self.tree = tree
         self.robot = robot
@@ -85,6 +86,10 @@ class Robot(object):
             self.starting_time = time
             self.last_update = time
             self.last_position = position
+
+        if float(self.age()) < self.warmup_time:
+            # Don't update position values within the warmup time
+            return
 
         # Calculate the distance the robot has covered as the Euclidean distance over
         # the x and y coordinates (we don't care for flying), as well as the time
