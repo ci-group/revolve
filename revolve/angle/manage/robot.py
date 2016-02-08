@@ -89,6 +89,8 @@ class Robot(object):
 
         if float(self.age()) < self.warmup_time:
             # Don't update position values within the warmup time
+            self.last_position = position
+            self.last_update = time
             return
 
         # Calculate the distance the robot has covered as the Euclidean distance over
