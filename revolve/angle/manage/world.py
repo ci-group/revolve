@@ -439,7 +439,7 @@ class WorldManager(manage.WorldManager):
         :return:
         :rtype: Robot
         """
-        return Robot(robot_name, tree, robot, position, time, parents)
+        return Robot(robot_name, tree, robot, position, time, parents=parents)
 
     def register_robot(self, robot):
         """
