@@ -38,7 +38,6 @@ class Robot(object):
         self.last_mate = None
 
         self.parents = set() if parents is None else parents
-
         self._ds = deque(maxlen=speed_window)
         self._dt = deque(maxlen=speed_window)
         self._positions = deque(maxlen=speed_window)
