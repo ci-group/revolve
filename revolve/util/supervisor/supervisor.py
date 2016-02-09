@@ -141,7 +141,6 @@ class Supervisor(object):
 
                     if out:
                         self.write_stdout(out)
-                        sys.stdout.write(out)
 
                     if err:
                         self.write_stderr(err)
