@@ -130,16 +130,43 @@ class Supervisor(object):
         Passes process piped standard out through to normal stdout
         :return:
         """
-        for stream in self.streams.values():
+        for stdout, stderr in self.streams.values():
             try:
                 while True:
-                    output = stream.readline(0.01)
-                    if output:
-                        sys.stdout.write(output)
-                    else:
+                    out = stdout.readline(0.01)
+                    err = stderr.readline(0.01)
+
+                    if not out and not err:
                         break
+
+                    if out:
+                        self.write_stdout(out)
+                        sys.stdout.write(out)
+
+                    if err:
+                        self.write_stderr(err)
             except:
                 pass
+
+    def write_stdout(self, data):
+        """
+        Overridable method to write to stdout, useful if you
+        want to apply some kind of filter, or write to a file
+        instead.
+        :param data:
+        :return:
+        """
+        sys.stdout.write(data)
+
+    def write_stderr(self, data):
+        """
+        Overridable method to write to stderr, useful if you
+        want to apply some kind of filter, or write to a file
+        instead.
+        :param data:
+        :return:
+        """
+        sys.stderr.write(data)
 
     def _terminate_all(self):
         """
@@ -161,7 +188,7 @@ class Supervisor(object):
         :param name:
         :return:
         """
-        self.streams[name] = NBSR(self.procs[name].stdout)
+        self.streams[name] = (NBSR(self.procs[name].stdout), NBSR(self.procs[name].stderr))
 
     def _launch_analyzer(self, ready_str="Body analyzer ready"):
         """
