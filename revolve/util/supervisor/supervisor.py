@@ -221,7 +221,7 @@ class Supervisor(object):
         print("Launching experiment manager...")
         args = self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
-        self.procs['manager'] = subprocess.Popen(args, stdout=subprocess.PIPE)
+        self.procs['manager'] = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self._add_output_stream('manager')
 
     def _launch_with_ready_str(self, cmd, ready_str):
@@ -230,7 +230,7 @@ class Supervisor(object):
         :param ready_str:
         :return:
         """
-        self.procs['_tmp'] = proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        self.procs['_tmp'] = proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         ready = False
         while not ready:
