@@ -503,7 +503,9 @@ class WorldManager(manage.WorldManager):
         poses.ParseFromString(msg)
 
         self.last_time = t = Time(msg=poses.time)
-        if self.start_time is None:
+        if self.start_time is None or t < self.start_time:
+            # A lower start time may indicate a world reset, which
+            # we should copy.
             self.start_time = t
 
         for pose in poses.pose:
@@ -512,7 +514,7 @@ class WorldManager(manage.WorldManager):
                 continue
 
             position = Vector3(pose.position.x, pose.position.y, pose.position.z)
-            robot.update_position(t, position, self.write_poses)
+            robot.update_position(self, t, position, self.write_poses)
 
         self.call_update_triggers()
 

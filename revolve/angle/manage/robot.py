@@ -70,9 +70,10 @@ class Robot(object):
         row += [parent.robot.id for parent in self.parents] if self.parents else ['', '']
         csv_writer.writerow(row)
 
-    def update_position(self, time, position, poses_file):
+    def update_position(self, world, time, position, poses_file):
         """
 
+        :param world: Instance of the world
         :param time: The simulation time at the time of this
                      position update.
         :type time: Time
@@ -122,7 +123,8 @@ class Robot(object):
         self._dt.append(dt)
 
         if poses_file:
-            poses_file.writerow([self.robot.id, time.sec, time.nsec,
+            age = world.age()
+            poses_file.writerow([self.robot.id, age.sec, age.nsec,
                                  position.x, position.y, position.z])
 
     def velocity(self):
