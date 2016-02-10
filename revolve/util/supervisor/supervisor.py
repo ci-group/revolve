@@ -133,8 +133,8 @@ class Supervisor(object):
         for stdout, stderr in self.streams.values():
             try:
                 for _ in range(100):
-                    out = stdout.readline(0.01)
-                    err = stderr.readline(0.01)
+                    out = stdout.readline(0.005)
+                    err = stderr.readline(0.005)
 
                     if not out and not err:
                         break
