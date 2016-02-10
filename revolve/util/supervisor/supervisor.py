@@ -132,7 +132,7 @@ class Supervisor(object):
         """
         for stdout, stderr in self.streams.values():
             try:
-                while True:
+                for _ in range(100):
                     out = stdout.readline(0.01)
                     err = stderr.readline(0.01)
 

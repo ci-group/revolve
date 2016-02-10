@@ -476,8 +476,9 @@ class WorldManager(manage.WorldManager):
         :param kwargs:
         :return:
         """
-        super(WorldManager, self).reset(**kwargs)
         self.start_time = None
+        fut = yield From(super(WorldManager, self).reset(**kwargs))
+        raise Return(fut)
 
     def age(self):
         """
