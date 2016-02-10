@@ -456,7 +456,7 @@ class WorldManager(manage.WorldManager):
         self.robots[robot.name] = robot
         if self.output_directory:
             # Write robot details and CSV row to files
-            robot.write_robot('%s/robot_%d.pb' % (self.output_directory, robot.robot.id),
+            robot.write_robot(self, '%s/robot_%d.pb' % (self.output_directory, robot.robot.id),
                               self.write_robots)
 
     def unregister_robot(self, robot):

@@ -51,11 +51,12 @@ class Robot(object):
         self._idx = 0
         self._count = 0
 
-    def write_robot(self, details_file, csv_writer):
+    def write_robot(self, world, details_file, csv_writer):
         """
         Writes this robot to a file. This simply writes the
         protobuf bot to a file, which can later be recovered
 
+        :param world: The world
         :param details_file:
         :param csv_writer:
         :type csv_writer: csv.writer
