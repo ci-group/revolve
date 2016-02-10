@@ -470,6 +470,27 @@ class WorldManager(manage.WorldManager):
         logger.debug("Unregistering robot %s." % robot.name)
         del self.robots[robot.name]
 
+    @trollius.coroutine
+    def reset(self, **kwargs):
+        """
+        :param kwargs:
+        :return:
+        """
+        super(WorldManager, self).reset(**kwargs)
+        self.start_time = None
+
+    def age(self):
+        """
+        Returns the age of the world, i.e. the difference between the
+        first and last registered update times.
+        :return:
+        :rtype: Time
+        """
+        if self.start_time is None:
+            return Time()
+        else:
+            return self.last_time - self.start_time
+
     def _update_poses(self, msg):
         """
         Handles the pose info message by updating robot positions.
