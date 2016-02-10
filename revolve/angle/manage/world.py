@@ -477,6 +477,7 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         self.start_time = None
+        self.last_time = None
         fut = yield From(super(WorldManager, self).reset(**kwargs))
         raise Return(fut)
 
