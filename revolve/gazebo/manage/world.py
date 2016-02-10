@@ -97,14 +97,20 @@ class WorldManager(object):
         raise Return(fut)
 
     @trollius.coroutine
-    def reset(self):
+    def reset(self, all=False, time_only=True, model_only=False):
         """
-        Reset the world
+        Reset the world. Defaults to time only, since that appears to be the
+        only thing that is working by default anyway.
+        :param model_only:
+        :param time_only:
+        :param all:
         :return:
         """
         logger.debug("Resetting the world state.")
         msg = world_control_pb2.WorldControl()
-        msg.reset.all = True
+        msg.reset.all = all
+        msg.reset.model_only = model_only
+        msg.reset.time_only = time_only
         fut = yield From(self.world_control.publish(msg))
         raise Return(fut)
 
