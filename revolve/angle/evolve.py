@@ -285,12 +285,14 @@ class Mutator(object):
         targets = [(node, neuron) for node in nodes
                    for neuron in node.get_neurons() if neuron.layer in ("hidden", "output")]
 
-        for i in range(n_new_connections):
-            source_node, source_neuron = random.choice(sources)
-            target_node, target_neuron = random.choice(targets)
-            weight = self.brain_gen.choose_weight()
-            source_node.add_neural_connection(source_neuron, target_neuron,
-                                              target_node, weight)
+        # Can only add neural connections if there are connection sources and targets
+        if sources and targets:
+            for i in range(n_new_connections):
+                source_node, source_neuron = random.choice(sources)
+                target_node, target_neuron = random.choice(targets)
+                weight = self.brain_gen.choose_weight()
+                source_node.add_neural_connection(source_neuron, target_neuron,
+                                                  target_node, weight)
 
         # Next, we add a body part at random. To roughly maintain
         # robot complexity, the probability of doing this is proportional
