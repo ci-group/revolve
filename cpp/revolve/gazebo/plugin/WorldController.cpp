@@ -155,7 +155,7 @@ void WorldController::OnModel(ConstModelPtr &msg) {
 	{
 		boost::mutex::scoped_lock lock(insertMutex_);
 		if (insertMap_.count(name) <= 0) {
-			std::cout << "Insertion of model `" << name << "` was not requested here." << std::endl;
+			// Insert was not requested here, ignore it
 			return;
 		}
 		id = insertMap_[name];
