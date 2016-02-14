@@ -88,6 +88,11 @@ class Robot(object):
             self.last_update = time
             self.last_position = position
 
+        if poses_file:
+            age = world.age()
+            poses_file.writerow([self.robot.id, age.sec, age.nsec,
+                                 position.x, position.y, position.z])
+
         if float(self.age()) < self.warmup_time:
             # Don't update position values within the warmup time
             self.last_position = position
@@ -121,11 +126,6 @@ class Robot(object):
         self._times.append(time)
         self._ds.append(ds)
         self._dt.append(dt)
-
-        if poses_file:
-            age = world.age()
-            poses_file.writerow([self.robot.id, age.sec, age.nsec,
-                                 position.x, position.y, position.z])
 
     def velocity(self):
         """
