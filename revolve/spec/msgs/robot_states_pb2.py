@@ -15,7 +15,7 @@ from pygazebo.msg import pose_pb2
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='robot_states.proto',
   package='revolve.msgs',
-  serialized_pb='\n\x12robot_states.proto\x12\x0crevolve.msgs\x1a\ntime.proto\x1a\npose.proto\"^\n\nRobotState\x12\n\n\x02id\x18\x01 \x02(\r\x12\x0c\n\x04name\x18\x02 \x02(\t\x12\x1f\n\x04pose\x18\x03 \x02(\x0b\x32\x11.gazebo.msgs.Pose\x12\x15\n\rbattery_level\x18\x04 \x01(\x01\"]\n\x0bRobotStates\x12\x1f\n\x04time\x18\x01 \x02(\x0b\x32\x11.gazebo.msgs.Time\x12-\n\x0brobot_state\x18\x02 \x03(\x0b\x32\x18.revolve.msgs.RobotState')
+  serialized_pb='\n\x12robot_states.proto\x12\x0crevolve.msgs\x1a\ntime.proto\x1a\npose.proto\"G\n\nRobotState\x12\n\n\x02id\x18\x01 \x02(\r\x12\x0c\n\x04name\x18\x02 \x02(\t\x12\x1f\n\x04pose\x18\x03 \x02(\x0b\x32\x11.gazebo.msgs.Pose\"]\n\x0bRobotStates\x12\x1f\n\x04time\x18\x01 \x02(\x0b\x32\x11.gazebo.msgs.Time\x12-\n\x0brobot_state\x18\x02 \x03(\x0b\x32\x18.revolve.msgs.RobotState')
 
 
 
@@ -48,13 +48,6 @@ _ROBOTSTATE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
-    _descriptor.FieldDescriptor(
-      name='battery_level', full_name='revolve.msgs.RobotState.battery_level', index=3,
-      number=4, type=1, cpp_type=5, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      options=None),
   ],
   extensions=[
   ],
@@ -65,7 +58,7 @@ _ROBOTSTATE = _descriptor.Descriptor(
   is_extendable=False,
   extension_ranges=[],
   serialized_start=60,
-  serialized_end=154,
+  serialized_end=131,
 )
 
 
@@ -99,8 +92,8 @@ _ROBOTSTATES = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=156,
-  serialized_end=249,
+  serialized_start=133,
+  serialized_end=226,
 )
 
 _ROBOTSTATE.fields_by_name['pose'].message_type = pose_pb2._POSE

@@ -11,33 +11,6 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-sdf::ElementPtr getBatteryElem(sdf::ElementPtr modelSdf) {
-	if (modelSdf->HasElement("plugin")) {
-		auto pluginElem = modelSdf->GetElement("plugin");
-		while (pluginElem) {
-			if (pluginElem->HasElement("rv:settings")) {
-				// Found revolve plugin
-				auto settings = pluginElem->GetElement("rv:settings");
-				if (settings->HasElement("rv:battery")) {
-					return settings->GetElement("rv:battery");
-				}
-			}
-			pluginElem = pluginElem->GetNextElement("plugin");
-		}
-	}
-
-	return sdf::ElementPtr();
-}
-
-sdf::ElementPtr getBatteryLevelElem(sdf::ElementPtr modelSdf) {
-	auto batteryElem = getBatteryElem(modelSdf);
-	if (batteryElem && batteryElem->HasElement("rv:level")) {
-		return batteryElem->GetElement("rv:level");
-	}
-
-	return sdf::ElementPtr();
-}
-
 WorldController::WorldController():
 	robotStatesPubFreq_(0),
 	lastRobotStatesUpdateTime_(0)
@@ -103,14 +76,6 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info) {
 
 			gz::msgs::Pose *poseMsg = stateMsg->mutable_pose();
 			gz::msgs::Set(poseMsg, model->GetRelativePose().Ign());
-
-			// Set battery level if available for this model
-			auto modelSdf = model->GetSDF();
-			auto levelElem = getBatteryLevelElem(modelSdf);
-
-			if (levelElem) {
-				stateMsg->set_battery_level(levelElem->Get< double >());
-			}
 		}
 
 		if (msg.robot_state_size() > 0) {

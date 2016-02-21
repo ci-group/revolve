@@ -41,6 +41,8 @@ class WorldManager(object):
         self.analyzer = None
         self.world_control = None
 
+        self.request_handler = None
+
     @classmethod
     @trollius.coroutine
     def create(cls, world_address=("127.0.0.1", 11345), analyzer_address=("127.0.0.1", 11346)):

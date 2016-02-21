@@ -6,7 +6,6 @@ message RobotState {
   required uint32 id = 1;
   required string name = 2;
   required gazebo.msgs.Pose pose = 3;
-  optional double battery_level = 4;
 }
 
 message RobotStates {

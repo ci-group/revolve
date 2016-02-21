@@ -44,26 +44,24 @@ public:
 	 */
 	virtual void DoUpdate(const ::gazebo::common::UpdateInfo info);
 
-	/**
-	 * Updates the battery level if applicable
-	 */
-	void UpdateBattery(const ::gazebo::common::UpdateInfo info);
-
+	// Methods below allow reading and writing the battery level
+	// in the robot SDF. This is mostly useful for the `BatterySensor`
+	// to obtain the battery state, and storing it in the SDF also
+	// means it will be adequately backed up in an eventual snapshot.
 	/**
 	 * Returns the battery level
 	 */
 	double GetBatteryLevel();
 
 	/**
-	 * Returns the battery level
+	 * Sets the battery level if possible
 	 */
-	double GetBatteryDischargeRate();
+	void SetBatteryLevel(double level);
 
 	/**
-	 * Returns maximum battery level
+	 * Request listener for battery update
 	 */
-	double GetMaxBatteryLevel();
-
+	void UpdateBattery(ConstRequestPtr & request);
 protected:
 	/**
 	 * Detects and loads motors in the plugin spec
@@ -99,6 +97,17 @@ protected:
 	 * actuation time has passed and updates if required.
 	 */
 	void CheckUpdate(const ::gazebo::common::UpdateInfo info);
+
+	/**
+	 * Networking node
+	 */
+	::gazebo::transport::NodePtr node_;
+
+	/**
+	 * Subscriber/responder for battery update request
+	 */
+	::gazebo::transport::SubscriberPtr batterySetSub_;
+	::gazebo::transport::PublisherPtr batterySetPub_;
 
 	/**
 	 * Holds an instance of the motor factory

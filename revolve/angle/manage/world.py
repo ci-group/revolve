@@ -8,10 +8,10 @@ import trollius
 from trollius import From, Return, Future
 from sdfbuilder import SDF
 from sdfbuilder.math import Vector3
-from pygazebo.msg import poses_stamped_pb2, gz_string_pb2
+from pygazebo.msg import gz_string_pb2, request_pb2, response_pb2
 
 # Local imports
-from ...gazebo import manage
+from ...gazebo import manage, RequestHandler
 from ...spec import Robot as PbRobot
 from .robot import Robot
 from ...logging import logger
@@ -43,6 +43,8 @@ class WorldManager(manage.WorldManager):
         """
         super(WorldManager, self).__init__(_private=_private, world_address=world_address,
                                            analyzer_address=analyzer_address)
+
+        self.battery_handler = None
 
         # Output files for robot CSV data
         self.robots_file = None
@@ -171,8 +173,12 @@ class WorldManager(manage.WorldManager):
             self._update_states
         )
 
-        fut = yield From(self.set_state_update_frequency(self.state_update_frequency))
-        yield From(fut)
+        yield From(wait_for(self.set_state_update_frequency(self.state_update_frequency)))
+
+        self.battery_handler = yield From(RequestHandler.create(
+            self.manager, advertise='/gazebo/default/set_battery_level/request',
+            subscribe='/gazebo/default/set_battery_level/response'
+        ))
 
         # Wait for connections
         yield From(self.pose_subscriber.wait_for_connection())
@@ -483,6 +489,33 @@ class WorldManager(manage.WorldManager):
         self.last_time = None
         fut = yield From(super(WorldManager, self).reset(**kwargs))
         raise Return(fut)
+
+    @trollius.coroutine
+    def update_battery_level(self, robot):
+        """
+        Communicates a single robot's battery level to its
+        controller.
+        :param robot:
+        :return:
+        """
+        fut = yield From(self.battery_handler.do_gazebo_request(
+            data=robot.name, dbl_data=robot.get_battery_level()
+        ))
+        raise Return(fut)
+
+    @trollius.coroutine
+    def update_battery_levels(self):
+        """
+        Communicates battery levels for all active robots.
+        :return:
+        """
+        futs = []
+        for robot in self.robot_list():
+            fut = yield From(self.update_battery_level(robot))
+            futs.append(fut)
+
+        if futs:
+            raise Return(multi_future(futs))
 
     def age(self):
         """

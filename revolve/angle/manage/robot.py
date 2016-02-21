@@ -71,7 +71,7 @@ class Robot(object):
 
         row = [self.robot.id]
         row += [parent.robot.id for parent in self.parents] if self.parents else ['', '']
-        row += [self.battery_level]
+        row += [self.get_battery_level()]
         csv_writer.writerow(row)
 
     def update_state(self, world, time, state, poses_file):
@@ -87,9 +87,6 @@ class Robot(object):
         :type poses_file: csv.writer
         :return:
         """
-        if state.HasField('battery_level'):
-            self.battery_level = state.battery_level
-
         pos = state.pose.position
         position = Vector3(pos.x, pos.y, pos.z)
 
@@ -102,7 +99,7 @@ class Robot(object):
             age = world.age()
             poses_file.writerow([self.robot.id, age.sec, age.nsec,
                                  position.x, position.y, position.z,
-                                 self.battery_level])
+                                 self.get_battery_level()])
 
         if float(self.age()) < self.warmup_time:
             # Don't update position values within the warmup time
@@ -184,3 +181,12 @@ class Robot(object):
         :rtype: Time
         """
         return Time() if self.last_update is None else self.last_update - self.starting_time
+
+    def get_battery_level(self):
+        """
+        Method to return the robot battery level. How the battery level
+        is managed is probably implementation specific, so you'll likely
+        have to modify this method for your specific use.
+        :return:
+        """
+        return self.battery_level

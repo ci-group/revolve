@@ -30,22 +30,8 @@ BatterySensor::BatterySensor(::gazebo::physics::ModelPtr model, std::string part
 ///////////////////////////////////
 
 void BatterySensor::read(double * input) {
-	if (!this->batteryElem) {
-		input[0] = 0;
-		return;
-	}
-
-	double maxLevel = this->batteryElem->HasElement("rv:max_level") ?
-					  this->batteryElem->GetElement("rv:max_level")->Get< double >() : 0.0;
-	double level = this->batteryElem->HasElement("rv:level") ?
+	input[0] = this->batteryElem && this->batteryElem->HasElement("rv:level") ?
 					  this->batteryElem->GetElement("rv:level")->Get< double >() : 0.0;
-
-	if (maxLevel < 1e-5) {
-		input[0] = 0;
-		return;
-	}
-
-	input[0] = level / maxLevel;
 }
 
 }
