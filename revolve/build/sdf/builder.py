@@ -294,7 +294,8 @@ class RobotBuilder(object):
         self.body_builder = body_builder
         self.brain_builder = brain_builder
 
-    def get_sdf_model(self, robot, controller_plugin=None, update_rate=5, name="sdf_robot", analyzer_mode=False):
+    def get_sdf_model(self, robot, controller_plugin=None, update_rate=5, name="sdf_robot",
+                      analyzer_mode=False, battery=None):
         """
         :param robot: Protobuf robot
         :type robot: Robot
@@ -306,7 +307,10 @@ class RobotBuilder(object):
         :type name: str
         :param analyzer_mode:
         :type analyzer_mode: bool
-        :return: The sdfbuilder Model
+        :param battery: A Battery element to be added to the plugin if
+                        applicable.
+        :type battery: Element
+        :return: The sdf-builder Model
         :rtype: Model
         """
         model = Model(name)
@@ -330,6 +334,9 @@ class RobotBuilder(object):
 
         self.brain_builder.build(robot, model, brain_config, analyzer_mode)
         self.body_builder.build(robot, model, config, analyzer_mode)
+
+        if battery:
+            plugin.add_element(battery)
 
         if controller_plugin:
             # Only add the plugin element when required
