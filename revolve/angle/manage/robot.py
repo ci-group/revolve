@@ -10,7 +10,7 @@ class Robot(object):
     Class to manage a single robot with the WorldManager
     """
 
-    def __init__(self, name, tree, robot, position, time,
+    def __init__(self, name, tree, robot, position, time, battery_level=0.0,
                  speed_window=60, warmup_time=0, parents=None):
         """
         :param speed_window:
@@ -21,6 +21,8 @@ class Robot(object):
         :type position: Vector3
         :param time:
         :type time: Time
+        :param battery_level:
+        :type battery_level: float
         :param parents:
         :type parents: set
         :return:
@@ -32,6 +34,7 @@ class Robot(object):
         self.name = name
         self.starting_position = position
         self.starting_time = time
+        self.battery_level = battery_level
 
         self.last_position = position
         self.last_update = time
@@ -68,21 +71,28 @@ class Robot(object):
 
         row = [self.robot.id]
         row += [parent.robot.id for parent in self.parents] if self.parents else ['', '']
+        row += [self.battery_level]
         csv_writer.writerow(row)
 
-    def update_position(self, world, time, position, poses_file):
+    def update_state(self, world, time, state, poses_file):
         """
+        Updates the robot state from a state message.
 
         :param world: Instance of the world
         :param time: The simulation time at the time of this
                      position update.
         :type time: Time
-        :param position:
-        :type position: Vector3
+        :param state: State message
         :param poses_file: CSV writer to write pose to, if applicable
         :type poses_file: csv.writer
         :return:
         """
+        if state.HasField('battery_level'):
+            self.battery_level = state.battery_level
+
+        pos = state.pose.position
+        position = Vector3(pos.x, pos.y, pos.z)
+
         if self.starting_time is None:
             self.starting_time = time
             self.last_update = time
@@ -91,7 +101,8 @@ class Robot(object):
         if poses_file:
             age = world.age()
             poses_file.writerow([self.robot.id, age.sec, age.nsec,
-                                 position.x, position.y, position.z])
+                                 position.x, position.y, position.z,
+                                 self.battery_level])
 
         if float(self.age()) < self.warmup_time:
             # Don't update position values within the warmup time

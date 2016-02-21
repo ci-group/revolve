@@ -11,9 +11,36 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
+sdf::ElementPtr getBatteryElem(sdf::ElementPtr modelSdf) {
+	if (modelSdf->HasElement("plugin")) {
+		auto pluginElem = modelSdf->GetElement("plugin");
+		while (pluginElem) {
+			if (pluginElem->HasElement("rv:settings")) {
+				// Found revolve plugin
+				auto settings = pluginElem->GetElement("rv:settings");
+				if (settings->HasElement("rv:battery")) {
+					return settings->GetElement("rv:battery");
+				}
+			}
+			pluginElem = pluginElem->GetNextElement("plugin");
+		}
+	}
+
+	return sdf::ElementPtr();
+}
+
+sdf::ElementPtr getBatteryLevelElem(sdf::ElementPtr modelSdf) {
+	auto batteryElem = getBatteryElem(modelSdf);
+	if (batteryElem && batteryElem->HasElement("rv:level")) {
+		return batteryElem->GetElement("rv:level");
+	}
+
+	return sdf::ElementPtr();
+}
+
 WorldController::WorldController():
-	robotPosesPubFreq_(0),
-	lastRobotPosesUpdateTime_(0)
+	robotStatesPubFreq_(0),
+	lastRobotStatesUpdateTime_(0)
 {
 }
 
@@ -48,20 +75,20 @@ void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/
 			boost::bind(&WorldController::OnUpdate, this, _1));
 
 	// Robot pose publisher
-	robotPosesPub_ = node_->Advertise<gz::msgs::PosesStamped>("~/revolve/robot_poses", 50);
+	robotStatesPub_ = node_->Advertise<revolve::msgs::RobotStates>("~/revolve/robot_states", 50);
 }
 
 void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info) {
-	if (!robotPosesPubFreq_) {
+	if (!robotStatesPubFreq_) {
 		return;
 	}
 
-	double secs = 1.0 / robotPosesPubFreq_;
+	double secs = 1.0 / robotStatesPubFreq_;
 	double time = _info.simTime.Double();
-	if ((time - lastRobotPosesUpdateTime_) >= secs) {
+	if ((time - lastRobotStatesUpdateTime_) >= secs) {
 		// Send robot info update message, this only sends the
 		// main pose of the robot (which is all we need for now)
-		gz::msgs::PosesStamped msg;
+		msgs::RobotStates msg;
 		gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
 		for (auto model : world_->GetModels()) {
@@ -70,15 +97,25 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info) {
 				continue;
 			}
 
-			gz::msgs::Pose *poseMsg = msg.add_pose();
-			poseMsg->set_name(model->GetScopedName());
-			poseMsg->set_id(model->GetId());
+			msgs::RobotState *stateMsg = msg.add_robot_state();
+			stateMsg->set_name(model->GetScopedName());
+			stateMsg->set_id(model->GetId());
+
+			gz::msgs::Pose *poseMsg = stateMsg->mutable_pose();
 			gz::msgs::Set(poseMsg, model->GetRelativePose().Ign());
+
+			// Set battery level if available for this model
+			auto modelSdf = model->GetSDF();
+			auto levelElem = getBatteryLevelElem(modelSdf);
+
+			if (levelElem) {
+				stateMsg->set_battery_level(levelElem->Get< double >());
+			}
 		}
 
-		if (msg.pose_size() > 0) {
-			robotPosesPub_->Publish(msg);
-			lastRobotPosesUpdateTime_ = time;
+		if (msg.robot_state_size() > 0) {
+			robotStatesPub_->Publish(msg);
+			lastRobotStatesUpdateTime_ = time;
 		}
 	}
 }
@@ -135,13 +172,13 @@ void WorldController::HandleRequest(ConstRequestPtr & request) {
 		// Don't leak memory
 		// https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
 		robotSDF.Root()->Reset();
-	} else if (request->request() == "set_robot_pose_update_frequency") {
-		robotPosesPubFreq_ = boost::lexical_cast<unsigned int>(request->data());
-		std::cout << "Setting robot pose update frequency to " << robotPosesPubFreq_ << "." << std::endl;
+	} else if (request->request() == "set_robot_state_update_frequency") {
+		robotStatesPubFreq_ = boost::lexical_cast<unsigned int>(request->data());
+		std::cout << "Setting robot state update frequency to " << robotStatesPubFreq_ << "." << std::endl;
 
 		gz::msgs::Response resp;
 		resp.set_id(request->id());
-		resp.set_request("set_robot_pose_update_frequency");
+		resp.set_request("set_robot_state_update_frequency");
 		resp.set_response("success");
 
 		responsePub_->Publish(resp);

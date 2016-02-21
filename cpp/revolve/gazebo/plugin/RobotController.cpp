@@ -54,21 +54,24 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 
 	// Load motors
 	this->motorFactory_ = this->getMotorFactory(_parent);
-	this->loadMotors(settings);
+	this->LoadMotors(settings);
 
 	// Load sensors
 	this->sensorFactory_ = this->getSensorFactory(_parent);
-	this->loadSensors(settings);
+	this->LoadSensors(settings);
 
 	// Load brain, this needs to be done after the motors and
 	// sensors so they can potentially be reordered.
-	this->loadBrain(settings);
+	this->LoadBrain(settings);
+
+	// Call the battery loader
+	this->LoadBattery(settings);
 
 	// Call startup function which decides on actuation
 	this->startup(_parent, _sdf);
 }
 
-void RobotController::loadMotors(sdf::ElementPtr sdf) {
+void RobotController::LoadMotors(sdf::ElementPtr sdf) {
 	if (!sdf->HasElement("rv:motor")) {
 		return;
 	}
@@ -81,7 +84,7 @@ void RobotController::loadMotors(sdf::ElementPtr sdf) {
     }
 }
 
-void RobotController::loadSensors(sdf::ElementPtr sdf) {
+void RobotController::LoadSensors(sdf::ElementPtr sdf) {
 	if (!sdf->HasElement("rv:sensor")) {
 		return;
 	}
@@ -91,6 +94,12 @@ void RobotController::loadSensors(sdf::ElementPtr sdf) {
 		auto sensorObj = this->sensorFactory_->create(sensor);
 		sensors_.push_back(sensorObj);
 		sensor = sensor->GetNextElement("rv:sensor");
+	}
+}
+
+void RobotController::LoadBattery(sdf::ElementPtr sdf) {
+	if (sdf->HasElement("rv:battery")) {
+		this->batteryElem_ = sdf->GetElement("rv:battery");
 	}
 }
 
@@ -104,7 +113,7 @@ SensorFactoryPtr RobotController::getSensorFactory(
 	return SensorFactoryPtr(new SensorFactory(model));
 }
 
-void RobotController::loadBrain(sdf::ElementPtr sdf) {
+void RobotController::LoadBrain(sdf::ElementPtr sdf) {
 	if (!sdf->HasElement("rv:brain")) {
 		std::cerr << "No robot brain detected, this is probably an error." << std::endl;
 		return;
@@ -123,14 +132,54 @@ void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo info) {
 	auto diff = info.simTime - lastActuationTime_;
 
 	if (diff.Double() > actuationTime_) {
-		lastActuationTime_ = info.simTime;
 		this->DoUpdate(info);
+		lastActuationTime_ = info.simTime;
 	}
 }
 
 // Default update function simply tells the brain to perform an update
 void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo info) {
 	brain_->update(motors_, sensors_, info.simTime.Double() - initTime_, actuationTime_);
+
+	this->UpdateBattery(info);
+}
+
+void RobotController::UpdateBattery(const ::gazebo::common::UpdateInfo info) {
+	if (!batteryElem_ || !batteryElem_->HasElement("rv:level")) {
+		// No need to update the battery if we don't have a level
+		return;
+	}
+
+	auto level = this->GetBatteryLevel();
+	auto diff = (info.simTime - lastActuationTime_).Double();
+	auto discharge = this->GetBatteryDischargeRate() * diff;
+	auto levelElem = batteryElem_->GetElement("rv:level");
+
+	levelElem->Set(level - discharge);
+}
+
+double RobotController::GetBatteryLevel() {
+	if (!batteryElem_ || !batteryElem_->HasElement("rv:level")) {
+		return 0.0;
+	}
+
+	return batteryElem_->GetElement("rv:level")->Get< double >();
+}
+
+double RobotController::GetBatteryDischargeRate() {
+	if (!batteryElem_ || !batteryElem_->HasElement("rv:discharge_rate")) {
+		return 0.0;
+	}
+
+	return batteryElem_->GetElement("rv:discharge_rate")->Get< double >();
+}
+
+double RobotController::GetMaxBatteryLevel() {
+	if (!batteryElem_ || !batteryElem_->HasElement("rv:max_level")) {
+		return 0.0;
+	}
+
+	return batteryElem_->GetElement("rv:max_level")->Get< double >();
 }
 
 } /* namespace gazebo */

@@ -7,7 +7,9 @@ from google.protobuf import reflection as _reflection
 from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
-from pygazebo.msg import model_pb2, time_pb2
+
+from pygazebo.msg import model_pb2
+from pygazebo.msg import time_pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(

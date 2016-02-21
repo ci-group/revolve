@@ -1,10 +1,3 @@
-/*
- * VirtualSensor.cpp
- *
- *  Created on: May 6, 2015
- *      Author: elte
- */
-
 #include <revolve/gazebo/sensors/VirtualSensor.h>
 
 namespace revolve {

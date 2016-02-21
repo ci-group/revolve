@@ -47,7 +47,7 @@ public:
 
 protected:
 	/**
-	 * The model this motor is part of
+	 * The model this sensor is part of
 	 */
 	::gazebo::physics::ModelPtr model_;
 

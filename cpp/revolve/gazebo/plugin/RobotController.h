@@ -28,8 +28,6 @@ public:
 public:
 	virtual void Load(::gazebo::physics::ModelPtr _parent, sdf::ElementPtr _sdf);
 
-
-
 	/**
 	 * @return Factory class that creates motors for this model
 	 */
@@ -46,22 +44,47 @@ public:
 	 */
 	virtual void DoUpdate(const ::gazebo::common::UpdateInfo info);
 
+	/**
+	 * Updates the battery level if applicable
+	 */
+	void UpdateBattery(const ::gazebo::common::UpdateInfo info);
+
+	/**
+	 * Returns the battery level
+	 */
+	double GetBatteryLevel();
+
+	/**
+	 * Returns the battery level
+	 */
+	double GetBatteryDischargeRate();
+
+	/**
+	 * Returns maximum battery level
+	 */
+	double GetMaxBatteryLevel();
+
 protected:
 	/**
 	 * Detects and loads motors in the plugin spec
 	 */
-	virtual void loadMotors(sdf::ElementPtr sdf);
+	virtual void LoadMotors(sdf::ElementPtr sdf);
 
 	/**
 	 * Detects and loads sensors in the plugin spec.
 	 */
-	virtual void loadSensors(sdf::ElementPtr sdf);
+	virtual void LoadSensors(sdf::ElementPtr sdf);
 
 	/**
 	 * Loads the brain from the `rv:brain` element. By default this
 	 * tries to construct a `StandardNeuralNetwork`.
 	 */
-	virtual void loadBrain(sdf::ElementPtr sdf);
+	virtual void LoadBrain(sdf::ElementPtr sdf);
+
+	/**
+	 * Loads / initializes the robot battery
+	 */
+	virtual void LoadBattery(sdf::ElementPtr sdf);
 
 	/**
 	 * Method that is called at the end of the default `Load` function. This
@@ -99,6 +122,9 @@ protected:
 
 	// Time of initialisation
 	double initTime_;
+
+	// rv:battery element, if present
+	sdf::ElementPtr batteryElem_;
 
 	/**
 	 * Time of the last actuation, in

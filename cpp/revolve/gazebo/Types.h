@@ -2,6 +2,7 @@
 #define REVOLVE_GZ_MODEL_TYPES_H_
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 namespace revolve {
 namespace gazebo {

@@ -1,5 +1,4 @@
 package revolve.msgs;
-import "body.proto";
 import "vector3d.proto";
 
 message Contact {

@@ -16,7 +16,7 @@ from ...spec import Robot as PbRobot
 from .robot import Robot
 from ...logging import logger
 from ...util import multi_future, Time, wait_for
-from revolve.spec.msgs import ModelInserted
+from revolve.spec.msgs import ModelInserted, RobotStates
 
 
 class WorldManager(manage.WorldManager):
@@ -26,13 +26,13 @@ class WorldManager(manage.WorldManager):
     """
 
     def __init__(self, builder, generator, world_address=None, analyzer_address=None,
-                 output_directory=None, pose_update_frequency=None,
+                 output_directory=None, state_update_frequency=None,
                  restore=None, _private=None):
         """
 
         :param restore: Restore the world from this directory, if available. Only works
                          if `output_directory` is also specified.
-        :param pose_update_frequency:
+        :param state_update_frequency:
         :param generator:
         :param _private:
         :param world_address:
@@ -55,7 +55,7 @@ class WorldManager(manage.WorldManager):
         self.snapshot_filename = None
         self.world_snapshot_filename = None
 
-        self.pose_update_frequency = pose_update_frequency
+        self.state_update_frequency = state_update_frequency
         self.builder = builder
         self.generator = generator
 
@@ -118,14 +118,14 @@ class WorldManager(manage.WorldManager):
         Returns the header to be written to the robots file
         :return:
         """
-        return ['id', 'parent1', 'parent2']
+        return ['id', 'parent1', 'parent2', 'battery_level']
 
     def poses_header(self):
         """
         Returns the header to be written to the poses file
         :return:
         """
-        return ['id', 'sec', 'nsec', 'x', 'y', 'z']
+        return ['id', 'sec', 'nsec', 'x', 'y', 'z', 'battery_level']
 
     @classmethod
     @trollius.coroutine
@@ -166,12 +166,12 @@ class WorldManager(manage.WorldManager):
 
         # Subscribe to pose updates
         self.pose_subscriber = self.manager.subscribe(
-            '/gazebo/default/revolve/robot_poses',
-            'gazebo.msgs.PosesStamped',
-            self._update_poses
+            '/gazebo/default/revolve/robot_states',
+            'revolve.msgs.RobotStates',
+            self._update_states
         )
 
-        fut = yield From(self.set_pose_update_frequency(self.pose_update_frequency))
+        fut = yield From(self.set_state_update_frequency(self.state_update_frequency))
         yield From(fut)
 
         # Wait for connections
@@ -245,15 +245,15 @@ class WorldManager(manage.WorldManager):
             "last_time": self.last_time
         }
 
-    def set_pose_update_frequency(self, freq):
+    def set_state_update_frequency(self, freq):
         """
         Sets the pose update frequency. Defaults to 10 times per second.
         :param freq:
         :type freq: int
         :return:
         """
-        fut = yield From(self.request_handler.do_gazebo_request("set_robot_pose_update_frequency", str(freq)))
-        self.pose_update_frequency = freq
+        fut = yield From(self.request_handler.do_gazebo_request("set_robot_state_update_frequency", str(freq)))
+        self.state_update_frequency = freq
         raise Return(fut)
 
     def get_robot_id(self):
@@ -325,7 +325,7 @@ class WorldManager(manage.WorldManager):
         raise Return(coll, bbox, robot)
 
     @trollius.coroutine
-    def insert_robot(self, tree, pose, parents=None):
+    def insert_robot(self, tree, pose, initial_battery=0.0, parents=None):
         """
         Inserts a robot into the world. This consists of two steps:
 
@@ -338,11 +338,12 @@ class WorldManager(manage.WorldManager):
         i.e. the message that confirms the robot has been inserted, a
         future is returned.
 
-        :param parents:
         :param tree:
         :type tree: Tree
-        :param pose:
+        :param pose: Insertion pose
         :type pose: Pose
+        :param initial_battery: Initial battery level
+        :param parents:
         :return: A future that resolves with the created `Robot` object.
         """
         robot_id = self.get_robot_id()
@@ -359,7 +360,7 @@ class WorldManager(manage.WorldManager):
         return_future = Future()
         insert_future = yield From(self.insert_model(sdf))
         insert_future.add_done_callback(lambda fut: self._robot_inserted(
-            robot_name, tree, robot, parents, fut.result(), return_future
+            robot_name, tree, robot, initial_battery, parents, fut.result(), return_future
         ))
         raise Return(return_future)
 
@@ -401,7 +402,7 @@ class WorldManager(manage.WorldManager):
 
         raise Return(multi_future(futures))
 
-    def _robot_inserted(self, robot_name, tree, robot, parents, msg, return_future):
+    def _robot_inserted(self, robot_name, tree, robot, initial_battery, parents, msg, return_future):
         """
         Registers a newly inserted robot and marks the insertion
         message response as handled.
@@ -410,6 +411,7 @@ class WorldManager(manage.WorldManager):
         :param robot_name:
         :param tree:
         :param robot:
+        :param initial_battery:
         :param parents:
         :param msg:
         :type msg: pygazebo.msgs.response_pb2.Response
@@ -424,22 +426,23 @@ class WorldManager(manage.WorldManager):
         p = model.pose.position
         position = Vector3(p.x, p.y, p.z)
 
-        robot = self.create_robot_manager(robot_name, tree, robot, position, time, parents)
+        robot = self.create_robot_manager(robot_name, tree, robot, position, time, initial_battery, parents)
         self.register_robot(robot)
         return_future.set_result(robot)
 
-    def create_robot_manager(self, robot_name, tree, robot, position, time, parents):
+    def create_robot_manager(self, robot_name, tree, robot, position, time, battery_level, parents):
         """
         :param robot_name:
         :param tree:
         :param robot:
         :param position:
         :param time:
+        :param battery_level:
         :param parents:
         :return:
         :rtype: Robot
         """
-        return Robot(robot_name, tree, robot, position, time, parents=parents)
+        return Robot(robot_name, tree, robot, position, time, battery_level, parents=parents)
 
     def register_robot(self, robot):
         """
@@ -493,28 +496,27 @@ class WorldManager(manage.WorldManager):
         else:
             return self.last_time - self.start_time
 
-    def _update_poses(self, msg):
+    def _update_states(self, msg):
         """
         Handles the pose info message by updating robot positions.
         :param msg:
         :return:
         """
-        poses = poses_stamped_pb2.PosesStamped()
-        poses.ParseFromString(msg)
+        states = RobotStates()
+        states.ParseFromString(msg)
 
-        self.last_time = t = Time(msg=poses.time)
+        self.last_time = t = Time(msg=states.time)
         if self.start_time is None or t < self.start_time:
             # A lower start time may indicate a world reset, which
             # we should copy.
             self.start_time = t
 
-        for pose in poses.pose:
-            robot = self.robots.get(pose.name, None)
+        for state in states.robot_state:
+            robot = self.robots.get(state.name, None)
             if not robot:
                 continue
 
-            position = Vector3(pose.position.x, pose.position.y, pose.position.z)
-            robot.update_position(self, t, position, self.write_poses)
+            robot.update_state(self, t, state, self.write_poses)
 
         self.call_update_triggers()
 

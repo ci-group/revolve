@@ -8,14 +8,13 @@ from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 
-import body_pb2
 from pygazebo.msg import vector3d_pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='sdf_body_analyze.proto',
   package='revolve.msgs',
-  serialized_pb='\n\x16sdf_body_analyze.proto\x12\x0crevolve.msgs\x1a\nbody.proto\x1a\x0evector3d.proto\"1\n\x07\x43ontact\x12\x12\n\ncollision1\x18\x01 \x02(\t\x12\x12\n\ncollision2\x18\x02 \x02(\t\"U\n\x0b\x42oundingBox\x12\"\n\x03min\x18\x01 \x02(\x0b\x32\x15.gazebo.msgs.Vector3d\x12\"\n\x03max\x18\x02 \x02(\x0b\x32\x15.gazebo.msgs.Vector3d\"n\n\x14\x42odyAnalysisResponse\x12.\n\x0b\x62oundingBox\x18\x01 \x01(\x0b\x32\x19.revolve.msgs.BoundingBox\x12&\n\x07\x63ontact\x18\x02 \x03(\x0b\x32\x15.revolve.msgs.Contact')
+  serialized_pb='\n\x16sdf_body_analyze.proto\x12\x0crevolve.msgs\x1a\x0evector3d.proto\"1\n\x07\x43ontact\x12\x12\n\ncollision1\x18\x01 \x02(\t\x12\x12\n\ncollision2\x18\x02 \x02(\t\"U\n\x0b\x42oundingBox\x12\"\n\x03min\x18\x01 \x02(\x0b\x32\x15.gazebo.msgs.Vector3d\x12\"\n\x03max\x18\x02 \x02(\x0b\x32\x15.gazebo.msgs.Vector3d\"n\n\x14\x42odyAnalysisResponse\x12.\n\x0b\x62oundingBox\x18\x01 \x01(\x0b\x32\x19.revolve.msgs.BoundingBox\x12&\n\x07\x63ontact\x18\x02 \x03(\x0b\x32\x15.revolve.msgs.Contact')
 
 
 
@@ -50,8 +49,8 @@ _CONTACT = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=68,
-  serialized_end=117,
+  serialized_start=56,
+  serialized_end=105,
 )
 
 
@@ -85,8 +84,8 @@ _BOUNDINGBOX = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=119,
-  serialized_end=204,
+  serialized_start=107,
+  serialized_end=192,
 )
 
 
@@ -120,8 +119,8 @@ _BODYANALYSISRESPONSE = _descriptor.Descriptor(
   options=None,
   is_extendable=False,
   extension_ranges=[],
-  serialized_start=206,
-  serialized_end=316,
+  serialized_start=194,
+  serialized_end=304,
 )
 
 _BOUNDINGBOX.fields_by_name['min'].message_type = vector3d_pb2._VECTOR3D

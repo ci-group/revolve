@@ -11,6 +11,7 @@
 #include <gazebo/msgs/msgs.hh>
 
 #include <revolve/msgs/model_inserted.pb.h>
+#include <revolve/msgs/robot_states.pb.h>
 
 #include <boost/thread/mutex.hpp>
 
@@ -70,17 +71,17 @@ protected:
 	::gazebo::transport::SubscriberPtr modelSub_;
 
 	// Publisher for periodic robot poses
-	::gazebo::transport::PublisherPtr robotPosesPub_;
+	::gazebo::transport::PublisherPtr robotStatesPub_;
 
 	// Frequency at which robot info is published
 	// Defaults to 0, which means no update at all
-	unsigned int robotPosesPubFreq_;
+	unsigned int robotStatesPubFreq_;
 
 	// Pointer to the update event connection
 	::gazebo::event::ConnectionPtr updateConnection_;
 
 	// Last (simulation) time robot info was sent
-	double lastRobotPosesUpdateTime_;
+	double lastRobotStatesUpdateTime_;
 };
 
 } // namespace gazebo
