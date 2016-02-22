@@ -112,15 +112,15 @@ class BasicBatterySensor(VirtualSensor):
         super(BasicBatterySensor, self).__init__(name, "basic_battery")
 
 
-class PointProximitySensor(VirtualSensor):
+class PointIntensitySensor(VirtualSensor):
     """
     The point proximity sensor returns the Euclidean distance from
     the center of mass of the robot to some predefined point,
     altered by some function.
     """
-    TAG_NAME = 'rv:point_proximity_sensor'
+    TAG_NAME = 'rv:point_intensity_sensor'
 
-    def __init__(self, name, point, a=1.0, b=1.0, c=1.0):
+    def __init__(self, name, point, i_max=1.0, r=1.0):
         """
         Point proximity sensor with defined point and function
         coefficients a, b, c, which are used to determine the sensor
@@ -134,19 +134,20 @@ class PointProximitySensor(VirtualSensor):
         :param c:
         :return:
         """
-        super(PointProximitySensor, self).__init__(name, "point_proximity")
+        super(PointIntensitySensor, self).__init__(name, "point_intensity")
         self.point = point
-        self.a, self.b, self.c = a, b, c
+        self.i_max = i_max
+        self.r = r
 
     def render_elements(self):
         """
 
         :return:
         """
-        elmns = super(PointProximitySensor, self).render_elements()
+        elmns = super(PointIntensitySensor, self).render_elements()
         return elmns + [
             Element(tag_name='rv:point', body='%s %s %s' % tuple(self.point)),
             Element(tag_name='rv:function', attributes={
-                'a': self.a, 'b': self.b, 'c': self.c
+                'i_max': self.i_max, 'r': self.r
             })
         ]
