@@ -203,8 +203,8 @@ double RobotController::GetBatteryLevel() {
 
 /////////////////////////////////////////////////////////////////
 void RobotController::SetBatteryLevel(double level) {
-	if (batteryElem_) {
-		batteryElem_->Set(level);
+	if (batteryElem_ && batteryElem_->HasElement("rv:level")) {
+		batteryElem_->GetElement("rv:level")->Set(level);
 	}
 }
 
