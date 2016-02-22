@@ -1,13 +1,10 @@
-"""
-The rv:battery element, to be included in a robot's plugin
-"""
 from sdfbuilder import Element
 from sdfbuilder.util import number_format as nf
 
 
 class BasicBattery(Element):
     """
-
+    The rv:battery element, to be included in a robot's plugin
     """
     TAG_NAME = 'rv:battery'
 

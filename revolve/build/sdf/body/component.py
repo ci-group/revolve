@@ -51,10 +51,10 @@ class Component(PosableGroup):
     def add_sensor(self, sensor, sensor_type=None, prefix=True):
         """
         :param sensor:
-        :type sensor: SdfSensor
+        :type sensor: SdfSensor|VirtualSensor
         :param sensor_type:
         :type sensor_type: str
-        :param prefix: Sensor names need to be unique within a model, so
+        :param prefix: SDF Sensor names need to be unique within a model, so
                         by default the name of the SDF sensor is prefixed
                         with the component ID for convenience. Set this
                         parameter to `False` to disable this behavior.
@@ -65,10 +65,16 @@ class Component(PosableGroup):
             sensor.name = "%s-%s" % (str(self.part_id), sensor.name)
 
         self.sensors.append((sensor, sensor_type))
-        self.add_element(sensor)
+
+        # Only add the sensor to the SDF if it is not virtual,
+        # otherwise the sensor element will be added to the plugin instead
+        if not getattr(sensor, 'is_virtual', False):
+            self.add_element(sensor)
 
     def get_plugin_sensors(self, link):
         """
+        Returns the sensor elements to be rendered in the plugin configuration.
+        :param link:
         :return:
         """
         return [Sensor(self.part_id, link, sensor, sensor_type)
@@ -90,6 +96,8 @@ class Component(PosableGroup):
     def create_connection_one_way(self, other, joint=None):
         """
         Creates a one-way connection, only used internally.
+        :param joint:
+        :param other:
         """
         self.connections.append(Connection(other, joint))
 

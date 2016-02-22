@@ -26,6 +26,16 @@ protected:
 	 * The point to which proximity should be returned
 	 */
 	::gazebo::math::Vector3 point_;
+
+	/**
+	 * The value of the input neuron of this sensor is calculated
+	 * from the distance with the function:
+	 *
+	 * b * (a * distance)^c
+	 */
+	double a_;
+	double b_;
+	double c_;
 };
 
 }
