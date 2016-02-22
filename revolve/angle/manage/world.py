@@ -357,7 +357,7 @@ class WorldManager(manage.WorldManager):
         robot_name = "gen__"+str(robot_id)
 
         robot = tree.to_robot(robot_id)
-        sdf = self.get_simulation_sdf(robot, robot_name)
+        sdf = self.get_simulation_sdf(robot, robot_name, initial_battery)
         sdf.elements[0].set_pose(pose)
 
         if self.output_directory:
@@ -371,9 +371,10 @@ class WorldManager(manage.WorldManager):
         ))
         raise Return(return_future)
 
-    def get_simulation_sdf(self, robot, robot_name):
+    def get_simulation_sdf(self, robot, robot_name, initial_battery=0.0):
         """
 
+        :param initial_battery:
         :param robot:
         :type robot: PbRobot
         :param robot_name:
