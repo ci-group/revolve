@@ -32,7 +32,7 @@ SensorPtr SensorFactory::getSensor(sdf::ElementPtr sensor,
 		out.reset(new LightSensor(this->model_, sensor, partId, sensorId));
 	} else if ("touch" == type) {
 		out.reset(new TouchSensor(this->model_, sensor, partId, sensorId));
-	} else if ("battery" == type) {
+	} else if ("basic_battery" == type) {
 		out.reset(new BatterySensor(this->model_, partId, sensorId));
 	} else if ("point_intensity" == type) {
 		out.reset(new PointIntensitySensor(sensor, this->model_, partId, sensorId));

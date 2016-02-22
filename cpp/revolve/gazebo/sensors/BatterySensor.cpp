@@ -13,11 +13,11 @@ BatterySensor::BatterySensor(::gazebo::physics::ModelPtr model, std::string part
 	if (modelSdf->HasElement("plugin")) {
 		auto pluginElem = modelSdf->GetElement("plugin");
 		while (pluginElem) {
-			if (pluginElem->HasElement("rv:settings")) {
+			if (pluginElem->HasElement("rv:robot_config")) {
 				// Found revolve plugin
-				auto settings = pluginElem->GetElement("rv:settings");
+				auto settings = pluginElem->GetElement("rv:robot_config");
 				if (settings->HasElement("rv:battery")) {
-					batteryElem = settings->GetElement("rv:battery");
+					this->batteryElem = settings->GetElement("rv:battery");
 				}
 
 				break;
