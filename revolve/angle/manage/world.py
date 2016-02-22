@@ -251,6 +251,7 @@ class WorldManager(manage.WorldManager):
             "last_time": self.last_time
         }
 
+    @trollius.coroutine
     def set_state_update_frequency(self, freq):
         """
         Sets the pose update frequency. Defaults to 10 times per second.
