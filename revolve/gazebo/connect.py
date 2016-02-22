@@ -26,6 +26,7 @@ class RequestHandler(object):
     def __init__(self, manager, request_class, request_type,
                  response_class, response_type,
                  advertise, subscribe, id_attr, request_attr, msg_id_base,
+                 wait_for_subscriber, wait_for_publisher,
                  _private=None):
         """
         Private constructor, use the `create` coroutine instead.
@@ -48,6 +49,8 @@ class RequestHandler(object):
         self.responses = {}
         self.callbacks = {}
         self.publisher = None
+        self.wait_for_publisher = wait_for_publisher
+        self.wait_for_subscriber = wait_for_subscriber
         self.msg_id = int(msg_id_base)
 
     @classmethod
@@ -61,6 +64,8 @@ class RequestHandler(object):
                subscribe='/gazebo/default/response',
                id_attr='id',
                request_attr='request',
+               wait_for_subscriber=True,
+               wait_for_publisher=True,
                msg_id_base=0):
         """
 
@@ -72,11 +77,13 @@ class RequestHandler(object):
         :param advertise:
         :param subscribe:
         :param id_attr:
+        :param request_attr:
         :param msg_id_base:
         :return:
         """
         handler = cls(manager, request_class, request_type, response_class, response_type,
-                      advertise, subscribe, id_attr, request_attr, msg_id_base, cls._PRIVATE)
+                      advertise, subscribe, id_attr, request_attr, msg_id_base,
+                      wait_for_subscriber, wait_for_publisher, cls._PRIVATE)
         yield From(handler._init())
         raise Return(handler)
 
@@ -96,8 +103,11 @@ class RequestHandler(object):
         self.publisher = yield From(self.manager.advertise(
             self.advertise, self.request_type))
 
-        yield From(self.subscriber.wait_for_connection())
-        yield From(self.publisher.wait_for_listener())
+        if self.wait_for_publisher:
+            yield From(self.subscriber.wait_for_connection())
+
+        if self.wait_for_subscriber:
+            yield From(self.publisher.wait_for_listener())
 
     def _callback(self, data):
         """
