@@ -176,8 +176,8 @@ class WorldManager(manage.WorldManager):
         yield From(wait_for(self.set_state_update_frequency(self.state_update_frequency)))
 
         self.battery_handler = yield From(RequestHandler.create(
-            self.manager, advertise='/gazebo/default/set_battery_level/request',
-            subscribe='/gazebo/default/set_battery_level/response'
+            self.manager, advertise='/gazebo/default/battery_level/request',
+            subscribe='/gazebo/default/battery_level/response'
         ))
 
         # Wait for connections
