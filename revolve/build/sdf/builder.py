@@ -336,7 +336,7 @@ class RobotBuilder(object):
         self.body_builder.build(robot, model, config, analyzer_mode)
 
         if battery:
-            plugin.add_element(battery)
+            config.add_element(battery)
 
         if controller_plugin:
             # Only add the plugin element when required

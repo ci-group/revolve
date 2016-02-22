@@ -69,6 +69,8 @@ class RequestHandler(object):
                msg_id_base=0):
         """
 
+        :param wait_for_publisher:
+        :param wait_for_subscriber:
         :param manager:
         :param request_class:
         :param request_type:

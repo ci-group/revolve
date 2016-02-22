@@ -177,7 +177,9 @@ class WorldManager(manage.WorldManager):
 
         self.battery_handler = yield From(RequestHandler.create(
             self.manager, advertise='/gazebo/default/battery_level/request',
-            subscribe='/gazebo/default/battery_level/response'
+            subscribe='/gazebo/default/battery_level/response',
+            # There will not be robots yet, so don't wait for this
+            wait_for_publisher=False, wait_for_subscriber=False
         ))
 
         # Wait for connections
@@ -501,7 +503,7 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         fut = yield From(self.battery_handler.do_gazebo_request(
-            data=robot.name, dbl_data=robot.get_battery_level()
+            "set_battery_level", data=robot.name, dbl_data=robot.get_battery_level()
         ))
         raise Return(fut)
 

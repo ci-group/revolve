@@ -44,15 +44,13 @@ class Sensor(Element):
         attrs.update({
             'link': self.link.name,
             'part_id': self.part_id,
-            'type': self.type
+            'type': self.type,
+            'id': '%s__%s' % (self.part_id, self.sensor.name)
         })
 
-        # Sensor may be virtual, so have optional sensor name
+        # Sensor may be virtual, so have optional Gazebo sensor reference
         if not self.is_virtual:
-            attrs.update({
-                'sensor': self.sensor.name,
-                'id': '%s__%s' % (self.part_id, self.sensor.name)
-            })
+            attrs['sensor'] = self.sensor.name
 
         return attrs
 

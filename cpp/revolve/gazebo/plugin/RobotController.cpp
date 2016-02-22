@@ -49,8 +49,8 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 	node_->Init();
 
 	// Subscribe to robot battery state updater
-	batterySetSub_ = node_->Subscribe("~/battery_level", &RobotController::UpdateBattery, this);
-	batterySetPub_ = node_->Advertise<gz::msgs::Response>("~/battery_level");
+	batterySetSub_ = node_->Subscribe("~/battery_level/request", &RobotController::UpdateBattery, this);
+	batterySetPub_ = node_->Advertise<gz::msgs::Response>("~/battery_level/response");
 
 	if (!_sdf->HasElement("rv:robot_config")) {
 		std::cerr << "No `rv:robot_config` element found, controller not initialized."
@@ -94,14 +94,14 @@ void RobotController::UpdateBattery(ConstRequestPtr &request) {
 	gz::msgs::Response resp;
 	resp.set_id(request->id());
 	resp.set_request(request->request());
-	resp.set_response("success");
 
 	if (request->request() == "set_battery_level") {
+		resp.set_response("success");
 		this->SetBatteryLevel(request->dbl_data());
 	} else {
 		std::stringstream ss;
 		ss << this->GetBatteryLevel();
-		resp.set_serialized_data(ss.str());
+		resp.set_response(ss.str());
 	}
 
 	batterySetPub_->Publish(resp);
