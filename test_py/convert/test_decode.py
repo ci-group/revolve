@@ -149,6 +149,7 @@ brain:
   neurons:
     Hidden1:
       type: Oscillator
+      part_id: Sub1
       period: 0.1
       phaseOffset: 0.2
       amplitude: 0.3
@@ -309,10 +310,13 @@ class TestConvertYaml(unittest.TestCase):
         hidden1 = [a for a in brain.neuron if a.id == "Hidden1"][0]
         hidden1params = [p.value for p in hidden1.param]
         self.assertEquals([0.1, 0.2, 0.3], hidden1params)
+        self.assertEquals("Oscillator", hidden1.type)
+        self.assertEquals("Sub1", hidden1.partId)
 
         hidden2 = [a for a in brain.neuron if a.id == "Hidden2"][0]
         hidden2params = [p.value for p in hidden2.param]
         self.assertEquals([0, 0, 0], hidden2params)
+        self.assertEquals("Oscillator", hidden2.type)
 
         hidden3 = [a for a in brain.neuron if a.id == "Hidden3"][0]
         self.assertEquals("Simple", hidden3.type)

@@ -4,7 +4,7 @@ futures==3.0.2
 numpy==1.9.2
 protobuf==2.6.1
 -e git+https://github.com/ElteHupkes/pygazebo.git@revolve#egg=pygazebo
--e git+https://github.com:ElteHupkes/sdf-builder.git@master#egg=sdfbuilder
+-e git+https://github.com/ElteHupkes/sdf-builder.git@master#egg=sdfbuilder
 trollius==2.0
 wsgiref==0.1.2
 psutil==3.4.2

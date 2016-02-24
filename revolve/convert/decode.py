@@ -209,10 +209,15 @@ class NeuralNetworkDecoder(object):
             if neuron_id in self.neurons:
                 err("Duplicate neuron ID '%s'" % neuron_id)
 
+            # This sets the defaults, the accurate values - if present - will
+            # be set by `_process_neuron_params`.
             self.neurons[neuron_id] = {
                 "layer": "hidden",
                 "type": "Simple"
             }
+
+            if "part_id" in neurons[neuron_id]:
+                self.neurons[neuron_id]["part_id"] = neurons[neuron_id]["part_id"]
 
             self._process_neuron_params(neuron_id, neurons[neuron_id])
 

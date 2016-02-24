@@ -7,6 +7,7 @@ from ..spec.msgs import *
 from .decode import BodyDecoder, NeuralNetworkDecoder
 from .proto_to_yaml import BodyEncoder, NeuralNetworkEncoder
 
+
 def yaml_to_robot(body_spec, nn_spec, yaml):
     """
     :param body_spec:
@@ -19,7 +20,8 @@ def yaml_to_robot(body_spec, nn_spec, yaml):
     """
     obj = YamlToRobot(body_spec, nn_spec)
     return obj.get_protobuf(yaml)
-    
+
+
 def robot_to_yaml(body_spec, nn_spec, bot_pb):
     """
     :param body_spec:
@@ -33,6 +35,7 @@ def robot_to_yaml(body_spec, nn_spec, bot_pb):
     """
     obj = RobotToYaml(body_spec, nn_spec)
     return obj.get_yaml(bot_pb)
+
 
 def unicode_representer(dumper, data):
         return dumper.represent_scalar(u'tag:yaml.org,2002:str', data)
@@ -55,7 +58,6 @@ class YamlToRobot:
         self.nn_spec = nn_spec
         self.body_decoder = BodyDecoder(body_spec)
         self.brain_decoder = NeuralNetworkDecoder(nn_spec, body_spec)
-
 
     def get_protobuf(self, stream):
         """
