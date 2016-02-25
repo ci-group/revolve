@@ -219,7 +219,7 @@ NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
 
 	// Decode connections
 	nNonInputs_ = nOutputs_ + nHidden_;
-	auto connection = node->HasElement("rv:connection") ? node->GetElement("rv:connection") : sdf::ElementPtr();
+	auto connection = node->HasElement("rv:neural_connection") ? node->GetElement("rv:neural_connection") : sdf::ElementPtr();
 	while (connection) {
 		if (!connection->HasAttribute("src") || !connection->HasAttribute("dst")
 				|| !connection->HasAttribute("weight")) {
@@ -236,7 +236,7 @@ NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
 		connectionHelper(src, dst, weight);
 
 		// Load the next connection
-		connection = connection->GetNextElement("rv:connection");
+		connection = connection->GetNextElement("rv:neural_connection");
 	}
 }
 
