@@ -1,3 +1,4 @@
+from __future__ import print_function
 import subprocess
 import os
 import psutil
@@ -103,6 +104,10 @@ class Supervisor(object):
                 self._pass_through_stdout()
                 manager_code = self.procs['manager'].poll()
                 success = (manager_code == 0)
+                unrecoverable = (manager_code == 23)
+
+                if manager_code and unrecoverable:
+                    print("Manager has exited with unrecoverable status code, terminating.", file=sys.stderr)
 
                 if manager_code and not success:
                     print("Manager has exited with status code %d, restarting experiment..." % int(manager_code))

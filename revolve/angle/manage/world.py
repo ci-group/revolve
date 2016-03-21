@@ -1,5 +1,6 @@
 # Global imports
 import os
+import sys
 import shutil
 import pickle
 from datetime import datetime
@@ -85,7 +86,11 @@ class WorldManager(manage.WorldManager):
             if os.path.exists(self.snapshot_filename):
                 # Snapshot exists - restore from it
                 with open(self.snapshot_filename, 'rb') as snapshot_file:
-                    self.do_restore = pickle.load(snapshot_file)
+                    try:
+                        self.do_restore = pickle.load(snapshot_file)
+                    except Exception as e:
+                        print("Cannot restore snapshot, shutting down. Exception: %s." % str(e))
+                        sys.exit(23)
 
             self.world_snapshot_filename = os.path.join(self.output_directory, 'snapshot.world')
 
