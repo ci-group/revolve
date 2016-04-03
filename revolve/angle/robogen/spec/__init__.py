@@ -1,5 +1,4 @@
-from .body import get_body_spec, get_body_generator
-from .brain import get_brain_spec, get_brain_generator
-from .robot import get_tree_generator, make_planar
+from .robot import RobogenTreeGenerator, make_planar
+from .body import BodyGenerator
 
 __author__ = 'Elte Hupkes'
