@@ -27,7 +27,7 @@
 #define MAX_HIDDEN_NEURONS 30
 
 // Convenience
-#define MAX_NON_INPUT_NEURONS (MAX_INPUT_NEURONS + MAX_OUTPUT_NEURONS)
+#define MAX_NON_INPUT_NEURONS (MAX_HIDDEN_NEURONS + MAX_OUTPUT_NEURONS)
 
 // (bias, tau, gain) or (phase offset, period, gain)
 #define MAX_NEURON_PARAMS 3
