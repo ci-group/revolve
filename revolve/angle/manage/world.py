@@ -220,6 +220,8 @@ class WorldManager(manage.WorldManager):
         # Get the snapshot data and pickle to file
         data = yield From(self.get_snapshot_data())
 
+        # It seems pickling causes some issues with the default recursion limit, up it
+        sys.setrecursionlimit(10000)
         with open(self.snapshot_filename, 'wb') as f:
             pickle.dump(data, f)
 
