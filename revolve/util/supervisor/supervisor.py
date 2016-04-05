@@ -108,6 +108,8 @@ class Supervisor(object):
 
                 if manager_code and unrecoverable:
                     print("Manager has exited with unrecoverable status code, terminating.", file=sys.stderr)
+                    self._terminate_all()
+                    sys.exit(1)
 
                 if manager_code and not success:
                     print("Manager has exited with status code %d, restarting experiment..." % int(manager_code))
