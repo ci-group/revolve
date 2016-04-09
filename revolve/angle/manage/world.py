@@ -1,4 +1,6 @@
 # Global imports
+import traceback
+
 import os
 import sys
 import shutil
@@ -89,6 +91,7 @@ class WorldManager(manage.WorldManager):
                     try:
                         self.do_restore = pickle.load(snapshot_file)
                     except Exception as e:
+                        traceback.print_exc()
                         print("Cannot restore snapshot, shutting down. Exception: %s." % str(e))
                         sys.exit(23)
 
@@ -223,7 +226,7 @@ class WorldManager(manage.WorldManager):
         # It seems pickling causes some issues with the default recursion limit, up it
         sys.setrecursionlimit(10000)
         with open(self.snapshot_filename, 'wb') as f:
-            pickle.dump(data, f)
+            pickle.dump(data, f, protocol=-1)
 
         # Flush statistic files and copy them
         self.poses_file.flush()

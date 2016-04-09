@@ -40,7 +40,7 @@ class Robot(object):
         self.last_update = time
         self.last_mate = None
 
-        self.parents = set() if parents is None else parents
+        self.parent_ids = set() if parents is None else set(p.robot.id for p in parents)
         self._ds = deque(maxlen=speed_window)
         self._dt = deque(maxlen=speed_window)
         self._positions = deque(maxlen=speed_window)
@@ -70,7 +70,7 @@ class Robot(object):
             f.write(self.robot.SerializeToString())
 
         row = [self.robot.id]
-        row += [parent.robot.id for parent in self.parents] if self.parents else ['', '']
+        row += list(self.parent_ids) if self.parent_ids else ['', '']
         row += [self.get_battery_level()]
         csv_writer.writerow(row)
 
