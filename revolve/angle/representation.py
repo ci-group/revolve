@@ -555,6 +555,12 @@ class Node(object):
         """
         return self.parent_connection() is None
 
+    def is_leaf(self):
+        """
+        Returns true if this item is a leaf node.
+        """
+        return not len(list(self.child_connections()))
+
     def __len__(self):
         """
         Returns the total number of nodes in the subtree for which
