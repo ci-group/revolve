@@ -244,7 +244,7 @@ class Mutator(object):
             # Delete hidden neurons at random
             hidden_before += node.io_count(recursive=False)[2]
             node.set_neurons([neuron for neuron in node.get_neurons()
-                              if neuron.type != "hidden" or decide(p_keep_hidden_neuron)])
+                              if neuron.layer != "hidden" or decide(p_keep_hidden_neuron)])
             hidden_after += node.io_count(recursive=False)[2]
 
             # Delete brain connections at random
