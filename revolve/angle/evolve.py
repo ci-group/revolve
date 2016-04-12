@@ -302,9 +302,10 @@ class Mutator(object):
         # of the number of added body parts in the loop below equals
         # the expected value of the number of deleted parts.
         avg_parts_deleted = avg_del_len * self.p_delete_subtree - avg_dup_len * self.p_duplicate_subtree
-        n_its = int(math.ceil(avg_parts_deleted * 2))
+        e_parts_to_add = min(avg_parts_deleted, self.body_gen.max_parts - len(root))
+        n_its = int(math.ceil(e_parts_to_add * 2))
         if n_its > 0:
-            p_add_body_part = avg_parts_deleted / n_its
+            p_add_body_part = e_parts_to_add / n_its
             for _ in range(n_its):
                 self.add_random_body_part(p_add_body_part, root)
 
