@@ -1,6 +1,9 @@
 from __future__ import print_function
 import random
 import itertools
+
+import math
+
 from .representation import Tree, Node
 from ..generate import BodyGenerator, NeuralNetworkGenerator
 from ..spec.msgs import BodyPart, Neuron, Robot
@@ -295,12 +298,15 @@ class Mutator(object):
                                                   target_node, weight)
 
         # Next, we add a body part at random. To roughly maintain
-        # robot complexity, the probability of doing this is proportional
-        # to the average number of body parts that have been removed
-        # by previous operations.
-        # TODO Should this be a loop with the rounded number, rather than a probability?
-        p_add_body_part = avg_dup_len * self.p_duplicate_subtree - avg_del_len * self.p_delete_subtree
-        self.add_random_body_part(p_add_body_part, root)
+        # robot complexity, we're making sure that the expected value
+        # of the number of added body parts in the loop below equals
+        # the expected value of the number of deleted parts.
+        avg_parts_deleted = avg_del_len * self.p_delete_subtree - avg_dup_len * self.p_duplicate_subtree
+        n_its = int(math.ceil(avg_parts_deleted * 2))
+        if n_its > 0:
+            p_add_body_part = avg_parts_deleted / n_its
+            for _ in range(n_its):
+                self.add_random_body_part(p_add_body_part, root)
 
         # Renumber the entire tree
         _renumber(root)
