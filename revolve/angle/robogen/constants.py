@@ -17,10 +17,10 @@ MAX_SERVO_VELOCITY = (50.0/60.0) * 2 * math.pi
 SERVO_LIMIT = math.radians(45)
 """ Upper and lower limit """
 
-HINGE_LIMIT = math.radians(45)
+HINGE_LIMIT = math.radians(60)
 """ Upper and lower limit for hinge """
 
-CARDAN_LIMIT = math.radians(45)
+CARDAN_LIMIT = math.radians(60)
 """ Upper and lower limit of each axis of rotation """
 
 SERVO_VELOCITY_PID = PID(
