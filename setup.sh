@@ -70,6 +70,58 @@ function build() {
   return 0
 }
 
+function install() {
+
+  local cwd=$(pwd)
+  if [ $# -gt 0 ]; then
+  local usecase="$1"
+    shift
+  else
+    error_exit "${LINENO}: In ${FUNCNAME}() no usecase argument provided."
+  fi
+
+  case "${usecase}" in
+    "localisation"|"loc")
+      echo "Install of localisation not implemented currently" ;;
+    "mating"|"mat")
+      echo "Install of mating not implemented currently" ;;
+    "server"|"srv")
+      echo "Install of localisation and mating not implemented currently" ;; 
+    "robot"|"rob")
+      echo "Install of robot not implemented currently" ;;
+    "simulation"|"sim")
+      echo "Install of simulation not implemented currently" ;;
+    *) error_exit "${LINENO}: In ${FUNCNAME}() unexpected usecase option: ${usecase}" ;;
+  esac
+  return 0
+}
+
+function test() {
+
+  local cwd=$(pwd)
+  if [ $# -gt 0 ]; then
+  local usecase="$1"
+    shift
+  else
+    error_exit "${LINENO}: In ${FUNCNAME}() no usecase argument provided."
+  fi
+
+  case "${usecase}" in
+    "localisation"|"loc")
+      echo "Testing of localisation not implemented currently" ;;
+    "mating"|"mat")
+      echo "Testing of mating not implemented currently" ;;
+    "server"|"srv")
+      echo "Testing of localisation and mating not implemented currently" ;; 
+    "robot"|"rob")
+      echo "Testing of robot not implemented currently" ;;
+    "simulation"|"sim")
+      echo "Testing of simulation not implemented currently" ;;
+    *) error_exit "${LINENO}: In ${FUNCNAME}() unexpected usecase option: ${usecase}" ;;
+  esac
+  return 0
+}
+
 function help() {
   echo "Usage: ${PROGNAME} {clone|update|build|install|test} [usecase...]"
   echo "Actions:"
@@ -107,9 +159,9 @@ function main() {
   case "${acton}" in
     "clone") clone ${option} ;;
     "update") update ;;
-    "build") build ${option};;
-    "install") ;;
-    "test") ;;
+    "build") build ${option} ;;
+    "install") install ${option} ;;
+    "test") test ${option} ;;
     *) help ;;
   esac
 
