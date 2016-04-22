@@ -1,5 +1,12 @@
 #!/bin/bash
 
+PROGNAME=$(basename $0)
+
+function error_exit() {
+  echo "${PROGNAME}: ${1:-"Unknown Error"}" 1>&2
+  exit 1
+}
+
 function install() {
   local usecase=$1
   case "${usecase}" in
@@ -14,7 +21,7 @@ function install() {
       ;;
     sim)
       echo "Simulation not implemented currently." ;;
-    *) echo "Unexpected option: ${usecase}" ; return 1 ;;
+    *) error_exit "${LINENO}: Unexpected option: ${usecase}" ;;
   esac
   return 0
 }
@@ -31,7 +38,7 @@ function main() {
       --install) install $1 ; break ;;
       --help|-h) help ;;
       --) break ;;
-      *) echo "Unexpected option: ${option}" ; exit 1 ;;
+      *) error_exit "${LINENO}: Unexpected option: ${option}" ;;
     esac
   done 
   exit 0
