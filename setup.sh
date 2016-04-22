@@ -33,6 +33,13 @@ function clone() {
   return 0
 }
 
+function update() {
+
+  find ./ -not -path '*/\.*' -type d -depth 1 -exec sh -c "git --git-dir={}/.git \
+   --work-tree=$PWD/{} pull origin" \;
+  return 0
+}
+
 function help() {
   echo "Usage: ${PROGNAME} {clone|update|build|install|test} [usecase...]"
   echo "Actions:"
@@ -68,7 +75,7 @@ function main() {
 
   case "${acton}" in
     "clone") clone ${option} ;;
-    "update") ;;
+    "update") update ;;
     "build") ;;
     "install") ;;
     "test") ;;
