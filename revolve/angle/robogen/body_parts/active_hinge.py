@@ -48,14 +48,14 @@ class ActiveHinge(BodyPart, ColorMixin):
             Box(SLOT_THICKNESS, SLOT_WIDTH, SLOT_WIDTH, MASS_SLOT), "root")
 
         # Make frame
-        visual1 = Visual("frame_visual", Mesh("model://tol_robot/meshes/ActiveHinge_Frame.dae"))
+        visual1 = Visual("frame_visual", Mesh("model://rg_robot/meshes/ActiveHinge_Frame.dae"))
         frame = self.create_component(Box(FRAME_LENGTH, SLOT_WIDTH, FRAME_HEIGHT, MASS_FRAME),
                                       "frame", visual=visual1)
         x_frame = SLOT_THICKNESS / 2.0 + SEPARATION + FRAME_LENGTH / 2.0
         frame.set_position(Vector3(x_frame, 0, 0))
 
         # Make servo
-        visual2 = Visual("servo_visual", Mesh("model://tol_robot/meshes/ActiveCardanHinge_Servo_Holder.dae"))
+        visual2 = Visual("servo_visual", Mesh("model://rg_robot/meshes/ActiveCardanHinge_Servo_Holder.dae"))
         servo = self.create_component(Box(SERVO_LENGTH, SLOT_WIDTH, SERVO_HEIGHT, MASS_SERVO),
                                       "servo", visual=visual2)
         x_servo = x_frame + (FRAME_ROTATION_OFFSET - 0.5 * FRAME_LENGTH) + \

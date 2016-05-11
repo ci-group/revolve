@@ -43,7 +43,7 @@ class Hinge(BodyPart, ColorMixin):
         self.hinge_tail = self.create_component(
             Box(SLOT_THICKNESS, SLOT_WIDTH, SLOT_WIDTH, MASS_SLOT), "slot_b",
             visual=False)
-        mesh = Mesh("model://tol_robot/meshes/PassiveHinge.dae")
+        mesh = Mesh("model://rg_robot/meshes/PassiveHinge.dae")
         visual_a = Visual("conn_a_visual", mesh)
         visual_a.translate(Vector3(-0.5 * SLOT_THICKNESS))
         conn_a = self.create_component(

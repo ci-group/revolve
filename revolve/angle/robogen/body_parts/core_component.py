@@ -29,7 +29,7 @@ class CoreComponent(BodyPart, ColorMixin):
         :return:
         """
         self.link = self.create_component(Box(WIDTH, WIDTH, HEIGHT, MASS), "box",
-                                          visual=Mesh("model://tol_robot/meshes/CoreComponent.dae"))
+                                          visual=Mesh("model://rg_robot/meshes/CoreComponent.dae"))
 
         if not self.conf.disable_sensors:
             # Now we will add the IMU sensor. First, we must

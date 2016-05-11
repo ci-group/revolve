@@ -26,7 +26,7 @@ class FixedBrick(Box, ColorMixin):
     def _initialize(self, **kwargs):
         self.component = self.create_component(
             BoxGeom(self.x, self.y, self.z, self.mass), "box",
-            visual=Mesh("model://tol_robot/meshes/FixedBrick.dae"))
+            visual=Mesh("model://rg_robot/meshes/FixedBrick.dae"))
         self.apply_color()
 
     def get_slot(self, slot):

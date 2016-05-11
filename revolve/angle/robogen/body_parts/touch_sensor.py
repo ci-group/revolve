@@ -39,7 +39,7 @@ class TouchSensor(Box, ColorMixin):
         y_left_sensor = -0.5 * SENSOR_WIDTH - SEPARATION
         y_right_sensor = 0.5 * SENSOR_WIDTH + SEPARATION
 
-        visual = Visual("touch_visual", Mesh("model://tol_robot/meshes/TouchSensor.dae"))
+        visual = Visual("touch_visual", Mesh("model://rg_robot/meshes/TouchSensor.dae"))
         visual.translate(Vector3(0.5 * SENSOR_THICKNESS, 0, 0))
         self.component = self.create_component(
             BoxGeom(self.x, self.y, self.z, self.mass), "box",
