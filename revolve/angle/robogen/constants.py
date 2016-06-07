@@ -53,4 +53,3 @@ SURFACE_SLIP2 = 0.01
 # them in `tol_ground` as well).
 SURFACE_ERP = 0.1
 SURFACE_CFM = 10e-6
-INTENDED_STEP_SIZE = 0.005
