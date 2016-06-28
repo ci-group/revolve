@@ -91,6 +91,8 @@ class Supervisor(object):
         """
         if not os.path.exists(self.snapshot_directory):
             os.mkdir(self.snapshot_directory)
+        if not os.path.exists(self.output_directory):
+            os.mkdir(self.output_directory)
 
         success = False
         while not success:
