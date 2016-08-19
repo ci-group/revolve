@@ -44,7 +44,7 @@ class Supervisor(object):
     and it should restore the world state from there.
     """
 
-    def __init__(self, manager_cmd, world_file, output_directory, manager_args=None, gazebo_cmd="gzserver",
+    def __init__(self, manager_cmd, world_file, output_directory=None, manager_args=None, gazebo_cmd="gzserver",
                  analyzer_cmd=None, gazebo_args=None, restore_arg="--restore-directory",
                  snapshot_world_file="snapshot.world", restore_directory=None):
         """
@@ -65,7 +65,8 @@ class Supervisor(object):
         """
         self.restore_directory = datetime.now().strftime('%Y%m%d%H%M%S') \
             if restore_directory is None else restore_directory
-        self.output_directory = os.path.abspath(output_directory)
+        self.output_directory = 'output' \
+            if output_directory is None else os.path.abspath(output_directory)
         self.snapshot_directory = os.path.join(self.output_directory, self.restore_directory)
         self.snapshot_world_file = snapshot_world_file
         self.restore_arg = restore_arg
@@ -89,10 +90,10 @@ class Supervisor(object):
         (Re)launches the experiment.
         :return:
         """
-        if not os.path.exists(self.snapshot_directory):
-            os.mkdir(self.snapshot_directory)
         if not os.path.exists(self.output_directory):
             os.mkdir(self.output_directory)
+        if not os.path.exists(self.snapshot_directory):
+            os.mkdir(self.snapshot_directory)
 
         success = False
         while not success:
