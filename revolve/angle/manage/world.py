@@ -361,6 +361,8 @@ class WorldManager(manage.WorldManager):
         :type tree: Tree
         :param pose: Insertion pose
         :type pose: Pose
+        :param name: Robot name
+        :type name: str
         :param initial_battery: Initial battery level
         :param parents:
         :return: A future that resolves with the created `Robot` object.
