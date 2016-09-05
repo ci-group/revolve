@@ -62,7 +62,7 @@ find_package(Protobuf REQUIRED)
 enable_testing()
 add_subdirectory(doc)
 add_subdirectory(include)
-#add_subdirectory(src)
+add_subdirectory(src)
 add_subdirectory(test)
 
 # System packaging (RPM, TGZ, ...)

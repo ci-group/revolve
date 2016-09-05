@@ -1,0 +1,10 @@
+package revolve.msgs;
+import "body.proto";
+import "neural_net.proto";
+
+message Robot {
+  required int32 id = 1;
+  required Body body = 2; 
+  required NeuralNetwork brain = 3;
+}
+
