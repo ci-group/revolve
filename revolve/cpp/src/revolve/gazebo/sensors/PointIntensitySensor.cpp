@@ -1,4 +1,4 @@
-#include "cpp/include/revolve/gazebo/sensors/PointIntensitySensor.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/PointIntensitySensor.h"
 
 namespace gz = gazebo;
 

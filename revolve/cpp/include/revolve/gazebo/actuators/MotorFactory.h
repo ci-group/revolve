@@ -8,7 +8,7 @@
 #ifndef REVOLVE_GAZEBO_MOTORS_MOTORFACTORY_H_
 #define REVOLVE_GAZEBO_MOTORS_MOTORFACTORY_H_
 
-#include "cpp/include/revolve/gazebo/Types.h"
+#include "revolve/cpp/include/revolve/gazebo/Types.h"
 
 #include <gazebo/common/common.hh>
 

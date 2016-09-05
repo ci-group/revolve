@@ -5,7 +5,7 @@
 #ifndef REVOLVE_GAZEBO_POSITIONMOTOR_H_
 #define REVOLVE_GAZEBO_POSITIONMOTOR_H_
 
-#include "cpp/include/revolve/gazebo/actuators/JointMotor.h"
+#include "revolve/cpp/include/revolve/gazebo/actuators/JointMotor.h"
 
 #include <gazebo/common/common.hh>
 

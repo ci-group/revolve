@@ -5,7 +5,7 @@
  *      Author: elte
  */
 
-#include "cpp/include/revolve/gazebo/sensors/LightSensor.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/LightSensor.h"
 
 #include <boost/bind.hpp>
 

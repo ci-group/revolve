@@ -32,7 +32,7 @@ endforeach()
 include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS} ${GAZEBO_PROTO_INCLUDE})
 
 # Directory where the custom .proto files reside within Revolve
-set(REVOLVE_PROTO_DIR "${CMAKE_SOURCE_DIR}/cpp/src/revolve/msgs")
+set(REVOLVE_PROTO_DIR "${CMAKE_SOURCE_DIR}/revolve/cpp/src/revolve/msgs")
 
 # All protobuf files we need, including the Gazebo ones
 file(GLOB_RECURSE REVOLVE_PROTO ${REVOLVE_PROTO_DIR}/*.proto)
@@ -53,6 +53,10 @@ endif()
 
 # Include the directory where the protobuf files will be placed
 include_directories(${PROTO_OUTPUT_BASE})
+
+#include_directories(
+#        "../include/"
+#)
 
 set(PROTO_SRCS)
 set(PROTO_HDRS)

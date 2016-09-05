@@ -5,8 +5,8 @@
  *      Author: elte
  */
 
-#include "cpp/include/revolve/gazebo/actuators/MotorFactory.h"
-#include "cpp/include/revolve/gazebo/actuators/Motors.h"
+#include "revolve/cpp/include/revolve/gazebo/actuators/MotorFactory.h"
+#include "revolve/cpp/include/revolve/gazebo/actuators/Motors.h"
 
 #include <cstdlib>
 

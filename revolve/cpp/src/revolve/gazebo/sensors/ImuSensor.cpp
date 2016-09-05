@@ -5,7 +5,7 @@
  *      Author: elte
  */
 
-#include "cpp/include/revolve/gazebo/sensors/ImuSensor.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/ImuSensor.h"
 
 #include <iostream>
 #include <stdexcept>

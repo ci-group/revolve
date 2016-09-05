@@ -5,8 +5,8 @@
  *      Author: elte
  */
 
-#include "cpp/include/revolve/gazebo/sensors/SensorFactory.h"
-#include "cpp/include/revolve/gazebo/sensors/Sensors.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/SensorFactory.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/Sensors.h"
 
 #include <stdexcept>
 #include <iostream>

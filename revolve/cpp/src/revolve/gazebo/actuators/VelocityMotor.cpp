@@ -1,4 +1,4 @@
-#include "cpp/include/revolve/gazebo/actuators/VelocityMotor.h"
+#include "revolve/cpp/include/revolve/gazebo/actuators/VelocityMotor.h"
 
 namespace gz = gazebo;
 

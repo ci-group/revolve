@@ -8,7 +8,7 @@
 #ifndef REVOLVE_GAZEBO_SENSORS_TOUCHSENSOR_H_
 #define REVOLVE_GAZEBO_SENSORS_TOUCHSENSOR_H_
 
-#include "cpp/include/revolve/gazebo/sensors/Sensor.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/Sensor.h"
 
 namespace revolve {
 namespace gazebo {

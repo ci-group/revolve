@@ -5,7 +5,7 @@
  *      Author: elte
  */
 
-#include "cpp/include/revolve/gazebo/sensors/Sensor.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/Sensor.h"
 
 namespace gz = gazebo;
 

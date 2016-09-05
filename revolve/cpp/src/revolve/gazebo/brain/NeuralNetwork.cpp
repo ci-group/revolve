@@ -2,9 +2,9 @@
  *
  */
 
-#include "cpp/include/revolve/gazebo/brain/NeuralNetwork.h"
-#include "cpp/include/revolve/gazebo/actuators/Motor.h"
-#include "cpp/include/revolve/gazebo/sensors/Sensor.h"
+#include "revolve/cpp/include/revolve/gazebo/brain/NeuralNetwork.h"
+#include "revolve/cpp/include/revolve/gazebo/actuators/Motor.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/Sensor.h"
 
 #include <iostream>
 #include <algorithm>

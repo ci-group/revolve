@@ -1,4 +1,4 @@
-#include "cpp/include/revolve/gazebo/sensors/VirtualSensor.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/VirtualSensor.h"
 
 namespace revolve {
 namespace gazebo {

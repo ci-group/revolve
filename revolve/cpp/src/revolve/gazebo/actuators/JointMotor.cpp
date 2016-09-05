@@ -5,7 +5,7 @@
  *      Author: elte
  */
 
-#include "cpp/include/revolve/gazebo/actuators/JointMotor.h"
+#include "revolve/cpp/include/revolve/gazebo/actuators/JointMotor.h"
 
 namespace gz = gazebo;
 

@@ -13,7 +13,7 @@
 #include <gazebo/common/common.hh>
 #include <gazebo/msgs/msgs.hh>
 
-#include "cpp/include/revolve/gazebo/Types.h"
+#include "revolve/cpp/include/revolve/gazebo/Types.h"
 
 #include <vector>
 

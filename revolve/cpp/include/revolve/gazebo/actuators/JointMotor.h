@@ -8,7 +8,7 @@
 #ifndef REVOLVE_GAZEBO_MOTORS_JOINTMOTOR_H_
 #define REVOLVE_GAZEBO_MOTORS_JOINTMOTOR_H_
 
-#include "cpp/include/revolve/gazebo/actuators/Motor.h"
+#include "revolve/cpp/include/revolve/gazebo/actuators/Motor.h"
 
 namespace revolve {
 namespace gazebo {

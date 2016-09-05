@@ -5,15 +5,15 @@
  *      Author: elte
  */
 
-#include "cpp/include/revolve/gazebo/actuators/MotorFactory.h"
-#include "cpp/include/revolve/gazebo/sensors/SensorFactory.h"
-#include "cpp/include/revolve/gazebo/brain/NeuralNetwork.h"
+#include "revolve/cpp/include/revolve/gazebo/actuators/MotorFactory.h"
+#include "revolve/cpp/include/revolve/gazebo/sensors/SensorFactory.h"
+#include "revolve/cpp/include/revolve/gazebo/brain/NeuralNetwork.h"
 
 #include <gazebo/transport/transport.hh>
 #include <gazebo/sensors/sensors.hh>
 
 #include <boost/bind.hpp>
-#include "cpp/include/revolve/gazebo/plugin/RobotController.h"
+#include "revolve/cpp/include/revolve/gazebo/plugin/RobotController.h"
 
 #include <iostream>
 #include <stdexcept>

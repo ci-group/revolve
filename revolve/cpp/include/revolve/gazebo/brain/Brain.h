@@ -7,7 +7,7 @@
 #ifndef REVOLVE_GAZEBO_BRAIN_BRAIN_H_
 #define REVOLVE_GAZEBO_BRAIN_BRAIN_H_
 
-#include "cpp/include/revolve/gazebo/Types.h"
+#include "revolve/cpp/include/revolve/gazebo/Types.h"
 #include <boost/shared_ptr.hpp>
 #include <gazebo/common/common.hh>
 

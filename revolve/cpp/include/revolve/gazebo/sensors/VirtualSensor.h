@@ -12,7 +12,7 @@
 #include <gazebo/gazebo.hh>
 #include <gazebo/sensors/sensors.hh>
 
-#include "cpp/include/revolve/gazebo/Types.h"
+#include "revolve/cpp/include/revolve/gazebo/Types.h"
 
 namespace revolve {
 namespace gazebo {

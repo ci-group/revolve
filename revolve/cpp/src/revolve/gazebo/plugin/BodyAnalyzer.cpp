@@ -6,7 +6,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "cpp/include/revolve/gazebo/plugin/BodyAnalyzer.h"
+#include "revolve/cpp/include/revolve/gazebo/plugin/BodyAnalyzer.h"
 
 namespace gz = gazebo;
 

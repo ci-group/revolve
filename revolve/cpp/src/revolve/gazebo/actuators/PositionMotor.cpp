@@ -1,4 +1,4 @@
-#include "cpp/include/revolve/gazebo/actuators/PositionMotor.h"
+#include "revolve/cpp/include/revolve/gazebo/actuators/PositionMotor.h"
 #include <gazebo/math/Rand.hh>
 
 namespace gz = gazebo;

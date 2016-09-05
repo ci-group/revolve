@@ -2,7 +2,7 @@
 // Created by elte on 6-6-15.
 //
 
-#include "cpp/include/revolve/gazebo/plugin/WorldController.h"
+#include "revolve/cpp/include/revolve/gazebo/plugin/WorldController.h"
 
 #include <iostream>
 
