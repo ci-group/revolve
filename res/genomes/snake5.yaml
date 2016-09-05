@@ -1,0 +1,41 @@
+---
+body:
+  id          : Core
+  type        : Core
+  children    :
+    0:
+      id          : Leg00Joint
+      type        : ActiveHinge
+      orientation : 90
+      children    :
+        1:
+          id          : Leg00
+          type        : FixedBrick
+          orientation : -90
+          children    :
+            1:
+              id          : Leg01Joint
+              type        : ActiveHinge
+              children    :
+                1:
+                  id          : Leg01
+                  type        : FixedBrick
+                  orientation : 0
+    1:
+      id          : Leg10Joint
+      type        : ActiveHinge
+      orientation : 90
+      children    :
+        1:
+          id          : Leg10
+          type        : FixedBrick
+          orientation : -90
+          children    :
+            1:
+              id          : Leg11Joint
+              type        : ActiveHinge
+              children    :
+                1:
+                  id          : Leg11
+                  type        : FixedBrick
+                  orientation : 0
