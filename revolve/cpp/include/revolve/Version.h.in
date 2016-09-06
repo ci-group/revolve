@@ -10,8 +10,8 @@
 #include <string>
 #include <sstream>
 
-namespace ProjectTemplate {
-namespace Revolve {
+namespace revolve {
+namespace gazebo {
 /// The current major version.
 #define HELLO_VERSION_MAJOR @VERSION_MAJOR@
 
