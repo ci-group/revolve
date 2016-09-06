@@ -21,6 +21,7 @@ monitoring and control over the simulation environment.
 ├── cmake               # cmake modules
 ├── res                 # resources
 │   ├── genomes             # robot genomes
+│   ├── models              # robot COLLADA models
 │   └── worlds              # simulator world files
 ├── revolve             # core Revolve project
 │   ├── cmake               # cmake modules
