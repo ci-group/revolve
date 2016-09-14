@@ -2,7 +2,7 @@
 # _____________________________________________________________________________
 
 #set(LIB_HEADERS
-#        "${CMAKE_CURRENT_BINARY_DIR}/../include/ProjA/Version.h" # Generated header
+#        "${CMAKE_CURRENT_BINARY_DIR}/../include/Revolve/Version.h" # Generated header
 ##        ../include/revolve/World.h # Normal header
 #        )
 #

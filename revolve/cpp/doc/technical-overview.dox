@@ -27,7 +27,7 @@
 	@endhtmlonly		
 	@section TECHNICAL_OVERVIEW_INTRODUCTION INTRODUCTION
 		@subsection Overview Overview
-			- Brief overview of the ProjA
+			- Brief overview of the Revolve
 		@subsection Version Version
 			- Version
 		@subsection Status Status

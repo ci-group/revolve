@@ -48,28 +48,28 @@ namespace gazebo {
    (HELLO_VERSION_MAJOR ==                    \
     MAJOR&&(HELLO_VERSION_MINOR < MINOR || (HELLO_VERSION_MINOR == MINOR&& HELLO_VERSION_PATCH <= PATCH))))
 
-/// Information about the current ProjA version.
+/// Information about the current Revolve version.
 class Version {
 public:
-  /// @return the current major version of ProjB.
+  /// @return the current major version of TOL-Revolve.
   static int getMajor()
   {
     return HELLO_VERSION_MAJOR;
   }
 
-  /// @return the current minor version of ProjB.
+  /// @return the current minor version of TOL-Revolve.
   static int getMinor()
   {
     return HELLO_VERSION_MINOR;
   }
 
-  /// @return the current patch level of ProjB.
+  /// @return the current patch level of TOL-Revolve.
   static int getPatch()
   {
     return HELLO_VERSION_PATCH;
   }
 
-  /// @return the current ProjB version (MM.mm.pp).
+  /// @return the current TOL-Revolve version (MM.mm.pp).
   static std::string getString()
   {
     std::ostringstream version;
@@ -83,7 +83,7 @@ public:
     return HELLO_VCS_REVISION;
   }
 
-  /// @return the current ProjB version plus the SVN revision (MM.mm.pp.rev).
+  /// @return the current TOL-Revolve version plus the SVN revision (MM.mm.pp.rev).
   static std::string getRevString()
   {
     std::ostringstream version;
