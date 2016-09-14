@@ -12,8 +12,11 @@ namespace gazebo {
 
 class Sensor : public VirtualSensor {
 public:
-	Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-			std::string partId, std::string sensorId, unsigned int inputs);
+	Sensor(::gazebo::physics::ModelPtr model,
+		   sdf::ElementPtr sensor,
+		   std::string partId,
+		   std::string sensorId,
+		   unsigned int inputs);
 	virtual ~Sensor();
 
 	/**

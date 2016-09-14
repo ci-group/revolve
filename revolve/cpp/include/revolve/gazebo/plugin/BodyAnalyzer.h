@@ -33,7 +33,8 @@ namespace gazebo {
 
 class BodyAnalyzer : public ::gazebo::WorldPlugin {
 public:
-	void Load(::gazebo::physics::WorldPtr _parent, sdf::ElementPtr _sdf);
+	void Load(::gazebo::physics::WorldPtr _parent,
+			  sdf::ElementPtr _sdf);
 
 	// Maximum size of request queue, if more requests come in they are discarded
 	static const int MAX_QUEUE_SIZE = 100;

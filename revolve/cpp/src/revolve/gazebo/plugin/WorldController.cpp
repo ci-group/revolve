@@ -2,9 +2,7 @@
 // Created by elte on 6-6-15.
 //
 
-#include "revolve/cpp/include/revolve/gazebo/plugin/WorldController.h"
-
-#include <iostream>
+#include "revolve/gazebo/plugin/WorldController.h"
 
 namespace gz = gazebo;
 
@@ -17,7 +15,9 @@ WorldController::WorldController():
 {
 }
 
-void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
+void WorldController::Load(gz::physics::WorldPtr world,
+                           sdf::ElementPtr /*_sdf*/)
+{
 	std::cout << "World plugin loaded." << std::endl;
 
 	// Store the world
@@ -51,7 +51,8 @@ void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/
 	robotStatesPub_ = node_->Advertise<revolve::msgs::RobotStates>("~/revolve/robot_states", 50);
 }
 
-void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info) {
+void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
+{
 	if (!robotStatesPubFreq_) {
 		return;
 	}
@@ -86,7 +87,8 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info) {
 }
 
 // Process insert and delete requests
-void WorldController::HandleRequest(ConstRequestPtr & request) {
+void WorldController::HandleRequest(ConstRequestPtr & request)
+{
 	if (request->request() == "delete_robot") {
 		auto name = request->data();
 		std::cout << "Processing request `" << request->id()
@@ -150,7 +152,8 @@ void WorldController::HandleRequest(ConstRequestPtr & request) {
 	}
 }
 
-void WorldController::OnModel(ConstModelPtr &msg) {
+void WorldController::OnModel(ConstModelPtr &msg)
+{
 	auto name = msg->name();
 
 	int id;
@@ -181,7 +184,8 @@ void WorldController::OnModel(ConstModelPtr &msg) {
 			world_->GetModelCount() << " models." << std::endl;
 }
 
-void WorldController::HandleResponse(ConstResponsePtr &response) {
+void WorldController::HandleResponse(ConstResponsePtr &response)
+{
 	if (response->request() != "entity_delete") {
 		return;
 	}

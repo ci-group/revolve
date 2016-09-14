@@ -8,15 +8,17 @@
 #ifndef REVOLVE_GAZEBO_SENSORS_TOUCHSENSOR_H_
 #define REVOLVE_GAZEBO_SENSORS_TOUCHSENSOR_H_
 
-#include "revolve/cpp/include/revolve/gazebo/sensors/Sensor.h"
+#include "Sensor.h"
 
 namespace revolve {
 namespace gazebo {
 
 class TouchSensor: public Sensor {
 public:
-	TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-			std::string partId, std::string sensorId);
+	TouchSensor(::gazebo::physics::ModelPtr model,
+				sdf::ElementPtr sensor,
+				std::string partId,
+				std::string sensorId);
 	virtual ~TouchSensor();
 
 	/**

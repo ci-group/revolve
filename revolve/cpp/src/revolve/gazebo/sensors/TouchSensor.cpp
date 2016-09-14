@@ -5,17 +5,17 @@
  *      Author: elte
  */
 
-#include "revolve/cpp/include/revolve/gazebo/sensors/TouchSensor.h"
-
-#include <boost/bind.hpp>
+#include "revolve/gazebo/sensors/TouchSensor.h"
 
 namespace gz = gazebo;
 
 namespace revolve {
 namespace gazebo {
 
-TouchSensor::TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-		std::string partId, std::string sensorId):
+TouchSensor::TouchSensor(::gazebo::physics::ModelPtr model,
+						 sdf::ElementPtr sensor,
+						 std::string partId,
+						 std::string sensorId):
 		Sensor(model, sensor, partId, sensorId, 1),
 		lastValue_(false)
 {
@@ -36,12 +36,14 @@ TouchSensor::TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sens
 TouchSensor::~TouchSensor()
 {}
 
-void TouchSensor::OnUpdate() {
+void TouchSensor::OnUpdate()
+{
 	auto contacts = this->castSensor_->GetContacts();
 	this->lastValue_ = contacts.contact_size() > 0;
 }
 
-void TouchSensor::read(double * input) {
+void TouchSensor::read(double * input)
+{
 	input[0] = lastValue_ ? 1 : 0;
 }
 

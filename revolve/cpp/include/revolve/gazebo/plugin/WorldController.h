@@ -22,7 +22,8 @@ class WorldController : public ::gazebo::WorldPlugin {
 public:
 	WorldController();
 
-	virtual void Load(::gazebo::physics::WorldPtr _parent, sdf::ElementPtr _sdf);
+	virtual void Load(::gazebo::physics::WorldPtr _parent,
+					  sdf::ElementPtr _sdf);
 
 protected:
 	// Listener for analysis requests

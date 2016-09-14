@@ -1,13 +1,14 @@
-#include "revolve/cpp/include/revolve/gazebo/actuators/PositionMotor.h"
-#include <gazebo/math/Rand.hh>
+#include "revolve/gazebo/actuators/PositionMotor.h"
 
 namespace gz = gazebo;
 
 namespace revolve {
 namespace gazebo {
 
-PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
-							 std::string motorId, sdf::ElementPtr motor):
+PositionMotor::PositionMotor(gz::physics::ModelPtr model,
+							 std::string partId,
+							 std::string motorId,
+							 sdf::ElementPtr motor):
 	JointMotor(model, partId, motorId, motor, 1),
 	positionTarget_(0),
 	noise_(0) {
@@ -17,7 +18,8 @@ PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
 	lowerLimit_ = fmax(-M_PI, joint_->GetLowerLimit(0).Radian());
 	fullRange_ = (upperLimit_ - lowerLimit_ + 1e-12) >= (2 * M_PI);
 
-	if (motor->HasElement("rv:pid")) {
+	if (motor->HasElement("rv:pid"))
+{
 		auto pidElem = motor->GetElement("rv:pid");
 		pid_ = Motor::createPid(pidElem);
 	}
@@ -39,13 +41,15 @@ PositionMotor::PositionMotor(gz::physics::ModelPtr model, std::string partId,
 	joint_->SetParam("fmax", 0, maxEffort);
 }
 
-PositionMotor::~PositionMotor() { }
+PositionMotor::~PositionMotor()
+{}
 
 //void PositionMotor::OnUpdate(const ::gazebo::common::UpdateInfo info) {
 //	DoUpdate(info.simTime);
 //}
 
-void PositionMotor::update(double *outputs, double /*step*/) {
+void PositionMotor::update(double *outputs, double /*step*/)
+{
 	// Just one network output, which is the first
 	double output = outputs[0];
 
@@ -64,7 +68,8 @@ void PositionMotor::update(double *outputs, double /*step*/) {
 	this->DoUpdate(joint_->GetWorld()->GetSimTime());
 }
 
-void PositionMotor::DoUpdate(const ::gazebo::common::Time &simTime) {
+void PositionMotor::DoUpdate(const ::gazebo::common::Time &simTime)
+{
 	gz::common::Time stepTime = simTime - prevUpdateTime_;
 	if (stepTime <= 0) {
 		// Only respond to positive step times

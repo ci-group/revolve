@@ -5,15 +5,18 @@
  *      Author: elte
  */
 
-#include "revolve/cpp/include/revolve/gazebo/sensors/Sensor.h"
+#include "revolve/gazebo/sensors/Sensor.h"
 
 namespace gz = gazebo;
 
 namespace revolve {
 namespace gazebo {
 
-Sensor::Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-		std::string partId, std::string sensorId, unsigned int inputs):
+Sensor::Sensor(::gazebo::physics::ModelPtr model,
+			   sdf::ElementPtr sensor,
+			   std::string partId,
+			   std::string sensorId,
+			   unsigned int inputs):
 	VirtualSensor(model, partId, sensorId, inputs)
 {
 	if (!sensor->HasAttribute("sensor") || !sensor->HasAttribute("link")) {
@@ -44,9 +47,10 @@ Sensor::Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
 Sensor::~Sensor()
 {}
 
-::gazebo::sensors::SensorPtr Sensor::gzSensor() {
+::gazebo::sensors::SensorPtr Sensor::gzSensor()
+{
 	return sensor_;
 }
 
 } /* namespace gazebo */
-} /* namespace tol_robogen */
+} /* namespace revolve */

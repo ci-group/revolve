@@ -5,11 +5,8 @@
  *      Author: elte
  */
 
-#include "revolve/cpp/include/revolve/gazebo/sensors/SensorFactory.h"
-#include "revolve/cpp/include/revolve/gazebo/sensors/Sensors.h"
-
-#include <stdexcept>
-#include <iostream>
+#include "revolve/gazebo/sensors/SensorFactory.h"
+#include "revolve/gazebo/sensors/Sensors.h"
 
 namespace gz = gazebo;
 
@@ -24,7 +21,10 @@ SensorFactory::~SensorFactory()
 {}
 
 SensorPtr SensorFactory::getSensor(sdf::ElementPtr sensor,
-		const std::string& type, const std::string& partId, const std::string& sensorId) {
+								   const std::string& type,
+								   const std::string& partId,
+								   const std::string& sensorId)
+{
 	SensorPtr out;
 	if ("imu" == type) {
 		out.reset(new ImuSensor(this->model_, sensor, partId, sensorId));
@@ -41,7 +41,8 @@ SensorPtr SensorFactory::getSensor(sdf::ElementPtr sensor,
 	return out;
 }
 
-SensorPtr SensorFactory::create(sdf::ElementPtr sensor) {
+SensorPtr SensorFactory::create(sdf::ElementPtr sensor)
+{
 	auto typeParam = sensor->GetAttribute("type");
 	auto partIdParam = sensor->GetAttribute("part_id");
 	auto idParam = sensor->GetAttribute("id");
@@ -65,4 +66,4 @@ SensorPtr SensorFactory::create(sdf::ElementPtr sensor) {
 }
 
 } /* namespace gazebo */
-} /* namespace tol_robogen */
+} /* namespace revolve */

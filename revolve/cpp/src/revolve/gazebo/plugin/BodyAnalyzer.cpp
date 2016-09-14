@@ -1,19 +1,15 @@
-#include <sstream>
-#include <stdexcept>
+#include "revolve/gazebo/plugin/BodyAnalyzer.h"
 
-#include <boost/bind.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/thread/thread.hpp>
-
-#include "revolve/cpp/include/revolve/gazebo/plugin/BodyAnalyzer.h"
 
 namespace gz = gazebo;
 
 namespace revolve {
 namespace gazebo {
 
-void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
+void BodyAnalyzer::Load(gz::physics::WorldPtr world,
+						sdf::ElementPtr /*_sdf*/)
+{
 	// Store pointer to the world
 	world_ = world;
 
@@ -51,7 +47,8 @@ void BodyAnalyzer::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/) {
 	std::cout << "Body analyzer ready" << std::endl;
 }
 
-void BodyAnalyzer::OnModel(ConstModelPtr & msg) {
+void BodyAnalyzer::OnModel(ConstModelPtr & msg)
+{
 	std::string expectedName = "analyze_bot_"+boost::lexical_cast<std::string>(counter_);
 	if (msg->name() != expectedName) {
 		throw std::runtime_error("INTERNAL ERROR: Expecting model with name '" + expectedName +
@@ -66,14 +63,16 @@ void BodyAnalyzer::OnModel(ConstModelPtr & msg) {
 	world_->SetPaused(false);
 }
 
-void BodyAnalyzer::OnModelDelete(ConstResponsePtr & msg) {
+void BodyAnalyzer::OnModelDelete(ConstResponsePtr & msg)
+{
 	if (msg->request() == "entity_delete") {
 		// This might have cleared the world
 		this->ProcessQueue();
 	}
 }
 
-void BodyAnalyzer::Advance() {
+void BodyAnalyzer::Advance()
+{
 	processingMutex_.lock();
 
 	// Clear current request to indicate nothing is being
@@ -87,7 +86,8 @@ void BodyAnalyzer::Advance() {
 	this->ProcessQueue();
 }
 
-void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
+void BodyAnalyzer::OnContacts(ConstContactsPtr &msg)
+{
 	// Pause the world so no new contacts will come in
 	world_->SetPaused(true);
 
@@ -151,7 +151,8 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
 	this->Advance();
 }
 
-void BodyAnalyzer::AnalyzeRequest(ConstRequestPtr &request) {
+void BodyAnalyzer::AnalyzeRequest(ConstRequestPtr &request)
+{
 	if (request->request() != "analyze_body") {
 		// Request is not meant for us
 		return;
@@ -186,7 +187,8 @@ void BodyAnalyzer::AnalyzeRequest(ConstRequestPtr &request) {
 	this->ProcessQueue();
 }
 
-void BodyAnalyzer::ProcessQueue() {
+void BodyAnalyzer::ProcessQueue()
+{
 	// Acquire mutex on queue
 	boost::mutex::scoped_lock lock(queueMutex_);
 

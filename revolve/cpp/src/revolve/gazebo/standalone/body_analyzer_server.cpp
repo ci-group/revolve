@@ -8,10 +8,10 @@
  *
  * @author Elte Hupkes
  */
-#include "gazebo/common/Exception.hh"
-//#include "gazebo/util/LogRecord.hh"
-#include "gazebo/common/Console.hh"
-#include "gazebo/Server.hh"
+
+#include <gazebo/common/Exception.hh>
+#include <gazebo/common/Console.hh>
+#include <gazebo/Server.hh>
 
 //////////////////////////////////////////////////
 int main(int argc, char **argv)

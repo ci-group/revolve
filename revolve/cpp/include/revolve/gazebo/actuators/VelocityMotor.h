@@ -5,7 +5,7 @@
 #ifndef REVOLVE_VELOCITYMOTOR_H
 #define REVOLVE_VELOCITYMOTOR_H
 
-#include "revolve/cpp/include/revolve/gazebo/actuators/JointMotor.h"
+#include "JointMotor.h"
 #include <gazebo/common/common.hh>
 
 namespace revolve {
@@ -20,7 +20,10 @@ public:
      * @param Whether the motor is velocity driven (the alternative is position driven)
      * @param The derivative gain of the motor's PID controller
      */
-    VelocityMotor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, sdf::ElementPtr motor);
+    VelocityMotor(::gazebo::physics::ModelPtr model,
+                  std::string partId,
+                  std::string motorId,
+                  sdf::ElementPtr motor);
 
     virtual ~VelocityMotor();
 
@@ -29,7 +32,8 @@ public:
      * converts it to a velocity target between the minimum and maximum
      * velocity set by the motor.
      */
-    virtual void update(double *outputs, double step);
+    virtual void update(double *outputs,
+                        double step);
 
 protected:
     // World update event function

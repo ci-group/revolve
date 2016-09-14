@@ -15,8 +15,10 @@ namespace gazebo {
 
 class ImuSensor: public Sensor {
 public:
-	ImuSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-			std::string partId, std::string sensorId);
+	ImuSensor(::gazebo::physics::ModelPtr model,
+			  sdf::ElementPtr sensor,
+			  std::string partId,
+			  std::string sensorId);
 	virtual ~ImuSensor();
 
 	/**

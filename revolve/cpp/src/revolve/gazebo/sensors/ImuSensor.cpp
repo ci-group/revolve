@@ -5,18 +5,17 @@
  *      Author: elte
  */
 
-#include "revolve/cpp/include/revolve/gazebo/sensors/ImuSensor.h"
-
-#include <iostream>
-#include <stdexcept>
+#include "revolve/gazebo/sensors/ImuSensor.h"
 
 namespace gz = gazebo;
 
 namespace revolve {
 namespace gazebo {
 
-ImuSensor::ImuSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-		std::string partId, std::string sensorId):
+ImuSensor::ImuSensor(::gazebo::physics::ModelPtr model,
+					 sdf::ElementPtr sensor,
+					 std::string partId,
+					 std::string sensorId):
 		Sensor(model, sensor, partId, sensorId, 6)
 {
 	this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::ImuSensor>(this->sensor_);
@@ -33,9 +32,11 @@ ImuSensor::ImuSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
 	this->updateConnection_ = this->castSensor_->ConnectUpdated(boost::bind(&ImuSensor::OnUpdate, this));
 }
 
-ImuSensor::~ImuSensor() {}
+ImuSensor::~ImuSensor()
+{}
 
-void ImuSensor::OnUpdate() {
+void ImuSensor::OnUpdate()
+{
 	// Store the recorded values
 	auto acc = this->castSensor_->LinearAcceleration();
 	auto velo = this->castSensor_->AngularVelocity();
@@ -47,7 +48,8 @@ void ImuSensor::OnUpdate() {
 	lastValues_[5] = velo[2];
 }
 
-void ImuSensor::read(double * input) {
+void ImuSensor::read(double * input)
+{
 	// Copy our values to the input array
 	memcpy(input, lastValues_, sizeof(lastValues_));
 }

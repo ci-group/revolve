@@ -8,7 +8,7 @@
 #ifndef REVOLVE_GAZEBO_SENSORS_SENSORFACTORY_H_
 #define REVOLVE_GAZEBO_SENSORS_SENSORFACTORY_H_
 
-#include "revolve/cpp/include/revolve/gazebo/Types.h"
+#include "revolve/gazebo/Types.h"
 #include <gazebo/common/common.hh>
 
 namespace revolve {
@@ -24,8 +24,10 @@ public:
 	 * This is the convenience wrapper over `create` that has required attributes
 	 * already checked, usually you should override this when adding new sensor types.
 	 */
-	virtual SensorPtr getSensor(sdf::ElementPtr sensor, const std::string & type,
-								const std::string & partId, const std::string & sensorId);
+	virtual SensorPtr getSensor(sdf::ElementPtr sensor,
+								const std::string & type,
+								const std::string & partId,
+								const std::string & sensorId);
 
 	/**
 	 * Creates a new sensor in the given model, from the

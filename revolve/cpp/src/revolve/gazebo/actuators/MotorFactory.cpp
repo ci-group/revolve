@@ -5,10 +5,8 @@
  *      Author: elte
  */
 
-#include "revolve/cpp/include/revolve/gazebo/actuators/MotorFactory.h"
-#include "revolve/cpp/include/revolve/gazebo/actuators/Motors.h"
-
-#include <cstdlib>
+#include "revolve/gazebo/actuators/MotorFactory.h"
+#include "revolve/gazebo/actuators/Motors.h"
 
 namespace gz = gazebo;
 
@@ -19,10 +17,14 @@ MotorFactory::MotorFactory(::gazebo::physics::ModelPtr model):
 	model_(model)
 {}
 
-MotorFactory::~MotorFactory() {}
+MotorFactory::~MotorFactory()
+{}
 
-MotorPtr MotorFactory::getMotor(sdf::ElementPtr motor, const std::string & type,
-								const std::string & partId, const std::string & motorId) {
+MotorPtr MotorFactory::getMotor(sdf::ElementPtr motor,
+								const std::string & type,
+								const std::string & partId,
+								const std::string & motorId)
+{
 	MotorPtr motorObj;
 	if ("position" == type) {
 		motorObj.reset(new PositionMotor(model_, partId, motorId, motor));
@@ -33,7 +35,8 @@ MotorPtr MotorFactory::getMotor(sdf::ElementPtr motor, const std::string & type,
 	return motorObj;
 }
 
-MotorPtr MotorFactory::create(sdf::ElementPtr motor) {
+MotorPtr MotorFactory::create(sdf::ElementPtr motor)
+{
 	auto typeParam = motor->GetAttribute("type");
 	auto partIdParam = motor->GetAttribute("part_id");
 	auto idParam = motor->GetAttribute("id");

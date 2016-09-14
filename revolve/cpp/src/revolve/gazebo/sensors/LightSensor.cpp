@@ -5,17 +5,17 @@
  *      Author: elte
  */
 
-#include "revolve/cpp/include/revolve/gazebo/sensors/LightSensor.h"
-
-#include <boost/bind.hpp>
+#include "revolve/gazebo/sensors/LightSensor.h"
 
 namespace gz = gazebo;
 
 namespace revolve {
 namespace gazebo {
 
-LightSensor::LightSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-		std::string partId, std::string sensorId):
+LightSensor::LightSensor(::gazebo::physics::ModelPtr model,
+						 sdf::ElementPtr sensor,
+						 std::string partId,
+						 std::string sensorId):
 	Sensor(model, sensor, partId, sensorId, 1),
 
 	// Initialize light sensor to full intensity
@@ -41,7 +41,8 @@ LightSensor::LightSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sens
 LightSensor::~LightSensor()
 {}
 
-void LightSensor::OnUpdate() {
+void LightSensor::OnUpdate()
+{
 	// Average all channels and pixels to get a linear
 	// light intensity.
 	const unsigned char* data = this->castSensor_->GetImageData();
@@ -69,9 +70,10 @@ void LightSensor::OnUpdate() {
  * case that would force the sensor update here on the "driver"
  * thread, which might be detrimental to performance.
  */
-void LightSensor::read(double * input) {
+void LightSensor::read(double * input)
+{
 	input[0] = lastValue_;
 }
 
 } /* namespace gazebo */
-} /* namespace tol_robogen */
+} /* namespace revolve */

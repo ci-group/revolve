@@ -13,7 +13,7 @@
 #include <gazebo/common/common.hh>
 #include <gazebo/msgs/msgs.hh>
 
-#include "revolve/cpp/include/revolve/gazebo/Types.h"
+#include "revolve/gazebo/Types.h"
 
 #include <vector>
 
@@ -26,7 +26,8 @@ public:
 	virtual ~RobotController();
 
 public:
-	virtual void Load(::gazebo::physics::ModelPtr _parent, sdf::ElementPtr _sdf);
+	virtual void Load(::gazebo::physics::ModelPtr _parent,
+					  sdf::ElementPtr _sdf);
 
 	/**
 	 * @return Factory class that creates motors for this model
@@ -90,7 +91,8 @@ protected:
 	 * event. By default, this grabs the `update_rate` from the robot config
 	 * pointer, and binds
 	 */
-	virtual void startup(::gazebo::physics::ModelPtr _parent, sdf::ElementPtr _sdf);
+	virtual void startup(::gazebo::physics::ModelPtr _parent,
+						 sdf::ElementPtr _sdf);
 
 	/**
 	 * Default method bound to world update event, checks whether the

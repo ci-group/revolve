@@ -5,18 +5,10 @@
  *      Author: elte
  */
 
-#include "revolve/cpp/include/revolve/gazebo/actuators/MotorFactory.h"
-#include "revolve/cpp/include/revolve/gazebo/sensors/SensorFactory.h"
-#include "revolve/cpp/include/revolve/gazebo/brain/NeuralNetwork.h"
-
-#include <gazebo/transport/transport.hh>
-#include <gazebo/sensors/sensors.hh>
-
-#include <boost/bind.hpp>
-#include "revolve/cpp/include/revolve/gazebo/plugin/RobotController.h"
-
-#include <iostream>
-#include <stdexcept>
+#include "revolve/gazebo/actuators/MotorFactory.h"
+#include "revolve/gazebo/brain/NeuralNetwork.h"
+#include "revolve/gazebo/plugin/RobotController.h"
+#include "revolve/gazebo/sensors/SensorFactory.h"
 
 namespace gz = gazebo;
 
@@ -38,7 +30,8 @@ RobotController::~RobotController()
 }
 
 void RobotController::Load(::gazebo::physics::ModelPtr _parent,
-		sdf::ElementPtr _sdf) {
+						   sdf::ElementPtr _sdf)
+{
 	// Store the pointer to the model / world
 	this->model = _parent;
 	this->world = _parent->GetWorld();
@@ -86,7 +79,8 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
 
 ////////////////////////////////////////////////////////////////
 
-void RobotController::UpdateBattery(ConstRequestPtr &request) {
+void RobotController::UpdateBattery(ConstRequestPtr &request)
+{
 	if (request->data() != this->model->GetName() && request->data() != this->model->GetScopedName()) {
 		return;
 	}
@@ -109,7 +103,8 @@ void RobotController::UpdateBattery(ConstRequestPtr &request) {
 
 ////////////////////////////////////////////////////////////////
 
-void RobotController::LoadMotors(sdf::ElementPtr sdf) {
+void RobotController::LoadMotors(sdf::ElementPtr sdf)
+{
 	if (!sdf->HasElement("rv:motor")) {
 		return;
 	}
@@ -124,7 +119,8 @@ void RobotController::LoadMotors(sdf::ElementPtr sdf) {
 
 ////////////////////////////////////////////////////////////
 
-void RobotController::LoadSensors(sdf::ElementPtr sdf) {
+void RobotController::LoadSensors(sdf::ElementPtr sdf)
+{
 	if (!sdf->HasElement("rv:sensor")) {
 		return;
 	}
@@ -137,17 +133,18 @@ void RobotController::LoadSensors(sdf::ElementPtr sdf) {
 	}
 }
 
-MotorFactoryPtr RobotController::getMotorFactory(
-		::gazebo::physics::ModelPtr model) {
+MotorFactoryPtr RobotController::getMotorFactory(::gazebo::physics::ModelPtr model)
+{
 	return MotorFactoryPtr(new MotorFactory(model));
 }
 
-SensorFactoryPtr RobotController::getSensorFactory(
-		::gazebo::physics::ModelPtr model) {
+SensorFactoryPtr RobotController::getSensorFactory(::gazebo::physics::ModelPtr model)
+{
 	return SensorFactoryPtr(new SensorFactory(model));
 }
 
-void RobotController::LoadBrain(sdf::ElementPtr sdf) {
+void RobotController::LoadBrain(sdf::ElementPtr sdf)
+{
 	if (!sdf->HasElement("rv:brain")) {
 		std::cerr << "No robot brain detected, this is probably an error." << std::endl;
 		return;
@@ -160,14 +157,17 @@ void RobotController::LoadBrain(sdf::ElementPtr sdf) {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Default startup, bind to CheckUpdate
-void RobotController::startup(::gazebo::physics::ModelPtr /*_parent*/, sdf::ElementPtr /*_sdf*/) {
+void RobotController::startup(::gazebo::physics::ModelPtr /*_parent*/,
+                              sdf::ElementPtr /*_sdf*/)
+{
 	this->updateConnection_ = gz::event::Events::ConnectWorldUpdateBegin(
 		boost::bind(&RobotController::CheckUpdate, this, _1));
 }
 
 //////////////////////////////////////////////////////////////////////////////////
 
-void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo info) {
+void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo info)
+{
 	auto diff = info.simTime - lastActuationTime_;
 
 	if (diff.Double() > actuationTime_) {
@@ -179,20 +179,23 @@ void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo info) {
 /////////////////////////////////////////////////////////////////////////////////////
 
 // Default update function simply tells the brain to perform an update
-void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo info) {
+void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo info)
+{
 	brain_->update(motors_, sensors_, info.simTime.Double() - initTime_, actuationTime_);
 }
 
 /////////////////////////////////////////////////////////
 
-void RobotController::LoadBattery(sdf::ElementPtr sdf) {
+void RobotController::LoadBattery(sdf::ElementPtr sdf)
+{
 	if (sdf->HasElement("rv:battery")) {
 		this->batteryElem_ = sdf->GetElement("rv:battery");
 	}
 }
 
 ///////////////////////////////////////////////////////////
-double RobotController::GetBatteryLevel() {
+double RobotController::GetBatteryLevel()
+{
 	if (!batteryElem_ || !batteryElem_->HasElement("rv:level")) {
 		return 0.0;
 	}
@@ -202,7 +205,8 @@ double RobotController::GetBatteryLevel() {
 
 
 /////////////////////////////////////////////////////////////////
-void RobotController::SetBatteryLevel(double level) {
+void RobotController::SetBatteryLevel(double level)
+{
 	if (batteryElem_ && batteryElem_->HasElement("rv:level")) {
 		batteryElem_->GetElement("rv:level")->Set(level);
 	}

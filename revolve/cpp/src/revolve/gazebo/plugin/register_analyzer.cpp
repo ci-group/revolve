@@ -1,5 +1,4 @@
-#include <gazebo/gazebo.hh>
-#include "revolve/cpp/include/revolve/gazebo/plugin/BodyAnalyzer.h"
+#include "revolve/gazebo/plugin/BodyAnalyzer.h"
 
 using namespace gazebo;
 

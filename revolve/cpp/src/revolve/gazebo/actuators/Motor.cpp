@@ -5,31 +5,38 @@
  *      Author: elte
  */
 
-#include "revolve/cpp/include/revolve/gazebo/actuators/Motor.h"
+#include "revolve/gazebo/actuators/Motor.h"
 
 namespace gz = gazebo;
 
 namespace revolve {
 namespace gazebo {
 
-Motor::Motor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, unsigned int outputNeurons):
+Motor::Motor(::gazebo::physics::ModelPtr model,
+			 std::string partId,
+			 std::string motorId,
+			 unsigned int outputNeurons):
 	model_(model),
 	partId_(partId),
 	motorId_(motorId),
 	outputs_(outputNeurons)
 {}
 
-Motor::~Motor() {}
+Motor::~Motor()
+{}
 
-std::string Motor::partId() {
+std::string Motor::partId()
+{
 	return partId_;
 }
 
-unsigned int Motor::outputs() {
+unsigned int Motor::outputs()
+{
 	return outputs_;
 }
 
-gz::common::PID Motor::createPid(sdf::ElementPtr pidElem) {
+gz::common::PID Motor::createPid(sdf::ElementPtr pidElem)
+{
 	double pv = 0, iv = 0, dv = 0, iMax = 0, iMin = 0,
 			cmdMax = 0, cmdMin = 0;
 
@@ -44,7 +51,8 @@ gz::common::PID Motor::createPid(sdf::ElementPtr pidElem) {
 	return gz::common::PID(pv, iv, dv, iMax, iMin, cmdMax, cmdMin);
 }
 
-std::string Motor::motorId() {
+std::string Motor::motorId()
+{
 	return motorId_;
 }
 

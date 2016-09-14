@@ -1,4 +1,4 @@
-#include "revolve/cpp/include/revolve/gazebo/actuators/VelocityMotor.h"
+#include "revolve/gazebo/actuators/VelocityMotor.h"
 
 namespace gz = gazebo;
 
@@ -6,8 +6,10 @@ namespace revolve {
 namespace gazebo {
 
 
-VelocityMotor::VelocityMotor(::gazebo::physics::ModelPtr model, std::string partId,
-                             std::string motorId, sdf::ElementPtr motor):
+VelocityMotor::VelocityMotor(::gazebo::physics::ModelPtr model,
+                             std::string partId,
+                             std::string motorId,
+                             sdf::ElementPtr motor):
     JointMotor(model, partId, motorId, motor, 1),
 	velocityTarget_(0),
     noise_(0)
@@ -35,9 +37,12 @@ VelocityMotor::VelocityMotor(::gazebo::physics::ModelPtr model, std::string part
 	joint_->SetParam("fmax", 0, maxEffort);
 }
 
-VelocityMotor::~VelocityMotor() {}
+VelocityMotor::~VelocityMotor()
+{}
 
-void VelocityMotor::update(double * outputs, double /*step*/) {
+void VelocityMotor::update(double * outputs,
+                           double /*step*/)
+{
     // Just one network output, which is the first
     double output = outputs[0];
 
@@ -51,7 +56,8 @@ void VelocityMotor::update(double * outputs, double /*step*/) {
 	DoUpdate(joint_->GetWorld()->GetSimTime());
 }
 
-void VelocityMotor::DoUpdate(const ::gazebo::common::Time &/*simTime*/) {
+void VelocityMotor::DoUpdate(const ::gazebo::common::Time &/*simTime*/)
+{
 	// I'm caving for now and am setting ODE parameters directly.
 	// See http://answers.gazebosim.org/question/9071/joint-target-velocity-with-maximum-force/
 	joint_->SetParam("vel", 0, velocityTarget_);

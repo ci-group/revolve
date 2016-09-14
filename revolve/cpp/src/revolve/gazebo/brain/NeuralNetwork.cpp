@@ -2,18 +2,9 @@
  *
  */
 
-#include "revolve/cpp/include/revolve/gazebo/brain/NeuralNetwork.h"
-#include "revolve/cpp/include/revolve/gazebo/actuators/Motor.h"
-#include "revolve/cpp/include/revolve/gazebo/sensors/Sensor.h"
-
-#include <iostream>
-#include <algorithm>
-#include <stdexcept>
-#include <cstdlib>
-#include <map>
-#include <string>
-#include <sstream>
-#include <cmath>
+#include "revolve/gazebo/actuators/Motor.h"
+#include "revolve/gazebo/brain/NeuralNetwork.h"
+#include "revolve/gazebo/sensors/Sensor.h"
 
 namespace gz = gazebo;
 
@@ -21,12 +12,17 @@ namespace revolve {
 namespace gazebo {
 
 // Internal helper function to build neuron params
-void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron);
-void neuronHelper(double* params, unsigned int* types, const revolve::msgs::Neuron & neuron);
+void neuronHelper(double* params,
+				  unsigned int* types,
+				  sdf::ElementPtr neuron);
+void neuronHelper(double* params,
+				  unsigned int* types,
+				  const revolve::msgs::Neuron & neuron);
 
-NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
+NeuralNetwork::NeuralNetwork(std::string modelName,
+							 sdf::ElementPtr node,
 							 std::vector< MotorPtr > & motors,
-		std::vector< SensorPtr > & sensors):
+							 std::vector< SensorPtr > & sensors):
 	flipState_(false),
 	nInputs_(0),
 	nOutputs_(0),
@@ -321,8 +317,10 @@ void NeuralNetwork::step(double time) {
 }
 
 void NeuralNetwork::update(const std::vector<MotorPtr>& motors,
-		const std::vector<SensorPtr>& sensors,
-		double t, double step) {
+						   const std::vector<SensorPtr>& sensors,
+						   double t,
+						   double step)
+{
 	boost::mutex::scoped_lock lock(networkMutex_);
 
 	// Read sensor data and feed the neural network
@@ -348,7 +346,8 @@ void NeuralNetwork::update(const std::vector<MotorPtr>& motors,
 
 //////////////////////////////////////////////////////////
 
-void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
+void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
+{
 	boost::mutex::scoped_lock lock(networkMutex_);
 
 	unsigned int i, j;
@@ -510,7 +509,9 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
 
 //////////////////////////////////////
 
-void NeuralNetwork::connectionHelper(const std::string & src, const std::string & dst, double weight) {
+void NeuralNetwork::connectionHelper(const std::string & src,
+									 const std::string & dst,
+									 double weight) {
 	if (!layerMap_.count(src)) {
 		std::cerr << "Source neuron '" << src << "' is unknown." << std::endl;
 		throw std::runtime_error("Robot brain error");
@@ -548,7 +549,8 @@ void NeuralNetwork::connectionHelper(const std::string & src, const std::string 
 
 /////////////////////////////////////////////////
 
-void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
+void neuronHelper(double* params, unsigned int* types,
+				  sdf::ElementPtr neuron) {
 	if (!neuron->HasAttribute("type")) {
 		std::cerr << "Missing required `type` attribute for neuron." << std::endl;
 				throw std::runtime_error("Robot brain error");
@@ -585,7 +587,10 @@ void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
 	}
 }
 
-void neuronHelper(double* params, unsigned int* types, const revolve::msgs::Neuron & neuron) {
+void neuronHelper(double* params,
+				  unsigned int* types,
+				  const revolve::msgs::Neuron & neuron)
+{
 	auto type = neuron.type();
 	if ("Sigmoid" == type || "Simple" == type) {
 		types[0] = "Simple" == type ? SIMPLE : SIGMOID;

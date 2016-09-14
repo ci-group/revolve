@@ -3,7 +3,7 @@
 
 #set(LIB_HEADERS
 #        "${CMAKE_CURRENT_BINARY_DIR}/../include/Revolve/Version.h" # Generated header
-##        ../include/revolve/World.h # Normal header
+#        ../include/revolve/World.h # Normal header
 #        )
 #
 #set(LIB_SOURCES
@@ -54,10 +54,6 @@ endif()
 # Include the directory where the protobuf files will be placed
 include_directories(${PROTO_OUTPUT_BASE})
 
-#include_directories(
-#        "../include/"
-#)
-
 set(PROTO_SRCS)
 set(PROTO_HDRS)
 file(MAKE_DIRECTORY ${PROTO_OUTPUT_BASE}/revolve/msgs)
@@ -92,8 +88,6 @@ target_link_libraries(revolve-spec ${PROTOBUF_LIBRARIES})
 
 # Generate Gazebo control plugin
 # _____________________________________________________________________________
-
-include_directories(${Boost_INCLUDE_DIRS})
 
 file(GLOB_RECURSE
         REVOLVE_GAZEBO_SRC

@@ -12,14 +12,17 @@
 #include <gazebo/gazebo.hh>
 #include <gazebo/sensors/sensors.hh>
 
-#include "revolve/cpp/include/revolve/gazebo/Types.h"
+#include "revolve/gazebo/Types.h"
 
 namespace revolve {
 namespace gazebo {
 
 class VirtualSensor {
 public:
-	VirtualSensor(::gazebo::physics::ModelPtr model, std::string partId, std::string sensorId, unsigned int inputs);
+	VirtualSensor(::gazebo::physics::ModelPtr model,
+				  std::string partId,
+				  std::string sensorId,
+				  unsigned int inputs);
 	virtual ~VirtualSensor();
 
 	/**

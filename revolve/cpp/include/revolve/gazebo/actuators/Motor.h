@@ -10,14 +10,17 @@
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 
-#include "revolve/cpp/include/revolve/gazebo/Types.h"
+#include "revolve/gazebo/Types.h"
 
 namespace revolve {
 namespace gazebo {
 
 class Motor {
 public:
-	Motor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, unsigned int outputs);
+	Motor(::gazebo::physics::ModelPtr model,
+		  std::string partId,
+		  std::string motorId,
+		  unsigned int outputs);
 	virtual ~Motor();
 
 	/**
@@ -76,6 +79,6 @@ protected:
 };
 
 } /* namespace gazebo */
-} /* namespace tol_robogen */
+} /* namespace revolve */
 
 #endif /* TOL_ROBOGEN_GAZEBO_MOTORS_MOTOR_H_ */

@@ -8,7 +8,7 @@
 #ifndef REVOLVE_GAZEBO_MOTORS_MOTORFACTORY_H_
 #define REVOLVE_GAZEBO_MOTORS_MOTORFACTORY_H_
 
-#include "revolve/cpp/include/revolve/gazebo/Types.h"
+#include "revolve/gazebo/Types.h"
 
 #include <gazebo/common/common.hh>
 
@@ -25,8 +25,10 @@ public:
 	 * This is the convenience wrapper over `create` that has required attributes
 	 * already checked, usually you should override this when adding new motor types.
 	 */
-	virtual MotorPtr getMotor(sdf::ElementPtr motor, const std::string & type,
-							  const std::string & motorId, const std::string & partId);
+	virtual MotorPtr getMotor(sdf::ElementPtr motor,
+							  const std::string & type,
+							  const std::string & motorId,
+							  const std::string & partId);
 
 	/**
 	 * Creates a motor for the given model for the given SDF element.

@@ -8,15 +8,18 @@
 #ifndef REVOLVE_GAZEBO_MOTORS_JOINTMOTOR_H_
 #define REVOLVE_GAZEBO_MOTORS_JOINTMOTOR_H_
 
-#include "revolve/cpp/include/revolve/gazebo/actuators/Motor.h"
+#include "Motor.h"
 
 namespace revolve {
 namespace gazebo {
 
 class JointMotor: public Motor {
 public:
-	JointMotor(::gazebo::physics::ModelPtr model, std::string partId,
-			std::string motorId, sdf::ElementPtr motor, unsigned int outputs);
+	JointMotor(::gazebo::physics::ModelPtr model,
+			   std::string partId,
+			   std::string motorId,
+			   sdf::ElementPtr motor,
+			   unsigned int outputs);
 	virtual ~JointMotor();
 protected:
 	/**

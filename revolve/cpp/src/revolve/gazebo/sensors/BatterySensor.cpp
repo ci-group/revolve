@@ -1,13 +1,15 @@
-#include "revolve/cpp/include/revolve/gazebo/sensors/BatterySensor.h"
+#include "revolve/gazebo/sensors/BatterySensor.h"
 
 namespace gz = gazebo;
 
 namespace revolve {
 namespace gazebo {
 
-BatterySensor::BatterySensor(::gazebo::physics::ModelPtr model, std::string partId,
+BatterySensor::BatterySensor(::gazebo::physics::ModelPtr model,
+							 std::string partId,
 							 std::string sensorId):
-		VirtualSensor(model, partId, sensorId, 1) {
+		VirtualSensor(model, partId, sensorId, 1)
+{
 	// Find the revolve plugin to get the battery data
 	auto modelSdf = model->GetSDF();
 	if (modelSdf->HasElement("plugin")) {
@@ -29,7 +31,8 @@ BatterySensor::BatterySensor(::gazebo::physics::ModelPtr model, std::string part
 
 ///////////////////////////////////
 
-void BatterySensor::read(double * input) {
+void BatterySensor::read(double * input)
+{
 	input[0] = this->batteryElem && this->batteryElem->HasElement("rv:level") ?
 					  this->batteryElem->GetElement("rv:level")->Get< double >() : 0.0;
 }
