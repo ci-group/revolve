@@ -28,10 +28,10 @@ include_directories(
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # adaptable according to individual needs
     set(CMAKE_MACOSX_RPATH ON)
-#    set(CMAKE_SKIP_BUILD_RPATH FALSE)
-#    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-#    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-#    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    #    set(CMAKE_SKIP_BUILD_RPATH FALSE)
+    #    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+    #    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+    #    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif ()
 
 # Finding dependencies
@@ -59,12 +59,14 @@ else ()
     find_package(gazebo 6.5 REQUIRED)
 endif ()
 include_directories(${GAZEBO_INCLUDE_DIRS})
+include_directories(${GAZEBO_PROTO_INCLUDE})
 
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 # Find protobuf
 find_package(Protobuf REQUIRED)
+include_directories(${PROTOBUF_INCLUDE_DIRS})
 
 # Source subdirectories
 # _____________________________________________________________________________

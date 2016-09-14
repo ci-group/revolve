@@ -29,7 +29,7 @@ foreach(ITR ${GAZEBO_INCLUDE_DIRS})
         set(GAZEBO_PROTO_INCLUDE "${ITR}/gazebo/msgs")
     endif()
 endforeach()
-include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS} ${GAZEBO_PROTO_INCLUDE})
+include_directories(${CMAKE_SOURCE_DIR} ${GAZEBO_PROTO_INCLUDE})
 
 # Directory where the custom .proto files reside within Revolve
 set(REVOLVE_PROTO_DIR "${CMAKE_SOURCE_DIR}/revolve/cpp/src/revolve/msgs")
