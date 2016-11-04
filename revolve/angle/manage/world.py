@@ -344,7 +344,7 @@ class WorldManager(manage.WorldManager):
         raise Return(coll, bbox, robot)
 
     @trollius.coroutine
-    def insert_robot(self, tree, pose, initial_battery=0.0, parents=None):
+    def insert_robot(self, tree, pose, name=None, initial_battery=0.0, parents=None):
         """
         Inserts a robot into the world. This consists of two steps:
 
@@ -361,12 +361,15 @@ class WorldManager(manage.WorldManager):
         :type tree: Tree
         :param pose: Insertion pose
         :type pose: Pose
+        :param name: Robot name
+        :type name: str
         :param initial_battery: Initial battery level
         :param parents:
         :return: A future that resolves with the created `Robot` object.
         """
         robot_id = self.get_robot_id()
-        robot_name = "gen__"+str(robot_id)
+        robot_name = "gen__"+str(robot_id) \
+            if name is None else str(name)
 
         robot = tree.to_robot(robot_id)
         sdf = self.get_simulation_sdf(robot, robot_name, initial_battery)
