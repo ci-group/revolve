@@ -295,7 +295,7 @@ class RobotBuilder(object):
         self.brain_builder = brain_builder
 
     def get_sdf_model(self, robot, controller_plugin=None, update_rate=5, name="sdf_robot",
-                      analyzer_mode=False, battery=None):
+                      analyzer_mode=False, battery=None, brain_conf=None):
         """
         :param robot: Protobuf robot
         :type robot: Robot
@@ -310,6 +310,8 @@ class RobotBuilder(object):
         :param battery: A Battery element to be added to the plugin if
                         applicable.
         :type battery: Element
+        :param brain_conf: Brain configuration data
+        :type brain_conf: dict
         :return: The sdf-builder Model
         :rtype: Model
         """
@@ -329,7 +331,7 @@ class RobotBuilder(object):
         plugin.add_element(config)
 
         # Add brain config element
-        brain_config = Element(tag_name='rv:brain')
+        brain_config = Element(tag_name='rv:brain', attributes=brain_conf)
         config.add_element(brain_config)
 
         self.brain_builder.build(robot, model, brain_config, analyzer_mode)

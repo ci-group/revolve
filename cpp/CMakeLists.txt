@@ -124,7 +124,8 @@ endforeach()
 set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES GENERATED TRUE)
 
 # Generate spec library with the messages
-add_library(revolve-spec STATIC ${PROTO_SRCS} )
+add_library(revolve-spec STATIC ${PROTO_SRCS})
+set_target_properties(revolve-spec PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(revolve-spec ${PROTOBUF_LIBRARIES})
 
 #### Other sources #######
