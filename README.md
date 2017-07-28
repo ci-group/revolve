@@ -1,3 +1,6 @@
+[![CircleCI](https://circleci.com/gh/ci-group/revolve.svg?style=svg)](https://circleci.com/gh/ci-group/revolve)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5443e24ddd4d413b897206b546d5600e)](https://www.codacy.com/app/milan.jelisavcic/revolve?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ci-group/revolve/&amp;utm_campaign=Badge_Grade)
+
 # Revolve - Robot evolution framework
 Revolve aims to be a flexible robot evolution framework, providing C++ and Python libraries to create,
 simulate and manage robots in the Gazebo robot simulator.
