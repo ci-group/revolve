@@ -30,7 +30,6 @@ namespace revolve {
 namespace gazebo {
 
 class BatterySensor : public VirtualSensor {
-
   public:
   BatterySensor(::gazebo::physics::ModelPtr model,
                 std::string partId,
@@ -39,10 +38,8 @@ class BatterySensor : public VirtualSensor {
   // Reads the battery value
   virtual void read(double * input);
 
-  protected:
-  sdf::ElementPtr batteryElem;
+  protected: sdf::ElementPtr batteryElem;
 };
-
 }
 }
 

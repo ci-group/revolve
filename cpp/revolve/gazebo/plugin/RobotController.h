@@ -80,6 +80,7 @@ class RobotController: public ::gazebo::ModelPlugin {
    * Request listener for battery update
    */
   void UpdateBattery(ConstRequestPtr & request);
+
   protected:
   /**
    * Detects and loads motors in the plugin spec

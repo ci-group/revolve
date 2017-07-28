@@ -58,7 +58,8 @@ typedef const boost::shared_ptr<revolve::msgs::ModifyNeuralNetwork const> ConstM
 /*
  * Copied from NeuronRepresentation.h
  */
-enum neuronType{
+enum neuronType
+{
   INPUT,
   SIMPLE,
   SIGMOID,
@@ -187,10 +188,10 @@ class NeuralNetwork: public Brain {
    * The number of non-inputs (i.e. nOutputs + nHidden)
    */
   unsigned int nNonInputs_;
-  private:
-  void connectionHelper(const std::string & src,
-                        const std::string & dst,
-                        double weight);
+
+  private: void connectionHelper(const std::string &src,
+                                 const std::string &dst,
+                                 double weight);
 };
 
 } /* namespace gazebo */

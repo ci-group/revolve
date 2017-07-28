@@ -35,8 +35,8 @@ namespace gazebo {
 
 class Brain {
   public:
-  Brain() {};
-  virtual ~Brain() {};
+  Brain() {}
+  virtual ~Brain() {}
 
   /**
    * Update step called for the brain.

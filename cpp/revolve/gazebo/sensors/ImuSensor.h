@@ -48,6 +48,7 @@ class ImuSensor: public Sensor {
    * Called when the IMU sensor is updated
    */
   void OnUpdate();
+
   private:
   /**
    * Sensor dynamically casted to correct type,

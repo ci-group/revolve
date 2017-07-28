@@ -34,7 +34,7 @@ namespace gazebo {
 
 class MotorFactory {
   public:
-  MotorFactory(::gazebo::physics::ModelPtr model);
+  explicit MotorFactory(::gazebo::physics::ModelPtr model);
   virtual ~MotorFactory();
 
   /**
@@ -42,8 +42,10 @@ class MotorFactory {
    * This is the convenience wrapper over `create` that has required attributes
    * already checked, usually you should override this when adding new motor types.
    */
-  virtual MotorPtr getMotor(sdf::ElementPtr motor, const std::string & type,
-                const std::string & motorId, const std::string & partId);
+  virtual MotorPtr getMotor(sdf::ElementPtr motor,
+                            const std::string & type,
+                            const std::string & motorId,
+                            const std::string & partId);
 
   /**
    * Creates a motor for the given model for the given SDF element.

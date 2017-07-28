@@ -32,7 +32,7 @@ namespace gazebo {
 
 class SensorFactory {
   public:
-  SensorFactory(::gazebo::physics::ModelPtr model);
+  explicit SensorFactory(::gazebo::physics::ModelPtr model);
   virtual ~SensorFactory();
 
   /**

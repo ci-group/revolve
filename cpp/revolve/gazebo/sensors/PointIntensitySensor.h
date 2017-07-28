@@ -41,7 +41,6 @@ namespace revolve {
 namespace gazebo {
 
 class PointIntensitySensor : public VirtualSensor {
-
   public:
   PointIntensitySensor(sdf::ElementPtr sensor,
                        ::gazebo::physics::ModelPtr model,
@@ -68,7 +67,6 @@ class PointIntensitySensor : public VirtualSensor {
   double i_max_;
   double r_;
 };
-
 }
 }
 

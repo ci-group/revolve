@@ -52,6 +52,7 @@ class BodyAnalyzer : public ::gazebo::WorldPlugin {
 
   // Maximum size of request queue, if more requests come in they are discarded
   static const int MAX_QUEUE_SIZE = 100;
+
   private:
   // HACK: Use this as an ID "prefix" to make sure we don't
   // erroneously identify other response messages as our
@@ -119,7 +120,6 @@ class BodyAnalyzer : public ::gazebo::WorldPlugin {
   // Listen to delete responses
   ::gazebo::transport::SubscriberPtr deleteSub_;
 };
-
 }
 }
 
