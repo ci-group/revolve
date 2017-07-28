@@ -75,16 +75,20 @@ class NeuralNetwork: public Brain {
    * @param Reference to motor list, which might be reordered
    * @param Reference to the sensor list, which might be reordered
    */
-  NeuralNetwork(std::string modelName, sdf::ElementPtr node,
-          std::vector< MotorPtr > & motors, std::vector< SensorPtr > & sensors);
+  NeuralNetwork(std::string modelName,
+                sdf::ElementPtr node,
+                std::vector< MotorPtr > & motors,
+                std::vector< SensorPtr > & sensors);
   virtual ~NeuralNetwork();
 
    /**
   * @param Motor list
   * @param Sensor list
   */
-  virtual void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
-      double t, double step);
+  virtual void update(const std::vector< MotorPtr > & motors,
+                      const std::vector< SensorPtr > & sensors,
+                      double t,
+                      double step);
 
   protected:
   /**
@@ -184,7 +188,9 @@ class NeuralNetwork: public Brain {
    */
   unsigned int nNonInputs_;
   private:
-  void connectionHelper(const std::string & src, const std::string & dst, double weight);
+  void connectionHelper(const std::string & src,
+                        const std::string & dst,
+                        double weight);
 };
 
 } /* namespace gazebo */

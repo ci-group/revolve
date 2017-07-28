@@ -32,7 +32,9 @@ namespace gazebo {
 class BatterySensor : public VirtualSensor {
 
   public:
-  BatterySensor(::gazebo::physics::ModelPtr model, std::string partId, std::string sensorId);
+  BatterySensor(::gazebo::physics::ModelPtr model,
+                std::string partId,
+                std::string sensorId);
 
   // Reads the battery value
   virtual void read(double * input);

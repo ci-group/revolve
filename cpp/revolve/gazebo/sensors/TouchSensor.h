@@ -32,8 +32,10 @@ namespace gazebo {
 
 class TouchSensor: public Sensor {
   public:
-  TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-      std::string partId, std::string sensorId);
+  TouchSensor(::gazebo::physics::ModelPtr model,
+              sdf::ElementPtr sensor,
+              std::string partId,
+              std::string sensorId);
   virtual ~TouchSensor();
 
   /**
