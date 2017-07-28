@@ -70,5 +70,5 @@ class PointIntensitySensor : public VirtualSensor {
 }
 }
 
+#endif  // REVOLVE_POINTINTENSITYSENSOR_H
 
-#endif //REVOLVE_POINTINTENSITYSENSOR_H

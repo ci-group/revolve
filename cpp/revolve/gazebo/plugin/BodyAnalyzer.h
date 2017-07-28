@@ -123,4 +123,4 @@ class BodyAnalyzer : public ::gazebo::WorldPlugin {
 }
 }
 
-#endif //REVOLVE_BODYANALYZER_H
+#endif  // REVOLVE_BODYANALYZER_H

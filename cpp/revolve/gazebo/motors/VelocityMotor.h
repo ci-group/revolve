@@ -83,8 +83,8 @@ class VelocityMotor : public JointMotor {
     ::gazebo::common::PID pid_;
 };
 
-} // namespace gazebo
-} // namespace revolve
+}  // namespace gazebo
+}  // namespace revolve
 
+#endif  // REVOLVE_VELOCITYMOTOR_H
 
-#endif //REVOLVE_VELOCITYMOTOR_H

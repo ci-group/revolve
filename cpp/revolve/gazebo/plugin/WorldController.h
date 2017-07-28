@@ -14,12 +14,9 @@
 *
 * Description: TODO: <Add brief description about file purpose>
 * Author: Elte Hupkes
+* Date: June 6, 2015
 *
 */
-
-//
-// Created by elte on 6-6-15.
-//
 
 #ifndef REVOLVE_WORLDCONTROLLER_H
 #define REVOLVE_WORLDCONTROLLER_H
@@ -109,7 +106,8 @@ class WorldController : public ::gazebo::WorldPlugin {
   double lastRobotStatesUpdateTime_;
 };
 
-} // namespace gazebo
-} // namespace revolve
+}  // namespace gazebo
+}  // namespace revolve
 
-#endif //REVOLVE_WORLDCONTROLLER_H
+#endif  // REVOLVE_WORLDCONTROLLER_H
+

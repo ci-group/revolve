@@ -44,4 +44,5 @@ class BatterySensor : public VirtualSensor {
 }
 }
 
-#endif //REVOLVE_BATTERYSENSOR_H
+#endif  // REVOLVE_BATTERYSENSOR_H
+
