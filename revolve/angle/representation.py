@@ -1,5 +1,5 @@
 import copy
-from ..spec.msgs import Robot, BodyPart, Neuron, NeuralNetwork, Body
+from ..spec.msgs import Robot, BodyPart, NeuralNetwork, Body
 from ..spec import BodyImplementation
 
 

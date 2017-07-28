@@ -11,11 +11,11 @@ import trollius
 from trollius import From, Return, Future
 from sdfbuilder import SDF
 from sdfbuilder.math import Vector3
-from pygazebo.msg import gz_string_pb2, request_pb2, response_pb2
+from pygazebo.msg import gz_string_pb2, response_pb2
 
 # Local imports
 from ...gazebo import manage, RequestHandler
-from ...spec import Robot as PbRobot
+# from ...spec import Robot as PbRobot
 from .robot import Robot
 from ...logging import logger
 from ...util import multi_future, Time, wait_for
