@@ -27,7 +27,7 @@ namespace revolve {
 namespace gazebo {
 
 class TouchSensor: public Sensor {
-public:
+  public:
   TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
       std::string partId, std::string sensorId);
   virtual ~TouchSensor();
@@ -45,7 +45,7 @@ public:
    */
   void OnUpdate();
 
-private:
+  private:
   /**
    * The contact state at the last update
    */

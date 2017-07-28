@@ -40,11 +40,11 @@ namespace revolve {
 namespace gazebo {
 
 class RobotController: public ::gazebo::ModelPlugin {
-public:
+  public:
   RobotController();
   virtual ~RobotController();
 
-public:
+  public:
   virtual void Load(::gazebo::physics::ModelPtr _parent, sdf::ElementPtr _sdf);
 
   /**
@@ -81,7 +81,7 @@ public:
    * Request listener for battery update
    */
   void UpdateBattery(ConstRequestPtr & request);
-protected:
+  protected:
   /**
    * Detects and loads motors in the plugin spec
    */
@@ -176,7 +176,7 @@ protected:
     // Pointer to the world
   ::gazebo::physics::WorldPtr world;
 
-private:
+  private:
     // Driver update event pointer
     ::gazebo::event::ConnectionPtr updateConnection_;
 };

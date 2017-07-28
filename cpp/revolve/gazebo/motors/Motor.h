@@ -31,7 +31,7 @@ namespace revolve {
 namespace gazebo {
 
 class Motor {
-public:
+  public:
   Motor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, unsigned int outputs);
   virtual ~Motor();
 
@@ -67,7 +67,7 @@ public:
    */
   static ::gazebo::common::PID createPid(sdf::ElementPtr pid);
 
-protected:
+  protected:
   /**
    * The model this motor is part of
    */

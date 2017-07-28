@@ -28,7 +28,7 @@ namespace revolve {
 namespace gazebo {
 
 class SensorFactory {
-public:
+  public:
   SensorFactory(::gazebo::physics::ModelPtr model);
   virtual ~SensorFactory();
 
@@ -45,7 +45,7 @@ public:
    * given SDF element pointer.
    */
   virtual SensorPtr create(sdf::ElementPtr sensor);
-protected:
+  protected:
   /**
    * Robot model for which this factory is generating sensors.
    */

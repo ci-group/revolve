@@ -31,7 +31,7 @@ namespace revolve {
 namespace gazebo {
 
 class VirtualSensor {
-public:
+  public:
   VirtualSensor(::gazebo::physics::ModelPtr model, std::string partId, std::string sensorId, unsigned int inputs);
   virtual ~VirtualSensor();
 
@@ -58,7 +58,7 @@ public:
    */
   unsigned int inputs();
 
-protected:
+  protected:
   /**
    * The model this sensor is part of
    */

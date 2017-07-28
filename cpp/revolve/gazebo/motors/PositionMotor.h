@@ -28,7 +28,7 @@ namespace revolve {
 namespace gazebo {
 
 class PositionMotor : public JointMotor {
-public:
+  public:
   /**
    * @param The model the motor is contained in
    * @param The joint driven by the motor
@@ -42,7 +42,7 @@ public:
 
   virtual void update(double * outputs, double step);
 
-protected:
+  protected:
   // World update event function
 //  void OnUpdate(const ::gazebo::common::UpdateInfo info);
 

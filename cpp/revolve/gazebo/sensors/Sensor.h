@@ -26,7 +26,7 @@ namespace revolve {
 namespace gazebo {
 
 class Sensor : public VirtualSensor {
-public:
+  public:
   Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
       std::string partId, std::string sensorId, unsigned int inputs);
   virtual ~Sensor();
@@ -36,7 +36,7 @@ public:
    */
   ::gazebo::sensors::SensorPtr gzSensor();
 
-protected:
+  protected:
   /**
    * The actual sensor object this sensor is receiving
    * input from.

@@ -51,12 +51,12 @@ namespace revolve {
 namespace gazebo {
 
 class BodyAnalyzer : public ::gazebo::WorldPlugin {
-public:
+  public:
   void Load(::gazebo::physics::WorldPtr _parent, sdf::ElementPtr _sdf);
 
   // Maximum size of request queue, if more requests come in they are discarded
   static const int MAX_QUEUE_SIZE = 100;
-private:
+  private:
   // HACK: Use this as an ID "prefix" to make sure we don't
   // erroneously identify other response messages as our
   // delete requests.

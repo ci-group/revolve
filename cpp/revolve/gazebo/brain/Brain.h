@@ -30,7 +30,7 @@ namespace revolve {
 namespace gazebo {
 
 class Brain {
-public:
+  public:
   Brain() {};
   virtual ~Brain() {};
 

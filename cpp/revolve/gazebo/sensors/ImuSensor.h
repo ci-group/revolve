@@ -27,7 +27,7 @@ namespace revolve {
 namespace gazebo {
 
 class ImuSensor: public Sensor {
-public:
+  public:
   ImuSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
       std::string partId, std::string sensorId);
   virtual ~ImuSensor();
@@ -42,7 +42,7 @@ public:
    * Called when the IMU sensor is updated
    */
   void OnUpdate();
-private:
+  private:
   /**
    * Sensor dynamically casted to correct type,
    * so it needs to happen only once.

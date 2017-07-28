@@ -29,7 +29,7 @@ namespace revolve {
 namespace gazebo {
 
 class MotorFactory {
-public:
+  public:
   MotorFactory(::gazebo::physics::ModelPtr model);
   virtual ~MotorFactory();
 
@@ -46,7 +46,7 @@ public:
    */
   virtual MotorPtr create(sdf::ElementPtr motor);
 
-protected:
+  protected:
   /**
    * Internal reference to the robot model
    */

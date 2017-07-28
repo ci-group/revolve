@@ -38,12 +38,12 @@ namespace revolve {
 namespace gazebo {
 
 class WorldController : public ::gazebo::WorldPlugin {
-public:
+  public:
   WorldController();
 
   virtual void Load(::gazebo::physics::WorldPtr _parent, sdf::ElementPtr _sdf);
 
-protected:
+  protected:
   // Listener for analysis requests
   virtual void HandleRequest(ConstRequestPtr &request);
 

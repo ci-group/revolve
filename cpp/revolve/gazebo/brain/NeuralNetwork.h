@@ -61,7 +61,7 @@ enum neuronType{
 };
 
 class NeuralNetwork: public Brain {
-public:
+  public:
   /**
    * @param Name of the robot
    * @param The brain node
@@ -79,7 +79,7 @@ public:
   virtual void update(const std::vector< MotorPtr > & motors, const std::vector< SensorPtr > & sensors,
       double t, double step);
 
-protected:
+  protected:
   /**
    * Steps the neural network
    */
@@ -176,7 +176,7 @@ protected:
    * The number of non-inputs (i.e. nOutputs + nHidden)
    */
   unsigned int nNonInputs_;
-private:
+  private:
   void connectionHelper(const std::string & src, const std::string & dst, double weight);
 };
 

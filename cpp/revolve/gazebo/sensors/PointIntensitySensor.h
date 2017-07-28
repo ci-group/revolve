@@ -39,14 +39,14 @@ namespace gazebo {
 
 class PointIntensitySensor : public VirtualSensor {
 
-public:
+  public:
   PointIntensitySensor(sdf::ElementPtr sensor, ::gazebo::physics::ModelPtr model,
              std::string partId, std::string sensorId);
 
   // Reads the battery value
   virtual void read(double * input);
 
-protected:
+  protected:
   /**
    * The point to which proximity should be returned
    */

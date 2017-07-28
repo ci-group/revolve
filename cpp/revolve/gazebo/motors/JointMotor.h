@@ -27,11 +27,11 @@ namespace revolve {
 namespace gazebo {
 
 class JointMotor: public Motor {
-public:
+  public:
   JointMotor(::gazebo::physics::ModelPtr model, std::string partId,
       std::string motorId, sdf::ElementPtr motor, unsigned int outputs);
   virtual ~JointMotor();
-protected:
+  protected:
   /**
    * The joint this motor is controlling
    */
