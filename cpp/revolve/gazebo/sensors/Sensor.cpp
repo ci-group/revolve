@@ -25,39 +25,39 @@ namespace revolve {
 namespace gazebo {
 
 Sensor::Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-		std::string partId, std::string sensorId, unsigned int inputs):
-	VirtualSensor(model, partId, sensorId, inputs)
+    std::string partId, std::string sensorId, unsigned int inputs):
+  VirtualSensor(model, partId, sensorId, inputs)
 {
-	if (!sensor->HasAttribute("sensor") || !sensor->HasAttribute("link")) {
-		std::cerr << "Sensor is missing required attributes (`link` or `sensor`)." << std::endl;
-		throw std::runtime_error("Sensor error");
-	}
+  if (!sensor->HasAttribute("sensor") || !sensor->HasAttribute("link")) {
+    std::cerr << "Sensor is missing required attributes (`link` or `sensor`)." << std::endl;
+    throw std::runtime_error("Sensor error");
+  }
 
-	auto sensorName = sensor->GetAttribute("sensor")->GetAsString();
-	auto linkName = sensor->GetAttribute("link")->GetAsString();
+  auto sensorName = sensor->GetAttribute("sensor")->GetAsString();
+  auto linkName = sensor->GetAttribute("link")->GetAsString();
 
-	auto link = model->GetLink(linkName);
-	if (!link) {
-		std::cerr << "Link '" << linkName << "' for sensor '"
-				<< sensorName << "' is not present in model." << std::endl;
-		throw std::runtime_error("Sensor error");
-	}
+  auto link = model->GetLink(linkName);
+  if (!link) {
+    std::cerr << "Link '" << linkName << "' for sensor '"
+        << sensorName << "' is not present in model." << std::endl;
+    throw std::runtime_error("Sensor error");
+  }
 
-	std::string scopedName = link->GetScopedName(true) + "::" + sensorName;
-	this->sensor_ = gz::sensors::get_sensor(scopedName);
+  std::string scopedName = link->GetScopedName(true) + "::" + sensorName;
+  this->sensor_ = gz::sensors::get_sensor(scopedName);
 
-	if (!this->sensor_) {
-		std::cerr << "Sensor with scoped name '" << scopedName
-				<< "' could not be found." << std::endl;
-		throw std::runtime_error("Sensor error");
-	}
+  if (!this->sensor_) {
+    std::cerr << "Sensor with scoped name '" << scopedName
+        << "' could not be found." << std::endl;
+    throw std::runtime_error("Sensor error");
+  }
 }
 
 Sensor::~Sensor()
 {}
 
 ::gazebo::sensors::SensorPtr Sensor::gzSensor() {
-	return sensor_;
+  return sensor_;
 }
 
 } /* namespace gazebo */

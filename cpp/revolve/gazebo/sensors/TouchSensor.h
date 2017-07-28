@@ -28,34 +28,34 @@ namespace gazebo {
 
 class TouchSensor: public Sensor {
 public:
-	TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-			std::string partId, std::string sensorId);
-	virtual ~TouchSensor();
+  TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
+      std::string partId, std::string sensorId);
+  virtual ~TouchSensor();
 
-	/**
-	 * The touch sensor is boolean; it is either
-	 * touching something or it is not. Since
-	 * the NN works with floats, we return 0.0
-	 * or 1.0.
-	 */
-	virtual void read(double * input);
+  /**
+   * The touch sensor is boolean; it is either
+   * touching something or it is not. Since
+   * the NN works with floats, we return 0.0
+   * or 1.0.
+   */
+  virtual void read(double * input);
 
-	/**
-	 * Called when the camera sensor is updated
-	 */
-	void OnUpdate();
+  /**
+   * Called when the camera sensor is updated
+   */
+  void OnUpdate();
 
 private:
-	/**
-	 * The contact state at the last update
-	 */
-	bool lastValue_;
+  /**
+   * The contact state at the last update
+   */
+  bool lastValue_;
 
-	/**
-	 * Sensor dynamically casted to correct type,
-	 * so it needs to happen only once.
-	 */
-	::gazebo::sensors::ContactSensorPtr castSensor_;
+  /**
+   * Sensor dynamically casted to correct type,
+   * so it needs to happen only once.
+   */
+  ::gazebo::sensors::ContactSensorPtr castSensor_;
 
     // Pointer to the update connection
     ::gazebo::event::ConnectionPtr updateConnection_;

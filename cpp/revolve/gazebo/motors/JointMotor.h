@@ -28,19 +28,19 @@ namespace gazebo {
 
 class JointMotor: public Motor {
 public:
-	JointMotor(::gazebo::physics::ModelPtr model, std::string partId,
-			std::string motorId, sdf::ElementPtr motor, unsigned int outputs);
-	virtual ~JointMotor();
+  JointMotor(::gazebo::physics::ModelPtr model, std::string partId,
+      std::string motorId, sdf::ElementPtr motor, unsigned int outputs);
+  virtual ~JointMotor();
 protected:
-	/**
-	 * The joint this motor is controlling
-	 */
-	::gazebo::physics::JointPtr joint_;
+  /**
+   * The joint this motor is controlling
+   */
+  ::gazebo::physics::JointPtr joint_;
 
-	/**
-	 * Scoped name of the controlled joint
-	 */
-	std::string jointName_;
+  /**
+   * Scoped name of the controlled joint
+   */
+  std::string jointName_;
 };
 
 } /* namespace gazebo */

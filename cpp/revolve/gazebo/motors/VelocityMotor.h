@@ -59,8 +59,8 @@ protected:
     // Last update time, used to determine update step time
     ::gazebo::common::Time prevUpdateTime_;
 
-	// The current velocity target
-	double velocityTarget_;
+  // The current velocity target
+  double velocityTarget_;
 
     // Velocity limits
     double minVelocity_;

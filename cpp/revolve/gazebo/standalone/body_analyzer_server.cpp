@@ -30,42 +30,42 @@
 //////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
-	char *analyzerLoaded = getenv("ANALYZER_TOOL");
-	if (!analyzerLoaded) {
-		std::cerr << "Please run using tools/run-analyzer.sh" << std::endl;
-		return -1;
-	}
+  char *analyzerLoaded = getenv("ANALYZER_TOOL");
+  if (!analyzerLoaded) {
+    std::cerr << "Please run using tools/run-analyzer.sh" << std::endl;
+    return -1;
+  }
 
-	// Set the port to 11346 rather than 11345
-	setenv("GAZEBO_MASTER_URI", "http://localhost:11346", 1);
-	gazebo::Server *server = NULL;
+  // Set the port to 11346 rather than 11345
+  setenv("GAZEBO_MASTER_URI", "http://localhost:11346", 1);
+  gazebo::Server *server = NULL;
 
-	try
-	{
-		// Initialize the informational logger. This will log warnings, and
-		// errors.
-		gzLogInit("server-analyzer-", "gzserver_analyzer.log");
+  try
+  {
+    // Initialize the informational logger. This will log warnings, and
+    // errors.
+    gzLogInit("server-analyzer-", "gzserver_analyzer.log");
 
-		// Initialize the data logger. This will log state information.
-//		gazebo::util::LogRecord::Instance()->Init("gzserver");
+    // Initialize the data logger. This will log state information.
+//    gazebo::util::LogRecord::Instance()->Init("gzserver");
 
-		server = new gazebo::Server();
-		if (!server->ParseArgs(argc, argv))
-			return -1;
+    server = new gazebo::Server();
+    if (!server->ParseArgs(argc, argv))
+      return -1;
 
-		server->Run();
-		server->Fini();
+    server->Run();
+    server->Fini();
 
-		delete server;
-	}
-	catch(gazebo::common::Exception &_e)
-	{
-		_e.Print();
+    delete server;
+  }
+  catch(gazebo::common::Exception &_e)
+  {
+    _e.Print();
 
-		server->Fini();
-		delete server;
-		return -1;
-	}
+    server->Fini();
+    delete server;
+    return -1;
+  }
 
-	return 0;
+  return 0;
 }

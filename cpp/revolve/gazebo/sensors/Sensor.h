@@ -27,21 +27,21 @@ namespace gazebo {
 
 class Sensor : public VirtualSensor {
 public:
-	Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-			std::string partId, std::string sensorId, unsigned int inputs);
-	virtual ~Sensor();
+  Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
+      std::string partId, std::string sensorId, unsigned int inputs);
+  virtual ~Sensor();
 
-	/**
-	 * @return The attached Gazebo sensor
-	 */
-	::gazebo::sensors::SensorPtr gzSensor();
+  /**
+   * @return The attached Gazebo sensor
+   */
+  ::gazebo::sensors::SensorPtr gzSensor();
 
 protected:
-	/**
-	 * The actual sensor object this sensor is receiving
-	 * input from.
-	 */
-	::gazebo::sensors::SensorPtr sensor_;
+  /**
+   * The actual sensor object this sensor is receiving
+   * input from.
+   */
+  ::gazebo::sensors::SensorPtr sensor_;
 };
 
 } /* namespace gazebo */
