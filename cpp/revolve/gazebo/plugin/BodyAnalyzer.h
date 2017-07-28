@@ -12,37 +12,33 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *
-* Description: TODO: <Add brief description about file purpose>
+* Description: The body analyzer can be used to gather some statistics about
+*              robot bodies before actually using them. This analyzer does
+*              the following:
+*               - It listens to incoming analyze messages TODO: message type
+*               - It publishes a message with robot statistics, currently all
+*                 registered contacts (which can be used to identify intersecting
+*                 body parts) and the robot model's bounding box.
 * Author: Elte Hupkes
 *
 */
 
-/**
- * The body analyzer can be used to gather some statistics about
- * robot bodies before actually using them. This analyzer does
- * the following:
- *
- * - It listens to incoming analyze messages TODO message type
- * - It publishes a message with robot statistics, currently all
- *   registered contacts (which can be used to identify intersecting
- *   body parts) and the robot model's bounding box.
- *
- * TODO message type
- *
- * @author Elte Hupkes
- */
-
 #ifndef REVOLVE_BODYANALYZER_H
 #define REVOLVE_BODYANALYZER_H
+
+#include <string>
+#include <utility>
+#include <queue>
+
+#include <sdf/Element.hh>
+
+#include <boost/thread/mutex.hpp>
 
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
 #include <gazebo/gazebo.hh>
 #include <gazebo/msgs/msgs.hh>
 
-#include <queue>
-#include <utility>
-#include <boost/thread/mutex.hpp>
 
 // Protobuf analysis messages
 #include <revolve/msgs/sdf_body_analyze.pb.h>

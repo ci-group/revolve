@@ -21,6 +21,10 @@
 #ifndef REVOLVE_GAZEBO_MOTORS_JOINTMOTOR_H_
 #define REVOLVE_GAZEBO_MOTORS_JOINTMOTOR_H_
 
+#include <string>
+
+#include <sdf/Element.hh>
+
 #include <revolve/gazebo/motors/Motor.h>
 
 namespace revolve {
@@ -28,8 +32,12 @@ namespace gazebo {
 
 class JointMotor: public Motor {
   public:
-  JointMotor(::gazebo::physics::ModelPtr model, std::string partId,
-      std::string motorId, sdf::ElementPtr motor, unsigned int outputs);
+  JointMotor(::gazebo::physics::ModelPtr model,
+             std::string partId,
+             std::string motorId,
+             sdf::ElementPtr motor,
+             unsigned int outputs);
+
   virtual ~JointMotor();
   protected:
   /**

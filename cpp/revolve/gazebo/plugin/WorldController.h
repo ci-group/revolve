@@ -24,6 +24,13 @@
 #ifndef REVOLVE_WORLDCONTROLLER_H
 #define REVOLVE_WORLDCONTROLLER_H
 
+#include <map>
+#include <string>
+
+#include <sdf/Element.hh>
+
+#include <boost/thread/mutex.hpp>
+
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
@@ -32,7 +39,6 @@
 #include <revolve/msgs/model_inserted.pb.h>
 #include <revolve/msgs/robot_states.pb.h>
 
-#include <boost/thread/mutex.hpp>
 
 namespace revolve {
 namespace gazebo {

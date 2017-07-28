@@ -22,10 +22,17 @@
 #ifndef REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
 #define REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
 
+#include <map>
+#include <string>
+#include <vector>
+
+#include <sdf/Element.hh>
+
+#include <gazebo/gazebo.hh>
+
+#include <revolve/msgs/neural_net.pb.h>
 
 #include "Brain.h"
-#include <gazebo/gazebo.hh>
-#include <revolve/msgs/neural_net.pb.h>
 
 // These numbers are quite arbitrary. It used to be in:13 out:8
 // for the Arduino, but I upped them both to 20 to accomodate other

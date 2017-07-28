@@ -22,6 +22,8 @@
 #ifndef REVOLVE_GAZEBO_SENSORS_VIRTUALSENSOR_H_
 #define REVOLVE_GAZEBO_SENSORS_VIRTUALSENSOR_H_
 
+#include <string>
+
 #include <gazebo/gazebo.hh>
 #include <gazebo/sensors/sensors.hh>
 

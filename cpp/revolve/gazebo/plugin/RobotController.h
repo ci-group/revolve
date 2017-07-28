@@ -14,18 +14,17 @@
 *
 * Description: TODO: <Add brief description about file purpose>
 * Author: Elte Hupkes
+* Date May 3, 2015
 *
 */
 
-/*
- * ModelController.h
- *
- *  Created on: May 3, 2015
- *      Author: elte
- */
-
 #ifndef REVOLVE_GAZEBO_PLUGIN_ROBOTCONTROLLER_H_
 #define REVOLVE_GAZEBO_PLUGIN_ROBOTCONTROLLER_H_
+
+#include <string>
+#include <vector>
+
+#include <sdf/Element.hh>
 
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
@@ -34,7 +33,6 @@
 
 #include <revolve/gazebo/Types.h>
 
-#include <vector>
 
 namespace revolve {
 namespace gazebo {

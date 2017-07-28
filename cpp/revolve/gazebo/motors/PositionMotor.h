@@ -20,9 +20,13 @@
 #ifndef REVOLVE_GAZEBO_POSITIONMOTOR_H_
 #define REVOLVE_GAZEBO_POSITIONMOTOR_H_
 
-#include <revolve/gazebo/motors/JointMotor.h>
+#include <string>
+
+#include <sdf/Element.hh>
 
 #include <gazebo/common/common.hh>
+
+#include <revolve/gazebo/motors/JointMotor.h>
 
 namespace revolve {
 namespace gazebo {
@@ -36,8 +40,10 @@ class PositionMotor : public JointMotor {
    * @param Whether the motor is velocity driven (the alternative is position driven)
    * @param The derivative gain of the motor's PID controller
    */
-  PositionMotor(::gazebo::physics::ModelPtr model, std::string partId,
-          std::string motorId, sdf::ElementPtr motor);
+  PositionMotor(::gazebo::physics::ModelPtr model,
+                std::string partId,
+                std::string motorId,
+                sdf::ElementPtr motor);
   virtual ~PositionMotor();
 
   virtual void update(double * outputs, double step);

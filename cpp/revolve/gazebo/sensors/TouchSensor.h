@@ -23,6 +23,10 @@
 
 #include <revolve/gazebo/sensors/Sensor.h>
 
+#include <string>
+
+#include <sdf/Element.hh>
+
 namespace revolve {
 namespace gazebo {
 

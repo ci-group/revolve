@@ -21,6 +21,10 @@
 #ifndef REVOLVE_GAZEBO_SENSORS_LIGHTSENSOR_H_
 #define REVOLVE_GAZEBO_SENSORS_LIGHTSENSOR_H_
 
+#include <string>
+
+#include <sdf/Element.hh>
+
 #include <revolve/gazebo/sensors/Sensor.h>
 
 namespace revolve {

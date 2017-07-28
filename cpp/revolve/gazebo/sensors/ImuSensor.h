@@ -21,6 +21,10 @@
 #ifndef REVOLVE_GAZEBO_SENSORS_IMUSENSOR_H_
 #define REVOLVE_GAZEBO_SENSORS_IMUSENSOR_H_
 
+#include <string>
+
+#include <sdf/Element.hh>
+
 #include "Sensor.h"
 
 namespace revolve {
@@ -28,8 +32,10 @@ namespace gazebo {
 
 class ImuSensor: public Sensor {
   public:
-  ImuSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-      std::string partId, std::string sensorId);
+  ImuSensor(::gazebo::physics::ModelPtr model,
+            sdf::ElementPtr sensor,
+            std::string partId,
+            std::string sensorId);
   virtual ~ImuSensor();
 
   /**

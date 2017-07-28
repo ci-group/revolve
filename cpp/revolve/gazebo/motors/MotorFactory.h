@@ -21,6 +21,10 @@
 #ifndef REVOLVE_GAZEBO_MOTORS_MOTORFACTORY_H_
 #define REVOLVE_GAZEBO_MOTORS_MOTORFACTORY_H_
 
+#include <string>
+
+#include <sdf/Element.hh>
+
 #include <revolve/gazebo/Types.h>
 
 #include <gazebo/common/common.hh>

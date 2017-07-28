@@ -32,7 +32,11 @@ namespace gazebo {
 
 class Motor {
   public:
-  Motor(::gazebo::physics::ModelPtr model, std::string partId, std::string motorId, unsigned int outputs);
+  Motor(::gazebo::physics::ModelPtr model,
+        std::string partId,
+        std::string motorId,
+        unsigned int outputs);
+
   virtual ~Motor();
 
   /**

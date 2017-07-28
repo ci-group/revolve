@@ -31,6 +31,9 @@
 #ifndef REVOLVE_POINTINTENSITYSENSOR_H
 #define REVOLVE_POINTINTENSITYSENSOR_H
 
+#include <string>
+
+#include <sdf/Element.hh>
 
 #include "VirtualSensor.h"
 

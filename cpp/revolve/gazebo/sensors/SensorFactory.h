@@ -21,8 +21,11 @@
 #ifndef REVOLVE_GAZEBO_SENSORS_SENSORFACTORY_H_
 #define REVOLVE_GAZEBO_SENSORS_SENSORFACTORY_H_
 
-#include <revolve/gazebo/Types.h>
+#include <string>
+
 #include <gazebo/common/common.hh>
+
+#include <revolve/gazebo/Types.h>
 
 namespace revolve {
 namespace gazebo {

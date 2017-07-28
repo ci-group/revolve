@@ -20,6 +20,10 @@
 #ifndef REVOLVE_BATTERYSENSOR_H
 #define REVOLVE_BATTERYSENSOR_H
 
+#include <string>
+
+#include <sdf/Element.hh>
+
 #include "VirtualSensor.h"
 
 namespace revolve {
