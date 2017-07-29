@@ -50,7 +50,7 @@ MotorPtr MotorFactory::create(sdf::ElementPtr motor) {
   auto partIdParam = motor->GetAttribute("part_id");
   auto idParam = motor->GetAttribute("id");
 
-  if (not typeParam || !partIdParam || !idParam) {
+  if (not typeParam || not partIdParam || not idParam) {
     std::cerr << "Motor is missing required attributes (`id`, `type` or `part_id`)." << std::endl;
     throw std::runtime_error("Motor error");
   }

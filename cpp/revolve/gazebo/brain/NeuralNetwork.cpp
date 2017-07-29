@@ -238,7 +238,7 @@ NeuralNetwork::NeuralNetwork(std::string modelName,
   auto connection = node->HasElement("rv:neural_connection") ? node->GetElement("rv:neural_connection") : sdf::ElementPtr();
   while (connection) {
     if (not connection->HasAttribute("src") || not connection->HasAttribute("dst")
-        || !connection->HasAttribute("weight")) {
+        || not connection->HasAttribute("weight")) {
       std::cerr << "Missing required connection attributes (`src`, `dst` or `weight`)." << std::endl;
       throw std::runtime_error("Robot brain error");
     }
@@ -585,8 +585,9 @@ void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
   } else if ("Oscillator" == type) {
     types[0] = OSCILLATOR;
 
-    if (not neuron->HasElement("rv:period") || !neuron->HasElement("rv:phase_offset") ||
-        !neuron->HasElement("rv:amplitude")) {
+    if (not neuron->HasElement("rv:period")
+        || not neuron->HasElement("rv:phase_offset")
+        || not neuron->HasElement("rv:amplitude")) {
       std::cerr << "An `Oscillator` neuron requires `rv:period`"
                 << ", `rv:phase_offset`"
                 << ", and `rv:amplitude` elements." << std::endl;

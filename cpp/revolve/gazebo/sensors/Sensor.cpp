@@ -24,11 +24,14 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-Sensor::Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-    std::string partId, std::string sensorId, unsigned int inputs):
-  VirtualSensor(model, partId, sensorId, inputs)
+Sensor::Sensor(::gazebo::physics::ModelPtr model,
+               sdf::ElementPtr sensor,
+               std::string partId,
+               std::string sensorId,
+               unsigned int inputs)
+        : VirtualSensor(model, partId, sensorId, inputs)
 {
-  if (not sensor->HasAttribute("sensor") || !sensor->HasAttribute("link")) {
+  if (not sensor->HasAttribute("sensor") || not sensor->HasAttribute("link")) {
     std::cerr << "Sensor is missing required attributes (`link` or `sensor`)." << std::endl;
     throw std::runtime_error("Sensor error");
   }

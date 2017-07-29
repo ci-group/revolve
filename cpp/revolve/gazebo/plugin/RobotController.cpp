@@ -205,7 +205,7 @@ void RobotController::LoadBattery(sdf::ElementPtr sdf) {
 
 ///////////////////////////////////////////////////////////
 double RobotController::GetBatteryLevel() {
-  if (not batteryElem_ || !batteryElem_->HasElement("rv:level")) {
+  if (not batteryElem_ || not batteryElem_->HasElement("rv:level")) {
     return 0.0;
   }
 

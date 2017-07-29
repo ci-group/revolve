@@ -23,11 +23,12 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-PointIntensitySensor::PointIntensitySensor(sdf::ElementPtr sensor, ::gazebo::physics::ModelPtr model,
-                       std::string partId, std::string sensorId):
-    VirtualSensor(model, partId, sensorId, 1),
-    i_max_(1),
-    r_(1)
+PointIntensitySensor::PointIntensitySensor(sdf::ElementPtr sensor,
+                                           ::gazebo::physics::ModelPtr model,
+                                           std::string partId, std::string sensorId)
+        : VirtualSensor(model, partId, sensorId, 1)
+        , i_max_(1)
+        , r_(1)
 {
 
   if (not sensor->HasElement("rv:point_intensity_sensor")) {

@@ -24,18 +24,20 @@ namespace revolve {
 namespace gazebo {
 
 
-VelocityMotor::VelocityMotor(::gazebo::physics::ModelPtr model, std::string partId,
-                             std::string motorId, sdf::ElementPtr motor):
-    JointMotor(model, partId, motorId, motor, 1),
-  velocityTarget_(0),
-    noise_(0)
+VelocityMotor::VelocityMotor(::gazebo::physics::ModelPtr model,
+                             std::string partId,
+                             std::string motorId,
+                             sdf::ElementPtr motor)
+        : JointMotor(model, partId, motorId, motor, 1)
+        , velocityTarget_(0)
+        , noise_(0)
 {
   if (motor->HasElement("rv:pid")) {
     auto pidElem = motor->GetElement("rv:pid");
     pid_ = Motor::createPid(pidElem);
   }
 
-    if (not motor->HasAttribute("min_velocity") || !motor->HasAttribute("max_velocity")) {
+    if (not motor->HasAttribute("min_velocity") || not motor->HasAttribute("max_velocity")) {
         std::cerr << "Missing servo min/max velocity parameters, "
                 "velocity will be zero." << std::endl;
         minVelocity_ = maxVelocity_ = 0;

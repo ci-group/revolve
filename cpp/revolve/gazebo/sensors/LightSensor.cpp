@@ -26,12 +26,12 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-LightSensor::LightSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-    std::string partId, std::string sensorId):
-  Sensor(model, sensor, partId, sensorId, 1),
-
-  // Initialize light sensor to full intensity
-  lastValue_(1.0)
+LightSensor::LightSensor(::gazebo::physics::ModelPtr model,
+                         sdf::ElementPtr sensor,
+                         std::string partId,
+                         std::string sensorId)
+        : Sensor(model, sensor, partId, sensorId, 1)
+        , lastValue_(1.0)  // Initialize light sensor to full intensity
 {
   this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::CameraSensor>(this->sensor_);
 

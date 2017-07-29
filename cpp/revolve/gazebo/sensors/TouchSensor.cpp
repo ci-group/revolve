@@ -33,10 +33,12 @@ namespace gz = gazebo;
 namespace revolve {
 namespace gazebo {
 
-TouchSensor::TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-    std::string partId, std::string sensorId):
-    Sensor(model, sensor, partId, sensorId, 1),
-    lastValue_(false)
+TouchSensor::TouchSensor(::gazebo::physics::ModelPtr model,
+                         sdf::ElementPtr sensor,
+                         std::string partId,
+                         std::string sensorId)
+        : Sensor(model, sensor, partId, sensorId, 1)
+        , lastValue_(false)
 {
   this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::ContactSensor>(this->sensor_);
 

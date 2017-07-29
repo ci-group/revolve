@@ -36,7 +36,9 @@ SensorFactory::~SensorFactory()
 {}
 
 SensorPtr SensorFactory::getSensor(sdf::ElementPtr sensor,
-    const std::string& type, const std::string& partId, const std::string& sensorId) {
+                                   const std::string& type,
+                                   const std::string& partId,
+                                   const std::string& sensorId) {
   SensorPtr out;
   if ("imu" == type) {
     out.reset(new ImuSensor(this->model_, sensor, partId, sensorId));
@@ -58,7 +60,7 @@ SensorPtr SensorFactory::create(sdf::ElementPtr sensor) {
   auto partIdParam = sensor->GetAttribute("part_id");
   auto idParam = sensor->GetAttribute("id");
 
-  if (not typeParam || !partIdParam || !idParam) {
+  if (not typeParam || not partIdParam || not idParam) {
     std::cerr << "Sensor is missing required attributes (`id`, `type` or `part_id`)." << std::endl;
     throw std::runtime_error("Sensor error");
   }
