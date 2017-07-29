@@ -58,7 +58,7 @@ SensorPtr SensorFactory::create(sdf::ElementPtr sensor) {
   auto partIdParam = sensor->GetAttribute("part_id");
   auto idParam = sensor->GetAttribute("id");
 
-  if (!typeParam || !partIdParam || !idParam) {
+  if (not typeParam || !partIdParam || !idParam) {
     std::cerr << "Sensor is missing required attributes (`id`, `type` or `part_id`)." << std::endl;
     throw std::runtime_error("Sensor error");
   }
@@ -68,7 +68,7 @@ SensorPtr SensorFactory::create(sdf::ElementPtr sensor) {
   auto id = idParam->GetAsString();
 
   SensorPtr out = this->getSensor(sensor, type, partId, id);
-  if (!out) {
+  if (not out) {
     std::cerr << "Sensor type '" << type << "' is not supported." << std::endl;
     throw std::runtime_error("Sensor error");
   }

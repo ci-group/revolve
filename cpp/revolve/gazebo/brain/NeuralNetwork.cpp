@@ -39,14 +39,15 @@ namespace gazebo {
 void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron);
 void neuronHelper(double* params, unsigned int* types, const revolve::msgs::Neuron & neuron);
 
-NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
-               std::vector< MotorPtr > & motors,
-    std::vector< SensorPtr > & sensors):
-  flipState_(false),
-  nInputs_(0),
-  nOutputs_(0),
-  nHidden_(0),
-  nNonInputs_(0)
+NeuralNetwork::NeuralNetwork(std::string modelName,
+                             sdf::ElementPtr node,
+                             std::vector< MotorPtr > & motors,
+                             std::vector< SensorPtr > & sensors)
+        : flipState_(false)
+        , nInputs_(0)
+        , nOutputs_(0)
+        , nHidden_(0)
+        , nNonInputs_(0)
 {
   // Create transport node
   node_.reset(new gz::transport::Node());
@@ -84,7 +85,7 @@ NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
   // if no neurons are present.
   auto neuron = node->HasElement("rv:neuron") ? node->GetElement("rv:neuron") : sdf::ElementPtr();
   while (neuron) {
-    if (!neuron->HasAttribute("layer") || !neuron->HasAttribute("id")) {
+    if (not neuron->HasAttribute("layer") || not neuron->HasAttribute("id")) {
       std::cerr << "Missing required neuron attributes (id or layer). '" << std::endl;
       throw std::runtime_error("Robot brain error");
     }
@@ -146,7 +147,7 @@ NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
   for (auto it = motors.begin(); it != motors.end(); ++it) {
     auto motor = *it;
     auto partId = motor->partId();
-    if (!outputCountMap.count(partId)) {
+    if (not outputCountMap.count(partId)) {
       outputCountMap[partId] = 0;
     }
 
@@ -177,7 +178,7 @@ NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
     auto sensor = *it;
     auto partId = sensor->partId();
 
-    if (!inputCountMap.count(partId)) {
+    if (not inputCountMap.count(partId)) {
       inputCountMap[partId] = 0;
     }
 
@@ -236,7 +237,7 @@ NeuralNetwork::NeuralNetwork(std::string modelName, sdf::ElementPtr node,
   nNonInputs_ = nOutputs_ + nHidden_;
   auto connection = node->HasElement("rv:neural_connection") ? node->GetElement("rv:neural_connection") : sdf::ElementPtr();
   while (connection) {
-    if (!connection->HasAttribute("src") || !connection->HasAttribute("dst")
+    if (not connection->HasAttribute("src") || not connection->HasAttribute("dst")
         || !connection->HasAttribute("weight")) {
       std::cerr << "Missing required connection attributes (`src`, `dst` or `weight`)." << std::endl;
       throw std::runtime_error("Robot brain error");
@@ -370,7 +371,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
   for (i = 0; i < (unsigned int)req->remove_hidden_size(); ++i) {
     // Find the neuron + position
     auto id = req->remove_hidden(i);
-    if (!positionMap_.count(id)) {
+    if (not positionMap_.count(id)) {
       std::cerr << "Unknown neuron ID `" << id << "`" << std::endl;
       throw std::runtime_error("Robot brain error");
     }
@@ -498,7 +499,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
   for (i = 0; i < (unsigned int)req->set_parameters_size(); ++i) {
     auto neuron = req->set_parameters(i);
     auto id = neuron.id();
-    if (!positionMap_.count(id)) {
+    if (not positionMap_.count(id)) {
       std::cerr << "Unknown neuron ID `" << id << "`" << std::endl;
       throw std::runtime_error("Robot brain error");
     }
@@ -526,12 +527,12 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req) {
 //////////////////////////////////////
 
 void NeuralNetwork::connectionHelper(const std::string & src, const std::string & dst, double weight) {
-  if (!layerMap_.count(src)) {
+  if (not layerMap_.count(src)) {
     std::cerr << "Source neuron '" << src << "' is unknown." << std::endl;
     throw std::runtime_error("Robot brain error");
   }
 
-  if (!layerMap_.count(dst)) {
+  if (not layerMap_.count(dst)) {
     std::cerr << "Destination neuron '" << dst << "' is unknown." << std::endl;
     throw std::runtime_error("Robot brain error");
   }
@@ -564,7 +565,7 @@ void NeuralNetwork::connectionHelper(const std::string & src, const std::string 
 /////////////////////////////////////////////////
 
 void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
-  if (!neuron->HasAttribute("type")) {
+  if (not neuron->HasAttribute("type")) {
     std::cerr << "Missing required `type` attribute for neuron." << std::endl;
         throw std::runtime_error("Robot brain error");
   }
@@ -573,7 +574,7 @@ void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
   if ("Sigmoid" == type || "Simple" == type) {
     types[0] = "Simple" == type ? SIMPLE : SIGMOID;
 
-    if (!neuron->HasElement("rv:bias") || !neuron->HasElement("rv:gain")) {
+    if (not neuron->HasElement("rv:bias") || not neuron->HasElement("rv:gain")) {
       std::cerr << "A `" << type << "` neuron requires `rv:bias` and `rv:gain` elements." << std::endl;
       throw std::runtime_error("Robot brain error");
     }
@@ -584,9 +585,11 @@ void neuronHelper(double* params, unsigned int* types, sdf::ElementPtr neuron) {
   } else if ("Oscillator" == type) {
     types[0] = OSCILLATOR;
 
-    if (!neuron->HasElement("rv:period") || !neuron->HasElement("rv:phase_offset") ||
+    if (not neuron->HasElement("rv:period") || !neuron->HasElement("rv:phase_offset") ||
         !neuron->HasElement("rv:amplitude")) {
-      std::cerr << "An `Oscillator` neuron requires `rv:period`, `rv:phase_offset` and `rv:amplitude` elements." << std::endl;
+      std::cerr << "An `Oscillator` neuron requires `rv:period`"
+                << ", `rv:phase_offset`"
+                << ", and `rv:amplitude` elements." << std::endl;
       throw std::runtime_error("Robot brain error");
     }
 

@@ -109,7 +109,7 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
   world_->SetPaused(true);
 
   boost::mutex::scoped_lock plock(processingMutex_);
-  if (!processing_) {
+  if (not processing_) {
     return;
   }
   plock.unlock();
@@ -134,7 +134,7 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg) {
   std::string name = "analyze_bot_"+boost::lexical_cast<std::string>(counter_);
   gz::physics::ModelPtr model = world_->GetModel(name);
 
-  if (!model) {
+  if (not model) {
     std::cerr << "------------------------------------" << std::endl;
     std::cerr << "INTERNAL ERROR, contact model not found: " << name << std::endl;
     std::cerr << "Please retry this request." << std::endl;
@@ -174,7 +174,7 @@ void BodyAnalyzer::AnalyzeRequest(ConstRequestPtr &request) {
     return;
   }
 
-  if (!request->has_data()) {
+  if (not request->has_data()) {
     std::cerr << "An `analyze_body` request should have data." << std::endl;
     return;
   }

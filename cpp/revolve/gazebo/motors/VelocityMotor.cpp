@@ -35,7 +35,7 @@ VelocityMotor::VelocityMotor(::gazebo::physics::ModelPtr model, std::string part
     pid_ = Motor::createPid(pidElem);
   }
 
-    if (!motor->HasAttribute("min_velocity") || !motor->HasAttribute("max_velocity")) {
+    if (not motor->HasAttribute("min_velocity") || !motor->HasAttribute("max_velocity")) {
         std::cerr << "Missing servo min/max velocity parameters, "
                 "velocity will be zero." << std::endl;
         minVelocity_ = maxVelocity_ = 0;

@@ -28,7 +28,7 @@ Sensor::Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
     std::string partId, std::string sensorId, unsigned int inputs):
   VirtualSensor(model, partId, sensorId, inputs)
 {
-  if (!sensor->HasAttribute("sensor") || !sensor->HasAttribute("link")) {
+  if (not sensor->HasAttribute("sensor") || !sensor->HasAttribute("link")) {
     std::cerr << "Sensor is missing required attributes (`link` or `sensor`)." << std::endl;
     throw std::runtime_error("Sensor error");
   }
@@ -37,7 +37,7 @@ Sensor::Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
   auto linkName = sensor->GetAttribute("link")->GetAsString();
 
   auto link = model->GetLink(linkName);
-  if (!link) {
+  if (not link) {
     std::cerr << "Link '" << linkName << "' for sensor '"
         << sensorName << "' is not present in model." << std::endl;
     throw std::runtime_error("Sensor error");
@@ -46,7 +46,7 @@ Sensor::Sensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
   std::string scopedName = link->GetScopedName(true) + "::" + sensorName;
   this->sensor_ = gz::sensors::get_sensor(scopedName);
 
-  if (!this->sensor_) {
+  if (not this->sensor_) {
     std::cerr << "Sensor with scoped name '" << scopedName
         << "' could not be found." << std::endl;
     throw std::runtime_error("Sensor error");

@@ -64,7 +64,7 @@ void RobotController::Load(::gazebo::physics::ModelPtr _parent,
   batterySetSub_ = node_->Subscribe("~/battery_level/request", &RobotController::UpdateBattery, this);
   batterySetPub_ = node_->Advertise<gz::msgs::Response>("~/battery_level/response");
 
-  if (!_sdf->HasElement("rv:robot_config")) {
+  if (not _sdf->HasElement("rv:robot_config")) {
     std::cerr << "No `rv:robot_config` element found, controller not initialized."
         << std::endl;
     return;
@@ -122,7 +122,7 @@ void RobotController::UpdateBattery(ConstRequestPtr &request) {
 ////////////////////////////////////////////////////////////////
 
 void RobotController::LoadMotors(sdf::ElementPtr sdf) {
-  if (!sdf->HasElement("rv:motor")) {
+  if (not sdf->HasElement("rv:motor")) {
     return;
   }
 
@@ -137,7 +137,7 @@ void RobotController::LoadMotors(sdf::ElementPtr sdf) {
 ////////////////////////////////////////////////////////////
 
 void RobotController::LoadSensors(sdf::ElementPtr sdf) {
-  if (!sdf->HasElement("rv:sensor")) {
+  if (not sdf->HasElement("rv:sensor")) {
     return;
   }
 
@@ -160,7 +160,7 @@ SensorFactoryPtr RobotController::getSensorFactory(
 }
 
 void RobotController::LoadBrain(sdf::ElementPtr sdf) {
-  if (!sdf->HasElement("rv:brain")) {
+  if (not sdf->HasElement("rv:brain")) {
     std::cerr << "No robot brain detected, this is probably an error." << std::endl;
     return;
   }
@@ -205,7 +205,7 @@ void RobotController::LoadBattery(sdf::ElementPtr sdf) {
 
 ///////////////////////////////////////////////////////////
 double RobotController::GetBatteryLevel() {
-  if (!batteryElem_ || !batteryElem_->HasElement("rv:level")) {
+  if (not batteryElem_ || !batteryElem_->HasElement("rv:level")) {
     return 0.0;
   }
 

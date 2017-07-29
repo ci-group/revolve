@@ -67,7 +67,7 @@ void WorldController::Load(gz::physics::WorldPtr world, sdf::ElementPtr /*_sdf*/
 }
 
 void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info) {
-  if (!robotStatesPubFreq_) {
+  if (not robotStatesPubFreq_) {
     return;
   }
 

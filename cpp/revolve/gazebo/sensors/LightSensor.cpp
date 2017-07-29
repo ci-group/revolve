@@ -35,7 +35,7 @@ LightSensor::LightSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sens
 {
   this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::CameraSensor>(this->sensor_);
 
-  if (!this->castSensor_) {
+  if (not this->castSensor_) {
     std::cerr << "Creating a light sensor with a non-camera sensor object." << std::endl;
     throw std::runtime_error("Sensor error");
   }

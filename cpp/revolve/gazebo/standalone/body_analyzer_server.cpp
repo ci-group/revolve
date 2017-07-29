@@ -31,7 +31,7 @@
 int main(int argc, char **argv)
 {
   char *analyzerLoaded = getenv("ANALYZER_TOOL");
-  if (!analyzerLoaded) {
+  if (not analyzerLoaded) {
     std::cerr << "Please run using tools/run-analyzer.sh" << std::endl;
     return -1;
   }
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 //    gazebo::util::LogRecord::Instance()->Init("gzserver");
 
     server = new gazebo::Server();
-    if (!server->ParseArgs(argc, argv))
+    if (not server->ParseArgs(argc, argv))
       return -1;
 
     server->Run();

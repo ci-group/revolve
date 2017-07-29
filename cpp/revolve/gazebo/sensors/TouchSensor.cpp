@@ -40,7 +40,7 @@ TouchSensor::TouchSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sens
 {
   this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::ContactSensor>(this->sensor_);
 
-  if (!this->castSensor_) {
+  if (not this->castSensor_) {
     std::cerr << "Creating a touch sensor with a non-contact sensor object." << std::endl;
     throw std::runtime_error("Sensor error");
   }

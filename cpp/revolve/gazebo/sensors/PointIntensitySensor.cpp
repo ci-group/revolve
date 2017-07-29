@@ -30,14 +30,14 @@ PointIntensitySensor::PointIntensitySensor(sdf::ElementPtr sensor, ::gazebo::phy
     r_(1)
 {
 
-  if (!sensor->HasElement("rv:point_intensity_sensor")) {
+  if (not sensor->HasElement("rv:point_intensity_sensor")) {
     std::cerr << "PointIntensitySensor missing `rv:point_intensity_sensor` element." << std::endl;
     throw std::runtime_error("Robot brain error.");
   }
 
   auto configElem = sensor->GetElement("rv:point_intensity_sensor");
 
-  if (!configElem->HasElement("rv:point")) {
+  if (not configElem->HasElement("rv:point")) {
     std::cerr << "PointIntensitySensor missing `rv:point` element." << std::endl;
   }
 
