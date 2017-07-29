@@ -17,18 +17,17 @@
 *
 */
 
-#include "NeuralNetwork.h"
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+
 #include "../motors/Motor.h"
 #include "../sensors/Sensor.h"
 
-#include <iostream>
-#include <algorithm>
-#include <stdexcept>
-#include <cstdlib>
-#include <map>
-#include <string>
-#include <sstream>
-#include <cmath>
+#include "NeuralNetwork.h"
 
 namespace gz = gazebo;
 
@@ -55,7 +54,7 @@ NeuralNetwork::NeuralNetwork(std::string modelName,
 
   // Listen to network modification requests
   alterSub_ = node_->Subscribe("~/"+modelName+"/modify_neural_network",
-                 &NeuralNetwork::modify, this);
+                               &NeuralNetwork::modify, this);
 
   // Initialize weights, input and states to zero by default
   memset(inputWeights_, 0, sizeof(inputWeights_));

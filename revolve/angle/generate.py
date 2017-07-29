@@ -5,7 +5,7 @@ with a body generator and a neural net generator. First, a body is
 generated. The interface of this body is then fed to the neural net
 generator resulting in a neural network.
 """
-from ..generate import BodyGenerator
+from ..generate import NeuralNetworkGenerator, BodyGenerator
 from .representation import Tree
 
 
