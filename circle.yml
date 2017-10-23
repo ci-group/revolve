@@ -1,0 +1,14 @@
+## Defining the Docker as VM machine
+machine:
+  services:
+    - docker
+
+## Build the test environment
+dependencies:
+  override:
+    - docker build --rm=false -t circleci/revolve .
+
+## Running tests defined in Docker image
+test:
+  override:
+    - docker run -it circleci/revolve; sleep 10
