@@ -1,32 +1,53 @@
 import unittest
-from revolve.spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec, ParamSpec, Robot, BodyPart
-from revolve.spec import RobotSpecificationException as SpecError, RobotValidator
+
+from revolve.spec import BodyImplementation, \
+                         BodyPart, \
+                         NeuralNetImplementation, \
+                         NeuronSpec, \
+                         ParamSpec, \
+                         PartSpec, \
+                         Robot, \
+                         RobotSpecificationException as SpecError, \
+                                                        RobotValidator
 
 # Imaginary specification for the tests
 body_spec = BodyImplementation(
-    {
-        ("CoreComponent", "E"): PartSpec(
-            arity=2,
-            outputs=1,
-            inputs=2
-        ),
-        "2Params": PartSpec(
-            arity=2,
-            inputs=2,
-            outputs=2,
-            params=[ParamSpec("param_a", default=-1, min_value=-2, max_value=0, max_inclusive=False),
-                    ParamSpec("param_b", default=15)]
-        )
-    }
+        {
+            ("CoreComponent", "E"): PartSpec(
+                    arity=2,
+                    outputs=1,
+                    inputs=2,
+            ),
+            "2Params"             : PartSpec(
+                    arity=2,
+                    inputs=2,
+                    outputs=2,
+                    params=[
+                        ParamSpec(
+                                "param_a",
+                                default=-1,
+                                min_value=-2,
+                                max_value=0,
+                                max_inclusive=False),
+                        ParamSpec(
+                                "param_b",
+                                default=15),
+                    ]
+            ),
+        }
 )
 
 brain_spec = NeuralNetImplementation(
-    {
-        "Simple": NeuronSpec(params=["bias"]),
-        "Oscillator": NeuronSpec(
-            params=["period", "phaseOffset", "amplitude"]
-        )
-    }
+        {
+            "Simple"    : NeuronSpec(params=["bias"]),
+            "Oscillator": NeuronSpec(
+                    params=[
+                        "period",
+                        "phaseOffset",
+                        "amplitude",
+                    ],
+            ),
+        }
 )
 
 
@@ -227,7 +248,8 @@ class TestValidate(unittest.TestCase):
 
         hidden.param.add()
         hidden.param.add()
-        hidden.param[0].value = hidden.param[1].value = hidden.param[2].value = 0
+        hidden.param[0].value = hidden.param[1].value = hidden.param[
+            2].value = 0
 
         # This should be fine now, do nothing to assert it doesn't raise
         validate_robot(robot)
@@ -255,6 +277,7 @@ class TestValidate(unittest.TestCase):
 
         # Again, this should be fine
         validate_robot(robot)
+
 
 if __name__ == '__main__':
     unittest.main()
