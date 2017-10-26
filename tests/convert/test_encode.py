@@ -3,11 +3,16 @@ Tests the `BodyEncoder` and the `NeuralNetworkEncoder` using a little help from
 the YAML converter to create the basic protobuf message.
 """
 import unittest
-from revolve.convert import yaml_to_robot, robot_to_yaml
-from revolve.spec import PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
-from revolve.spec import BodyImplementation, NeuralNetImplementation
+
 import yaml
 
+from revolve.convert import robot_to_yaml, yaml_to_robot
+from revolve.spec import BodyImplementation, \
+    NeuralNetImplementation, \
+    NeuronSpec, \
+    ParamSpec, \
+    PartSpec, \
+    RobotSpecificationException as SpecErr
 
 # the basic yaml object that will be altered for the diffent test cases
 basic_yaml_object = '''\
@@ -58,25 +63,33 @@ brain:
 # the body and brain specifications
 body_spec = BodyImplementation({
     ("CoreComponent", "E"): PartSpec(
-        arity=2,
-        outputs=1,
-        inputs=2
+            arity=2,
+            outputs=1,
+            inputs=2,
     ),
-    "2Params": PartSpec(
-        arity=2,
-        inputs=2,
-        outputs=2,
-        params=[ParamSpec("param_a", default=-1), ParamSpec("param_b", default=15)]
-    )
-})
+    "2Params"             : PartSpec(
+            arity=2,
+            inputs=2,
+            outputs=2,
+            params=[
+                ParamSpec(
+                        "param_a",
+                        default=-1
+                ),
+                ParamSpec(
+                        "param_b",
+                        default=15
+                ),
+            ],
+    ),
+}, )
 
 brain_spec = NeuralNetImplementation({
-    "Simple": NeuronSpec(params=["bias"]),
+    "Simple"    : NeuronSpec(params=["bias"]),
     "Oscillator": NeuronSpec(
-        params=["period", "phaseOffset", "amplitude"]
+            params=["period", "phaseOffset", "amplitude"]
     )
 })
-
 
 # Enter the test cases below (make alterations to the basic yaml object)
 # Body test cases
@@ -109,7 +122,10 @@ duplicate_neuron_id = yaml_to_robot(body_spec, brain_spec, basic_yaml_object)
 duplicate_neuron_id.brain.neuron[0].id = "thesame"
 duplicate_neuron_id.brain.neuron[1].id = "thesame"
 
-input_destination_neuron = yaml_to_robot(body_spec, brain_spec, basic_yaml_object)
+input_destination_neuron = yaml_to_robot(
+        body_spec=body_spec,
+        nn_spec=brain_spec,
+        yaml=basic_yaml_object)
 input_destination_neuron.brain.neuron[1].type = "invalid"
 
 
@@ -122,6 +138,7 @@ class TestConvertYaml(unittest.TestCase):
     """
     Tests error cases for the converter
     """
+
     def test_simple_body_exceptions(self):
         with self.assertRaises(SpecErr):
             rty(missing_body)
@@ -165,11 +182,21 @@ class TestConvertYaml(unittest.TestCase):
         yaml_robot = rty(protobuf_robot)
         robot = yaml.load(yaml_robot)
 
-        self.assertEquals(0, robot["id"], "Robot ID not correctly set.")
+        self.assertEquals(
+                first=0,
+                second=robot["id"],
+                msg="Robot ID not correctly set.")
 
-        self.assertEquals("Core", robot["body"]["id"], "Root ID not correctly set. (%s)" % robot["body"]["id"])
+        self.assertEquals(
+                first="Core",
+                second=robot["body"]["id"],
+                msg="Root ID not correctly set. (%s)" % robot["body"]["id"])
 
-        self.assertEquals(2, len(robot["body"]["children"]), "Root should have two children.")
+        self.assertEquals(
+                first=2,
+                second=len(robot["body"]["children"]),
+                msg="Root should have two children.")
+
 
 if __name__ == '__main__':
     unittest.main()
