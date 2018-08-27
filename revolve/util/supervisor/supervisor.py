@@ -85,6 +85,9 @@ class Supervisor(object):
         # Terminate all processes when the supervisor exits
         atexit.register(self._terminate_all)
 
+    def launch_gazebo(self):
+        self._launch_gazebo()
+
     def launch(self):
         """
         (Re)launches the experiment.
