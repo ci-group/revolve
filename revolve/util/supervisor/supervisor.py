@@ -7,6 +7,7 @@ import time
 import sys
 import atexit
 from .nbsr import NonBlockingStreamReader as NBSR
+mswindows = (sys.platform == "win32")
 
 
 def terminate_process(proc):
@@ -237,22 +238,53 @@ class Supervisor(object):
         self.procs['manager'] = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self._add_output_stream('manager')
 
-    def _launch_with_ready_str(self, cmd, ready_str):
+    @staticmethod
+    def _launch_with_ready_str(cmd, ready_str):
         """
         :param cmd:
         :param ready_str:
         :return:
         """
-        self.procs['_tmp'] = proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # make out and err non-blocking pipes
+        if not mswindows:
+            import fcntl
+            for pipe in [process.stdout, process.stderr]:
+                fd = pipe.fileno()
+                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        else:
+            sys.stderr.write("Using Windows may not give the most optimal experience\n")
+            # hint on how to fix it here: https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
 
         ready = False
         while not ready:
-            out = proc.stdout.readline()
-            sys.stdout.write(out)
-            if ready_str in out:
-                ready = True
+            exit_code = process.poll()
+            if exit_code is not None:
+                # flush out all stdout and stderr
+                out, err = process.communicate()
+                if out is not None:
+                    sys.stdout.write(out)
+                if err is not None:
+                    sys.stderr.write(err)
+                raise RuntimeError("Error launching launch {}, exit with code {}".format(cmd, exit_code))
+
+            try:
+                out = process.stdout.readline()
+                sys.stdout.write(out)
+                if ready_str in out:
+                    ready = True
+            except IOError:
+                pass
+
+            if not mswindows:
+                try:
+                    err = process.stderr.readline()
+                    sys.stderr.write(err)
+                except IOError:
+                    pass
 
             time.sleep(0.1)
 
-        del self.procs['_tmp']
-        return proc
+        return process
