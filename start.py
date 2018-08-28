@@ -9,7 +9,7 @@ from revolve.util import Supervisor
 
 if __name__ == "__main__":
     os.environ['GAZEBO_PLUGIN_PATH'] = os.path.join(rvpath, 'build')
-    os.environ['GAZEBO_MODEL_PATH'] = os.path.join(rvpath, 'worlds')
+    os.environ['GAZEBO_MODEL_PATH'] = os.path.join(rvpath, 'models')
 
     supervisor = Supervisor(
         manager_cmd=None,
