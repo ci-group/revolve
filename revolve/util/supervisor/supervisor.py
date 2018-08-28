@@ -47,7 +47,7 @@ class Supervisor(object):
 
     def __init__(self, manager_cmd, world_file, output_directory=None, manager_args=None, gazebo_cmd="gzserver",
                  analyzer_cmd=None, gazebo_args=None, restore_arg="--restore-directory",
-                 snapshot_world_file="snapshot.world", restore_directory=None):
+                 snapshot_world_file="snapshot.world", restore_directory=None, plugin_dir=None):
         """
 
         :param manager_cmd: The command used to run your manager / experiment
@@ -86,8 +86,32 @@ class Supervisor(object):
         # Terminate all processes when the supervisor exits
         atexit.register(self._terminate_all)
 
+        if plugin_dir is not None:
+            plugin_dir = os.path.abspath(plugin_dir)
+            os.environ["GAZEBO_PLUGIN_PATH"] = "{}:{}".format(os.environ["GAZEBO_PLUGIN_PATH"], plugin_dir)
+
+        print("Created Supervisor with:"
+              "\n\t- manager command: {} {}"
+              "\n\t- gazebo command: {} {}"
+              "\n\t- world file: {}"
+              "\n\t- gazebo plugin dir: {}"
+              .format(manager_cmd, manager_args, gazebo_cmd, gazebo_args, world_file, plugin_dir)
+              )
+
     def launch_gazebo(self):
         self._launch_gazebo()
+
+        # Wait for the end
+        ret = 0
+        for proc_name in self.procs:
+            ret = self.procs[proc_name].wait()
+            if ret == 0:
+                sys.stdout.write("Program {} exited normally\n".format(proc_name))
+                ret = 255
+            else:
+                sys.stderr.write("Program {} exited with code {}\n".format(proc_name, ret))
+
+        return ret
 
     def launch(self):
         """
@@ -286,5 +310,17 @@ class Supervisor(object):
                     pass
 
             time.sleep(0.1)
+
+
+        # make out and err blocking pipes again
+        if not mswindows:
+            import fcntl
+            for pipe in [process.stdout, process.stderr]:
+                fd = pipe.fileno()
+                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, fl & (~ os.O_NONBLOCK))
+        else:
+            sys.stderr.write("Using Windows may not give the most optimal experience\n")
+            # hint on how to fix it here: https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
 
         return process

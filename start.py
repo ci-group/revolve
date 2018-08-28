@@ -15,6 +15,9 @@ if __name__ == "__main__":
         manager_cmd=None,
         world_file="worlds/gait-learning.world",
         gazebo_cmd="gazebo",
+        gazebo_args=["--verbose"],
+        plugin_dir="build/lib"
     )
 
-    supervisor.launch_gazebo()
+    ret = supervisor.launch_gazebo()
+    sys.exit(ret)
