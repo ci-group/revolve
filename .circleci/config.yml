@@ -1,20 +1,21 @@
-version: 2
-jobs:
-  build:
-    docker:
-      - image: circleci/python:2.7
-    steps:
-      - checkout
-      - run: echo "hello world" # run the `echo` command
-#  test:
-#    docker:
-#      - image: circleci/<language>:<version TAG>
-#    steps:
-#      - checkout
-#      - run: <command>
 workflows:
   version: 2
-  build_and_test:
-    jobs:
-      - build
-      - test
+  jobs:
+    build:
+      docker:
+        - image: circleci/python:2.7
+      steps:
+        - checkout
+        - run: echo "hello world" # run the `echo` command
+    test:
+      docker:
+        - image: circleci/python:2.7
+      steps:
+        - checkout
+        - run: <command>
+  workflows:
+    version: 2
+    build_and_test:
+      jobs:
+        - build
+        - test
