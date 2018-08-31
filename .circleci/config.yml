@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  "gazebo-6.5":
+  build:
     working_directory: ~/ci-group/gazebo
     docker:
       - image: circleci/gazebo:6.5
