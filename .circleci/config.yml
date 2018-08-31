@@ -1,8 +1,16 @@
 version: 2
 jobs:
-  build:
+  "gazebo-6.5":
+    working_directory: ~/ci-group/gazebo
     docker:
-      - image: circleci/python:2.7
+      - image: circleci/gazebo:6.5
     steps:
-      - checkout
-      - run: echo "hello world"
+      - run: git clone https://github.com/ci-group/gazebo.git \
+                       -b gazebo6-revolve .
+      - run: mkdir -p build && cd build
+      - run: cmake .. -DCMAKE_BUILD_TYPE="Release" \
+                      -DCMAKE_INSTALL_PREFIX=/usr/local \
+                      -DENABLE_SSE4=True \
+                      -DENABLE_TESTS_COMPILATION:BOOL=False
+      - run: make -j8
+      - run: make install
