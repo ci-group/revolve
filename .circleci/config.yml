@@ -12,7 +12,7 @@ workflows:
         - image: circleci/python:2.7
       steps:
         - checkout
-        - run: <command>
+        - run: echo "hello world" # run the `echo` command
   workflows:
     version: 2
     build_and_test:
