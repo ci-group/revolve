@@ -20,24 +20,30 @@
 #ifndef REVOLVE_BATTERYSENSOR_H
 #define REVOLVE_BATTERYSENSOR_H
 
+#include <string>
+
 #include "VirtualSensor.h"
 
-namespace revolve {
-namespace gazebo {
+namespace revolve
+{
+  namespace gazebo
+  {
+    class BatterySensor
+            : public VirtualSensor
+    {
+      public:
+      BatterySensor(
+              ::gazebo::physics::ModelPtr model,
+              std::string partId,
+              std::string sensorId);
 
-class BatterySensor : public VirtualSensor {
+      // Reads the battery value
+      virtual void read(double *input);
 
-public:
-	BatterySensor(::gazebo::physics::ModelPtr model, std::string partId, std::string sensorId);
-
-	// Reads the battery value
-	virtual void read(double * input);
-
-protected:
-	sdf::ElementPtr batteryElem;
-};
-
+      protected:
+      sdf::ElementPtr batteryElem;
+    };
+  }
 }
-}
 
-#endif //REVOLVE_BATTERYSENSOR_H
+#endif  // REVOLVE_BATTERYSENSOR_H
