@@ -52,8 +52,12 @@ else
   else
     CPPCHECK_FILES=`find $CHECK_DIRS -name "*.cc" -o -name "*.hh"`
   fi
-  CPPLINT_FILES=`\
-    find $CHECK_DIRS -name "*.cc" -o -name "*.hh" -o -name "*.c" -o -name "*.h" | grep -v test_fixture/gtest`
+  CPPLINT_FILES=`find $CHECK_DIRS -name "*.cc" \
+                                  -o -name "*.hh" \
+                                  -o -name "*.c" \
+                                  -o -name "*.h" \
+                                  -o -name "*.cpp" | \
+                                  grep -v test_fixture/gtest`
 fi
 
 SUPPRESS=/tmp/gazebo_cpp_check.suppress
