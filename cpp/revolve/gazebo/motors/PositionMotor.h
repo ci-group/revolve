@@ -20,61 +20,71 @@
 #ifndef REVOLVE_GAZEBO_POSITIONMOTOR_H_
 #define REVOLVE_GAZEBO_POSITIONMOTOR_H_
 
-#include <revolve/gazebo/motors/JointMotor.h>
+#include <string>
 
 #include <gazebo/common/common.hh>
 
-namespace revolve {
-namespace gazebo {
+#include <revolve/gazebo/motors/JointMotor.h>
 
-class PositionMotor : public JointMotor {
-public:
-	/**
-	 * @param The model the motor is contained in
-	 * @param The joint driven by the motor
-	 * @param The part ID the motor belongs to
-	 * @param Whether the motor is velocity driven (the alternative is position driven)
-	 * @param The derivative gain of the motor's PID controller
-	 */
-	PositionMotor(::gazebo::physics::ModelPtr model, std::string partId,
-				  std::string motorId, sdf::ElementPtr motor);
-	virtual ~PositionMotor();
+namespace revolve
+{
+  namespace gazebo
+  {
+    class PositionMotor
+            : public JointMotor
+    {
+      public:
+      /**
+       * @param The model the motor is contained in
+       * @param The joint driven by the motor
+       * @param The part ID the motor belongs to
+       * @param Whether the motor is velocity driven (the alternative is position driven)
+       * @param The derivative gain of the motor's PID controller
+       */
+      PositionMotor(
+              ::gazebo::physics::ModelPtr model,
+              std::string partId,
+              std::string motorId,
+              sdf::ElementPtr motor);
 
-	virtual void update(double * outputs, double step);
+      virtual ~PositionMotor();
 
-protected:
-	// World update event function
-//	void OnUpdate(const ::gazebo::common::UpdateInfo info);
+      virtual void update(
+              double *outputs,
+              double step);
 
-	// Perform the actual update given the step size
-	void DoUpdate(const ::gazebo::common::Time &simTime);
+      protected:
+      // World update event function
+      // void OnUpdate(const ::gazebo::common::UpdateInfo info);
 
-	// Store update event pointer
-	::gazebo::event::ConnectionPtr updateConnection_;
+      // Perform the actual update given the step size
+      void DoUpdate(const ::gazebo::common::Time &simTime);
 
-	// Last update time, used to determine update step time
-	::gazebo::common::Time prevUpdateTime_;
+      // Store update event pointer
+      ::gazebo::event::ConnectionPtr updateConnection_;
 
-	// Current position target
-	double positionTarget_;
+      // Last update time, used to determine update step time
+      ::gazebo::common::Time prevUpdateTime_;
 
-	// Upper and lower position limits
-	double lowerLimit_;
-	double upperLimit_;
+      // Current position target
+      double positionTarget_;
 
-	// Whether this joint can achieve a full range of motion, meaning
-	// it can flip from a positive to a negative angle. This is set
-	// to true whenever the total range is >/ 2 pi.
-	bool fullRange_;
+      // Upper and lower position limits
+      double lowerLimit_;
+      double upperLimit_;
 
-	// Motor noise
-	double noise_;
+      // Whether this joint can achieve a full range of motion, meaning
+      // it can flip from a positive to a negative angle. This is set
+      // to true whenever the total range is >/ 2 pi.
+      bool fullRange_;
 
-	// PID that controls this motor
-	::gazebo::common::PID pid_;
-};
+      // Motor noise
+      double noise_;
 
-} /* namespace gazebo */
+      // PID that controls this motor
+      ::gazebo::common::PID pid_;
+    };
+  } /* namespace gazebo */
 } /* namespace revolve */
 
 #endif /* REVOLVE_GAZEBO_POSITIONMOTOR_H_ */
