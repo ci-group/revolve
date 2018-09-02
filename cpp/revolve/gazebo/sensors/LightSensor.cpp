@@ -17,55 +17,64 @@
 *
 */
 
-#include <revolve/gazebo/sensors/LightSensor.h>
+#include <string>
 
-#include <boost/bind.hpp>
+#include <revolve/gazebo/sensors/LightSensor.h>
 
 namespace gz = gazebo;
 
-namespace revolve {
-namespace gazebo {
-
-LightSensor::LightSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-		std::string partId, std::string sensorId):
-	Sensor(model, sensor, partId, sensorId, 1),
-
-	// Initialize light sensor to full intensity
-	lastValue_(1.0)
+namespace revolve
 {
-	this->castSensor_ = boost::dynamic_pointer_cast<gz::sensors::CameraSensor>(this->sensor_);
+  namespace gazebo
+  {
+    LightSensor::LightSensor(
+            ::gazebo::physics::ModelPtr model,
+            sdf::ElementPtr sensor,
+            std::string partId,
+            std::string sensorId)
+            : Sensor(model, sensor, partId, sensorId, 1)
+            , lastValue_(1.0)
+    {
+      this->castSensor_ = boost::dynamic_pointer_cast<
+              gz::sensors::CameraSensor >(this->sensor_);
 
-	if (!this->castSensor_) {
-		std::cerr << "Creating a light sensor with a non-camera sensor object." << std::endl;
-		throw std::runtime_error("Sensor error");
-	}
+      if (!this->castSensor_)
+      {
+        std::cerr << "Creating a light sensor with a non-camera sensor object."
+                  << std::endl;
+        throw std::runtime_error("Sensor error");
+      }
 
-	// Sensor must always update
-	this->castSensor_->SetActive(true);
+      // Sensor must always update
+      this->castSensor_->SetActive(true);
 
-	// One byte per channel per pixel
-	this->dataSize_ = 3 * this->castSensor_->GetImageWidth() * this->castSensor_->GetImageHeight();
+      // One byte per channel per pixel
+      this->dataSize_ = 3 * this->castSensor_->GetImageWidth()
+                        * this->castSensor_->GetImageHeight();
 
-	// Add update connection that will produce new value
-	this->updateConnection_ = this->sensor_->ConnectUpdated(boost::bind(&LightSensor::OnUpdate, this));
-}
+      // Add update connection that will produce new value
+      this->updateConnection_ = this->sensor_->ConnectUpdated(
+              boost::bind(&LightSensor::OnUpdate, this));
+    }
 
-LightSensor::~LightSensor()
-{}
+    LightSensor::~LightSensor()
+    {}
 
-void LightSensor::OnUpdate() {
-	// Average all channels and pixels to get a linear
-	// light intensity.
-	const unsigned char* data = this->castSensor_->GetImageData();
-	float avg = 0;
-	for (unsigned int i = 0; i < this->dataSize_; ++i) {
-		avg += (unsigned int)data[i];
-	}
+    void LightSensor::OnUpdate()
+    {
+      // Average all channels and pixels to get a linear
+      // light intensity.
+      const unsigned char *data = this->castSensor_->GetImageData();
+      float avg = 0;
+      for (unsigned int i = 0; i < this->dataSize_; ++i)
+      {
+        avg += (unsigned int)data[i];
+      }
 
-	avg /= this->dataSize_ * 255.f;
+      avg /= this->dataSize_ * 255.f;
 
-	this->lastValue_ = avg;
-}
+      this->lastValue_ = avg;
+    }
 
 /**
  * TODO Measure the fastest / most accurate way to use the light sensor.
@@ -81,9 +90,9 @@ void LightSensor::OnUpdate() {
  * case that would force the sensor update here on the "driver"
  * thread, which might be detrimental to performance.
  */
-void LightSensor::read(double * input) {
-	input[0] = lastValue_;
-}
-
-} /* namespace gazebo */
+    void LightSensor::read(double *input)
+    {
+      input[0] = lastValue_;
+    }
+  } /* namespace gazebo */
 } /* namespace tol_robogen */
