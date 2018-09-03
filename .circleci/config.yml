@@ -1,16 +1,23 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/ci-group/gazebo
     docker:
-      - image: circleci/gazebo:6.5
+      - image: cigroup/gazebo:gazebo6-revolve
     steps:
-      - run: git clone https://github.com/ci-group/gazebo.git \
-                       -b gazebo6-revolve .
-      - run: mkdir -p build && cd build
-      - run: cmake .. -DCMAKE_BUILD_TYPE="Release" \
-                      -DCMAKE_INSTALL_PREFIX=/usr/local \
-                      -DENABLE_SSE4=True \
-                      -DENABLE_TESTS_COMPILATION:BOOL=False
-      - run: make -j8
-      - run: make install
+      - checkout
+
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - run:
+          name: Build Revolve image
+          command: docker build -t cigroup/revolve:$CIRCLE_BRANCH .
+
+      - run:
+          name: Save Revolve image
+          command: |
+            set -e
+            TAG=0.1.$CIRCLE_BUILD_NUM
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push cigroup/revolve:$CIRCLE_BRANCH
+            docker push cigroup/revolve:latest
