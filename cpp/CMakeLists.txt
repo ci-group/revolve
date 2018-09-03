@@ -5,22 +5,20 @@ cmake_minimum_required (VERSION 2.8.12)
 project (Revolve)
 
 # CMake flag to help local projects find the build dir
-if (${LOCAL_BUILD_DIR})
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build")
-    set(HEADER_COPY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../build/include")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build")
+set(HEADER_COPY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../build/include")
 
-    # Copy header files to the output directory so they can be used
-    # by other projects in development.
-    file(
-       COPY ${CMAKE_CURRENT_SOURCE_DIR}/revolve
-       DESTINATION ${HEADER_COPY_DIR}
-       FILES_MATCHING PATTERN "*.h"
-    )
+# Copy header files to the output directory so they can be used
+# by other projects in development.
+file(
+   COPY ${CMAKE_CURRENT_SOURCE_DIR}/revolve
+   DESTINATION ${HEADER_COPY_DIR}
+   FILES_MATCHING PATTERN "*.h"
+)
 
-    message("Using local build directory.")
-endif()
+message("Using local build directory.")
 
 # Pass source dir to preprocessor
 add_definitions(-DSOURCE_DIR=${CMAKE_SOURCE_DIR})
@@ -149,6 +147,10 @@ file(GLOB_RECURSE
 # Create the library containing the Revolve API
 add_library(revolve-gazebo ${REVOLVE_GZ_SRC})
 target_link_libraries(revolve-gazebo ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+
+# Create World plugin
+add_library(revolveworldcontrol SHARED revolve/gazebo/plugin/register_world_plugin.cpp)
+target_link_libraries(revolveworldcontrol revolve-gazebo revolve-spec)
 
 # Add the file that registers the body analyzer as a separate library that
 # can be used as a world plugin directly.

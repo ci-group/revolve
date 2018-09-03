@@ -31,41 +31,45 @@
 #ifndef REVOLVE_POINTINTENSITYSENSOR_H
 #define REVOLVE_POINTINTENSITYSENSOR_H
 
+#include <string>
 
 #include "VirtualSensor.h"
 
-namespace revolve {
-namespace gazebo {
+namespace revolve
+{
+  namespace gazebo
+  {
+    class PointIntensitySensor
+            : public VirtualSensor
+    {
+      public:
+      PointIntensitySensor(
+              sdf::ElementPtr sensor,
+              ::gazebo::physics::ModelPtr model,
+              std::string partId,
+              std::string sensorId);
 
-class PointIntensitySensor : public VirtualSensor {
+      // Reads the battery value
+      virtual void read(double *input);
 
-public:
-	PointIntensitySensor(sdf::ElementPtr sensor, ::gazebo::physics::ModelPtr model,
-						 std::string partId, std::string sensorId);
+      protected:
+      /**
+       * The point to which proximity should be returned
+       */
+      ::gazebo::math::Vector3 point_;
 
-	// Reads the battery value
-	virtual void read(double * input);
-
-protected:
-	/**
-	 * The point to which proximity should be returned
-	 */
-	::gazebo::math::Vector3 point_;
-
-	/**
-	 * The value of the input neuron of this sensor is calculated
-	 * from the distance with the function:
-	 *
-	 * a / (distance**b)
-	 *
-	 * Where it will be made sure that the output is between 0 and a.
-	 */
-	double i_max_;
-	double r_;
-};
-
+      /**
+       * The value of the input neuron of this sensor is calculated
+       * from the distance with the function:
+       *
+       * a / (distance**b)
+       *
+       * Where it will be made sure that the output is between 0 and a.
+       */
+      double i_max_;
+      double r_;
+    };
+  }
 }
-}
 
-
-#endif //REVOLVE_POINTINTENSITYSENSOR_H
+#endif  // REVOLVE_POINTINTENSITYSENSOR_H

@@ -24,6 +24,11 @@
 #ifndef REVOLVE_WORLDCONTROLLER_H
 #define REVOLVE_WORLDCONTROLLER_H
 
+#include <map>
+#include <string>
+
+#include <boost/thread/mutex.hpp>
+
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
@@ -32,78 +37,80 @@
 #include <revolve/msgs/model_inserted.pb.h>
 #include <revolve/msgs/robot_states.pb.h>
 
-#include <boost/thread/mutex.hpp>
+namespace revolve
+{
+  namespace gazebo
+  {
+    class WorldController
+            : public ::gazebo::WorldPlugin
+    {
+      public:
+      WorldController();
 
-namespace revolve {
-namespace gazebo {
+      virtual void Load(
+              ::gazebo::physics::WorldPtr _parent,
+              sdf::ElementPtr _sdf);
 
-class WorldController : public ::gazebo::WorldPlugin {
-public:
-	WorldController();
+      protected:
+      // Listener for analysis requests
+      virtual void HandleRequest(ConstRequestPtr &request);
 
-	virtual void Load(::gazebo::physics::WorldPtr _parent, sdf::ElementPtr _sdf);
+      // Listener for entity delete responses
+      virtual void HandleResponse(ConstResponsePtr &request);
 
-protected:
-	// Listener for analysis requests
-	virtual void HandleRequest(ConstRequestPtr &request);
+      // Callback for model insertion
+      virtual void OnModel(ConstModelPtr &msg);
 
-	// Listener for entity delete responses
-	virtual void HandleResponse(ConstResponsePtr &request);
+      // Method called
+      virtual void OnUpdate(const ::gazebo::common::UpdateInfo &_info);
 
-	// Callback for model insertion
-	virtual void OnModel(ConstModelPtr &msg);
+      // Maps model names to insert request IDs
+      std::map< std::string, int > insertMap_;
 
-	// Method called
-	virtual void OnUpdate(const ::gazebo::common::UpdateInfo & _info);
+      // Maps `entity_delete` IDs to `delete_robot` ids
+      std::map< int, int > deleteMap_;
 
-	// Maps model names to insert request IDs
-	std::map<std::string, int> insertMap_;
+      // Stores the world
+      ::gazebo::physics::WorldPtr world_;
 
-	// Maps `entity_delete` IDs to `delete_robot` ids
-	std::map<int, int> deleteMap_;
+      // Transport node
+      ::gazebo::transport::NodePtr node_;
 
-	// Stores the world
-	::gazebo::physics::WorldPtr world_;
+      // Mutex for the insertMap_
+      boost::mutex insertMutex_;
 
-	// Transport node
-	::gazebo::transport::NodePtr node_;
+      // Mutex for the deleteMap_
+      boost::mutex deleteMutex_;
 
-	// Mutex for the insertMap_
-	boost::mutex insertMutex_;
+      // Request subscriber
+      ::gazebo::transport::SubscriberPtr requestSub_;
 
-	// Mutex for the deleteMap_
-	boost::mutex deleteMutex_;
+      // Request publisher
+      ::gazebo::transport::PublisherPtr requestPub_;
 
-	// Request subscriber
-	::gazebo::transport::SubscriberPtr requestSub_;
+      // Response subscriber
+      ::gazebo::transport::SubscriberPtr responseSub_;
 
-	// Request publisher
-	::gazebo::transport::PublisherPtr requestPub_;
+      // Response publisher
+      ::gazebo::transport::PublisherPtr responsePub_;
 
-	// Response subscriber
-	::gazebo::transport::SubscriberPtr responseSub_;
+      // Subscriber for actual model insertion
+      ::gazebo::transport::SubscriberPtr modelSub_;
 
-	// Response publisher
-	::gazebo::transport::PublisherPtr responsePub_;
+      // Publisher for periodic robot poses
+      ::gazebo::transport::PublisherPtr robotStatesPub_;
 
-	// Subscriber for actual model insertion
-	::gazebo::transport::SubscriberPtr modelSub_;
+      // Frequency at which robot info is published
+      // Defaults to 0, which means no update at all
+      unsigned int robotStatesPubFreq_;
 
-	// Publisher for periodic robot poses
-	::gazebo::transport::PublisherPtr robotStatesPub_;
+      // Pointer to the update event connection
+      ::gazebo::event::ConnectionPtr updateConnection_;
 
-	// Frequency at which robot info is published
-	// Defaults to 0, which means no update at all
-	unsigned int robotStatesPubFreq_;
+      // Last (simulation) time robot info was sent
+      double lastRobotStatesUpdateTime_;
+    };
+  }  // namespace gazebo
+}  // namespace revolve
 
-	// Pointer to the update event connection
-	::gazebo::event::ConnectionPtr updateConnection_;
-
-	// Last (simulation) time robot info was sent
-	double lastRobotStatesUpdateTime_;
-};
-
-} // namespace gazebo
-} // namespace revolve
-
-#endif //REVOLVE_WORLDCONTROLLER_H
+#endif  // REVOLVE_WORLDCONTROLLER_H

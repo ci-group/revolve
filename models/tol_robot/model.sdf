@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+<sdf version="1.5"><model name="test_bot"><pose>0.000000e+00 0.000000e+00 2.325000e-02 0.000000e+00 -0.000000e+00 0.000000e+00</pose>
+<link name="link_component_Core__box"><pose>0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00 -0.000000e+00 0.000000e+00</pose>
+<visual name="component_Core__box_visual"><pose>0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00 -0.000000e+00 0.000000e+00</pose>
+<material><ambient>0.50 0.50 0.50 1.00</ambient><diffuse>0.50 0.50 0.50 1.00</diffuse><specular>0.1 0.1 0.1 1.00</specular></material>
+<geometry><mesh><uri>model://tol_meshes/meshes/CoreComponent.dae</uri></mesh></geometry></visual>
+<collision name="component_Core__box_collision"><pose>0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00 -0.000000e+00 0.000000e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>9.000000e-02 9.000000e-02 4.500000e-02</size></box></geometry></collision>
+<sensor type="imu" name="Core-imu_sensor"><pose>0.000000e+00 0.000000e+00 0.000000e+00 0.000000e+00 -0.000000e+00 0.000000e+00</pose>
+<update_rate>1.000000e+01</update_rate>
+<always_on>1</always_on></sensor>
+<collision name="component_PassiveHinge__slot_a_collision"><pose>1.665335e-19 -4.575000e-02 4.163336e-20 1.570796e+00 -5.551115e-17 -1.570796e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>1.500000e-03 3.400000e-02 3.400000e-02</size></box></geometry></collision>
+<visual name="component_PassiveHinge__conn_a_conn_a_visual"><pose>2.256528e-18 -5.610000e-02 8.243406e-19 1.570796e+00 -5.551115e-17 -1.570796e+00</pose>
+<material><ambient>0.50 0.50 0.50 1.00</ambient><diffuse>0.50 0.50 0.50 1.00</diffuse><specular>0.1 0.1 0.1 1.00</specular></material>
+<geometry><mesh><uri>model://tol_meshes/meshes/PassiveHinge.stl</uri></mesh></geometry></visual>
+<collision name="component_PassiveHinge__conn_a_collision"><pose>2.631229e-18 -5.685000e-02 6.578071e-19 1.570796e+00 -5.551115e-17 -1.570796e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>2.050000e-02 2.000000e-03 2.000000e-02</size></box></geometry></collision>
+<visual name="component_ActiveHinge__root_visual"><pose>1.665335e-19 4.575000e-02 -4.163336e-20 1.570796e+00 5.551115e-17 1.570796e+00</pose>
+<material><ambient>1.00 0.00 0.00 1.00</ambient><diffuse>1.00 0.00 0.00 1.00</diffuse><specular>0.1 0.1 0.1 1.00</specular></material>
+<geometry><box><size>1.500000e-03 3.400000e-02 3.400000e-02</size></box></geometry></visual>
+<collision name="component_ActiveHinge__root_collision"><pose>1.665335e-19 4.575000e-02 -4.163336e-20 1.570796e+00 5.551115e-17 1.570796e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>1.500000e-03 3.400000e-02 3.400000e-02</size></box></geometry></collision>
+<visual name="component_ActiveHinge__frame_frame_visual"><pose>2.353673e-18 5.560000e-02 -5.884182e-19 1.570796e+00 5.551115e-17 1.570796e+00</pose>
+<material><ambient>1.00 0.00 0.00 1.00</ambient><diffuse>1.00 0.00 0.00 1.00</diffuse><specular>0.1 0.1 0.1 1.00</specular></material>
+<geometry><mesh><uri>model://tol_meshes/meshes/ActiveHinge_Frame.dae</uri></mesh></geometry></visual>
+<collision name="component_ActiveHinge__frame_collision"><pose>2.353673e-18 5.560000e-02 -5.884182e-19 1.570796e+00 5.551115e-17 1.570796e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>1.800000e-02 3.400000e-02 1.000000e-02</size></box></geometry></collision>
+<inertial><mass>1.012000e-01</mass><inertia><ixx>1.027687e-04</ixx><ixy>2.218130e-22</ixy><ixz>1.729089e-22</ixz><iyy>7.783077e-05</iyy><iyz>3.149203e-22</iyz><izz>1.482586e-04</izz></inertia></inertial>
+<self_collide>True</self_collide></link>
+<link name="link_component_PassiveHinge__conn_b"><pose>6.294965e-18 -7.335000e-02 1.573741e-18 1.570796e+00 -5.551115e-17 -1.570796e+00</pose>
+<visual name="component_PassiveHinge__conn_b_conn_b_visual"><pose>0.000000e+00 0.000000e+00 0.000000e+00 3.141593e+00 1.110223e-16 3.141593e+00</pose>
+<material><ambient>0.50 0.50 0.50 1.00</ambient><diffuse>0.50 0.50 0.50 1.00</diffuse><specular>0.1 0.1 0.1 1.00</specular></material>
+<geometry><mesh><uri>model://tol_meshes/meshes/PassiveHinge.stl</uri></mesh></geometry></visual>
+<collision name="component_PassiveHinge__conn_b_collision"><pose>0.000000e+00 0.000000e+00 0.000000e+00 -2.220446e-16 0.000000e+00 0.000000e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>2.050000e-02 2.000000e-03 2.000000e-02</size></box></geometry></collision>
+<collision name="component_PassiveHinge__slot_b_collision"><pose>1.110000e-02 -3.080869e-18 -3.080869e-18 -2.220446e-16 0.000000e+00 0.000000e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>1.500000e-03 3.400000e-02 3.400000e-02</size></box></geometry></collision>
+<inertial><mass>3.000000e-03</mass><inertia><ixx>4.190000e-07</ixx><ixy>6.839529e-23</ixy><ixz>6.839529e-23</ixz><iyy>5.078158e-07</iyy><iyz>-7.327472e-24</iyz><izz>4.748158e-07</izz></inertia></inertial>
+<self_collide>True</self_collide></link>
+<joint type="revolute" name="joint_link_component_Core__box_link_component_PassiveHinge__conn_b"><pose>-8.250000e-03 0.000000e+00 0.000000e+00 -1.110223e-16 0.000000e+00 0.000000e+00</pose>
+<parent>link_component_Core__box</parent>
+<child>link_component_PassiveHinge__conn_b</child>
+<axis><xyz>0.000000e+00 0.000000e+00 1.000000e+00</xyz>
+<use_parent_model_frame>0</use_parent_model_frame>
+<limit><lower>-7.853982e-01</lower>
+<upper>7.853982e-01</upper></limit></axis></joint>
+<link name="link_component_ActiveHinge__servo"><pose>5.295764e-18 6.885000e-02 -1.323941e-18 1.570796e+00 5.551115e-17 1.570796e+00</pose>
+<visual name="component_ActiveHinge__servo_servo_visual"><pose>0.000000e+00 0.000000e+00 0.000000e+00 -2.220446e-16 0.000000e+00 0.000000e+00</pose>
+<material><ambient>1.00 0.00 0.00 1.00</ambient><diffuse>1.00 0.00 0.00 1.00</diffuse><specular>0.1 0.1 0.1 1.00</specular></material>
+<geometry><mesh><uri>model://tol_meshes/meshes/ActiveCardanHinge_Servo_Holder.dae</uri></mesh></geometry></visual>
+<collision name="component_ActiveHinge__servo_collision"><pose>0.000000e+00 0.000000e+00 0.000000e+00 -2.220446e-16 0.000000e+00 0.000000e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>2.450000e-02 3.400000e-02 1.000000e-02</size></box></geometry></collision>
+<collision name="component_ActiveHinge__tail_collision"><pose>1.310000e-02 3.635980e-18 3.635980e-18 -2.220446e-16 0.000000e+00 0.000000e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>1.500000e-03 3.400000e-02 3.400000e-02</size></box></geometry></collision>
+<visual name="component_Brick__box_visual"><pose>3.435000e-02 2.071954e-17 2.515596e-17 -1.570796e+00 -1.570796e+00 0.000000e+00</pose>
+<material><ambient>0.50 0.50 0.50 1.00</ambient><diffuse>0.50 0.50 0.50 1.00</diffuse><specular>0.1 0.1 0.1 1.00</specular></material>
+<geometry><mesh><uri>model://tol_meshes/meshes/FixedBrick.dae</uri></mesh></geometry></visual>
+<collision name="component_Brick__box_collision"><pose>3.435000e-02 2.071954e-17 2.515596e-17 -1.570796e+00 -1.570796e+00 0.000000e+00</pose>
+<surface><contact><ode><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></ode><bullet><soft_cfm>1.000000e-02</soft_cfm><soft_erp>2.000000e-01</soft_erp></bullet></contact>
+<friction><ode><mu>1.000000e+00</mu>
+<mu2>1.000000e+00</mu2>
+<slip1>1.000000e-02</slip1>
+<slip2>1.000000e-02</slip2></ode>
+<bullet><friction>1.000000e+00</friction>
+<friction2>1.000000e+00</friction2></bullet></friction></surface>
+<geometry><box><size>4.100000e-02 4.100000e-02 3.550000e-02</size></box></geometry></collision>
+<inertial><mass>2.620000e-02</mass><inertia><ixx>4.790729e-06</ixx><ixy>-7.355067e-21</ixy><ixz>-8.869750e-21</ixz><iyy>1.729501e-05</iyy><iyz>5.328335e-22</iyz><izz>1.772938e-05</izz></inertia></inertial>
+<self_collide>True</self_collide></link>
+<joint type="revolute" name="joint_link_component_ActiveHinge__servo_link_component_Core__box"><pose>3.463896e-18 6.060000e-02 -8.659740e-19 1.570796e+00 5.551115e-17 1.570796e+00</pose>
+<parent>link_component_ActiveHinge__servo</parent>
+<child>link_component_Core__box</child>
+<axis><xyz>0.000000e+00 1.000000e+00 0.000000e+00</xyz>
+<use_parent_model_frame>0</use_parent_model_frame>
+<limit><lower>-7.853982e-01</lower>
+<upper>7.853982e-01</upper>
+<effort>1.765800e-01</effort>
+<velocity>5.235988e+00</velocity></limit></axis></joint>
+<plugin name="robot_controller" filename="libtolrobotcontrol.so"><rv:robot_config xmlns:rv="https://github.com/ElteHupkes/revolve"><rv:update_rate>1.000000e+01</rv:update_rate>
+<rv:brain><rv:neuron layer="input" type="Input" id="Core-in-5" part_id="Core" />
+<rv:neuron layer="input" type="Input" id="Core-in-4" part_id="Core" />
+<rv:neuron layer="input" type="Input" id="Core-in-1" part_id="Core" />
+<rv:neuron layer="input" type="Input" id="Core-in-0" part_id="Core" />
+<rv:neuron layer="input" type="Input" id="Core-in-3" part_id="Core" />
+<rv:neuron layer="input" type="Input" id="Core-in-2" part_id="Core" />
+<rv:neuron layer="output" type="Oscillator" id="ActiveHinge-out-0" part_id="ActiveHinge"><rv:period>8.000000e+00</rv:period>
+<rv:amplitude>2.000000e+00</rv:amplitude>
+<rv:phase_offset>0.000000e+00</rv:phase_offset></rv:neuron></rv:brain>
+<rv:sensor link="link_component_Core__box" sensor="Core-imu_sensor" id="Core__Core-imu_sensor" part_id="Core" type="imu" />
+<rv:motor joint="joint_link_component_ActiveHinge__servo_link_component_Core__box" type="position" id="ActiveHinge__rotate" part_id="ActiveHinge"><rv:pid><rv:p>9.000000e-01</rv:p>
+<rv:i>0.000000e+00</rv:i>
+<rv:d>0.000000e+00</rv:d>
+<rv:i_max>0.000000e+00</rv:i_max>
+<rv:i_min>0.000000e+00</rv:i_min></rv:pid></rv:motor></rv:robot_config></plugin>
+<static>0</static></model></sdf>

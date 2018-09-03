@@ -7,6 +7,7 @@ import time
 import sys
 import atexit
 from .nbsr import NonBlockingStreamReader as NBSR
+mswindows = (sys.platform == "win32")
 
 
 def terminate_process(proc):
@@ -44,9 +45,20 @@ class Supervisor(object):
     and it should restore the world state from there.
     """
 
-    def __init__(self, manager_cmd, world_file, output_directory=None, manager_args=None, gazebo_cmd="gzserver",
-                 analyzer_cmd=None, gazebo_args=None, restore_arg="--restore-directory",
-                 snapshot_world_file="snapshot.world", restore_directory=None):
+    def __init__(self,
+                 manager_cmd,
+                 world_file,
+                 output_directory=None,
+                 manager_args=None,
+                 gazebo_cmd="gzserver",
+                 analyzer_cmd=None,
+                 gazebo_args=None,
+                 restore_arg="--restore-directory",
+                 snapshot_world_file="snapshot.world",
+                 restore_directory=None,
+                 plugins_dir_path=None,
+                 models_dir_path=None
+                 ):
         """
 
         :param manager_cmd: The command used to run your manager / experiment
@@ -61,7 +73,11 @@ class Supervisor(object):
                             the manager. Note that the output directory is not passed as
                             part of this name, just the relative path.
         :param snapshot_world_file:
-        :return:
+        :param restore_directory:
+        :param plugins_dir_path: Full path (or relative to cwd) to the gazebo plugins directory
+                                 (setting env variable GAZEBO_PLUGIN_PATH).
+        :param models_dir_path: Full path (or relative to cwd) to the gazebo models directory
+                                (setting env variable GAZEBO_MODEL_PATH).
         """
         self.restore_directory = datetime.now().strftime('%Y%m%d%H%M%S') \
             if restore_directory is None else restore_directory
@@ -84,6 +100,54 @@ class Supervisor(object):
 
         # Terminate all processes when the supervisor exits
         atexit.register(self._terminate_all)
+
+        # Set plugins dir path for Gazebo
+        if plugins_dir_path is not None:
+            plugins_dir_path = os.path.abspath(plugins_dir_path)
+            try:
+                new_env_var = "{}:{}".format(os.environ["GAZEBO_PLUGIN_PATH"], plugins_dir_path)
+            except KeyError:
+                new_env_var = plugins_dir_path
+            os.environ["GAZEBO_PLUGIN_PATH"] = new_env_var
+
+        # Set models dir path for Gazebo
+        if models_dir_path is not None:
+            models_dir_path = os.path.abspath(models_dir_path)
+            try:
+                new_env_var = "{}:{}".format(os.environ["GAZEBO_MODEL_PATH"], models_dir_path)
+            except KeyError:
+                new_env_var = models_dir_path
+            os.environ['GAZEBO_MODEL_PATH'] = new_env_var
+
+        print("Created Supervisor with:"
+              "\n\t- manager command: {} {}"
+              "\n\t- gazebo command: {} {}"
+              "\n\t- world file: {}"
+              "\n\t- gazebo plugin dir: {}"
+              "\n\t- gazebo models dir: {}"
+              .format(manager_cmd,
+                      manager_args,
+                      gazebo_cmd,
+                      gazebo_args,
+                      world_file,
+                      plugins_dir_path,
+                      models_dir_path)
+              )
+
+    def launch_gazebo(self):
+        self._launch_gazebo()
+
+        # Wait for the end
+        ret = 0
+        for proc_name in self.procs:
+            ret = self.procs[proc_name].wait()
+            if ret == 0:
+                sys.stdout.write("Program {} exited normally\n".format(proc_name))
+                ret = 255
+            else:
+                sys.stderr.write("Program {} exited with code {}\n".format(proc_name, ret))
+
+        return ret
 
     def launch(self):
         """
@@ -234,22 +298,65 @@ class Supervisor(object):
         self.procs['manager'] = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self._add_output_stream('manager')
 
-    def _launch_with_ready_str(self, cmd, ready_str):
+    @staticmethod
+    def _launch_with_ready_str(cmd, ready_str):
         """
         :param cmd:
         :param ready_str:
         :return:
         """
-        self.procs['_tmp'] = proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # make out and err non-blocking pipes
+        if not mswindows:
+            import fcntl
+            for pipe in [process.stdout, process.stderr]:
+                fd = pipe.fileno()
+                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        else:
+            sys.stderr.write("Using Windows may not give the most optimal experience\n")
+            # hint on how to fix it here: https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
 
         ready = False
         while not ready:
-            out = proc.stdout.readline()
-            sys.stdout.write(out)
-            if ready_str in out:
-                ready = True
+            exit_code = process.poll()
+            if exit_code is not None:
+                # flush out all stdout and stderr
+                out, err = process.communicate()
+                if out is not None:
+                    sys.stdout.write(out)
+                if err is not None:
+                    sys.stderr.write(err)
+                raise RuntimeError("Error launching launch {}, exit with code {}".format(cmd, exit_code))
+
+            try:
+                out = process.stdout.readline()
+                sys.stdout.write(out)
+                if ready_str in out:
+                    ready = True
+            except IOError:
+                pass
+
+            if not mswindows:
+                try:
+                    err = process.stderr.readline()
+                    sys.stderr.write(err)
+                except IOError:
+                    pass
 
             time.sleep(0.1)
 
-        del self.procs['_tmp']
-        return proc
+
+        # make out and err blocking pipes again
+        if not mswindows:
+            import fcntl
+            for pipe in [process.stdout, process.stderr]:
+                fd = pipe.fileno()
+                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                fcntl.fcntl(fd, fcntl.F_SETFL, fl & (~ os.O_NONBLOCK))
+        else:
+            sys.stderr.write("Using Windows may not give the most optimal experience\n")
+            # hint on how to fix it here: https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
+
+        return process

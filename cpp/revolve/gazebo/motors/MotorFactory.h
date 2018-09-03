@@ -21,39 +21,46 @@
 #ifndef REVOLVE_GAZEBO_MOTORS_MOTORFACTORY_H_
 #define REVOLVE_GAZEBO_MOTORS_MOTORFACTORY_H_
 
-#include <revolve/gazebo/Types.h>
+#include <string>
 
 #include <gazebo/common/common.hh>
 
-namespace revolve {
-namespace gazebo {
+#include <revolve/gazebo/Types.h>
 
-class MotorFactory {
-public:
-	MotorFactory(::gazebo::physics::ModelPtr model);
-	virtual ~MotorFactory();
+namespace revolve
+{
+  namespace gazebo
+  {
+    class MotorFactory
+    {
+      public:
+      explicit MotorFactory(::gazebo::physics::ModelPtr model);
 
-	/**
-	 * Returns a motor pointer instance from a motor element, part ID and type.
-	 * This is the convenience wrapper over `create` that has required attributes
-	 * already checked, usually you should override this when adding new motor types.
-	 */
-	virtual MotorPtr getMotor(sdf::ElementPtr motor, const std::string & type,
-							  const std::string & motorId, const std::string & partId);
+      virtual ~MotorFactory();
 
-	/**
-	 * Creates a motor for the given model for the given SDF element.
-	 */
-	virtual MotorPtr create(sdf::ElementPtr motor);
+      /**
+       * Returns a motor pointer instance from a motor element, part ID and type.
+       * This is the convenience wrapper over `create` that has required attributes
+       * already checked, usually you should override this when adding new motor types.
+       */
+      virtual MotorPtr getMotor(
+              sdf::ElementPtr motor,
+              const std::string &type,
+              const std::string &motorId,
+              const std::string &partId);
 
-protected:
-	/**
-	 * Internal reference to the robot model
-	 */
-	::gazebo::physics::ModelPtr model_;
-};
+      /**
+       * Creates a motor for the given model for the given SDF element.
+       */
+      virtual MotorPtr create(sdf::ElementPtr motor);
 
-} /* namespace gazebo */
+      protected:
+      /**
+       * Internal reference to the robot model
+       */
+      ::gazebo::physics::ModelPtr model_;
+    };
+  } /* namespace gazebo */
 } /* namespace revolve */
 
 #endif /* REVOLVE_GAZEBO_MOTORS_MOTORFACTORY_H_ */
