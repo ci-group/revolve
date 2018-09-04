@@ -1,3 +1,5 @@
+from gazebo:gazebo6-revolve
+
 ADD . /revolve
 RUN mkdir -p build && cd build
 RUN cmake ../cpp \

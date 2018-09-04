@@ -2,6 +2,7 @@ version: 2
 jobs:
   build:
     docker:
+      - image: circleci/python:3-stretch-node
       - image: cigroup/gazebo:gazebo6-revolve
     steps:
       - checkout
