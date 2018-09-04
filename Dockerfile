@@ -1,5 +1,4 @@
-
-ADD /revolve
+ADD . /revolve
 RUN mkdir -p build && cd build
 RUN cmake ../cpp \
           -DCMAKE_BUILD_TYPE="Release" \
