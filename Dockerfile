@@ -1,4 +1,4 @@
-from cigroup/gazebo:gazebo6-revolve
+FROM cigroup/gazebo:gazebo6-revolve
 
 # Dependencies
 RUN apt-get install build-essential \
