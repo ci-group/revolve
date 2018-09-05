@@ -8,8 +8,6 @@ cmake ../cpp \
       -DCMAKE_BUILD_TYPE="Release"
 make -j4
 
-# Set the virtual environment
+# Install the Python dependencies
 cd /revolve
-virtualenv .venv
-source .venv/bin/activate
-pip install -r requiremenrst.txt
+pip install -r requirements.txt
