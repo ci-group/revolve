@@ -4,9 +4,10 @@ FROM cigroup/gazebo:gazebo6-revolve
 RUN apt-get install -y build-essential \
                        cmake           \
                        cppcheck        \
+                       git             \
                        xsltproc        \
                        python          \
-                       python-pip       \
+                       python-pip      \
                        mercurial
 
 ADD . /revolve
