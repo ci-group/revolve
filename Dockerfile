@@ -1,8 +1,12 @@
-from gazebo:gazebo6-revolve
+from cigroup/gazebo:gazebo6-revolve
+
+# Dependencies
+RUN apt-get install build-essential \
+                    cmake           \
+                    cppcheck        \
+                    xsltproc        \
+                    python          \
+                    mercurial
 
 ADD . /revolve
-RUN mkdir -p build && cd build
-RUN cmake ../cpp \
-          -DCMAKE_BUILD_TYPE="Release" \
-          -DLOCAL_BUILD_DIR=1
-RUN make -j4
+RUN /revolve/docker/build_revolve.sh
