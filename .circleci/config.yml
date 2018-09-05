@@ -20,4 +20,3 @@ jobs:
             TAG=0.1.$CIRCLE_BUILD_NUM
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push cigroup/revolve:$CIRCLE_BRANCH
-            docker push cigroup/revolve:latest
