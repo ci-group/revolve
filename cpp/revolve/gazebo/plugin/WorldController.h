@@ -110,7 +110,7 @@ namespace revolve
       // Last (simulation) time robot info was sent
       double lastRobotStatesUpdateTime_;
     };
-  } // namespace gazebo
-} // namespace revolve
+  }  // namespace gazebo
+}  // namespace revolve
 
 #endif  // REVOLVE_WORLDCONTROLLER_H

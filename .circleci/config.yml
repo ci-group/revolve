@@ -1,0 +1,22 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3-stretch-node
+    steps:
+      - checkout
+
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - run:
+          name: Build Revolve image
+          command: docker build -t cigroup/revolve:$CIRCLE_BRANCH .
+
+      - run:
+          name: Save Revolve image
+          command: |
+            set -e
+            TAG=0.1.$CIRCLE_BUILD_NUM
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push cigroup/revolve:$CIRCLE_BRANCH
