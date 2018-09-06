@@ -13,10 +13,10 @@ jobs:
           name: "Build Revolve's Docker image"
           command: docker build -t cigroup/revolve:$CIRCLE_BRANCH .
 
-      - run:
-          name: "Run Python tests"
-          command: |
-            python -m unittest discover test_py
+#      - run:
+#          name: "Run Python tests"
+#          command: |
+#            python -m unittest discover test_py
 
       - run:
           name: "Save Revolve's Docker image"
