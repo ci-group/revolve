@@ -10,11 +10,16 @@ jobs:
           docker_layer_caching: true
 
       - run:
-          name: Build Revolve image
+          name: "Build Revolve's Docker image"
           command: docker build -t cigroup/revolve:$CIRCLE_BRANCH .
 
       - run:
-          name: Save Revolve image
+          name: "Run Python tests"
+          command: |
+            python -m unittest discover test_py
+
+      - run:
+          name: "Save Revolve's Docker image"
           command: |
             set -e
             TAG=0.1.$CIRCLE_BUILD_NUM
