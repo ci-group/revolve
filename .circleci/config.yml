@@ -16,7 +16,7 @@ jobs:
       - run:
           name: "Run Python tests"
           command: |
-            docker run cigroup/revolve:$CIRCLE_BRANCH ./docker/test_python.sh
+            docker run cigroup/revolve:$CIRCLE_BRANCH /revolve/docker/test_python.sh
 
       - run:
           name: "Save Revolve's Docker image"
