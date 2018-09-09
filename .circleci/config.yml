@@ -16,6 +16,8 @@ jobs:
       - run:
           name: "Run Python tests"
           command: |
+            set -e
+            TAG=0.1.$CIRCLE_BUILD_NUM
             docker exec cigroup/revolve:$CIRCLE_BRANCH docker/test_python.sh
 
       - run:
