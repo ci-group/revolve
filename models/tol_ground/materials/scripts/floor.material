@@ -1,0 +1,95 @@
+material Floor/Wood1
+{
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture wood1.png
+        scale 0.01 0.01
+      }
+    }
+  }
+}
+
+material Floor/Wood2
+{
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture wood2.png
+        scale 0.02 0.02
+      }
+    }
+  }
+}
+
+material Floor/Wood3
+{
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture wood3.png
+        scale 0.05 0.05
+      }
+    }
+  }
+}
+
+material Floor/Concrete1
+{
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture concrete1.png
+        scale 0.04 0.04
+      }
+    }
+  }
+}
+
+material Floor/Grass
+{
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture grass.png
+        scale 0.01 0.01
+      }
+    }
+  }
+}
+
+material Floor/Asphalt
+{
+  technique
+  {
+    pass
+    {
+
+      texture_unit
+      {
+        texture asphalt.png
+        scale 0.01 0.01
+      }
+    }
+  }
+}

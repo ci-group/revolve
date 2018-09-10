@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+    <world name="default">
+    <scene>
+        <origin_visual>0</origin_visual>
+        <grid>0</grid>
+        <sky><time>12</time></sky>
+    </scene>
+    <gui>
+        <plugin name="interactive-evolution" filename="libtolinteractiveevolution.so" />
+    </gui>
+    <physics type="ode">
+      <!--<max_contacts>32</max_contacts>-->
+      <ode>
+        <constraints>
+          <!-- Simulator.cpp -->
+          <erp>0.5</erp> 
+          <cfm>10e-6</cfm>
+        </constraints>
+      </ode>
+    </physics>
+
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://tol_ground</uri>
+    </include>
+
+    <plugin name="tol-control" filename="libtolworldcontrol.so" />
+  </world>
+</sdf>

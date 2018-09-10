@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+    <world name="default">
+    <scene>
+        <origin_visual>0</origin_visual>
+        <grid>0</grid>
+    </scene>
+    <gui />
+    <physics type="ode">
+      <!--<max_contacts>32</max_contacts>-->
+      <real_time_factor>1.0</real_time_factor>
+      <max_step_size>0.001</max_step_size>
+      <ode>
+        <constraints>
+          <!-- Simulator.cpp -->
+            <cfm>10e-6</cfm>
+            <erp>0.1</erp>
+        </constraints>
+      </ode>
+    </physics>
+
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <include>
+      <uri>model://tol_ground</uri>
+    </include>
+
+    <plugin name="tol-control" filename="libtolworldcontrol.so" />
+  </world>
+</sdf>

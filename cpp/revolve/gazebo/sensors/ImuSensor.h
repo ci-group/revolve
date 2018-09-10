@@ -21,42 +21,51 @@
 #ifndef REVOLVE_GAZEBO_SENSORS_IMUSENSOR_H_
 #define REVOLVE_GAZEBO_SENSORS_IMUSENSOR_H_
 
+#include <string>
+
 #include "Sensor.h"
 
-namespace revolve {
-namespace gazebo {
+namespace revolve
+{
+  namespace gazebo
+  {
+    class ImuSensor
+            : public Sensor
+    {
+      public:
+      ImuSensor(
+              ::gazebo::physics::ModelPtr model,
+              sdf::ElementPtr sensor,
+              std::string partId,
+              std::string sensorId);
 
-class ImuSensor: public Sensor {
-public:
-	ImuSensor(::gazebo::physics::ModelPtr model, sdf::ElementPtr sensor,
-			std::string partId, std::string sensorId);
-	virtual ~ImuSensor();
+      virtual ~ImuSensor();
 
-	/**
-	 * Read the value of this IMU sensor into the
-	 * input array.
-	 */
-	virtual void read(double * input);
+      /**
+       * Read the value of this IMU sensor into the
+       * input array.
+       */
+      virtual void read(double *input);
 
-	/**
-	 * Called when the IMU sensor is updated
-	 */
-	void OnUpdate();
-private:
-	/**
-	 * Sensor dynamically casted to correct type,
-	 * so it needs to happen only once.
-	 */
-	::gazebo::sensors::ImuSensorPtr castSensor_;
+      /**
+       * Called when the IMU sensor is updated
+       */
+      void OnUpdate();
 
-	// Pointer to the update connection
-	::gazebo::event::ConnectionPtr updateConnection_;
+      private:
+      /**
+       * Sensor dynamically casted to correct type,
+       * so it needs to happen only once.
+       */
+      ::gazebo::sensors::ImuSensorPtr castSensor_;
 
-	// Last read sensor values
-	double lastValues_[6];
-};
+      // Pointer to the update connection
+      ::gazebo::event::ConnectionPtr updateConnection_;
 
-} /* namespace gazebo */
+      // Last read sensor values
+      double lastValues_[6];
+    };
+  } /* namespace gazebo */
 } /* namespace revolve */
 
-#endif /* REVOLVE_GAZEBO_SENSORS_IMUSENSOR_H_ */
+#endif  // REVOLVE_GAZEBO_SENSORS_IMUSENSOR_H_
