@@ -139,15 +139,17 @@ class Supervisor(object):
 
         # Wait for the end
         ret = 0
-        for proc_name in self.procs:
-            ret = self.procs[proc_name].wait()
-            if ret == 0:
-                sys.stdout.write("Program {} exited normally\n".format(proc_name))
-                ret = 255
-            else:
-                sys.stderr.write("Program {} exited with code {}\n".format(proc_name, ret))
+        while True:
+            for proc_name in self.procs:
+                self._pass_through_stdout()
+                ret = self.procs[proc_name].poll()
+                if ret is not None:
+                    if ret == 0:
+                        sys.stdout.write("Program {} exited normally\n".format(proc_name))
+                    else:
+                        sys.stderr.write("Program {} exited with code {}\n".format(proc_name, ret))
 
-        return ret
+                    return ret
 
     def launch(self):
         """
@@ -162,33 +164,23 @@ class Supervisor(object):
         success = False
         while not success:
             print("Launching all processes...")
-            self._launch_analyzer()
+            # self._launch_analyzer()
             self._launch_gazebo()
             self._launch_manager()
 
+            ret = 0
             while not success:
-                # Write out all received stdout
-                self._pass_through_stdout()
-                manager_code = self.procs['manager'].poll()
-                success = (manager_code == 0)
-                unrecoverable = (manager_code == 23)
+                for proc_name in self.procs:
+                    # Write out all received stdout
+                    self._pass_through_stdout()
+                    ret = self.procs[proc_name].poll()
+                    if ret is not None:
+                        if ret == 0:
+                            sys.stdout.write("Program '{}' exited normally\n".format(proc_name))
+                        else:
+                            sys.stderr.write("Program '{}' exited with code {}\n".format(proc_name, ret))
 
-                if manager_code and unrecoverable:
-                    print("Manager has exited with unrecoverable status code, terminating.", file=sys.stderr)
-                    self._terminate_all()
-                    sys.exit(1)
-
-                if manager_code and not success:
-                    print("Manager has exited with status code %d, restarting experiment..." % int(manager_code))
-                    break
-
-                if 'analyzer' in self.procs and self.procs['analyzer'].poll() is not None:
-                    print("Analyzer has exited, restarting experiment...")
-                    break
-
-                if 'gazebo' in self.procs and self.procs['gazebo'].poll() is not None:
-                    print("Gazebo has exited, restarting experiment...")
-                    break
+                        return ret
 
                 # We could do this a lot less often, but this way we get
                 # output once every second.
@@ -251,6 +243,10 @@ class Supervisor(object):
             if proc.poll() is None:
                 terminate_process(proc)
 
+        # flush output of all processes
+        #TODO fix this better
+        self._pass_through_stdout()
+
         self.procs = {}
 
     def _add_output_stream(self, name):
@@ -261,7 +257,8 @@ class Supervisor(object):
         :param name:
         :return:
         """
-        self.streams[name] = (NBSR(self.procs[name].stdout), NBSR(self.procs[name].stderr))
+        self.streams[name] = (NBSR(self.procs[name].stdout),
+                              NBSR(self.procs[name].stderr))
 
     def _launch_analyzer(self, ready_str="Body analyzer ready"):
         """
