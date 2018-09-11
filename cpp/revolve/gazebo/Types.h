@@ -46,6 +46,12 @@ namespace revolve
     typedef boost::shared_ptr< MotorFactory > MotorFactoryPtr;
 
     typedef boost::shared_ptr< SensorFactory > SensorFactoryPtr;
+
+    typedef std::vector< double > Spline;
+
+    typedef std::vector< Spline > Policy;
+
+    typedef std::shared_ptr< Policy > PolicyPtr;
   }
 }
 
