@@ -1,8 +1,11 @@
 # CMake Required Version
 cmake_minimum_required (VERSION 2.8.12)
 
-# Project Name
+# Project name
 project (Revolve)
+
+# Initial setups
+# _____________________________________________________________________________
 
 # CMake flag to help local projects find the build dir
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
@@ -17,7 +20,6 @@ file(
    DESTINATION ${HEADER_COPY_DIR}
    FILES_MATCHING PATTERN "*.h"
 )
-
 message("Using local build directory.")
 
 # Pass source dir to preprocessor
@@ -39,6 +41,23 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
 # Release flags
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -funroll-loops -finline-functions -fomit-frame-pointer -DNDEBUG")
 
+# MacOS X needed variables
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  # adaptable according to individual needs
+  set(CMAKE_MACOSX_RPATH ON)
+  #    set(CMAKE_SKIP_BUILD_RPATH FALSE)
+  #    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+  #    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  #    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif ()
+
+# Finding dependencies
+# _____________________________________________________________________________
+
+# Find Boost and add to include dirs
+find_package(Boost REQUIRED COMPONENTS system)
+include_directories(${Boost_INCLUDE_DIRS})
+
 # Find and include Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
@@ -50,6 +69,7 @@ else()
     find_package(gazebo 6.5 REQUIRED)
 endif()
 include_directories(${GAZEBO_INCLUDE_DIRS})
+#include_directories(${GAZEBO_PROTO_INCLUDE})
 
 #### Protobuf ####
 # This part is currently a mess, but it works for what I need it to
@@ -67,7 +87,9 @@ foreach(ITR ${GAZEBO_INCLUDE_DIRS})
     set(GAZEBO_PROTO_INCLUDE "${ITR}/gazebo/msgs")
   endif()
 endforeach()
-include_directories(${CMAKE_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS} ${GAZEBO_PROTO_INCLUDE})
+include_directories(${CMAKE_SOURCE_DIR}
+                    ${PROTOBUF_INCLUDE_DIRS}
+                    ${GAZEBO_PROTO_INCLUDE})
 
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
@@ -121,19 +143,10 @@ endforeach()
 # Tell the compiler these files were generated
 set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES GENERATED TRUE)
 
-# Generate spec library with the messages
-add_library(revolve-spec STATIC ${PROTO_SRCS})
-set_target_properties(revolve-spec PROPERTIES LINKER_LANGUAGE CXX)
-target_link_libraries(revolve-spec ${PROTOBUF_LIBRARIES})
+# Source subdirectories
+# _____________________________________________________________________________
 
-#### Other sources #######
-# Find Boost and add to include dirs
-find_package(Boost REQUIRED COMPONENTS system)
-include_directories(${Boost_INCLUDE_DIRS})
-
-# Gazebo control plugins
-
-# Plugin CPP files
+# Plugin C++ files
 file(GLOB_RECURSE
 	 REVOLVE_GZ_SRC
 	 revolve/gazebo/brain/*.cpp
@@ -144,22 +157,79 @@ file(GLOB_RECURSE
 	 revolve/gazebo/plugin/WorldController.cpp
 )
 
+# Generate
+# _____________________________________________________________________________
+# Add the file that registers the body analyzer as a separate library that
+# can be used as a world plugin directly.
 # Create the library containing the Revolve API
-add_library(revolve-gazebo ${REVOLVE_GZ_SRC})
-target_link_libraries(revolve-gazebo ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+
+# Generate spec library with the messages
+add_library(
+        revolve-spec STATIC
+        ${PROTO_SRCS}
+)
+set_target_properties(revolve-spec PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(
+        revolve-spec
+        ${PROTOBUF_LIBRARIES}
+)
+
+# Create Rebolve bundle plugin
+add_library(
+        revolve-gazebo
+        ${REVOLVE_GZ_SRC}
+)
+target_link_libraries(
+        revolve-gazebo
+        ${GAZEBO_LIBRARIES}
+        ${Boost_LIBRARIES}
+)
 
 # Create World plugin
-add_library(revolveworldcontrol SHARED revolve/gazebo/plugin/register_world_plugin.cpp)
-target_link_libraries(revolveworldcontrol revolve-gazebo revolve-spec)
+add_library(
+        revolveworldcontrol SHARED
+        revolve/gazebo/plugin/register_world_plugin.cpp
+)
+target_link_libraries(
+        revolveworldcontrol
+        revolve-gazebo
+        revolve-spec
+)
+
+# Create World plugin
+add_library(
+        tolrobotcontrol SHARED
+        revolve/gazebo/plugin/WorldController.cpp
+)
+target_link_libraries(
+        tolrobotcontrol
+        revolve-gazebo
+        revolve-spec
+        ${GAZEBO_LIBRARIES}
+)
 
 # Add the file that registers the body analyzer as a separate library that
 # can be used as a world plugin directly.
-add_library(revolve-body-analyzer SHARED revolve/gazebo/plugin/register_analyzer.cpp)
-target_link_libraries(revolve-body-analyzer revolve-gazebo revolve-spec ${GAZEBO_LIBRARIES})
+add_library(
+        revolve-body-analyzer SHARED
+        revolve/gazebo/plugin/register_analyzer.cpp
+)
+target_link_libraries(
+        revolve-body-analyzer
+        revolve-gazebo
+        revolve-spec
+        ${GAZEBO_LIBRARIES}
+)
 
 # Add the analyzer server standalone
-add_executable(body-analyzer revolve/gazebo/standalone/body_analyzer_server.cpp)
-target_link_libraries(body-analyzer revolve-body-analyzer ${GAZEBO_LIBRARIES} ${Boost_LIBRARIES})
+add_executable(body-analyzer
+               revolve/gazebo/standalone/body_analyzer_server.cpp)
+target_link_libraries(
+        body-analyzer
+        revolve-body-analyzer
+        ${GAZEBO_LIBRARIES}
+        ${Boost_LIBRARIES}
+)
 
 # Install libraries into "lib", header files into "include"
 install(
