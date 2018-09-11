@@ -37,6 +37,8 @@ namespace revolve
 
     class SensorFactory;
 
+    class Evaluator;
+
     typedef boost::shared_ptr< Brain > BrainPtr;
 
     typedef boost::shared_ptr< Motor > MotorPtr;
@@ -46,6 +48,8 @@ namespace revolve
     typedef boost::shared_ptr< MotorFactory > MotorFactoryPtr;
 
     typedef boost::shared_ptr< SensorFactory > SensorFactoryPtr;
+
+    typedef boost::shared_ptr< Evaluator > EvaluatorPtr;
 
     typedef std::vector< double > Spline;
 
