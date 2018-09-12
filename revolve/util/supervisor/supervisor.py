@@ -138,7 +138,6 @@ class Supervisor(object):
         self._launch_gazebo()
 
         # Wait for the end
-        ret = 0
         while True:
             for proc_name in self.procs:
                 self._pass_through_stdout()
@@ -161,35 +160,30 @@ class Supervisor(object):
         if not os.path.exists(self.snapshot_directory):
             os.mkdir(self.snapshot_directory)
 
-        success = False
-        while not success:
-            print("Launching all processes...")
-            # self._launch_analyzer()
-            self._launch_gazebo()
-            self._launch_manager()
+        print("Launching all processes...")
+        # self._launch_analyzer()
+        self._launch_gazebo()
+        self._launch_manager()
 
-            ret = 0
-            while not success:
-                for proc_name in self.procs:
-                    # Write out all received stdout
-                    self._pass_through_stdout()
-                    ret = self.procs[proc_name].poll()
-                    if ret is not None:
-                        if ret == 0:
-                            sys.stdout.write("Program '{}' exited normally\n".format(proc_name))
-                        else:
-                            sys.stderr.write("Program '{}' exited with code {}\n".format(proc_name, ret))
+        while True:
+            for proc_name in self.procs:
+                # Write out all received stdout
+                self._pass_through_stdout()
 
-                        return ret
+                ret = self.procs[proc_name].poll()
+                if ret is not None:
+                    if ret == 0:
+                        sys.stdout.write(
+                                "Program '{}' exited normally\n".format(proc_name))
+                    else:
+                        sys.stderr.write(
+                                "Program '{}' exited with code {}\n".format(proc_name, ret))
 
-                # We could do this a lot less often, but this way we get
-                # output once every second.
-                time.sleep(1.0)
+                    return ret
 
-            print("Stop condition reached.")
-            self._terminate_all()
-
-        print("Experiment successful, shutting down.")
+            # We could do this a lot less often, but this way we get
+            # output once every second.
+            time.sleep(1.0)
 
     def _pass_through_stdout(self):
         """
@@ -257,8 +251,8 @@ class Supervisor(object):
         :param name:
         :return:
         """
-        self.streams[name] = (NBSR(self.procs[name].stdout),
-                              NBSR(self.procs[name].stderr))
+        self.streams[name] = (NBSR(self.procs[name].stdout, name),
+                              NBSR(self.procs[name].stderr, name))
 
     def _launch_analyzer(self, ready_str="Body analyzer ready"):
         """
@@ -292,7 +286,8 @@ class Supervisor(object):
         print("Launching experiment manager...")
         args = self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
-        self.procs['manager'] = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.procs['manager'] = subprocess.Popen(args, bufsize=1,
+                                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self._add_output_stream('manager')
 
     @staticmethod
@@ -302,7 +297,8 @@ class Supervisor(object):
         :param ready_str:
         :return:
         """
-        process = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(cmd, bufsize=1, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
 
         # make out and err non-blocking pipes
         if not mswindows:
@@ -322,14 +318,14 @@ class Supervisor(object):
                 # flush out all stdout and stderr
                 out, err = process.communicate()
                 if out is not None:
-                    sys.stdout.write(out)
+                    sys.stdout.write("[gazebo-launch] {}".format(out))
                 if err is not None:
-                    sys.stderr.write(err)
+                    sys.stderr.write("[gazebo-launch] {}".format(err))
                 raise RuntimeError("Error launching launch {}, exit with code {}".format(cmd, exit_code))
 
             try:
                 out = process.stdout.readline()
-                sys.stdout.write(out)
+                sys.stdout.write("[gazebo-launch] {}".format(out))
                 if ready_str in out:
                     ready = True
             except IOError:
@@ -338,7 +334,7 @@ class Supervisor(object):
             if not mswindows:
                 try:
                     err = process.stderr.readline()
-                    sys.stderr.write(err)
+                    sys.stderr.write("[gazebo-launch] {}".format(err))
                 except IOError:
                     pass
 

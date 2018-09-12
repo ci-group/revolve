@@ -9,7 +9,7 @@ from Queue import Queue, Empty
 
 
 class NonBlockingStreamReader:
-    def __init__(self, stream):
+    def __init__(self, stream, prefix=None):
         """
         stream: the stream to read from.
                 Usually a process' stdout or stderr.
@@ -17,6 +17,7 @@ class NonBlockingStreamReader:
 
         self._s = stream
         self._q = Queue()
+        self._prefix = prefix
 
         def _populate_queue(stream, queue):
             """
@@ -41,7 +42,12 @@ class NonBlockingStreamReader:
 
     def readline(self, timeout=None):
         try:
-            return self._q.get(block=timeout is not None,
+            line = self._q.get(block=timeout is not None,
                                timeout=timeout)
+            if self._prefix:
+                return "[{}] {}".format(self._prefix, line)
+            else:
+                return line
+
         except Empty:
             return None
