@@ -45,7 +45,7 @@ class LightSensor(Box, ColorMixin):
                       "<image>" \
                       "<width>1</width><height>1</height>" \
                       "</image>" \
-                      "<clip><near>{}</near><far>%s</far></clip>" \
+                      "<clip><near>{}</near><far>{}</far></clip>" \
                       "</camera>".format(nf(in_mm(1)), nf(in_mm(50000)))
         camera.add_element(cam_details)
         camera.set_position(Vector3(0.5 * self.x, 0, 0))

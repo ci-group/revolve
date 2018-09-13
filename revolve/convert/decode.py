@@ -74,7 +74,7 @@ class BodyDecoder(object):
                     "{}.".format(src, part_id, spec.arity))
 
             if src == dst_slot:
-                err("Part '{}': Attempt to use slot %d for child which is "
+                err("Part '{}': Attempt to use slot {} for child which is "
                     "already attached to parent.".format(part_id, src))
             self._process_body_connection(part, src, children[src])
 

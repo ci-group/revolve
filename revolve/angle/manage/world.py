@@ -30,8 +30,6 @@ class WorldManager(manage.WorldManager):
 
     def __init__(
             self,
-            builder,
-            generator,
             world_address=None,
             analyzer_address=None,
             output_directory=None,
@@ -72,8 +70,6 @@ class WorldManager(manage.WorldManager):
         self.world_snapshot_filename = None
 
         self.state_update_frequency = state_update_frequency
-        self.builder = builder
-        self.generator = generator
 
         self.robots = {}
         self.robot_id = 0
@@ -88,14 +84,16 @@ class WorldManager(manage.WorldManager):
 
         if output_directory:
             if not restore:
-                restore = datetime.now().strftime(datetime.now().strftime('%Y%m%d%H%M%S'))
+                restore = datetime.now()\
+                    .strftime(datetime.now().strftime('%Y%m%d%H%M%S'))
 
             self.output_directory = os.path.join(output_directory, restore)
 
             if not os.path.exists(self.output_directory):
                 os.mkdir(self.output_directory)
 
-            self.snapshot_filename = os.path.join(self.output_directory, 'snapshot.pickle')
+            self.snapshot_filename = \
+                os.path.join(self.output_directory, 'snapshot.pickle')
             if os.path.exists(self.snapshot_filename):
                 # Snapshot exists - restore from it
                 with open(self.snapshot_filename, 'rb') as snapshot_file:
@@ -107,14 +105,18 @@ class WorldManager(manage.WorldManager):
                               "Exception: {}.".format(str(e)))
                         sys.exit(23)
 
-            self.world_snapshot_filename = os.path.join(self.output_directory, 'snapshot.world')
+            self.world_snapshot_filename = \
+                os.path.join(self.output_directory, 'snapshot.world')
 
-            self.robots_filename = os.path.join(self.output_directory, 'robots.csv')
-            self.poses_filename = os.path.join(self.output_directory, 'poses.csv')
+            self.robots_filename = \
+                os.path.join(self.output_directory, 'robots.csv')
+            self.poses_filename = \
+                os.path.join(self.output_directory, 'poses.csv')
 
             if self.do_restore:
                 # Copy snapshot files and open created files in append mode
-                # TODO Delete robot sdf / pb files that were created after the snapshot
+                # TODO: Delete robot sdf / pb files that were created after
+                # the snapshot
                 shutil.copy(self.poses_filename+'.snapshot', self.poses_filename)
                 shutil.copy(self.robots_filename+'.snapshot', self.robots_filename)
 
@@ -156,8 +158,6 @@ class WorldManager(manage.WorldManager):
     @trollius.coroutine
     def create(
             cls,
-            builder,
-            generator,
             world_address=("127.0.0.1", 11345),
             analyzer_address=("127.0.0.1", 11346),
             pose_update_frequency=10
@@ -171,8 +171,6 @@ class WorldManager(manage.WorldManager):
         """
         self = cls(
                 _private=cls._PRIVATE,
-                builder=builder,
-                generator=generator,
                 world_address=world_address,
                 analyzer_address=analyzer_address,
                 state_update_frequency=pose_update_frequency
@@ -579,7 +577,7 @@ class WorldManager(manage.WorldManager):
         :type robot: Robot
         :return:
         """
-        logger.debug("Unregistering robot %s.".format(robot.name))
+        logger.debug("Unregistering robot {}.".format(robot.name))
         del self.robots[robot.name]
 
     @trollius.coroutine

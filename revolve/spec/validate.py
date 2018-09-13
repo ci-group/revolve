@@ -171,7 +171,7 @@ class NeuralNetValidator(Validator):
         if neuron.id in self.expected_neurons:
             layer = self.expected_neurons[neuron.id]
             if layer != neuron.layer:
-                err("Neuron '%s' should be in layer '{}' instead of '{}'"
+                err("Neuron '{}' should be in layer '{}' instead of '{}'"
                     .format(neuron.id, layer, neuron.layer))
 
             if not neuron.HasField("partId"):
@@ -203,7 +203,7 @@ class NeuralNetValidator(Validator):
         :return:
         """
         if conn.src not in self.neurons:
-            err("Unknown source neuron '%s'.".format(conn.src))
+            err("Unknown source neuron '{}'.".format(conn.src))
 
         if conn.dst not in self.neurons:
             err("Unknown destination neuron '{}'.".format(conn.dat))

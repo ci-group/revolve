@@ -24,7 +24,12 @@ class WorldManager(object):
     # Object used to make constructor private
     _PRIVATE = object()
 
-    def __init__(self, _private=None, world_address=None, analyzer_address=None):
+    def __init__(
+            self,
+            _private=None,
+            world_address=None,
+            analyzer_address=None
+    ):
         """
 
         :param _private:
@@ -45,14 +50,22 @@ class WorldManager(object):
 
     @classmethod
     @trollius.coroutine
-    def create(cls, world_address=("127.0.0.1", 11345), analyzer_address=("127.0.0.1", 11346)):
+    def create(
+            cls,
+            world_address=("127.0.0.1", 11345),
+            analyzer_address=("127.0.0.1", 11346)
+    ):
         """
 
         :param analyzer_address:
         :param world_address:
         :return:
         """
-        self = cls(_private=cls._PRIVATE, world_address=world_address, analyzer_address=analyzer_address)
+        self = cls(
+                _private=cls._PRIVATE,
+                world_address=world_address,
+                analyzer_address=analyzer_address
+        )
         yield From(self._init())
         raise Return(self)
 
