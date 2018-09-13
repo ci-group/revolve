@@ -76,7 +76,7 @@ class BodyEncoder:
                 conn_src = connection.src
 
                 if conn_src >= spec.arity:
-                    err("Cannot attach to slot %d of part '{}' with arity "
+                    err("Cannot attach to slot {} of part '{}' with arity "
                         "{}.".format(conn_src, part_id, spec.arity))
 
                 if conn_src == dst_slot:

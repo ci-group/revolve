@@ -30,6 +30,8 @@ class WorldManager(manage.WorldManager):
 
     def __init__(
             self,
+            builder,
+            generator,
             world_address=None,
             analyzer_address=None,
             output_directory=None,
@@ -70,6 +72,8 @@ class WorldManager(manage.WorldManager):
         self.world_snapshot_filename = None
 
         self.state_update_frequency = state_update_frequency
+        self.builder = builder
+        self.generator = generator
 
         self.robots = {}
         self.robot_id = 0
