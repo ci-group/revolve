@@ -142,23 +142,62 @@ def default_neural_net(epsilon=0.05):
         ),
         "Sigmoid": NeuronSpec(
             params=[
-                ParamSpec("bias", min_value=-1, max_value=1, default=0, epsilon=epsilon),
-                ParamSpec("gain", min_value=0, max_value=1, default=.5, epsilon=epsilon)
+                ParamSpec(
+                        "bias",
+                        min_value=-1,
+                        max_value=1,
+                        default=0,
+                        epsilon=epsilon
+                ),
+                ParamSpec(
+                        "gain",
+                        min_value=0,
+                        max_value=1,
+                        default=.5,
+                        epsilon=epsilon
+                )
             ],
             layers=["output", "hidden"]
         ),
         "Simple": NeuronSpec(
             params=[
-                ParamSpec("bias", min_value=-1, max_value=1, epsilon=epsilon),
-                ParamSpec("gain", min_value=0, max_value=1, default=.5, epsilon=epsilon)
+                ParamSpec(
+                        "bias",
+                        min_value=-1,
+                        max_value=1,
+                        epsilon=epsilon
+                ),
+                ParamSpec(
+                        "gain",
+                        min_value=0,
+                        max_value=1,
+                        default=.5,
+                        epsilon=epsilon
+                )
             ],
             layers=["output", "hidden"]
         ),
         "Oscillator": NeuronSpec(
             params=[
-                ParamSpec("period", min_value=0, max_value=10, epsilon=epsilon),
-                ParamSpec("phase_offset", min_value=0, max_value=3.14, epsilon=epsilon),
-                ParamSpec("amplitude", min_value=0, default=1, max_value=2, epsilon=epsilon)
+                ParamSpec(
+                        "period",
+                        min_value=0,
+                        max_value=10,
+                        epsilon=epsilon
+                ),
+                ParamSpec(
+                        "phase_offset",
+                        min_value=0,
+                        max_value=3.14,
+                        epsilon=epsilon
+                ),
+                ParamSpec(
+                        "amplitude",
+                        min_value=0,
+                        default=1,
+                        max_value=2,
+                        epsilon=epsilon
+                )
             ],
             layers=["output", "hidden"]
         )
@@ -169,8 +208,16 @@ class ParamSpec(object):
     """
     Parameter specification class
     """
-    def __init__(self, name, default=0.0, min_value=None, max_value=None,
-                 min_inclusive=True, max_inclusive=True, epsilon=0.0):
+    def __init__(
+            self,
+            name,
+            default=0.0,
+            min_value=None,
+            max_value=None,
+            min_inclusive=True,
+            max_inclusive=True,
+            epsilon=0.0
+    ):
         """
         :param default:
         :param min_value:
@@ -185,8 +232,10 @@ class ParamSpec(object):
         self.min = min_value
         self.max = max_value
 
-        if self.min is not None and self.max is not None and self.min > self.max:
-            raise ValueError("Parameter min value is larger than parameter max value.")
+        if self.min is not None \
+                and self.max is not None \
+                and self.min > self.max:
+            raise ValueError("Parameter min value is larger than max value.")
 
         self.min_inclusive = min_inclusive
         self.max_inclusive = max_inclusive
@@ -203,22 +252,26 @@ class ParamSpec(object):
         """
         min_valid = max_valid = True
         if self.min is not None:
-            min_valid = value >= self.min and (self.min_inclusive or value > self.min)
+            min_valid = value >= self.min \
+                        and (self.min_inclusive or value > self.min)
 
         if self.max is not None:
-            max_valid = value <= self.max and (self.max_inclusive or value < self.max)
+            max_valid = value <= self.max \
+                        and (self.max_inclusive or value < self.max)
 
         return min_valid and max_valid
 
     def get_random_value(self, epsilon=1e-9):
         """
-        Returns a random value according to this parameter spec. By default, this
-        returns a uniformly distributed value between the minimum and the maximum
-        value. If no minimum or maximum are supplied, the default value is returned.
+        Returns a random value according to this parameter spec. By default,
+        this returns a uniformly distributed value between the minimum and
+        the maximum value. If no minimum or maximum are supplied, the default
+        value is returned.
 
-        The uniform distribution has a small chance of generating a boundary value,
-        if this happens while the boundary should not be included, the given epsilon
-        value is added or subtracted to get the value within range.
+        The uniform distribution has a small chance of generating a boundary
+        value, if this happens while the boundary should not be included,
+        the given epsilon value is added or subtracted to get the value
+        within range.
 
         :param epsilon: See method description.
         :type epsilon: float
@@ -268,8 +321,8 @@ class Parameterizable(object):
 
     def __init__(self, params=None):
         """
-        :param params: List of named params for this part, in the order in which they
-                       will be serialized.
+        :param params: List of named params for this part, in the order in
+        which they will be serialized.
         :type params: list
         """
         if params is None:
@@ -283,7 +336,8 @@ class Parameterizable(object):
                 params[i] = ParamSpec(params[i])
 
             if params[i].name in self.RESERVED:
-                err("'%s' is a reserved parameter and cannot be used as a name." % params[i].name)
+                err("'{}' is a reserved parameter and cannot be used as a name."
+                    .format(params[i].name))
 
         # Store tuple array index, spec
         self.parameters = {params[i].name: (i, params[i]) for i in range(l)}
@@ -321,7 +375,9 @@ class Parameterizable(object):
         """
         ret = [0] * self.n_parameters
         for k in self.parameters:
-            ret[self.parameters[k][0]] = params.get(k, self.parameters[k][1].default)
+            ret[self.parameters[k][0]] = params.get(
+                    k,
+                    self.parameters[k][1].default)
 
         return ret
 
@@ -355,8 +411,8 @@ class Parameterizable(object):
 
     def get_random_parameters(self, serialize=False):
         """
-        Initializes all parameters with their `get_random_value()` method
-        and returns the dictionary representing that.
+        Initializes all parameters with their `get_random_value()` method and
+        returns the dictionary representing that.
         :param serialize:
         :type serialize: bool
         :return:
@@ -370,8 +426,8 @@ class Parameterizable(object):
 
     def get_epsilon_mutated_parameters(self, params, serialize=False):
         """
-        Mutates the given parameters by generating a new set of
-        values and modifying them according to their epsilon value.
+        Mutates the given parameters by generating a new set of values and
+        modifying them according to their epsilon value.
         :param params:
         :param serialize:
         :return: Mutated parameters

@@ -78,7 +78,8 @@ class Tree(object):
         neuron_map = {}
         for neuron in brain.neuron:
             if not neuron.HasField("partId"):
-                raise Exception("Neuron %s not associated with any part." % neuron.id)
+                raise Exception("Neuron {} not associated with any "
+                                "part.".format(neuron.id))
 
             neuron_map[neuron.id] = neuron
 
@@ -95,7 +96,11 @@ class Tree(object):
             dst_neuron = neuron_map[conn.dst]
             src_node = tree.get_node(src_neuron.partId)
             dst_node = tree.get_node(dst_neuron.partId)
-            src_node.add_neural_connection(src_neuron, dst_neuron, dst_node, conn.weight)
+            src_node.add_neural_connection(
+                    src=src_neuron,
+                    dst=dst_neuron,
+                    dst_part=dst_node,
+                    weight=conn.weight)
 
         return tree
 
@@ -308,7 +313,14 @@ class Node(object):
         self.connections = old_conn
         return result
 
-    def set_connection(self, from_slot, to_slot, node, parent=True, bidirectional=True):
+    def set_connection(
+            self,
+            from_slot,
+            to_slot,
+            node,
+            parent=True,
+            bidirectional=True
+    ):
         """
         Adds a bidirectional node body connection, removing any connection
         that was currently there.
@@ -453,7 +465,7 @@ class Node(object):
         has been generated.
         """
         t = {"input": "in", "output": "out", "hidden": "hidden"}[neuron_layer]
-        return "%s-%s-%d" % (self.id, t, offset)
+        return "{}-{}-{}".format(self.id, t, offset)
 
     def get_neuron_offset(self, neuron):
         """
@@ -499,8 +511,8 @@ class Node(object):
             dst_id = target.get_neuron_id(dst_layer, dst_idx)
 
             # Ignore duplicates
-            # Duplicates could happen because paths aren't unique - it's possible to
-            # go back and forth between two nodes.
+            # Duplicates could happen because paths aren't unique - it's
+            # possible to go back and forth between two nodes.
             pair = (src_id, dst_id)
             if pair in taken:
                 continue

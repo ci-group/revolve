@@ -52,4 +52,6 @@ def make_planar(node, current_orientation=0):
         node.part.orientation = (360 - current_orientation) % 360
 
     for conn in node.child_connections():
-        make_planar(conn.node, (current_orientation + node.part.orientation) % 360)
+        make_planar(
+                conn.node,
+                (current_orientation + node.part.orientation) % 360)

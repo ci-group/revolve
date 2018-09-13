@@ -36,26 +36,26 @@ class BodyValidator(Validator):
         :return:
         """
         if part.id in self.part_slots:
-            err("Duplicate part ID '%s'" % part.id)
+            err("Duplicate part ID '{}'".format(part.id))
 
         self.part_slots[part.id] = set()
 
         spec = self.spec.get(part.type)
         if spec is None:
-            err("Unregistered part type '%s'" % part.type)
+            err("Unregistered part type '{}'".format(part.type))
 
         if dst_slot is not None:
             if dst_slot < 0 or dst_slot >= spec.arity:
-                err("Part '%s' of type '%s' does not have destination slot %d" %
-                    (part.id, part.type, dst_slot))
+                err("Part '{}' of type '{}' does not have destination slot {}"
+                    .format(part.id, part.type, dst_slot))
 
             # At this point there are no connections to this
             # part yet, so we need only add the slot.
             self.part_slots[part.id].add(dst_slot)
 
         if len(part.param) != spec.n_parameters:
-            err("Expecting %d parameters for part '%s', got %d." %
-                (spec.n_parameters, part.id, len(part.param)))
+            err("Expecting {} parameters for part '{}', got {}."
+                .format(spec.n_parameters, part.id, len(part.param)))
 
         if not spec.params_validate(part.param):
             err("Invalid parameter length or ranges.")
@@ -74,13 +74,13 @@ class BodyValidator(Validator):
         :return:
         """
         if conn.src < 0 or conn.src >= spec.arity:
-            err("Part '%s' of type '%s' does not have source slot %d" %
-                (parent.id, parent.type, conn.src))
+            err("Part '{}' of type '{}' does not have source slot {}"
+                .format(parent.id, parent.type, conn.src))
 
         slots = self.part_slots[parent.id]
         if conn.src in slots:
-            err("Trying to attach to already occupied slot %d of part '%s'"
-                % (conn.src, parent.id))
+            err("Trying to attach to already occupied slot {} of part '{}'"
+                .format(conn.src, parent.id))
 
         slots.add(conn.src)
         self._process_body_part(conn.part, conn.dst)
@@ -135,7 +135,8 @@ class NeuralNetValidator(Validator):
 
         missing_neurons = self.expected_neurons.keys()
         if len(missing_neurons):
-            err("Missing expected neurons: %s" % ', '.join(missing_neurons))
+            err("Missing expected neurons: {}"
+                .format(', '.join(missing_neurons)))
 
     def _process_body_part(self, part):
         """
@@ -152,8 +153,8 @@ class NeuralNetValidator(Validator):
         cats = {"in": spec.inputs, "out": spec.outputs}
         for cat in cats:
             for i in range(cats[cat]):
-                neuron_id = "%s-%s-%d" % (part.id, cat, i)
-                self.expected_neurons[neuron_id] = "%sput" % cat
+                neuron_id = "{}-{}-{}".format(part.id, cat, i)
+                self.expected_neurons[neuron_id] = "{}put".format(cat)
 
     def _process_neuron(self, neuron):
         """
@@ -162,7 +163,7 @@ class NeuralNetValidator(Validator):
         :return:
         """
         if neuron.id in self.neurons:
-            err("Duplicate neuron ID '%s'" % neuron.id)
+            err("Duplicate neuron ID '{}'".format(neuron.id))
 
         self.neurons[neuron.id] = neuron.layer
         self.neural_connections[neuron.id] = set()
@@ -170,27 +171,30 @@ class NeuralNetValidator(Validator):
         if neuron.id in self.expected_neurons:
             layer = self.expected_neurons[neuron.id]
             if layer != neuron.layer:
-                err("Neuron '%s' should be in layer '%s' instead of '%s'" %
-                    (neuron.id, layer, neuron.layer))
+                err("Neuron '%s' should be in layer '{}' instead of '{}'"
+                    .format(neuron.id, layer, neuron.layer))
 
             if not neuron.HasField("partId"):
-                err("Neuron '%s' in layer '%s' should have a part ID." % (neuron.id, layer))
+                err("Neuron '{}' in layer '{}' should have a part ID."
+                    .format(neuron.id, layer))
 
             if neuron.partId not in self.parts:
-                err("Unknown part ID '%s' for neuron '%s'." % (neuron.partId, neuron.id))
+                err("Unknown part ID '{}' for neuron '{}'."
+                    .format(neuron.partId, neuron.id))
 
             del self.expected_neurons[neuron.id]
 
         spec = self.spec.get(neuron.type)
         if spec is None:
-            err("Unspecified neuron type '%s'." % neuron.type)
+            err("Unspecified neuron type '{}'.".format(neuron.type))
 
         if neuron.layer not in spec.layers:
-            err("Neuron of type '%s' is not allowed to be in layer '%s'." % (neuron.type, neuron.layer))
+            err("Neuron of type '{}' is not allowed to be in layer '{}'."
+                .format(neuron.type, neuron.layer))
 
         if spec.n_parameters != len(neuron.param):
-            err("Expecting %d parameters for neuron '%s', got %d." %
-                (spec.n_parameters, neuron.id, len(neuron.param)))
+            err("Expecting {} parameters for neuron '{}', got {}."
+                .format(spec.n_parameters, neuron.id, len(neuron.param)))
 
     def _process_neural_connection(self, conn):
         """
@@ -199,17 +203,18 @@ class NeuralNetValidator(Validator):
         :return:
         """
         if conn.src not in self.neurons:
-            err("Unknown source neuron '%s'." % conn.src)
+            err("Unknown source neuron '%s'.".format(conn.src))
 
         if conn.dst not in self.neurons:
-            err("Unknown destination neuron '%s'." % conn.dat)
+            err("Unknown destination neuron '{}'.".format(conn.dat))
 
         if self.neurons[conn.dst] == "input":
-            err("Destination neuron '%s' is an input neuron." % conn.dst)
+            err("Destination neuron '{}' is an input neuron.".format(conn.dst))
 
         connections = self.neural_connections[conn.src]
         if conn.dst in connections:
-            err("Duplicate neural connection %s -> %s" % (conn.src, conn.dst))
+            err("Duplicate neural connection {} -> {}"
+                .format(conn.src, conn.dst))
 
         connections.add(conn.dst)
 
@@ -230,7 +235,11 @@ class RobotValidator(Validator):
         :return:
         """
         self.body_validator = BodyValidator(body_spec, robot.body)
-        self.brain_validator = NeuralNetValidator(nn_spec, body_spec, robot.body, robot.brain)
+        self.brain_validator = NeuralNetValidator(
+                spec=nn_spec,
+                body_spec=body_spec,
+                body=robot.body,
+                brain=robot.brain)
 
     def validate(self):
         """

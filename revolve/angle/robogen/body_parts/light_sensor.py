@@ -35,16 +35,18 @@ class LightSensor(Box, ColorMixin):
         super(LightSensor, self)._initialize(**kwargs)
 
         # Add the SDF camera sensor
-        camera = SdfSensor("%s_light_sensor" % self.id, "camera",
-                           update_rate=self.conf.sensor_update_rate)
+        camera = SdfSensor(
+                name="{}_light_sensor".format(self.id),
+                sensor_type="camera",
+                update_rate=self.conf.sensor_update_rate)
 
-        # TODO Set field of view
+        # TODO: Set field of view
         cam_details = "<camera>" \
                       "<image>" \
                       "<width>1</width><height>1</height>" \
                       "</image>" \
-                      "<clip><near>%s</near><far>%s</far></clip>" \
-                      "</camera>" % (nf(in_mm(1)), nf(in_mm(50000)))
+                      "<clip><near>{}</near><far>%s</far></clip>" \
+                      "</camera>".format(nf(in_mm(1)), nf(in_mm(50000)))
         camera.add_element(cam_details)
         camera.set_position(Vector3(0.5 * self.x, 0, 0))
         self.component.add_sensor(camera, "light")

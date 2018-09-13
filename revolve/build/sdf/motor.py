@@ -53,7 +53,7 @@ class Motor(Element):
         attrs.update({
             'type': self.type if self.type is not None else self.MOTOR_TYPE,
             'part_id': self.part_id,
-            'id': '%s__%s' % (self.part_id, self.motor_id)
+            'id': '{}__{}'.format(self.part_id, self.motor_id)
         })
 
         if self.joint is not None:

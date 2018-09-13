@@ -41,7 +41,7 @@ class BodyEncoder:
 
         # check for duplicate part ids:
         if part_id in self.unique_ids:
-            err("Duplicate part ID '%s'" % part_id)
+            err("Duplicate part ID '{}'".format(part_id))
         self.unique_ids.add(part_id)
 
         if len(part_id) is 0:
@@ -56,7 +56,7 @@ class BodyEncoder:
 
         # check if part type is in spec:
         if spec is None:
-            err("Part type '%s' not in implementation spec." % part_type)
+            err("Part type '{}' not in implementation spec.".format(part_type))
 
         # Check destination slot arity
         if dst_slot is not None and dst_slot >= spec.arity:
@@ -76,12 +76,12 @@ class BodyEncoder:
                 conn_src = connection.src
 
                 if conn_src >= spec.arity:
-                    err("Cannot attach to slot %d of part '%s' with arity %d." %
-                        (conn_src, part_id, spec.arity))
+                    err("Cannot attach to slot %d of part '%s' with arity "
+                        "{}.".format(conn_src, part_id, spec.arity))
 
                 if conn_src == dst_slot:
-                    err("Part '%s': Attempt to use slot %d for child which is already "
-                        "attached to parent." % (part_id, conn_src))
+                    err("Part '{}': Attempt to use slot {} for child which is "
+                        "already attached to parent.".format(part_id, conn_src))
 
                 self._process_body_connection(connection, yaml_part)
 
@@ -152,11 +152,11 @@ class NeuralNetworkEncoder:
             neuron_part_id = neuron.partId
 
             if neuron_id in self.neurons:
-                err("Duplicate neuron ID '%s'" % neuron_id)
+                err("Duplicate neuron ID '{}'".format(neuron_id))
 
             spec = self.spec.get(neuron_type)
             if spec is None:
-                err("Unknown neuron type '%s'" % neuron_type)
+                err("Unknown neuron type '{}'".format(neuron_type))
             neuron_params = spec.unserialize_params(neuron.param)
 
             self.neurons[neuron_id] = {

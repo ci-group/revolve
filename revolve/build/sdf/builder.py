@@ -63,8 +63,11 @@ class BodyBuilder(AspectBuilder):
             diff = traversed.difference(components)
             if len(diff):
                 diff_list = ", ".join(skipped.name for skipped in diff)
-                raise ComponentException("The following components were defined but not traversed:\n%s\n"
-                                         "Make sure all components are properly fixed or joined." % diff_list)
+                raise ComponentException(
+                        "The following components were defined but not "
+                        "traversed:\n{}\n"
+                        "Make sure all components are properly fixed or "
+                        "joined.".format(diff_list))
 
             # Sensors have been added in _build_body.
             # Adding motors should work just fine as-is since they render
@@ -122,7 +125,9 @@ class BodyBuilder(AspectBuilder):
             # be unique.
             # The position of the link is determined later when we decide
             # its center of mass.
-            link = Link("link_%s" % component.name, self_collide=True)
+            link = Link(
+                    name="link_{}".format(component.name),
+                    self_collide=True)
             child_joints = []
             model.add_element(link)
 
@@ -206,7 +211,7 @@ class BodyBuilder(AspectBuilder):
         """
         spec = self.spec.get(part.type)
         if spec is None:
-            err("Cannot build unknown part type '%s'." % part.type)
+            err("Cannot build unknown part type '{}'.".format(part.type))
 
         body_part_class = spec.body_part
         kwargs = spec.unserialize_params(part.param)
@@ -268,7 +273,8 @@ class NeuralNetBuilder(AspectBuilder):
         for neuron in brain.neuron:
             spec = self.spec.get(neuron.type)
             if spec is None:
-                err("Cannot build unknown neuron type '%s'." % neuron.type)
+                err("Cannot build unknown neuron type '{}'.".format(
+                        neuron.type))
 
             params = spec.unserialize_params(neuron.param)
             plugin.add_element(Neuron(neuron, params))

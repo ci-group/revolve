@@ -45,7 +45,7 @@ class Sensor(Element):
             'link': self.link.name,
             'part_id': self.part_id,
             'type': self.type,
-            'id': '%s__%s' % (self.part_id, self.sensor.name)
+            'id': '{}__{}'.format(self.part_id, self.sensor.name)
         })
 
         # Sensor may be virtual, so have optional Gazebo sensor reference
@@ -144,8 +144,10 @@ class PointIntensitySensor(VirtualSensor):
         """
         elmns = super(PointIntensitySensor, self).render_elements()
         return elmns + [
-            Element(tag_name='rv:point', body='%s %s %s' % tuple(self.point)),
-            Element(tag_name='rv:function', attributes={
+            Element(tag_name='rv:point',
+                    body='{}'.format(tuple(self.point))),
+            Element(tag_name='rv:function',
+                    attributes={
                 'i_max': self.i_max, 'r': self.r
             })
         ]

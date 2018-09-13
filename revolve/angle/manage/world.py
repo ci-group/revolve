@@ -28,13 +28,21 @@ class WorldManager(manage.WorldManager):
     Revolve.Angle, such as inserting whole robot trees etc.
     """
 
-    def __init__(self, builder, generator, world_address=None, analyzer_address=None,
-                 output_directory=None, state_update_frequency=None,
-                 restore=None, _private=None):
+    def __init__(
+            self,
+            builder,
+            generator,
+            world_address=None,
+            analyzer_address=None,
+            output_directory=None,
+            state_update_frequency=None,
+            restore=None,
+            _private=None
+    ):
         """
 
-        :param restore: Restore the world from this directory, if available. Only works
-                         if `output_directory` is also specified.
+        :param restore: Restore the world from this directory, if available.
+                        Only works if `output_directory` is also specified.
         :param state_update_frequency:
         :param generator:
         :param _private:
@@ -44,8 +52,11 @@ class WorldManager(manage.WorldManager):
         :param output_directory:
         :return:
         """
-        super(WorldManager, self).__init__(_private=_private, world_address=world_address,
-                                           analyzer_address=analyzer_address)
+        super(WorldManager, self).__init__(
+                _private=_private,
+                world_address=world_address,
+                analyzer_address=analyzer_address
+        )
 
         self.battery_handler = None
 
@@ -92,7 +103,8 @@ class WorldManager(manage.WorldManager):
                         self.do_restore = pickle.load(snapshot_file)
                     except Exception as e:
                         traceback.print_exc()
-                        print("Cannot restore snapshot, shutting down. Exception: %s." % str(e))
+                        print("Cannot restore snapshot, shutting down. "
+                              "Exception: {}.".format(str(e)))
                         sys.exit(23)
 
             self.world_snapshot_filename = os.path.join(self.output_directory, 'snapshot.world')
@@ -111,12 +123,15 @@ class WorldManager(manage.WorldManager):
                 self.write_robots = csv.writer(self.robots_file, delimiter=',')
                 self.write_poses = csv.writer(self.poses_file, delimiter=',')
             else:
-                # Open poses file, this is written *a lot* so use default OS buffering
-                self.poses_file = open(os.path.join(self.output_directory, 'poses.csv'), 'wb')
+                # Open poses file, this is written *a lot* so use default OS
+                # buffering
+                poses_log = os.path.join(self.output_directory, 'poses.csv')
+                self.poses_file = open(poses_log, 'wb')
 
-                # Open robots file line buffered so we can see it on the fly, isn't written
-                # too often.
-                self.robots_file = open(os.path.join(self.output_directory, 'robots.csv'), 'wb', buffering=1)
+                # Open robots file line buffered so we can see it on the fly,
+                # isn't written too often.
+                robot_log = os.path.join(self.output_directory, 'robots.csv')
+                self.robots_file = open(robot_log, 'wb', buffering=1)
                 self.write_robots = csv.writer(self.robots_file, delimiter=',')
                 self.write_poses = csv.writer(self.poses_file, delimiter=',')
 
@@ -139,8 +154,14 @@ class WorldManager(manage.WorldManager):
 
     @classmethod
     @trollius.coroutine
-    def create(cls, world_address=("127.0.0.1", 11345), analyzer_address=("127.0.0.1", 11346),
-               pose_update_frequency=10):
+    def create(
+            cls,
+            builder,
+            generator,
+            world_address=("127.0.0.1", 11345),
+            analyzer_address=("127.0.0.1", 11346),
+            pose_update_frequency=10
+    ):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager
         :param pose_update_frequency:
@@ -148,9 +169,15 @@ class WorldManager(manage.WorldManager):
         :param analyzer_address:
         :return:
         """
-        self = cls(_private=cls._PRIVATE, world_address=world_address, analyzer_address=analyzer_address,
-                   pose_update_frequency=pose_update_frequency)
-        yield From(self._init())
+        self = cls(
+                _private=cls._PRIVATE,
+                builder=builder,
+                generator=generator,
+                world_address=world_address,
+                analyzer_address=analyzer_address,
+                state_update_frequency=pose_update_frequency
+        )
+        yield From(self._init(builder=None, generator=None))
         raise Return(self)
 
     @trollius.coroutine
@@ -181,7 +208,9 @@ class WorldManager(manage.WorldManager):
             self._update_states
         )
 
-        yield From(wait_for(self.set_state_update_frequency(self.state_update_frequency)))
+        yield From(wait_for(self.set_state_update_frequency(
+                self.state_update_frequency
+        )))
 
         self.battery_handler = yield From(RequestHandler.create(
             self.manager, advertise='/gazebo/default/battery_level/request',
@@ -209,10 +238,12 @@ class WorldManager(manage.WorldManager):
         # Pause the world
         yield From(wait_for(self.pause()))
 
-        # Obtain a copy of the current world SDF from Gazebo and write it to file
+        # Obtain a copy of the current world SDF from Gazebo and write it to
+        # file
         response = yield From(wait_for(self.request_handler.do_gazebo_request("world_sdf")))
         if response.response == "error":
-            logger.warning("WARNING: requesting world state resulted in error. Snapshot failed.")
+            logger.warning("WARNING: requesting world state resulted in "
+                           "error. Snapshot failed.")
             raise Return(False)
 
         msg = gz_string_pb2.GzString()
@@ -223,7 +254,8 @@ class WorldManager(manage.WorldManager):
         # Get the snapshot data and pickle to file
         data = yield From(self.get_snapshot_data())
 
-        # It seems pickling causes some issues with the default recursion limit, up it
+        # It seems pickling causes some issues with the default recursion
+        # limit, up it
         sys.setrecursionlimit(10000)
         with open(self.snapshot_filename, 'wb') as f:
             pickle.dump(data, f, protocol=-1)
@@ -321,7 +353,8 @@ class WorldManager(manage.WorldManager):
             if not coll:
                 raise Return(tree, robot, bbox)
 
-        logger.error("Failed to produce a valid robot in %d attempts." % max_attempts)
+        logger.error("Failed to produce a valid robot in {} attempts."
+                     .format(max_attempts))
         raise Return(None)
 
     @trollius.coroutine
@@ -344,7 +377,14 @@ class WorldManager(manage.WorldManager):
         raise Return(coll, bbox, robot)
 
     @trollius.coroutine
-    def insert_robot(self, tree, pose, name=None, initial_battery=0.0, parents=None):
+    def insert_robot(
+            self,
+            tree,
+            pose,
+            name=None,
+            initial_battery=0.0,
+            parents=None
+    ):
         """
         Inserts a robot into the world. This consists of two steps:
 
@@ -376,17 +416,33 @@ class WorldManager(manage.WorldManager):
         sdf.elements[0].set_pose(pose)
 
         if self.output_directory:
-            with open(os.path.join(self.output_directory, 'robot_%d.sdf' % robot_id), 'w') as f:
+            robot_file_path = os.path.join(
+                    self.output_directory,
+                    'robot_{}.sdf'.format(robot_id)
+            )
+            with open(robot_file_path, 'w') as f:
                 f.write(str(sdf))
 
         return_future = Future()
         insert_future = yield From(self.insert_model(sdf))
-        insert_future.add_done_callback(lambda fut: self._robot_inserted(
-            robot_name, tree, robot, initial_battery, parents, fut.result(), return_future
+        insert_future.add_done_callback(
+                lambda fut: self._robot_inserted(
+                        robot_name,
+                        tree,
+                        robot,
+                        initial_battery,
+                        parents,
+                        fut.result(),
+                        return_future
         ))
         raise Return(return_future)
 
-    def get_simulation_sdf(self, robot, robot_name, initial_battery=0.0):
+    def get_simulation_sdf(
+            self,
+            robot,
+            robot_name,
+            initial_battery=0.0
+    ):
         """
 
         :param initial_battery:
@@ -425,7 +481,16 @@ class WorldManager(manage.WorldManager):
 
         raise Return(multi_future(futures))
 
-    def _robot_inserted(self, robot_name, tree, robot, initial_battery, parents, msg, return_future):
+    def _robot_inserted(
+            self,
+            robot_name,
+            tree,
+            robot,
+            initial_battery,
+            parents,
+            msg,
+            return_future
+    ):
         """
         Registers a newly inserted robot and marks the insertion
         message response as handled.
@@ -453,7 +518,16 @@ class WorldManager(manage.WorldManager):
         self.register_robot(robot)
         return_future.set_result(robot)
 
-    def create_robot_manager(self, robot_name, tree, robot, position, time, battery_level, parents):
+    def create_robot_manager(
+            self,
+            robot_name,
+            tree,
+            robot,
+            position,
+            time,
+            battery_level,
+            parents
+    ):
         """
         :param robot_name:
         :param tree:
@@ -465,7 +539,15 @@ class WorldManager(manage.WorldManager):
         :return:
         :rtype: Robot
         """
-        return Robot(robot_name, tree, robot, position, time, battery_level, parents=parents)
+        return Robot(
+                name=robot_name,
+                tree=tree,
+                robot=robot,
+                position=position,
+                time=time,
+                battery_level=battery_level,
+                parents=parents
+        )
 
     def register_robot(self, robot):
         """
@@ -474,16 +556,20 @@ class WorldManager(manage.WorldManager):
         :type robot: Robot
         :return:
         """
-        logger.debug("Registering robot %s." % robot.name)
+        logger.debug("Registering robot {}.".format(robot.name))
 
         if robot.name in self.robots:
-            raise ValueError("Duplicate robot: %s" % robot.name)
+            raise ValueError("Duplicate robot: {}".format(robot.name))
 
         self.robots[robot.name] = robot
         if self.output_directory:
             # Write robot details and CSV row to files
-            robot.write_robot(self, '%s/robot_%d.pb' % (self.output_directory, robot.robot.id),
-                              self.write_robots)
+            proto_file = '{}/robot_{}.pb'.format(
+                    self.output_directory,
+                    robot.robot.id)
+            robot.write_robot(
+                    details_file=proto_file,
+                    csv_writer=self.write_robots)
 
     def unregister_robot(self, robot):
         """
@@ -493,7 +579,7 @@ class WorldManager(manage.WorldManager):
         :type robot: Robot
         :return:
         """
-        logger.debug("Unregistering robot %s." % robot.name)
+        logger.debug("Unregistering robot %s.".format(robot.name))
         del self.robots[robot.name]
 
     @trollius.coroutine
@@ -515,8 +601,11 @@ class WorldManager(manage.WorldManager):
         :param robot:
         :return:
         """
-        fut = yield From(self.battery_handler.do_gazebo_request(
-            "set_battery_level", data=robot.name, dbl_data=robot.get_battery_level()
+        fut = yield From(
+                self.battery_handler.do_gazebo_request(
+                        request="set_battery_level",
+                        data=robot.name,
+                        dbl_data=robot.get_battery_level()
         ))
         raise Return(fut)
 

@@ -10,8 +10,8 @@ def _init_part_list(spec, parts):
     specs = {part_type: spec.get(part_type) for part_type in parts}
     none_values = [k for k in specs if specs[k] is None]
     if none_values:
-        raise ValueError("Invalid body part(s): %s"
-                         % ', '.join(none_values))
+        raise ValueError("Invalid body part(s): {}"
+                         .format(', '.join(none_values)))
 
     return specs
 
@@ -30,23 +30,34 @@ class BodyGenerator(object):
       be attached
     """
 
-    def __init__(self, spec, root_parts=None, attach_parts=None, min_parts=1, max_parts=50,
-                 fix_num_parts=False, max_inputs=None, max_outputs=None):
+    def __init__(
+            self,
+            spec,
+            root_parts=None,
+            attach_parts=None,
+            min_parts=1,
+            max_parts=50,
+            fix_num_parts=False,
+            max_inputs=None,
+            max_outputs=None
+    ):
         """
 
         :param min_parts: Minimum number of parts in each robot
         :type min_parts: int
         :param fix_num_parts:
-        :type fix_num_parts: If true, fixes the number of parts to `max_parts` rather than
-                         picking a random value (the number of parts might still be lower
-                         if other constraints apply).
+        :type fix_num_parts: If true, fixes the number of parts to
+                         `max_parts` rather than picking a random value (the
+                         number of parts might still be lower if other
+                         constraints apply).
         :param spec: The body implementation spec
         :type spec: BodyImplementation
-        :param root_parts: A list of part specifiers that are allowed as root parts,
-                          or `None` if all parts can be used as such.
+        :param root_parts: A list of part specifiers that are allowed as root
+                           parts, or `None` if all parts can be used as such.
         :type root_parts: list
-        :param attach_parts: A list of part specifiers that are allowed as non-root (i.e. attached) parts,
-                             or `None` if all parts can be used.
+        :param attach_parts: A list of part specifiers that are allowed as
+                             non-root (i.e. attached) parts, or `None` if all
+                             parts can be used.
         :type attach_parts: list
         :param max_parts: The maximum number of parts to be used in a robot; must be specified for
                           the generation to ever halt.
@@ -133,7 +144,7 @@ class BodyGenerator(object):
             conn = parent.child.add()
             conn.src = slot
             conn.dst = target_slot
-            conn.part.id = "bodygen-%d" % counter
+            conn.part.id = "bodygen-{}".format(counter)
             conn.part.type = new_part_type
             self.initialize_part(new_part, conn.part, parent, body.root)
 
@@ -154,7 +165,8 @@ class BodyGenerator(object):
         :param inputs: Current number of inputs
         :param outputs: Current number of outputs
         :param root_part: The current body root part
-        :return: List of identifiers of parts that when added do not violate some robot rules.
+        :return: List of identifiers of parts that when added do not violate
+                 some robot rules,
                  By default, this checks for maximum inputs / outputs.
         :rtype: list[str]
         """
@@ -179,7 +191,7 @@ class BodyGenerator(object):
 
         # Set random orientation in degrees
         new_part.orientation = self.choose_orientation(new_part, parent_part, root_part, root)
-        new_part.label = "part-%d" % self.get_label_counter()
+        new_part.label = "part-{}".format(self.get_label_counter())
         return new_part
 
     def get_label_counter(self):
