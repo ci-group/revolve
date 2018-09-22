@@ -192,12 +192,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--analyzer-address',
-    default="127.0.0.1:11346", type=str,
-    help="Host:port of the body analyzer (set to empty string to ignore)."
-)
-
-parser.add_argument(
     '--gazebo-cmd',
     default='gzserver', type=str,
     help="Determine wether to use gzserver or gazebo."

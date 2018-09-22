@@ -92,7 +92,9 @@ class World(WorldManager):
 
         # Write settings to config file
         if self.output_directory:
-            parser.write_to_file(conf, os.path.join(self.output_directory, "settings.conf"))
+            parser.write_to_file(
+                    conf,
+                    os.path.join(self.output_directory, "settings.conf"))
 
     @classmethod
     @trollius.coroutine
@@ -113,7 +115,16 @@ class World(WorldManager):
         """
         return Robot.header()
 
-    def create_robot_manager(self, robot_name, tree, robot, position, t, battery_level, parents):
+    def create_robot_manager(
+            self,
+            robot_name,
+            tree,
+            robot,
+            position,
+            t,
+            battery_level,
+            parents
+    ):
         """
         Overriding with robot manager with more capabilities.
         :param robot_name:
@@ -183,7 +194,8 @@ class World(WorldManager):
             futures.append(future)
 
         future = multi_future(futures)
-        future.add_done_callback(lambda _: logger.debug("Done inserting population."))
+        future.add_done_callback(
+                lambda _: logger.debug("Done inserting population."))
         raise Return(future)
 
     def get_simulation_sdf(self, robot, robot_name, initial_battery=0.0):
@@ -193,7 +205,13 @@ class World(WorldManager):
         :param initial_battery:
         :return:
         """
-        return get_simulation_robot(robot, robot_name, self.builder, self.conf, battery_charge=initial_battery)
+        return get_simulation_robot(
+                robot=robot,
+                name=robot_name,
+                builder=self.builder,
+                conf=self.conf,
+                battery_charge=initial_battery
+        )
 
     @trollius.coroutine
     def build_walls(self, points):
@@ -204,11 +222,16 @@ class World(WorldManager):
         :return: Future that resolves when all walls have been inserted.
         """
         futures = []
-        l = len(points)
-        for i in range(l):
+        length = len(points)
+        for i in range(length):
             start = points[i]
-            end = points[(i + 1) % l]
-            wall = Wall("wall_%d" % i, start, end, constants.WALL_THICKNESS, constants.WALL_HEIGHT)
+            end = points[(i + 1) % length]
+            wall = Wall(
+                    name="wall_%d" % i,
+                    start=start,
+                    end=end,
+                    thickness=constants.WALL_THICKNESS,
+                    height=constants.WALL_HEIGHT)
             future = yield From(self.insert_model(SDF(elements=[wall])))
             futures.append(future)
 
@@ -222,7 +245,9 @@ class World(WorldManager):
         :param rb:
         :return:
         """
-        logger.debug("Attempting mating between `%s` and `%s`..." % (ra.name, rb.name))
+        logger.debug("Attempting mating between `{}` and `{}`...".format(
+                ra.name,
+                rb.name))
 
         # Attempt to create a child through crossover
         success, child = self.crossover.crossover(ra.tree, rb.tree)

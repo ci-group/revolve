@@ -11,10 +11,19 @@ def get_builder(conf):
     """
     body_spec = get_body_spec(conf)
     brain_spec = get_brain_spec(conf)
-    return RobotBuilder(BodyBuilder(body_spec, conf), NeuralNetBuilder(brain_spec))
+    return RobotBuilder(
+            body_builder=BodyBuilder(body_spec, conf),
+            brain_builder=NeuralNetBuilder(brain_spec)
+    )
 
 
-def get_simulation_robot(robot, name, builder, conf, battery_charge=None):
+def get_simulation_robot(
+        robot,
+        name,
+        builder,
+        conf,
+        battery_charge=None
+):
     """
     :param robot:
     :param name:
@@ -25,13 +34,18 @@ def get_simulation_robot(robot, name, builder, conf, battery_charge=None):
     """
     battery = None if battery_charge is None else BasicBattery(battery_charge)
     brain_conf = None if not hasattr(conf, 'brain_conf') else conf.brain_conf
-    model = builder.get_sdf_model(robot, controller_plugin="libtolrobotcontrol.so",
-                                  update_rate=conf.controller_update_rate, name=name,
-                                  battery=battery, brain_conf=brain_conf)
+
+    model = builder.get_sdf_model(
+            robot=robot,
+            # controller_plugin="libtolrobotcontrol.so",
+            update_rate=conf.controller_update_rate,
+            name=name,
+            battery=battery,
+            brain_conf=brain_conf
+    )
 
     apply_surface_parameters(model, conf.world_step_size)
 
     sdf = SDF()
     sdf.add_element(model)
     return sdf
-

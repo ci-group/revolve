@@ -300,8 +300,16 @@ class RobotBuilder(object):
         self.body_builder = body_builder
         self.brain_builder = brain_builder
 
-    def get_sdf_model(self, robot, controller_plugin=None, update_rate=5, name="sdf_robot",
-                      analyzer_mode=False, battery=None, brain_conf=None):
+    def get_sdf_model(
+            self,
+            robot,
+            controller_plugin=None,
+            update_rate=5,
+            name="sdf_robot",
+            analyzer_mode=False,
+            battery=None,
+            brain_conf=None
+    ):
         """
         :param robot: Protobuf robot
         :type robot: Robot

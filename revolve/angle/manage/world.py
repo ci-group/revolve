@@ -33,7 +33,6 @@ class WorldManager(manage.WorldManager):
             builder,
             generator,
             world_address=None,
-            analyzer_address=None,
             output_directory=None,
             state_update_frequency=None,
             restore=None,
@@ -55,7 +54,6 @@ class WorldManager(manage.WorldManager):
         super(WorldManager, self).__init__(
                 _private=_private,
                 world_address=world_address,
-                analyzer_address=analyzer_address
         )
 
         self.battery_handler = None
@@ -163,7 +161,6 @@ class WorldManager(manage.WorldManager):
     def create(
             cls,
             world_address=("127.0.0.1", 11345),
-            analyzer_address=("127.0.0.1", 11346),
             pose_update_frequency=10
     ):
         """
@@ -176,7 +173,6 @@ class WorldManager(manage.WorldManager):
         self = cls(
                 _private=cls._PRIVATE,
                 world_address=world_address,
-                analyzer_address=analyzer_address,
                 state_update_frequency=pose_update_frequency
         )
         yield From(self._init(builder=None, generator=None))
@@ -211,14 +207,16 @@ class WorldManager(manage.WorldManager):
         )
 
         yield From(wait_for(self.set_state_update_frequency(
-                self.state_update_frequency
+                freq=self.state_update_frequency
         )))
 
         self.battery_handler = yield From(RequestHandler.create(
-            self.manager, advertise='/gazebo/default/battery_level/request',
-            subscribe='/gazebo/default/battery_level/response',
-            # There will not be robots yet, so don't wait for this
-            wait_for_publisher=False, wait_for_subscriber=False
+                manager=self.manager,
+                advertise='/gazebo/default/battery_level/request',
+                subscribe='/gazebo/default/battery_level/response',
+                # There will not be robots yet, so don't wait for this
+                wait_for_publisher=False,
+                wait_for_subscriber=False
         ))
 
         # Wait for connections
@@ -242,7 +240,9 @@ class WorldManager(manage.WorldManager):
 
         # Obtain a copy of the current world SDF from Gazebo and write it to
         # file
-        response = yield From(wait_for(self.request_handler.do_gazebo_request("world_sdf")))
+        response = yield From(wait_for(self.request_handler.do_gazebo_request(
+                request="world_sdf"
+        )))
         if response.response == "error":
             logger.warning("WARNING: requesting world state resulted in "
                            "error. Snapshot failed.")
@@ -427,16 +427,16 @@ class WorldManager(manage.WorldManager):
 
         return_future = Future()
         insert_future = yield From(self.insert_model(sdf))
-        insert_future.add_done_callback(
-                lambda fut: self._robot_inserted(
-                        robot_name,
-                        tree,
-                        robot,
-                        initial_battery,
-                        parents,
-                        fut.result(),
-                        return_future
-        ))
+        # TODO: Unhandled error in exception handler. Fix this.
+        # insert_future.add_done_callback(lambda fut: self._robot_inserted(
+        #         robot_name=robot_name,
+        #         tree=tree,
+        #         robot=robot,
+        #         initial_battery=initial_battery,
+        #         parents=parents,
+        #         msg=fut.result(),
+        #         return_future=return_future
+        # ))
         raise Return(return_future)
 
     def get_simulation_sdf(
@@ -454,7 +454,8 @@ class WorldManager(manage.WorldManager):
         :return:
         :rtype: SDF
         """
-        raise NotImplementedError("Implement in subclass if you want to use this method.")
+        raise NotImplementedError(
+                "Implement in subclass if you want to use this method.")
 
     @trollius.coroutine
     def delete_robot(self, robot):
@@ -516,7 +517,15 @@ class WorldManager(manage.WorldManager):
         p = model.pose.position
         position = Vector3(p.x, p.y, p.z)
 
-        robot = self.create_robot_manager(robot_name, tree, robot, position, time, initial_battery, parents)
+        robot = self.create_robot_manager(
+                robot_name=robot_name,
+                tree=tree,
+                robot=robot,
+                position=position,
+                time=time,
+                battery_level=initial_battery,
+                parents=parents
+        )
         self.register_robot(robot)
         return_future.set_result(robot)
 
@@ -603,11 +612,10 @@ class WorldManager(manage.WorldManager):
         :param robot:
         :return:
         """
-        fut = yield From(
-                self.battery_handler.do_gazebo_request(
-                        request="set_battery_level",
-                        data=robot.name,
-                        dbl_data=robot.get_battery_level()
+        fut = yield From(self.battery_handler.do_gazebo_request(
+                request="set_battery_level",
+                data=robot.name,
+                dbl_data=robot.get_battery_level()
         ))
         raise Return(fut)
 
