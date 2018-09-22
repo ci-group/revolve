@@ -37,7 +37,7 @@ def get_simulation_robot(
 
     model = builder.get_sdf_model(
             robot=robot,
-            # controller_plugin="libtolrobotcontrol.so",
+            controller_plugin="libtolrobotcontrol.so",
             update_rate=conf.controller_update_rate,
             name=name,
             battery=battery,

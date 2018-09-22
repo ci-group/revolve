@@ -174,7 +174,7 @@ target_link_libraries(
         ${PROTOBUF_LIBRARIES}
 )
 
-# Create Rebolve bundle plugin
+# Create Revolve bundle plugin
 add_library(
         revolve-gazebo
         ${REVOLVE_GZ_SRC}
@@ -194,41 +194,19 @@ target_link_libraries(
         revolveworldcontrol
         revolve-gazebo
         revolve-spec
+        ${GAZEBO_LIBRARIES}
 )
 
-# Create World plugin
+# Create Robot plugin
 add_library(
         tolrobotcontrol SHARED
-        revolve/gazebo/plugin/WorldController.cpp
+        revolve/gazebo/plugin/register_robot_plugin.cpp
 )
 target_link_libraries(
         tolrobotcontrol
         revolve-gazebo
         revolve-spec
         ${GAZEBO_LIBRARIES}
-)
-
-# Add the file that registers the body analyzer as a separate library that
-# can be used as a world plugin directly.
-add_library(
-        revolve-body-analyzer SHARED
-        revolve/gazebo/plugin/register_analyzer.cpp
-)
-target_link_libraries(
-        revolve-body-analyzer
-        revolve-gazebo
-        revolve-spec
-        ${GAZEBO_LIBRARIES}
-)
-
-# Add the analyzer server standalone
-add_executable(body-analyzer
-               revolve/gazebo/standalone/body_analyzer_server.cpp)
-target_link_libraries(
-        body-analyzer
-        revolve-body-analyzer
-        ${GAZEBO_LIBRARIES}
-        ${Boost_LIBRARIES}
 )
 
 # Install libraries into "lib", header files into "include"

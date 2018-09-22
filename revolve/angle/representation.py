@@ -84,7 +84,11 @@ class Tree(object):
             neuron_map[neuron.id] = neuron
 
         # Create the tree without neural net connections
-        root = _create_subtree(body.root, brain, body_spec)
+        root = _create_subtree(
+                body_part=body.root,
+                brain=brain,
+                body_spec=body_spec
+        )
         tree = Tree(root)
 
         # Create the neural net connections. We only

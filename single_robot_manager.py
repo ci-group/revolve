@@ -1,9 +1,7 @@
 #!/usr/bin/env python2
 
-import ast
 import os
 import sys
-import yaml
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 

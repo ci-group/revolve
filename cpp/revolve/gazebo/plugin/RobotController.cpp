@@ -182,9 +182,8 @@ namespace revolve
     {
       if (!sdf->HasElement("rv:brain"))
       {
-        std::cerr
-                << "No robot brain detected, this is probably an error."
-                << std::endl;
+        std::cerr << "No robot brain detected, this is probably an error."
+                  << std::endl;
         return;
       }
       auto brain = sdf->GetElement("rv:brain");

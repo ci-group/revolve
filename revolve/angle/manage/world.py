@@ -414,7 +414,10 @@ class WorldManager(manage.WorldManager):
             if name is None else str(name)
 
         robot = tree.to_robot(robot_id)
-        sdf = self.get_simulation_sdf(robot, robot_name, initial_battery)
+        sdf = self.get_simulation_sdf(
+                robot=robot,
+                robot_name=robot_name,
+                initial_battery=initial_battery)
         sdf.elements[0].set_pose(pose)
 
         if self.output_directory:

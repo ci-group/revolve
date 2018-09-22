@@ -36,9 +36,9 @@ namespace revolve
   {
     class Brain
     {
-      public: explicit Brain();
+      public: explicit Brain() {};
 
-      public: virtual ~Brain();
+      public: virtual ~Brain() {};
 
       /**
        * Update step called for the brain.
