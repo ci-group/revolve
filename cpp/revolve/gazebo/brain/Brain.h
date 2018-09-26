@@ -36,23 +36,22 @@ namespace revolve
   {
     class Brain
     {
+      /// \brief Constructor
       public: explicit Brain() {};
 
+      /// \brief Destructor
       public: virtual ~Brain() {};
 
-      /**
-       * Update step called for the brain.
-       *
-       * @param List of motors
-       * @param List of sensors
-       * @param Current simulation time
-       * @param Actuation step size in seconds
-       */
-      public: virtual void update(
-              const std::vector< MotorPtr > &_motors,
-              const std::vector< SensorPtr > &_sensors,
-              double _time,
-              double _step) = 0;
+      /// \brief Update step called for the brain.
+      /// \param[in] _motors List of motors
+      /// \param[in] _sensors List of sensors
+      /// \param[in] _time Current simulation time
+      /// \param[in] _step Actuation step size in seconds
+      public: virtual void Update(
+          const std::vector< MotorPtr > &_motors,
+          const std::vector< SensorPtr > &_sensors,
+          double _time,
+          double _step) = 0;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

@@ -24,63 +24,63 @@
 
 namespace gz = gazebo;
 
-namespace revolve
+using namespace revolve::gazebo;
+
+/////////////////////////////////////////////////
+MotorFactory::MotorFactory(::gazebo::physics::ModelPtr _model)
+    : model_(_model)
 {
-  namespace gazebo
+}
+
+/////////////////////////////////////////////////
+MotorFactory::~MotorFactory()
+{
+}
+
+/////////////////////////////////////////////////
+MotorPtr MotorFactory::Motor(
+    sdf::ElementPtr _motor,
+    const std::string &_type,
+    const std::string &_motorId,
+    const std::string &_partId)
+{
+  MotorPtr motorObj;
+  if ("position" == _type)
   {
-    MotorFactory::MotorFactory(::gazebo::physics::ModelPtr model)
-            :
-            model_(model)
-    {}
+    motorObj.reset(new PositionMotor(model_, _motorId, _partId, _motor));
+  }
+  else if ("velocity" == _type)
+  {
+    motorObj.reset(new VelocityMotor(model_, _motorId, _partId, _motor));
+  }
 
-    MotorFactory::~MotorFactory()
-    {}
+  return motorObj;
+}
 
-    MotorPtr MotorFactory::getMotor(
-            sdf::ElementPtr motor,
-            const std::string &type,
-            const std::string &partId,
-            const std::string &motorId)
-    {
-      MotorPtr motorObj;
-      if ("position" == type)
-      {
-        motorObj.reset(new PositionMotor(model_, partId, motorId, motor));
-      }
-      else if ("velocity" == type)
-      {
-        motorObj.reset(new VelocityMotor(model_, partId, motorId, motor));
-      }
+/////////////////////////////////////////////////
+MotorPtr MotorFactory::Create(sdf::ElementPtr _motor)
+{
+  auto typeParam = _motor->GetAttribute("type");
+  auto partIdParam = _motor->GetAttribute("part_id");
+  auto idParam = _motor->GetAttribute("id");
 
-      return motorObj;
-    }
+  if (not typeParam or not partIdParam or not idParam)
+  {
+    std::cerr << "Motor is missing required attributes (`id`, `type` or "
+        "`part_id`)." << std::endl;
+    throw std::runtime_error("Motor error");
+  }
 
-    MotorPtr MotorFactory::create(sdf::ElementPtr motor)
-    {
-      auto typeParam = motor->GetAttribute("type");
-      auto partIdParam = motor->GetAttribute("part_id");
-      auto idParam = motor->GetAttribute("id");
+  auto partId = partIdParam->GetAsString();
+  auto type = typeParam->GetAsString();
+  auto id = idParam->GetAsString();
+  MotorPtr motorObj = this->Motor(_motor, type, partId, id);
 
-      if (!typeParam || !partIdParam || !idParam)
-      {
-        std::cerr << "Motor is missing required attributes (`id`, `type` or "
-                "`part_id`)." << std::endl;
-        throw std::runtime_error("Motor error");
-      }
+  if (not motorObj)
+  {
+    std::cerr << "Motor type '" << type << "' is unknown." << std::endl;
+    throw std::runtime_error("Motor error");
+  }
 
-      auto partId = partIdParam->GetAsString();
-      auto type = typeParam->GetAsString();
-      auto id = idParam->GetAsString();
-      MotorPtr motorObj = this->getMotor(motor, type, partId, id);
-
-      if (!motorObj)
-      {
-        std::cerr << "Motor type '" << type <<
-                  "' is unknown." << std::endl;
-        throw std::runtime_error("Motor error");
-      }
-
-      return motorObj;
-    }
-  } /* namespace gazebo */
-} /* namespace revolve */
+  return motorObj;
+}
