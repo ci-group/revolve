@@ -159,7 +159,7 @@ void RobotController::LoadSensors(sdf::ElementPtr sdf)
   auto sensor = sdf->GetElement("rv:sensor");
   while (sensor)
   {
-    auto sensorObj = this->sensorFactory_->create(sensor);
+    auto sensorObj = this->sensorFactory_->Create(sensor);
     sensors_.push_back(sensorObj);
     sensor = sensor->GetNextElement("rv:sensor");
   }
@@ -253,7 +253,7 @@ double RobotController::BatteryLevel()
 /////////////////////////////////////////////////
 void RobotController::SetBatteryLevel(double level)
 {
-  if (batteryElem_ && batteryElem_->HasElement("rv:level"))
+  if (batteryElem_ and batteryElem_->HasElement("rv:level"))
   {
     batteryElem_->GetElement("rv:level")->Set(level);
   }

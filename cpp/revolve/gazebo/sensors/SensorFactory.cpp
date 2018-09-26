@@ -28,54 +28,54 @@ namespace revolve
 {
   namespace gazebo
   {
-    SensorFactory::SensorFactory(gz::physics::ModelPtr model)
-            : model_(model)
+    SensorFactory::SensorFactory(gz::physics::ModelPtr _model)
+            : model_(_model)
     {}
 
-    SensorFactory::~SensorFactory()
-    {}
+    SensorFactory::~SensorFactory() = default;
 
-    SensorPtr SensorFactory::getSensor(
-            sdf::ElementPtr sensor,
-            const std::string &type,
-            const std::string &partId,
-            const std::string &sensorId)
+    SensorPtr SensorFactory::Sensor(
+        sdf::ElementPtr _sensor,
+        const std::string &_type,
+        const std::string &_partId,
+        const std::string &_sensorId)
     {
       SensorPtr out;
-      if ("imu" == type)
+      if ("imu" == _type)
       {
-        out.reset(new ImuSensor(this->model_, sensor, partId, sensorId));
+        out.reset(new ImuSensor(this->model_, _sensor, _partId, _sensorId));
       }
-      else if ("light" == type)
+      else if ("light" == _type)
       {
-        out.reset(new LightSensor(this->model_, sensor, partId, sensorId));
+        out.reset(new LightSensor(this->model_, _sensor, _partId, _sensorId));
       }
-      else if ("touch" == type)
+      else if ("touch" == _type)
       {
-        out.reset(new TouchSensor(this->model_, sensor, partId, sensorId));
+        out.reset(new TouchSensor(this->model_, _sensor, _partId, _sensorId));
       }
-      else if ("basic_battery" == type)
+      else if ("basic_battery" == _type)
       {
-        out.reset(new BatterySensor(this->model_, partId, sensorId));
+        out.reset(new BatterySensor(this->model_, _partId, _sensorId));
       }
-      else if ("point_intensity" == type)
+      else if ("point_intensity" == _type)
       {
-        out.reset(new PointIntensitySensor(sensor,
-                                           this->model_,
-                                           partId,
-                                           sensorId));
+        out.reset(new PointIntensitySensor(
+            _sensor,
+            this->model_,
+            _partId,
+            _sensorId));
       }
 
       return out;
     }
 
-    SensorPtr SensorFactory::create(sdf::ElementPtr sensor)
+    SensorPtr SensorFactory::Create(sdf::ElementPtr sensor)
     {
       auto typeParam = sensor->GetAttribute("type");
       auto partIdParam = sensor->GetAttribute("part_id");
       auto idParam = sensor->GetAttribute("id");
 
-      if (!typeParam || !partIdParam || !idParam)
+      if (not typeParam or not partIdParam or not idParam)
       {
         std::cerr << "Sensor is missing required attributes (`id`, `type` or "
                 "`part_id`)." << std::endl;
@@ -86,8 +86,8 @@ namespace revolve
       auto type = typeParam->GetAsString();
       auto id = idParam->GetAsString();
 
-      SensorPtr out = this->getSensor(sensor, type, partId, id);
-      if (!out)
+      SensorPtr out = this->Sensor(sensor, type, partId, id);
+      if (not out)
       {
         std::cerr << "Sensor type '" << type
                   << "' is not supported." << std::endl;
