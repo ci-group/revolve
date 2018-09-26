@@ -209,7 +209,10 @@ target_link_libraries(
         ${GAZEBO_LIBRARIES}
 )
 
+# Install
+# _____________________________________________________________________________
 # Install libraries into "lib", header files into "include"
+
 install(
     TARGETS revolve-spec revolve-gazebo
     DESTINATION lib

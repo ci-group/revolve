@@ -50,21 +50,25 @@ namespace revolve
             const revolve::msgs::Neuron &neuron);
 
     NeuralNetwork::NeuralNetwork(
-            std::string modelName,
-            sdf::ElementPtr node,
-            std::vector< MotorPtr > &motors,
-            std::vector< SensorPtr > &sensors)
-            :
-            flipState_(false), nInputs_(0), nOutputs_(0), nHidden_(0)
-            , nNonInputs_(0)
+        std::string _modelName,
+        sdf::ElementPtr _node,
+        std::vector< MotorPtr > &_motors,
+        std::vector< SensorPtr > &_sensors)
+        : flipState_(false)
+        , nInputs_(0)
+        , nOutputs_(0)
+        , nHidden_(0)
+        , nNonInputs_(0)
     {
       // Create transport node
       node_.reset(new gz::transport::Node());
       node_->Init();
 
       // Listen to network modification requests
-      alterSub_ = node_->Subscribe("~/" + modelName + "/modify_neural_network",
-                                   &NeuralNetwork::modify, this);
+      alterSub_ = node_->Subscribe(
+          "~/" + _modelName + "/modify_neural_network",
+          &NeuralNetwork::modify,
+          this);
 
       // Initialize weights, input and states to zero by default
       memset(inputWeights_, 0, sizeof(inputWeights_));
@@ -92,16 +96,15 @@ namespace revolve
 
       // Fetch the first neuron; note the HasElement call is necessary to
       // prevent SDF from complaining if no neurons are present.
-      auto neuron =
-              node->HasElement("rv:neuron") ? node->GetElement("rv:neuron")
-                                            : sdf::ElementPtr();
+      auto neuron = _node->HasElement("rv:neuron")
+                    ? _node->GetElement("rv:neuron")
+                    : sdf::ElementPtr();
       while (neuron)
       {
-        if (!neuron->HasAttribute("layer") || !neuron->HasAttribute("id"))
+        if (not neuron->HasAttribute("layer") or not neuron->HasAttribute("id"))
         {
-          std::cerr
-                  << "Missing required neuron attributes (id or layer). '"
-                  << std::endl;
+          std::cerr << "Missing required neuron attributes (id or layer). '"
+                    << std::endl;
           throw std::runtime_error("Robot brain error");
         }
         auto layer = neuron->GetAttribute("layer")->GetAsString();
@@ -109,8 +112,7 @@ namespace revolve
 
         if (layerMap_.count(neuronId))
         {
-          std::cerr << "Duplicate neuron ID '"
-                    << neuronId << "'" << std::endl;
+          std::cerr << "Duplicate neuron ID '" << neuronId << "'" << std::endl;
           throw std::runtime_error("Robot brain error");
         }
 
@@ -147,13 +149,11 @@ namespace revolve
         {
           if (hiddenNeurons.size() >= MAX_HIDDEN_NEURONS)
           {
-            std::cerr
-                    << "The number of hidden neurons("
-                    << (hiddenNeurons.size() + 1)
-                    << ") is greater than the maximum allowed one ("
-                    << MAX_HIDDEN_NEURONS
-                    << ")"
-                    << std::endl;
+            std::cerr  << "The number of hidden neurons("
+                       << (hiddenNeurons.size() + 1)
+                       << ") is greater than the maximum allowed one ("
+                       << MAX_HIDDEN_NEURONS << ")"
+                       << std::endl;
             throw std::runtime_error("Robot brain error");
           }
 
@@ -174,11 +174,10 @@ namespace revolve
       // neuron we find in order.
       std::map< std::string, unsigned int > outputCountMap;
       unsigned int outPos = 0;
-      for (auto it = motors.begin(); it != motors.end(); ++it)
+      for (const auto &motor : _motors)
       {
-        auto motor = *it;
         auto partId = motor->partId();
-        if (!outputCountMap.count(partId))
+        if (not outputCountMap.count(partId))
         {
           outputCountMap[partId] = 0;
         }
@@ -210,12 +209,11 @@ namespace revolve
       // Create sensor input neurons
       std::map< std::string, unsigned int > inputCountMap;
       unsigned int inPos = 0;
-      for (auto it = sensors.begin(); it != sensors.end(); ++it)
+      for (const auto &sensor : _sensors)
       {
-        auto sensor = *it;
         auto partId = sensor->partId();
 
-        if (!inputCountMap.count(partId))
+        if (not inputCountMap.count(partId))
         {
           inputCountMap[partId] = 0;
         }
@@ -248,12 +246,11 @@ namespace revolve
       // neuron should be connected to at least a virtual motor / sensor.
       if (toProcess.size())
       {
-        std::cerr
-                << "The following input / output neurons were"
-                        " defined, but not attached to any sensor / motor:"
-                << std::endl;
+        std::cerr << "The following input / output neurons were"
+                     " defined, but not attached to any sensor / motor:"
+                  << std::endl;
 
-        for (auto it = toProcess.begin(); it != toProcess.end(); ++it)
+        for (auto it = toProcess.begin(); it not_eq toProcess.end(); ++it)
         {
           std::cerr << (*it) << std::endl;
         }
@@ -265,10 +262,8 @@ namespace revolve
 
       // Add hidden neurons
       outPos = 0;
-      for (auto it = hiddenNeurons.begin(); it != hiddenNeurons.end(); ++it)
+      for (const auto &neuronId : hiddenNeurons)
       {
-        auto neuronId = *it;
-
         // Position relative to hidden neurons
         positionMap_[neuronId] = outPos;
 
@@ -282,13 +277,14 @@ namespace revolve
 
       // Decode connections
       nNonInputs_ = nOutputs_ + nHidden_;
-      auto connection =
-              node->HasElement("rv:neural_connection") ? node->GetElement(
-                      "rv:neural_connection") : sdf::ElementPtr();
+      auto connection = _node->HasElement("rv:neural_connection")
+                        ? _node->GetElement("rv:neural_connection")
+                        : sdf::ElementPtr();
       while (connection)
       {
-        if (!connection->HasAttribute("src") || !connection->HasAttribute("dst")
-            || !connection->HasAttribute("weight"))
+        if (not connection->HasAttribute("src") or
+            not connection->HasAttribute("dst") or
+            not connection->HasAttribute("weight"))
         {
           std::cerr << "Missing required connection attributes (`src`, `dst` "
                   "or `weight`)." << std::endl;
@@ -308,10 +304,9 @@ namespace revolve
       }
     }
 
-    NeuralNetwork::~NeuralNetwork()
-    {}
+    NeuralNetwork::~NeuralNetwork() = default;
 
-    void NeuralNetwork::step(double time)
+    void NeuralNetwork::step(double _time)
     {
       unsigned int i = 0;
       unsigned int j = 0;
@@ -349,8 +344,8 @@ namespace revolve
         // Add output neuron values
         for (j = 0; j < nOutputs_; ++j)
         {
-          curNeuronActivation +=
-                  outputWeights_[maxNonInputs * j + i] * curState[j];
+          curNeuronActivation += outputWeights_[maxNonInputs * j + i]
+                                 * curState[j];
         }
 
         // Add hidden neuron values
@@ -366,15 +361,13 @@ namespace revolve
           case SIGMOID:
             /* params are bias, gain */
             curNeuronActivation -= params_[base];
-            nextState[i] = 1.0
-                           / (1.0 + exp(-params_[base + 1] *
-                                        curNeuronActivation));
+            nextState[i] = 1.0 / (1.0 + exp(-params_[base + 1] *
+                                            curNeuronActivation));
             break;
           case SIMPLE:
             /* linear, params are bias, gain */
             curNeuronActivation -= params_[base];
-            nextState[i] = params_[base + 1] *
-                           curNeuronActivation;
+            nextState[i] = params_[base + 1] * curNeuronActivation;
             break;
           case OSCILLATOR:
           { // Use the block to prevent "crosses initialization" error
@@ -385,42 +378,40 @@ namespace revolve
 
             /* Value in [0, 1] */
             nextState[i] = ((sin((2.0 * M_PI / period) *
-                                 (time - period * phaseOffset))) + 1.0) / 2.0;
+                                 (_time - period * phaseOffset))) + 1.0) / 2.0;
 
             /* set output to be in [0.5 - gain/2, 0.5 + gain/2] */
-            nextState[i] = (0.5 - (gain / 2.0) +
-                            nextState[i] * gain);
+            nextState[i] = (0.5 - (gain / 2.0) + nextState[i] * gain);
           }
             break;
           default:
             // Unsupported type should never happen
-            std::cerr
-                    << "Invalid neuron type during processing, must be a bug."
-                    << std::endl;
+            std::cerr << "Invalid neuron type during processing, must be a bug."
+                      << std::endl;
             throw std::runtime_error("Robot brain error");
         }
       }
 
-      flipState_ = !flipState_;
+      flipState_ = not flipState_;
     }
 
     void NeuralNetwork::update(
-            const std::vector< MotorPtr > &motors,
-            const std::vector< SensorPtr > &sensors,
-            double t,
-            double step)
+            const std::vector< MotorPtr > &_motors,
+            const std::vector< SensorPtr > &_sensors,
+            double _time,
+            double _step)
     {
       boost::mutex::scoped_lock lock(networkMutex_);
 
       // Read sensor data and feed the neural network
       unsigned int p = 0;
-      for (auto sensor : sensors)
+      for (const auto &sensor : _sensors)
       {
         sensor->read(&input_[p]);
         p += sensor->inputs();
       }
 
-      this->step(t);
+      this->step(_time);
 
       // Since the output neurons are the first in the state
       // array we can just use it to update the motors directly.
@@ -428,9 +419,9 @@ namespace revolve
 
       // Send new signals to the motors
       p = 0;
-      for (auto motor: motors)
+      for (const auto &motor: _motors)
       {
-        motor->update(&output[p], step);
+        motor->update(&output[p], _step);
         p += motor->outputs();
       }
     }
@@ -446,19 +437,16 @@ namespace revolve
       {
         // Find the neuron + position
         auto id = req->remove_hidden(i);
-        if (!positionMap_.count(id))
+        if (not positionMap_.count(id))
         {
           std::cerr << "Unknown neuron ID `" << id << "`" << std::endl;
           throw std::runtime_error("Robot brain error");
         }
 
-        if ("hidden" != layerMap_[id])
+        if ("hidden" not_eq layerMap_[id])
         {
-          std::cerr
-                  << "Cannot remove neuron ID `"
-                  << id
-                  << "`, it is not a hidden neuron."
-                  << std::endl;
+          std::cerr << "Cannot remove neuron ID `" << id
+                    << "`, it is not a hidden neuron." << std::endl;
           throw std::runtime_error("Robot brain error");
         }
 
@@ -495,9 +483,16 @@ namespace revolve
         // For each entry in each of the three weights arrays we have to
         // move all hidden connection weights down, then zero out the last entry
         s = sizeof(inputWeights_[0]);
-        double *weightArrays[] =
-                {inputWeights_, outputWeights_, hiddenWeights_};
-        unsigned int sizes[] = {nInputs_, nOutputs_, nHidden_};
+        double *weightArrays[] = {
+            inputWeights_,
+            outputWeights_,
+            hiddenWeights_
+        };
+        unsigned int sizes[] = {
+            nInputs_,
+            nOutputs_,
+            nHidden_
+        };
 
         for (unsigned int k = 0; k < 3; ++k)
         {
@@ -543,7 +538,7 @@ namespace revolve
         // Decrement the entry in the `positionMap` for all
         // hidden neurons above this one.
         for (auto iter =
-                positionMap_.begin(); iter != positionMap_.end(); ++iter)
+                positionMap_.begin(); iter not_eq positionMap_.end(); ++iter)
         {
           auto layer = layerMap_[iter->first];
           if ("hidden" == layer && positionMap_[iter->first] > pos)
@@ -561,16 +556,14 @@ namespace revolve
       {
         if (nHidden_ >= MAX_HIDDEN_NEURONS)
         {
-          std::cerr
-                  << "Cannot add hidden neuron; the max ("
-                  << MAX_HIDDEN_NEURONS
-                  << ") is already reached."
-                  << std::endl;
+          std::cerr << "Cannot add hidden neuron; the max ("
+                    << MAX_HIDDEN_NEURONS
+                    << ") is already reached." << std::endl;
           throw std::runtime_error("Robot brain error");
         }
 
         auto neuron = req->add_hidden(i);
-        auto id = neuron.id();
+        const auto id = neuron.id();
         if (layerMap_.count(id))
         {
           std::cerr << "Adding duplicate neuron ID `" << id << "`" << std::endl;
@@ -590,8 +583,8 @@ namespace revolve
       for (i = 0; i < (unsigned int)req->set_parameters_size(); ++i)
       {
         auto neuron = req->set_parameters(i);
-        auto id = neuron.id();
-        if (!positionMap_.count(id))
+        const auto id = neuron.id();
+        if (not positionMap_.count(id))
         {
           std::cerr << "Unknown neuron ID `" << id << "`" << std::endl;
           throw std::runtime_error("Robot brain error");
@@ -613,8 +606,8 @@ namespace revolve
       for (i = 0; i < (unsigned int)req->set_weights_size(); ++i)
       {
         auto conn = req->set_weights(i);
-        auto src = conn.src();
-        auto dst = conn.dst();
+        const auto src = conn.src();
+        const auto dst = conn.dst();
         this->connectionHelper(src, dst, conn.weight());
       }
     }
@@ -626,19 +619,16 @@ namespace revolve
             const std::string &dst,
             double weight)
     {
-      if (!layerMap_.count(src))
+      if (not layerMap_.count(src))
       {
         std::cerr << "Source neuron '" << src << "' is unknown." << std::endl;
         throw std::runtime_error("Robot brain error");
       }
 
-      if (!layerMap_.count(dst))
+      if (not layerMap_.count(dst))
       {
-        std::cerr
-                << "Destination neuron '"
-                << dst
-                << "' is unknown."
-                << std::endl;
+        std::cerr<< "Destination neuron '" << dst
+                 << "' is unknown." << std::endl;
         throw std::runtime_error("Robot brain error");
       }
 
@@ -650,11 +640,8 @@ namespace revolve
 
       if ("input" == dstLayer)
       {
-        std::cerr
-                << "Destination neuron '"
-                << dst
-                << "' is an input neuron."
-                << std::endl;
+        std::cerr << "Destination neuron '"<< dst
+                  << "' is an input neuron." << std::endl;
         throw std::runtime_error("Robot brain error");
       }
       else if ("hidden" == dstLayer)
@@ -686,26 +673,24 @@ namespace revolve
             unsigned int *types,
             sdf::ElementPtr neuron)
     {
-      if (!neuron->HasAttribute("type"))
+      if (not neuron->HasAttribute("type"))
       {
-        std::cerr
-                << "Missing required `type` attribute for neuron."
-                << std::endl;
+        std::cerr << "Missing required `type` attribute for neuron."
+                  << std::endl;
         throw std::runtime_error("Robot brain error");
       }
 
-      auto type = neuron->GetAttribute("type")->GetAsString();
-      if ("Sigmoid" == type || "Simple" == type)
+      const auto type = neuron->GetAttribute("type")->GetAsString();
+      if ("Sigmoid" == type or "Simple" == type)
       {
-        types[0] = "Simple" == type ? SIMPLE : SIGMOID;
+        types[0] = ("Simple" == type ? SIMPLE : SIGMOID);
 
-        if (!neuron->HasElement("rv:bias") || !neuron->HasElement("rv:gain"))
+        if (not neuron->HasElement("rv:bias") or
+            not neuron->HasElement("rv:gain"))
         {
-          std::cerr
-                  << "A `"
-                  << type
-                  << "` neuron requires `rv:bias` and `rv:gain` elements."
-                  << std::endl;
+          std::cerr << "A `" << type
+                    << "` neuron requires `rv:bias` and `rv:gain` elements."
+                    << std::endl;
           throw std::runtime_error("Robot brain error");
         }
 
@@ -717,9 +702,9 @@ namespace revolve
       {
         types[0] = OSCILLATOR;
 
-        if (!neuron->HasElement("rv:period") || !neuron->HasElement(
-                "rv:phase_offset") ||
-            !neuron->HasElement("rv:amplitude"))
+        if (not neuron->HasElement("rv:period") or not neuron->HasElement(
+                "rv:phase_offset") or
+            not neuron->HasElement("rv:amplitude"))
         {
           std::cerr << "An `Oscillator` neuron requires `rv:period`, "
                   "`rv:phase_offset` and `rv:amplitude` elements."
@@ -744,17 +729,14 @@ namespace revolve
             unsigned int *types,
             const revolve::msgs::Neuron &neuron)
     {
-      auto type = neuron.type();
-      if ("Sigmoid" == type || "Simple" == type)
+      const auto type = neuron.type();
+      if ("Sigmoid" == type or "Simple" == type)
       {
         types[0] = "Simple" == type ? SIMPLE : SIGMOID;
-        if (neuron.param_size() != 2)
+        if (neuron.param_size() not_eq 2)
         {
-          std::cerr
-                  << "A `"
-                  << type
-                  << "` neuron requires exactly two parameters."
-                  << std::endl;
+          std::cerr << "A `"<< type
+                    << "` neuron requires exactly two parameters." << std::endl;
           throw std::runtime_error("Robot brain error");
         }
 
@@ -766,13 +748,11 @@ namespace revolve
       {
         types[0] = OSCILLATOR;
 
-        if (neuron.param_size() != 3)
+        if (neuron.param_size() not_eq 3)
         {
-          std::cerr
-                  << "A `"
-                  << type
-                  << "` neuron requires exactly three parameters."
-                  << std::endl;
+          std::cerr << "A `" << type
+                    << "` neuron requires exactly three parameters."
+                    << std::endl;
           throw std::runtime_error("Robot brain error");
         }
 

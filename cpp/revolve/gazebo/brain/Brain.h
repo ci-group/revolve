@@ -49,10 +49,10 @@ namespace revolve
        * @param Actuation step size in seconds
        */
       public: virtual void update(
-              const std::vector< MotorPtr > &motors,
-              const std::vector< SensorPtr > &sensors,
-              double t,
-              double step) = 0;
+              const std::vector< MotorPtr > &_motors,
+              const std::vector< SensorPtr > &_sensors,
+              double _time,
+              double _step) = 0;
     };
   } /* namespace gazebo */
 } /* namespace revolve */
