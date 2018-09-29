@@ -22,46 +22,42 @@
 
 namespace gz = gazebo;
 
-namespace revolve
+using namespace revolve::gazebo;
+
+/////////////////////////////////////////////////
+BatterySensor::BatterySensor(
+    ::gazebo::physics::ModelPtr _model,
+    std::string _partId,
+    std::string _sensorId)
+    : VirtualSensor(_model, _partId, _sensorId, 1)
 {
-  namespace gazebo
+  // Find the revolve plugin to get the battery data
+  auto modelSdf = _model->GetSDF();
+  if (modelSdf->HasElement("plugin"))
   {
-    BatterySensor::BatterySensor(
-            ::gazebo::physics::ModelPtr model,
-            std::string partId,
-            std::string sensorId)
-            : VirtualSensor(model, partId, sensorId, 1)
+    auto pluginSdf = modelSdf->GetElement("plugin");
+    while (pluginSdf)
     {
-      // Find the revolve plugin to get the battery data
-      auto modelSdf = model->GetSDF();
-      if (modelSdf->HasElement("plugin"))
+      if (pluginSdf->HasElement("rv:robot_config"))
       {
-        auto pluginElem = modelSdf->GetElement("plugin");
-        while (pluginElem)
+        // Found revolve plugin
+        auto settingsSdf = pluginSdf->GetElement("rv:robot_config");
+        if (settingsSdf->HasElement("rv:battery"))
         {
-          if (pluginElem->HasElement("rv:robot_config"))
-          {
-            // Found revolve plugin
-            auto settings = pluginElem->GetElement("rv:robot_config");
-            if (settings->HasElement("rv:battery"))
-            {
-              this->batteryElem = settings->GetElement("rv:battery");
-            }
-
-            break;
-          }
-          pluginElem = pluginElem->GetNextElement("plugin");
+          this->battery_ = settingsSdf->GetElement("rv:battery");
         }
+
+        break;
       }
-    }
-
-///////////////////////////////////
-
-    void BatterySensor::read(double *input)
-    {
-      input[0] =
-              this->batteryElem && this->batteryElem->HasElement("rv:level") ?
-              this->batteryElem->GetElement("rv:level")->Get< double >() : 0.0;
+      pluginSdf = pluginSdf->GetNextElement("plugin");
     }
   }
+}
+
+/////////////////////////////////////////////////
+void BatterySensor::Read(double *_input)
+{
+  _input[0] = this->battery_ and
+             (this->battery_->HasElement("rv:level") ?
+             this->battery_->GetElement("rv:level")->Get< double >() : 0.0);
 }

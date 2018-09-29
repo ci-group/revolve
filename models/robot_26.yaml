@@ -66,8 +66,8 @@ body:
   label: ''
   orientation: 0.0
   params:
-    blue: 0.5953148282533604
-    green: 0.05388661438151121
+    blue: 0.0953148282533604
+    green: 0.95388661438151121
     red: 0.715480953744637
   type: Core
 id: 26

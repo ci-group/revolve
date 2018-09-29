@@ -6,10 +6,10 @@ rvpath = os.path.abspath(os.path.join(here, '..', 'revolve'))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from revolve.util import Supervisor
-from revolve.tol.config import parser
+# from revolve.tol.config import parser
 
 if __name__ == "__main__":
-    args = parser.parse_args()
+    # args = parser.parse_args()
 
     supervisor = Supervisor(
             manager_cmd=os.path.join(here, "single_robot_manager.py"),

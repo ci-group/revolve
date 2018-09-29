@@ -61,16 +61,18 @@ void RobotController::Load(
   node_->Init();
 
   // Subscribe to robot battery state updater
-  batterySetSub_ = node_->Subscribe("~/battery_level/request",
-                                    &RobotController::UpdateBattery,
-                                    this);
-  batterySetPub_ =
-      node_->Advertise< gz::msgs::Response >("~/battery_level/response");
+  batterySetSub_ = node_->Subscribe(
+      "~/battery_level/request",
+      &RobotController::UpdateBattery,
+      this);
+  batterySetPub_ = node_->Advertise< gz::msgs::Response >(
+      "~/battery_level/response");
 
   if (not _sdf->HasElement("rv:robot_config"))
   {
-    std::cerr << "No `rv:robot_config` element found, controller not "
-        "initialized." << std::endl;
+    std::cerr
+        << "No `rv:robot_config` element found, controller not initialized."
+        << std::endl;
     return;
   }
 
@@ -193,8 +195,7 @@ void RobotController::LoadBrain(sdf::ElementPtr sdf)
       this->model->GetName(),
       brain,
       motors_,
-      sensors_
-  ));
+      sensors_));
 }
 
 /////////////////////////////////////////////////
@@ -204,8 +205,7 @@ void RobotController::Startup(
     sdf::ElementPtr /*_sdf*/)
 {
   this->updateConnection_ = gz::event::Events::ConnectWorldUpdateBegin(
-      boost::bind(&RobotController::CheckUpdate, this, _1)
-  );
+      boost::bind(&RobotController::CheckUpdate, this, _1));
 }
 
 /////////////////////////////////////////////////

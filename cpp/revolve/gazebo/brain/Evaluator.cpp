@@ -23,40 +23,38 @@
 
 #include "Evaluator.h"
 
-namespace revolve
+using namespace revolve::gazebo;
+
+/////////////////////////////////////////////////
+Evaluator::Evaluator()
 {
-  namespace gazebo
-  {
-    Evaluator::Evaluator()
-    {
-      this->currentPosition_.Reset();
-      this->previousPosition_.Reset();
-    }
+  this->currentPosition_.Reset();
+  this->previousPosition_.Reset();
+}
 
-    Evaluator::~Evaluator()
-    {
+/////////////////////////////////////////////////
+Evaluator::~Evaluator() = default;
 
-    }
+/////////////////////////////////////////////////
+void Evaluator::Start()
+{
+  this->previousPosition_ = this->currentPosition_;
+}
 
-    void Evaluator::start()
-    {
-      this->previousPosition_ = this->currentPosition_;
-    }
+/////////////////////////////////////////////////
+double Evaluator::Fitness()
+{
+  double dS = std::sqrt(
+      std::pow(this->previousPosition_.Pos().X() -
+               this->currentPosition_.Pos().X(), 2) +
+      std::pow(this->previousPosition_.Pos().Y() -
+               this->currentPosition_.Pos().Y(), 2));
+  this->previousPosition_ = this->currentPosition_;
+  return dS / 30.0;  // dS / RLPower::FREQUENCY_RATE
+}
 
-    double Evaluator::fitness()
-    {
-      double dS = std::sqrt(
-              std::pow(this->previousPosition_.Pos().X()
-                       - this->currentPosition_.Pos().X(), 2) +
-              std::pow(this->previousPosition_.Pos().Y()
-                       - this->currentPosition_.Pos().Y(), 2));
-      this->previousPosition_ = this->currentPosition_;
-      return dS / 30.0;  // dS / RLPower::FREQUENCY_RATE
-    }
-
-    void Evaluator::update(const ignition::math::Pose3d pose)
-    {
-      this->currentPosition_ = pose;
-    }
-  }
+/////////////////////////////////////////////////
+void Evaluator::Update(const ignition::math::Pose3d _pose)
+{
+  this->currentPosition_ = _pose;
 }

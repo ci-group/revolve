@@ -79,7 +79,8 @@ def run():
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
-        print ("Robot fitness is {fitness}".format(fitness=42))
+        print ("Robot fitness is {fitness}".format(
+                fitness=robot_manager.fitness()))
         yield From(trollius.sleep(1.0))
 
 

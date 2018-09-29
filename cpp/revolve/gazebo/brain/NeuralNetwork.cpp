@@ -19,10 +19,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <set>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "NeuralNetwork.h"
@@ -64,17 +66,16 @@ NeuralNetwork::NeuralNetwork(
 
   // Listen to network modification requests
   alterSub_ = node_->Subscribe(
-      "~/" + _modelName + "/modify_neural_network",
-      &NeuralNetwork::modify,
+      "~/" + _modelName + "/modify_neural_network", &NeuralNetwork::Modify,
       this);
 
   // Initialize weights, input and states to zero by default
-  memset(inputWeights_, 0, sizeof(inputWeights_));
-  memset(outputWeights_, 0, sizeof(outputWeights_));
-  memset(hiddenWeights_, 0, sizeof(hiddenWeights_));
-  memset(state1_, 0, sizeof(state1_));
-  memset(state2_, 0, sizeof(state2_));
-  memset(input_, 0, sizeof(input_));
+  std::memset(inputWeights_, 0, sizeof(inputWeights_));
+  std::memset(outputWeights_, 0, sizeof(outputWeights_));
+  std::memset(hiddenWeights_, 0, sizeof(hiddenWeights_));
+  std::memset(state1_, 0, sizeof(state1_));
+  std::memset(state2_, 0, sizeof(state2_));
+  std::memset(input_, 0, sizeof(input_));
 
   // We now setup the neural network and its parameters. The end result
   // of this operation should be that we can iterate/update all sensors in
@@ -173,13 +174,13 @@ NeuralNetwork::NeuralNetwork(
   unsigned int outPos = 0;
   for (const auto &motor : _motors)
   {
-    auto partId = motor->partId();
+    auto partId = motor->PartId();
     if (not outputCountMap.count(partId))
     {
       outputCountMap[partId] = 0;
     }
 
-    for (unsigned int i = 0, l = motor->outputs(); i < l; ++i)
+    for (unsigned int i = 0, l = motor->Outputs(); i < l; ++i)
     {
       std::stringstream neuronId;
       neuronId << partId << "-out-" << outputCountMap[partId];
@@ -207,14 +208,14 @@ NeuralNetwork::NeuralNetwork(
   unsigned int inPos = 0;
   for (const auto &sensor : _sensors)
   {
-    auto partId = sensor->partId();
+    auto partId = sensor->PartId();
 
     if (not inputCountMap.count(partId))
     {
       inputCountMap[partId] = 0;
     }
 
-    for (unsigned int i = 0, l = sensor->inputs(); i < l; ++i)
+    for (unsigned int i = 0, l = sensor->Inputs(); i < l; ++i)
     {
       std::stringstream neuronId;
       neuronId << partId << "-in-" << inputCountMap[partId];
@@ -290,7 +291,7 @@ NeuralNetwork::NeuralNetwork(
     connection->GetAttribute("weight")->Get(weight);
 
     // Use connection helper to set the weight
-    connectionHelper(src, dst, weight);
+    ConnectionHelper(src, dst, weight);
 
     // Load the next connection
     connection = connection->GetNextElement("rv:neural_connection");
@@ -301,7 +302,7 @@ NeuralNetwork::NeuralNetwork(
 NeuralNetwork::~NeuralNetwork() = default;
 
 /////////////////////////////////////////////////
-void NeuralNetwork::step(double _time)
+void NeuralNetwork::Step(double _time)
 {
   unsigned int i = 0;
   unsigned int j = 0;
@@ -401,11 +402,11 @@ void NeuralNetwork::Update(
   unsigned int p = 0;
   for (const auto &sensor : _sensors)
   {
-    sensor->read(&input_[p]);
-    p += sensor->inputs();
+    sensor->Read(&input_[p]);
+    p += sensor->Inputs();
   }
 
-  this->step(_time);
+  this->Step(_time);
 
   // Since the output neurons are the first in the state
   // array we can just use it to update the motors directly.
@@ -415,21 +416,21 @@ void NeuralNetwork::Update(
   p = 0;
   for (const auto &motor: _motors)
   {
-    motor->update(&output[p], _step);
-    p += motor->outputs();
+    motor->Update(&output[p], _step);
+    p += motor->Outputs();
   }
 }
 
 /////////////////////////////////////////////////
-void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
+void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
 {
   boost::mutex::scoped_lock lock(networkMutex_);
 
   unsigned int i, j;
-  for (i = 0; i < (unsigned int)req->remove_hidden_size(); ++i)
+  for (i = 0; i < (unsigned int)_request->remove_hidden_size(); ++i)
   {
     // Find the neuron + position
-    auto id = req->remove_hidden(i);
+    auto id = _request->remove_hidden(i);
     if (not positionMap_.count(id))
     {
       std::cerr << "Unknown neuron ID `" << id << "`" << std::endl;
@@ -464,7 +465,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
 
     // Shift parameters
     s = sizeof(params_[0]);
-    memmove(
+    std::memmove(
         // Position of item to remove
         params_ + (pos + nOutputs_) * MAX_NEURON_PARAMS * s,
 
@@ -493,7 +494,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
 
       for (j = 0; j < size; ++j)
       {
-        memmove(
+        std::memmove(
             // Position of item to remove
             weights + (nOutputs_ + pos) * s,
 
@@ -512,7 +513,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
     // Now the weights where the removed neuron is the source. The block of
     // weights corresponding to the neuron that is being removed needs to be
     // removed by shifting down all items beyond it.
-    memmove(
+    std::memmove(
         // Position of the item to remove
         hiddenWeights_ + pos * MAX_NON_INPUT_NEURONS * s,
 
@@ -523,7 +524,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
         (MAX_HIDDEN_NEURONS - pos - 1) * MAX_NON_INPUT_NEURONS * s);
 
     // Zero the remaining entries at the end
-    memset(hiddenWeights_ + (MAX_HIDDEN_NEURONS - 1) * s,
+    std::memset(hiddenWeights_ + (MAX_HIDDEN_NEURONS - 1) * s,
            0,
            MAX_NON_INPUT_NEURONS * s);
 
@@ -544,7 +545,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
   }
 
   // Add new requested hidden neurons
-  for (i = 0; i < (unsigned int)req->add_hidden_size(); ++i)
+  for (i = 0; i < (unsigned int)_request->add_hidden_size(); ++i)
   {
     if (nHidden_ >= MAX_HIDDEN_NEURONS)
     {
@@ -556,7 +557,7 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
       throw std::runtime_error("Robot brain error");
     }
 
-    auto neuron = req->add_hidden(i);
+    auto neuron = _request->add_hidden(i);
     const auto id = neuron.id();
     if (layerMap_.count(id))
     {
@@ -574,9 +575,9 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
   }
 
   // Update parameters of existing neurons
-  for (i = 0; i < (unsigned int)req->set_parameters_size(); ++i)
+  for (i = 0; i < (unsigned int)_request->set_parameters_size(); ++i)
   {
-    auto neuron = req->set_parameters(i);
+    auto neuron = _request->set_parameters(i);
     const auto id = neuron.id();
     if (not positionMap_.count(id))
     {
@@ -597,44 +598,44 @@ void NeuralNetwork::modify(ConstModifyNeuralNetworkPtr &req)
   }
 
   // Set weights of new or existing connections
-  for (i = 0; i < (unsigned int)req->set_weights_size(); ++i)
+  for (i = 0; i < (unsigned int)_request->set_weights_size(); ++i)
   {
-    auto conn = req->set_weights(i);
+    auto conn = _request->set_weights(i);
     const auto src = conn.src();
     const auto dst = conn.dst();
-    this->connectionHelper(src, dst, conn.weight());
+    this->ConnectionHelper(src, dst, conn.weight());
   }
 }
 
 /////////////////////////////////////////////////
-void NeuralNetwork::connectionHelper(
-    const std::string &src,
-    const std::string &dst,
-    double weight)
+void NeuralNetwork::ConnectionHelper(
+    const std::string &_src,
+    const std::string &_dst,
+    double _weight)
 {
-  if (not layerMap_.count(src))
+  if (not layerMap_.count(_src))
   {
-    std::cerr << "Source neuron '" << src << "' is unknown." << std::endl;
+    std::cerr << "Source neuron '" << _src << "' is unknown." << std::endl;
     throw std::runtime_error("Robot brain error");
   }
 
-  if (not layerMap_.count(dst))
+  if (not layerMap_.count(_dst))
   {
-    std::cerr << "Destination neuron '" << dst << "' is unknown." << std::endl;
+    std::cerr << "Destination neuron '" << _dst << "' is unknown." << std::endl;
     throw std::runtime_error("Robot brain error");
   }
 
-  auto srcLayer = layerMap_[src];
-  auto dstLayer = layerMap_[dst];
+  auto srcLayer = layerMap_[_src];
+  auto dstLayer = layerMap_[_dst];
 
-  unsigned int srcNeuronPos = positionMap_[src],
-      dstNeuronPos = positionMap_[dst];
+  unsigned int srcNeuronPos = positionMap_[_src],
+      dstNeuronPos = positionMap_[_dst];
 
   if ("input" == dstLayer)
   {
     std::cerr
         << "Destination neuron '"
-        << dst
+        << _dst
         << "' is an input neuron."
         << std::endl;
     throw std::runtime_error("Robot brain error");
@@ -649,15 +650,15 @@ void NeuralNetwork::connectionHelper(
   unsigned int idx = (srcNeuronPos * MAX_NON_INPUT_NEURONS) + dstNeuronPos;
   if ("input" == srcLayer)
   {
-    inputWeights_[idx] = weight;
+    inputWeights_[idx] = _weight;
   }
   else if ("output" == srcLayer)
   {
-    outputWeights_[idx] = weight;
+    outputWeights_[idx] = _weight;
   }
   else
   {
-    hiddenWeights_[idx] = weight;
+    hiddenWeights_[idx] = _weight;
   }
 }
 

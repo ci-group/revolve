@@ -35,58 +35,48 @@ namespace revolve
   {
     class VirtualSensor
     {
-      public:
-      VirtualSensor(
-              ::gazebo::physics::ModelPtr model,
-              std::string partId,
-              std::string sensorId,
-              unsigned int inputs);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _sensor Sensor identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _sensorId Sensor identifier
+      /// \param[in] _inputs Number of inputs a sensor has
+      public: VirtualSensor(
+          ::gazebo::physics::ModelPtr _model,
+          std::string _partId,
+          std::string _sensorId,
+          unsigned int _inputs);
 
-      virtual ~VirtualSensor();
+      /// \brief Destructor
+      public: virtual ~VirtualSensor();
 
-      /**
-       * Reads the current value of this sensor into the given network
-       * output array. This should fill the number of input neurons
-       * the sensor specifies to have, i.e. if the sensor specifies 2
-       * input neurons it should fill `input[0]` and `input[1]`
-       */
-      virtual void read(double *input) = 0;
+      /// \brief Reads the current value of this sensor into the given
+      /// network output array. This should fill the number of input neurons
+      /// the sensor specifies to have, i.e. if the sensor specifies 2 input
+      /// neurons it should fill `input[0]` and `input[1]`
+      /// \brief[in,out] _input Input value to write on
+      public: virtual void Read(double *_input) = 0;
 
-      /**
-       * @return The part ID
-       */
-      std::string partId();
+      /// \return The part ID
+      public: std::string PartId();
 
-      /**
-       * @return The ID of the sensor
-       */
-      std::string sensorId();
+      /// \return The ID of the sensor
+      public: std::string SensorId();
 
-      /**
-       * @return Number of inputs this sensor generates
-       */
-      unsigned int inputs();
+      /// \return Number of inputs this sensor generates
+      public: unsigned int Inputs();
 
-      protected:
-      /**
-       * The model this sensor is part of
-       */
-      ::gazebo::physics::ModelPtr model_;
+      /// \brief The model this sensor is part of
+      protected: ::gazebo::physics::ModelPtr model_;
 
-      /**
-       * ID of the body part the motor belongs to
-       */
-      std::string partId_;
+      /// \brief ID of the body part the motor belongs to
+      protected: std::string partId_;
 
-      /**
-       * ID of the sensor
-       */
-      std::string sensorId_;
+      /// \brief ID of the sensor
+      protected: std::string sensorId_;
 
-      /**
-       * Number of inputs this sensor generates
-       */
-      unsigned int inputs_;
+      /// \brief Number of inputs this sensor generates
+      protected: unsigned int inputs_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

@@ -21,37 +21,38 @@
 
 #include <revolve/gazebo/sensors/VirtualSensor.h>
 
-namespace revolve
+using namespace revolve::gazebo;
+
+/////////////////////////////////////////////////
+VirtualSensor::VirtualSensor(
+    ::gazebo::physics::ModelPtr _model,
+    std::string _partId,
+    std::string _sensorId,
+    unsigned int _inputs)
+    : model_(_model)
+    , partId_(_partId)
+    , sensorId_(_sensorId)
+    , inputs_(_inputs)
 {
-  namespace gazebo
-  {
-    VirtualSensor::VirtualSensor(
-            ::gazebo::physics::ModelPtr model,
-            std::string partId,
-            std::string sensorId,
-            unsigned int inputs)
-            : model_(model)
-            , partId_(partId)
-            , sensorId_(sensorId)
-            , inputs_(inputs)
-    {}
+}
 
-    VirtualSensor::~VirtualSensor()
-    {}
+/////////////////////////////////////////////////
+VirtualSensor::~VirtualSensor() = default;
 
-    unsigned int VirtualSensor::inputs()
-    {
-      return inputs_;
-    }
+/////////////////////////////////////////////////
+unsigned int VirtualSensor::Inputs()
+{
+  return this->inputs_;
+}
 
-    std::string VirtualSensor::partId()
-    {
-      return partId_;
-    }
+/////////////////////////////////////////////////
+std::string VirtualSensor::PartId()
+{
+  return this->partId_;
+}
 
-    std::string VirtualSensor::sensorId()
-    {
-      return sensorId_;
-    }
-  } /* namespace gazebo */
-} /* namespace revolve */
+/////////////////////////////////////////////////
+std::string VirtualSensor::SensorId()
+{
+  return this->sensorId_;
+}

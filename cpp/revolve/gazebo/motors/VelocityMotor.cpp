@@ -16,80 +16,76 @@
 *
 */
 
+#include <cmath>
 #include <string>
 
 #include "VelocityMotor.h"
 
 namespace gz = gazebo;
 
-namespace revolve
+using namespace revolve::gazebo;
+
+VelocityMotor::VelocityMotor(
+    ::gazebo::physics::ModelPtr model,
+    std::string partId,
+    std::string motorId,
+    sdf::ElementPtr motor)
+    : JointMotor(model, partId, motorId, motor, 1)
+    , velocityTarget_(0)
+    , noise_(0)
 {
-  namespace gazebo
+  if (motor->HasElement("rv:pid"))
   {
-    VelocityMotor::VelocityMotor(
-            ::gazebo::physics::ModelPtr model,
-            std::string partId,
-            std::string motorId,
-            sdf::ElementPtr motor)
-            :
-            JointMotor(model, partId, motorId, motor, 1), velocityTarget_(0)
-            , noise_(0)
-    {
-      if (motor->HasElement("rv:pid"))
-      {
-        auto pidElem = motor->GetElement("rv:pid");
-        pid_ = Motor::createPid(pidElem);
-      }
+    auto pidElem = motor->GetElement("rv:pid");
+    this->pid_ = Motor::CreatePid(pidElem);
+  }
 
-      if (!motor->HasAttribute("min_velocity") || !motor->HasAttribute(
-              "max_velocity"))
-      {
-        std::cerr << "Missing servo min/max velocity parameters, "
-                "velocity will be zero." << std::endl;
-        minVelocity_ = maxVelocity_ = 0;
-      }
-      else
-      {
-        motor->GetAttribute("min_velocity")->Get(minVelocity_);
-        motor->GetAttribute("max_velocity")->Get(maxVelocity_);
-      }
+  if (not motor->HasAttribute("min_velocity") or
+      not motor->HasAttribute("max_velocity"))
+  {
+    std::cerr << "Missing servo min/max velocity parameters, "
+        "velocity will be zero." << std::endl;
+    this->minVelocity_ = this->maxVelocity_ = 0;
+  }
+  else
+  {
+    motor->GetAttribute("min_velocity")->Get(this->minVelocity_);
+    motor->GetAttribute("max_velocity")->Get(this->maxVelocity_);
+  }
 
-      // I've asked this question at the Gazebo forums:
-      // http://answers.gazebosim.org/question/9071/joint-target-velocity-with-maximum-force/
-      // Until it is answered I'm resorting to calling ODE functions directly
-      // to get this to work. This will result in some deprecation warnings.
-      // The update connection is no longer needed though.;
-      double maxEffort = joint_->GetEffortLimit(0);
-      joint_->SetParam("fmax", 0, maxEffort);
-    }
+  // I've asked this question at the Gazebo forums: https://tinyurl.com/y7he7y8l
+  // Until it is answered I'm resorting to calling ODE functions directly
+  // to get this to work. This will result in some deprecation warnings.
+  // The update connection is no longer needed though.;
+  double maxEffort = this->joint_->GetEffortLimit(0);
+  this->joint_->SetParam("fmax", 0, maxEffort);
+}
 
-    VelocityMotor::~VelocityMotor()
-    {}
+VelocityMotor::~VelocityMotor()
+{
+}
 
-    void VelocityMotor::update(
-            double *outputs,
-            double /*step*/)
-    {
-      // Just one network output, which is the first
-      double output = outputs[0];
+void VelocityMotor::Update(
+    double *outputs,
+    double /*step*/)
+{
+  // Just one network output, which is the first
+  double output = outputs[0];
 
-      // Motor noise in range +/- noiseLevel * actualValue
-      output += ((2 * gz::math::Rand::GetDblUniform() * noise_) -
-                 noise_) * output;
+  // Motor noise in range +/- noiseLevel * actualValue
+  output += ((2 * gz::math::Rand::GetDblUniform() * this->noise_) -
+             this->noise_) *
+            output;
 
-      // Truncate output to [0, 1]
-      output = fmax(fmin(output, 1), 0);
-      velocityTarget_ = minVelocity_ + output * (maxVelocity_ - minVelocity_);
-      DoUpdate(joint_->GetWorld()->GetSimTime());
-    }
+  // Truncate output to [0, 1]
+  output = std::fmax(std::fmin(output, 1), 0);
+  this->velocityTarget_ = minVelocity_ + output * (maxVelocity_ - minVelocity_);
+  this->DoUpdate(this->joint_->GetWorld()->GetSimTime());
+}
 
-    void VelocityMotor::DoUpdate(const ::gazebo::common::Time &/*simTime*/)
-    {
-      // I'm caving for now and am setting ODE parameters directly.
-      // See http://answers.gazebosim.org/question/9071/joint-target-velocity-with-maximum-force/
-      joint_->SetParam("vel", 0, velocityTarget_);
-    }
-  }  // namespace gazebo
-}  // namespace revolve
-
-
+void VelocityMotor::DoUpdate(const ::gazebo::common::Time &/*simTime*/)
+{
+  // I'm caving for now and am setting ODE parameters directly.
+  // See https://tinyurl.com/y7he7y8l
+  this->joint_->SetParam("vel", 0, this->velocityTarget_);
+}

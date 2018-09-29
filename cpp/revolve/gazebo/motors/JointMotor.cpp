@@ -23,40 +23,33 @@
 
 namespace gz = gazebo;
 
-namespace revolve
+using namespace revolve::gazebo;
+
+/////////////////////////////////////////////////
+JointMotor::JointMotor(
+    ::gazebo::physics::ModelPtr _model,
+    std::string _partId,
+    std::string _motorId,
+    sdf::ElementPtr _motor,
+    unsigned int _outputs)
+    : Motor(_model, _partId, _motorId, _outputs)
 {
-  namespace gazebo
+  if (not _motor->HasAttribute("joint"))
   {
-    JointMotor::JointMotor(
-            gz::physics::ModelPtr model,
-            std::string partId,
-            std::string motorId,
-            sdf::ElementPtr motor,
-            unsigned int outputs)
-            : Motor(model, partId, motorId, outputs)
-    {
-      if (!motor->HasAttribute("joint"))
-      {
-        std::cerr << "JointMotor requires a `joint` attribute." << std::endl;
-        throw std::runtime_error("Motor error");
-      }
+    std::cerr << "JointMotor requires a `joint` attribute." << std::endl;
+    throw std::runtime_error("Motor error");
+  }
 
-      auto jointName = motor->GetAttribute("joint")->GetAsString();
-      joint_ = model->GetJoint(jointName);
-      if (!joint_)
-      {
-        std::cerr
-                << "Cannot locate joint motor `"
-                << jointName
-                << "`"
-                << std::endl;
-        throw std::runtime_error("Motor error");
-      }
+  auto jointName = _motor->GetAttribute("joint")->GetAsString();
+  this->joint_ = _model->GetJoint(jointName);
+  if (not this->joint_)
+  {
+    std::cerr << "Cannot locate joint motor `" << jointName << "`" << std::endl;
+    throw std::runtime_error("Motor error");
+  }
 
-      jointName_ = joint_->GetScopedName();
-    }
+  this->jointName_ = this->joint_->GetScopedName();
+}
 
-    JointMotor::~JointMotor()
-    {}
-  } /* namespace gazebo */
-} /* namespace revolve */
+/////////////////////////////////////////////////
+JointMotor::~JointMotor() = default;

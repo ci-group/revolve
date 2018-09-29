@@ -31,27 +31,27 @@ namespace revolve
     class Sensor
             : public VirtualSensor
     {
-      public:
-      Sensor(
-              ::gazebo::physics::ModelPtr model,
-              sdf::ElementPtr sensor,
-              std::string partId,
-              std::string sensorId,
-              unsigned int inputs);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _sensor Sensor identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _sensorId Sensor identifier
+      /// \param[in] _inputs Number of inputs a sensor has
+      public: Sensor(
+          ::gazebo::physics::ModelPtr _model,
+          sdf::ElementPtr _sensor,
+          std::string _partId,
+          std::string _sensorId,
+          unsigned int _inputs);
 
-      virtual ~Sensor();
+      /// \brief Destructor
+      public: virtual ~Sensor();
 
-      /**
-       * @return The attached Gazebo sensor
-       */
-      ::gazebo::sensors::SensorPtr gzSensor();
+      /// \return The attached Gazebo sensor
+      public: ::gazebo::sensors::SensorPtr GzSensor();
 
-      protected:
-      /**
-       * The actual sensor object this sensor is receiving
-       * input from.
-       */
-      ::gazebo::sensors::SensorPtr sensor_;
+      /// \brief The actual sensor object this sensor is receiving input from
+      protected: ::gazebo::sensors::SensorPtr sensor_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

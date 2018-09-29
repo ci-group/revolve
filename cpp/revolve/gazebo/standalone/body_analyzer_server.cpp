@@ -26,13 +26,13 @@
 #include "gazebo/common/Console.hh"
 #include "gazebo/Server.hh"
 
-//////////////////////////////////////////////////
+/////////////////////////////////////////////////
 int main(
-        int argc,
-        char **argv)
+    int argc,
+    char **argv)
 {
   char *analyzerLoaded = getenv("ANALYZER_TOOL");
-  if (!analyzerLoaded)
+  if (not analyzerLoaded)
   {
     std::cerr << "Please run using tools/run-analyzer.sh" << std::endl;
     return -1;
@@ -49,10 +49,10 @@ int main(
     gzLogInit("server-analyzer-", "gzserver_analyzer.log");
 
     // Initialize the data logger. This will log state information.
-//  gazebo::util::LogRecord::Instance()->Init("gzserver");
+    //  gazebo::util::LogRecord::Instance()->Init("gzserver");
 
     server = new gazebo::Server();
-    if (!server->ParseArgs(argc, argv))
+    if (not server->ParseArgs(argc, argv))
     {
       return -1;
     }

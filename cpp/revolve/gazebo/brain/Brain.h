@@ -37,10 +37,10 @@ namespace revolve
     class Brain
     {
       /// \brief Constructor
-      public: explicit Brain() {};
+      public: explicit Brain() {}
 
       /// \brief Destructor
-      public: virtual ~Brain() {};
+      public: virtual ~Brain() {}
 
       /// \brief Update step called for the brain.
       /// \param[in] _motors List of motors

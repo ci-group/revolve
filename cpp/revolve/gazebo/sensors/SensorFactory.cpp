@@ -24,77 +24,76 @@
 
 namespace gz = gazebo;
 
-namespace revolve
+using namespace revolve::gazebo;
+
+/////////////////////////////////////////////////
+SensorFactory::SensorFactory(gz::physics::ModelPtr _model)
+    : model_(_model)
 {
-  namespace gazebo
+}
+
+/////////////////////////////////////////////////
+SensorFactory::~SensorFactory() = default;
+
+/////////////////////////////////////////////////
+SensorPtr SensorFactory::Sensor(
+    sdf::ElementPtr _sensor,
+    const std::string &_type,
+    const std::string &_partId,
+    const std::string &_sensorId)
+{
+  SensorPtr out;
+  if ("imu" == _type)
   {
-    SensorFactory::SensorFactory(gz::physics::ModelPtr _model)
-            : model_(_model)
-    {}
+    out.reset(new ImuSensor(this->model_, _sensor, _partId, _sensorId));
+  }
+  else if ("light" == _type)
+  {
+    out.reset(new LightSensor(this->model_, _sensor, _partId, _sensorId));
+  }
+  else if ("touch" == _type)
+  {
+    out.reset(new TouchSensor(this->model_, _sensor, _partId, _sensorId));
+  }
+  else if ("basic_battery" == _type)
+  {
+    out.reset(new BatterySensor(this->model_, _partId, _sensorId));
+  }
+  else if ("point_intensity" == _type)
+  {
+    out.reset(new PointIntensitySensor(_sensor,
+                                       this->model_,
+                                       _partId,
+                                       _sensorId));
+  }
 
-    SensorFactory::~SensorFactory() = default;
+  return out;
+}
 
-    SensorPtr SensorFactory::Sensor(
-        sdf::ElementPtr _sensor,
-        const std::string &_type,
-        const std::string &_partId,
-        const std::string &_sensorId)
-    {
-      SensorPtr out;
-      if ("imu" == _type)
-      {
-        out.reset(new ImuSensor(this->model_, _sensor, _partId, _sensorId));
-      }
-      else if ("light" == _type)
-      {
-        out.reset(new LightSensor(this->model_, _sensor, _partId, _sensorId));
-      }
-      else if ("touch" == _type)
-      {
-        out.reset(new TouchSensor(this->model_, _sensor, _partId, _sensorId));
-      }
-      else if ("basic_battery" == _type)
-      {
-        out.reset(new BatterySensor(this->model_, _partId, _sensorId));
-      }
-      else if ("point_intensity" == _type)
-      {
-        out.reset(new PointIntensitySensor(
-            _sensor,
-            this->model_,
-            _partId,
-            _sensorId));
-      }
+/////////////////////////////////////////////////
+SensorPtr SensorFactory::Create(sdf::ElementPtr _sensor)
+{
+  auto typeParam = _sensor->GetAttribute("type");
+  auto partIdParam = _sensor->GetAttribute("part_id");
+  auto idParam = _sensor->GetAttribute("id");
 
-      return out;
-    }
+  if (not typeParam or not partIdParam or not idParam)
+  {
+    std::cerr << "Sensor is missing required attributes (`id`, `type` or "
+        "`part_id`)." << std::endl;
+    throw std::runtime_error("Sensor error");
+  }
 
-    SensorPtr SensorFactory::Create(sdf::ElementPtr sensor)
-    {
-      auto typeParam = sensor->GetAttribute("type");
-      auto partIdParam = sensor->GetAttribute("part_id");
-      auto idParam = sensor->GetAttribute("id");
+  auto partId = partIdParam->GetAsString();
+  auto type = typeParam->GetAsString();
+  auto id = idParam->GetAsString();
 
-      if (not typeParam or not partIdParam or not idParam)
-      {
-        std::cerr << "Sensor is missing required attributes (`id`, `type` or "
-                "`part_id`)." << std::endl;
-        throw std::runtime_error("Sensor error");
-      }
+  SensorPtr out = this->Sensor(_sensor, type, partId, id);
+  if (not out)
+  {
+    std::cerr << "Sensor type '" << type << "' is not supported." << std::endl;
+    throw std::runtime_error("Sensor error");
+  }
 
-      auto partId = partIdParam->GetAsString();
-      auto type = typeParam->GetAsString();
-      auto id = idParam->GetAsString();
-
-      SensorPtr out = this->Sensor(sensor, type, partId, id);
-      if (not out)
-      {
-        std::cerr << "Sensor type '" << type
-                  << "' is not supported." << std::endl;
-        throw std::runtime_error("Sensor error");
-      }
-
-      return out;
-    }
-  } /* namespace gazebo */
-} /* namespace tol_robogen */
+  return out;
+}

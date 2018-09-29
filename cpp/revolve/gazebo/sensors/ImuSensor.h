@@ -32,38 +32,37 @@ namespace revolve
     class ImuSensor
             : public Sensor
     {
-      public:
-      ImuSensor(
-              ::gazebo::physics::ModelPtr model,
-              sdf::ElementPtr sensor,
-              std::string partId,
-              std::string sensorId);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _sensor Sensor identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _sensorId Sensor identifier
+      public: ImuSensor(
+          ::gazebo::physics::ModelPtr _model,
+          sdf::ElementPtr _sensor,
+          std::string _partId,
+          std::string _sensorId);
 
-      virtual ~ImuSensor();
+      /// \brief Destructor
+      public: virtual ~ImuSensor();
 
-      /**
-       * Read the value of this IMU sensor into the
-       * input array.
-       */
-      virtual void read(double *input);
+      /// \brief Read the value of this IMU sensor into the
+      /// \param[in] _input: array.
+      /// \brief[in,out] _input Input value to write on
+      public: virtual void Read(double *_input);
 
-      /**
-       * Called when the IMU sensor is updated
-       */
-      void OnUpdate();
+      /// \brief  Called when the IMU sensor is updated
+      public: void OnUpdate();
 
-      private:
-      /**
-       * Sensor dynamically casted to correct type,
-       * so it needs to happen only once.
-       */
-      ::gazebo::sensors::ImuSensorPtr castSensor_;
+      /// \brief Sensor dynamically casted to correct type, so it needs to
+      /// happen only once.
+      private: ::gazebo::sensors::ImuSensorPtr castSensor_;
 
-      // Pointer to the update connection
-      ::gazebo::event::ConnectionPtr updateConnection_;
+      /// \brief Pointer to the update connection
+      private: ::gazebo::event::ConnectionPtr updateConnection_;
 
-      // Last read sensor values
-      double lastValues_[6];
+      /// \brief Last read sensor values
+      private: double lastValues_[6];
     };
   } /* namespace gazebo */
 } /* namespace revolve */

@@ -20,6 +20,8 @@
 #ifndef REVOLVE_GZ_MODEL_TYPES_H_
 #define REVOLVE_GZ_MODEL_TYPES_H_
 
+#include <vector>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 

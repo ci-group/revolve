@@ -33,9 +33,7 @@ MotorFactory::MotorFactory(::gazebo::physics::ModelPtr _model)
 }
 
 /////////////////////////////////////////////////
-MotorFactory::~MotorFactory()
-{
-}
+MotorFactory::~MotorFactory() = default;
 
 /////////////////////////////////////////////////
 MotorPtr MotorFactory::Motor(

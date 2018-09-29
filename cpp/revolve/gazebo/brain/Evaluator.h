@@ -37,13 +37,15 @@ namespace revolve
       public: ~Evaluator();
 
       /// \brief Initialisation method
-      public: void start();
+      public: void Start();
 
       /// \brief Retrieve the fitness
-      public: double fitness();
+      /// \return A fitness value according to a given formula
+      public: double Fitness();
 
       /// \brief Update the position
-      public: void update(const ignition::math::Pose3d pose);
+      /// \param[in] _pose Current position of a robot
+      public: void Update(const ignition::math::Pose3d _pose);
 
       /// \brief Previous position of a robot
       private: ignition::math::Pose3d previousPosition_;

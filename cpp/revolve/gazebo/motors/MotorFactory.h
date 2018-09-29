@@ -33,27 +33,31 @@ namespace revolve
   {
     class MotorFactory
     {
-      public:
-      explicit MotorFactory(::gazebo::physics::ModelPtr _model);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _motorId Motor identifier
+      /// \brief[in] _outputs Number of motor outputs
+      public: explicit MotorFactory(::gazebo::physics::ModelPtr _model);
 
-      virtual ~MotorFactory();
+      /// \brief Destructor
+      public: virtual ~MotorFactory();
 
       /// \brief Returns a motor pointer instance from a motor element, part
       /// ID and type. This is the convenience wrapper over `create` that has
       /// required attributes already checked, usually you should override
       /// this when adding new motor types.
-      virtual MotorPtr Motor(
+      public: virtual MotorPtr Motor(
           sdf::ElementPtr _motor,
           const std::string &_type,
           const std::string &_motorId,
           const std::string &_partId);
 
       /// \brief Creates a motor for the given model for the given SDF element.
-      virtual MotorPtr Create(sdf::ElementPtr _motor);
+      public: virtual MotorPtr Create(sdf::ElementPtr _motor);
 
-      protected:
       /// \brief Internal reference to the robot model
-      ::gazebo::physics::ModelPtr model_;
+      protected: ::gazebo::physics::ModelPtr model_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */
