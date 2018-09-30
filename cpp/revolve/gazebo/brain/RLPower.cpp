@@ -63,7 +63,7 @@ RLPower::RLPower(
   this->numInterpolationPoints_ = 100;
 //  this->maxEvaluations_ = brain.max_evaluations;
 //  this->maxRankedPolicies_ = brain.max_ranked_policies;
-//  this->sigma_ = brain.noise_sigma;
+  this->sigma_ = 0.8;
 //  this->tau_ = brain.sigma_tau_correction;
   this->sourceYSize_ = 3;
 //  this->stepRate_ = brain.update_step;
