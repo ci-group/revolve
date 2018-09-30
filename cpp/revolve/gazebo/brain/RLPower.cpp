@@ -51,7 +51,7 @@ RLPower::RLPower(
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
 
-  std::cout << _node->GetElement() << std::endl;
+  std::cout << _node << std::endl;
   // Read out brain configuration attributes
 //  this->algorithmType_ = brain_.algorithm_type;
 //  std::cout << std::endl << "Initialising RLPower, type " << algorithmType_
