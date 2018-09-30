@@ -42,8 +42,8 @@ namespace revolve
     class RLPower
             : public Brain
     {
-//      typedef const std::shared_ptr<revolve::msgs::ModifyPolicy const>
-//          ConstModifyPolicyPtr;
+      typedef const std::shared_ptr<revolve::msgs::ModifyPolicy const>
+          ConstModifyPolicyPtr;
 
       static const size_t MAX_EVALUATIONS;
       static const size_t MAX_RANKED_POLICIES;
@@ -110,20 +110,23 @@ namespace revolve
         std::string policyLoadPath;
       };
 
+      /// \brief Request handler to modify the neural network
+      protected: void Modify(ConstModifyPolicyPtr &req);
+
+      /// \brief Transport node
+      protected: ::gazebo::transport::NodePtr node_;
+
       /// \brief Mutex for stepping / updating the network
-      protected: boost::mutex networkMutex_;
+      protected: boost::mutex rlpowerMutex_;
 
       /// \brief Network modification subscriber
       protected: ::gazebo::transport::SubscriberPtr alterSub_;
 
-      /// \brief Request handler to modify the neural network
-//      protected: void Modify(ConstModifyPolicyPtr &req);
-
       /// \brief Generate new policy
-      private: void InitialisePolicy();
+      private: void InitialisePolicy(size_t _numSplines);
 
       /// \brief Evaluate the current policy and generate new
-      private: void UpdatePolicy();
+      private: void UpdatePolicy(const size_t _numSplines);
 
       /// \brief  Load saved policy from JSON file
       private: void LoadPolicy(std::string const &policyPath);
@@ -135,6 +138,7 @@ namespace revolve
       /// \param[out] _destinationY: set of interpolated control points
       /// (default 100)
       private: void InterpolateCubic(
+          const size_t _numSplines,
           Policy *const _sourceY,
           Policy *_destinationY);
 
@@ -150,8 +154,9 @@ namespace revolve
       /// interpolation
       /// Writes the output in output_vector
       private: void Output(
-          const double time,
-          double *output_vector);
+          const size_t _numSplines,
+          const double _time,
+          double *_output);
 
       /// \brief Retrieves fitness for the current policy
       /// \return
@@ -223,9 +228,6 @@ namespace revolve
       /// \brief Container for best ranked policies
       private: std::map< double, PolicyPtr, std::greater< double>>
           rankedPolicies_;
-
-      /// \brief Transport node
-      private: ::gazebo::transport::NodePtr node_;
     };
   }
 }

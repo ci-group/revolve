@@ -51,25 +51,29 @@ RLPower::RLPower(
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
 
-  std::cout << _node << std::endl;
-  // Read out brain configuration attributes
+//  // Listen to network modification requests
+//  this->alterSub_ = this->node_->Subscribe(
+//      "~/" + _modelName + "/modify_spline_policy", &RLPower::Modify,
+//      this);
+
 //  this->algorithmType_ = brain_.algorithm_type;
 //  std::cout << std::endl << "Initialising RLPower, type " << algorithmType_
 //            << std::endl << std::endl;
 //  this->evaluationRate_ = brain.evaluation_rate;
-//  this->numInterpolationPoints_ = brain.interpolation_spline_size;
+  this->numInterpolationPoints_ = 100;
 //  this->maxEvaluations_ = brain.max_evaluations;
 //  this->maxRankedPolicies_ = brain.max_ranked_policies;
 //  this->sigma_ = brain.noise_sigma;
 //  this->tau_ = brain.sigma_tau_correction;
-//  this->sourceYSize_ = brain.source_y_size;
+  this->sourceYSize_ = 3;
 //  this->stepRate_ = brain.update_step;
 
 //  this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
-//
-//  // Generate first random policy
-//  this->InitialisePolicy();
-//
+
+  // Generate first random policy
+  auto numMotors = _motors.size();
+  this->InitialisePolicy(numMotors);
+
 //  // Start the evaluator
 //  evaluator_->Start();
 }
@@ -84,7 +88,7 @@ void RLPower::Update(
     double _time,
     double _step)
 {
-  //        boost::mutex::scoped_lock lock(networkMutex_);
+//  boost::mutex::scoped_lock lock(this->rlpowerMutex_);
   if (this->startTime_ < 0)
   {
     this->startTime_ = _time;
@@ -99,23 +103,24 @@ void RLPower::Update(
 //    evaluator_->Start();
 //  }
 
-//  // generate outputs
-//  auto *outputVector = new double[this->numActuators_];
-//  this->Output(_time, outputVector);
-//
-//  // Send new signals to the actuators
-//  size_t p = 0;
-//  for (const auto &motor: _motors)
-//  {
-//    motor->Update(&outputVector[p], _step);
-//    p += motor->Outputs();
-//  }
-//
-//  delete[] outputVector;
+  // generate outputs
+  auto numMotors = _motors.size();
+  auto *output = new double[numMotors];
+  this->Output(numMotors, _time, output);
+
+  // Send new signals to the actuators
+  size_t p = 0;
+  for (const auto &motor: _motors)
+  {
+    motor->Update(&output[p], _step);
+    p += motor->Outputs();
+  }
+
+  delete[] output;
 }
 
 /////////////////////////////////////////////////
-void RLPower::InitialisePolicy()
+void RLPower::InitialisePolicy(size_t _numSplines)
 {
   std::random_device rd;
   std::mt19937 mt(rd());
@@ -124,10 +129,10 @@ void RLPower::InitialisePolicy()
   // Init first random controller
   if (not this->currentPolicy_)
   {
-    this->currentPolicy_ = std::make_shared< Policy >(this->numActuators_);
+    this->currentPolicy_ = std::make_shared< Policy >(_numSplines);
   }
 
-  for (size_t i = 0; i < this->numActuators_; i++)
+  for (size_t i = 0; i < _numSplines; i++)
   {
     Spline spline(this->sourceYSize_);
     for (size_t j = 0; j < this->sourceYSize_; ++j)
@@ -140,21 +145,23 @@ void RLPower::InitialisePolicy()
   // Init of empty cache
   if (not this->interpolationCache_)
   {
-    this->interpolationCache_ = std::make_shared< Policy >(this->numActuators_);
+    this->interpolationCache_ = std::make_shared< Policy >(_numSplines);
   }
 
-  for (size_t i = 0; i < this->numActuators_; i++)
+  for (size_t i = 0; i < _numSplines; i++)
   {
     this->interpolationCache_->at(i).resize(this->numInterpolationPoints_, 0);
   }
 
   this->InterpolateCubic(
+      _numSplines,
       this->currentPolicy_.get(),
       this->interpolationCache_.get());
 }
 
 /////////////////////////////////////////////////
 void RLPower::InterpolateCubic(
+    const size_t _numSplines,
     Policy *const _sourceY,
     Policy *_destinationY)
 {
@@ -184,7 +191,7 @@ void RLPower::InterpolateCubic(
     xNew[i] = step_size * i;
   }
 
-  for (size_t j = 0; j < this->numActuators_; j++)
+  for (size_t j = 0; j < _numSplines; j++)
   {
     Spline &sourceYLine = _sourceY->at(j);
     Spline &destinationYLine = _destinationY->at(j);
@@ -216,14 +223,14 @@ void RLPower::InterpolateCubic(
 }
 
 /////////////////////////////////////////////////
-void RLPower::UpdatePolicy()
+void RLPower::UpdatePolicy(const size_t _numSplines)
 {
   // Calculate fitness for current policy
   double curr_fitness = this->Fitness();
 
   // Insert ranked policy in list
-  PolicyPtr policy_copy = std::make_shared< Policy >(this->numActuators_);
-  for (size_t i = 0; i < this->numActuators_; i++)
+  PolicyPtr policy_copy = std::make_shared< Policy >(_numSplines);
+  for (size_t i = 0; i < _numSplines; i++)
   {
     Spline &spline = this->currentPolicy_->at(i);
     policy_copy->at(i) = Spline(spline.begin(),
@@ -301,7 +308,7 @@ void RLPower::UpdatePolicy()
   {
     // Generate random policy if number of stored policies is less then
     // `maxRankedPolicies_`
-    for (size_t i = 0; i < this->numActuators_; i++)
+    for (size_t i = 0; i < _numSplines; i++)
     {
       for (size_t j = 0; j < this->sourceYSize_; j++)
       {
@@ -333,7 +340,7 @@ void RLPower::UpdatePolicy()
       total_fitness = fitness1 + fitness2;
 
       // For each spline
-      for (size_t i = 0; i < this->numActuators_; i++)
+      for (size_t i = 0; i < _numSplines; i++)
       {
         // And for each control point
         for (size_t j = 0; j < this->sourceYSize_; j++)
@@ -369,7 +376,7 @@ void RLPower::UpdatePolicy()
 
       // For each spline
       // TODO: Verify that this should is correct formula
-      for (size_t i = 0; i < this->numActuators_; i++)
+      for (size_t i = 0; i < _numSplines; i++)
       {
         // And for each control point
         for (size_t j = 0; j < this->sourceYSize_; j++)
@@ -398,9 +405,9 @@ void RLPower::UpdatePolicy()
   }
 
   // cache update
-  this->InterpolateCubic(
-      this->currentPolicy_.get(),
-      this->interpolationCache_.get());
+  this->InterpolateCubic(0,
+                         this->currentPolicy_.get(),
+                         this->interpolationCache_.get());
 }
 
 /////////////////////////////////////////////////
@@ -423,7 +430,7 @@ void RLPower::IncreaseSplinePoints()
     spline.resize(this->sourceYSize_);
   }
 
-  this->InterpolateCubic(&policy_copy, this->currentPolicy_.get());
+  this->InterpolateCubic(0, &policy_copy, this->currentPolicy_.get());
 
   for (auto &it : this->rankedPolicies_)
   {
@@ -435,7 +442,7 @@ void RLPower::IncreaseSplinePoints()
       policy_copy[j] = Spline(spline.begin(), spline.end());
       spline.resize(this->sourceYSize_);
     }
-    this->InterpolateCubic(&policy_copy, policy.get());
+    this->InterpolateCubic(0, &policy_copy, policy.get());
   }
 }
 
@@ -478,4 +485,45 @@ const double RLPower::SIGMA_DECAY_SQUARED = 0.98;
 double RLPower::Fitness()
 {
   return this->evaluator_->Fitness();
+}
+
+void RLPower::Modify(ConstModifyPolicyPtr &req)
+{
+  boost::mutex::scoped_lock lock(this->rlpowerMutex_);
+
+  // TODO: Implement the rest of the method
+}
+
+void RLPower::Output(
+    const size_t _numSplines,
+    const double _time,
+    double *_output)
+{
+  if (this->cycleStartTime_ < 0)
+  {
+    this->cycleStartTime_ = _time;
+  }
+
+  // get correct X value (between 0 and CYCLE_LENGTH)
+  double x = _time - this->cycleStartTime_;
+  while (x >= RLPower::CYCLE_LENGTH)
+  {
+    this->cycleStartTime_ += RLPower::CYCLE_LENGTH;
+    x = _time - this->cycleStartTime_;
+  }
+
+  // adjust X on the cache coordinate space
+  x = (x / CYCLE_LENGTH) * this->numInterpolationPoints_;
+  // generate previous and next values
+  auto x_a = ((int)x) % this->numInterpolationPoints_;
+  auto x_b = (x_a + 1) % this->numInterpolationPoints_;
+
+  // linear interpolation for every actuator
+  for (size_t i = 0; i < _numSplines; i++)
+  {
+    double y_a = this->interpolationCache_->at(i)[x_a];
+    double y_b = this->interpolationCache_->at(i)[x_b];
+
+    _output[i] = y_a + ((y_b - y_a) * (x - x_a) / (x_b - x_a));
+  }
 }
