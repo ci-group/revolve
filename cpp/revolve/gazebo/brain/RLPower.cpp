@@ -56,26 +56,24 @@ RLPower::RLPower(
 //      "~/" + _modelName + "/modify_spline_policy", &RLPower::Modify,
 //      this);
 
-//  this->algorithmType_ = brain_.algorithm_type;
-//  std::cout << std::endl << "Initialising RLPower, type " << algorithmType_
-//            << std::endl << std::endl;
-//  this->evaluationRate_ = brain.evaluation_rate;
+  this->algorithmType_ = "D";
+  this->evaluationRate_ = 30.0;
   this->numInterpolationPoints_ = 100;
-//  this->maxEvaluations_ = brain.max_evaluations;
-//  this->maxRankedPolicies_ = brain.max_ranked_policies;
+  this->maxEvaluations_ = 1000;
+  this->maxRankedPolicies_ = 10;
   this->sigma_ = 0.8;
-//  this->tau_ = brain.sigma_tau_correction;
+  this->tau_ = 0.2;
   this->sourceYSize_ = 3;
 //  this->stepRate_ = brain.update_step;
 
-//  this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
+  this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
 
   // Generate first random policy
   auto numMotors = _motors.size();
   this->InitialisePolicy(numMotors);
 
-//  // Start the evaluator
-//  evaluator_->Start();
+  // Start the evaluator
+//  this->evaluator_->Start();
 }
 
 /////////////////////////////////////////////////
@@ -89,22 +87,24 @@ void RLPower::Update(
     double _step)
 {
 //  boost::mutex::scoped_lock lock(this->rlpowerMutex_);
+
   if (this->startTime_ < 0)
   {
     this->startTime_ = _time;
   }
 
-//  // Evaluate policy on certain time limit
-//  if ((_time - this->startTime_) > this->evaluationRate_ and
-//      this->generationCounter_ < this->maxEvaluations_)
-//  {
-//    this->UpdatePolicy();
-//    this->startTime_ = _time;
+  auto numMotors = _motors.size();
+
+  // Evaluate policy on certain time limit
+  if ((_time - this->startTime_) > this->evaluationRate_ and
+      this->generationCounter_ < this->maxEvaluations_)
+  {
+    this->UpdatePolicy(numMotors);
+    this->startTime_ = _time;
 //    evaluator_->Start();
-//  }
+  }
 
   // generate outputs
-  auto numMotors = _motors.size();
   auto *output = new double[numMotors];
   this->Output(numMotors, _time, output);
 
@@ -229,16 +229,15 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   double curr_fitness = this->Fitness();
 
   // Insert ranked policy in list
-  PolicyPtr policy_copy = std::make_shared< Policy >(_numSplines);
+  PolicyPtr backupPolicy = std::make_shared< Policy >(_numSplines);
   for (size_t i = 0; i < _numSplines; i++)
   {
     Spline &spline = this->currentPolicy_->at(i);
-    policy_copy->at(i) = Spline(spline.begin(),
-                                spline.end());
+    backupPolicy->at(i) = Spline(spline.begin(), spline.end());
 
     spline.resize(this->sourceYSize_);
   }
-  this->rankedPolicies_.insert({curr_fitness, policy_copy});
+  this->rankedPolicies_.insert({curr_fitness, backupPolicy});
 
   // Remove worst policies
   while (this->rankedPolicies_.size() > this->maxRankedPolicies_)
@@ -247,19 +246,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     this->rankedPolicies_.erase(last);
   }
 
-  // Print-out current status to the terminal
-  std::cout << this->robotName_ << ":" << this->generationCounter_
-            << " ranked_policies_:";
-  for (auto const &it : this->rankedPolicies_)
-  {
-    double fitness = it.first;
-    std::cout << " " << fitness;
-  }
-  std::cout << std::endl;
-
-  // Write fitness and genomes log to output files
-//  this->writeCurrent();
-//  this->writeElite();
+  // TODO: Record fitnesses and policies
 
   // Update generation counter and check is it finished
   this->generationCounter_++;
@@ -271,7 +258,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   // Increase spline points if it is a time
   if (this->generationCounter_ % this->stepRate_ == 0)
   {
-    this->IncreaseSplinePoints();
+    this->IncreaseSplinePoints(_numSplines);
   }
 
   /// Actual policy generation
@@ -319,7 +306,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   else
   {
     // Generate new policy using weighted crossover operator
-    double total_fitness = 0;
+    double totalFitness = 0;
     if (this->algorithmType_ == "B" or this->algorithmType_ == "D")
     {
       // k-selection tournament
@@ -337,7 +324,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       PolicyPtr policy2 = parent2->second;
 
       // TODO: Verify what should be total fitness in binary
-      total_fitness = fitness1 + fitness2;
+      totalFitness = fitness1 + fitness2;
 
       // For each spline
       for (size_t i = 0; i < _numSplines; i++)
@@ -346,20 +333,20 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
         for (size_t j = 0; j < this->sourceYSize_; j++)
         {
           // Apply modifier
-          double spline_point = 0;
-          spline_point +=
+          double splinePoint = 0;
+          splinePoint +=
               ((policy1->at(i)[j] - (*this->currentPolicy_)[i][j])) *
-              (fitness1 / total_fitness);
-          spline_point +=
+              (fitness1 / totalFitness);
+          splinePoint +=
               ((policy2->at(i)[j] - (*this->currentPolicy_)[i][j])) *
-              (fitness2 / total_fitness);
+              (fitness2 / totalFitness);
 
           // Add a mutation + current
           // TODO: Verify do we use current in this case
-          spline_point += dist(mt) + (*this->currentPolicy_)[i][j];
+          splinePoint += dist(mt) + (*this->currentPolicy_)[i][j];
 
           // Set a newly generated point as current
-          (*this->currentPolicy_)[i][j] = spline_point;
+          (*this->currentPolicy_)[i][j] = splinePoint;
         }
       }
     }
@@ -371,7 +358,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       for (auto const &it : this->rankedPolicies_)
       {
         double fitness = it.first;
-        total_fitness += fitness;
+        totalFitness += fitness;
       }
 
       // For each spline
@@ -382,47 +369,46 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
         for (size_t j = 0; j < this->sourceYSize_; j++)
         {
           // Apply modifier
-          double spline_point = 0;
+          double splinePoint = 0;
           for (auto const &it : this->rankedPolicies_)
           {
             double fitness = it.first;
             PolicyPtr policy = it.second;
 
-            spline_point +=
+            splinePoint +=
                 ((policy->at(i)[j] - (*this->currentPolicy_)[i][j])) *
-                (fitness / total_fitness);
+                (fitness / totalFitness);
           }
 
           // Add a mutation + current
           // TODO: Verify do we use 'current_policy_' in this case
-          spline_point += dist(mt) + (*this->currentPolicy_)[i][j];
+          splinePoint += dist(mt) + (*this->currentPolicy_)[i][j];
 
           // Set a newly generated point as current
-          (*this->currentPolicy_)[i][j] = spline_point;
+          (*this->currentPolicy_)[i][j] = splinePoint;
         }
       }
     }
   }
 
   // cache update
-  this->InterpolateCubic(0,
-                         this->currentPolicy_.get(),
-                         this->interpolationCache_.get());
+  this->InterpolateCubic(
+      _numSplines,
+      this->currentPolicy_.get(),
+      this->interpolationCache_.get());
 }
 
 /////////////////////////////////////////////////
-void RLPower::IncreaseSplinePoints()
+void RLPower::IncreaseSplinePoints(const size_t _numSplines)
 {
   this->sourceYSize_++;
 
   // LOG code
   this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
-  std::cout << "New samplingSize_=" << this->sourceYSize_
-            << ", and stepRate_=" << this->stepRate_ << std::endl;
 
   // Copy current policy for resizing
   Policy policy_copy(this->currentPolicy_->size());
-  for (size_t i = 0; i < this->numActuators_; i++)
+  for (size_t i = 0; i < _numSplines; i++)
   {
     Spline &spline = this->currentPolicy_->at(i);
     policy_copy[i] = Spline(spline.begin(), spline.end());
@@ -436,7 +422,7 @@ void RLPower::IncreaseSplinePoints()
   {
     PolicyPtr policy = it.second;
 
-    for (size_t j = 0; j < this->numActuators_; j++)
+    for (size_t j = 0; j < _numSplines; j++)
     {
       Spline &spline = policy->at(j);
       policy_copy[j] = Spline(spline.begin(), spline.end());
@@ -484,7 +470,7 @@ const double RLPower::SIGMA_DECAY_SQUARED = 0.98;
 
 double RLPower::Fitness()
 {
-  return this->evaluator_->Fitness();
+  return 0.1;  // this->evaluator_->Fitness();
 }
 
 void RLPower::Modify(ConstModifyPolicyPtr &req)

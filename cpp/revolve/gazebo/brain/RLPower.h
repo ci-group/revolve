@@ -143,7 +143,7 @@ namespace revolve
           Policy *_destinationY);
 
       /// \brief Increment number of sampling points for policy
-      private: void IncreaseSplinePoints();
+      private: void IncreaseSplinePoints(const size_t _numSplines);
 
       /// \brief Randomly select two policies and return the one with higher
       /// fitness
@@ -188,9 +188,6 @@ namespace revolve
 
       /// \brief Maximal number of evaluations
       private: size_t maxEvaluations_;
-
-      /// \brief Number of actuators
-      private: size_t numActuators_;
 
       /// \brief The size of a spline before beeing increased
       private: size_t sourceYSize_;
