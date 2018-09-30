@@ -192,7 +192,7 @@ void RobotController::LoadBrain(sdf::ElementPtr sdf)
     return;
   }
   auto brain = sdf->GetElement("rv:brain");
-  brain_.reset(new NeuralNetwork(
+  brain_.reset(new RLPower(
       this->model->GetName(),
       brain,
       motors_,
