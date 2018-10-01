@@ -189,12 +189,9 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
               << std::endl;
     return;
   }
+
   auto brain = _sdf->GetElement("rv:brain");
-  brain_.reset(new RLPower(
-      this->model_->GetName(),
-      brain,
-      motors_,
-      sensors_));
+  brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
 }
 
 /////////////////////////////////////////////////

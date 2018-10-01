@@ -68,7 +68,7 @@ namespace revolve
       /// \param[in] _sensors: vector list of robot's sensors
       /// \return pointer to the RLPower class object
       public: RLPower(
-          std::string _modelName,
+          ::gazebo::physics::ModelPtr _model,
           sdf::ElementPtr _node,
           std::vector< MotorPtr > &_motors,
           std::vector< SensorPtr > &_sensors);
@@ -216,7 +216,7 @@ namespace revolve
       private: double startTime_;
 
       /// \brief Name of the robot
-      private: std::string robotName_;
+      private: ::gazebo::physics::ModelPtr robot_;
 
       /// \brief Type of the used algorithm
       private: std::string algorithmType_;

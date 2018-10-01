@@ -50,7 +50,7 @@ void neuronHelper(
 
 /////////////////////////////////////////////////
 NeuralNetwork::NeuralNetwork(
-    std::string _modelName,
+    ::gazebo::physics::ModelPtr _model,
     sdf::ElementPtr _node,
     std::vector< MotorPtr > &_motors,
     std::vector< SensorPtr > &_sensors)
@@ -64,9 +64,10 @@ NeuralNetwork::NeuralNetwork(
   node_.reset(new gz::transport::Node());
   node_->Init();
 
+  auto name = _model->GetName();
   // Listen to network modification requests
   alterSub_ = node_->Subscribe(
-      "~/" + _modelName + "/modify_neural_network", &NeuralNetwork::Modify,
+      "~/" + name + "/modify_neural_network", &NeuralNetwork::Modify,
       this);
 
   // Initialize weights, input and states to zero by default

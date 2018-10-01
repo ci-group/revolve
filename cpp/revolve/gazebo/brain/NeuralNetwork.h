@@ -75,7 +75,7 @@ namespace revolve
       /// \param[in] _motors Reference to a motor list, it be reordered
       /// \param[in] _sensors Reference to a sensor list, it might be reordered
       public: NeuralNetwork(
-          std::string _modelName,
+          ::gazebo::physics::ModelPtr _model,
           sdf::ElementPtr _node,
           std::vector< MotorPtr > &_motors,
           std::vector< SensorPtr > &_sensors);

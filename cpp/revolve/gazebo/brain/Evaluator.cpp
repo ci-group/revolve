@@ -26,8 +26,11 @@
 using namespace revolve::gazebo;
 
 /////////////////////////////////////////////////
-Evaluator::Evaluator()
+Evaluator::Evaluator(const double _evaluationRate)
 {
+  assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
+  this->evaluationRate_ = _evaluationRate;
+
   this->currentPosition_.Reset();
   this->previousPosition_.Reset();
 }
@@ -36,7 +39,7 @@ Evaluator::Evaluator()
 Evaluator::~Evaluator() = default;
 
 /////////////////////////////////////////////////
-void Evaluator::Start()
+void Evaluator::Reset()
 {
   this->previousPosition_ = this->currentPosition_;
 }
@@ -50,7 +53,7 @@ double Evaluator::Fitness()
       std::pow(this->previousPosition_.Pos().Y() -
                this->currentPosition_.Pos().Y(), 2));
   this->previousPosition_ = this->currentPosition_;
-  return dS / 30.0;  // dS / RLPower::FREQUENCY_RATE
+  return dS / this->evaluationRate_;
 }
 
 /////////////////////////////////////////////////
