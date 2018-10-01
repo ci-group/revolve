@@ -37,30 +37,30 @@ MotorFactory::~MotorFactory() = default;
 
 /////////////////////////////////////////////////
 MotorPtr MotorFactory::Motor(
-    sdf::ElementPtr _motor,
+    sdf::ElementPtr _motorSdf,
     const std::string &_type,
     const std::string &_motorId,
     const std::string &_partId)
 {
-  MotorPtr motorObj;
+  MotorPtr motor;
   if ("position" == _type)
   {
-    motorObj.reset(new PositionMotor(model_, _motorId, _partId, _motor));
+    motor.reset(new PositionMotor(model_, _motorId, _partId, _motorSdf));
   }
   else if ("velocity" == _type)
   {
-    motorObj.reset(new VelocityMotor(model_, _motorId, _partId, _motor));
+    motor.reset(new VelocityMotor(model_, _motorId, _partId, _motorSdf));
   }
 
-  return motorObj;
+  return motor;
 }
 
 /////////////////////////////////////////////////
-MotorPtr MotorFactory::Create(sdf::ElementPtr _motor)
+MotorPtr MotorFactory::Create(sdf::ElementPtr _motorSdf)
 {
-  auto typeParam = _motor->GetAttribute("type");
-  auto partIdParam = _motor->GetAttribute("part_id");
-  auto idParam = _motor->GetAttribute("id");
+  auto typeParam = _motorSdf->GetAttribute("type");
+  auto partIdParam = _motorSdf->GetAttribute("part_id");
+  auto idParam = _motorSdf->GetAttribute("id");
 
   if (not typeParam or not partIdParam or not idParam)
   {
@@ -72,13 +72,13 @@ MotorPtr MotorFactory::Create(sdf::ElementPtr _motor)
   auto partId = partIdParam->GetAsString();
   auto type = typeParam->GetAsString();
   auto id = idParam->GetAsString();
-  MotorPtr motorObj = this->Motor(_motor, type, partId, id);
+  MotorPtr motor = this->Motor(_motorSdf, type, partId, id);
 
-  if (not motorObj)
+  if (not motor)
   {
     std::cerr << "Motor type '" << type << "' is unknown." << std::endl;
     throw std::runtime_error("Motor error");
   }
 
-  return motorObj;
+  return motor;
 }
