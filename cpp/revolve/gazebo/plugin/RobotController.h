@@ -44,21 +44,21 @@ namespace revolve
       public: virtual ~RobotController();
 
       /// \brief Load method
-      public: virtual void Load(
+      public: void Load(
               ::gazebo::physics::ModelPtr _parent,
-              sdf::ElementPtr _sdf);
+              sdf::ElementPtr _sdf) override;
 
       /// \return Factory class that creates motors for this model
       public: virtual MotorFactoryPtr MotorFactory(
-          ::gazebo::physics::ModelPtr model);
+          ::gazebo::physics::ModelPtr _model);
 
       /// \return Factory class that creates motors for this robot
       public: virtual SensorFactoryPtr SensorFactory(
-          ::gazebo::physics::ModelPtr model);
+          ::gazebo::physics::ModelPtr _model);
 
       /// \brief Update event which, by default, is called periodically
       /// according to the update rate specified in the robot plugin.
-      public: virtual void DoUpdate(const ::gazebo::common::UpdateInfo info);
+      public: virtual void DoUpdate(const ::gazebo::common::UpdateInfo _info);
 
       /// \brief Returns the battery level
       /// \details Methods allows reading and writing the battery level in
@@ -68,23 +68,23 @@ namespace revolve
       public: double BatteryLevel();
 
       /// \brief Sets the battery level if possible
-      public: void SetBatteryLevel(double level);
+      public: void SetBatteryLevel(double _level);
 
       /// \brief Request listener for battery update
-      public: void UpdateBattery(ConstRequestPtr &request);
+      public: void UpdateBattery(ConstRequestPtr &_request);
 
       /// \brief Detects and loads motors in the plugin spec
-      protected: virtual void LoadMotors(sdf::ElementPtr sdf);
+      protected: virtual void LoadMotors(const sdf::ElementPtr _sdf);
 
       /// \brief Detects and loads sensors in the plugin spec.
-      protected: virtual void LoadSensors(sdf::ElementPtr sdf);
+      protected: virtual void LoadSensors(const sdf::ElementPtr _sdf);
 
       /// \brief Loads the brain from the `rv:brain` element.
       /// \details By default this tries to construct a `StandardNeuralNetwork`.
-      protected: virtual void LoadBrain(sdf::ElementPtr sdf);
+      protected: virtual void LoadBrain(const sdf::ElementPtr _sdf);
 
       /// \brief Loads / initializes the robot battery
-      protected: virtual void LoadBattery(sdf::ElementPtr sdf);
+      protected: virtual void LoadBattery(const sdf::ElementPtr _sdf);
 
       /// \brief Method called at the end of the default `Load` function.
       /// \details This  should be used to initialize robot actuation, i.e.
@@ -96,7 +96,7 @@ namespace revolve
 
       /// \brief Default method bound to world update event, checks whether the
       /// \brief actuation time has passed and updates if required.
-      protected: void CheckUpdate(const ::gazebo::common::UpdateInfo info);
+      protected: void CheckUpdate(const ::gazebo::common::UpdateInfo _info);
 
       /// \brief Networking node
       protected: ::gazebo::transport::NodePtr node_;
@@ -135,10 +135,10 @@ namespace revolve
       protected: std::vector< SensorPtr > sensors_;
 
       /// \brief Pointer to the model
-      protected: ::gazebo::physics::ModelPtr model;
+      protected: ::gazebo::physics::ModelPtr model_;
 
       /// \brief Pointer to the world
-      protected: ::gazebo::physics::WorldPtr world;
+      protected: ::gazebo::physics::WorldPtr world_;
 
       /// \brief Driver update event pointer
       private: ::gazebo::event::ConnectionPtr updateConnection_;

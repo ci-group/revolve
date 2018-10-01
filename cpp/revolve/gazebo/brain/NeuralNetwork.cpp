@@ -534,7 +534,7 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
          iter not_eq positionMap_.end(); ++iter)
     {
       auto layer = layerMap_[iter->first];
-      if ("hidden" == layer && positionMap_[iter->first] > pos)
+      if ("hidden" == layer and positionMap_[iter->first] > pos)
       {
         positionMap_[iter->first]--;
       }

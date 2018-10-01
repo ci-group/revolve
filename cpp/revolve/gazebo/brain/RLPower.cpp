@@ -64,7 +64,6 @@ RLPower::RLPower(
   this->sigma_ = 0.8;
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
-//  this->stepRate_ = brain.update_step;
 
   this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
 
@@ -282,7 +281,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     // Default is decaying sigma
     if (this->rankedPolicies_.size() >= this->maxRankedPolicies_)
     {
-      this->sigma_ *= SIGMA_DECAY_SQUARED;
+      this->sigma_ *= SIGMA;
     }
   }
   std::normal_distribution< double > dist(0, this->sigma_);
@@ -466,7 +465,7 @@ std::map< double, PolicyPtr >::iterator RLPower::BinarySelection()
 const double RLPower::CYCLE_LENGTH = 5;
 
 // sigma decay
-const double RLPower::SIGMA_DECAY_SQUARED = 0.98;
+const double RLPower::SIGMA = 0.98;
 
 double RLPower::Fitness()
 {

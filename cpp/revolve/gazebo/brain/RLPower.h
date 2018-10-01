@@ -54,9 +54,11 @@ namespace revolve
       static const double SIGMA_START_VALUE;
       static const double SIGMA_TAU_CORRECTION;
 
+      /// \brief The default number of update points in a spline cycle
       static const double CYCLE_LENGTH;
-      static const double SIGMA_DECAY_SQUARED;
 
+      /// \brief The constant for defining the random distribution
+      static const double SIGMA;
 
       /// \brief The RLPower constructor reads out configuration file,
       /// deretmines which algorithm type to apply and initialises new policy.

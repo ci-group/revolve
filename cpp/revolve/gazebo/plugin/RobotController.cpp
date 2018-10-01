@@ -42,7 +42,7 @@ RobotController::RobotController()
 RobotController::~RobotController()
 {
   this->node_.reset();
-  this->world.reset();
+  this->world_.reset();
   this->motorFactory_.reset();
   this->sensorFactory_.reset();
 }
@@ -53,20 +53,20 @@ void RobotController::Load(
     sdf::ElementPtr _sdf)
 {
   // Store the pointer to the model / world
-  this->model = _parent;
-  this->world = _parent->GetWorld();
-  this->initTime_ = this->world->GetSimTime().Double();
+  this->model_ = _parent;
+  this->world_ = _parent->GetWorld();
+  this->initTime_ = this->world_->GetSimTime().Double();
 
   // Create transport node
-  node_.reset(new gz::transport::Node());
-  node_->Init();
+  this->node_.reset(new gz::transport::Node());
+  this->node_->Init();
 
   // Subscribe to robot battery state updater
-  batterySetSub_ = node_->Subscribe(
+  this->batterySetSub_ = this->node_->Subscribe(
       "~/battery_level/request",
       &RobotController::UpdateBattery,
       this);
-  batterySetPub_ = node_->Advertise< gz::msgs::Response >(
+  this->batterySetPub_ = this->node_->Advertise< gz::msgs::Response >(
       "~/battery_level/response");
 
   if (not _sdf->HasElement("rv:robot_config"))
@@ -81,8 +81,8 @@ void RobotController::Load(
 
   if (settings->HasElement("rv:update_rate"))
   {
-    double updateRate = settings->GetElement("rv:update_rate")->Get< double >();
-    actuationTime_ = 1.0 / updateRate;
+    auto updateRate = settings->GetElement("rv:update_rate")->Get< double >();
+    this->actuationTime_ = 1.0 / updateRate;
   }
 
   // Load motors
@@ -105,24 +105,22 @@ void RobotController::Load(
 }
 
 /////////////////////////////////////////////////
-void RobotController::UpdateBattery(ConstRequestPtr &request)
+void RobotController::UpdateBattery(ConstRequestPtr &_request)
 {
-  if (request->data() not_eq this->model->GetName() && request
-                                                           ->data() not_eq this
-                                                           ->model
-                                                           ->GetScopedName())
+  if (_request->data() not_eq this->model_->GetName() and
+      _request->data() not_eq this->model_->GetScopedName())
   {
     return;
   }
 
   gz::msgs::Response resp;
-  resp.set_id(request->id());
-  resp.set_request(request->request());
+  resp.set_id(_request->id());
+  resp.set_request(_request->request());
 
-  if (request->request() == "set_battery_level")
+  if (_request->request() == "set_battery_level")
   {
     resp.set_response("success");
-    this->SetBatteryLevel(request->dbl_data());
+    this->SetBatteryLevel(_request->dbl_data());
   }
   else
   {
@@ -135,14 +133,14 @@ void RobotController::UpdateBattery(ConstRequestPtr &request)
 }
 
 /////////////////////////////////////////////////
-void RobotController::LoadMotors(sdf::ElementPtr sdf)
+void RobotController::LoadMotors(const sdf::ElementPtr _sdf)
 {
-  if (not sdf->HasElement("rv:motor"))
+  if (not _sdf->HasElement("rv:motor"))
   {
     return;
   }
 
-  auto motor = sdf->GetElement("rv:motor");
+  auto motor = _sdf->GetElement("rv:motor");
   while (motor)
   {
     auto motorObj = this->motorFactory_->Create(motor);
@@ -152,14 +150,14 @@ void RobotController::LoadMotors(sdf::ElementPtr sdf)
 }
 
 /////////////////////////////////////////////////
-void RobotController::LoadSensors(sdf::ElementPtr sdf)
+void RobotController::LoadSensors(const sdf::ElementPtr _sdf)
 {
-  if (not sdf->HasElement("rv:sensor"))
+  if (not _sdf->HasElement("rv:sensor"))
   {
     return;
   }
 
-  auto sensor = sdf->GetElement("rv:sensor");
+  auto sensor = _sdf->GetElement("rv:sensor");
   while (sensor)
   {
     auto sensorObj = this->sensorFactory_->Create(sensor);
@@ -170,30 +168,30 @@ void RobotController::LoadSensors(sdf::ElementPtr sdf)
 
 /////////////////////////////////////////////////
 MotorFactoryPtr RobotController::MotorFactory(
-    ::gazebo::physics::ModelPtr model)
+    ::gazebo::physics::ModelPtr _model)
 {
-  return MotorFactoryPtr(new class MotorFactory(model));
+  return MotorFactoryPtr(new class MotorFactory(_model));
 }
 
 /////////////////////////////////////////////////
 SensorFactoryPtr RobotController::SensorFactory(
-    ::gazebo::physics::ModelPtr model)
+    ::gazebo::physics::ModelPtr _model)
 {
-  return SensorFactoryPtr(new class SensorFactory(model));
+  return SensorFactoryPtr(new class SensorFactory(_model));
 }
 
 /////////////////////////////////////////////////
-void RobotController::LoadBrain(sdf::ElementPtr sdf)
+void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 {
-  if (not sdf->HasElement("rv:brain"))
+  if (not _sdf->HasElement("rv:brain"))
   {
     std::cerr << "No robot brain detected, this is probably an error."
               << std::endl;
     return;
   }
-  auto brain = sdf->GetElement("rv:brain");
+  auto brain = _sdf->GetElement("rv:brain");
   brain_.reset(new RLPower(
-      this->model->GetName(),
+      this->model_->GetName(),
       brain,
       motors_,
       sensors_));
@@ -210,33 +208,32 @@ void RobotController::Startup(
 }
 
 /////////////////////////////////////////////////
-void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo info)
+void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo _info)
 {
-  auto diff = info.simTime - lastActuationTime_;
+  auto diff = _info.simTime - lastActuationTime_;
 
   if (diff.Double() > actuationTime_)
   {
-    this->DoUpdate(info);
-    lastActuationTime_ = info.simTime;
+    this->DoUpdate(_info);
+    lastActuationTime_ = _info.simTime;
   }
 }
 
 /////////////////////////////////////////////////
 /// Default update function simply tells the brain to perform an update
-void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo info)
+void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
 {
-  brain_->Update(motors_,
-                 sensors_,
-                 info.simTime.Double() - initTime_,
-                 actuationTime_);
+  auto currentTime = _info.simTime.Double() - initTime_;
+
+  brain_->Update(motors_, sensors_, currentTime, actuationTime_);
 }
 
 /////////////////////////////////////////////////
-void RobotController::LoadBattery(sdf::ElementPtr sdf)
+void RobotController::LoadBattery(const sdf::ElementPtr _sdf)
 {
-  if (sdf->HasElement("rv:battery"))
+  if (_sdf->HasElement("rv:battery"))
   {
-    this->batteryElem_ = sdf->GetElement("rv:battery");
+    this->batteryElem_ = _sdf->GetElement("rv:battery");
   }
 }
 
@@ -252,10 +249,10 @@ double RobotController::BatteryLevel()
 }
 
 /////////////////////////////////////////////////
-void RobotController::SetBatteryLevel(double level)
+void RobotController::SetBatteryLevel(double _level)
 {
   if (batteryElem_ and batteryElem_->HasElement("rv:level"))
   {
-    batteryElem_->GetElement("rv:level")->Set(level);
+    batteryElem_->GetElement("rv:level")->Set(_level);
   }
 }
