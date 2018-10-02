@@ -44,9 +44,9 @@ class BodyPart(PosableGroup):
                                  in the frame of the body part.
     - `get_slot_normal(slot)`: Return a vector normal to the slot, in the frame
                                of the body part.
-    - `get_slot_tangent(slot)`: Return a vector tangent to the slot, in the frame of
-                                the body part. This vector should be orthogonal to
-                                the normal vector.
+    - `get_slot_tangent(slot)`: Return a vector tangent to the slot, in the
+                                frame of the body part. This vector should be
+                                orthogonal to the normal vector.
     """
 
     def __init__(self, id, conf, **kwargs):
@@ -88,9 +88,16 @@ class BodyPart(PosableGroup):
         Initializes the component, to be implemented by child model.
         :return:
         """
-        raise NotImplementedError("`BodyPart._initialize()` must be implemented by child class.")
+        raise NotImplementedError(
+                "`BodyPart._initialize()` must be implemented by child class.")
 
-    def create_component(self, geometry, label=None, collision=True, visual=True):
+    def create_component(
+            self,
+            geometry,
+            label=None,
+            collision=True,
+            visual=True
+    ):
         """
         :param geometry:
         :param label:
@@ -175,28 +182,31 @@ class BodyPart(PosableGroup):
         :return: Position for given slot ID in child coordinates
         :rtype: Vector3
         """
-        raise NotImplementedError("`BodyPart.get_slot_position()` not implemented.")
+        raise NotImplementedError(
+                "`BodyPart.get_slot_position()` not implemented.")
 
     def get_slot_normal(self, slot_id):
         """
-        Returns the normal direction vector of the given slot ID in this component's frame.
+        Returns the normal direction vector of the slot ID in component's frame.
         :param slot_id: Slot ID
         :type slot_id: int
-        :return: Normal direction vector of the given slot ID in this component's frame
+        :return: Normal direction vector of the slot in this component's frame
         :rtype: Vector3
         """
-        raise NotImplementedError("`BodyPart.get_slot_normal()` not implemented.")
+        raise NotImplementedError(
+                "`BodyPart.get_slot_normal()` not implemented.")
 
     def get_slot_tangent(self, slot_id):
         """
-        Returns the vector that represents the given slot's zero orientation, which should be
-        tangent to the slot normal.
+        Returns the vector that represents the given slot's zero orientation,
+        which should be tangent to the slot normal.
         :param slot_id: Slot ID
         :type slot_id: int
         :return: Slot tangent vector
         :rtype: Vector3
         """
-        raise NotImplementedError("`BodyPart.get_slot_tangent()` not implemented.")
+        raise NotImplementedError(
+                "`BodyPart.get_slot_tangent()` not implemented.")
 
     def attach(self, other, other_slot, my_slot, orientation):
         """
@@ -242,7 +252,8 @@ class BodyPart(PosableGroup):
         )
 
         # Internal sanity check
-        norm = (self.to_parent_frame(a_slot) - other.to_parent_frame(b_slot)).norm()
+        norm = (self.to_parent_frame(a_slot)
+                - other.to_parent_frame(b_slot)).norm()
         assert norm < 1e-5, "Incorrect attachment positions!"
 
         my_component = self.get_slot(my_slot)
@@ -275,7 +286,8 @@ class BodyPart(PosableGroup):
         :return:
         """
         assert self.arity is not None, "Arity of body part was not set, " \
-                                       "make sure your builder derives this from the spec."
+                                       "make sure your builder derives this " \
+                                       "from the spec."
 
         if slot < 0 or slot >= self.arity:
-            raise ArityException("Invalid slot %d for body part." % slot)
+            raise ArityException("Invalid slot {} for body part.".format(slot))

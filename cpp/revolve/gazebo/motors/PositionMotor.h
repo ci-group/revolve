@@ -33,56 +33,58 @@ namespace revolve
     class PositionMotor
             : public JointMotor
     {
-      public:
-      /**
-       * @param The model the motor is contained in
-       * @param The joint driven by the motor
-       * @param The part ID the motor belongs to
-       * @param Whether the motor is velocity driven (the alternative is position driven)
-       * @param The derivative gain of the motor's PID controller
-       */
-      PositionMotor(
-              ::gazebo::physics::ModelPtr model,
-              std::string partId,
-              std::string motorId,
-              sdf::ElementPtr motor);
+      /// \brief Constructor
+      /// \param The model the motor is contained in
+      /// \param The joint driven by the motor
+      /// \param The part ID the motor belongs to
+      /// \param Whether the motor is velocity driven (the alternative is
+      /// position driven)
+      /// \param The derivative gain of the motor's PID controller
+      public: PositionMotor(
+          ::gazebo::physics::ModelPtr _model,
+          std::string _partId,
+          std::string _motorId,
+          sdf::ElementPtr _motor);
 
-      virtual ~PositionMotor();
+      /// \brief Destructor
+      public: virtual ~PositionMotor();
 
-      virtual void update(
-              double *outputs,
-              double step);
+      /// \brief
+      public: virtual void Update(
+          double *_outputs,
+          double _step);
 
-      protected:
-      // World update event function
-      // void OnUpdate(const ::gazebo::common::UpdateInfo info);
+      /// \brief World update event function
+//      protected: void OnUpdate(const ::gazebo::common::UpdateInfo info);
 
-      // Perform the actual update given the step size
-      void DoUpdate(const ::gazebo::common::Time &simTime);
+      /// \brief Perform the actual update given the step size
+      protected: void DoUpdate(const ::gazebo::common::Time &_simTime);
 
-      // Store update event pointer
-      ::gazebo::event::ConnectionPtr updateConnection_;
+      /// \brief Store update event pointer
+      protected: ::gazebo::event::ConnectionPtr updateConnection_;
 
-      // Last update time, used to determine update step time
-      ::gazebo::common::Time prevUpdateTime_;
+      /// \brief Last update time, used to determine update step time
+      protected: ::gazebo::common::Time prevUpdateTime_;
 
-      // Current position target
-      double positionTarget_;
+      /// \brief Current position target
+      protected: double positionTarget_;
 
-      // Upper and lower position limits
-      double lowerLimit_;
-      double upperLimit_;
+      /// \brief Upper and lower position limits
+      protected: double lowerLimit_;
 
-      // Whether this joint can achieve a full range of motion, meaning
-      // it can flip from a positive to a negative angle. This is set
-      // to true whenever the total range is >/ 2 pi.
-      bool fullRange_;
+      /// \brief
+      protected: double upperLimit_;
 
-      // Motor noise
-      double noise_;
+      /// \brief Whether this joint can achieve a full range of motion,
+      /// meaning it can flip from a positive to a negative angle. This is
+      /// set to true whenever the total range is >/ 2 pi.
+      protected: bool fullRange_;
 
-      // PID that controls this motor
-      ::gazebo::common::PID pid_;
+      /// \brief Motor noise
+      protected: double noise_;
+
+      /// \brief PID that controls this motor
+      protected: ::gazebo::common::PID pid_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

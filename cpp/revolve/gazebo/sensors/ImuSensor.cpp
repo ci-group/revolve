@@ -17,61 +17,61 @@
 *
 */
 
+#include <cstring>
 #include <string>
 
 #include "ImuSensor.h"
 
 namespace gz = gazebo;
 
-namespace revolve
+using namespace revolve::gazebo;
+
+/////////////////////////////////////////////////
+ImuSensor::ImuSensor(
+    ::gazebo::physics::ModelPtr _model,
+    sdf::ElementPtr _sensor,
+    std::string _partId,
+    std::string _sensorId)
+    : Sensor(_model, _sensor, _partId, _sensorId, 6)
 {
-  namespace gazebo
+  this->castSensor_ =
+      boost::dynamic_pointer_cast< gz::sensors::ImuSensor >(this->sensor_);
+
+  if (not this->castSensor_)
   {
-    ImuSensor::ImuSensor(
-            ::gazebo::physics::ModelPtr model,
-            sdf::ElementPtr sensor,
-            std::string partId,
-            std::string sensorId)
-            : Sensor(model, sensor, partId, sensorId, 6)
-    {
-      this->castSensor_ = boost::dynamic_pointer_cast<
-              gz::sensors::ImuSensor >(this->sensor_);
+    std::cerr << "Creating an IMU sensor with a non-IMU sensor object."
+              << std::endl;
+    throw std::runtime_error("Sensor error");
+  }
 
-      if (!this->castSensor_)
-      {
-        std::cerr << "Creating an IMU sensor with a non-IMU sensor object."
-                  << std::endl;
-        throw std::runtime_error("Sensor error");
-      }
+  // Initialize all initial values to zero
+  std::memset(this->lastValues_, 0, sizeof(this->lastValues_));
 
-      // Initialize all initial values to zero
-      memset(lastValues_, 0, sizeof(lastValues_));
+  // Add update connection that will produce new value
+  this->updateConnection_ = this->castSensor_->ConnectUpdated(
+      boost::bind(&ImuSensor::OnUpdate, this));
+}
 
-      // Add update connection that will produce new value
-      this->updateConnection_ = this->castSensor_->ConnectUpdated(
-              boost::bind(&ImuSensor::OnUpdate, this));
-    }
+/////////////////////////////////////////////////
+ImuSensor::~ImuSensor() = default;
 
-    ImuSensor::~ImuSensor()
-    {}
+/////////////////////////////////////////////////
+void ImuSensor::OnUpdate()
+{
+  // Store the recorded values
+  auto acc = this->castSensor_->LinearAcceleration();
+  auto velo = this->castSensor_->AngularVelocity();
+  this->lastValues_[0] = acc[0];
+  this->lastValues_[1] = acc[1];
+  this->lastValues_[2] = acc[2];
+  this->lastValues_[3] = velo[0];
+  this->lastValues_[4] = velo[1];
+  this->lastValues_[5] = velo[2];
+}
 
-    void ImuSensor::OnUpdate()
-    {
-      // Store the recorded values
-      auto acc = this->castSensor_->LinearAcceleration();
-      auto velo = this->castSensor_->AngularVelocity();
-      lastValues_[0] = acc[0];
-      lastValues_[1] = acc[1];
-      lastValues_[2] = acc[2];
-      lastValues_[3] = velo[0];
-      lastValues_[4] = velo[1];
-      lastValues_[5] = velo[2];
-    }
-
-    void ImuSensor::read(double *input)
-    {
-      // Copy our values to the input array
-      memcpy(input, lastValues_, sizeof(lastValues_));
-    }
-  } /* namespace gazebo */
-} /* namespace revolve */
+/////////////////////////////////////////////////
+void ImuSensor::Read(double *_input)
+{
+  // Copy our values to the input array
+  memcpy(_input, this->lastValues_, sizeof(this->lastValues_));
+}

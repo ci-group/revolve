@@ -6,7 +6,6 @@ from pygazebo.msg import world_control_pb2
 
 # Revolve
 from ..connect import connect, RequestHandler
-from ..analyze import BodyAnalyzer
 from ...logging import logger
 
 # Construct a message base from the time. This should make
@@ -24,7 +23,11 @@ class WorldManager(object):
     # Object used to make constructor private
     _PRIVATE = object()
 
-    def __init__(self, _private=None, world_address=None, analyzer_address=None):
+    def __init__(
+            self,
+            _private=None,
+            world_address=None,
+    ):
         """
 
         :param _private:
@@ -35,24 +38,28 @@ class WorldManager(object):
                              "rather the `create` coroutine should be used.")
 
         self.world_address = world_address
-        self.analyzer_address = analyzer_address
 
         self.manager = None
-        self.analyzer = None
         self.world_control = None
 
         self.request_handler = None
 
     @classmethod
     @trollius.coroutine
-    def create(cls, world_address=("127.0.0.1", 11345), analyzer_address=("127.0.0.1", 11346)):
+    def create(
+            cls,
+            world_address=("127.0.0.1", 11345),
+    ):
         """
 
         :param analyzer_address:
         :param world_address:
         :return:
         """
-        self = cls(_private=cls._PRIVATE, world_address=world_address, analyzer_address=analyzer_address)
+        self = cls(
+                _private=cls._PRIVATE,
+                world_address=world_address,
+        )
         yield From(self._init())
         raise Return(self)
 
@@ -67,9 +74,6 @@ class WorldManager(object):
         # Initialize the manager / analyzer connections as well as
         # the general request handler
         self.manager = yield From(connect(self.world_address))
-
-        if self.analyzer_address:
-            self.analyzer = yield From(BodyAnalyzer.create(self.analyzer_address))
 
         self.world_control = yield From(self.manager.advertise(
             '/gazebo/default/world_control', 'gazebo.msgs.WorldControl'
@@ -120,17 +124,21 @@ class WorldManager(object):
     def insert_model(self, sdf):
         """
         Insert a model wrapped in an SDF tag into the world. Make
-        sure it has a unique name, as it will be literally inserted into the world.
+        sure it has a unique name, as it will be literally inserted into the
+        world.
 
         This coroutine yields until the request has been successfully sent.
-        It returns a future that resolves when a response has been received. The
-        optional given callback is added to this future.
+        It returns a future that resolves when a response has been received.
+        The optional given callback is added to this future.
 
         :param sdf:
         :type sdf: SDF
         :return:
         """
-        future = yield From(self.request_handler.do_gazebo_request("insert_sdf", data=str(sdf)))
+        future = yield From(self.request_handler.do_gazebo_request(
+                request="insert_sdf",
+                data=str(sdf)
+        ))
         raise Return(future)
 
     @trollius.coroutine
@@ -144,5 +152,8 @@ class WorldManager(object):
         occurring from deleting sensors.
         :return:
         """
-        future = yield From(self.request_handler.do_gazebo_request(req, data=name))
+        future = yield From(self.request_handler.do_gazebo_request(
+                request=req,
+                data=name
+        ))
         raise Return(future)

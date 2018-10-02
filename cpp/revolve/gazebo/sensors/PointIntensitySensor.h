@@ -42,32 +42,32 @@ namespace revolve
     class PointIntensitySensor
             : public VirtualSensor
     {
-      public:
-      PointIntensitySensor(
-              sdf::ElementPtr sensor,
-              ::gazebo::physics::ModelPtr model,
-              std::string partId,
-              std::string sensorId);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _sensor Sensor identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _sensorId Sensor identifier
+      public: PointIntensitySensor(
+          sdf::ElementPtr _sensor,
+          ::gazebo::physics::ModelPtr _model,
+          std::string _partId,
+          std::string _sensorId);
 
-      // Reads the battery value
-      virtual void read(double *input);
+      /// \brief Reads the battery value
+      /// \brief[in,out] _input Input value to write on
+      public: virtual void Read(double *_input);
 
-      protected:
-      /**
-       * The point to which proximity should be returned
-       */
-      ::gazebo::math::Vector3 point_;
+      /// \brief The point to which proximity should be returned
+      protected: ::gazebo::math::Vector3 point_;
 
-      /**
-       * The value of the input neuron of this sensor is calculated
-       * from the distance with the function:
-       *
-       * a / (distance**b)
-       *
-       * Where it will be made sure that the output is between 0 and a.
-       */
-      double i_max_;
-      double r_;
+      /// \brief The value of the input neuron of this sensor is calculated
+      /// from the distance with the function:
+      /// `a / (distance**b)`
+      /// Where it will be made sure that the output is between 0 and a.
+      protected: double maxInput_;
+
+      /// \brief Radius distance
+      protected: double r_;
     };
   }
 }

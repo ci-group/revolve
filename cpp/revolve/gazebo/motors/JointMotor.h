@@ -32,26 +32,26 @@ namespace revolve
     class JointMotor
             : public Motor
     {
-      public:
-      JointMotor(
-              ::gazebo::physics::ModelPtr model,
-              std::string partId,
-              std::string motorId,
-              sdf::ElementPtr motor,
-              unsigned int outputs);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _motorId Motor identifier
+      /// \brief[in] _outputs Number of motor outputs
+      public: JointMotor(
+          ::gazebo::physics::ModelPtr _model,
+          std::string _partId,
+          std::string _motorId,
+          sdf::ElementPtr _motor,
+          unsigned int _outputs);
 
-      virtual ~JointMotor();
+      /// \brief Destructor
+      public: virtual ~JointMotor();
 
-      protected:
-      /**
-       * The joint this motor is controlling
-       */
-      ::gazebo::physics::JointPtr joint_;
+      /// \brief The joint this motor is controlling
+      protected: ::gazebo::physics::JointPtr joint_;
 
-      /**
-       * Scoped name of the controlled joint
-       */
-      std::string jointName_;
+      /// \brief  Scoped name of the controlled joint
+      protected: std::string jointName_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

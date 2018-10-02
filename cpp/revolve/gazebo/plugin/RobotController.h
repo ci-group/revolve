@@ -37,151 +37,111 @@ namespace revolve
     class RobotController
             : public ::gazebo::ModelPlugin
     {
-      public:
-      RobotController();
+      /// \brief Constructor
+      public: RobotController();
 
-      virtual ~RobotController();
+      /// \brief Destructor
+      public: virtual ~RobotController();
 
-      public:
-      virtual void Load(
+      /// \brief Load method
+      public: void Load(
+              ::gazebo::physics::ModelPtr _parent,
+              sdf::ElementPtr _sdf) override;
+
+      /// \return Factory class that creates motors for this model
+      public: virtual MotorFactoryPtr MotorFactory(
+          ::gazebo::physics::ModelPtr _model);
+
+      /// \return Factory class that creates motors for this robot
+      public: virtual SensorFactoryPtr SensorFactory(
+          ::gazebo::physics::ModelPtr _model);
+
+      /// \brief Update event which, by default, is called periodically
+      /// according to the update rate specified in the robot plugin.
+      public: virtual void DoUpdate(const ::gazebo::common::UpdateInfo _info);
+
+      /// \brief Returns the battery level
+      /// \details Methods allows reading and writing the battery level in
+      /// the robot SDF. This is mostly useful for the `BatterySensor` to
+      /// obtain the battery state, and storing it in the SDF also means it
+      /// will be adequately backed up in an eventual snapshot.
+      public: double BatteryLevel();
+
+      /// \brief Sets the battery level if possible
+      public: void SetBatteryLevel(double _level);
+
+      /// \brief Request listener for battery update
+      public: void UpdateBattery(ConstRequestPtr &_request);
+
+      /// \brief Detects and loads motors in the plugin spec
+      protected: virtual void LoadMotors(const sdf::ElementPtr _sdf);
+
+      /// \brief Detects and loads sensors in the plugin spec.
+      protected: virtual void LoadSensors(const sdf::ElementPtr _sdf);
+
+      /// \brief Loads the brain from the `rv:brain` element.
+      /// \details By default this tries to construct a `StandardNeuralNetwork`.
+      protected: virtual void LoadBrain(const sdf::ElementPtr _sdf);
+
+      /// \brief Loads / initializes the robot battery
+      protected: virtual void LoadBattery(const sdf::ElementPtr _sdf);
+
+      /// \brief Method called at the end of the default `Load` function.
+      /// \details This  should be used to initialize robot actuation, i.e.
+      /// register some update event. By default, this grabs the
+      /// `update_rate` from the robot config pointer, and binds
+      protected: virtual void Startup(
               ::gazebo::physics::ModelPtr _parent,
               sdf::ElementPtr _sdf);
 
-      /**
-       * @return Factory class that creates motors for this model
-       */
-      virtual MotorFactoryPtr getMotorFactory(::gazebo::physics::ModelPtr model);
+      /// \brief Default method bound to world update event, checks whether the
+      /// \brief actuation time has passed and updates if required.
+      protected: void CheckUpdate(const ::gazebo::common::UpdateInfo _info);
 
-      /**
-       * @return Factory class that creates motors for this robot
-       */
-      virtual SensorFactoryPtr getSensorFactory(::gazebo::physics::ModelPtr model);
+      /// \brief Networking node
+      protected: ::gazebo::transport::NodePtr node_;
 
-      /**
-       * Update event which, by default, is called periodically according to the
-       * update rate specified in the robot plugin.
-       */
-      virtual void DoUpdate(const ::gazebo::common::UpdateInfo info);
+      /// \brief Subscriber for battery update request
+      protected: ::gazebo::transport::SubscriberPtr batterySetSub_;
 
-      // Methods below allow reading and writing the battery level
-      // in the robot SDF. This is mostly useful for the `BatterySensor`
-      // to obtain the battery state, and storing it in the SDF also
-      // means it will be adequately backed up in an eventual snapshot.
-      /**
-       * Returns the battery level
-       */
-      double GetBatteryLevel();
+      /// \brief Responder for battery update request
+      protected: ::gazebo::transport::PublisherPtr batterySetPub_;
 
-      /**
-       * Sets the battery level if possible
-       */
-      void SetBatteryLevel(double level);
+      /// \brief Holds an instance of the motor factory
+      protected: MotorFactoryPtr motorFactory_;
 
-      /**
-       * Request listener for battery update
-       */
-      void UpdateBattery(ConstRequestPtr &request);
+      /// \brief Holds an instance of the sensor factory
+      protected: SensorFactoryPtr sensorFactory_;
 
-      protected:
-      /**
-       * Detects and loads motors in the plugin spec
-       */
-      virtual void LoadMotors(sdf::ElementPtr sdf);
+      /// \brief Brain controlling this model
+      protected: BrainPtr brain_;
 
-      /**
-       * Detects and loads sensors in the plugin spec.
-       */
-      virtual void LoadSensors(sdf::ElementPtr sdf);
+      /// \brief Actuation time, in seconds
+      protected: double actuationTime_;
 
-      /**
-       * Loads the brain from the `rv:brain` element. By default this
-       * tries to construct a `StandardNeuralNetwork`.
-       */
-      virtual void LoadBrain(sdf::ElementPtr sdf);
+      /// \brief Time of initialisation
+      protected: double initTime_;
 
-      /**
-       * Loads / initializes the robot battery
-       */
-      virtual void LoadBattery(sdf::ElementPtr sdf);
+      /// \brief rv:battery element, if present
+      protected: sdf::ElementPtr batteryElem_;
 
-      /**
-       * Method that is called at the end of the default `Load` function. This
-       * should be used to initialize robot actuation, i.e. register some update
-       * event. By default, this grabs the `update_rate` from the robot config
-       * pointer, and binds
-       */
-      virtual void startup(
-              ::gazebo::physics::ModelPtr _parent,
-              sdf::ElementPtr _sdf);
+      /// \brief Time of the last actuation, in seconds and nanoseconds
+      protected: ::gazebo::common::Time lastActuationTime_;
 
-      /**
-       * Default method bound to world update event, checks whether the
-       * actuation time has passed and updates if required.
-       */
-      void CheckUpdate(const ::gazebo::common::UpdateInfo info);
+      /// \brief Motors in this model
+      protected: std::vector< MotorPtr > motors_;
 
-      /**
-       * Networking node
-       */
-      ::gazebo::transport::NodePtr node_;
+      /// \brief Sensors in this model
+      protected: std::vector< SensorPtr > sensors_;
 
-      /**
-       * Subscriber/responder for battery update request
-       */
-      ::gazebo::transport::SubscriberPtr batterySetSub_;
-      ::gazebo::transport::PublisherPtr batterySetPub_;
+      /// \brief Pointer to the model
+      protected: ::gazebo::physics::ModelPtr model_;
 
-      /**
-       * Holds an instance of the motor factory
-       */
-      MotorFactoryPtr motorFactory_;
+      /// \brief Pointer to the world
+      protected: ::gazebo::physics::WorldPtr world_;
 
-      /**
-       * Holds an instance of the sensor factory
-       */
-      SensorFactoryPtr sensorFactory_;
-
-      /**
-       * Brain controlling this model
-       */
-      BrainPtr brain_;
-
-      /**
-       * Actuation time, in seconds
-       */
-      double actuationTime_;
-
-      // Time of initialisation
-      double initTime_;
-
-      // rv:battery element, if present
-      sdf::ElementPtr batteryElem_;
-
-      /**
-       * Time of the last actuation, in
-       * seconds and nanoseconds
-       */
-      ::gazebo::common::Time lastActuationTime_;
-
-      /**
-       * Motors in this model
-       */
-      std::vector< MotorPtr > motors_;
-
-      /**
-       * Sensors in this model
-       */
-      std::vector< SensorPtr > sensors_;
-
-      // Pointer to the model
-      ::gazebo::physics::ModelPtr model;
-
-      // Pointer to the world
-      ::gazebo::physics::WorldPtr world;
-
-      private:
-      // Driver update event pointer
-      ::gazebo::event::ConnectionPtr updateConnection_;
+      /// \brief Driver update event pointer
+      private: ::gazebo::event::ConnectionPtr updateConnection_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

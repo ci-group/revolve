@@ -42,7 +42,7 @@ class BodyDecoder(object):
 
         part.id = part_id = conf['id']
         if part_id in self.part_ids:
-            err("Duplicate part ID '%s'" % part_id)
+            err("Duplicate part ID '{}'".format(part_id))
         self.part_ids.add(part_id)
 
         if 'type' not in conf:
@@ -51,7 +51,7 @@ class BodyDecoder(object):
 
         spec = self.spec.get(part_type)
         if spec is None:
-            err("Part type '%s' not in implementation spec." % part_type)
+            err("Part type '{}' not in implementation spec.".format(part_type))
 
         # Check destination slot arity
         if dst_slot is not None and dst_slot >= spec.arity:
@@ -70,12 +70,12 @@ class BodyDecoder(object):
         children = conf.get('children', {})
         for src in children:
             if src >= spec.arity:
-                err("Cannot attach to slot %d of part '%s' with arity %d." %
-                    (src, part_id, spec.arity))
+                err("Cannot attach to slot {} of part '{}' with arity "
+                    "{}.".format(src, part_id, spec.arity))
 
             if src == dst_slot:
-                err("Part '%s': Attempt to use slot %d for child which is already "
-                    "attached to parent." % (part_id, src))
+                err("Part '{}': Attempt to use slot {} for child which is "
+                    "already attached to parent.".format(part_id, src))
             self._process_body_connection(part, src, children[src])
 
         return part
@@ -153,7 +153,7 @@ class NeuralNetworkDecoder(object):
 
         spec = self.body_spec.get(part_type)
         if spec is None:
-            err("Part type '%s' not in implementation spec." % part_type)
+            err("Part type '{}' not in implementation spec.".format(part_type))
 
         # Add children
         children = conf.get('children', {})
@@ -166,12 +166,12 @@ class NeuralNetworkDecoder(object):
             default_type = "Input" if cat == "in" else "Simple"
 
             for i in range(cats[cat]):
-                neuron_id = "%s-%s-%d" % (part_id, cat, i)
+                neuron_id = "{}-{}-{}".format(part_id, cat, i)
                 if neuron_id in self.neurons:
-                    err("Duplicate neuron ID '%s'" % neuron_id)
+                    err("Duplicate neuron ID '{}'".format(neuron_id))
 
                 self.neurons[neuron_id] = {
-                    "layer": "%sput" % cat,
+                    "layer": "{}put".format(cat),
                     "part_id": part_id
                 }
 
@@ -185,18 +185,19 @@ class NeuralNetworkDecoder(object):
         :return:
         """
         if neuron_id not in self.neurons:
-            err("Cannot set parameters for unknown neuron '%s'" % neuron_id)
+            err("Cannot set parameters for unknown neuron '{}'".format(
+                    neuron_id))
 
         current = self.neurons[neuron_id]
         if "type" not in current or "type" in conf:
             current["type"] = conf.get("type", "Simple")
 
         if current["type"] != "Input" and current["layer"] == "input":
-            err("Input neuron '%s' must be of type 'Input'" % neuron_id)
+            err("Input neuron '{}' must be of type 'Input'".format(neuron_id))
 
         spec = self.spec.get(current["type"])
         if spec is None:
-            err("Unknown neuron type '%s'" % current["type"])
+            err("Unknown neuron type '{}'".format(current["type"]))
 
         current["params"] = spec.serialize_params(conf)
 
@@ -207,7 +208,7 @@ class NeuralNetworkDecoder(object):
         """
         for neuron_id in neurons:
             if neuron_id in self.neurons:
-                err("Duplicate neuron ID '%s'" % neuron_id)
+                err("Duplicate neuron ID '{}'".format(neuron_id))
 
             # This sets the defaults, the accurate values - if present - will
             # be set by `_process_neuron_params`.
@@ -238,16 +239,18 @@ class NeuralNetworkDecoder(object):
                 err("Neuron connection is missing 'src'.")
 
             if src not in self.neurons:
-                err("Using unknown neuron '%s' as connection source." % src)
+                err("Using unknown neuron '{}' as connection source.".format(
+                        src))
 
             if dst is None:
                 err("Neuron connection is missing 'dst'.")
 
             if dst not in self.neurons:
-                err("Using unknown neuron '%s' as connection destination." % dst)
+                err("Using unknown neuron '{}' as connection "
+                    "destination.".format(dst))
 
             if self.neurons[dst]["layer"] == "input":
-                err("Using input neuron '%s' as destination." % dst)
+                err("Using input neuron '{}' as destination.".format(dst))
 
             c.src = src
             c.dst = dst

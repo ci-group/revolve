@@ -32,42 +32,37 @@ namespace revolve
     class TouchSensor
             : public Sensor
     {
-      public:
-      TouchSensor(
-              ::gazebo::physics::ModelPtr model,
-              sdf::ElementPtr sensor,
-              std::string partId,
-              std::string sensorId);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _sensor Sensor identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _sensorId Sensor identifier
+      public: TouchSensor(
+          ::gazebo::physics::ModelPtr _model,
+          sdf::ElementPtr _sensor,
+          std::string _partId,
+          std::string _sensorId);
 
-      virtual ~TouchSensor();
+      /// \brief Destructor
+      public: virtual ~TouchSensor();
 
-      /**
-       * The touch sensor is boolean; it is either
-       * touching something or it is not. Since
-       * the NN works with floats, we return 0.0
-       * or 1.0.
-       */
-      virtual void read(double *input);
+      /// \brief The touch sensor is boolean; it is either touching something
+      /// or it is not. Since the NN works with floats, we return 0.0 or 1.0.
+      /// \brief[in,out] _input Input value to write on
+      public: virtual void Read(double *_input);
 
-      /**
-       * Called when the camera sensor is updated
-       */
-      void OnUpdate();
+      /// \brief  Called when the camera sensor is updated
+      public: void OnUpdate();
 
-      private:
-      /**
-       * The contact state at the last update
-       */
-      bool lastValue_;
+      /// \brief The contact state at the last update
+      private: bool lastValue_;
 
-      /**
-       * Sensor dynamically casted to correct type,
-       * so it needs to happen only once.
-       */
-      ::gazebo::sensors::ContactSensorPtr castSensor_;
+      /// \brief Sensor dynamically casted to correct type, so it needs to
+      /// happen only once.
+      private: ::gazebo::sensors::ContactSensorPtr castSensor_;
 
-      // Pointer to the update connection
-      ::gazebo::event::ConnectionPtr updateConnection_;
+      /// \brief Pointer to the update connection
+      private: ::gazebo::event::ConnectionPtr updateConnection_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

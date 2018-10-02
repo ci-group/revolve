@@ -52,7 +52,8 @@ namespace revolve
               ::gazebo::physics::WorldPtr _parent,
               sdf::ElementPtr _sdf);
 
-      // Maximum size of request queue, if more requests come in they are discarded
+      // Maximum size of request queue, if more requests come in they are
+      // discarded
       static const int MAX_QUEUE_SIZE = 100;
       private:
       // HACK: Use this as an ID "prefix" to make sure we don't

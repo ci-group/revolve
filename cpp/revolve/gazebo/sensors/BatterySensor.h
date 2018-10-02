@@ -29,19 +29,23 @@ namespace revolve
   namespace gazebo
   {
     class BatterySensor
-            : public VirtualSensor
+        : public VirtualSensor
     {
-      public:
-      BatterySensor(
-              ::gazebo::physics::ModelPtr model,
-              std::string partId,
-              std::string sensorId);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _sensorId Sensor identifier
+      public: BatterySensor(
+          ::gazebo::physics::ModelPtr _model,
+          std::string _partId,
+          std::string _sensorId);
 
-      // Reads the battery value
-      virtual void read(double *input);
+      /// \brief Reads the battery value
+      /// \param[in,out] _input: Input parameter of the sensor
+      public: virtual void Read(double *_input);
 
-      protected:
-      sdf::ElementPtr batteryElem;
+      /// \brief SDF battery
+      protected: sdf::ElementPtr battery_;
     };
   }
 }

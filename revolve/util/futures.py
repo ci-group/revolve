@@ -34,7 +34,8 @@ def multi_future(children, quiet_exceptions=()):
                 except Exception as e:
                     if future.done():
                         if not isinstance(e, quiet_exceptions):
-                            print("Multiple exceptions in yield list", file=sys.stderr)
+                            print("Multiple exceptions in yield list",
+                                  file=sys.stderr)
                     else:
                         future.set_exception(sys.exc_info())
             if not future.done():

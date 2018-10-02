@@ -33,70 +33,57 @@ namespace revolve
   {
     class Motor
     {
-      public:
-      Motor(
-              ::gazebo::physics::ModelPtr model,
-              std::string partId,
-              std::string motorId,
-              unsigned int outputs);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _motorId Motor identifier
+      /// \brief[in] _outputs Number of motor outputs
+      public: Motor(
+          ::gazebo::physics::ModelPtr _model,
+          std::string _partId,
+          std::string _motorId,
+          unsigned int _outputs);
 
-      virtual ~Motor();
+      /// \brief Destructor
+      public: virtual ~Motor();
 
-      /**
-       * Updates the motor based on the attached output
-       * of the neural network.
-       *
-       * @param Raw motor update value(s), it is up to the motor to decide how to interpret this.
-       * 		  This is a pointer to an array of values, out of which the motor should read the
-       * 		  first `n` values if it specifies `n` outputs.
-       * @param Actuation time in seconds
-       */
-      virtual void update(
-              double *output,
-              double step) = 0;
+      /// \brief Updates the motor based on the attached output of the neural
+      /// network.
+      /// \param[in,out] output Raw motor update value(s), it is up to the
+      /// motor to decide how to interpret this. This is a pointer to an
+      /// array of values, out of which the motor should read the first `n`
+      /// values if it specifies `n` outputs.
+      /// \param[in[ step Actuation time in seconds
+      public: virtual void Update(
+          double *_output,
+          double _step) = 0;
 
-      /**
-       * @return The part ID
-       */
-      std::string partId();
+      /// \brief Retrieve the ID
+      /// \return The part ID
+      public: std::string PartId();
 
-      /**
-       * @return The full ID of the motor (should be unique in the robot)
-       */
-      std::string motorId();
+      /// \return The full ID of the motor (should be unique in the robot)
+      public: std::string MotorId();
 
-      /**
-       * @return Number of output neurons connected to this motor
-       */
-      unsigned int outputs();
+      /// \return Number of output neurons connected to this motor
+      public: unsigned int Outputs();
 
-      /**
-       * @param Pointer to the rv:pid element
-       * @return Gazebo PID
-       */
-      static ::gazebo::common::PID createPid(sdf::ElementPtr pid);
+      /// \brief Create PID element
+      /// \param pid Pointer to the rv:pid element
+      /// \return Gazebo PID
+      public: static ::gazebo::common::PID CreatePid(sdf::ElementPtr _pid);
 
-      protected:
-      /**
-       * The model this motor is part of
-       */
-      ::gazebo::physics::ModelPtr model_;
+      /// \brief The model this motor is part of
+      protected: ::gazebo::physics::ModelPtr model_;
 
-      /**
-       * ID of the body part the motor belongs to
-       */
-      std::string partId_;
+      /// \brief ID of the body part the motor belongs to
+      protected: std::string partId_;
 
-      /**
-       * Robot-wide unique motor ID
-       */
-      std::string motorId_;
+      /// \brief Robot-wide unique motor ID
+      protected: std::string motorId_;
 
-      /**
-       * Number of output neurons that should be connected
-       * to this motor.
-       */
-      unsigned int outputs_;
+      /// \brief Number of output neurons that should be connected to the motor.
+      protected: unsigned int outputs_;
     };
   } /* namespace gazebo */
 } /* namespace tol_robogen */

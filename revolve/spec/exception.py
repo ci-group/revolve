@@ -9,4 +9,4 @@ def err(msg):
     :param msg:
     :return:
     """
-    raise RobotSpecificationException("Error: %s" % msg)
+    raise RobotSpecificationException("Error: {}".format(msg))

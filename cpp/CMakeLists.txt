@@ -58,6 +58,10 @@ endif ()
 find_package(Boost REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Find GSL - GNU Scientific Library
+find_package(GSL REQUIRED)
+include_directories(${GSL_INCLUDE_DIRS})
+
 # Find and include Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
@@ -174,7 +178,7 @@ target_link_libraries(
         ${PROTOBUF_LIBRARIES}
 )
 
-# Create Rebolve bundle plugin
+# Create Revolve bundle plugin
 add_library(
         revolve-gazebo
         ${REVOLVE_GZ_SRC}
@@ -183,6 +187,7 @@ target_link_libraries(
         revolve-gazebo
         ${GAZEBO_LIBRARIES}
         ${Boost_LIBRARIES}
+        ${GSL_LIBRARIES}
 )
 
 # Create World plugin
@@ -194,12 +199,13 @@ target_link_libraries(
         revolveworldcontrol
         revolve-gazebo
         revolve-spec
+        ${GAZEBO_LIBRARIES}
 )
 
-# Create World plugin
+# Create Robot plugin
 add_library(
         tolrobotcontrol SHARED
-        revolve/gazebo/plugin/WorldController.cpp
+        revolve/gazebo/plugin/register_robot_plugin.cpp
 )
 target_link_libraries(
         tolrobotcontrol
@@ -208,30 +214,10 @@ target_link_libraries(
         ${GAZEBO_LIBRARIES}
 )
 
-# Add the file that registers the body analyzer as a separate library that
-# can be used as a world plugin directly.
-add_library(
-        revolve-body-analyzer SHARED
-        revolve/gazebo/plugin/register_analyzer.cpp
-)
-target_link_libraries(
-        revolve-body-analyzer
-        revolve-gazebo
-        revolve-spec
-        ${GAZEBO_LIBRARIES}
-)
-
-# Add the analyzer server standalone
-add_executable(body-analyzer
-               revolve/gazebo/standalone/body_analyzer_server.cpp)
-target_link_libraries(
-        body-analyzer
-        revolve-body-analyzer
-        ${GAZEBO_LIBRARIES}
-        ${Boost_LIBRARIES}
-)
-
+# Install
+# _____________________________________________________________________________
 # Install libraries into "lib", header files into "include"
+
 install(
     TARGETS revolve-spec revolve-gazebo
     DESTINATION lib
@@ -242,6 +228,3 @@ install(
    DESTINATION include
    FILES_MATCHING PATTERN "*.h"
 )
-
-
-

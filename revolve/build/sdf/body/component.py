@@ -32,8 +32,8 @@ class Component(PosableGroup):
             elif isinstance(visual, Visual):
                 self.visual = visual.copy()
 
-                # Make sure the name is unique, or the visual might not get rendered
-                # (it might collide with another within the same link)
+                # Make sure the name is unique, or the visual might not get
+                # rendered (it might collide with another within the same link)
                 self.visual.name = name+"_"+self.visual.name
             else:
                 self.visual = Visual(name+"_visual", geometry.copy())
@@ -62,7 +62,7 @@ class Component(PosableGroup):
         :return:
         """
         if prefix:
-            sensor.name = "%s-%s" % (str(self.part_id), sensor.name)
+            sensor.name = "{}-{}".format(str(self.part_id), sensor.name)
 
         self.sensors.append((sensor, sensor_type))
 

@@ -26,10 +26,10 @@ def apply_surface_parameters(model, intended_step_size=0.005):
     )
     contact = "<contact>" \
               "<ode>" \
-              "<kd>%s</kd>" \
-              "<kp>%s</kp>" \
+              "<kd>{}</kd>" \
+              "<kp>{}</kp>" \
               "</ode>" \
-              "</contact>" % (
+              "</contact>".format(
                   nf(surface_kd), nf(surface_kp)
               )
 

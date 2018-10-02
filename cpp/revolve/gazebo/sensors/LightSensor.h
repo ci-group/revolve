@@ -32,44 +32,39 @@ namespace revolve
     class LightSensor
             : public Sensor
     {
-      public:
-      LightSensor(
-              ::gazebo::physics::ModelPtr model,
-              sdf::ElementPtr sensor,
-              std::string partId,
-              std::string sensorId);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _sensor Sensor identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _sensorId Sensor identifier
+      public: LightSensor(
+          ::gazebo::physics::ModelPtr _model,
+          sdf::ElementPtr _sensor,
+          std::string _partId,
+          std::string _sensorId);
 
-      virtual ~LightSensor();
+      /// \brief Destructor
+      public: virtual ~LightSensor();
 
-      /**
-       * Returns a float intensity between 0 and 1
-       */
-      virtual void read(double *input);
+      /// \brief Returns a float intensity between 0 and 1
+      /// \brief[in,out] _input Input value to write on
+      public: virtual void Read(double *_input);
 
-      /**
-       * Called when the camera sensor is updated
-       */
-      void OnUpdate();
+      /// \brief Called when the camera sensor is updated
+      public: void OnUpdate();
 
-      private:
-      /**
-       * Sensor dynamically casted to correct type,
-       * so it needs to happen only once.
-       */
-      ::gazebo::sensors::CameraSensorPtr castSensor_;
+      /// \brief Sensor dynamically casted to correct type, so it needs to
+      /// happen only once.
+      private: ::gazebo::sensors::CameraSensorPtr castSensor_;
 
-      /**
-       * Size of the data which we determine once
-       */
-      unsigned int dataSize_;
+      /// \brief Size of the data which we determine once
+      private: unsigned int dataSize_;
 
-      /**
-       * Last calculated average
-       */
-      float lastValue_;
+      /// \brief Last calculated average
+      private: float lastValue_;
 
-      // Pointer to the update connection
-      ::gazebo::event::ConnectionPtr updateConnection_;
+      /// \brief Pointer to the update connection
+      private: ::gazebo::event::ConnectionPtr updateConnection_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

@@ -33,32 +33,31 @@ namespace revolve
   {
     class MotorFactory
     {
-      public:
-      explicit MotorFactory(::gazebo::physics::ModelPtr model);
+      /// \brief Constructor
+      /// \brief[in] _model Model identifier
+      /// \brief[in] _partId Module identifier
+      /// \brief[in] _motorId Motor identifier
+      /// \brief[in] _outputs Number of motor outputs
+      public: explicit MotorFactory(::gazebo::physics::ModelPtr _model);
 
-      virtual ~MotorFactory();
+      /// \brief Destructor
+      public: virtual ~MotorFactory();
 
-      /**
-       * Returns a motor pointer instance from a motor element, part ID and type.
-       * This is the convenience wrapper over `create` that has required attributes
-       * already checked, usually you should override this when adding new motor types.
-       */
-      virtual MotorPtr getMotor(
-              sdf::ElementPtr motor,
-              const std::string &type,
-              const std::string &motorId,
-              const std::string &partId);
+      /// \brief Returns a motor pointer instance from a motor element, part
+      /// ID and type. This is the convenience wrapper over `create` that has
+      /// required attributes already checked, usually you should override
+      /// this when adding new motor types.
+      public: virtual MotorPtr Motor(
+          sdf::ElementPtr _motorSdf,
+          const std::string &_type,
+          const std::string &_motorId,
+          const std::string &_partId);
 
-      /**
-       * Creates a motor for the given model for the given SDF element.
-       */
-      virtual MotorPtr create(sdf::ElementPtr motor);
+      /// \brief Creates a motor for the given model for the given SDF element.
+      public: virtual MotorPtr Create(sdf::ElementPtr _motorSdf);
 
-      protected:
-      /**
-       * Internal reference to the robot model
-       */
-      ::gazebo::physics::ModelPtr model_;
+      /// \brief Internal reference to the robot model
+      protected: ::gazebo::physics::ModelPtr model_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

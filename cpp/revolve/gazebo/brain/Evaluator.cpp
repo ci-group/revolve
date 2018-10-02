@@ -23,40 +23,41 @@
 
 #include "Evaluator.h"
 
-namespace revolve
+using namespace revolve::gazebo;
+
+/////////////////////////////////////////////////
+Evaluator::Evaluator(const double _evaluationRate)
 {
-  namespace gazebo
-  {
-    Evaluator::Evaluator()
-    {
-      this->currentPosition_.Reset();
-      this->previousPosition_.Reset();
-    }
+  assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
+  this->evaluationRate_ = _evaluationRate;
 
-    Evaluator::~Evaluator()
-    {
+  this->currentPosition_.Reset();
+  this->previousPosition_.Reset();
+}
 
-    }
+/////////////////////////////////////////////////
+Evaluator::~Evaluator() = default;
 
-    void Evaluator::start()
-    {
-      this->previousPosition_ = this->currentPosition_;
-    }
+/////////////////////////////////////////////////
+void Evaluator::Reset()
+{
+  this->previousPosition_ = this->currentPosition_;
+}
 
-    double Evaluator::fitness()
-    {
-      double dS = std::sqrt(
-              std::pow(this->previousPosition_.Pos().X()
-                       - this->currentPosition_.Pos().X(), 2) +
-              std::pow(this->previousPosition_.Pos().Y()
-                       - this->currentPosition_.Pos().Y(), 2));
-      this->previousPosition_ = this->currentPosition_;
-      return dS / 30.0;  // dS / RLPower::FREQUENCY_RATE
-    }
+/////////////////////////////////////////////////
+double Evaluator::Fitness()
+{
+  double dS = std::sqrt(
+      std::pow(this->previousPosition_.Pos().X() -
+               this->currentPosition_.Pos().X(), 2) +
+      std::pow(this->previousPosition_.Pos().Y() -
+               this->currentPosition_.Pos().Y(), 2));
+  this->previousPosition_ = this->currentPosition_;
+  return dS / this->evaluationRate_;
+}
 
-    void Evaluator::update(const ignition::math::Pose3d pose)
-    {
-      this->currentPosition_ = pose;
-    }
-  }
+/////////////////////////////////////////////////
+void Evaluator::Update(const ignition::math::Pose3d _pose)
+{
+  this->currentPosition_ = _pose;
 }

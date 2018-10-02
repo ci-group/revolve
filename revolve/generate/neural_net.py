@@ -11,8 +11,8 @@ from ..util import decide
 # Helper function to extract the network interface from a body part and subtree
 def _extract_io(body_spec, part):
     spec = body_spec.get(part.type)
-    inputs = ["%s-in-%d" % (part.id, i) for i in range(spec.inputs)]
-    outputs = ["%s-out-%d" % (part.id, i) for i in range(spec.outputs)]
+    inputs = ["{}-in-{}".format(part.id, i) for i in range(spec.inputs)]
+    outputs = ["{}-out-{}".format(part.id, i) for i in range(spec.outputs)]
     part_ids = {neuron_id: part.id for neuron_id in inputs + outputs}
 
     for child in part.child:
@@ -97,7 +97,7 @@ class NeuralNetworkGenerator(object):
         num_hidden = self.choose_num_hidden() if num_hidden is None else num_hidden
         for i in range(num_hidden):
             neuron = net.neuron.add()
-            neuron.id = 'brian-gen-hidden-%s' % len(hidden)
+            neuron.id = 'brian-gen-hidden-{}'.format(len(hidden))
 
             # Assign a part ID to each hidden neuron, provided we
             # have a map.

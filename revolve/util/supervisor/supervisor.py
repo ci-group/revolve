@@ -62,38 +62,50 @@ class Supervisor(object):
         """
 
         :param manager_cmd: The command used to run your manager / experiment
-        :param world_file: Full path (or relative to cwd) to the Gazebo world file to be loaded.
-        :param output_directory: Full path (or relative to cwd) to the output directory, which will
-                                 be the parent of the restore directory.
+        :param world_file: Full path (or relative to cwd) to the Gazebo world
+                           file to load.
+        :param output_directory: Full path (or relative to cwd) to the output
+                                 directory, which will be the parent of the
+                                 restore directory.
         :param manager_args: Commands to pass to the manager
         :param gazebo_cmd: Command to run Gazebo with
-        :param analyzer_cmd: Command to run the analyzer with, leave `None` for no analyzer.
-        :param gazebo_args: Arguments to pass to Gazebo, *excluding* the world file name
-        :param restore_arg: Argument used to pass the snapshot/restore directory name to
-                            the manager. Note that the output directory is not passed as
-                            part of this name, just the relative path.
+        :param analyzer_cmd: Command to run the analyzer with, leave `None` for
+                             no analyzer.
+        :param gazebo_args: Arguments to Gazebo, *excluding* the world file name
+        :param restore_arg: Argument used to pass the snapshot/restore
+                            directory name to the manager. Note that the
+                            output directory is not passed as part of this
+                            name, just the relative path.
         :param snapshot_world_file:
         :param restore_directory:
-        :param plugins_dir_path: Full path (or relative to cwd) to the gazebo plugins directory
-                                 (setting env variable GAZEBO_PLUGIN_PATH).
-        :param models_dir_path: Full path (or relative to cwd) to the gazebo models directory
-                                (setting env variable GAZEBO_MODEL_PATH).
+        :param plugins_dir_path: Full path (or relative to cwd) to the gazebo
+                                 plugins directory (setting env variable
+                                 GAZEBO_PLUGIN_PATH).
+        :param models_dir_path: Full path (or relative to cwd) to the gazebo
+                                models directory (setting env variable
+                                GAZEBO_MODEL_PATH).
         """
         self.restore_directory = datetime.now().strftime('%Y%m%d%H%M%S') \
             if restore_directory is None else restore_directory
         self.output_directory = 'output' \
             if output_directory is None else os.path.abspath(output_directory)
-        self.snapshot_directory = os.path.join(self.output_directory, self.restore_directory)
+        self.snapshot_directory = os.path.join(
+                self.output_directory,
+                self.restore_directory)
         self.snapshot_world_file = snapshot_world_file
         self.restore_arg = restore_arg
         self.gazebo_args = gazebo_args if gazebo_args is not None else ["-u"]
-        self.analyzer_cmd = analyzer_cmd if isinstance(analyzer_cmd, list) or not analyzer_cmd else [analyzer_cmd]
-        self.gazebo_cmd = gazebo_cmd if isinstance(gazebo_cmd, list) else [gazebo_cmd]
+        self.analyzer_cmd = analyzer_cmd \
+            if isinstance(analyzer_cmd, list) or not analyzer_cmd \
+            else [analyzer_cmd]
+        self.gazebo_cmd = gazebo_cmd \
+            if isinstance(gazebo_cmd, list) else [gazebo_cmd]
         self.manager_args = manager_args if manager_args is not None else []
         self.manager_args += [self.restore_arg, self.snapshot_directory]
 
         self.world_file = os.path.abspath(world_file)
-        self.manager_cmd = manager_cmd if isinstance(manager_cmd, list) else [manager_cmd]
+        self.manager_cmd = manager_cmd \
+            if isinstance(manager_cmd, list) else [manager_cmd]
 
         self.streams = {}
         self.procs = {}
@@ -105,7 +117,9 @@ class Supervisor(object):
         if plugins_dir_path is not None:
             plugins_dir_path = os.path.abspath(plugins_dir_path)
             try:
-                new_env_var = "{}:{}".format(os.environ["GAZEBO_PLUGIN_PATH"], plugins_dir_path)
+                new_env_var = "{curr_paths}:{new_path}".format(
+                        curr_paths=os.environ["GAZEBO_PLUGIN_PATH"],
+                        new_path=plugins_dir_path)
             except KeyError:
                 new_env_var = plugins_dir_path
             os.environ["GAZEBO_PLUGIN_PATH"] = new_env_var
@@ -114,7 +128,9 @@ class Supervisor(object):
         if models_dir_path is not None:
             models_dir_path = os.path.abspath(models_dir_path)
             try:
-                new_env_var = "{}:{}".format(os.environ["GAZEBO_MODEL_PATH"], models_dir_path)
+                new_env_var = "{curr_paths}:{new_path}".format(
+                        curr_paths=os.environ["GAZEBO_MODEL_PATH"],
+                        new_path=models_dir_path)
             except KeyError:
                 new_env_var = models_dir_path
             os.environ['GAZEBO_MODEL_PATH'] = new_env_var
@@ -138,16 +154,17 @@ class Supervisor(object):
         self._launch_gazebo()
 
         # Wait for the end
-        ret = 0
         while True:
             for proc_name in self.procs:
                 self._pass_through_stdout()
                 ret = self.procs[proc_name].poll()
                 if ret is not None:
                     if ret == 0:
-                        sys.stdout.write("Program {} exited normally\n".format(proc_name))
+                        sys.stdout.write("Program {} exited normally\n"
+                                         .format(proc_name))
                     else:
-                        sys.stderr.write("Program {} exited with code {}\n".format(proc_name, ret))
+                        sys.stderr.write("Program {} exited with code {}\n"
+                                         .format(proc_name, ret))
 
                     return ret
 
@@ -161,35 +178,30 @@ class Supervisor(object):
         if not os.path.exists(self.snapshot_directory):
             os.mkdir(self.snapshot_directory)
 
-        success = False
-        while not success:
-            print("Launching all processes...")
-            # self._launch_analyzer()
-            self._launch_gazebo()
-            self._launch_manager()
+        print("Launching all processes...")
+        # self._launch_analyzer()
+        self._launch_gazebo()
+        self._launch_manager()
 
-            ret = 0
-            while not success:
-                for proc_name in self.procs:
-                    # Write out all received stdout
-                    self._pass_through_stdout()
-                    ret = self.procs[proc_name].poll()
-                    if ret is not None:
-                        if ret == 0:
-                            sys.stdout.write("Program '{}' exited normally\n".format(proc_name))
-                        else:
-                            sys.stderr.write("Program '{}' exited with code {}\n".format(proc_name, ret))
+        while True:
+            for proc_name in self.procs:
+                # Write out all received stdout
+                self._pass_through_stdout()
 
-                        return ret
+                ret = self.procs[proc_name].poll()
+                if ret is not None:
+                    if ret == 0:
+                        sys.stdout.write( "Program '{}' exited normally\n"
+                                          .format(proc_name))
+                    else:
+                        sys.stderr.write("Program '{}' exited with code {}\n"
+                                         .format(proc_name, ret))
 
-                # We could do this a lot less often, but this way we get
-                # output once every second.
-                time.sleep(1.0)
+                    return ret
 
-            print("Stop condition reached.")
-            self._terminate_all()
-
-        print("Experiment successful, shutting down.")
+            # We could do this a lot less often, but this way we get
+            # output once every second.
+            time.sleep(1.0)
 
     def _pass_through_stdout(self):
         """
@@ -244,7 +256,7 @@ class Supervisor(object):
                 terminate_process(proc)
 
         # flush output of all processes
-        #TODO fix this better
+        # TODO: fix this better
         self._pass_through_stdout()
 
         self.procs = {}
@@ -257,8 +269,8 @@ class Supervisor(object):
         :param name:
         :return:
         """
-        self.streams[name] = (NBSR(self.procs[name].stdout),
-                              NBSR(self.procs[name].stderr))
+        self.streams[name] = (NBSR(self.procs[name].stdout, name),
+                              NBSR(self.procs[name].stderr, name))
 
     def _launch_analyzer(self, ready_str="Body analyzer ready"):
         """
@@ -269,7 +281,9 @@ class Supervisor(object):
             return
 
         print("Launching analyzer...")
-        self.procs['analyzer'] = self._launch_with_ready_str(self.analyzer_cmd, ready_str)
+        self.procs['analyzer'] = self._launch_with_ready_str(
+                cmd=self.analyzer_cmd,
+                ready_str=ready_str)
         self._add_output_stream('analyzer')
 
     def _launch_gazebo(self, ready_str="World plugin loaded"):
@@ -279,10 +293,15 @@ class Supervisor(object):
         """
         print("Launching Gazebo...")
         gz_args = self.gazebo_cmd + self.gazebo_args
-        snapshot_world = os.path.join(self.snapshot_directory, self.snapshot_world_file)
-        world = snapshot_world if os.path.exists(snapshot_world) else self.world_file
+        snapshot_world = os.path.join(
+                self.snapshot_directory,
+                self.snapshot_world_file)
+        world = snapshot_world \
+            if os.path.exists(snapshot_world) else self.world_file
         gz_args.append(world)
-        self.procs['gazebo'] = self._launch_with_ready_str(gz_args, ready_str)
+        self.procs['gazebo'] = self._launch_with_ready_str(
+                cmd=gz_args,
+                ready_str=ready_str)
         self._add_output_stream('gazebo')
 
     def _launch_manager(self):
@@ -292,7 +311,11 @@ class Supervisor(object):
         print("Launching experiment manager...")
         args = self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
-        self.procs['manager'] = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.procs['manager'] = subprocess.Popen(
+                args,
+                bufsize=1,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
         self._add_output_stream('manager')
 
     @staticmethod
@@ -302,7 +325,11 @@ class Supervisor(object):
         :param ready_str:
         :return:
         """
-        process = subprocess.Popen(cmd, bufsize=0, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(
+                cmd,
+                bufsize=1,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
 
         # make out and err non-blocking pipes
         if not mswindows:
@@ -312,8 +339,9 @@ class Supervisor(object):
                 fl = fcntl.fcntl(fd, fcntl.F_GETFL)
                 fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
         else:
-            sys.stderr.write("Using Windows may not give the most optimal experience\n")
-            # hint on how to fix it here: https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
+            # hint on how to fix it here:
+            # https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
+            sys.stderr.write("Windows may not give the optimal experience\n")
 
         ready = False
         while not ready:
@@ -322,14 +350,15 @@ class Supervisor(object):
                 # flush out all stdout and stderr
                 out, err = process.communicate()
                 if out is not None:
-                    sys.stdout.write(out)
+                    sys.stdout.write("[gazebo-launch] {}".format(out))
                 if err is not None:
-                    sys.stderr.write(err)
-                raise RuntimeError("Error launching launch {}, exit with code {}".format(cmd, exit_code))
+                    sys.stderr.write("[gazebo-launch] {}".format(err))
+                raise RuntimeError("Error launching {}, exit with code {}"
+                                   .format(cmd, exit_code))
 
             try:
                 out = process.stdout.readline()
-                sys.stdout.write(out)
+                sys.stdout.write("[gazebo-launch] {}".format(out))
                 if ready_str in out:
                     ready = True
             except IOError:
@@ -338,12 +367,11 @@ class Supervisor(object):
             if not mswindows:
                 try:
                     err = process.stderr.readline()
-                    sys.stderr.write(err)
+                    sys.stderr.write("[gazebo-launch] {}".format(err))
                 except IOError:
                     pass
 
             time.sleep(0.1)
-
 
         # make out and err blocking pipes again
         if not mswindows:
@@ -353,7 +381,8 @@ class Supervisor(object):
                 fl = fcntl.fcntl(fd, fcntl.F_GETFL)
                 fcntl.fcntl(fd, fcntl.F_SETFL, fl & (~ os.O_NONBLOCK))
         else:
-            sys.stderr.write("Using Windows may not give the most optimal experience\n")
-            # hint on how to fix it here: https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
+            # hint on how to fix it here:
+            # https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
+            sys.stderr.write("Windows may not give the optimal experience\n")
 
         return process

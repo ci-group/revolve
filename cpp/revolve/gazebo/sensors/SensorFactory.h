@@ -33,33 +33,33 @@ namespace revolve
   {
     class SensorFactory
     {
-      public:
-      explicit SensorFactory(::gazebo::physics::ModelPtr model);
+      /// \brief Constructor
+      public: explicit SensorFactory(::gazebo::physics::ModelPtr _model);
 
-      virtual ~SensorFactory();
+      /// \brief Destructor
+      public: virtual ~SensorFactory();
 
-      /**
-       * Returns a sensor pointer instance from a motor element, part ID and type.
-       * This is the convenience wrapper over `create` that has required attributes
-       * already checked, usually you should override this when adding new sensor types.
-       */
-      virtual SensorPtr getSensor(
-              sdf::ElementPtr sensor,
-              const std::string &type,
-              const std::string &partId,
-              const std::string &sensorId);
+      /// \brief Returns a sensor pointer instance from a motor element, part
+      /// ID and type. This is the convenience wrapper over `create` that has
+      /// required attributes already checked, usually you should override
+      /// this when adding new sensor types.
+      /// \brief[in] _sensor Sensor identifier
+      /// \brief[in] _type Module identifier
+      /// \param[in] _partId Number of inputs a sensor has
+      /// \brief[in] _sensorId Sensor identifier
+      public: virtual SensorPtr Sensor(
+          sdf::ElementPtr _sensorSdf,
+          const std::string &_type,
+          const std::string &_partId,
+          const std::string &_sensorId);
 
-      /**
-       * Creates a new sensor in the given model, from the
-       * given SDF element pointer.
-       */
-      virtual SensorPtr create(sdf::ElementPtr sensor);
+      /// \brief Creates a new sensor in the given model, from the given SDF
+      /// element pointer.
+      /// \param[in] _sensor An SDF pointer to a sensor
+      public: virtual SensorPtr Create(sdf::ElementPtr _sensorSdf);
 
-      protected:
-      /**
-       * Robot model for which this factory is generating sensors.
-       */
-      ::gazebo::physics::ModelPtr model_;
+      /// \brief Robot model for which this factory is generating sensors.
+      protected: ::gazebo::physics::ModelPtr model_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

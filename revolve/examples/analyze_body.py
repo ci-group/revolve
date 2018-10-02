@@ -22,7 +22,7 @@ else:
     seed = random.randint(0, 10000)
 
 random.seed(seed)
-print("Seed: %d" % seed, file=sys.stderr)
+print("Seed: {}".format(seed), file=sys.stderr)
 
 
 @trollius.coroutine
@@ -37,16 +37,23 @@ def analysis_func():
         sdf = get_analysis_robot(robot, builder)
 
         # Find out its intersections and bounding box
-        intersections, bbox = yield From(analyzer.analyze_robot(robot, builder=builder))
+        intersections, bbox = yield From(
+                analyzer.analyze_robot(robot, builder=builder))
 
         if intersections:
             print("Invalid model - intersections detected.", file=sys.stderr)
         else:
             print("No model intersections detected!", file=sys.stderr)
             if bbox:
-                # Translate the model in z direction so it stands directly on the ground
-                print("Model bounding box: (%f, %f, %f), (%f, %f, %f)" % (
-                    bbox.min.x, bbox.min.y, bbox.min.z, bbox.max.x, bbox.max.y, bbox.max.z
+                # Translate the model in z direction so it stands directly on
+                # the ground
+                print("Model bounding box: ({}, {}, {}), ({}, {}, {})".format(
+                        bbox.min.x,
+                        bbox.min.y,
+                        bbox.min.z,
+                        bbox.max.x,
+                        bbox.max.y,
+                        bbox.max.z
                 ), file=sys.stderr)
                 model = sdf.elements[0]
                 model.translate(Vector3(0, 0, -bbox.min.z))

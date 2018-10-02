@@ -119,7 +119,9 @@ class Time(object):
         :return:
         """
         if isinstance(other, Time):
-            return self.__class__(self.sec + other.sec, self.nsec + other.nsec)
+            return self.__class__(
+                    sec=self.sec + other.sec,
+                    nsec=self.nsec + other.nsec)
 
         # Otherwise assume a number
         return self.__class__(dbl=float(self) + other)
@@ -133,7 +135,9 @@ class Time(object):
         :return:
         """
         if isinstance(other, Time):
-            return self.__class__(self.sec - other.sec, self.nsec - other.nsec)
+            return self.__class__(
+                    sec=self.sec - other.sec,
+                    nsec=self.nsec - other.nsec)
 
         # Assume a number
         return self.__class__(dbl=float(self) - other)
@@ -188,6 +192,6 @@ class Time(object):
         return self.sec + self.nsec / 10.0e9
 
     def __str__(self):
-        return "%f" % float(self)
+        return "{}".format(float(self))
 
     __repr__ = __str__

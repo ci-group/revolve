@@ -10,8 +10,18 @@ class Robot(object):
     Class to manage a single robot with the WorldManager
     """
 
-    def __init__(self, name, tree, robot, position, time, battery_level=0.0,
-                 speed_window=60, warmup_time=0, parents=None):
+    def __init__(
+            self,
+            name,
+            tree,
+            robot,
+            position,
+            time,
+            battery_level=0.0,
+            speed_window=60,
+            warmup_time=0,
+            parents=None
+    ):
         """
         :param speed_window:
         :param name:
@@ -40,7 +50,8 @@ class Robot(object):
         self.last_update = time
         self.last_mate = None
 
-        self.parent_ids = set() if parents is None else set(p.robot.id for p in parents)
+        self.parent_ids = set() \
+            if parents is None else set(p.robot.id for p in parents)
         self._ds = deque(maxlen=speed_window)
         self._dt = deque(maxlen=speed_window)
         self._positions = deque(maxlen=speed_window)
@@ -54,7 +65,7 @@ class Robot(object):
         self._idx = 0
         self._count = 0
 
-    def write_robot(self, world, details_file, csv_writer):
+    def write_robot(self, details_file, csv_writer):
         """
         Writes this robot to a file. This simply writes the
         protobuf bot to a file, which can later be recovered
@@ -107,9 +118,9 @@ class Robot(object):
             self.last_update = time
             return
 
-        # Calculate the distance the robot has covered as the Euclidean distance over
-        # the x and y coordinates (we don't care for flying), as well as the time
-        # it took to cover this distance.
+        # Calculate the distance the robot has covered as the Euclidean
+        # distance over the x and y coordinates (we don't care for flying),
+        # as well as the time it took to cover this distance.
         last = self.last_position
         ds = np.sqrt((position.x - last.x)**2 + (position.y - last.y)**2)
         dt = float(time - self.last_update)
@@ -180,7 +191,9 @@ class Robot(object):
         :return:
         :rtype: Time
         """
-        return Time() if self.last_update is None else self.last_update - self.starting_time
+        return Time() \
+            if self.last_update is None \
+            else self.last_update - self.starting_time
 
     def get_battery_level(self):
         """

@@ -39,7 +39,7 @@ def _renumber(node, base=0):
     :return:
     """
     for node in _node_list(node):
-        node.id = "node-%d" % base
+        node.id = "node-{}".format(base)
         base += 1
 
     return base
@@ -247,7 +247,8 @@ class Mutator(object):
             # Delete hidden neurons at random
             hidden_before += node.io_count(recursive=False)[2]
             node.set_neurons([neuron for neuron in node.get_neurons()
-                              if neuron.layer != "hidden" or decide(p_keep_hidden_neuron)])
+                              if neuron.layer != "hidden"
+                              or decide(p_keep_hidden_neuron)])
             hidden_after += node.io_count(recursive=False)[2]
 
             # Delete brain connections at random
@@ -269,8 +270,9 @@ class Mutator(object):
         # they were removed and multiply it by the deletion
         # probability. Cap to the maximum number we can add to
         # not violate robot properties
-        n_new_hidden = int(min(round(hidden_before * self.p_delete_hidden_neuron),
-                           self.brain_gen.max_hidden - hidden_after))
+        n_new_hidden = \
+            int(min(round(hidden_before * self.p_delete_hidden_neuron),
+                    self.brain_gen.max_hidden - hidden_after))
         nodes = _node_list(root, root=True)
         for i in range(n_new_hidden):
             target = random.choice(nodes)
@@ -283,12 +285,16 @@ class Mutator(object):
 
         # Finally, we add new neural connections, applying the same logic
         # as before for the count.
-        n_new_connections = int(round(conn_before * self.p_delete_brain_connection))
-        sources = [(node, neuron) for node in nodes for neuron in node.get_neurons()]
+        n_new_connections = \
+            int(round(conn_before * self.p_delete_brain_connection))
+        sources = [(node, neuron) for node in nodes
+                   for neuron in node.get_neurons()]
         targets = [(node, neuron) for node in nodes
-                   for neuron in node.get_neurons() if neuron.layer in ("hidden", "output")]
+                   for neuron in node.get_neurons()
+                   if neuron.layer in ("hidden", "output")]
 
-        # Can only add neural connections if there are connection sources and targets
+        # Can only add neural connections if there are connection sources and
+        # targets
         if sources and targets:
             for i in range(n_new_connections):
                 source_node, source_neuron = random.choice(sources)
@@ -301,8 +307,10 @@ class Mutator(object):
         # robot complexity, we're making sure that the expected value
         # of the number of added body parts in the loop below equals
         # the expected value of the number of deleted parts.
-        avg_parts_deleted = avg_del_len * self.p_delete_subtree - avg_dup_len * self.p_duplicate_subtree
-        e_parts_to_add = min(avg_parts_deleted, self.body_gen.max_parts - len(root))
+        avg_parts_deleted = avg_del_len * self.p_delete_subtree \
+                            - avg_dup_len * self.p_duplicate_subtree
+        e_parts_to_add = \
+            min(avg_parts_deleted, self.body_gen.max_parts - len(root))
         n_its = int(math.ceil(e_parts_to_add * 2))
         if n_its > 0:
             p_add_body_part = e_parts_to_add / n_its
@@ -350,7 +358,9 @@ class Mutator(object):
         # Create a list of subtrees that
         # - Is not larger than max_add_size
         # - Does not violate I/O constraints when added
-        mi, mo, mh = self.body_gen.max_inputs, self.body_gen.max_outputs, self.brain_gen.max_hidden
+        mi, mo, mh = self.body_gen.max_inputs, \
+                     self.body_gen.max_outputs, \
+                     self.brain_gen.max_hidden
 
         def valid_part(node):
             """
@@ -360,7 +370,8 @@ class Mutator(object):
                 return False
 
             i, o, h = node.io_count()
-            return (i + inputs) <= mi and (o + outputs) <= mo and (h + hidden) <= mh
+            return (i + inputs) <= mi \
+                   and (o + outputs) <= mo and (h + hidden) <= mh
 
         # If there are no valid nodes or attachment positions, duplication will
         # never happen and the average duplication length is 0. Deciding this
@@ -386,23 +397,30 @@ class Mutator(object):
         dup = random.choice(nodes)
         """ :type : Node """
 
-        # We need a current protobuf body to call `choose_attachment`, generate it here
+        # We need a current protobuf body to call `choose_attachment`,
+        # generate it here
         robot = Robot()
         _renumber(root)
         root.build(robot.body.root, robot.brain)
 
-        attach_node, attach_slot = self.body_gen.choose_attachment(attachments, root.part)
+        attach_node, attach_slot = self.body_gen.choose_attachment(
+                attachments=attachments,
+                root_part=root.part)
         dup_new = dup.copy(copy_parent=False)
-        dup_new.set_connection(dup.parent_connection().from_slot, attach_slot, attach_node, parent=False)
+        dup_new.set_connection(
+                from_slot=dup.parent_connection().from_slot,
+                to_slot=attach_slot,
+                node=attach_node,
+                parent=False)
         return dup_new, avg_dup_len
 
     def swap_random_subtrees(self, root):
         """
-        Picks to random subtrees (which are not parents / children of each other)
-        and swaps them.
+        Picks to random subtrees (which are not parents / children of each
+        other) and swaps them.
         :param root:
-        :return: The two body parts on which swapping was performed, or (None, None)
-                 if this did not happen.
+        :return: The two body parts on which swapping was performed,
+                 or (None, None) if this did not happen.
         """
         if not decide(self.p_swap_subtree):
             return None, None
@@ -430,13 +448,21 @@ class Mutator(object):
         b.remove_connection(b_conn.from_slot)
 
         # Create new connections
-        a.set_connection(a_conn.from_slot, b_conn.to_slot, b_conn.node, parent=False)
-        b.set_connection(b_conn.from_slot, a_conn.to_slot, a_conn.node, parent=False)
+        a.set_connection(
+                from_slot=a_conn.from_slot,
+                to_slot=b_conn.to_slot,
+                node=b_conn.node,
+                parent=False)
+        b.set_connection(
+                from_slot=b_conn.from_slot,
+                to_slot=a_conn.to_slot,
+                node=a_conn.node,
+                parent=False)
 
     def add_random_body_part(self, prob, root):
         """
         Generates a new random body part
-        :param prob: The calculated probability with which the part should be added
+        :param prob: The probability with which the part should be added
         :param root:
         :return: The added body part
         """
@@ -453,8 +479,12 @@ class Mutator(object):
         nodes = _node_list(root, root=True)
         n_nodes = len(nodes)
         inputs, outputs, hidden = root.io_count(nodes)
-        usable = self.body_gen.get_allowed_parts(self.body_gen.attach_specs, n_nodes,
-                                                 inputs, outputs, root.part)
+        usable = self.body_gen.get_allowed_parts(
+                attach_specs=self.body_gen.attach_specs,
+                num_parts=n_nodes,
+                inputs=inputs,
+                outputs=outputs,
+                root_part=root.part)
         if not usable:
             return None
 
@@ -469,9 +499,18 @@ class Mutator(object):
 
         # Choose a body part type and initialize its parameters
         part = BodyPart()
-        part.type = self.body_gen.choose_part(usable, parent_node.part, root.part, root=False)
+        part.type = self.body_gen.choose_part(
+                parts=usable,
+                parent_part=parent_node.part,
+                root_part=root.part,
+                root=False)
         type_spec = self.body_gen.spec.get(part.type)
-        self.body_gen.initialize_part(type_spec, part, parent_node.part, root.part, root=False)
+        self.body_gen.initialize_part(
+                spec=type_spec,
+                new_part=part,
+                parent_part=parent_node.part,
+                root_part=root.part,
+                root=False)
 
         # Decide the initial hidden neurons this part will have
         # by getting the average of an expected number from
@@ -481,8 +520,8 @@ class Mutator(object):
 
         # We can hijack brain generation to generate a neural network for
         # just this part. We then only have to generate the network connections.
-        inputs = ["input-%d" % i for i in range(type_spec.inputs)]
-        outputs = ["output-%d" % i for i in range(type_spec.outputs)]
+        inputs = ["input-{}".format(i) for i in range(type_spec.inputs)]
+        outputs = ["output-{}".format(i) for i in range(type_spec.outputs)]
         network = self.brain_gen.generate(inputs, outputs, num_hidden=n_hidden)
         neurons = [neuron for neuron in network.neuron]
 
@@ -491,15 +530,19 @@ class Mutator(object):
         nodes.append(nw_node)
 
         # Pick a target slot
-        target_slot = self.body_gen.choose_target_slot(type_spec, parent_node.part, root.part)
+        target_slot = self.body_gen.choose_target_slot(
+                new_part=type_spec,
+                parent=parent_node.part,
+                root_part=root.part)
         parent_node.set_connection(slot, target_slot, nw_node)
 
-        # Now we add network connections where this node is the source. We don't add
-        # connections towards this node since, assuming valid paths,
-        # these connections already exist in other nodes.
+        # Now we add network connections where this node is the source. We
+        # don't add connections towards this node since, assuming valid
+        # paths, these connections already exist in other nodes.
         sources = neurons
         destinations = [(neuron, node) for node in nodes
-                        for neuron in node.get_neurons() if neuron.layer in ("hidden", "output")]
+                        for neuron in node.get_neurons()
+                        if neuron.layer in ("hidden", "output")]
         for src, (dst, dst_node) in itertools.izip(sources, destinations):
             if not decide(self.brain_gen.conn_prob):
                 continue
@@ -523,7 +566,9 @@ class Mutator(object):
         :return:
         """
         spec = self.body_gen.spec.get(node.part.type)
-        nw_params = spec.get_epsilon_mutated_parameters(node.part.param, serialize=False)
+        nw_params = spec.get_epsilon_mutated_parameters(
+                params=node.part.param,
+                serialize=False)
         spec.set_parameters(node.part.param, nw_params)
 
     def mutate_node_brain_parameters(self, node):
@@ -534,5 +579,7 @@ class Mutator(object):
         """
         for neuron in node.get_neurons():
             spec = self.brain_gen.spec.get(neuron.type)
-            nw_params = spec.get_epsilon_mutated_parameters(neuron.param, serialize=False)
+            nw_params = spec.get_epsilon_mutated_parameters(
+                    params=neuron.param,
+                    serialize=False)
             spec.set_parameters(neuron.param, nw_params)

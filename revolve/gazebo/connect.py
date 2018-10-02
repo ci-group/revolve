@@ -23,18 +23,29 @@ class RequestHandler(object):
     # Object used to make constructor private
     _PRIVATE = object()
 
-    def __init__(self, manager, request_class, request_type,
-                 response_class, response_type,
-                 advertise, subscribe, id_attr, request_attr, msg_id_base,
-                 wait_for_subscriber, wait_for_publisher,
-                 _private=None):
+    def __init__(
+            self,
+            manager,
+            request_class,
+            request_type,
+            response_class,
+            response_type,
+            advertise,
+            subscribe,
+            id_attr,
+            request_attr,
+            msg_id_base,
+            wait_for_subscriber,
+            wait_for_publisher,
+            _private=None
+    ):
         """
         Private constructor, use the `create` coroutine instead.
         :param manager:
         :return:
         """
         if _private is not self._PRIVATE:
-            raise ValueError("The RequestHandler cannot be directly constructed,"
+            raise ValueError("RequestHandler cannot be directly constructed,"
                              "rather the `create` coroutine should be used.")
 
         self.id_attr = id_attr
@@ -55,18 +66,21 @@ class RequestHandler(object):
 
     @classmethod
     @trollius.coroutine
-    def create(cls, manager,
-               request_class=request_pb2.Request,
-               request_type='gazebo.msgs.Request',
-               response_class=response_pb2.Response,
-               response_type='gazebo.msgs.Response',
-               advertise='/gazebo/default/request',
-               subscribe='/gazebo/default/response',
-               id_attr='id',
-               request_attr='request',
-               wait_for_subscriber=True,
-               wait_for_publisher=True,
-               msg_id_base=0):
+    def create(
+            cls,
+            manager,
+            request_class=request_pb2.Request,
+            request_type='gazebo.msgs.Request',
+            response_class=response_pb2.Response,
+            response_type='gazebo.msgs.Response',
+            advertise='/gazebo/default/request',
+            subscribe='/gazebo/default/response',
+            id_attr='id',
+            request_attr='request',
+            wait_for_subscriber=True,
+            wait_for_publisher=True,
+            msg_id_base=0
+    ):
         """
 
         :param wait_for_publisher:
@@ -83,9 +97,21 @@ class RequestHandler(object):
         :param msg_id_base:
         :return:
         """
-        handler = cls(manager, request_class, request_type, response_class, response_type,
-                      advertise, subscribe, id_attr, request_attr, msg_id_base,
-                      wait_for_subscriber, wait_for_publisher, cls._PRIVATE)
+        handler = cls(
+                manager,
+                request_class,
+                request_type,
+                response_class,
+                response_type,
+                advertise,
+                subscribe,
+                id_attr,
+                request_attr,
+                msg_id_base,
+                wait_for_subscriber,
+                wait_for_publisher,
+                cls._PRIVATE
+        )
         yield From(handler._init())
         raise Return(handler)
 
@@ -172,7 +198,13 @@ class RequestHandler(object):
         del cb[msg_id]
 
     @trollius.coroutine
-    def do_gazebo_request(self, request, data=None, dbl_data=None, msg_id=None):
+    def do_gazebo_request(
+            self,
+            request,
+            data=None,
+            dbl_data=None,
+            msg_id=None
+    ):
         """
         Convenience wrapper to use `do_request` with a default Gazebo
         `Request` message. See that method for more info.
@@ -181,8 +213,8 @@ class RequestHandler(object):
         :type request: str
         :param data:
         :param dbl_data:
-        :param msg_id: Force the message to use this ID. Sequencer is used if no message
-                       ID is specified.
+        :param msg_id: Force the message to use this ID. Sequencer is used if no
+                       message ID is specified.
         :type msg_id: int
         :return:
         """
@@ -232,7 +264,9 @@ class RequestHandler(object):
         req, cb = self._get_response_map(request_type)
 
         if msg_id in req:
-            raise RuntimeError("Duplicate request ID: `%s` for type `%s`" % (msg_id, request_type))
+            raise RuntimeError(
+                    "Duplicate request ID: `{}` for type `{}`".format(
+                            msg_id, request_type))
 
         future = Future()
         req[msg_id] = None

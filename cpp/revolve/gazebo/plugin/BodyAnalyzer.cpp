@@ -84,7 +84,7 @@ namespace revolve
     {
       std::string expectedName =
               "analyze_bot_" + boost::lexical_cast< std::string >(counter_);
-      if (msg->name() != expectedName)
+      if (msg->name() not_eq expectedName)
       {
         throw std::runtime_error(
                 "INTERNAL ERROR: Expecting model with name '" + expectedName +
@@ -131,7 +131,7 @@ namespace revolve
       world_->SetPaused(true);
 
       boost::mutex::scoped_lock plock(processingMutex_);
-      if (!processing_)
+      if (not processing_)
       {
         return;
       }
@@ -160,7 +160,7 @@ namespace revolve
               "analyze_bot_" + boost::lexical_cast< std::string >(counter_);
       gz::physics::ModelPtr model = world_->GetModel(name);
 
-      if (!model)
+      if (not model)
       {
         std::cerr << "------------------------------------" << std::endl;
         std::cerr
@@ -205,13 +205,13 @@ namespace revolve
 
     void BodyAnalyzer::AnalyzeRequest(ConstRequestPtr &request)
     {
-      if (request->request() != "analyze_body")
+      if (request->request() not_eq "analyze_body")
       {
         // Request is not meant for us
         return;
       }
 
-      if (!request->has_data())
+      if (not request->has_data())
       {
         std::cerr << "An `analyze_body` request should have data." << std::endl;
         return;
@@ -226,13 +226,9 @@ namespace revolve
 
       if (requests_.size() >= MAX_QUEUE_SIZE)
       {
-        std::cerr
-                << "Ignoring request "
-                << request->id()
-                << ": maximum queue size ("
-                << MAX_QUEUE_SIZE
-                << ") reached."
-                << std::endl;
+        std::cerr << "Ignoring request " << request->id()
+                  << ": maximum queue size (" << MAX_QUEUE_SIZE << ") reached."
+                  << std::endl;
         return;
       }
 
