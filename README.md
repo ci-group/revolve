@@ -23,37 +23,6 @@ that can be directly used in Gazebo.
 Revolve also ships with some simple generator classes, which can generate arbitrary robot bodies from scratch
 given a set of constraints.
 
-## Robot brains
-Of course you would like your robot to also have a brain. Revolve also ships with a specification for a simple
-neural network, with its interface based on a robot body if desired.
- 
-## Gazebo plugins
-Revolve also comes with a number of Gazebo plugins to power the defined components in simulation. The `RobotController`
-C++ class is a solid basis for controlling a robot in a simple manner, providing default implementations of
- motor controllers and sensor readers with an interface over the body parts' inputs and outputs.
- 
-## Revolve.Angle
-The most complete, but opinionated part of Revolve is Angle, which is a framework that allows specification, generation
-and evolution of robots that fit within the defined body space and have a neural network as a brain. See the information
-in the `revolve.angle` folder for details.
- 
-## Work in progress
-I am writing revolve, as well as the related library [sdfbuilder](https://github.com/ElteHupkes/sdf-builder) as part
-of my Master's thesis research. The actual code that is going to be running my experiments is currently being
-constructed in my [Triangle of Life repository](https://github.com/ElteHupkes/tol-revolve). This repo also serves
-as the currently only and therefore best way to see Revolve in action. All of this is still very much a work in
-progress, though I do have large parts of Revolve and ToL working at this point.
+# Instalation
 
-# Installation
-To use Revolve, you need Gazebo. Since some common scenarios (mostly involving deleting models) cause
-some very serious bugs in Gazebo, currently a patched version of Gazebo is required (and will have to
-be compiled from source, unfortunately). To get this version, clone the Gazebo fork from 
-https://bitbucket.org/ElteHupkes/gazebo and checkout the `gazebo6-revolve` branch. Follow the steps
-found [at this page](http://gazebosim.org/tutorials?tut=install_from_source&ver=default&cat=install) to
-install Gazebo from source.
-
-## TODO
-Given a working Gazebo installation, Revolve can be compiled using cmake followed by make also. The easiest way
-to use the Python libraries right now is by using `pip install -e /path/to/revolve`. I'll update these instructions
-with more details as soon as I find the time.
-
+For the details, see [wiki pages](https://github.com/ci-group/revolve/wiki).
