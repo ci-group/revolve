@@ -48,7 +48,7 @@ namespace revolve
       /// \param[in] _partId Number of inputs a sensor has
       /// \brief[in] _sensorId Sensor identifier
       public: virtual SensorPtr Sensor(
-          sdf::ElementPtr _sensor,
+          sdf::ElementPtr _sensorSdf,
           const std::string &_type,
           const std::string &_partId,
           const std::string &_sensorId);
@@ -56,7 +56,7 @@ namespace revolve
       /// \brief Creates a new sensor in the given model, from the given SDF
       /// element pointer.
       /// \param[in] _sensor An SDF pointer to a sensor
-      public: virtual SensorPtr Create(sdf::ElementPtr _sensor);
+      public: virtual SensorPtr Create(sdf::ElementPtr _sensorSdf);
 
       /// \brief Robot model for which this factory is generating sensors.
       protected: ::gazebo::physics::ModelPtr model_;

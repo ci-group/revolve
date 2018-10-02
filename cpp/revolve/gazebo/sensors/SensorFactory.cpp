@@ -37,45 +37,46 @@ SensorFactory::~SensorFactory() = default;
 
 /////////////////////////////////////////////////
 SensorPtr SensorFactory::Sensor(
-    sdf::ElementPtr _sensor,
+    sdf::ElementPtr _sensorSdf,
     const std::string &_type,
     const std::string &_partId,
     const std::string &_sensorId)
 {
-  SensorPtr out;
+  SensorPtr sensor;
   if ("imu" == _type)
   {
-    out.reset(new ImuSensor(this->model_, _sensor, _partId, _sensorId));
+    sensor.reset(new ImuSensor(this->model_, _sensorSdf, _partId, _sensorId));
   }
   else if ("light" == _type)
   {
-    out.reset(new LightSensor(this->model_, _sensor, _partId, _sensorId));
+    sensor.reset(new LightSensor(this->model_, _sensorSdf, _partId, _sensorId));
   }
   else if ("touch" == _type)
   {
-    out.reset(new TouchSensor(this->model_, _sensor, _partId, _sensorId));
+    sensor.reset(new TouchSensor(this->model_, _sensorSdf, _partId, _sensorId));
   }
   else if ("basic_battery" == _type)
   {
-    out.reset(new BatterySensor(this->model_, _partId, _sensorId));
+    sensor.reset(new BatterySensor(this->model_, _partId, _sensorId));
   }
   else if ("point_intensity" == _type)
   {
-    out.reset(new PointIntensitySensor(_sensor,
-                                       this->model_,
-                                       _partId,
-                                       _sensorId));
+    sensor.reset(new PointIntensitySensor(
+        _sensorSdf,
+        this->model_,
+        _partId,
+        _sensorId));
   }
 
-  return out;
+  return sensor;
 }
 
 /////////////////////////////////////////////////
-SensorPtr SensorFactory::Create(sdf::ElementPtr _sensor)
+SensorPtr SensorFactory::Create(sdf::ElementPtr _sensorSdf)
 {
-  auto typeParam = _sensor->GetAttribute("type");
-  auto partIdParam = _sensor->GetAttribute("part_id");
-  auto idParam = _sensor->GetAttribute("id");
+  auto typeParam = _sensorSdf->GetAttribute("type");
+  auto partIdParam = _sensorSdf->GetAttribute("part_id");
+  auto idParam = _sensorSdf->GetAttribute("id");
 
   if (not typeParam or not partIdParam or not idParam)
   {
@@ -88,12 +89,12 @@ SensorPtr SensorFactory::Create(sdf::ElementPtr _sensor)
   auto type = typeParam->GetAsString();
   auto id = idParam->GetAsString();
 
-  SensorPtr out = this->Sensor(_sensor, type, partId, id);
-  if (not out)
+  SensorPtr sensor = this->Sensor(_sensorSdf, type, partId, id);
+  if (not sensor)
   {
     std::cerr << "Sensor type '" << type << "' is not supported." << std::endl;
     throw std::runtime_error("Sensor error");
   }
 
-  return out;
+  return sensor;
 }

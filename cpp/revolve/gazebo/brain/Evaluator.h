@@ -31,13 +31,13 @@ namespace revolve
     class Evaluator
     {
       /// \brief Constructor
-      public: Evaluator();
+      public: Evaluator(const double _evaluationRate);
 
       /// \brief Destructor
       public: ~Evaluator();
 
       /// \brief Initialisation method
-      public: void Start();
+      public: void Reset();
 
       /// \brief Retrieve the fitness
       /// \return A fitness value according to a given formula
@@ -52,6 +52,9 @@ namespace revolve
 
       /// \brief Current position of a robot
       private: ignition::math::Pose3d currentPosition_;
+
+      /// \brief
+      private: double evaluationRate_;
     };
   }
 }

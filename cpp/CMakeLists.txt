@@ -58,6 +58,10 @@ endif ()
 find_package(Boost REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Find GSL - GNU Scientific Library
+find_package(GSL REQUIRED)
+include_directories(${GSL_INCLUDE_DIRS})
+
 # Find and include Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
@@ -183,6 +187,7 @@ target_link_libraries(
         revolve-gazebo
         ${GAZEBO_LIBRARIES}
         ${Boost_LIBRARIES}
+        ${GSL_LIBRARIES}
 )
 
 # Create World plugin
