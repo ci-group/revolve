@@ -10,8 +10,7 @@ RUN apt-get install -y build-essential      \
                        mercurial            \
                        python               \
                        python-pip           \
-                       xsltproc             \
-
+                       xsltproc
 
 ADD . /revolve
 RUN /revolve/docker/build_revolve.sh
