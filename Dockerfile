@@ -1,6 +1,7 @@
 FROM cigroup/gazebo:gazebo6-revolve
 
 # Dependencies
+RUN apt-get update
 RUN apt-get install -y build-essential      \
                        cmake                \
                        cppcheck             \
