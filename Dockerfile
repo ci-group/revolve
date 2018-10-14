@@ -4,12 +4,14 @@ FROM cigroup/gazebo:gazebo6-revolve
 RUN apt-get install -y build-essential      \
                        cmake                \
                        cppcheck             \
+                       doxygen              \
                        git                  \
-                       xsltproc             \
+                       gsl-bin libgsl0-dev  \
+                       mercurial            \
                        python               \
                        python-pip           \
-                       gsl-bin libgsl0-dev  \
-                       mercurial
+                       xsltproc             \
+
 
 ADD . /revolve
 RUN /revolve/docker/build_revolve.sh
