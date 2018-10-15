@@ -88,8 +88,8 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
     return;
   }
 
-  double secs = 1.0 / this->robotStatesPubFreq_;
-  double time = _info.simTime.Double();
+  auto secs = 1.0 / this->robotStatesPubFreq_;
+  auto time = _info.simTime.Double();
   if ((time - this->lastRobotStatesUpdateTime_) >= secs)
   {
     // Send robot info update message, this only sends the
@@ -131,7 +131,7 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     std::cout << "Processing request `" << request->id()
               << "` to delete robot `" << name << "`" << std::endl;
 
-    gz::physics::ModelPtr model = this->world_->GetModel(name);
+    auto model = this->world_->GetModel(name);
     if (model)
     {
       // Tell the world to remove the model
@@ -143,7 +143,7 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
       // `entity_delete` request, which will make sure deleting the model
       // happens on the world thread.
       gz::msgs::Request deleteReq;
-      int id = gz::physics::getUniqueId();
+      auto id = gz::physics::getUniqueId();
       deleteReq.set_id(id);
       deleteReq.set_request("entity_delete");
       deleteReq.set_data(model->GetScopedName());
