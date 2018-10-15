@@ -1,7 +1,9 @@
 from sdfbuilder.math import Vector3
-from revolve.util import Time
+
 from revolve.angle import Robot as RvRobot
-from ..util.analyze import count_joints, count_motors, count_connections, count_extremities
+from revolve.util import Time
+from ..util.analyze import count_connections, count_extremities, count_joints, \
+    count_motors
 
 
 class Robot(RvRobot):
@@ -9,7 +11,17 @@ class Robot(RvRobot):
     Class to manage a single robot
     """
 
-    def __init__(self, conf, name, tree, robot, position, time, battery_level=0.0, parents=None):
+    def __init__(
+            self,
+            conf,
+            name,
+            tree,
+            robot,
+            position,
+            time,
+            battery_level=0.0,
+            parents=None
+    ):
         """
         :param conf:
         :param name:
@@ -26,9 +38,17 @@ class Robot(RvRobot):
         :return:
         """
         speed_window = int(conf.evaluation_time * conf.pose_update_frequency)
-        super(Robot, self).__init__(name=name, tree=tree, robot=robot, position=position, time=time,
-                                    battery_level=battery_level, speed_window=speed_window,
-                                    warmup_time=conf.warmup_time, parents=parents)
+        super(Robot, self).__init__(
+                name=name,
+                tree=tree,
+                robot=robot,
+                position=position,
+                time=time,
+                battery_level=battery_level,
+                speed_window=speed_window,
+                warmup_time=conf.warmup_time,
+                parents=parents
+        )
 
         # Set of robots this bot has mated with
         self.mated_with = {}
@@ -40,8 +60,8 @@ class Robot(RvRobot):
 
     def will_mate_with(self, other):
         """
-        Decides whether or not to mate with the other given robot
-        based on its position and speed.
+        Decides whether or not to mate with the other given robot based on
+        its position and speed.
         :param other:
         :type other: Robot
         :return:
@@ -57,7 +77,7 @@ class Robot(RvRobot):
             return False
 
         if self.last_mate is not None and \
-           float(self.last_update - self.last_mate) < self.conf.gestation_period:
+          float(self.last_update - self.last_mate) < self.conf.gestation_period:
             # Don't mate within the cooldown window
             return False
 
@@ -94,9 +114,13 @@ class Robot(RvRobot):
         """
         :return:
         """
-        return ['run', 'id', 't_birth', 'parent1', 'parent2', 'nparts', 'x', 'y', 'z',
-                'extremity_count', 'joint_count', 'motor_count', 'inputs', 'outputs', 'hidden',
-                'conn']
+        return [
+            'run', 'id', 't_birth',
+            'parent1', 'parent2', 'nparts',
+            'x', 'y', 'z',
+            'extremity_count', 'joint_count', 'motor_count',
+            'inputs', 'outputs', 'hidden', 'conn'
+        ]
 
     def write_robot(self, world, details_file, csv_writer):
         """
@@ -116,8 +140,15 @@ class Robot(RvRobot):
 
         root = self.tree.root
         inputs, outputs, hidden = root.io_count(recursive=True)
-        row += [count_extremities(root), count_joints(root), count_motors(root),
-                inputs, outputs, hidden, count_connections(root)]
+        row += [
+            count_extremities(root),
+            count_joints(root),
+            count_motors(root),
+            inputs,
+            outputs,
+            hidden,
+            count_connections(root)
+        ]
 
         csv_writer.writerow(row)
 

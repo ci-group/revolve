@@ -1,7 +1,10 @@
+#!/usr/bin/env python2
+
 # Global / system
+import time
+
 import trollius
 from trollius import From, Return
-import time
 from pygazebo.msg import world_control_pb2
 
 # Revolve
@@ -71,16 +74,19 @@ class WorldManager(object):
         if self.manager is not None:
             return
 
-        # Initialize the manager / analyzer connections as well as
-        # the general request handler
+        # Initialize the manager connections as well as the general request
+        # handler
         self.manager = yield From(connect(self.world_address))
 
         self.world_control = yield From(self.manager.advertise(
-            '/gazebo/default/world_control', 'gazebo.msgs.WorldControl'
+                topic_name='/gazebo/default/world_control',
+                msg_type='gazebo.msgs.WorldControl'
         ))
 
         self.request_handler = yield From(RequestHandler.create(
-            self.manager, msg_id_base=MSG_BASE))
+                manager=self.manager,
+                msg_id_base=MSG_BASE
+        ))
 
         # Wait for connections
         yield From(self.world_control.wait_for_listener())
