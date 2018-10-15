@@ -2,21 +2,34 @@ syntax = "proto2";
 package revolve.msgs;
 import "parameter.proto";
 
+// Protobuf message for a robot's body part based on Robogen design
 message BodyPart {
+  // Unique identifier for a body part
   required string id = 1;
+  // Type designator for a body part
   required string type = 2;
+  // Orientation of a body part
   required double orientation = 3;
+  // Designation of a child node pointer in a tree representation
   repeated BodyConnection child = 4;
+  // Parameters for a ParametricBarJoint
   repeated Parameter param = 5;
+  // Label for a body part
   optional string label = 6;
 }
 
+// BodyConnection message
 message BodyConnection {
+  // Identificator of a source
   required int32 src = 1;
+  // Identificator of a destination
   required int32 dst = 2;
+  // BodyPart message
   required BodyPart part = 3;
 }
 
+// BodyPart message
 message Body {
+  // Root BodyPart message
   required BodyPart root = 1;
 }

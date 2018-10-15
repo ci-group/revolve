@@ -72,12 +72,12 @@ class World(WorldManager):
 
         self.conf = conf
         self.crossover = Crossover(
-                self.generator.body_gen,
-                self.generator.brain_gen
+                body_gen=self.generator.body_gen,
+                brain_gen=self.generator.brain_gen
         )
         self.mutator = Mutator(
-                self.generator.body_gen,
-                self.generator.brain_gen,
+                body_gen=self.generator.body_gen,
+                brain_gen=self.generator.brain_gen,
                 p_duplicate_subtree=conf.p_duplicate_subtree,
                 p_swap_subtree=conf.p_swap_subtree,
                 p_delete_subtree=conf.p_delete_subtree,
@@ -93,8 +93,9 @@ class World(WorldManager):
         # Write settings to config file
         if self.output_directory:
             parser.write_to_file(
-                    conf,
-                    os.path.join(self.output_directory, "settings.conf"))
+                    args=conf,
+                    file=os.path.join(self.output_directory, "settings.conf")
+            )
 
     @classmethod
     @trollius.coroutine
@@ -136,8 +137,16 @@ class World(WorldManager):
         :param parents:
         :return:
         """
-        return Robot(self.conf, robot_name, tree, robot, position, t,
-                     battery_level=battery_level, parents=parents)
+        return Robot(
+                conf=self.conf,
+                name=robot_name,
+                tree=tree,
+                robot=robot,
+                position=position,
+                time=t,
+                battery_level=battery_level,
+                parents=parents
+        )
 
     @trollius.coroutine
     def add_highlight(self, position, color):

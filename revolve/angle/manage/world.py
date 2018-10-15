@@ -20,7 +20,7 @@ from .robot import Robot
 from ...logging import logger
 from ...util import multi_future, Time, wait_for
 from revolve.spec.msgs import ModelInserted, RobotStates
-
+from revolve.spec.msgs import BoundingBox
 
 class WorldManager(manage.WorldManager):
     """
@@ -366,16 +366,26 @@ class WorldManager(manage.WorldManager):
         :param tree:
         :return:
         """
-        if not self.analyzer:
-            raise RuntimeError("World.analyze_tree(): No analyzer configured.")
+        # if not self.analyzer:
+        #     raise RuntimeError("World.analyze_tree(): No analyzer configured.")
 
         robot = tree.to_robot(self.get_robot_id())
-        ret = yield From(self.analyzer.analyze_robot(robot, builder=self.builder))
-        if ret is None:
-            logger.error("Error in robot analysis, skipping.")
-            raise Return(None)
+        # ret = yield From(self.analyzer.analyze_robot(robot, builder=self.builder))
+        # if ret is None:
+        #     logger.error("Error in robot analysis, skipping.")
+        #     raise Return(None)
 
-        coll, bbox = ret
+        # TODO: Fix this by sending SDF to Gazebo and returning a bounding box
+        bbox = BoundingBox()
+        bbox.min.x = -0.045
+        bbox.min.y = -0.240100062445
+        bbox.min.z = -0.0225
+        bbox.max.x = 0.175792043339
+        bbox.max.y = 0.120400062445
+        bbox.max.z = 0.0225
+
+        # coll, bbox = ret
+        coll = 0
         raise Return(coll, bbox, robot)
 
     @trollius.coroutine
@@ -431,15 +441,15 @@ class WorldManager(manage.WorldManager):
         return_future = Future()
         insert_future = yield From(self.insert_model(sdf))
         # TODO: Unhandled error in exception handler. Fix this.
-        # insert_future.add_done_callback(lambda fut: self._robot_inserted(
-        #         robot_name=robot_name,
-        #         tree=tree,
-        #         robot=robot,
-        #         initial_battery=initial_battery,
-        #         parents=parents,
-        #         msg=fut.result(),
-        #         return_future=return_future
-        # ))
+        insert_future.add_done_callback(lambda fut: self._robot_inserted(
+                robot_name=robot_name,
+                tree=tree,
+                robot=robot,
+                initial_battery=initial_battery,
+                parents=parents,
+                msg=fut.result(),
+                return_future=return_future
+        ))
         raise Return(return_future)
 
     def get_simulation_sdf(
@@ -521,13 +531,13 @@ class WorldManager(manage.WorldManager):
         position = Vector3(p.x, p.y, p.z)
 
         robot = self.create_robot_manager(
-                robot_name=robot_name,
-                tree=tree,
-                robot=robot,
-                position=position,
-                time=time,
-                battery_level=initial_battery,
-                parents=parents
+                robot_name,
+                tree,
+                robot,
+                position,
+                time,
+                initial_battery,
+                parents
         )
         self.register_robot(robot)
         return_future.set_result(robot)

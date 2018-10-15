@@ -1,0 +1,117 @@
+<?xml version='1.0'?>
+<sdf version='1.4'>
+  <model name="thymio">
+    <static>false</static>
+    <link name='chassis'>
+      <pose>0 0 .1 0 0 0</pose>
+
+      <collision name='collision'>
+        <pose>0 0 0.001 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://thymio/meshes/chassis.dae</uri>
+            <scale>0.22 0.224 0.106</scale>
+          </mesh>
+        </geometry>
+      </collision>
+
+      <visual name='visual'>
+        <pose>0 0 0.001 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>model://thymio/meshes/chassis.dae</uri>
+            <scale>0.22 0.224 0.106</scale>
+          </mesh>
+        </geometry>
+      </visual>
+
+      <collision name='caster_collision'>
+        <pose>-0.03 0 -0.02 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>.01</radius>
+            </sphere>
+          </geometry>
+
+          <surface>
+            <friction>
+              <ode>
+                <mu>0</mu>
+                <mu2>0</mu2>
+                <slip1>1.0</slip1>
+                <slip2>1.0</slip2>
+              </ode>
+            </friction>
+          </surface>
+      </collision>
+
+      <visual name='caster_visual'>
+        <pose>-0.03 0 -0.02 0 0 0</pose>
+          <geometry>
+            <sphere>
+              <radius>.01</radius>
+            </sphere>
+          </geometry>
+      </visual>
+    </link>
+
+    <link name="left_wheel">
+      <pose>0.01 0.05 0.095 0 1.5707 1.5707</pose>
+      <collision name="collision">
+        <geometry>
+          <cylinder>
+            <radius>.02</radius>
+            <length>.015</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <cylinder>
+            <radius>.02</radius>
+            <length>.015</length>
+          </cylinder>
+        </geometry>
+      </visual>
+    </link>
+
+    <link name="right_wheel">
+      <pose>0.01 -0.05 0.095 0 1.5707 1.5707</pose>
+      <collision name="collision">
+        <geometry>
+          <cylinder>
+            <radius>.02</radius>
+            <length>.015</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <cylinder>
+            <radius>.02</radius>
+            <length>.015</length>
+          </cylinder>
+        </geometry>
+      </visual>
+    </link>
+
+    <joint type="revolute" name="left_wheel_hinge">
+      <pose>0 0 -0.03 0 0 0</pose>
+      <child>left_wheel</child>
+      <parent>chassis</parent>
+      <axis>
+        <xyz>0 1 0</xyz>
+      </axis>
+    </joint>
+
+    <joint type="revolute" name="right_wheel_hinge">
+      <pose>0 0 0.03 0 0 0</pose>
+      <child>right_wheel</child>
+      <parent>chassis</parent>
+      <axis>
+        <xyz>0 1 0</xyz>
+      </axis>
+    </joint>
+
+  </model>
+</sdf>

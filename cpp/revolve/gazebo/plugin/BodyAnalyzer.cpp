@@ -54,27 +54,32 @@ namespace revolve
       // Subscribe to the contacts message. Note that the contact manager does
       // not generate data without at least one subscriber, so there is no use
       // in bypassing the messaging mechanism.
-      contactsSub_ = node_->Subscribe("~/physics/contacts",
-                                      &BodyAnalyzer::OnContacts,
-                                      this);
+      contactsSub_ = node_->Subscribe(
+          "~/physics/contacts",
+          &BodyAnalyzer::OnContacts,
+          this);
 
       // Subscribe to analysis request messages
-      requestSub_ = node_->Subscribe("~/request",
-                                     &BodyAnalyzer::AnalyzeRequest,
-                                     this);
+      requestSub_ = node_->Subscribe(
+          "~/request",
+          &BodyAnalyzer::AnalyzeRequest,
+          this);
 
       // Since models are added asynchronously, we need some way of detecting
       // our model add. We do this using a model info subscriber.
-      modelSub_ =
-              node_->Subscribe("~/model/info", &BodyAnalyzer::OnModel, this);
+      modelSub_ = node_->Subscribe(
+          "~/model/info",
+          &BodyAnalyzer::OnModel,
+          this);
 
       // Publisher for the results
       responsePub_ = node_->Advertise< gz::msgs::Response >("~/response");
 
       // Subscribe to model delete events
-      deleteSub_ = node_->Subscribe("~/response",
-                                    &BodyAnalyzer::OnModelDelete,
-                                    this);
+      deleteSub_ = node_->Subscribe(
+          "~/response",
+          &BodyAnalyzer::OnModelDelete,
+          this);
 
       // Hello world!
       std::cout << "Body analyzer ready" << std::endl;
@@ -149,24 +154,21 @@ namespace revolve
       wrapper.set_request("analyze_body");
 
       // Add contact info
-      for (auto contact : msg->contact())
+      for (const auto &contact : msg->contact())
       {
         auto msgContact = response.add_contact();
         msgContact->set_collision1(contact.collision1());
         msgContact->set_collision2(contact.collision2());
       }
 
-      std::string name =
-              "analyze_bot_" + boost::lexical_cast< std::string >(counter_);
-      gz::physics::ModelPtr model = world_->GetModel(name);
+      auto name = "analyze_bot_" + boost::lexical_cast< std::string >(counter_);
+      auto model = world_->GetModel(name);
 
       if (not model)
       {
         std::cerr << "------------------------------------" << std::endl;
-        std::cerr
-                << "INTERNAL ERROR, contact model not found: "
-                << name
-                << std::endl;
+        std::cerr << "INTERNAL ERROR, contact model not found: " << name
+                  << std::endl;
         std::cerr << "Please retry this request." << std::endl;
         std::cerr << "------------------------------------" << std::endl;
         wrapper.set_response("error");
@@ -192,11 +194,8 @@ namespace revolve
       response.SerializeToString(wrapper.mutable_serialized_data());
       wrapper.set_response("success");
       responsePub_->Publish(wrapper);
-      std::cout
-              << "Response for request "
-              << currentRequest_
-              << " sent."
-              << std::endl;
+      std::cout << "Response for request " << currentRequest_
+                << " sent." << std::endl;
 
       // Remove all models from the world and advance
       world_->Clear();
@@ -205,7 +204,7 @@ namespace revolve
 
     void BodyAnalyzer::AnalyzeRequest(ConstRequestPtr &request)
     {
-      if (request->request() not_eq "analyze_body")
+      if (request->request() not_eq " ")
       {
         // Request is not meant for us
         return;
@@ -285,8 +284,8 @@ namespace revolve
       // Force the model name to something we know
       std::string name =
               "analyze_bot_" + boost::lexical_cast< std::string >(counter_);
-      robotSDF.Root()->GetElement("model")->GetAttribute("name")->SetFromString(
-              name);
+      robotSDF.Root()->GetElement("model")
+              ->GetAttribute("name")->SetFromString(name);
 
       // Insert the model into the world. For clarity we use
       // `InsertModelString` directly, this is actually also what
