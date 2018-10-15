@@ -27,8 +27,8 @@ jobs:
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push cigroup/revolve:$CIRCLE_BRANCH
 
-      - run:
-          name: "Build documentation"
-          command: |
-            DOXY_BUILD=/revolve/docker/make_dosc.sh
-            docker run -it cigroup/revolve:$CIRCLE_BRANCH ${DOXY_BUILD}
+#      - run:
+#          name: "Build documentation"
+#          command: |
+#            DOXY_BUILD=/revolve/docker/make_dosc.sh
+#            docker run -it cigroup/revolve:$CIRCLE_BRANCH ${DOXY_BUILD}
