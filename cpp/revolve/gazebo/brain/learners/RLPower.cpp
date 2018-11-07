@@ -28,8 +28,8 @@
 #include <gsl/gsl_spline.h>
 
 #include "RLPower.h"
-#include "../motors/Motor.h"
-#include "../sensors/Sensor.h"
+#include "../../motors/Motor.h"
+#include "../../sensors/Sensor.h"
 
 namespace gz = gazebo;
 

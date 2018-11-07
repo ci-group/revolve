@@ -28,8 +28,8 @@
 #include <vector>
 
 #include "NeuralNetwork.h"
-#include "../motors/Motor.h"
-#include "../sensors/Sensor.h"
+#include "../../motors/Motor.h"
+#include "../../sensors/Sensor.h"
 
 namespace gz = gazebo;
 

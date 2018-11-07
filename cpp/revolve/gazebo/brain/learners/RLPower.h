@@ -32,8 +32,8 @@
 
 #include <revolve/msgs/spline_policy.pb.h>
 
-#include "Evaluator.h"
-#include "Brain.h"
+#include "../Evaluator.h"
+#include "../Brain.h"
 
 namespace revolve
 {

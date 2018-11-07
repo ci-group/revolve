@@ -22,7 +22,7 @@
 #ifndef REVOLVE_THYMIOBRAIN_H
 #define REVOLVE_THYMIOBRAIN_H
 
-#include "Brain.h"
+#include "../Brain.h"
 
 
 namespace revolve

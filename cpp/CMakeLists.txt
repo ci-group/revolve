@@ -152,13 +152,15 @@ set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES GENERATED TRU
 
 # Plugin C++ files
 file(GLOB_RECURSE
-	 REVOLVE_GZ_SRC
-	 revolve/gazebo/brain/*.cpp
-	 revolve/gazebo/motors/*.cpp
-	 revolve/gazebo/sensors/*.cpp
-	 revolve/gazebo/plugin/BodyAnalyzer.cpp
-	 revolve/gazebo/plugin/RobotController.cpp
-	 revolve/gazebo/plugin/WorldController.cpp
+        REVOLVE_GZ_SRC
+        revolve/gazebo/brain/*.cpp
+        revolve/gazebo/brain/controllers/*.cpp
+        revolve/gazebo/brain/learners/*.cpp
+        revolve/gazebo/motors/*.cpp
+        revolve/gazebo/sensors/*.cpp
+        revolve/gazebo/plugin/BodyAnalyzer.cpp
+        revolve/gazebo/plugin/RobotController.cpp
+        revolve/gazebo/plugin/WorldController.cpp
 )
 
 # Generate
