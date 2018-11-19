@@ -2,7 +2,7 @@
 Revolve aims to be a flexible robot evolution framework, providing C++ and Python libraries to create,
 simulate and manage robots in the Gazebo robot simulator.
 
-## Robot body framework
+### Robot body framework
 The most elaborate component of Revolve is the robot body framework. It is heavily inspired by the
 robot structure als employed by [Robogen](http://www.robogen.org). The framework works by specifying 
 a body space using a `revolve.spec.BodyImplementation`. This boils down to specifying a number of predefined
@@ -23,6 +23,16 @@ that can be directly used in Gazebo.
 Revolve also ships with some simple generator classes, which can generate arbitrary robot bodies from scratch
 given a set of constraints.
 
-# Instalation
+## Instalation
 
 For the details, see [wiki pages](https://github.com/ci-group/revolve/wiki).
+
+## Contribution guidelines
+
+## For more information
+* [EvoSphere Website](https://evosphere.eu/)
+* [CIGroup Website](https://www.cs.vu.nl/ci/)
+
+## License
+
+[Apache License 2.0](LICENSE)
