@@ -54,7 +54,7 @@ endif ()
 # Finding dependencies
 # _____________________________________________________________________________
 
-# Find Boost and add to include dirs
+# Find Boost
 find_package(Boost REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIRS})
 
@@ -62,7 +62,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 
-# Find and include Gazebo
+# Find Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
     find_package(gazebo 6.5 REQUIRED CONFIG
@@ -73,13 +73,9 @@ else()
     find_package(gazebo 6.5 REQUIRED)
 endif()
 include_directories(${GAZEBO_INCLUDE_DIRS})
-#include_directories(${GAZEBO_PROTO_INCLUDE})
 
-#### Protobuf ####
-# This part is currently a mess, but it works for what I need it to
-# (which is have includes that work in this project and in the other
-#  project I'm working on simultaneously). I might rework it later.
-# Get protobuf library
+# Find Protobuf
+# TODO: This part is currently a mess, and it should be handeled better
 find_package(Protobuf REQUIRED)
 
 # Find the protobuf import directory for Gazebo. Found in this
@@ -91,9 +87,11 @@ foreach(ITR ${GAZEBO_INCLUDE_DIRS})
     set(GAZEBO_PROTO_INCLUDE "${ITR}/gazebo/msgs")
   endif()
 endforeach()
-include_directories(${CMAKE_SOURCE_DIR}
-                    ${PROTOBUF_INCLUDE_DIRS}
-                    ${GAZEBO_PROTO_INCLUDE})
+include_directories(
+    ${CMAKE_SOURCE_DIR}
+    ${PROTOBUF_INCLUDE_DIRS}
+    ${GAZEBO_PROTO_INCLUDE}
+)
 
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
@@ -102,7 +100,7 @@ list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 set(SPEC_DIR "${CMAKE_SOURCE_DIR}/revolve/msgs")
 
 # All protobuf files we need, including the Gazebo ones
-file(GLOB_RECURSE REVOLVE_PROTO ${SPEC_DIR}/*.proto)
+file(GLOB_RECURSE REVOLVE_PROTOS ${SPEC_DIR}/*.proto)
 
 # Do the protobuf generation by hand for more flexibility. I'm generating
 # the files in a subdirectory such that it can potentially be added to
@@ -124,28 +122,31 @@ endif()
 include_directories(${PROTO_OUTPUT_BASE})
 
 file(MAKE_DIRECTORY ${PROTO_OUTPUT_BASE}/revolve/msgs)
-foreach(FIL ${REVOLVE_PROTO})
-    get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-    get_filename_component(FIL_WE ${FIL} NAME_WE)
-    get_filename_component(FILE_DIR ${FIL} DIRECTORY)
+foreach(RV_PROTO ${REVOLVE_PROTOS})
+    get_filename_component(RV_ABS_PROTO ${RV_PROTO} ABSOLUTE)
+    get_filename_component(RV_NAME_PROTO ${RV_PROTO} NAME_WE)
+    get_filename_component(RV_DIR_PROTO ${RV_PROTO} DIRECTORY)
 
-    list(APPEND PROTO_SRCS "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.cc")
-    list(APPEND PROTO_HDRS "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.h")
+    list(APPEND PROTO_SRCS
+         "${PROTO_OUTPUT_BASE}/revolve/msgs/${RV_NAME_PROTO}.pb.cc")
+    list(APPEND PROTO_HDRS
+         "${PROTO_OUTPUT_BASE}/revolve/msgs/${RV_NAME_PROTO}.pb.h")
 
     add_custom_command(
-      OUTPUT "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.cc"
-             "${PROTO_OUTPUT_BASE}/revolve/msgs/${FIL_WE}.pb.h"
+      OUTPUT "${PROTO_OUTPUT_BASE}/revolve/msgs/${RV_NAME_PROTO}.pb.cc"
+             "${PROTO_OUTPUT_BASE}/revolve/msgs/${RV_NAME_PROTO}.pb.h"
       COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-      ARGS -I ${FILE_DIR}
+      ARGS -I ${RV_DIR_PROTO}
            -I ${GAZEBO_PROTO_PATH}
-           --cpp_out ${PROTO_OUTPUT_BASE}/revolve/msgs ${ABS_FIL}
-      DEPENDS ${ABS_FIL}
-      COMMENT "Running C++ protocol buffer compiler on ${FIL}"
+           --cpp_out ${PROTO_OUTPUT_BASE}/revolve/msgs ${RV_ABS_PROTO}
+      DEPENDS ${RV_ABS_PROTO}
+      COMMENT "Running C++ protocol buffer compiler on ${RV_PROTO}"
       VERBATIM )
 endforeach()
 
 # Tell the compiler these files were generated
-set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES GENERATED TRUE)
+set_source_files_properties(
+    ${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES GENERATED TRUE)
 
 # Source subdirectories
 # _____________________________________________________________________________
@@ -153,12 +154,9 @@ set_source_files_properties(${PROTO_SRCS} ${PROTO_HDRS} PROPERTIES GENERATED TRU
 # Plugin C++ files
 file(GLOB_RECURSE
 	 REVOLVE_GZ_SRC
-	 revolve/gazebo/brain/*.cpp
-	 revolve/gazebo/motors/*.cpp
-	 revolve/gazebo/sensors/*.cpp
-	 revolve/gazebo/plugin/BodyAnalyzer.cpp
-	 revolve/gazebo/plugin/RobotController.cpp
-	 revolve/gazebo/plugin/WorldController.cpp
+	 *.cc
+	 *.cpp
+	 *.cxx
 )
 
 # Generate
