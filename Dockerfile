@@ -1,4 +1,4 @@
-FROM cigroup/gazebo:gazebo6-revolve
+FROM ubuntu:xenial
 
 # Dependencies
 RUN apt-get update
@@ -12,6 +12,7 @@ RUN apt-get install -y build-essential      \
                        python               \
                        python-pip           \
                        xsltproc
+RUN curl -sSL http://get.gazebosim.org | sh
 
 ADD . /revolve
 RUN /revolve/docker/build_revolve.sh
