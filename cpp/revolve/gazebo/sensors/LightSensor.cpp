@@ -34,8 +34,8 @@ LightSensor::LightSensor(
     : Sensor(_model, _sensor, _partId, _sensorId, 1)
     , lastValue_(1.0)
 {
-  this->castSensor_ =
-      boost::dynamic_pointer_cast< gz::sensors::CameraSensor >(this->sensor_);
+  this->castSensor_ = std::dynamic_pointer_cast< gz::sensors::CameraSensor >(
+      this->sensor_);
 
   if (not this->castSensor_)
   {
@@ -49,12 +49,12 @@ LightSensor::LightSensor(
 
   // One byte per channel per pixel
   this->dataSize_ = 3 *
-                    this->castSensor_->GetImageWidth() *
-                    this->castSensor_->GetImageHeight();
+                    this->castSensor_->ImageWidth() *
+                    this->castSensor_->ImageHeight();
 
   // Add update connection that will produce new value
   this->updateConnection_ = this->sensor_->ConnectUpdated(
-      boost::bind(&LightSensor::OnUpdate, this));
+      std::bind(&LightSensor::OnUpdate, this));
 }
 
 /////////////////////////////////////////////////
@@ -65,9 +65,9 @@ void LightSensor::OnUpdate()
 {
   // Average all channels and pixels to get a linear
   // light intensity.
-  const unsigned char *data = this->castSensor_->GetImageData();
-  float avg = 0;
-  for (unsigned int i = 0; i < this->dataSize_; ++i)
+  auto data = this->castSensor_->ImageData();
+  auto avg = 0.0;
+  for (auto i = 0; i < this->dataSize_; ++i)
   {
     avg += (unsigned int)data[i];
   }

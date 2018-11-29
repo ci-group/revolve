@@ -35,8 +35,8 @@ TouchSensor::TouchSensor(
     : Sensor(_model, _sensor, _partId, _sensorId, 1)
     , lastValue_(false)
 {
-  this->castSensor_ =
-      boost::dynamic_pointer_cast< gz::sensors::ContactSensor >(this->sensor_);
+  this->castSensor_ = std::dynamic_pointer_cast< gz::sensors::ContactSensor >(
+      this->sensor_);
 
   if (not this->castSensor_)
   {
@@ -49,8 +49,8 @@ TouchSensor::TouchSensor(
   this->castSensor_->SetActive(true);
 
   // Add update connection that will produce new value
-  this->updateConnection_ =
-      this->sensor_->ConnectUpdated(boost::bind(&TouchSensor::OnUpdate, this));
+  this->updateConnection_ = this->sensor_->ConnectUpdated(
+      std::bind(&TouchSensor::OnUpdate, this));
 }
 
 /////////////////////////////////////////////////
@@ -59,12 +59,12 @@ TouchSensor::~TouchSensor() = default;
 /////////////////////////////////////////////////
 void TouchSensor::OnUpdate()
 {
-  auto contacts = this->castSensor_->GetContacts();
+  auto contacts = this->castSensor_->Contacts();
   this->lastValue_ = contacts.contact_size() > 0;
 }
 
 /////////////////////////////////////////////////
 void TouchSensor::Read(double *_input)
 {
-  _input[0] = lastValue_ ? 1 : 0;
+  _input[0] = this->lastValue_ ? 1 : 0;
 }

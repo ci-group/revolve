@@ -45,7 +45,7 @@ namespace revolve
 
       /// \brief Update the position
       /// \param[in] _pose Current position of a robot
-      public: void Update(const ignition::math::Pose3d _pose);
+      public: void Update(const ignition::math::Pose3d &_pose);
 
       /// \brief Previous position of a robot
       private: ignition::math::Pose3d previousPosition_;

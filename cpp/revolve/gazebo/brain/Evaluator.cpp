@@ -57,7 +57,7 @@ double Evaluator::Fitness()
 }
 
 /////////////////////////////////////////////////
-void Evaluator::Update(const ignition::math::Pose3d _pose)
+void Evaluator::Update(const ignition::math::Pose3d &_pose)
 {
   this->currentPosition_ = _pose;
 }

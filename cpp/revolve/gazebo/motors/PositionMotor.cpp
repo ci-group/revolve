@@ -37,8 +37,9 @@ PositionMotor::PositionMotor(
 {
   // Retrieve upper / lower limit from joint set in parent constructor
   // Truncate ranges to [-pi, pi]
-  this->upperLimit_ = std::fmin(M_PI, this->joint_->GetUpperLimit(0).Radian());
-  this->lowerLimit_ = std::fmax(-M_PI, this->joint_->GetLowerLimit(0).Radian());
+  /// TODO: Milan fix
+  this->upperLimit_ = std::fmin(M_PI, this->joint_->UpperLimit(0));
+  this->lowerLimit_ = std::fmax(-M_PI, this->joint_->LowerLimit(0));
   this->fullRange_ = ((this->upperLimit_ - this->lowerLimit_ + 1e-12) >=
                       (2 * M_PI));
 
@@ -84,7 +85,8 @@ void PositionMotor::Update(
   double output = outputs[0];
 
   // Motor noise in range +/- noiseLevel * actualValue
-  output += ((2 * gz::math::Rand::GetDblUniform() * this->noise_) -
+  /// TODO: Milan fix
+  output += ((2 * ignition::math::Rand::DblUniform() * this->noise_) -
              this->noise_) *
             output;
 
@@ -97,7 +99,7 @@ void PositionMotor::Update(
                           (output * (this->upperLimit_ - this->lowerLimit_));
 
   // Perform the actual motor update
-  this->DoUpdate(this->joint_->GetWorld()->GetSimTime());
+  this->DoUpdate(this->joint_->GetWorld()->SimTime());
 }
 
 /////////////////////////////////////////////////
@@ -111,14 +113,12 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
   }
 
   this->prevUpdateTime_ = _simTime;
-  auto positionAngle = this->joint_->GetAngle(0);
+  auto position = this->joint_->Position(0);
 
   // TODO Make sure normalized angle lies within possible range
   // I get the feeling we might be moving motors outside their
   // allowed range. Also something to be aware of when setting
   // the direction.
-  positionAngle.Normalize();
-  double position = positionAngle.Radian();
 
   if (this->fullRange_ and std::fabs(position - positionTarget_) > M_PI)
   {

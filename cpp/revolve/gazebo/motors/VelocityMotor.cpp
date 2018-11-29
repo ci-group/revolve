@@ -73,14 +73,14 @@ void VelocityMotor::Update(
   double output = outputs[0];
 
   // Motor noise in range +/- noiseLevel * actualValue
-  output += ((2 * gz::math::Rand::GetDblUniform() * this->noise_) -
+  output += ((2 * ignition::math::Rand::DblUniform() * this->noise_) -
              this->noise_) *
             output;
 
   // Truncate output to [0, 1]
   output = std::fmax(std::fmin(output, 1), 0);
   this->velocityTarget_ = minVelocity_ + output * (maxVelocity_ - minVelocity_);
-  this->DoUpdate(this->joint_->GetWorld()->GetSimTime());
+  this->DoUpdate(this->joint_->GetWorld()->SimTime());
 }
 
 void VelocityMotor::DoUpdate(const ::gazebo::common::Time &/*simTime*/)

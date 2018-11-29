@@ -50,7 +50,7 @@ PointIntensitySensor::PointIntensitySensor(
   }
 
   auto pointElem = configElem->GetElement("rv:point");
-  this->point_ = pointElem->Get< gz::math::Vector3 >();
+  this->point_ = pointElem->Get< ignition::math::Vector3d >();
 
   if (configElem->HasElement("rv:function"))
   {
@@ -71,7 +71,7 @@ PointIntensitySensor::PointIntensitySensor(
 /////////////////////////////////////////////////
 void PointIntensitySensor::Read(double *_input)
 {
-  double distance = this->model_->GetWorldPose().pos.Distance(this->point_);
+  double distance = this->model_->WorldPose().Pos().Distance(this->point_);
 
   if (distance < this->r_)
   {
@@ -79,6 +79,6 @@ void PointIntensitySensor::Read(double *_input)
   }
   else
   {
-    _input[0] = this->maxInput_ * pow(this->r_ / distance, 2);
+    _input[0] = this->maxInput_ * std::pow(this->r_ / distance, 2);
   }
 }

@@ -65,12 +65,12 @@ include_directories(${GSL_INCLUDE_DIRS})
 # Find Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
-    find_package(gazebo 6.5 REQUIRED CONFIG
+    find_package(gazebo 9 REQUIRED CONFIG
             PATHS "${LOCAL_GAZEBO_DIR}"
             NO_DEFAULT_PATH)
     message(WARNING "Using local Gazebo @ ${gazebo_DIR}")
 else()
-    find_package(gazebo 6.5 REQUIRED)
+    find_package(gazebo 9 REQUIRED)
 endif()
 include_directories(${GAZEBO_INCLUDE_DIRS})
 
@@ -97,7 +97,7 @@ include_directories(
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 # Directory where the .proto files reside within revolve
-set(SPEC_DIR "${CMAKE_SOURCE_DIR}/revolve/msgs")
+set(SPEC_DIR "${CMAKE_SOURCE_DIR}/cpp/revolve/msgs")
 
 # All protobuf files we need, including the Gazebo ones
 file(GLOB_RECURSE REVOLVE_PROTOS ${SPEC_DIR}/*.proto)
@@ -154,9 +154,12 @@ set_source_files_properties(
 # Plugin C++ files
 file(GLOB_RECURSE
 	 REVOLVE_GZ_SRC
-	 *.cc
-	 *.cpp
-	 *.cxx
+     revolve/gazebo/brain/*.cpp
+     revolve/gazebo/motors/*.cpp
+     revolve/gazebo/sensors/*.cpp
+     revolve/gazebo/plugin/BodyAnalyzer.cpp
+     revolve/gazebo/plugin/RobotController.cpp
+     revolve/gazebo/plugin/WorldController.cpp
 )
 
 # Generate
@@ -167,12 +170,12 @@ file(GLOB_RECURSE
 
 # Generate spec library with the messages
 add_library(
-        revolve-spec STATIC
+        revolve-proto STATIC
         ${PROTO_SRCS}
 )
-set_target_properties(revolve-spec PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(revolve-proto PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(
-        revolve-spec
+        revolve-proto
         ${PROTOBUF_LIBRARIES}
 )
 
@@ -196,7 +199,7 @@ add_library(
 target_link_libraries(
         revolveworldcontrol
         revolve-gazebo
-        revolve-spec
+        revolve-proto
         ${GAZEBO_LIBRARIES}
 )
 
@@ -208,7 +211,7 @@ add_library(
 target_link_libraries(
         tolrobotcontrol
         revolve-gazebo
-        revolve-spec
+        revolve-proto
         ${GAZEBO_LIBRARIES}
 )
 
@@ -217,7 +220,7 @@ target_link_libraries(
 # Install libraries into "lib", header files into "include"
 
 install(
-    TARGETS revolve-spec revolve-gazebo
+    TARGETS revolve-proto revolve-gazebo
     DESTINATION lib
 )
 

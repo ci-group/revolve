@@ -114,7 +114,7 @@ void RLPower::Update(
     p += motor->Outputs();
   }
 
-  auto currPosition = this->robot_->GetWorldPose().Ign();
+  auto currPosition = this->robot_->WorldPose();
   this->evaluator_->Update(currPosition);
   delete[] output;
 }

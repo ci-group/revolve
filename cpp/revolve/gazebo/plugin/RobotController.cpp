@@ -55,7 +55,7 @@ void RobotController::Load(
   // Store the pointer to the model / world
   this->model_ = _parent;
   this->world_ = _parent->GetWorld();
-  this->initTime_ = this->world_->GetSimTime().Double();
+  this->initTime_ = this->world_->SimTime().Double();
 
   // Create transport node
   this->node_.reset(new gz::transport::Node());

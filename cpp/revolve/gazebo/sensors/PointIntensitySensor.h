@@ -58,7 +58,7 @@ namespace revolve
       public: virtual void Read(double *_input);
 
       /// \brief The point to which proximity should be returned
-      protected: ::gazebo::math::Vector3 point_;
+      protected: ::ignition::math::Vector3d point_;
 
       /// \brief The value of the input neuron of this sensor is calculated
       /// from the distance with the function:

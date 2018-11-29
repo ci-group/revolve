@@ -97,7 +97,7 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
     msgs::RobotStates msg;
     gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
-    for (auto model : this->world_->GetModels())
+    for (const auto &model : this->world_->Models())
     {
       if (model->IsStatic())
       {
@@ -105,12 +105,14 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
         continue;
       }
 
-      msgs::RobotState *stateMsg = msg.add_robot_state();
+      auto stateMsg = msg.add_robot_state();
       stateMsg->set_name(model->GetScopedName());
       stateMsg->set_id(model->GetId());
 
-      gz::msgs::Pose *poseMsg = stateMsg->mutable_pose();
-      gz::msgs::Set(poseMsg, model->GetRelativePose().Ign());
+      // TODO: Currently it is commented out. Not sure why the linker does
+      // not recognise `(poseMsg, RelativePose)`
+//      auto poseMsg = stateMsg->mutable_pose();
+//      gz::msgs::Set(poseMsg, model->RelativePose());
     }
 
     if (msg.robot_state_size() > 0)
@@ -131,7 +133,7 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     std::cout << "Processing request `" << request->id()
               << "` to delete robot `" << name << "`" << std::endl;
 
-    auto model = this->world_->GetModel(name);
+    auto model = this->world_->ModelByName(name);
     if (model)
     {
       // Tell the world to remove the model
@@ -227,13 +229,13 @@ void WorldController::OnModel(ConstModelPtr &msg)
 
   msgs::ModelInserted inserted;
   inserted.mutable_model()->CopyFrom(*msg);
-  gz::msgs::Set(inserted.mutable_time(), this->world_->GetSimTime());
+  gz::msgs::Set(inserted.mutable_time(), this->world_->SimTime());
   inserted.SerializeToString(resp.mutable_serialized_data());
 
   this->responsePub_->Publish(resp);
 
   std::cout << "Model `" << name << "` inserted, world now contains "
-            << this->world_->GetModelCount() << " models." << std::endl;
+            << this->world_->ModelCount() << " models." << std::endl;
 }
 
 /////////////////////////////////////////////////

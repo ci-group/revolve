@@ -34,8 +34,8 @@ ImuSensor::ImuSensor(
     std::string _sensorId)
     : Sensor(_model, _sensor, _partId, _sensorId, 6)
 {
-  this->castSensor_ =
-      boost::dynamic_pointer_cast< gz::sensors::ImuSensor >(this->sensor_);
+  this->castSensor_ = std::dynamic_pointer_cast< gz::sensors::ImuSensor >(
+      this->sensor_);
 
   if (not this->castSensor_)
   {
@@ -49,7 +49,7 @@ ImuSensor::ImuSensor(
 
   // Add update connection that will produce new value
   this->updateConnection_ = this->castSensor_->ConnectUpdated(
-      boost::bind(&ImuSensor::OnUpdate, this));
+      std::bind(&ImuSensor::OnUpdate, this));
 }
 
 /////////////////////////////////////////////////
