@@ -13,7 +13,7 @@ RUN apt-get install -y build-essential      \
                        python               \
                        python-pip           \
                        xsltproc
-RUN curl -sSL http://get.gazebosim.org | sh
+RUN apt-get install -y gazebo9
 
 ADD . /revolve
 RUN /revolve/docker/build_revolve.sh
