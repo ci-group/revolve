@@ -17,6 +17,8 @@
 *
 */
 
+#include <string>
+
 #include "WorldController.h"
 
 namespace gz = gazebo;
@@ -189,8 +191,9 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
   }
   else if (request->request() == "set_robot_state_update_frequency")
   {
-    this->robotStatesPubFreq_ = boost::lexical_cast< unsigned int >(
-        request->data());
+    auto frequency = request->data();
+    assert(frequency.find_first_not_of( "0123456789" ) == std::string::npos);
+    this->robotStatesPubFreq_ = (unsigned int)std::stoul(frequency);
     std::cout << "Setting robot state update frequency to "
               << this->robotStatesPubFreq_ << "." << std::endl;
 
