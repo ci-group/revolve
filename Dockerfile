@@ -10,6 +10,7 @@ RUN apt-get install -y build-essential      \
                        git                  \
                        gsl-bin libgsl0-dev  \
                        mercurial            \
+                       pkg-config           \
                        python               \
                        python-pip           \
                        xsltproc
