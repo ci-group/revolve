@@ -67,7 +67,7 @@ void LightSensor::OnUpdate()
   // light intensity.
   auto data = this->castSensor_->ImageData();
   auto avg = 0.0;
-  for (auto i = 0; i < this->dataSize_; ++i)
+  for (size_t i = 0; i < this->dataSize_; ++i)
   {
     avg += (unsigned int)data[i];
   }
