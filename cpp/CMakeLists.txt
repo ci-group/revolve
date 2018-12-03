@@ -73,6 +73,7 @@ else()
     find_package(gazebo 9 REQUIRED)
 endif()
 include_directories(${GAZEBO_INCLUDE_DIRS})
+link_directories(${GAZEBO_LIBRARY_DIRS})
 
 # Find Protobuf
 # TODO: This part is currently a mess, and it should be handeled better
