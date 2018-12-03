@@ -1,10 +1,10 @@
-FROM ubuntu:xenial
+FROM ubuntu:bionic
 
 # Dependencies
 RUN apt-get update
 RUN apt-get install -y build-essential      \
                        cmake                \
-                       curl                \
+                       curl                 \
                        cppcheck             \
                        doxygen              \
                        git                  \
@@ -13,7 +13,7 @@ RUN apt-get install -y build-essential      \
                        python               \
                        python-pip           \
                        xsltproc
-RUN apt-get install -y gazebo9
+RUN apt-get install -y gazebo9 gazebo9-common
 
 ADD . /revolve
 RUN /revolve/docker/build_revolve.sh
