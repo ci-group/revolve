@@ -109,10 +109,9 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
       stateMsg->set_name(model->GetScopedName());
       stateMsg->set_id(model->GetId());
 
-      // TODO: Currently it is commented out. Not sure why the linker does
-      // not recognise `(poseMsg, RelativePose)`
-//      auto poseMsg = stateMsg->mutable_pose();
-//      gz::msgs::Set(poseMsg, model->RelativePose());
+      auto poseMsg = stateMsg->mutable_pose();
+      auto relativePose = model->RelativePose();
+      gz::msgs::Set(poseMsg, relativePose);
     }
 
     if (msg.robot_state_size() > 0)
