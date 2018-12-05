@@ -1,10 +1,9 @@
-PyYAML==3.11
 argparse==1.2.1
 futures==3.0.2
-numpy==1.9.2
-protobuf==2.6.1
--e git+https://github.com/ci-group/pygazebo.git@revolve#egg=pygazebo
--e git+https://github.com/ci-group/sdf-builder.git@master#egg=sdfbuilder
-trollius==2.0
-wsgiref==0.1.2
+numpy>=1.9.2
+PyYAML==3.11
+protobuf==3.0.0
 psutil==3.4.2
+
+-e git+https://github.com/ci-group/sdf-builder.git@master#egg=sdfbuilder
+-e git+https://github.com/ci-group/pygazebo.git@py2to3#egg=pygazebo
