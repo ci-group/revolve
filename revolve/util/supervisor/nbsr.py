@@ -5,7 +5,7 @@ without the supervisor stalling. Code taken from:
 http://eyalarubas.com/python-subproc-nonblock.html
 """
 from threading import Thread
-from Queue import Queue, Empty
+from queue import Queue, Empty
 
 
 class NonBlockingStreamReader:

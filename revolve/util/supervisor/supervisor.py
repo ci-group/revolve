@@ -348,7 +348,7 @@ class Supervisor(object):
             exit_code = process.poll()
             if exit_code is not None:
                 # flush out all stdout and stderr
-                out, err = process.communicate()
+                out, err = str(process.communicate(), 'utf-8')
                 if out is not None:
                     sys.stdout.write("[gazebo-launch] {}".format(out))
                 if err is not None:
@@ -357,7 +357,7 @@ class Supervisor(object):
                                    .format(cmd, exit_code))
 
             try:
-                out = process.stdout.readline()
+                out = str(process.stdout.readline(), 'utf-8)')
                 sys.stdout.write("[gazebo-launch] {}".format(out))
                 if ready_str in out:
                     ready = True
@@ -366,7 +366,7 @@ class Supervisor(object):
 
             if not mswindows:
                 try:
-                    err = process.stderr.readline()
+                    err = str(process.stderr.readline(), 'utf-8')
                     sys.stderr.write("[gazebo-launch] {}".format(err))
                 except IOError:
                     pass
