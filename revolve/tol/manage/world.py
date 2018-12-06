@@ -1,15 +1,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import csv
-import itertools
-import math
 import os
-import random
-import sys
 import time
-
-from datetime import datetime
 
 import trollius
 from trollius import From, Return, Future
@@ -180,7 +173,7 @@ class World(WorldManager):
         trees = []
         bboxes = []
 
-        for _ in xrange(n):
+        for _ in range(n):
             gen = yield From(self.generate_valid_robot())
             if not gen:
                 raise Return(None)
@@ -201,7 +194,7 @@ class World(WorldManager):
         :return:
         """
         futures = []
-        for tree, pose in itertools.izip(trees, poses):
+        for tree, pose in zip(trees, poses):
             future = yield From(self.insert_robot(tree, pose))
             futures.append(future)
 

@@ -6,14 +6,15 @@ If the analysis is accepted, it outputs the bot, otherwise
 it generates a new one. Writes the final bot's contents to
 stdout, statistics are written to stderr.
 """
+from __future__ import absolute_import
 from __future__ import print_function
 
 import sys
+import random
 
 from sdfbuilder.math import Vector3
 from .generated_sdf import generate_robot, builder, robot_to_sdf
 from ..gazebo import connect, get_analysis_robot, BodyAnalyzer
-import random
 
 import trollius
 from trollius import From

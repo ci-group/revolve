@@ -135,7 +135,7 @@ class NeuralNetValidator(Validator):
         for conn in self.brain.connection:
             self._process_neural_connection(conn)
 
-        missing_neurons = self.expected_neurons.keys()
+        missing_neurons = list(self.expected_neurons.keys())
         if len(missing_neurons):
             err("Missing expected neurons: {}"
                 .format(', '.join(missing_neurons)))

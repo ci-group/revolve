@@ -2,7 +2,10 @@
 ToL constants
 """
 from __future__ import absolute_import
+from __future__ import division
+
 import math
+
 from ...build.sdf import PID
 
 MAX_SERVO_TORQUE = 1.8 * 9.81 / 100

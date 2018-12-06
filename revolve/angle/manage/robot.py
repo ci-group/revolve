@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import division
+
 from collections import deque
 
 from sdfbuilder.math import Vector3

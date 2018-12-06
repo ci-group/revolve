@@ -1,16 +1,19 @@
 from __future__ import absolute_import
+from __future__ import print_function
 
 # Global imports
+import csv
+import os
+import pickle
+import shutil
+import sys
 import traceback
 
-import os
-import sys
-import shutil
-import pickle
 from datetime import datetime
-import csv
+
 import trollius
 from trollius import From, Return, Future
+
 from sdfbuilder import SDF
 from sdfbuilder.math import Vector3
 from pygazebo.msg import gz_string_pb2, request_pb2, response_pb2
@@ -325,7 +328,7 @@ class WorldManager(manage.WorldManager):
         :return:
         :rtype: list[Robot]
         """
-        return self.robots.values()
+        return list(self.robots.values())
 
     def get_robot_by_name(self, name):
         """
@@ -345,7 +348,7 @@ class WorldManager(manage.WorldManager):
         :type max_attempts: int
         :return:
         """
-        for i in xrange(max_attempts):
+        for i in range(max_attempts):
             tree = self.generator.generate_tree()
 
             ret = yield From(self.analyze_tree(tree))

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 
 from math import ceil
 
@@ -73,6 +74,9 @@ class Time(object):
             return self.sec == other.sec and self.nsec == other.nsec
         else:
             return Time(dbl=other) == self
+
+    def __hash__(self, other):
+        return hash(other)
 
     def __ne__(self, other):
         """

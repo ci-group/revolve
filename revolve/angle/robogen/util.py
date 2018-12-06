@@ -1,6 +1,8 @@
 from __future__ import absolute_import
+from __future__ import division
 
 import constants
+
 from sdfbuilder.physics import Friction
 from sdfbuilder.structure import Collision
 from sdfbuilder.util import number_format as nf

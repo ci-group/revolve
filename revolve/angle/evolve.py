@@ -1,9 +1,8 @@
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 
 import random
-import itertools
-
 import math
 
 from .representation import Tree, Node
@@ -545,7 +544,7 @@ class Mutator(object):
         destinations = [(neuron, node) for node in nodes
                         for neuron in node.get_neurons()
                         if neuron.layer in ("hidden", "output")]
-        for src, (dst, dst_node) in itertools.izip(sources, destinations):
+        for src, (dst, dst_node) in zip(sources, destinations):
             if not decide(self.brain_gen.conn_prob):
                 continue
 

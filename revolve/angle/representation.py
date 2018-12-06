@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import copy
+
 from ..spec.msgs import Robot, BodyPart, Neuron, NeuralNetwork, Body
 from ..spec import BodyImplementation
 
@@ -365,7 +366,7 @@ class Node(object):
         Returns the free slots on this node
         :return:
         """
-        return [i for i in xrange(self.spec.arity) if i not in self.connections]
+        return [i for i in range(self.spec.arity) if i not in self.connections]
 
     def get_target(self, path):
         """

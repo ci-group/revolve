@@ -1,10 +1,13 @@
 from __future__ import absolute_import
+from __future__ import print_function
 
 from sdfbuilder import SDF
 from sdfbuilder.math import Vector3
-from .generated_sdf import body_spec, brain_spec
+
 from revolve.build.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder
 from revolve.convert import yaml_to_robot
+
+from .generated_sdf import body_spec, brain_spec
 
 bot_yaml = '''
 ---

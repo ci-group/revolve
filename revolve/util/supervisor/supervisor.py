@@ -352,11 +352,11 @@ class Supervisor(object):
             exit_code = process.poll()
             if exit_code is not None:
                 # flush out all stdout and stderr
-                out, err = process.communicate().decode('utf-8')
+                out, err = process.communicate()
                 if out is not None:
-                    sys.stdout.write("[gazebo-launch] {}".format(out))
+                    sys.stdout.write("[gazebo-launch] {}".format(out.decode('utf-8')))
                 if err is not None:
-                    sys.stderr.write("[gazebo-launch] {}".format(err))
+                    sys.stderr.write("[gazebo-launch] {}".format(err.decode('utf-8')))
                 raise RuntimeError("Error launching {}, exit with code {}"
                                    .format(cmd, exit_code))
 

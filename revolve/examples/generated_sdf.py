@@ -2,6 +2,7 @@
 Demonstrates creating a simple SDF bot from a spec and a YAML file.
 """
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 
 import math

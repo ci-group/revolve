@@ -1,10 +1,9 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-# Revolve imports
-import itertools
 import math
 
+# Revolve imports
 from ....build.sdf import BodyPart, VelocityMotor, ComponentJoint as Joint
 from ....build.util import in_grams, in_mm
 from sdfbuilder.joint import Limit
@@ -74,7 +73,7 @@ class ActiveWheg(BodyPart, ColorMixin):
         axis = Vector3(0, 0, 1)
         r = wheg_base_radius + 0.5 * self.radius
 
-        for spoke, rotation in itertools.izip(spokes, rotations):
+        for spoke, rotation in zip(spokes, rotations):
             spoke.rotate_around(axis, math.radians(rotation))
             rotate_radians = math.radians(rotation)
             x = r * math.cos(rotate_radians)
