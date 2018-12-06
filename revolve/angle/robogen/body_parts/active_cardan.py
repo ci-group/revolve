@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 
 # Revolve imports
 from ....build.sdf import BodyPart, PositionMotor, ComponentJoint as Joint

@@ -6,10 +6,8 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 from pygazebo.pygazebo import DisconnectError
-from trollius.py33_exceptions import ConnectionResetError
 
-import trollius
-from trollius import From
+import asyncio
 
 from revolve.tol.manage import World
 from revolve.tol.config import parser
@@ -24,7 +22,7 @@ from revolve.util import wait_for
 from revolve.logging import logger
 
 
-@trollius.coroutine
+@asyncio.coroutine
 def run():
     """
     The main coroutine, which is started below.
@@ -42,7 +40,7 @@ def run():
 
     # Create the world, this connects to the Gazebo world
 
-    world = yield From(World.create(conf))
+    world = yield from(World.create(conf))
 
     # These are useful when working with YAML
     body_spec = world.builder.body_builder.spec
@@ -77,18 +75,18 @@ def run():
     # is actually confirmed and a robot manager object has been created
     pose1 = Pose(position=Vector3(0, 0, 0.05))
     pose2 = Pose(position=Vector3(0, 2, 0.05))
-    future1 = yield From(world.insert_robot(
+    future1 = yield from(world.insert_robot(
             tree=robot_tree1,
             pose=pose1,
             # name="robot_26"
     ))
-    future2 = yield From(world.insert_robot(
+    future2 = yield from(world.insert_robot(
             tree=robot_tree2,
             pose=pose2,
             # name="robot_26"
     ))
-    robot_manager1 = yield From(future1)
-    robot_manager2 = yield From(future2)
+    robot_manager1 = yield from(future1)
+    robot_manager2 = yield from(future2)
 
     # I usually start the world paused, un-pause it here. Note that
     # pause again returns a future for when the request is sent,
@@ -96,14 +94,14 @@ def run():
     # This is the general convention for all message actions in the
     # world manager. `wait_for` saves the hassle of grabbing the
     # intermediary future in this case.
-    yield From(wait_for(world.pause(True)))
+    yield from(wait_for(world.pause(True)))
 
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
         print ("Robot fitness is {fitness}".format(
                 fitness=robot_manager1.fitness()))
-        yield From(trollius.sleep(1.0))
+        yield from(asyncio.sleep(1.0))
 
 
 def main():
@@ -116,7 +114,7 @@ def main():
         raise context['exception']
 
     try:
-        loop = trollius.get_event_loop()
+        loop = asyncio.get_event_loop()
         loop.set_exception_handler(handler)
         loop.run_until_complete(run())
     except KeyboardInterrupt:

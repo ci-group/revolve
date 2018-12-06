@@ -11,12 +11,14 @@ import traceback
 
 from datetime import datetime
 
-import trollius
-from trollius import From, Return, Future
+import asyncio
+from asyncio import Future
+
+from pygazebo.msg import gz_string_pb2, request_pb2, response_pb2
 
 from sdfbuilder import SDF
 from sdfbuilder.math import Vector3
-from pygazebo.msg import gz_string_pb2, request_pb2, response_pb2
+
 
 # Local imports
 from ...gazebo import manage, RequestHandler
@@ -162,7 +164,7 @@ class WorldManager(manage.WorldManager):
         return ['id', 'sec', 'nsec', 'x', 'y', 'z', 'battery_level']
 
     @classmethod
-    @trollius.coroutine
+    @asyncio.coroutine
     def create(
             cls,
             world_address=("127.0.0.1", 11345),
@@ -180,10 +182,10 @@ class WorldManager(manage.WorldManager):
                 world_address=world_address,
                 state_update_frequency=pose_update_frequency
         )
-        yield From(self._init(builder=None, generator=None))
-        raise Return(self)
+        yield from(self._init(builder=None, generator=None))
+        return (self)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def teardown(self):
         """
         Finalizes the world, flushes files, etc.
@@ -193,7 +195,7 @@ class WorldManager(manage.WorldManager):
             self.robots_file.close()
             self.poses_file.close()
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def _init(self):
         """
         Initializes the world manager
@@ -202,7 +204,7 @@ class WorldManager(manage.WorldManager):
         if self.manager is not None:
             return
 
-        yield From(super(WorldManager, self)._init())
+        yield from(super(WorldManager, self)._init())
 
         # Subscribe to pose updates
         self.pose_subscriber = self.manager.subscribe(
@@ -211,11 +213,11 @@ class WorldManager(manage.WorldManager):
             self._update_states
         )
 
-        yield From(wait_for(self.set_state_update_frequency(
+        yield from(wait_for(self.set_state_update_frequency(
                 freq=self.state_update_frequency
         )))
 
-        self.battery_handler = yield From(RequestHandler.create(
+        self.battery_handler = yield from(RequestHandler.create(
                 manager=self.manager,
                 advertise='/gazebo/default/battery_level/request',
                 subscribe='/gazebo/default/battery_level/response',
@@ -225,12 +227,12 @@ class WorldManager(manage.WorldManager):
         ))
 
         # Wait for connections
-        yield From(self.pose_subscriber.wait_for_connection())
+        yield from(self.pose_subscriber.wait_for_connection())
 
         if self.do_restore:
-            yield From(self.restore_snapshot(self.do_restore))
+            yield from(self.restore_snapshot(self.do_restore))
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def create_snapshot(self):
         """
         Creates a snapshot of the world in the output directory. This pauses the world.
@@ -238,20 +240,20 @@ class WorldManager(manage.WorldManager):
         """
         if not self.output_directory:
             logger.warning("No output directory - no snapshot will be created.")
-            raise Return(False)
+            return (False)
 
         # Pause the world
-        yield From(wait_for(self.pause()))
+        yield from(wait_for(self.pause()))
 
         # Obtain a copy of the current world SDF from Gazebo and write it to
         # file
-        response = yield From(wait_for(self.request_handler.do_gazebo_request(
+        response = yield from(wait_for(self.request_handler.do_gazebo_request(
                 request="world_sdf"
         )))
         if response.response == "error":
             logger.warning("WARNING: requesting world state resulted in "
                            "error. Snapshot failed.")
-            raise Return(False)
+            return (False)
 
         msg = gz_string_pb2.GzString()
         msg.ParseFromString(response.serialized_data)
@@ -259,7 +261,7 @@ class WorldManager(manage.WorldManager):
             f.write(msg.data)
 
         # Get the snapshot data and pickle to file
-        data = yield From(self.get_snapshot_data())
+        data = yield from(self.get_snapshot_data())
 
         # It seems pickling causes some issues with the default recursion
         # limit, up it
@@ -272,9 +274,9 @@ class WorldManager(manage.WorldManager):
         self.robots_file.flush()
         shutil.copy(self.poses_filename, self.poses_filename+'.snapshot')
         shutil.copy(self.robots_filename, self.robots_filename+'.snapshot')
-        raise Return(True)
+        return (True)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def restore_snapshot(self, data):
         """
         Called with the data object created and pickled in `get_snapshot_data`,
@@ -288,7 +290,7 @@ class WorldManager(manage.WorldManager):
         self.start_time = data['start_time']
         self.last_time = data['last_time']
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def get_snapshot_data(self):
         """
         Returns a data object to be pickled into a snapshot file.
@@ -302,7 +304,7 @@ class WorldManager(manage.WorldManager):
             "last_time": self.last_time
         }
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def set_state_update_frequency(self, freq):
         """
         Sets the pose update frequency. Defaults to 10 times per second.
@@ -310,9 +312,9 @@ class WorldManager(manage.WorldManager):
         :type freq: int
         :return:
         """
-        fut = yield From(self.request_handler.do_gazebo_request("set_robot_state_update_frequency", str(freq)))
+        fut = yield from(self.request_handler.do_gazebo_request("set_robot_state_update_frequency", str(freq)))
         self.state_update_frequency = freq
-        raise Return(fut)
+        return (fut)
 
     def get_robot_id(self):
         """
@@ -338,7 +340,7 @@ class WorldManager(manage.WorldManager):
         """
         return self.robots.get(name, None)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def generate_valid_robot(self, max_attempts=100):
         """
         Uses tree generation in conjuction with the analyzer
@@ -351,20 +353,20 @@ class WorldManager(manage.WorldManager):
         for i in range(max_attempts):
             tree = self.generator.generate_tree()
 
-            ret = yield From(self.analyze_tree(tree))
+            ret = yield from(self.analyze_tree(tree))
             if ret is None:
                 # Error already shown
                 continue
 
             coll, bbox, robot = ret
             if not coll:
-                raise Return(tree, robot, bbox)
+                return (tree, robot, bbox)
 
         logger.error("Failed to produce a valid robot in {} attempts."
                      .format(max_attempts))
-        raise Return(None)
+        return (None)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def analyze_tree(self, tree):
         """
         Calls the body analyzer on a robot tree.
@@ -391,9 +393,9 @@ class WorldManager(manage.WorldManager):
 
         # coll, bbox = ret
         coll = 0
-        raise Return(coll, bbox, robot)
+        return (coll, bbox, robot)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def insert_robot(
             self,
             tree,
@@ -444,7 +446,7 @@ class WorldManager(manage.WorldManager):
                 f.write(str(sdf))
 
         return_future = Future()
-        insert_future = yield From(self.insert_model(sdf))
+        insert_future = yield from(self.insert_model(sdf))
         # TODO: Unhandled error in exception handler. Fix this.
         insert_future.add_done_callback(lambda fut: self._robot_inserted(
                 robot_name=robot_name,
@@ -455,7 +457,7 @@ class WorldManager(manage.WorldManager):
                 msg=fut.result(),
                 return_future=return_future
         ))
-        raise Return(return_future)
+        return (return_future)
 
     def get_simulation_sdf(
             self,
@@ -475,7 +477,7 @@ class WorldManager(manage.WorldManager):
         raise NotImplementedError(
                 "Implement in subclass if you want to use this method.")
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def delete_robot(self, robot):
         """
         :param robot:
@@ -485,10 +487,10 @@ class WorldManager(manage.WorldManager):
         # Immediately unregister the robot so no it won't be used
         # for anything else while it is being deleted.
         self.unregister_robot(robot)
-        future = yield From(self.delete_model(robot.name, req="delete_robot"))
-        raise Return(future)
+        future = yield from(self.delete_model(robot.name, req="delete_robot"))
+        return (future)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def delete_all_robots(self):
         """
         Deletes all robots from the world. Returns a future that resolves
@@ -497,10 +499,10 @@ class WorldManager(manage.WorldManager):
         """
         futures = []
         for bot in list(self.robots.values()):
-            future = yield From(self.delete_robot(bot))
+            future = yield from(self.delete_robot(bot))
             futures.append(future)
 
-        raise Return(multi_future(futures))
+        return (multi_future(futures))
 
     def _robot_inserted(
             self,
@@ -611,7 +613,7 @@ class WorldManager(manage.WorldManager):
         logger.debug("Unregistering robot {}.".format(robot.name))
         del self.robots[robot.name]
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def reset(self, **kwargs):
         """
         :param kwargs:
@@ -619,10 +621,10 @@ class WorldManager(manage.WorldManager):
         """
         self.start_time = None
         self.last_time = None
-        fut = yield From(super(WorldManager, self).reset(**kwargs))
-        raise Return(fut)
+        fut = yield from(super(WorldManager, self).reset(**kwargs))
+        return (fut)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def update_battery_level(self, robot):
         """
         Communicates a single robot's battery level to its
@@ -630,14 +632,14 @@ class WorldManager(manage.WorldManager):
         :param robot:
         :return:
         """
-        fut = yield From(self.battery_handler.do_gazebo_request(
+        fut = yield from(self.battery_handler.do_gazebo_request(
                 request="set_battery_level",
                 data=robot.name,
                 dbl_data=robot.get_battery_level()
         ))
-        raise Return(fut)
+        return (fut)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def update_battery_levels(self):
         """
         Communicates battery levels for all active robots.
@@ -645,11 +647,11 @@ class WorldManager(manage.WorldManager):
         """
         futs = []
         for robot in self.robot_list():
-            fut = yield From(self.update_battery_level(robot))
+            fut = yield from(self.update_battery_level(robot))
             futs.append(fut)
 
         if futs:
-            raise Return(multi_future(futs))
+            return (multi_future(futs))
 
     def age(self):
         """

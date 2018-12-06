@@ -16,8 +16,8 @@ from sdfbuilder.math import Vector3
 from .generated_sdf import generate_robot, builder, robot_to_sdf
 from ..gazebo import connect, get_analysis_robot, BodyAnalyzer
 
-import trollius
-from trollius import From
+import asyncio
+
 
 if len(sys.argv) > 1:
     seed = int(sys.argv[1])
@@ -28,9 +28,9 @@ random.seed(seed)
 print("Seed: {}".format(seed), file=sys.stderr)
 
 
-@trollius.coroutine
+@asyncio.coroutine
 def analysis_func():
-    analyzer = yield From(BodyAnalyzer.create(address=("127.0.0.1", 11346)))
+    analyzer = yield from(BodyAnalyzer.create(address=("127.0.0.1", 11346)))
 
     # Try a maximum of 100 times
     for i in range(100):
@@ -40,7 +40,7 @@ def analysis_func():
         sdf = get_analysis_robot(robot, builder)
 
         # Find out its intersections and bounding box
-        intersections, bbox = yield From(
+        intersections, bbox = yield from(
                 analyzer.analyze_robot(robot, builder=builder))
 
         if intersections:
@@ -64,5 +64,5 @@ def analysis_func():
             print(str(robot_to_sdf(robot, "test_bot", "controllerplugin.so")))
             break
 
-loop = trollius.get_event_loop()
+loop = asyncio.get_event_loop()
 loop.run_until_complete(analysis_func())

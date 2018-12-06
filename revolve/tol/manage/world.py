@@ -4,8 +4,8 @@ from __future__ import print_function
 import os
 import time
 
-import trollius
-from trollius import From, Return, Future
+import asyncio
+from asyncio import Future
 
 # Pygazebo
 from pygazebo.msg import world_control_pb2, poses_stamped_pb2, world_stats_pb2, model_pb2
@@ -94,7 +94,7 @@ class World(WorldManager):
             )
 
     @classmethod
-    @trollius.coroutine
+    @asyncio.coroutine
     def create(cls, conf):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager
@@ -102,8 +102,8 @@ class World(WorldManager):
         :return:
         """
         self = cls(_private=cls._PRIVATE, conf=conf)
-        yield From(self._init())
-        raise Return(self)
+        yield from(self._init())
+        return (self)
 
     def robots_header(self):
         """
@@ -144,7 +144,7 @@ class World(WorldManager):
                 parents=parents
         )
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def add_highlight(self, position, color):
         """
         Adds a circular highlight at the given position.
@@ -157,10 +157,10 @@ class World(WorldManager):
         position.z = 0
         hl.set_position(position)
         sdf = SDF(elements=[hl])
-        fut = yield From(self.insert_model(sdf))
-        raise Return(fut, hl)
+        fut = yield from(self.insert_model(sdf))
+        return (fut, hl)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def generate_population(self, n):
         """
         Generates population of `n` valid robots robots.
@@ -174,17 +174,17 @@ class World(WorldManager):
         bboxes = []
 
         for _ in range(n):
-            gen = yield From(self.generate_valid_robot())
+            gen = yield from(self.generate_valid_robot())
             if not gen:
-                raise Return(None)
+                return (None)
 
             tree, robot, bbox = gen
             trees.append(tree)
             bboxes.append(bbox)
 
-        raise Return(trees, bboxes)
+        return (trees, bboxes)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def insert_population(self, trees, poses):
         """
         :param trees:
@@ -195,13 +195,13 @@ class World(WorldManager):
         """
         futures = []
         for tree, pose in zip(trees, poses):
-            future = yield From(self.insert_robot(tree, pose))
+            future = yield from(self.insert_robot(tree, pose))
             futures.append(future)
 
         future = multi_future(futures)
         future.add_done_callback(
                 lambda _: logger.debug("Done inserting population."))
-        raise Return(future)
+        return (future)
 
     def get_simulation_sdf(self, robot, robot_name, initial_battery=0.0):
         """
@@ -218,7 +218,7 @@ class World(WorldManager):
                 battery_charge=initial_battery
         )
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def build_walls(self, points):
         """
         Builds a wall defined by the given points, used to shield the
@@ -237,12 +237,12 @@ class World(WorldManager):
                     end=end,
                     thickness=constants.WALL_THICKNESS,
                     height=constants.WALL_HEIGHT)
-            future = yield From(self.insert_model(SDF(elements=[wall])))
+            future = yield from(self.insert_model(SDF(elements=[wall])))
             futures.append(future)
 
-        raise Return(multi_future(futures))
+        return (multi_future(futures))
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def attempt_mate(self, ra, rb):
         """
         Attempts mating between two robots.
@@ -258,7 +258,7 @@ class World(WorldManager):
         success, child = self.crossover.crossover(ra.tree, rb.tree)
         if not success:
             logger.debug("Crossover failed.")
-            raise Return(False)
+            return (False)
 
         # Apply mutation
         logger.debug("Crossover succeeded, applying mutation...")
@@ -270,16 +270,16 @@ class World(WorldManager):
         _, outputs, _ = child.root.io_count(recursive=True)
         if not outputs:
             logger.debug("Evolution resulted in child without motors.")
-            raise Return(False)
+            return (False)
 
         # Check if the robot body is valid
-        ret = yield From(self.analyze_tree(child))
+        ret = yield from(self.analyze_tree(child))
         if ret is None or ret[0]:
             logger.debug("Intersecting body parts: Miscarriage.")
-            raise Return(False)
+            return (False)
 
         logger.debug("Viable child created.")
-        raise Return(child, ret[1])
+        return (child, ret[1])
 
 
 class Highlight(Model):

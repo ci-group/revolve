@@ -9,8 +9,9 @@ from ..spec import BodyAnalysisResponse
 from ..build.sdf import BodyPart
 from sdfbuilder import SDF, Link, Model
 from sdfbuilder.sensor import Sensor
-import trollius
-from trollius import From, Return
+
+import asyncio
+
 import logging
 from .connect import connect, RequestHandler
 
@@ -65,12 +66,12 @@ def analyze_body(sdf, address=("127.0.0.1", 11346)):
     """
     response_obj = [None]
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def internal_analyze():
-        analyzer = yield From(BodyAnalyzer.create(address))
-        response_obj[0] = yield From(analyzer.analyze_sdf(sdf))
+        analyzer = yield from(BodyAnalyzer.create(address))
+        response_obj[0] = yield from(analyzer.analyze_sdf(sdf))
 
-    loop = trollius.get_event_loop()
+    loop = asyncio.get_event_loop()
     loop.run_until_complete(internal_analyze())
     return response_obj[0]
 
@@ -97,7 +98,7 @@ class BodyAnalyzer(object):
         self.request_handler = None
 
     @classmethod
-    @trollius.coroutine
+    @asyncio.coroutine
     def create(cls, address=("127.0.0.1", 11346)):
         """
         Instantiates a new body analyzer at the given address.
@@ -107,20 +108,20 @@ class BodyAnalyzer(object):
         :return:
         """
         self = cls(cls._PRIVATE, address)
-        yield From(self._init())
-        raise Return(self)
+        yield from(self._init())
+        return (self)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def _init(self):
         """
         BodyAnalyzer initialization coroutine
         :return:
         """
-        self.manager = yield From(connect(self.address))
-        self.request_handler = yield From(
+        self.manager = yield from(connect(self.address))
+        self.request_handler = yield from(
             RequestHandler.create(self.manager, msg_id_base=_msg_id()))
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def analyze_robot(self, robot, builder, max_attempts=5):
         """
         Performs body analysis of a given Robot object.
@@ -132,10 +133,10 @@ class BodyAnalyzer(object):
         :return:
         """
         sdf = get_analysis_robot(robot, builder)
-        ret = yield From(self.analyze_sdf(sdf, max_attempts=max_attempts))
-        raise Return(ret)
+        ret = yield from(self.analyze_sdf(sdf, max_attempts=max_attempts))
+        return (ret)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def analyze_sdf(self, sdf, max_attempts=5):
         """
         Coroutine that returns with a (collisions, bounding box) tuple,
@@ -149,8 +150,8 @@ class BodyAnalyzer(object):
         msg = None
         rh = self.request_handler
         for _ in range(max_attempts):
-            future = yield From(rh.do_gazebo_request("analyze_body", str(sdf)))
-            yield From(future)
+            future = yield from(rh.do_gazebo_request("analyze_body", str(sdf)))
+            yield from(future)
 
             response = future.result()
             if response.response == "success":
@@ -160,7 +161,7 @@ class BodyAnalyzer(object):
 
         if not msg:
             # Error return
-            raise Return(None)
+            return (None)
 
         if msg.HasField("boundingBox"):
             bbox = msg.boundingBox
@@ -168,4 +169,4 @@ class BodyAnalyzer(object):
             bbox = None
 
         internal_collisions = len(msg.contact)
-        raise Return(internal_collisions, bbox)
+        return (internal_collisions, bbox)

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-import trollius
-from trollius import From, Return, Future
+import asyncio
+from asyncio import Future
 
 import pygazebo
 from pygazebo.msg import request_pb2, response_pb2
@@ -12,10 +12,10 @@ from pygazebo.msg import request_pb2, response_pb2
 default_address = ["127.0.0.1", 11345]
 
 
-@trollius.coroutine
+@asyncio.coroutine
 def connect(address=default_address):
-    manager = yield From(pygazebo.connect(address=tuple(address)))
-    raise Return(manager)
+    manager = yield from(pygazebo.connect(address=tuple(address)))
+    return (manager)
 
 
 class RequestHandler(object):
@@ -68,7 +68,7 @@ class RequestHandler(object):
         self.msg_id = int(msg_id_base)
 
     @classmethod
-    @trollius.coroutine
+    @asyncio.coroutine
     def create(
             cls,
             manager,
@@ -115,10 +115,10 @@ class RequestHandler(object):
                 wait_for_publisher,
                 cls._PRIVATE
         )
-        yield From(handler._init())
-        raise Return(handler)
+        yield from(handler._init())
+        return (handler)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def _init(self):
         """
         :return:
@@ -131,14 +131,14 @@ class RequestHandler(object):
             self.response_type,
             self._callback
         )
-        self.publisher = yield From(self.manager.advertise(
+        self.publisher = yield from(self.manager.advertise(
             self.advertise, self.request_type))
 
         if self.wait_for_publisher:
-            yield From(self.subscriber.wait_for_connection())
+            yield from(self.subscriber.wait_for_connection())
 
         if self.wait_for_subscriber:
-            yield From(self.publisher.wait_for_listener())
+            yield from(self.publisher.wait_for_listener())
 
     def _callback(self, data):
         """
@@ -200,7 +200,7 @@ class RequestHandler(object):
         del req[msg_id]
         del cb[msg_id]
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def do_gazebo_request(
             self,
             request,
@@ -234,8 +234,8 @@ class RequestHandler(object):
         if dbl_data is not None:
             req.dbl_data = dbl_data
 
-        future = yield From(self.do_request(req))
-        raise Return(future)
+        future = yield from(self.do_request(req))
+        return (future)
 
     def _get_response_map(self, request_type):
         """
@@ -250,7 +250,7 @@ class RequestHandler(object):
 
         return self.responses[request_type], self.callbacks[request_type]
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def do_request(self, msg):
         """
         Performs a request. The only requirement
@@ -274,5 +274,5 @@ class RequestHandler(object):
         future = Future()
         req[msg_id] = None
         cb[msg_id] = future
-        yield From(self.publisher.publish(msg))
-        raise Return(future)
+        yield from(self.publisher.publish(msg))
+        return (future)

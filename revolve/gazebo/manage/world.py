@@ -4,8 +4,8 @@ from __future__ import absolute_import
 # Global / system
 import time
 
-import trollius
-from trollius import From, Return
+import asyncio
+
 from pygazebo.msg import world_control_pb2
 
 # Revolve
@@ -49,7 +49,7 @@ class WorldManager(object):
         self.request_handler = None
 
     @classmethod
-    @trollius.coroutine
+    @asyncio.coroutine
     def create(
             cls,
             world_address=("127.0.0.1", 11345),
@@ -64,8 +64,8 @@ class WorldManager(object):
                 _private=cls._PRIVATE,
                 world_address=world_address,
         )
-        yield From(self._init())
-        raise Return(self)
+        yield from(self._init())
+        return (self)
 
     def _init(self):
         """
@@ -77,22 +77,22 @@ class WorldManager(object):
 
         # Initialize the manager connections as well as the general request
         # handler
-        self.manager = yield From(connect(self.world_address))
+        self.manager = yield from(connect(self.world_address))
 
-        self.world_control = yield From(self.manager.advertise(
+        self.world_control = yield from(self.manager.advertise(
                 topic_name='/gazebo/default/world_control',
                 msg_type='gazebo.msgs.WorldControl'
         ))
 
-        self.request_handler = yield From(RequestHandler.create(
+        self.request_handler = yield from(RequestHandler.create(
                 manager=self.manager,
                 msg_id_base=MSG_BASE
         ))
 
         # Wait for connections
-        yield From(self.world_control.wait_for_listener())
+        yield from(self.world_control.wait_for_listener())
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def pause(self, pause=True):
         """
         Pause / unpause the world
@@ -106,10 +106,10 @@ class WorldManager(object):
 
         msg = world_control_pb2.WorldControl()
         msg.pause = pause
-        fut = yield From(self.world_control.publish(msg))
-        raise Return(fut)
+        fut = yield from(self.world_control.publish(msg))
+        return (fut)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def reset(self, all=False, time_only=True, model_only=False):
         """
         Reset the world. Defaults to time only, since that appears to be the
@@ -124,10 +124,10 @@ class WorldManager(object):
         msg.reset.all = all
         msg.reset.model_only = model_only
         msg.reset.time_only = time_only
-        fut = yield From(self.world_control.publish(msg))
-        raise Return(fut)
+        fut = yield from(self.world_control.publish(msg))
+        return (fut)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def insert_model(self, sdf):
         """
         Insert a model wrapped in an SDF tag into the world. Make
@@ -142,13 +142,13 @@ class WorldManager(object):
         :type sdf: SDF
         :return:
         """
-        future = yield From(self.request_handler.do_gazebo_request(
+        future = yield from(self.request_handler.do_gazebo_request(
                 request="insert_sdf",
                 data=str(sdf)
         ))
-        raise Return(future)
+        return (future)
 
-    @trollius.coroutine
+    @asyncio.coroutine
     def delete_model(self, name, req="entity_delete"):
         """
         Deletes the model with the given name from the world.
@@ -159,8 +159,8 @@ class WorldManager(object):
         occurring from deleting sensors.
         :return:
         """
-        future = yield From(self.request_handler.do_gazebo_request(
+        future = yield from(self.request_handler.do_gazebo_request(
                 request=req,
                 data=name
         ))
-        raise Return(future)
+        return (future)

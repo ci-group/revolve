@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import sys
 
-from trollius import Future, From, Return
+from asyncio import Future
 
 
 def multi_future(children, quiet_exceptions=()):
@@ -78,6 +78,6 @@ def wait_for(coro):
     :param coro: A coroutine
     :return:
     """
-    fut = yield From(coro)
-    result = yield From(fut)
-    raise Return(result)
+    fut = yield from(coro)
+    result = yield from(fut)
+    return (result)
