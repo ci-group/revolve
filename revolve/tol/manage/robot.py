@@ -81,11 +81,13 @@ class Robot(RvRobot):
             return False
 
         if self.last_mate is not None and \
-          float(self.last_update - self.last_mate) < self.conf.gestation_period:
+                float(self.last_update - self.last_mate) < \
+                self.conf.gestation_period:
             # Don't mate within the cooldown window
             return False
 
-        if self.distance_to(other.last_position) > self.conf.mating_distance_threshold:
+        if self.distance_to(other.last_position) > \
+                self.conf.mating_distance_threshold:
             return False
 
         my_fitness = self.fitness()
@@ -173,7 +175,8 @@ class Robot(RvRobot):
         :return:
         """
         age = self.age()
-        if age < (0.25 * self.conf.evaluation_time) or age < self.conf.warmup_time:
+        if age < (0.25 * self.conf.evaluation_time) \
+           or age < self.conf.warmup_time:
             # We want at least some data
             return 0.0
 
@@ -181,7 +184,9 @@ class Robot(RvRobot):
         d_fac = self.conf.fitness_displacement_factor
         s_fac = self.conf.fitness_size_factor
         d = 1.0 - (self.conf.fitness_size_discount * self.size)
-        v = d * (d_fac * self.displacement_velocity() + v_fac * self.velocity() + s_fac * self.size)
+        v = d * (d_fac * self.displacement_velocity()
+                 + v_fac * self.velocity()
+                 + s_fac * self.size)
         return v if v <= self.conf.fitness_limit else 0.0
 
     def is_evaluated(self):

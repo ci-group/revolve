@@ -1,8 +1,28 @@
 from __future__ import absolute_import
 
-from .body import BodyPart, Box, Cylinder, ComponentJoint
-from .neural_net import Neuron, NeuralConnection
-from .builder import AspectBuilder, RobotBuilder, BodyBuilder, NeuralNetBuilder
-from .motor import Motor, PID, PIDMotor, VelocityMotor, PositionMotor
-from .sensor import Sensor, VirtualSensor, BasicBatterySensor, PointIntensitySensor
 from .battery import BasicBattery
+
+from .body import BodyPart
+from .body import Box
+from .body import Cylinder
+from .body import ComponentJoint
+
+from .builder import AspectBuilder
+from .builder import RobotBuilder
+from .builder import BodyBuilder
+from .builder import NeuralNetBuilder
+
+from .motor import Motor
+from .motor import PID
+from .motor import PIDMotor
+from .motor import VelocityMotor
+from .motor import PositionMotor
+
+from .neural_net import Neuron
+from .neural_net import NeuralConnection
+
+from .sensor import Sensor
+from .sensor import VirtualSensor
+from .sensor import BasicBatterySensor
+from .sensor import PointIntensitySensor
+

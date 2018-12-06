@@ -107,11 +107,11 @@ class RobotToYaml(object):
         yaml.add_representer(str, unicode_representer)
         bot_yaml = {}
 
-        id = bot_pb.id
+        bot_pb_id = bot_pb.id
         body = bot_pb.body
         brain = bot_pb.brain
 
-        bot_yaml['id'] = id
+        bot_yaml['id'] = bot_pb_id
         bot_yaml['body'] = self.body_encoder.parse_body(body.root)
         bot_yaml['brain'] = self.brain_encoder.parse_neural_network(brain)
 

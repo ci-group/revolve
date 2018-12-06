@@ -4,8 +4,11 @@ Body generation utilities,
 from __future__ import absolute_import
 
 import random
-from ..spec import BodyImplementation, PartSpec, BodyPart
-from ..spec.msgs import Body
+from revolve.spec import BodyImplementation
+from revolve.spec import PartSpec
+from revolve.spec import BodyPart
+
+from revolve.spec.msgs import Body
 
 
 def _init_part_list(spec, parts):
@@ -61,8 +64,8 @@ class BodyGenerator(object):
                              non-root (i.e. attached) parts, or `None` if all
                              parts can be used.
         :type attach_parts: list
-        :param max_parts: The maximum number of parts to be used in a robot; must be specified for
-                          the generation to ever halt.
+        :param max_parts: The maximum number of parts to be used in a robot;
+                          must be specified for the generation to ever halt.
         :type max_parts: int
         :param max_inputs: The total maximum number of inputs.
         :type max_inputs: int
@@ -73,8 +76,10 @@ class BodyGenerator(object):
         self.min_parts = min_parts
         self.fix_parts = fix_num_parts
         self.spec = spec
-        self.root_parts = root_parts if root_parts is not None else spec.get_all_types()
-        self.attach_parts = attach_parts if attach_parts is not None else spec.get_all_types()
+        self.root_parts = root_parts if root_parts is not None \
+            else spec.get_all_types()
+        self.attach_parts = attach_parts if attach_parts is not None \
+            else spec.get_all_types()
 
         # Get the part specifications, check if they are valid
         self.root_specs = _init_part_list(self.spec, self.root_parts)
@@ -95,13 +100,23 @@ class BodyGenerator(object):
         root_specs, attach_specs = self.root_specs, self.attach_specs
 
         # First, pick a number of body parts (this will be an upper limit)
-        max_parts = self.max_parts if self.fix_parts else self.choose_max_parts()
+        max_parts = self.max_parts if self.fix_parts \
+            else self.choose_max_parts()
 
-        root_part_type = self.choose_part(self.root_parts, None, None, root=True)
+        root_part_type = self.choose_part(
+                parts=self.root_parts,
+                parent_part=None,
+                root_part=None,
+                root=True)
         root_part = root_specs[root_part_type]
         body.root.id = "bodygen-root"
         body.root.type = root_part_type
-        self.initialize_part(root_part, body.root, None, body.root, root=True)
+        self.initialize_part(
+                spec=root_part,
+                new_part=body.root,
+                parent_part=None,
+                root_part=body.root,
+                root=True)
 
         # A body part counter
         counter = 1
@@ -120,7 +135,12 @@ class BodyGenerator(object):
 
             # Construct a list of parts we can use that
             # would not break the constraints
-            usable = self.get_allowed_parts(attach_specs, counter, inputs, outputs, body.root)
+            usable = self.get_allowed_parts(
+                    attach_specs=attach_specs,
+                    num_parts=counter,
+                    inputs=inputs,
+                    outputs=outputs,
+                    root_part=body.root)
 
             if not usable:
                 break
@@ -154,11 +174,20 @@ class BodyGenerator(object):
             inputs += new_part.inputs
             outputs += new_part.outputs
             counter += 1
-            free += [(conn.part, i) for i in range(new_part.arity) if i != target_slot]
+            free += [
+                (conn.part, i) for i in range(new_part.arity) if i != target_slot
+            ]
 
         return body
 
-    def get_allowed_parts(self, attach_specs, num_parts, inputs, outputs, root_part):
+    def get_allowed_parts(
+            self,
+            attach_specs,
+            num_parts,
+            inputs,
+            outputs,
+            root_part
+    ):
         """
         Overridable function that creates a list of allowed parts for a specific
         stage of robot generation.
@@ -177,7 +206,14 @@ class BodyGenerator(object):
             outputs + attach_specs[item].outputs <= self.max_outputs
         )]
 
-    def initialize_part(self, spec, new_part, parent_part, root_part, root=False):
+    def initialize_part(
+            self,
+            spec,
+            new_part,
+            parent_part,
+            root_part,
+            root=False
+    ):
         """
         :param spec:
         :type spec: PartSpec
@@ -192,7 +228,11 @@ class BodyGenerator(object):
         spec.set_parameters(new_part.param, spec.get_random_parameters())
 
         # Set random orientation in degrees
-        new_part.orientation = self.choose_orientation(new_part, parent_part, root_part, root)
+        new_part.orientation = self.choose_orientation(
+                new_part=new_part,
+                parent_part=parent_part,
+                root_part=root_part,
+                root=root)
         new_part.label = "part-{}".format(self.get_label_counter())
         return new_part
 
@@ -236,18 +276,30 @@ class BodyGenerator(object):
         """
         return random.choice(parts)
 
-    def choose_attachment(self, attachments, root_part):
+    @staticmethod
+    def choose_attachment(
+            self,
+            attachments,
+            root_part
+    ):
         """
         Overridable method to choose a parent/slot combination
         from a list of attachments.
         :param attachments:
-        :param root_part: The current root of the tree with connections, for inspection
+        :param root_part: The current root of the tree with connections,
+                          for inspection
         :return: The chosen parent / slot tuple
         :rtype: tuple
         """
         return random.choice(attachments)
 
-    def choose_target_slot(self, new_part, parent, root_part):
+    @staticmethod
+    def choose_target_slot(
+            self,
+            new_part,
+            parent,
+            root_part
+    ):
         """
         Overridable method to choose a target attachment
         slot for a new part.

@@ -77,7 +77,8 @@ class SpecImplementation(object):
         :return: A list of all spec identifiers
         :rtype list:
         """
-        return [(a if isinstance(a, basestring) else a[0]) for a in list(self.spec.keys())]
+        return [(a if isinstance(a, basestring)
+                 else a[0]) for a in list(self.spec.keys())]
 
 
 class BodyImplementation(SpecImplementation):
@@ -247,7 +248,7 @@ class ParamSpec(object):
 
     def is_valid(self, value):
         """
-        Returns whether the given parameter is valid according to this param spec.
+        Returns whether the given parameter is valid according to param's spec
 
         :param value:
         :type value: float
@@ -332,10 +333,10 @@ class Parameterizable(object):
         if params is None:
             params = []
 
-        l = self.n_parameters = len(params)
+        ln = self.n_parameters = len(params)
 
         # Map from parameter name to index in list
-        for i in range(l):
+        for i in range(ln):
             if not isinstance(params[i], ParamSpec):
                 params[i] = ParamSpec(params[i])
 
@@ -344,7 +345,7 @@ class Parameterizable(object):
                     .format(params[i].name))
 
         # Store tuple array index, spec
-        self.parameters = {params[i].name: (i, params[i]) for i in range(l)}
+        self.parameters = {params[i].name: (i, params[i]) for i in range(ln)}
 
     def get_param_index(self, name):
         """
@@ -394,7 +395,11 @@ class Parameterizable(object):
         :rtype: dict
         """
         assert len(params) == len(self.parameters), "Invalid parameter length."
-        return {param: params[self.parameters[param][0]].value for param in self.parameters}
+        return {
+            param: params[
+                self.parameters[param][0]
+            ].value for param in self.parameters
+        }
 
     def params_validate(self, params):
         """
@@ -443,7 +448,8 @@ class Parameterizable(object):
         nw_params = {}
         for name, (_, spec) in list(self.parameters.items()):
             epsilon = spec.epsilon
-            nw_params[name] = (1.0 - epsilon) * params[name] + epsilon * spec.get_random_value()
+            nw_params[name] = (1.0 - epsilon) * params[name] + \
+                              epsilon * spec.get_random_value()
 
         return self.serialize_params(nw_params) if serialize else nw_params
 

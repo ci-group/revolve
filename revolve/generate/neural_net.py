@@ -7,8 +7,14 @@ from __future__ import print_function
 import random
 import itertools
 
-from ..spec import NeuralNetwork, Neuron, NeuralNetImplementation, NeuronSpec, Body, BodyImplementation
-from ..util import decide
+from revolve.spec import NeuralNetwork
+from revolve.spec import Neuron
+from revolve.spec import NeuralNetImplementation
+from revolve.spec import NeuronSpec
+from revolve.spec import Body
+from revolve.spec import BodyImplementation
+
+from revolve.util import decide
 
 
 # Helper function to extract the network interface from a body part and subtree
@@ -35,7 +41,8 @@ class NeuralNetworkGenerator(object):
     """
     def __init__(self, spec, max_hidden=20, conn_prob=0.1):
         """
-        :param conn_prob: Probability of creating a connection (i.e. nonzero weight) between two neurons.
+        :param conn_prob: Probability of creating a connection (i.e. nonzero
+                          weight) between two neurons.
         :type conn_prob: float
         :param spec:
         :type spec: NeuralNetImplementation
@@ -97,7 +104,8 @@ class NeuralNetworkGenerator(object):
                 spec = self.spec.get(neuron.type)
                 self.initialize_neuron(spec, neuron)
 
-        num_hidden = self.choose_num_hidden() if num_hidden is None else num_hidden
+        num_hidden = self.choose_num_hidden() if num_hidden is None \
+            else num_hidden
         for i in range(num_hidden):
             neuron = net.neuron.add()
             neuron.id = 'brian-gen-hidden-{}'.format(len(hidden))
@@ -143,7 +151,8 @@ class NeuralNetworkGenerator(object):
         inputs, outputs, part_ids = _extract_io(body_spec, body.root)
         return self.generate(inputs, outputs, part_ids)
 
-    def choose_weight(self):
+    @staticmethod
+    def choose_weight():
         """
         Overridable function to pick a neural connection weight.
         By default, this returns a value between 0 and 1
@@ -152,7 +161,8 @@ class NeuralNetworkGenerator(object):
         """
         return random.random()
 
-    def initialize_neuron(self, spec, neuron):
+    @staticmethod
+    def initialize_neuron(spec, neuron):
         """
         Initializes a neuron's parameters
         :param spec:

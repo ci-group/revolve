@@ -195,8 +195,8 @@ class Supervisor(object):
                 ret = self.procs[proc_name].poll()
                 if ret is not None:
                     if ret == 0:
-                        sys.stdout.write( "Program '{}' exited normally\n"
-                                          .format(proc_name))
+                        sys.stdout.write("Program '{}' exited normally\n"
+                                         .format(proc_name))
                     else:
                         sys.stderr.write("Program '{}' exited with code {}\n"
                                          .format(proc_name, ret))
@@ -205,7 +205,7 @@ class Supervisor(object):
 
             # We could do this a lot less often, but this way we get
             # output once every second.
-            time.sleep(1.0)
+            time.sleep(10.0)
 
     def _pass_through_stdout(self):
         """
@@ -226,14 +226,16 @@ class Supervisor(object):
 
                     if err:
                         self.write_stderr(err)
-            except:
+            except Exception:
                 pass
 
+    @staticmethod
     def write_stdout(self, data):
         """
         Overridable method to write to stdout, useful if you
         want to apply some kind of filter, or write to a file
         instead.
+        :param self:
         :param data:
         :return:
         """

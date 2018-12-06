@@ -1,8 +1,13 @@
 from __future__ import absolute_import
 
 from sdfbuilder import PosableGroup
-from sdfbuilder.structure import Visual, Collision, Geometry
+
+from sdfbuilder.structure import Visual
+from sdfbuilder.structure import Collision
+from sdfbuilder.structure import Geometry
+
 from sdfbuilder.sensor import Sensor as SdfSensor
+
 from ..sensor import Sensor
 
 
@@ -11,7 +16,14 @@ class Component(PosableGroup):
 
     """
 
-    def __init__(self, part_id, name, geometry, collision=True, visual=True):
+    def __init__(
+            self,
+            part_id,
+            name,
+            geometry,
+            collision=True,
+            visual=True
+    ):
         """
 
         :param part_id:

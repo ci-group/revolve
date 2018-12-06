@@ -102,7 +102,7 @@ class World(WorldManager):
         """
         self = cls(_private=cls._PRIVATE, conf=conf)
         await (self._init())
-        return (self)
+        return self
 
     def robots_header(self):
         """
@@ -155,8 +155,8 @@ class World(WorldManager):
         position.z = 0
         hl.set_position(position)
         sdf = SDF(elements=[hl])
-        fut = await (self.insert_model(sdf))
-        return (fut, hl)
+        future = await (self.insert_model(sdf))
+        return future, hl
 
     async def generate_population(self, n):
         """
@@ -173,13 +173,13 @@ class World(WorldManager):
         for _ in range(n):
             gen = await (self.generate_valid_robot())
             if not gen:
-                return (None)
+                return None
 
             tree, robot, bbox = gen
             trees.append(tree)
             bboxes.append(bbox)
 
-        return (trees, bboxes)
+        return trees, bboxes
 
     async def insert_population(self, trees, poses):
         """
@@ -197,7 +197,7 @@ class World(WorldManager):
         future = multi_future(futures)
         future.add_done_callback(
                 lambda _: logger.debug("Done inserting population."))
-        return (future)
+        return future
 
     def get_simulation_sdf(self, robot, robot_name, initial_battery=0.0):
         """
@@ -235,7 +235,7 @@ class World(WorldManager):
             future = await (self.insert_model(SDF(elements=[wall])))
             futures.append(future)
 
-        return (multi_future(futures))
+        return multi_future(futures)
 
     async def attempt_mate(self, ra, rb):
         """
@@ -252,7 +252,7 @@ class World(WorldManager):
         success, child = self.crossover.crossover(ra.tree, rb.tree)
         if not success:
             logger.debug("Crossover failed.")
-            return (False)
+            return False
 
         # Apply mutation
         logger.debug("Crossover succeeded, applying mutation...")
@@ -273,7 +273,7 @@ class World(WorldManager):
             return False
 
         logger.debug("Viable child created.")
-        return (child, ret[1])
+        return child, ret[1]
 
 
 class Highlight(Model):

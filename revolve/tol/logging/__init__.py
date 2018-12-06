@@ -1,4 +1,5 @@
 from __future__ import absolute_import
 
-__author__ = 'Elte Hupkes'
-from .logger import logger, output_console, log_debug
+from .logger import logger
+from .logger import output_console
+from .logger import log_debug

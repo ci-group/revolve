@@ -25,18 +25,26 @@ class Motor(Element):
     # alternatively specify `motor_type` in constructor.
     MOTOR_TYPE = 'motor'
 
-    def __init__(self, part_id, motor_id, joint=None, motor_type=None):
+    def __init__(
+            self,
+            part_id,
+            motor_id,
+            joint=None,
+            motor_type=None
+    ):
         """
-        :param part_id: ID of the part this motor belongs to. This is required in the XML to identify
-                        the corresponding output neuron.
+        :param part_id: ID of the part this motor belongs to. This is
+                        required in the XML to identify the corresponding
+                        output neuron.
         :type part_id: str
         :param motor_id: Motor identifier that should be unique within the
                          body part. It is combined with the part id to create
                          an identifier which is unique for the robot, allowing
                          you to target motors directly in the controller.
         :type motor_id: str
-        :param joint: It is common for motors to power a joint, this allows you to specify
-                      which joint the motor controls if this is the case.
+        :param joint: It is common for motors to power a joint, this allows
+                      you to specify which joint the motor controls if this
+                      is the case.
         :type joint: ComponentJoint
         :param motor_type:
         :type motor_type: str
@@ -74,14 +82,23 @@ class PID(Element):
     """
     TAG_NAME = 'rv:pid'
 
-    def __init__(self, proportional_gain=0.0, integral_gain=0.0, derivative_gain=0.0,
-                 integral_max=0.0, integral_min=None, cmd_max=None, cmd_min=None):
+    def __init__(
+            self,
+            proportional_gain=0.0,
+            integral_gain=0.0,
+            derivative_gain=0.0,
+            integral_max=0.0,
+            integral_min=None,
+            cmd_max=None,
+            cmd_min=None
+    ):
         """
         :param proportional_gain:
         :param integral_gain:
         :param derivative_gain:
         :param integral_max:
-        :param integral_min: Defaults to `-integral_max` if not specified and max is specified.
+        :param integral_min: Defaults to `-integral_max` if not specified and
+                             max is specified.
         :param cmd_max:
         :param cmd_min:
         """
@@ -129,7 +146,11 @@ class PIDMotor(Motor):
         :param pid:
         :type pid: PID
         """
-        super(PIDMotor, self).__init__(part_id, motor_id, joint=joint, motor_type=motor_type)
+        super(PIDMotor, self).__init__(
+                part_id=part_id,
+                motor_id=motor_id,
+                joint=joint,
+                motor_type=motor_type)
         self.pid = PID() if pid is None else pid
 
     def render_elements(self):
@@ -154,21 +175,40 @@ class VelocityMotor(PIDMotor):
     """
     MOTOR_TYPE = 'velocity'
 
-    def __init__(self, part_id, motor_id, joint, pid=None, motor_type=None, max_velocity=10, min_velocity=None):
+    def __init__(
+            self,
+            part_id,
+            motor_id,
+            joint,
+            pid=None,
+            motor_type=None,
+            max_velocity=10,
+            min_velocity=None
+    ):
         """
 
         :param max_velocity: Maximum velocity in radians / second
-        :param min_velocity: Minimum velocity in radians / second. Defaults to -max_velocity.
+        :param min_velocity: Minimum velocity in radians / second. Defaults
+                             to -max_velocity.
         :return:
         """
-        super(VelocityMotor, self).__init__(part_id, motor_id, joint=joint, pid=pid, motor_type=motor_type)
+        super(VelocityMotor, self).__init__(
+                part_id=part_id,
+                motor_id=motor_id,
+                joint=joint,
+                pid=pid,
+                motor_type=motor_type)
         self.max_velocity = max_velocity
-        self.min_velocity = -max_velocity if min_velocity is None else min_velocity
+        self.min_velocity = -max_velocity if min_velocity is None \
+            else min_velocity
 
     def render_attributes(self):
         """
         :return:
         """
         attrs = super(VelocityMotor, self).render_attributes()
-        attrs.update({'min_velocity': nf(self.min_velocity), 'max_velocity': nf(self.max_velocity)})
+        attrs.update({
+            'min_velocity': nf(self.min_velocity),
+            'max_velocity': nf(self.max_velocity)
+        })
         return attrs

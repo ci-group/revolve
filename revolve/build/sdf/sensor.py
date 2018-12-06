@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
-from sdfbuilder import Element, Link
+from sdfbuilder import Element
+from sdfbuilder import Link
+
 from sdfbuilder.sensor import Sensor as SdfSensor
 from sdfbuilder.util import number_format as nf
 
@@ -149,7 +151,5 @@ class PointIntensitySensor(VirtualSensor):
             Element(tag_name='rv:point',
                     body='{}'.format(tuple(self.point))),
             Element(tag_name='rv:function',
-                    attributes={
-                'i_max': self.i_max, 'r': self.r
-            })
+                    attributes={'i_max': self.i_max, 'r': self.r})
         ]

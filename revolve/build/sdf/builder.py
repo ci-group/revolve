@@ -1,11 +1,18 @@
 from __future__ import absolute_import
 
 from math import radians
+
 from sdfbuilder import Model, Element, Link, FixedJoint
 from sdfbuilder.math import Quaternion, Vector3
 from sdfbuilder.util import number_format as nf
-from ...spec import Robot, BodyPart as PbBodyPart, BodyImplementation, NeuralNetImplementation
-from ...spec.exception import err
+
+from revolve.spec import Robot
+from revolve.spec import RobotBodyPart as PbBodyPart
+from revolve.spec import RobotBodyImplementation
+from revolve.spec import RobotNeuralNetImplementation
+
+from revolve.spec.exception import err
+
 from .neural_net import Neuron, NeuralConnection
 from .body import Component, BodyPart
 from .body.exception import ComponentException
@@ -75,6 +82,7 @@ class BodyBuilder(AspectBuilder):
             # the ID of the generated joint.
             plugin.add_elements(motors)
 
+    @staticmethod
     def _build_analyzer_body(self, model, body_parts, connections):
         """
         Builds a model from body parts in analyzer mode - i.e.
@@ -101,7 +109,15 @@ class BodyBuilder(AspectBuilder):
             joint = FixedJoint(part_map[a], part_map[b])
             model.add_element(joint)
 
-    def _build_body(self, traversed, model, plugin, component, link=None, child_joints=None):
+    def _build_body(
+            self,
+            traversed,
+            model,
+            plugin,
+            component,
+            link=None,
+            child_joints=None
+    ):
         """
         :param traversed: Set of components that were already traversed,
                           prevents loops (since all connections are two-sided).
@@ -145,24 +161,27 @@ class BodyBuilder(AspectBuilder):
         for conn in component.connections:
             if conn.joint:
                 # Create the subtree after the joint
-                other_link = self._build_body(traversed, model, plugin, conn.other)
+                other_link = self._build_body(
+                        traversed=traversed,
+                        model=model,
+                        plugin=plugin,
+                        component=conn.other)
                 if other_link is None:
                     # This connection was already created
                     # from the other side.
                     continue
 
-                # Check whether this component is the parent or the child
-                # of the joint connection (it is the parent by default)
-                # This is relevant for another reason, because we will
-                # be moving the internals of the current joint around
-                # to center the inertia later on. This means that for
-                # joints for which the current link is the child we need
-                # to move the joint as well since the joint position is
-                # expressed in the child frame. If the current link is
-                # the parent there is no need to move it with this one,
-                # and since `create_joint` is called after everything
-                # within the child link has been fully neither does
-                # the other link code.
+                # Check whether this component is the parent or the child of
+                # the joint connection (it is the parent by default). This is
+                # relevant for another reason, because we will be moving the
+                # internals of the current joint around to center the inertia
+                # later on. This means that for joints for which the current
+                # link is the child we need to move the joint as well since
+                # the joint position is expressed in the child frame. If the
+                # current link is the parent there is no need to move it with
+                # this one, and since `create_joint` is called after everything
+                # within the child link has been fully neither does the other
+                # link code.
                 parent_link = link
                 child_link = other_link
                 is_child = conn.joint.parent is not component
@@ -170,40 +189,56 @@ class BodyBuilder(AspectBuilder):
                 if is_child:
                     parent_link, child_link = other_link, link
 
-                joint = conn.joint.create_joint(parent_link, child_link,
-                                                conn.joint.parent, conn.joint.child)
+                joint = conn.joint.create_joint(
+                        parent_link=parent_link,
+                        child_link=child_link,
+                        parent=conn.joint.parent,
+                        child=conn.joint.child)
                 model.add_element(joint)
 
                 if is_child:
                     child_joints.append(joint)
             else:
                 # Just add this element to the current link
-                self._build_body(traversed, model, plugin, conn.other, link, child_joints)
+                self._build_body(
+                        traversed=traversed,
+                        model=model,
+                        plugin=plugin,
+                        component=conn.other,
+                        link=link,
+                        child_joints=child_joints)
 
         if create_link:
             # Give the link the inertial properties of the combined collision,
             # only calculated by the item which created the link.
-            # Note that we need to align the center of mass with the link's origin,
-            # which will move the internal components around. In order to compensate
-            # for this in the internal position we need to reposition the link according
-            # to this change.
+            # Note that we need to align the center of mass with the link's
+            # origin, which will move the internal components around. In
+            # order to compensate for this in the internal position we need
+            # to reposition the link according to this change.
             translation = link.align_center_of_mass()
             link.translate(-translation)
             link.calculate_inertial()
 
             # Translate all the joints expressed in this link's frame that
-            # were created before repositioning
-            # Note that the joints need the same translation as the child elements
-            # rather than the counter translation of the link.
+            # were created before repositioning.
+            # Note that the joints need the same translation as the child
+            # elements rather than the counter translation of the link.
             for joint in child_joints:
                 joint.translate(translation)
 
         return link
 
-    def _process_body_part(self, part, parent=None, src_slot=None, dst_slot=None):
+    def _process_body_part(
+            self,
+            part,
+            parent=None,
+            src_slot=None,
+            dst_slot=None
+    ):
         """
-        Traverses and positions all body parts, creates connections between connected
-        slots such that `_build_body` can later generate the actual robot body.
+        Traverses and positions all body parts, creates connections between
+        connected slots such that `_build_body` can later generate the actual
+        robot body.
 
         :param part:
         :type part: PbBodyPart
@@ -229,15 +264,26 @@ class BodyBuilder(AspectBuilder):
 
         if parent:
             # Attach to parent
-            body_part.attach(parent, src_slot, dst_slot, radians(part.orientation))
+            body_part.attach(
+                    other=parent,
+                    other_slot=src_slot,
+                    my_slot=dst_slot,
+                    orientation=radians(part.orientation))
         else:
             # Just apply specified rotation around zero slot
-            body_part.rotate_around(body_part.get_slot_normal(0), part.orientation, relative_to_child=True)
+            body_part.rotate_around(
+                    body_part.get_slot_normal(0),
+                    part.orientation,
+                    relative_to_child=True)
 
         # Process body connections
         for conn in part.child:
             connections.add((part.id, conn.part.id))
-            cn, bp, cmp, mtr = self._process_body_part(conn.part, body_part, conn.src, conn.dst)
+            cn, bp, cmp, mtr = self._process_body_part(
+                    part=conn.part,
+                    parent=body_part,
+                    src_slot=conn.src,
+                    dst_slot=conn.dst)
             components += cmp
             motors += mtr
             body_parts += bp
@@ -248,8 +294,8 @@ class BodyBuilder(AspectBuilder):
 
 class NeuralNetBuilder(AspectBuilder):
     """
-    Default neural network builder. Assumes the neural net construction as specified
-    in the example protobuf message.
+    Default neural network builder. Assumes the neural net construction as
+    specified in the example protobuf message.
     """
 
     def __init__(self, spec):
@@ -333,20 +379,28 @@ class RobotBuilder(object):
         model = Model(name)
 
         # Create the model plugin element
-        plugin = Element(tag_name='plugin', attributes={
-            'name': 'robot_controller',
-            'filename': controller_plugin
-        })
+        plugin = Element(
+                tag_name='plugin',
+                attributes={
+                    'name': 'robot_controller',
+                    'filename': controller_plugin
+                })
 
         # Add body config element
-        config = Element(tag_name='rv:robot_config', attributes={
-            'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
-        })
-        config.add_element(Element(tag_name='rv:update_rate', body=nf(update_rate)))
+        config = Element(
+                tag_name='rv:robot_config',
+                attributes={
+                    'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
+                })
+        config.add_element(Element(
+                tag_name='rv:update_rate',
+                body=nf(update_rate)))
         plugin.add_element(config)
 
         # Add brain config element
-        brain_config = Element(tag_name='rv:brain', attributes=brain_conf)
+        brain_config = Element(
+                tag_name='rv:brain',
+                attributes=brain_conf)
         config.add_element(brain_config)
 
         self.brain_builder.build(robot, model, brain_config, analyzer_mode)

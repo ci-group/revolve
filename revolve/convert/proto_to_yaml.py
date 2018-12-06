@@ -29,7 +29,6 @@ class BodyEncoder(object):
         self._parse_part(yaml_body, body)
         return yaml_body
 
-
     def _parse_part(self, yaml_part, part, dst_slot = None):
         """
         :param yaml_part:

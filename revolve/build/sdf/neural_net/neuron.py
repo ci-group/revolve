@@ -2,7 +2,9 @@ from __future__ import absolute_import
 
 from sdfbuilder import Element
 from sdfbuilder.util import number_format as nf
-from ....spec import Neuron as ProtoNeuron, NeuralConnection as ProtoNeuralConnection
+
+from revolve.spec import Neuron as ProtoNeuron
+from revolve.spec import NeuralConnection as ProtoNeuralConnection
 
 
 class Neuron(Element):
@@ -42,7 +44,9 @@ class Neuron(Element):
         """
         Adds attributes as elements
         """
-        elms = [Element(tag_name='rv:'+param, body=nf(self.params[param])) for param in self.params]
+        elms = [Element(
+                tag_name='rv:'+param,
+                body=nf(self.params[param])) for param in self.params]
         return super(Neuron, self).render_elements() + elms
 
 

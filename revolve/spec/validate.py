@@ -1,8 +1,16 @@
 from __future__ import absolute_import
 
-from ..spec.msgs import Robot, BodyPart, NeuralConnection, BodyConnection
-from ..spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec
-from ..spec.exception import err
+from revolve.spec import BodyImplementation
+from revolve.spec import NeuralNetImplementation
+from revolve.spec import PartSpec
+from revolve.spec import NeuronSpec
+
+from revolve.spec.msgs import Robot
+from revolve.spec.msgs import BodyPart
+from revolve.spec.msgs import NeuralConnection
+from revolve.spec.msgs import BodyConnection
+
+from revolve.spec.exception import err
 
 
 class Validator(object):

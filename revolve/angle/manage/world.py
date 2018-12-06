@@ -231,12 +231,13 @@ class WorldManager(manage.WorldManager):
 
     async def create_snapshot(self):
         """
-        Creates a snapshot of the world in the output directory. This pauses the world.
+        Creates a snapshot of the world in the output directory.
+        This pauses the world.
         :return:
         """
         if not self.output_directory:
             logger.warning("No output directory - no snapshot will be created.")
-            return (False)
+            return False
 
         # Pause the world
         await (wait_for(self.pause()))
@@ -249,7 +250,7 @@ class WorldManager(manage.WorldManager):
         if response.response == "error":
             logger.warning("WARNING: requesting world state resulted in "
                            "error. Snapshot failed.")
-            return (False)
+            return False
 
         msg = gz_string_pb2.GzString()
         msg.ParseFromString(response.serialized_data)
@@ -270,7 +271,7 @@ class WorldManager(manage.WorldManager):
         self.robots_file.flush()
         shutil.copy(self.poses_filename, self.poses_filename+'.snapshot')
         shutil.copy(self.robots_filename, self.robots_filename+'.snapshot')
-        return (True)
+        return True
 
     async def restore_snapshot(self, data):
         """
@@ -305,9 +306,12 @@ class WorldManager(manage.WorldManager):
         :type freq: int
         :return:
         """
-        fut = await (self.request_handler.do_gazebo_request("set_robot_state_update_frequency", str(freq)))
+        future = await (self.request_handler.do_gazebo_request(
+                request="set_robot_state_update_frequency",
+                data=str(freq)
+        ))
         self.state_update_frequency = freq
-        return (fut)
+        return future
 
     def get_robot_id(self):
         """
@@ -345,18 +349,18 @@ class WorldManager(manage.WorldManager):
         for i in range(max_attempts):
             tree = self.generator.generate_tree()
 
-            ret = await (self.analyze_tree(tree))
+            ret = await self.analyze_tree(tree)
             if ret is None:
                 # Error already shown
                 continue
 
             coll, bbox, robot = ret
             if not coll:
-                return (tree, robot, bbox)
+                return tree, robot, bbox
 
         logger.error("Failed to produce a valid robot in {} attempts."
                      .format(max_attempts))
-        return (None)
+        return None
 
     async def analyze_tree(self, tree):
         """
@@ -384,7 +388,7 @@ class WorldManager(manage.WorldManager):
 
         # coll, bbox = ret
         coll = 0
-        return (coll, bbox, robot)
+        return coll, bbox, robot
 
     async def insert_robot(
             self,
@@ -435,7 +439,7 @@ class WorldManager(manage.WorldManager):
             with open(robot_file_path, 'w') as f:
                 f.write(str(sdf))
 
-        return_future = Future()
+        future = Future()
         insert_future = await (self.insert_model(sdf))
         # TODO: Unhandled error in exception handler. Fix this.
         insert_future.add_done_callback(lambda fut: self._robot_inserted(
@@ -445,9 +449,9 @@ class WorldManager(manage.WorldManager):
                 initial_battery=initial_battery,
                 parents=parents,
                 msg=fut.result(),
-                return_future=return_future
+                return_future=future
         ))
-        return (return_future)
+        return future
 
     def get_simulation_sdf(
             self,
@@ -477,7 +481,7 @@ class WorldManager(manage.WorldManager):
         # for anything else while it is being deleted.
         self.unregister_robot(robot)
         future = await (self.delete_model(robot.name, req="delete_robot"))
-        return (future)
+        return future
 
     async def delete_all_robots(self):
         """
@@ -490,7 +494,7 @@ class WorldManager(manage.WorldManager):
             future = await (self.delete_robot(bot))
             futures.append(future)
 
-        return (multi_future(futures))
+        return multi_future(futures)
 
     def _robot_inserted(
             self,
@@ -608,8 +612,8 @@ class WorldManager(manage.WorldManager):
         """
         self.start_time = None
         self.last_time = None
-        fut = await (super(WorldManager, self).reset(**kwargs))
-        return (fut)
+        future = await (super(WorldManager, self).reset(**kwargs))
+        return future
 
     async def update_battery_level(self, robot):
         """
@@ -618,25 +622,25 @@ class WorldManager(manage.WorldManager):
         :param robot:
         :return:
         """
-        fut = await (self.battery_handler.do_gazebo_request(
+        future = await (self.battery_handler.do_gazebo_request(
                 request="set_battery_level",
                 data=robot.name,
                 dbl_data=robot.get_battery_level()
         ))
-        return (fut)
+        return future
 
     async def update_battery_levels(self):
         """
         Communicates battery levels for all active robots.
         :return:
         """
-        futs = []
+        futures = []
         for robot in self.robot_list():
             fut = await (self.update_battery_level(robot))
-            futs.append(fut)
+            futures.append(fut)
 
-        if futs:
-            return (multi_future(futs))
+        if futures:
+            return multi_future(futures)
 
     def age(self):
         """
