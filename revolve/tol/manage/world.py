@@ -4,11 +4,11 @@ from __future__ import print_function
 import os
 import time
 
-import asyncio
-from asyncio import Future
-
 # Pygazebo
-from pygazebo.msg import world_control_pb2, poses_stamped_pb2, world_stats_pb2, model_pb2
+from pygazebo.msg import model_pb2
+from pygazebo.msg import poses_stamped_pb2
+from pygazebo.msg import world_control_pb2
+from pygazebo.msg import world_stats_pb2
 
 # Revolve / sdfbuilder
 from revolve.angle import Tree, Crossover, Mutator, WorldManager
@@ -94,15 +94,14 @@ class World(WorldManager):
             )
 
     @classmethod
-    @asyncio.coroutine
-    def create(cls, conf):
+    async def create(cls, conf):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager
         :param conf:
         :return:
         """
         self = cls(_private=cls._PRIVATE, conf=conf)
-        yield from(self._init())
+        await (self._init())
         return (self)
 
     def robots_header(self):
@@ -144,8 +143,7 @@ class World(WorldManager):
                 parents=parents
         )
 
-    @asyncio.coroutine
-    def add_highlight(self, position, color):
+    async def add_highlight(self, position, color):
         """
         Adds a circular highlight at the given position.
         :param position:
@@ -157,11 +155,10 @@ class World(WorldManager):
         position.z = 0
         hl.set_position(position)
         sdf = SDF(elements=[hl])
-        fut = yield from(self.insert_model(sdf))
+        fut = await (self.insert_model(sdf))
         return (fut, hl)
 
-    @asyncio.coroutine
-    def generate_population(self, n):
+    async def generate_population(self, n):
         """
         Generates population of `n` valid robots robots.
 
@@ -174,7 +171,7 @@ class World(WorldManager):
         bboxes = []
 
         for _ in range(n):
-            gen = yield from(self.generate_valid_robot())
+            gen = await (self.generate_valid_robot())
             if not gen:
                 return (None)
 
@@ -184,8 +181,7 @@ class World(WorldManager):
 
         return (trees, bboxes)
 
-    @asyncio.coroutine
-    def insert_population(self, trees, poses):
+    async def insert_population(self, trees, poses):
         """
         :param trees:
         :type trees: list[Tree]
@@ -195,7 +191,7 @@ class World(WorldManager):
         """
         futures = []
         for tree, pose in zip(trees, poses):
-            future = yield from(self.insert_robot(tree, pose))
+            future = await (self.insert_robot(tree, pose))
             futures.append(future)
 
         future = multi_future(futures)
@@ -218,8 +214,7 @@ class World(WorldManager):
                 battery_charge=initial_battery
         )
 
-    @asyncio.coroutine
-    def build_walls(self, points):
+    async def build_walls(self, points):
         """
         Builds a wall defined by the given points, used to shield the
         arena.
@@ -237,13 +232,12 @@ class World(WorldManager):
                     end=end,
                     thickness=constants.WALL_THICKNESS,
                     height=constants.WALL_HEIGHT)
-            future = yield from(self.insert_model(SDF(elements=[wall])))
+            future = await (self.insert_model(SDF(elements=[wall])))
             futures.append(future)
 
         return (multi_future(futures))
 
-    @asyncio.coroutine
-    def attempt_mate(self, ra, rb):
+    async def attempt_mate(self, ra, rb):
         """
         Attempts mating between two robots.
         :param ra:
@@ -270,13 +264,13 @@ class World(WorldManager):
         _, outputs, _ = child.root.io_count(recursive=True)
         if not outputs:
             logger.debug("Evolution resulted in child without motors.")
-            return (False)
+            return False
 
         # Check if the robot body is valid
-        ret = yield from(self.analyze_tree(child))
+        ret = await (self.analyze_tree(child))
         if ret is None or ret[0]:
             logger.debug("Intersecting body parts: Miscarriage.")
-            return (False)
+            return False
 
         logger.debug("Viable child created.")
         return (child, ret[1])

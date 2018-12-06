@@ -28,9 +28,8 @@ random.seed(seed)
 print("Seed: {}".format(seed), file=sys.stderr)
 
 
-@asyncio.coroutine
-def analysis_func():
-    analyzer = yield from(BodyAnalyzer.create(address=("127.0.0.1", 11346)))
+async def analysis_func():
+    analyzer = await (BodyAnalyzer.create(address=("127.0.0.1", 11346)))
 
     # Try a maximum of 100 times
     for i in range(100):
@@ -40,7 +39,7 @@ def analysis_func():
         sdf = get_analysis_robot(robot, builder)
 
         # Find out its intersections and bounding box
-        intersections, bbox = yield from(
+        intersections, bbox = await (
                 analyzer.analyze_robot(robot, builder=builder))
 
         if intersections:

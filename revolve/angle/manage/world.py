@@ -137,12 +137,12 @@ class WorldManager(manage.WorldManager):
                 # Open poses file, this is written *a lot* so use default OS
                 # buffering
                 poses_log = os.path.join(self.output_directory, 'poses.csv')
-                self.poses_file = open(poses_log, 'wb')
+                self.poses_file = open(poses_log, 'wt')
 
                 # Open robots file line buffered so we can see it on the fly,
                 # isn't written too often.
                 robot_log = os.path.join(self.output_directory, 'robots.csv')
-                self.robots_file = open(robot_log, 'wb', buffering=1)
+                self.robots_file = open(robot_log, 'wt', buffering=1)
                 self.write_robots = csv.writer(self.robots_file, delimiter=',')
                 self.write_poses = csv.writer(self.poses_file, delimiter=',')
 
@@ -164,8 +164,7 @@ class WorldManager(manage.WorldManager):
         return ['id', 'sec', 'nsec', 'x', 'y', 'z', 'battery_level']
 
     @classmethod
-    @asyncio.coroutine
-    def create(
+    async def create(
             cls,
             world_address=("127.0.0.1", 11345),
             pose_update_frequency=10
@@ -182,11 +181,10 @@ class WorldManager(manage.WorldManager):
                 world_address=world_address,
                 state_update_frequency=pose_update_frequency
         )
-        yield from(self._init(builder=None, generator=None))
+        await (self._init(builder=None, generator=None))
         return (self)
 
-    @asyncio.coroutine
-    def teardown(self):
+    async def teardown(self):
         """
         Finalizes the world, flushes files, etc.
         :return:
@@ -195,8 +193,7 @@ class WorldManager(manage.WorldManager):
             self.robots_file.close()
             self.poses_file.close()
 
-    @asyncio.coroutine
-    def _init(self):
+    async def _init(self):
         """
         Initializes the world manager
         :return:
@@ -204,7 +201,7 @@ class WorldManager(manage.WorldManager):
         if self.manager is not None:
             return
 
-        yield from(super(WorldManager, self)._init())
+        await (super(WorldManager, self)._init())
 
         # Subscribe to pose updates
         self.pose_subscriber = self.manager.subscribe(
@@ -213,11 +210,11 @@ class WorldManager(manage.WorldManager):
             self._update_states
         )
 
-        yield from(wait_for(self.set_state_update_frequency(
+        await (wait_for(self.set_state_update_frequency(
                 freq=self.state_update_frequency
         )))
 
-        self.battery_handler = yield from(RequestHandler.create(
+        self.battery_handler = await (RequestHandler.create(
                 manager=self.manager,
                 advertise='/gazebo/default/battery_level/request',
                 subscribe='/gazebo/default/battery_level/response',
@@ -227,13 +224,12 @@ class WorldManager(manage.WorldManager):
         ))
 
         # Wait for connections
-        yield from(self.pose_subscriber.wait_for_connection())
+        await (self.pose_subscriber.wait_for_connection())
 
         if self.do_restore:
-            yield from(self.restore_snapshot(self.do_restore))
+            await (self.restore_snapshot(self.do_restore))
 
-    @asyncio.coroutine
-    def create_snapshot(self):
+    async def create_snapshot(self):
         """
         Creates a snapshot of the world in the output directory. This pauses the world.
         :return:
@@ -243,11 +239,11 @@ class WorldManager(manage.WorldManager):
             return (False)
 
         # Pause the world
-        yield from(wait_for(self.pause()))
+        await (wait_for(self.pause()))
 
         # Obtain a copy of the current world SDF from Gazebo and write it to
         # file
-        response = yield from(wait_for(self.request_handler.do_gazebo_request(
+        response = await (wait_for(self.request_handler.do_gazebo_request(
                 request="world_sdf"
         )))
         if response.response == "error":
@@ -261,7 +257,7 @@ class WorldManager(manage.WorldManager):
             f.write(msg.data)
 
         # Get the snapshot data and pickle to file
-        data = yield from(self.get_snapshot_data())
+        data = await (self.get_snapshot_data())
 
         # It seems pickling causes some issues with the default recursion
         # limit, up it
@@ -276,8 +272,7 @@ class WorldManager(manage.WorldManager):
         shutil.copy(self.robots_filename, self.robots_filename+'.snapshot')
         return (True)
 
-    @asyncio.coroutine
-    def restore_snapshot(self, data):
+    async def restore_snapshot(self, data):
         """
         Called with the data object created and pickled in `get_snapshot_data`,
         should restore the state of the world manager to where
@@ -290,8 +285,7 @@ class WorldManager(manage.WorldManager):
         self.start_time = data['start_time']
         self.last_time = data['last_time']
 
-    @asyncio.coroutine
-    def get_snapshot_data(self):
+    async def get_snapshot_data(self):
         """
         Returns a data object to be pickled into a snapshot file.
         This should contain
@@ -304,15 +298,14 @@ class WorldManager(manage.WorldManager):
             "last_time": self.last_time
         }
 
-    @asyncio.coroutine
-    def set_state_update_frequency(self, freq):
+    async def set_state_update_frequency(self, freq):
         """
         Sets the pose update frequency. Defaults to 10 times per second.
         :param freq:
         :type freq: int
         :return:
         """
-        fut = yield from(self.request_handler.do_gazebo_request("set_robot_state_update_frequency", str(freq)))
+        fut = await (self.request_handler.do_gazebo_request("set_robot_state_update_frequency", str(freq)))
         self.state_update_frequency = freq
         return (fut)
 
@@ -340,8 +333,7 @@ class WorldManager(manage.WorldManager):
         """
         return self.robots.get(name, None)
 
-    @asyncio.coroutine
-    def generate_valid_robot(self, max_attempts=100):
+    async def generate_valid_robot(self, max_attempts=100):
         """
         Uses tree generation in conjuction with the analyzer
         to generate a valid new robot.
@@ -353,7 +345,7 @@ class WorldManager(manage.WorldManager):
         for i in range(max_attempts):
             tree = self.generator.generate_tree()
 
-            ret = yield from(self.analyze_tree(tree))
+            ret = await (self.analyze_tree(tree))
             if ret is None:
                 # Error already shown
                 continue
@@ -366,8 +358,7 @@ class WorldManager(manage.WorldManager):
                      .format(max_attempts))
         return (None)
 
-    @asyncio.coroutine
-    def analyze_tree(self, tree):
+    async def analyze_tree(self, tree):
         """
         Calls the body analyzer on a robot tree.
         :param tree:
@@ -395,8 +386,7 @@ class WorldManager(manage.WorldManager):
         coll = 0
         return (coll, bbox, robot)
 
-    @asyncio.coroutine
-    def insert_robot(
+    async def insert_robot(
             self,
             tree,
             pose,
@@ -446,7 +436,7 @@ class WorldManager(manage.WorldManager):
                 f.write(str(sdf))
 
         return_future = Future()
-        insert_future = yield from(self.insert_model(sdf))
+        insert_future = await (self.insert_model(sdf))
         # TODO: Unhandled error in exception handler. Fix this.
         insert_future.add_done_callback(lambda fut: self._robot_inserted(
                 robot_name=robot_name,
@@ -477,8 +467,7 @@ class WorldManager(manage.WorldManager):
         raise NotImplementedError(
                 "Implement in subclass if you want to use this method.")
 
-    @asyncio.coroutine
-    def delete_robot(self, robot):
+    async def delete_robot(self, robot):
         """
         :param robot:
         :type robot: Robot
@@ -487,11 +476,10 @@ class WorldManager(manage.WorldManager):
         # Immediately unregister the robot so no it won't be used
         # for anything else while it is being deleted.
         self.unregister_robot(robot)
-        future = yield from(self.delete_model(robot.name, req="delete_robot"))
+        future = await (self.delete_model(robot.name, req="delete_robot"))
         return (future)
 
-    @asyncio.coroutine
-    def delete_all_robots(self):
+    async def delete_all_robots(self):
         """
         Deletes all robots from the world. Returns a future that resolves
         when all responses have been received.
@@ -499,7 +487,7 @@ class WorldManager(manage.WorldManager):
         """
         futures = []
         for bot in list(self.robots.values()):
-            future = yield from(self.delete_robot(bot))
+            future = await (self.delete_robot(bot))
             futures.append(future)
 
         return (multi_future(futures))
@@ -613,41 +601,38 @@ class WorldManager(manage.WorldManager):
         logger.debug("Unregistering robot {}.".format(robot.name))
         del self.robots[robot.name]
 
-    @asyncio.coroutine
-    def reset(self, **kwargs):
+    async def reset(self, **kwargs):
         """
         :param kwargs:
         :return:
         """
         self.start_time = None
         self.last_time = None
-        fut = yield from(super(WorldManager, self).reset(**kwargs))
+        fut = await (super(WorldManager, self).reset(**kwargs))
         return (fut)
 
-    @asyncio.coroutine
-    def update_battery_level(self, robot):
+    async def update_battery_level(self, robot):
         """
         Communicates a single robot's battery level to its
         controller.
         :param robot:
         :return:
         """
-        fut = yield from(self.battery_handler.do_gazebo_request(
+        fut = await (self.battery_handler.do_gazebo_request(
                 request="set_battery_level",
                 data=robot.name,
                 dbl_data=robot.get_battery_level()
         ))
         return (fut)
 
-    @asyncio.coroutine
-    def update_battery_levels(self):
+    async def update_battery_levels(self):
         """
         Communicates battery levels for all active robots.
         :return:
         """
         futs = []
         for robot in self.robot_list():
-            fut = yield from(self.update_battery_level(robot))
+            fut = await (self.update_battery_level(robot))
             futs.append(fut)
 
         if futs:

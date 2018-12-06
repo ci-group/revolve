@@ -12,9 +12,8 @@ from pygazebo.msg import request_pb2, response_pb2
 default_address = ["127.0.0.1", 11345]
 
 
-@asyncio.coroutine
-def connect(address=default_address):
-    manager = yield from(pygazebo.connect(address=tuple(address)))
+async def connect(address=default_address):
+    manager = await (pygazebo.connect(address=tuple(address)))
     return (manager)
 
 
@@ -68,8 +67,7 @@ class RequestHandler(object):
         self.msg_id = int(msg_id_base)
 
     @classmethod
-    @asyncio.coroutine
-    def create(
+    async def create(
             cls,
             manager,
             request_class=request_pb2.Request,
@@ -115,11 +113,10 @@ class RequestHandler(object):
                 wait_for_publisher,
                 cls._PRIVATE
         )
-        yield from(handler._init())
+        await (handler._init())
         return (handler)
 
-    @asyncio.coroutine
-    def _init(self):
+    async def _init(self):
         """
         :return:
         """
@@ -131,14 +128,14 @@ class RequestHandler(object):
             self.response_type,
             self._callback
         )
-        self.publisher = yield from(self.manager.advertise(
+        self.publisher = await (self.manager.advertise(
             self.advertise, self.request_type))
 
         if self.wait_for_publisher:
-            yield from(self.subscriber.wait_for_connection())
+            await (self.subscriber.wait_for_connection())
 
         if self.wait_for_subscriber:
-            yield from(self.publisher.wait_for_listener())
+            await (self.publisher.wait_for_listener())
 
     def _callback(self, data):
         """
@@ -200,8 +197,7 @@ class RequestHandler(object):
         del req[msg_id]
         del cb[msg_id]
 
-    @asyncio.coroutine
-    def do_gazebo_request(
+    async def do_gazebo_request(
             self,
             request,
             data=None,
@@ -234,7 +230,7 @@ class RequestHandler(object):
         if dbl_data is not None:
             req.dbl_data = dbl_data
 
-        future = yield from(self.do_request(req))
+        future = await (self.do_request(req))
         return (future)
 
     def _get_response_map(self, request_type):
@@ -250,8 +246,7 @@ class RequestHandler(object):
 
         return self.responses[request_type], self.callbacks[request_type]
 
-    @asyncio.coroutine
-    def do_request(self, msg):
+    async def do_request(self, msg):
         """
         Performs a request. The only requirement
         of `msg` is that it has an `id` attribute.
@@ -274,5 +269,5 @@ class RequestHandler(object):
         future = Future()
         req[msg_id] = None
         cb[msg_id] = future
-        yield from(self.publisher.publish(msg))
+        await (self.publisher.publish(msg))
         return (future)

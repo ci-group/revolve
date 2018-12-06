@@ -56,7 +56,7 @@ def multi_future(children, quiet_exceptions=()):
     return future
 
 
-def wait_for(coro):
+async def wait_for(coro):
     """
     This function was created to counter the common
     pattern where you do this:
@@ -78,6 +78,6 @@ def wait_for(coro):
     :param coro: A coroutine
     :return:
     """
-    fut = yield from(coro)
-    result = yield from(fut)
+    fut = await (coro)
+    result = await (fut)
     return (result)

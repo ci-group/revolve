@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 
-import constants
+from .constants import *
 
 from sdfbuilder.physics import Friction
 from sdfbuilder.structure import Collision
@@ -17,16 +17,16 @@ def apply_surface_parameters(model, intended_step_size=0.005):
     :param intended_step_size:
     :return:
     """
-    surface_kd = constants.SURFACE_ERP / (constants.SURFACE_CFM * intended_step_size)
-    surface_kp = 1.0 / constants.SURFACE_CFM - (constants.SURFACE_ERP / constants.SURFACE_CFM)
+    surface_kd = SURFACE_ERP / (SURFACE_CFM * intended_step_size)
+    surface_kp = 1.0 / SURFACE_CFM - (SURFACE_ERP / SURFACE_CFM)
 
     # Add friction surfaces to all body parts
     surf = Element(tag_name="surface")
     friction = Friction(
-        friction=constants.SURFACE_FRICTION1,
-        friction2=constants.SURFACE_FRICTION2,
-        slip1=constants.SURFACE_SLIP1,
-        slip2=constants.SURFACE_SLIP2
+        friction=SURFACE_FRICTION1,
+        friction2=SURFACE_FRICTION2,
+        slip1=SURFACE_SLIP1,
+        slip2=SURFACE_SLIP2
     )
     contact = "<contact>" \
               "<ode>" \

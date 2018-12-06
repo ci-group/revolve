@@ -66,10 +66,9 @@ def analyze_body(sdf, address=("127.0.0.1", 11346)):
     """
     response_obj = [None]
 
-    @asyncio.coroutine
-    def internal_analyze():
-        analyzer = yield from(BodyAnalyzer.create(address))
-        response_obj[0] = yield from(analyzer.analyze_sdf(sdf))
+    async def internal_analyze():
+        analyzer = await (BodyAnalyzer.create(address))
+        response_obj[0] = await (analyzer.analyze_sdf(sdf))
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(internal_analyze())
@@ -98,8 +97,7 @@ class BodyAnalyzer(object):
         self.request_handler = None
 
     @classmethod
-    @asyncio.coroutine
-    def create(cls, address=("127.0.0.1", 11346)):
+    async def create(cls, address=("127.0.0.1", 11346)):
         """
         Instantiates a new body analyzer at the given address.
 
@@ -108,21 +106,19 @@ class BodyAnalyzer(object):
         :return:
         """
         self = cls(cls._PRIVATE, address)
-        yield from(self._init())
+        await (self._init())
         return (self)
 
-    @asyncio.coroutine
-    def _init(self):
+    async def _init(self):
         """
         BodyAnalyzer initialization coroutine
         :return:
         """
-        self.manager = yield from(connect(self.address))
-        self.request_handler = yield from(
+        self.manager = await (connect(self.address))
+        self.request_handler = await (
             RequestHandler.create(self.manager, msg_id_base=_msg_id()))
 
-    @asyncio.coroutine
-    def analyze_robot(self, robot, builder, max_attempts=5):
+    async def analyze_robot(self, robot, builder, max_attempts=5):
         """
         Performs body analysis of a given Robot object.
         :param robot:
@@ -133,11 +129,10 @@ class BodyAnalyzer(object):
         :return:
         """
         sdf = get_analysis_robot(robot, builder)
-        ret = yield from(self.analyze_sdf(sdf, max_attempts=max_attempts))
+        ret = await (self.analyze_sdf(sdf, max_attempts=max_attempts))
         return (ret)
 
-    @asyncio.coroutine
-    def analyze_sdf(self, sdf, max_attempts=5):
+    async def analyze_sdf(self, sdf, max_attempts=5):
         """
         Coroutine that returns with a (collisions, bounding box) tuple,
         assuming analysis succeeds.
@@ -150,8 +145,8 @@ class BodyAnalyzer(object):
         msg = None
         rh = self.request_handler
         for _ in range(max_attempts):
-            future = yield from(rh.do_gazebo_request("analyze_body", str(sdf)))
-            yield from(future)
+            future = await (rh.do_gazebo_request("analyze_body", str(sdf)))
+            await (future)
 
             response = future.result()
             if response.response == "success":

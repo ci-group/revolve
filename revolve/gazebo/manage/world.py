@@ -49,8 +49,7 @@ class WorldManager(object):
         self.request_handler = None
 
     @classmethod
-    @asyncio.coroutine
-    def create(
+    async def create(
             cls,
             world_address=("127.0.0.1", 11345),
     ):
@@ -64,10 +63,10 @@ class WorldManager(object):
                 _private=cls._PRIVATE,
                 world_address=world_address,
         )
-        yield from(self._init())
+        await (self._init())
         return (self)
 
-    def _init(self):
+    async def _init(self):
         """
         Initializes connections for the world manager
         :return:
@@ -77,23 +76,22 @@ class WorldManager(object):
 
         # Initialize the manager connections as well as the general request
         # handler
-        self.manager = yield from(connect(self.world_address))
+        self.manager = await (connect(self.world_address))
 
-        self.world_control = yield from(self.manager.advertise(
+        self.world_control = await (self.manager.advertise(
                 topic_name='/gazebo/default/world_control',
                 msg_type='gazebo.msgs.WorldControl'
         ))
 
-        self.request_handler = yield from(RequestHandler.create(
+        self.request_handler = await (RequestHandler.create(
                 manager=self.manager,
                 msg_id_base=MSG_BASE
         ))
 
         # Wait for connections
-        yield from(self.world_control.wait_for_listener())
+        await (self.world_control.wait_for_listener())
 
-    @asyncio.coroutine
-    def pause(self, pause=True):
+    async def pause(self, pause=True):
         """
         Pause / unpause the world
         :param pause:
@@ -106,11 +104,10 @@ class WorldManager(object):
 
         msg = world_control_pb2.WorldControl()
         msg.pause = pause
-        fut = yield from(self.world_control.publish(msg))
+        fut = await (self.world_control.publish(msg))
         return (fut)
 
-    @asyncio.coroutine
-    def reset(self, all=False, time_only=True, model_only=False):
+    async def reset(self, all=False, time_only=True, model_only=False):
         """
         Reset the world. Defaults to time only, since that appears to be the
         only thing that is working by default anyway.
@@ -124,11 +121,10 @@ class WorldManager(object):
         msg.reset.all = all
         msg.reset.model_only = model_only
         msg.reset.time_only = time_only
-        fut = yield from(self.world_control.publish(msg))
+        fut = await (self.world_control.publish(msg))
         return (fut)
 
-    @asyncio.coroutine
-    def insert_model(self, sdf):
+    async def insert_model(self, sdf):
         """
         Insert a model wrapped in an SDF tag into the world. Make
         sure it has a unique name, as it will be literally inserted into the
@@ -142,14 +138,13 @@ class WorldManager(object):
         :type sdf: SDF
         :return:
         """
-        future = yield from(self.request_handler.do_gazebo_request(
+        future = await (self.request_handler.do_gazebo_request(
                 request="insert_sdf",
                 data=str(sdf)
         ))
         return (future)
 
-    @asyncio.coroutine
-    def delete_model(self, name, req="entity_delete"):
+    async def delete_model(self, name, req="entity_delete"):
         """
         Deletes the model with the given name from the world.
         :param name:
@@ -159,7 +154,7 @@ class WorldManager(object):
         occurring from deleting sensors.
         :return:
         """
-        future = yield from(self.request_handler.do_gazebo_request(
+        future = await (self.request_handler.do_gazebo_request(
                 request=req,
                 data=name
         ))

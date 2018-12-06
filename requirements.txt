@@ -3,7 +3,7 @@ asyncio==3.4.3
 futures==3.0.2
 numpy>=1.9.2
 PyYAML==3.11
-protobuf==3.0.0
+protobuf>=3.0.0
 psutil==3.4.2
 
 -e git+https://github.com/ci-group/sdf-builder.git@master#egg=sdfbuilder
