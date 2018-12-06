@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from sdfbuilder import PosableGroup
 from sdfbuilder.math import Vector3, Quaternion
 from sdfbuilder.structure import Collision, Visual

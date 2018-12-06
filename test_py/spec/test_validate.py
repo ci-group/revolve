@@ -1,4 +1,7 @@
+from __future__ import absolute_import
+
 import unittest
+
 from revolve.spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec, ParamSpec, Robot, BodyPart
 from revolve.spec import RobotSpecificationException as SpecError, RobotValidator
 

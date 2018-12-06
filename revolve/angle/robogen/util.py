@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import constants
 from sdfbuilder.physics import Friction
 from sdfbuilder.structure import Collision

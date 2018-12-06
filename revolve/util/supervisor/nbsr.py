@@ -4,6 +4,8 @@ without the supervisor stalling. Code taken from:
 
 http://eyalarubas.com/python-subproc-nonblock.html
 """
+from __future__ import absolute_import
+
 from threading import Thread
 from queue import Queue, Empty
 

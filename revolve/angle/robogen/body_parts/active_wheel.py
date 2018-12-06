@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # Revolve imports
 from ....build.sdf import BodyPart, VelocityMotor, ComponentJoint as Joint
 from ....build.util import in_grams, in_mm

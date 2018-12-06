@@ -1,8 +1,11 @@
 """
 Demonstrates creating a simple SDF bot from a spec and a YAML file.
 """
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import
+from __future__ import print_function
+
 import math
+
 from sdfbuilder.sensor import Sensor as SdfSensor
 from sdfbuilder.math import Vector3
 from sdfbuilder import SDF, Limit

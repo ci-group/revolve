@@ -1,6 +1,8 @@
 """
 Utility functions
 """
+from __future__ import absolute_import
+
 size_scale_factor = 1
 weight_scale_factor = 1
 

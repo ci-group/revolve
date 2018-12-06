@@ -5,7 +5,10 @@ Includes functions for robot tree analysis, to:
 - Determine the number of joints per robot
 -
 """
+from __future__ import absolute_import
+
 import itertools
+
 from revolve.angle.representation import Tree, Node
 
 

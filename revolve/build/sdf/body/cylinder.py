@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from sdfbuilder.math import Vector3
 from sdfbuilder.structure import Cylinder as CylinderGeom
 from .body_part import BodyPart

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from .active_hinge import ActiveHinge
 from .core_component import CoreComponent
 from .hinge import Hinge

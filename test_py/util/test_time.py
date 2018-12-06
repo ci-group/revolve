@@ -1,4 +1,7 @@
+from __future__ import absolute_import
+
 import unittest
+
 from revolve.util import Time
 
 

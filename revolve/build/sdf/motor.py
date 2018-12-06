@@ -5,6 +5,8 @@ to be recognized by a motor controller in the C++ model plugin.
 When writing a new motor, this often involves creating a corresponding
 C++ motor class.
 """
+from __future__ import absolute_import
+
 from sdfbuilder import Element
 from sdfbuilder.util import number_format as nf
 

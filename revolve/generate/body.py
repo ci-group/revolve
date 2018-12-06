@@ -1,6 +1,8 @@
 """
 Body generation utilities,
 """
+from __future__ import absolute_import
+
 import random
 from ..spec import BodyImplementation, PartSpec, BodyPart
 from ..spec.msgs import Body

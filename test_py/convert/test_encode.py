@@ -2,7 +2,10 @@
 Tests the `BodyEncoder` and the `NeuralNetworkEncoder` using a little help from
 the YAML converter to create the basic protobuf message.
 """
+from __future__ import absolute_import
+
 import unittest
+
 from revolve.convert import yaml_to_robot, robot_to_yaml
 from revolve.spec import PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
 from revolve.spec import BodyImplementation, NeuralNetImplementation

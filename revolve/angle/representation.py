@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import copy
 from ..spec.msgs import Robot, BodyPart, Neuron, NeuralNetwork, Body
 from ..spec import BodyImplementation

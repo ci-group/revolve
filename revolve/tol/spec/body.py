@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 from revolve.angle.robogen.spec import BodyGenerator
 from revolve.angle.robogen.spec import get_body_spec as rv_body_spec
 from random import gauss

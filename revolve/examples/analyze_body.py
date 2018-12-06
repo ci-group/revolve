@@ -7,7 +7,9 @@ it generates a new one. Writes the final bot's contents to
 stdout, statistics are written to stderr.
 """
 from __future__ import print_function
+
 import sys
+
 from sdfbuilder.math import Vector3
 from .generated_sdf import generate_robot, builder, robot_to_sdf
 from ..gazebo import connect, get_analysis_robot, BodyAnalyzer

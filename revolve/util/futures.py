@@ -2,9 +2,12 @@
 Multi-future function to amend that missing functionality
 in Trollius. Code taken mostly from Tornado.
 """
+from __future__ import absolute_import
 from __future__ import print_function
-from trollius import Future, From, Return
+
 import sys
+
+from trollius import Future, From, Return
 
 
 def multi_future(children, quiet_exceptions=()):

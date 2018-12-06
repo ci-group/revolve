@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+
 import trollius
 from trollius import From, Return, Future
+
 import pygazebo
 from pygazebo.msg import request_pb2, response_pb2
 

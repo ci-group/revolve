@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+
+
 class Config:
     def __init__(self,
                  min_parts,

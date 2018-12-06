@@ -1,7 +1,10 @@
+from __future__ import absolute_import
+
 from sdfbuilder.math import Vector3
 
 from revolve.angle import Robot as RvRobot
 from revolve.util import Time
+
 from ..util.analyze import count_connections, count_extremities, count_joints, \
     count_motors
 
@@ -87,8 +90,8 @@ class Robot(RvRobot):
         my_fitness = self.fitness()
         other_fitness = other.fitness()
 
-        # Only mate with robots with nonzero fitness, check for self zero-fitness
-        # to prevent division by zero.
+        # Only mate with robots with nonzero fitness, check for self
+        # zero-fitness to prevent division by zero.
         return other_fitness > 0 and (
             my_fitness == 0 or
             (other_fitness / my_fitness) >= self.conf.mating_fitness_threshold

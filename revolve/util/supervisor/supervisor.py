@@ -1,11 +1,15 @@
+from __future__ import absolute_import
 from __future__ import print_function
+
+import atexit
 import subprocess
 import os
 import psutil
-from datetime import datetime
-import time
 import sys
-import atexit
+import time
+
+from datetime import datetime
+
 from .nbsr import NonBlockingStreamReader as NBSR
 mswindows = (sys.platform == "win32")
 
@@ -348,7 +352,7 @@ class Supervisor(object):
             exit_code = process.poll()
             if exit_code is not None:
                 # flush out all stdout and stderr
-                out, err = str(process.communicate(), 'utf-8')
+                out, err = process.communicate().decode('utf-8')
                 if out is not None:
                     sys.stdout.write("[gazebo-launch] {}".format(out))
                 if err is not None:
@@ -357,7 +361,7 @@ class Supervisor(object):
                                    .format(cmd, exit_code))
 
             try:
-                out = str(process.stdout.readline(), 'utf-8)')
+                out = process.stdout.readline().decode('utf-8')
                 sys.stdout.write("[gazebo-launch] {}".format(out))
                 if ready_str in out:
                     ready = True
@@ -366,7 +370,7 @@ class Supervisor(object):
 
             if not mswindows:
                 try:
-                    err = str(process.stderr.readline(), 'utf-8')
+                    err = process.stderr.readline().decode('utf-8')
                     sys.stderr.write("[gazebo-launch] {}".format(err))
                 except IOError:
                     pass

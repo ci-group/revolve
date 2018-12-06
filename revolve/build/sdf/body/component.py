@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from sdfbuilder import PosableGroup
 from sdfbuilder.structure import Visual, Collision, Geometry
 from sdfbuilder.sensor import Sensor as SdfSensor

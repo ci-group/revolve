@@ -1,6 +1,8 @@
 """
 ToL constants
 """
+from __future__ import absolute_import
+
 MAX_HIDDEN_NEURONS = 10
 """ Maximum number of hidden neurons """
 

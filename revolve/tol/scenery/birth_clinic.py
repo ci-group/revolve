@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from sdfbuilder import SDF, Model, Link, Element
 from sdfbuilder.physics import Friction
 from sdfbuilder.structure import Mesh, Visual, Collision

@@ -1,9 +1,12 @@
 """
 Random generator for the default neural network
 """
+from __future__ import absolute_import
 from __future__ import print_function
+
 import random
 import itertools
+
 from ..spec import NeuralNetwork, Neuron, NeuralNetImplementation, NeuronSpec, Body, BodyImplementation
 from ..util import decide
 

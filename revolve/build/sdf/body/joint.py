@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from sdfbuilder import Posable, Joint, Link, Axis
 from sdfbuilder.math import Vector3
 

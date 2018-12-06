@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from revolve.angle.robogen.spec import RobogenTreeGenerator
 from ..spec.body import get_body_generator
 from ..spec.brain import get_brain_generator

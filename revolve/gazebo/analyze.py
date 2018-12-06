@@ -1,5 +1,8 @@
+from __future__ import absolute_import
 from __future__ import print_function
+
 import sys
+
 from pygazebo import Manager
 from pygazebo.msg.request_pb2 import Request as AnalyzeRequest
 from ..spec import BodyAnalysisResponse

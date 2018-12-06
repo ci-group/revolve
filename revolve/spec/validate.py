@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from ..spec.msgs import Robot, BodyPart, NeuralConnection, BodyConnection
 from ..spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec
 from ..spec.exception import err

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # Revolve / sdfbuilder imports
 from ....build.sdf import Box
 from ....build.util import in_grams, in_mm

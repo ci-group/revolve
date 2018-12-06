@@ -1,15 +1,18 @@
-# External / system
-from __future__ import print_function, absolute_import
+from __future__ import absolute_import
+from __future__ import print_function
+
+import csv
+import itertools
+import math
+import os
 import random
 import sys
-import math
+import time
+
+from datetime import datetime
+
 import trollius
 from trollius import From, Return, Future
-import time
-import itertools
-import csv
-import os
-from datetime import datetime
 
 # Pygazebo
 from pygazebo.msg import world_control_pb2, poses_stamped_pb2, world_stats_pb2, model_pb2

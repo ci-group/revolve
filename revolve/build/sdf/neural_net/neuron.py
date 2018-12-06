@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from sdfbuilder import Element
 from sdfbuilder.util import number_format as nf
 from ....spec import Neuron as ProtoNeuron, NeuralConnection as ProtoNeuralConnection

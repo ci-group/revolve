@@ -1,7 +1,9 @@
 """
 """
 from __future__ import absolute_import
+
 import yaml
+
 from ..spec import BodyImplementation, NeuralNetImplementation
 from ..spec.msgs import *
 from .decode import BodyDecoder, NeuralNetworkDecoder

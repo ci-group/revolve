@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from sdfbuilder import SDF
 from sdfbuilder.math import Vector3
 from .generated_sdf import body_spec, brain_spec

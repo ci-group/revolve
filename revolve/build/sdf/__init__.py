@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from .body import BodyPart, Box, Cylinder, ComponentJoint
 from .neural_net import Neuron, NeuralConnection
 from .builder import AspectBuilder, RobotBuilder, BodyBuilder, NeuralNetBuilder
