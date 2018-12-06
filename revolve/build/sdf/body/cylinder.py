@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 
 from sdfbuilder.math import Vector3
 from sdfbuilder.structure import Cylinder as CylinderGeom

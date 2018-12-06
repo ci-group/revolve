@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 
-class Config:
+class Config(object):
     def __init__(self,
                  min_parts,
                  max_parts,

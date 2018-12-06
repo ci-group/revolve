@@ -1,5 +1,6 @@
 # System imports
 from __future__ import absolute_import
+from __future__ import division
 
 # SDF builder imports
 from sdfbuilder.sensor import Sensor as SdfSensor

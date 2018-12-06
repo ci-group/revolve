@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 
 from sdfbuilder.structure import Box as BoxGeom
 from sdfbuilder.math import Vector3

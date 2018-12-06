@@ -496,7 +496,7 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         futures = []
-        for bot in self.robots.values():
+        for bot in list(self.robots.values()):
             future = yield From(self.delete_robot(bot))
             futures.append(future)
 

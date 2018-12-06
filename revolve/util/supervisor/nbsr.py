@@ -10,7 +10,7 @@ from threading import Thread
 from queue import Queue, Empty
 
 
-class NonBlockingStreamReader:
+class NonBlockingStreamReader(object):
     def __init__(self, stream, prefix=None):
         """
         stream: the stream to read from.

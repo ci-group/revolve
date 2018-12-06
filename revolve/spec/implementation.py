@@ -21,7 +21,7 @@ def _process_aliases(obj, alias_map):
     :type alias_map: dict
     :return:
     """
-    keys = obj.keys()
+    keys = list(obj.keys())
 
     for key in keys:
         if not isinstance(key, tuple):
@@ -77,7 +77,7 @@ class SpecImplementation(object):
         :return: A list of all spec identifiers
         :rtype list:
         """
-        return [(a if isinstance(a, basestring) else a[0]) for a in self.spec.keys()]
+        return [(a if isinstance(a, basestring) else a[0]) for a in list(self.spec.keys())]
 
 
 class BodyImplementation(SpecImplementation):
@@ -423,7 +423,7 @@ class Parameterizable(object):
         :rtype: dict|list
         """
         params = {}
-        for name, (_, spec) in self.parameters.items():
+        for name, (_, spec) in list(self.parameters.items()):
             params[name] = spec.get_random_value()
 
         return self.serialize_params(params) if serialize else params
@@ -441,7 +441,7 @@ class Parameterizable(object):
             params = self.unserialize_params(params)
 
         nw_params = {}
-        for name, (_, spec) in self.parameters.items():
+        for name, (_, spec) in list(self.parameters.items()):
             epsilon = spec.epsilon
             nw_params[name] = (1.0 - epsilon) * params[name] + epsilon * spec.get_random_value()
 

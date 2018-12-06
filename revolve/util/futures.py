@@ -18,7 +18,7 @@ def multi_future(children, quiet_exceptions=()):
     """
     if isinstance(children, dict):
         keys = list(children.keys())
-        children = children.values()
+        children = list(children.values())
     else:
         keys = None
     unfinished_children = set(children)
@@ -43,7 +43,7 @@ def multi_future(children, quiet_exceptions=()):
                         future.set_exception(sys.exc_info())
             if not future.done():
                 if keys is not None:
-                    future.set_result(dict(zip(keys, result_list)))
+                    future.set_result(dict(list(zip(keys, result_list))))
                 else:
                     future.set_result(result_list)
 

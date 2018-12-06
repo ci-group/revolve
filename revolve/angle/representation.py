@@ -292,7 +292,7 @@ class Node(object):
         self._len = -1
         self._io = None
 
-        for conn in self.connections.values():
+        for conn in list(self.connections.values()):
             if conn.node is origin:
                 continue
 
@@ -395,7 +395,7 @@ class Node(object):
         if target is self:
             return []
 
-        for conn in self.connections.values():
+        for conn in list(self.connections.values()):
             if conn.node is origin:
                 continue
 
@@ -535,7 +535,7 @@ class Node(object):
         :return:
         :rtype: list[BodyConnection]
         """
-        for v in self.connections.values():
+        for v in list(self.connections.values()):
             if v.parent:
                 yield v
 
@@ -546,7 +546,7 @@ class Node(object):
         :return:
         :rtype: BodyConnection
         """
-        for v in self.connections.values():
+        for v in list(self.connections.values()):
             if not v.parent:
                 return v
 

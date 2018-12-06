@@ -5,7 +5,7 @@ from ..spec.msgs import Body, BodyPart, NeuralNetwork
 from ..spec.exception import err
 
 
-class BodyEncoder:
+class BodyEncoder(object):
     """
     Body decoder for the protobuf messages
     """
@@ -108,7 +108,7 @@ class BodyEncoder:
         yaml_child_part['slot'] = conn_dst
 
 
-class NeuralNetworkEncoder:
+class NeuralNetworkEncoder(object):
     """
     Encoder class for the standard neural network spec.
     """

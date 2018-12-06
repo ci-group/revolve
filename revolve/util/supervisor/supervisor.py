@@ -212,7 +212,7 @@ class Supervisor(object):
         Passes process piped standard out through to normal stdout
         :return:
         """
-        for stdout, stderr in self.streams.values():
+        for stdout, stderr in list(self.streams.values()):
             try:
                 for _ in range(1000):
                     out = stdout.readline(0.005)
@@ -255,7 +255,7 @@ class Supervisor(object):
         :return:
         """
         print("Terminating processes...")
-        for proc in self.procs.values():
+        for proc in list(self.procs.values()):
             if proc.poll() is None:
                 terminate_process(proc)
 

@@ -43,7 +43,7 @@ def unicode_representer(dumper, data):
         return dumper.represent_scalar(u'tag:yaml.org,2002:str', data)
 
 
-class YamlToRobot:
+class YamlToRobot(object):
     """
     Sample converter creates a Robot protobuf message
     from a YAML stream and a body / neural net spec.
@@ -78,7 +78,7 @@ class YamlToRobot:
         return robot
 
 
-class RobotToYaml:
+class RobotToYaml(object):
     """
     Sample converter creates a YAML stream from a 
     Robot protobuf message and a body / neural net spec.
@@ -104,7 +104,7 @@ class RobotToYaml:
         :return:
         :rtype: YAML file
         """
-        yaml.add_representer(unicode, unicode_representer)
+        yaml.add_representer(str, unicode_representer)
         bot_yaml = {}
 
         id = bot_pb.id
