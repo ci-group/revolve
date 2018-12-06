@@ -47,7 +47,7 @@ class NonBlockingStreamReader(object):
             line = self._q.get(block=timeout is not None,
                                timeout=timeout)
             if self._prefix:
-                return "[{}] {}".format(self._prefix, line)
+                return "[{}] {}".format(self._prefix, line.decode("utf-8"))
             else:
                 return line
 

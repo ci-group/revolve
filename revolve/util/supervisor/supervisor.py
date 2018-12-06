@@ -354,15 +354,15 @@ class Supervisor(object):
                 # flush out all stdout and stderr
                 out, err = process.communicate()
                 if out is not None:
-                    sys.stdout.write("[gazebo-launch] {}".format(out.decode('utf-8')))
+                    sys.stdout.write("{}\n".format(out.decode('utf-8')))
                 if err is not None:
-                    sys.stderr.write("[gazebo-launch] {}".format(err.decode('utf-8')))
+                    sys.stderr.write("{}\n".format(err.decode('utf-8')))
                 raise RuntimeError("Error launching {}, exit with code {}"
                                    .format(cmd, exit_code))
 
             try:
                 out = process.stdout.readline().decode('utf-8')
-                sys.stdout.write("[gazebo-launch] {}".format(out))
+                sys.stdout.write("{}\n".format(out))
                 if ready_str in out:
                     ready = True
             except IOError:
