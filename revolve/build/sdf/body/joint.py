@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from sdfbuilder import Posable, Joint, Link, Axis
-from sdfbuilder.math import Vector3
+from revolve.sdfbuilder import Posable, Joint, Link, Axis
+from revolve.sdfbuilder.math import Vector3
 
 
 class ComponentJoint(Posable):

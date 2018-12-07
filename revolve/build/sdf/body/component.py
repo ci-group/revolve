@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-from sdfbuilder import PosableGroup
-from sdfbuilder.structure import Visual, Collision, Geometry
-from sdfbuilder.sensor import Sensor as SdfSensor
+from revolve.sdfbuilder import PosableGroup
+from revolve.sdfbuilder.structure import Visual, Collision, Geometry
+from revolve.sdfbuilder.sensor import Sensor as SdfSensor
 from ..sensor import Sensor
 
 

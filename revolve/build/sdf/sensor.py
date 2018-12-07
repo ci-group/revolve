@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-from sdfbuilder import Element, Link
-from sdfbuilder.sensor import Sensor as SdfSensor
-from sdfbuilder.util import number_format as nf
+from revolve.sdfbuilder import Element, Link
+from revolve.sdfbuilder.sensor import Sensor as SdfSensor
+from revolve.sdfbuilder.util import number_format as nf
 
 
 class Sensor(Element):

@@ -269,5 +269,5 @@ class RequestHandler(object):
         future = Future()
         req[msg_id] = None
         cb[msg_id] = future
-        await (self.publisher.publish(msg))
-        return (future)
+        await self.publisher.publish(msg)
+        return future

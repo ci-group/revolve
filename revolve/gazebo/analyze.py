@@ -1,18 +1,19 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+import asyncio
+import logging
 import sys
 
 from pygazebo import Manager
 from pygazebo.msg.request_pb2 import Request as AnalyzeRequest
+
+from revolve.sdfbuilder import SDF, Link, Model
+from revolve.sdfbuilder.sensor import Sensor
+
 from ..spec import BodyAnalysisResponse
 from ..build.sdf import BodyPart
-from sdfbuilder import SDF, Link, Model
-from sdfbuilder.sensor import Sensor
 
-import asyncio
-
-import logging
 from .connect import connect, RequestHandler
 
 # Message ID sequencer, start at some high value to

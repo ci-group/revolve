@@ -4,9 +4,9 @@ from __future__ import absolute_import
 from ....build.sdf import BodyPart, ComponentJoint as Joint
 from ....build.util import in_grams, in_mm
 
-from sdfbuilder.joint import Limit
-from sdfbuilder.math import Vector3
-from sdfbuilder.structure import Cylinder, Box
+from revolve.sdfbuilder.joint import Limit
+from revolve.sdfbuilder.math import Vector3
+from revolve.sdfbuilder.structure import Cylinder, Box
 
 # Local imports
 from .util import ColorMixin

@@ -3,9 +3,9 @@ from __future__ import absolute_import
 from __future__ import division
 
 # SDF builder imports
-from sdfbuilder.sensor import Sensor as SdfSensor
-from sdfbuilder.math import Vector3
-from sdfbuilder.structure import Box, Mesh
+from revolve.sdfbuilder.sensor import Sensor as SdfSensor
+from revolve.sdfbuilder.math import Vector3
+from revolve.sdfbuilder.structure import Box, Mesh
 
 # Revolve imports
 from ....build.sdf import BodyPart

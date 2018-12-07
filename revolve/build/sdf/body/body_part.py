@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-from sdfbuilder import PosableGroup
-from sdfbuilder.math import Vector3, Quaternion
-from sdfbuilder.structure import Collision, Visual
+from revolve.sdfbuilder import PosableGroup
+from revolve.sdfbuilder.math import Vector3, Quaternion
+from revolve.sdfbuilder.structure import Collision, Visual
 
 from .exception import ArityException
 from .component import Component

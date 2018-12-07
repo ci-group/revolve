@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from revolve.build.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder, BasicBattery
 from revolve.angle.robogen.util import apply_surface_parameters
-from sdfbuilder import SDF
+from revolve.sdfbuilder import SDF
 from ..spec import get_body_spec, get_brain_spec
 
 

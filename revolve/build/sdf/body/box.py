@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 
-from sdfbuilder.structure import Box as BoxGeom
-from sdfbuilder.math import Vector3
+from revolve.sdfbuilder.structure import Box as BoxGeom
+from revolve.sdfbuilder.math import Vector3
 from .body_part import BodyPart
 
 

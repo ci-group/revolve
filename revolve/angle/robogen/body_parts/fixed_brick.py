@@ -4,8 +4,8 @@ from __future__ import division
 # Revolve / sdfbuilder imports
 from ....build.sdf import Box
 from ....build.util import in_grams, in_mm
-from sdfbuilder.structure import Box as BoxGeom, Mesh
-from sdfbuilder.math import Vector3
+from revolve.sdfbuilder.structure import Box as BoxGeom, Mesh
+from revolve.sdfbuilder.math import Vector3
 
 # Local imports
 from .util import ColorMixin

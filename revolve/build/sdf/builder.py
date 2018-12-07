@@ -1,11 +1,14 @@
 from __future__ import absolute_import
 
 from math import radians
-from sdfbuilder import Model, Element, Link, FixedJoint
-from sdfbuilder.math import Quaternion, Vector3
-from sdfbuilder.util import number_format as nf
+
+from revolve.sdfbuilder import Model, Element, Link, FixedJoint
+from revolve.sdfbuilder.math import Quaternion, Vector3
+from revolve.sdfbuilder.util import number_format as nf
+
 from ...spec import Robot, BodyPart as PbBodyPart, BodyImplementation, NeuralNetImplementation
 from ...spec.exception import err
+
 from .neural_net import Neuron, NeuralConnection
 from .body import Component, BodyPart
 from .body.exception import ComponentException

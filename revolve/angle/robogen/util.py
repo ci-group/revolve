@@ -3,10 +3,10 @@ from __future__ import division
 
 from .constants import *
 
-from sdfbuilder.physics import Friction
-from sdfbuilder.structure import Collision
-from sdfbuilder.util import number_format as nf
-from sdfbuilder import Element
+from revolve.sdfbuilder.physics import Friction
+from revolve.sdfbuilder.structure import Collision
+from revolve.sdfbuilder.util import number_format as nf
+from revolve.sdfbuilder import Element
 
 
 def apply_surface_parameters(model, intended_step_size=0.005):

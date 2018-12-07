@@ -8,9 +8,9 @@ from ....build.sdf import BodyPart, ComponentJoint as Joint
 from ....build.util import in_grams, in_mm
 
 # SDF builder imports
-from sdfbuilder import Limit
-from sdfbuilder.math import Vector3
-from sdfbuilder.structure import Box, Mesh, Visual
+from revolve.sdfbuilder import Limit
+from revolve.sdfbuilder.math import Vector3
+from revolve.sdfbuilder.structure import Box, Mesh, Visual
 
 # Local imports
 from .util import ColorMixin

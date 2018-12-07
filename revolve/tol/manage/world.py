@@ -13,8 +13,9 @@ from pygazebo.msg import world_stats_pb2
 # Revolve / sdfbuilder
 from revolve.angle import Tree, Crossover, Mutator, WorldManager
 from revolve.angle.robogen.spec import make_planar
-from sdfbuilder.math import Vector3, Quaternion
-from sdfbuilder import SDF, Model, Pose, Link
+
+from revolve.sdfbuilder.math import Vector3, Quaternion
+from revolve.sdfbuilder import SDF, Model, Pose, Link
 
 # Local
 from ..config import constants, parser, str_to_address, make_revolve_config

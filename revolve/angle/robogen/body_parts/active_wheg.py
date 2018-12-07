@@ -7,9 +7,9 @@ import math
 # Revolve imports
 from ....build.sdf import BodyPart, VelocityMotor, ComponentJoint as Joint
 from ....build.util import in_grams, in_mm
-from sdfbuilder.joint import Limit
-from sdfbuilder.math import Vector3
-from sdfbuilder.structure import Box, Cylinder
+from revolve.sdfbuilder.joint import Limit
+from revolve.sdfbuilder.math import Vector3
+from revolve.sdfbuilder.structure import Box, Cylinder
 
 # Local imports
 from .util import ColorMixin

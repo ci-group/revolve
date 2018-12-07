@@ -3,7 +3,7 @@ from __future__ import division
 
 from collections import deque
 
-from sdfbuilder.math import Vector3
+from revolve.sdfbuilder.math import Vector3
 from revolve.util import Time
 import numpy as np
 

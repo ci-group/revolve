@@ -6,9 +6,19 @@ from ....generate import FixedOrientationBodyGenerator
 from ....spec import BodyImplementation, PartSpec, ParamSpec
 from ..body_parts import *
 
-# A utility function to generate color property parameters. Note that color parameters do not mutate.
-channel_func = lambda channel: ParamSpec(channel, min_value=0, max_value=1, default=0.5, epsilon=0)
-color_params = [channel_func("red"), channel_func("green"), channel_func("blue")]
+# A utility function to generate color property parameters. Note that color
+# parameters do not mutate.
+channel_func = lambda channel: ParamSpec(
+        channel,
+        min_value=0,
+        max_value=1,
+        default=0.5,
+        epsilon=0)
+color_params = [
+    channel_func("red"),
+    channel_func("green"),
+    channel_func("blue")
+]
 
 
 def get_body_spec(conf):
@@ -70,7 +80,12 @@ def get_body_spec(conf):
                 body_part=Wheel,
                 arity=1,
                 params=color_params + [
-                    ParamSpec("radius", min_value=40, max_value=80, default=60, epsilon=conf.body_mutation_epsilon)
+                    ParamSpec(
+                            "radius",
+                            min_value=40,
+                            max_value=80,
+                            default=60,
+                            epsilon=conf.body_mutation_epsilon)
                 ]
             ),
             "ActiveWheel": PartSpec(
@@ -78,7 +93,12 @@ def get_body_spec(conf):
                 arity=1,
                 outputs=1,
                 params=color_params + [
-                    ParamSpec("radius", min_value=40, max_value=80, default=60, epsilon=conf.body_mutation_epsilon)
+                    ParamSpec(
+                            "radius",
+                            min_value=40,
+                            max_value=80,
+                            default=60,
+                            epsilon=conf.body_mutation_epsilon)
                 ]
             ),
             "Cardan": PartSpec(
@@ -103,7 +123,12 @@ def get_body_spec(conf):
                 arity=2,
                 outputs=1,
                 params=color_params + [
-                    ParamSpec("radius", min_value=40, max_value=80, default=60, epsilon=conf.body_mutation_epsilon)
+                    ParamSpec(
+                            "radius",
+                            min_value=40,
+                            max_value=80,
+                            default=60,
+                            epsilon=conf.body_mutation_epsilon)
                 ]
             )
         })
@@ -151,7 +176,7 @@ class BodyGenerator(FixedOrientationBodyGenerator):
             # Require at least some complexity
             min_parts=conf.min_parts,
 
-            # High number of maximum parts, limit will probably be something else
+            # High number of maximum parts, limit will probably be different
             max_parts=conf.max_parts,
 
             # Maximum number of sensory inputs
@@ -162,7 +187,14 @@ class BodyGenerator(FixedOrientationBodyGenerator):
         )
         self.last_parameters = None
 
-    def initialize_part(self, spec, new_part, parent_part, root_part, root=False):
+    def initialize_part(
+            self,
+            spec,
+            new_part,
+            parent_part,
+            root_part,
+            root=False
+    ):
         """
         Overrides `initialize_part` to make sure all parts get
         the same color as the root part
@@ -177,9 +209,15 @@ class BodyGenerator(FixedOrientationBodyGenerator):
             self.last_parameters = params
         elif self.last_parameters:
             params['red'], params['green'], params['blue'] = \
-                self.last_parameters['red'], self.last_parameters['green'], self.last_parameters['blue']
+                self.last_parameters['red'],\
+                self.last_parameters['green'],\
+                self.last_parameters['blue']
 
-        new_part.orientation = self.choose_orientation(new_part, parent_part, root_part, root)
+        new_part.orientation = self.choose_orientation(
+                new_part,
+                parent_part,
+                root_part,
+                root)
         spec.set_parameters(new_part.param, params)
         return new_part
 

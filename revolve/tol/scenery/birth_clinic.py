@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from sdfbuilder import SDF, Model, Link, Element
-from sdfbuilder.physics import Friction
-from sdfbuilder.structure import Mesh, Visual, Collision
-from sdfbuilder.math import Vector3
-from sdfbuilder.util import number_format as nf
+from revolve.sdfbuilder import SDF, Model, Link, Element
+from revolve.sdfbuilder.physics import Friction
+from revolve.sdfbuilder.structure import Mesh, Visual, Collision
+from revolve.sdfbuilder.math import Vector3
+from revolve.sdfbuilder.util import number_format as nf
 
 from ..config import constants
 

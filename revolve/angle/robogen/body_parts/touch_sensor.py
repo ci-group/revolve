@@ -5,9 +5,9 @@ from ....build.sdf import Box, Sensor
 from ....build.util import in_grams, in_mm
 
 # SDF builder imports
-from sdfbuilder.math import Vector3
-from sdfbuilder.sensor import Sensor as SdfSensor
-from sdfbuilder.structure import Box as BoxGeom, Mesh, Visual
+from revolve.sdfbuilder.math import Vector3
+from revolve.sdfbuilder.sensor import Sensor as SdfSensor
+from revolve.sdfbuilder.structure import Box as BoxGeom, Mesh, Visual
 
 # Local imports
 from .util import ColorMixin

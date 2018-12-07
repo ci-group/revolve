@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 # Global imports
+import asyncio
 import csv
 import os
 import pickle
@@ -11,13 +12,12 @@ import traceback
 
 from datetime import datetime
 
-import asyncio
 from asyncio import Future
 
 from pygazebo.msg import gz_string_pb2, request_pb2, response_pb2
 
-from sdfbuilder import SDF
-from sdfbuilder.math import Vector3
+from revolve.sdfbuilder import SDF
+from revolve.sdfbuilder.math import Vector3
 
 
 # Local imports

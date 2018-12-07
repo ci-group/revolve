@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from sdfbuilder import Model, Posable, Link
-from sdfbuilder.math import Vector3
+from revolve.sdfbuilder import Model, Posable, Link
+from revolve.sdfbuilder.math import Vector3
 
 
 class Wall(Model):

@@ -6,8 +6,8 @@ from ....build.sdf import BodyPart
 from ....build.util import in_grams, in_mm
 
 # sdfbuilder imports
-from sdfbuilder.math import Vector3
-from sdfbuilder.structure import Box
+from revolve.sdfbuilder.math import Vector3
+from revolve.sdfbuilder.structure import Box
 
 # Local imports
 from .util import ColorMixin
