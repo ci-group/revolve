@@ -6,5 +6,4 @@ PyYAML==3.11
 protobuf>=3.0.0
 psutil==3.4.2
 
--e git+https://github.com/ci-group/sdf-builder.git@master#egg=sdfbuilder
 -e git+https://github.com/ci-group/pygazebo.git@py2to3#egg=pygazebo
