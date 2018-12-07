@@ -45,4 +45,5 @@ if __name__ == "__main__":
     )
 
     ret = supervisor.launch()
+    # ret = supervisor.launch_gazebo()
     sys.exit(ret)

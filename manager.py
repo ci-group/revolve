@@ -5,8 +5,8 @@ import asyncio
 # sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from pygazebo.pygazebo import DisconnectError
-from sdfbuilder import Pose
-from sdfbuilder.math import Vector3
+from revolve.sdfbuilder import Pose
+from revolve.sdfbuilder.math import Vector3
 
 from revolve.angle import Tree
 from revolve.convert.yaml import yaml_to_robot
