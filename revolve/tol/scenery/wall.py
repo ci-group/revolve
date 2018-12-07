@@ -21,7 +21,8 @@ class Wall(Model):
         :return:
         """
         super(Wall, self).__init__(name, static=True, **kwargs)
-        assert start.z == end.z, "Walls with different start / end z are undefined."
+        assert start.z == end.z, \
+            "Walls with different start / end z are undefined."
 
         center = 0.5 * (end + start)
         diff = end - start

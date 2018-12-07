@@ -27,13 +27,13 @@ def multi_future(children, quiet_exceptions=()):
     if not children:
         future.set_result({} if keys is not None else [])
 
-    def callback(f):
-        unfinished_children.remove(f)
+    def callback(ft):
+        unfinished_children.remove(ft)
         if not unfinished_children:
             result_list = []
-            for f in children:
+            for ft in children:
                 try:
-                    result_list.append(f.result())
+                    result_list.append(ft.result())
                 except Exception as e:
                     if future.done():
                         if not isinstance(e, quiet_exceptions):
@@ -78,6 +78,6 @@ async def wait_for(coro):
     :param coro: A coroutine
     :return:
     """
-    fut = await (coro)
-    result = await (fut)
-    return (result)
+    fut = await coro
+    result = await fut
+    return result

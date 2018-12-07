@@ -265,9 +265,9 @@ parser.add_argument(
 parser.add_argument(
     '--disable-sensors',
     default=False, type=str_to_bool,
-    help="Disables all sensors - overriding specific sensor settings. In practice "
-         "this means that the core component is created without an IMU sensor, whereas "
-         "the other sensor parts are not enabled at all."
+    help="Disables all sensors - overriding specific sensor settings."
+         "In practice this means that the core component is created without "
+         "an IMU sensor, whereas the other sensor parts are not enabled at all."
 )
 
 parser.add_argument(
@@ -285,16 +285,17 @@ parser.add_argument(
 parser.add_argument(
     '--warmup-time',
     default=0, type=float,
-    help="The number of seconds the robot is initially ignored, allows it to e.g. topple over"
-         " when put down without that being counted as movement. Especially helps when dropping"
-         " robots from the sky at the start."
+    help="The number of seconds the robot is initially ignored, allows it to "
+         "e.g. topple over when put down without that being counted as "
+         "movement. Especially helps when dropping robots from the sky at "
+         "the start."
 )
 
 parser.add_argument(
     '--fitness-size-factor',
     default=0, type=float,
-    help="Multiplication factor of robot size in the fitness function. Note that this"
-         " needs to be negative to discount size."
+    help="Multiplication factor of robot size in the fitness function. Note "
+         "that this needs to be negative to discount size."
 )
 
 parser.add_argument(
@@ -306,22 +307,24 @@ parser.add_argument(
 parser.add_argument(
     '--fitness-displacement-factor',
     default=5.0, type=float,
-    help="Multiplication factor of robot displacement velocity (= velocity in a straight line "
-         " in the fitness function."
+    help="Multiplication factor of robot displacement velocity (= velocity in "
+         "a straight line in the fitness function."
 )
 
 parser.add_argument(
     '--fitness-size-discount',
     default=0, type=float,
-    help="Another possible way of discounting robot size, multiplies the previously calculated"
-         " fitness by (1 - d * size) where `d` is this discount factor."
+    help="Another possible way of discounting robot size, multiplies the "
+         "previously calculated fitness by (1 - d * size) where `d` is this "
+         "discount factor."
 )
 
 parser.add_argument(
     '--fitness-limit',
     default=1.0, type=float,
-    help="Minimum fitness value that is considered unrealistic and should probably be attributed"
-         " to a simulator instability. A fitness of zero is returned in this case."
+    help="Minimum fitness value that is considered unrealistic and should "
+         "probably be attributed  to a simulator instability. A fitness of "
+         "zero is returned in this case."
 )
 
 parser.add_argument(
@@ -329,9 +332,10 @@ parser.add_argument(
     default=4, type=int,
     help="The size of the random tournament used for parent selection, if"
          " selection is enabled. When individuals are chosen for reproduction,"
-         " this number of possible parents is randomly sampled from the population,"
-         " and out of these the best is chosen. A larger number here means higher"
-         " selection pressure but less selection variance and vice versa."
+         " this number of possible parents is randomly sampled from the "
+         "population, and out of these the best is chosen. A larger number "
+         "here means higher selection pressure but less selection variance "
+         "and vice versa."
 )
 
 parser.add_argument(
@@ -344,8 +348,8 @@ parser.add_argument(
 parser.add_argument(
     '--world-step-size',
     default=0.003, type=float,
-    help="The physics step size configured in the simulation world file. This needs to match"
-         " in order to configure some physics parameters."
+    help="The physics step size configured in the simulation world file."
+         "This needs to match in order to configure some physics parameters."
 )
 
 

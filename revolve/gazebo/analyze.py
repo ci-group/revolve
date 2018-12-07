@@ -20,11 +20,14 @@ from .connect import connect, RequestHandler
 # prevent ID clashes (don't know if this would ever be
 # a problem though).
 _counter = 1234321000
+
+
 def _msg_id():
     global _counter
     r = _counter
     _counter += 1
     return r
+
 
 # Prevent the trollius logging warning
 kl = logging.getLogger("trollius")
@@ -41,7 +44,11 @@ def get_analysis_robot(robot, builder):
     :type builder: BodyBuilder
     :return:
     """
-    model = builder.get_sdf_model(robot, analyzer_mode=True, controller_plugin=None, name="analyze_bot")
+    model = builder.get_sdf_model(
+            robot=robot,
+            analyzer_mode=True,
+            controller_plugin=None,
+            name="analyze_bot")
     model.remove_elements_of_type(Sensor, recursive=True)
     sdf = SDF()
     sdf.add_element(model)
@@ -58,9 +65,10 @@ def analyze_body(sdf, address=("127.0.0.1", 11346)):
     :param sdf: SDF object consisting of BodyPart
                 instances.
     :type sdf: SDF
-    :param address: Tuple of the hostname and port where the analyzer resides. Note
-                    that the default is one up from the default Gazebo port,
-                    since it is meant to be used with the `run-analyzer.sh` tool.
+    :param address: Tuple of the hostname and port where the analyzer
+                    resides. Note that the default is one up from the default
+                    Gazebo port, since it is meant to be used with the
+                    `run-analyzer.sh` tool.
     :type address: (str, int)
     :return:
     :rtype: (bool, (float, float, float))
@@ -91,7 +99,8 @@ class BodyAnalyzer(object):
         :return:
         """
         if _private is not self._PRIVATE:
-            raise ValueError("`BodyAnalyzer` must be initialized through the `create` coroutine.")
+            raise ValueError("`BodyAnalyzer` must be initialized through "
+                             "the `create` coroutine.")
 
         self.address = address
         self.manager = None
@@ -108,7 +117,7 @@ class BodyAnalyzer(object):
         """
         self = cls(cls._PRIVATE, address)
         await (self._init())
-        return (self)
+        return self
 
     async def _init(self):
         """
@@ -131,7 +140,7 @@ class BodyAnalyzer(object):
         """
         sdf = get_analysis_robot(robot, builder)
         ret = await (self.analyze_sdf(sdf, max_attempts=max_attempts))
-        return (ret)
+        return ret
 
     async def analyze_sdf(self, sdf, max_attempts=5):
         """
@@ -147,7 +156,7 @@ class BodyAnalyzer(object):
         rh = self.request_handler
         for _ in range(max_attempts):
             future = await (rh.do_gazebo_request("analyze_body", str(sdf)))
-            await (future)
+            await future
 
             response = future.result()
             if response.response == "success":
@@ -157,7 +166,7 @@ class BodyAnalyzer(object):
 
         if not msg:
             # Error return
-            return (None)
+            return None
 
         if msg.HasField("boundingBox"):
             bbox = msg.boundingBox
@@ -165,4 +174,4 @@ class BodyAnalyzer(object):
             bbox = None
 
         internal_collisions = len(msg.contact)
-        return (internal_collisions, bbox)
+        return internal_collisions, bbox

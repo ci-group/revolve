@@ -149,7 +149,5 @@ class PointIntensitySensor(VirtualSensor):
             Element(tag_name='rv:point',
                     body='{}'.format(tuple(self.point))),
             Element(tag_name='rv:function',
-                    attributes={
-                'i_max': self.i_max, 'r': self.r
-            })
+                    attributes={'i_max': self.i_max, 'r': self.r})
         ]

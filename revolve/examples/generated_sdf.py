@@ -13,11 +13,25 @@ from sdfbuilder import SDF, Limit
 from sdfbuilder.structure import Box as BoxGeom, Cylinder as CylinderGeom
 
 # Module imports
-from revolve.generate import BodyGenerator, NeuralNetworkGenerator
-from revolve.spec import BodyImplementation, default_neural_net, PartSpec, ParamSpec, Robot
-from revolve.build.sdf.body import Box, Cylinder, ComponentJoint as Joint
-from revolve.build.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder, \
-    VelocityMotor, PID, Sensor
+from revolve.generate import BodyGenerator
+from revolve.generate import NeuralNetworkGenerator
+
+from revolve.spec import BodyImplementation
+from revolve.spec import default_neural_net
+from revolve.spec import PartSpec
+from revolve.spec import ParamSpec
+from revolve.spec import Robot
+
+from revolve.build.sdf.body import Box
+from revolve.build.sdf.body import Cylinder
+from revolve.build.sdf.body import ComponentJoint as Joint
+
+from revolve.build.sdf import RobotBuilder
+from revolve.build.sdf import BodyBuilder
+from revolve.build.sdf import NeuralNetBuilder
+from revolve.build.sdf import VelocityMotor
+from revolve.build.sdf import PID
+from revolve.build.sdf import Sensor
 
 # Some configuration
 # This is the number of times per second we will call our
@@ -28,7 +42,9 @@ UPDATE_RATE = 5
 
 # A utility function to generate color properties
 channel_func = lambda channel: ParamSpec(channel, min_value=0, max_value=1, default=0.5)
-color_params = [channel_func("red"), channel_func("green"), channel_func("blue")]
+color_params = [
+    channel_func("red"), channel_func("green"), channel_func("blue")
+]
 
 
 class ColorMixin(object):
@@ -107,23 +123,33 @@ class PassiveHinge(Box, ColorMixin):
         # way of doing this, because it sets some non-default link properties
         # (such as self_collide) which you generally need.
         length = kwargs["length"]
-        self.var_block = self.create_component(BoxGeom(length, self.y, self.z, 0.1), "var-block")
+        self.var_block = self.create_component(
+                BoxGeom(length, self.y, self.z, 0.1), "var-block")
 
         # We move the block in the x-direction so that it
         # just about overlaps with the other block (to
         # make it seem like a somewhat realistic joint)
-        self.var_block.translate(Vector3(0.5 * (length + self.x) - self.JOINT_OFFSET, 0, 0))
+        self.var_block.translate(
+                Vector3(0.5 * (length + self.x) - self.JOINT_OFFSET, 0, 0))
 
         # Now create a revolute joint at this same position. The
         # joint axis is in the y-direction.
         axis = Vector3(0, 1, 0)
-        passive_joint = Joint("revolute", self.component, self.var_block, axis=axis)
+        passive_joint = Joint(
+                joint_type="revolute",
+                parent=self.component,
+                child=self.var_block,
+                axis=axis)
 
         # Set some movement limits on the joint
-        passive_joint.axis.limit = Limit(lower=math.radians(-45), upper=math.radians(45), effort=1.0)
+        passive_joint.axis.limit = Limit(
+                lower=math.radians(-45),
+                upper=math.radians(45),
+                effort=1.0)
 
         # Set the joint position - in the child frame!
-        passive_joint.set_position(Vector3(-0.5 * length + self.JOINT_OFFSET, 0, 0))
+        passive_joint.set_position(
+                Vector3(-0.5 * length + self.JOINT_OFFSET, 0, 0))
 
         # Don't forget to add the joint and the link
         self.add_joint(passive_joint)
@@ -149,14 +175,15 @@ class PassiveHinge(Box, ColorMixin):
         # Again, prevent errors
         self.check_slot(slot)
 
-        # The constructor of `BodyPart` stores the initialization's kwargs parameters
-        # in `self.part_params`.
+        # The constructor of `BodyPart` stores the initialization's kwargs
+        # parameters in `self.part_params`.
         length = self.part_params["length"]
 
         # The center of the base box lies at (0, 0), move 1/2 x to the
-        # left to get that slot, or move 1/2 x to the right, plus the variable length
-        # minus the offset to get the other.
-        return Vector3(-0.5 * self.x, 0, 0) if slot == 0 else Vector3(0.5 * self.x + length - self.JOINT_OFFSET, 0, 0)
+        # left to get that slot, or move 1/2 x to the right, plus the
+        # variable length minus the offset to get the other.
+        return Vector3(-0.5 * self.x, 0, 0) if slot == 0 \
+            else Vector3(0.5 * self.x + length - self.JOINT_OFFSET, 0, 0)
 
     def get_slot_normal(self, slot):
         """
@@ -213,7 +240,11 @@ class Wheel(Cylinder, ColorMixin):
         self.attachment.set_position(anchor + Vector3(0, 0, 0.5 * box_size))
 
         # Create revolute joint. Remember: joint position is in child frame
-        motor_joint = Joint("revolute", self.component, self.attachment, axis=axis)
+        motor_joint = Joint(
+                joint_type="revolute",
+                parent=self.component,
+                child=self.attachment,
+                axis=axis)
         motor_joint.set_position(Vector3(0, 0, -0.5 * box_size))
 
         # Set a force limit on the joint
@@ -225,8 +256,13 @@ class Wheel(Cylinder, ColorMixin):
         # We also give it a simple PID controller
         pid = PID(proportional_gain=1.0, integral_gain=0.1)
         max_speed = 2 * math.pi * 50.0 / 60
-        self.motors.append(VelocityMotor(self.id, "rotate", motor_joint, pid=pid,
-                                         min_velocity=-max_speed, max_velocity=max_speed))
+        self.motors.append(VelocityMotor(
+                part_id=self.id,
+                motor_id="rotate",
+                joint=motor_joint,
+                pid=pid,
+                min_velocity=-max_speed,
+                max_velocity=max_speed))
         self.apply_color()
 
     def get_slot(self, slot_id):
@@ -247,6 +283,7 @@ class Wheel(Cylinder, ColorMixin):
         v = super(Wheel, self).get_slot_position(slot_id)
         return v + Vector3(0, 0, self.MOTOR_SIZE)
 
+
 body_spec = BodyImplementation(
     {
         ("Core", "C"): PartSpec(
@@ -266,7 +303,13 @@ body_spec = BodyImplementation(
         "Hinge": PartSpec(
             body_part=PassiveHinge,
             arity=2,
-            params=color_params + [ParamSpec("length", min_value=0.1, max_value=1, default=0.5)]
+            params=color_params + [
+                ParamSpec(
+                    name="length",
+                    min_value=0.1,
+                    max_value=1,
+                    default=0.5)
+            ]
         )
     }
 )
@@ -307,6 +350,7 @@ brain_gen = NeuralNetworkGenerator(
 # Create a builder to convert the protobuf to SDF
 builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
 
+
 def generate_robot(robot_id=0):
     # Create a protobuf robot
     robot = Robot()
@@ -322,15 +366,22 @@ def generate_robot(robot_id=0):
 
     return robot
 
+
 def robot_to_sdf(robot, name="test_bot", plugin_controller=None):
-    model = builder.get_sdf_model(robot, plugin_controller, update_rate=UPDATE_RATE, name=name)
-    sdf = SDF()
-    sdf.add_element(model)
-    return sdf
+    model = builder.get_sdf_model(
+            robot=robot,
+            controller_plugin=plugin_controller,
+            update_rate=UPDATE_RATE,
+            name=name)
+    model_sdf = SDF()
+    model_sdf.add_element(model)
+    return model_sdf
+
 
 def generate_sdf_robot(robot_id=0, plugin_controller=None, name="test_bot"):
     robot = generate_robot(robot_id)
     return robot_to_sdf(robot, name, plugin_controller)
+
 
 if __name__ == "__main__":
     # Create SDF and output

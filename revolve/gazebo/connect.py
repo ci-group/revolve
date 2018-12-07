@@ -13,8 +13,8 @@ default_address = ["127.0.0.1", 11345]
 
 
 async def connect(address=default_address):
-    manager = await (pygazebo.connect(address=tuple(address)))
-    return (manager)
+    manager = await pygazebo.connect(address=tuple(address))
+    return manager
 
 
 class RequestHandler(object):
@@ -113,8 +113,8 @@ class RequestHandler(object):
                 wait_for_publisher,
                 cls._PRIVATE
         )
-        await (handler._init())
-        return (handler)
+        await handler._init()
+        return handler
 
     async def _init(self):
         """
@@ -231,7 +231,7 @@ class RequestHandler(object):
             req.dbl_data = dbl_data
 
         future = await (self.do_request(req))
-        return (future)
+        return future
 
     def _get_response_map(self, request_type):
         """

@@ -11,7 +11,14 @@ class Component(PosableGroup):
 
     """
 
-    def __init__(self, part_id, name, geometry, collision=True, visual=True):
+    def __init__(
+            self,
+            part_id,
+            name,
+            geometry,
+            collision=True,
+            visual=True
+    ):
         """
 
         :param part_id:

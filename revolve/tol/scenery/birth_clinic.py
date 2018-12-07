@@ -36,7 +36,8 @@ class BirthClinic(Model):
         # Cannot go higher than mesh height, or lower than the bottom
         # of the slice.
         scaled_height = scale * MESH_HEIGHT
-        self.height = max(min(height, scaled_height), SLICE_FRACTION * scaled_height)
+        self.height = max(arg1=min(height, scaled_height),
+                          arg2=(SLICE_FRACTION * scaled_height))
 
         mesh = Mesh("model://tol_robot/meshes/BirthClinic.dae", scale=scale)
 

@@ -63,8 +63,8 @@ class WorldManager(object):
                 _private=cls._PRIVATE,
                 world_address=world_address,
         )
-        await (self._init())
-        return (self)
+        await self._init()
+        return self
 
     async def _init(self):
         """
@@ -104,25 +104,30 @@ class WorldManager(object):
 
         msg = world_control_pb2.WorldControl()
         msg.pause = pause
-        fut = await (self.world_control.publish(msg))
-        return (fut)
+        future = await (self.world_control.publish(msg))
+        return future
 
-    async def reset(self, all=False, time_only=True, model_only=False):
+    async def reset(
+            self,
+            rall=False,
+            time_only=True,
+            model_only=False
+    ):
         """
         Reset the world. Defaults to time only, since that appears to be the
         only thing that is working by default anyway.
         :param model_only:
         :param time_only:
-        :param all:
+        :param rall:
         :return:
         """
         logger.debug("Resetting the world state.")
         msg = world_control_pb2.WorldControl()
-        msg.reset.all = all
+        msg.reset.all = rall
         msg.reset.model_only = model_only
         msg.reset.time_only = time_only
-        fut = await (self.world_control.publish(msg))
-        return (fut)
+        future = await (self.world_control.publish(msg))
+        return future
 
     async def insert_model(self, sdf):
         """
@@ -142,9 +147,12 @@ class WorldManager(object):
                 request="insert_sdf",
                 data=str(sdf)
         ))
-        return (future)
+        return future
 
-    async def delete_model(self, name, req="entity_delete"):
+    async def delete_model(
+            self,
+            name, req="entity_delete"
+    ):
         """
         Deletes the model with the given name from the world.
         :param name:
@@ -158,4 +166,4 @@ class WorldManager(object):
                 request=req,
                 data=name
         ))
-        return (future)
+        return future

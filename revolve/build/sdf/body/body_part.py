@@ -103,6 +103,8 @@ class BodyPart(PosableGroup):
         """
         :param geometry:
         :param label:
+        :param collision:
+        :param visual:
         :return:
         """
         append = "__"+str(len(self.elements)) if label is None else "_"+str(label)
@@ -123,7 +125,8 @@ class BodyPart(PosableGroup):
         """
         return self.get_elements_of_type(Component)
 
-    def fix(self, a, b):
+    @staticmethod
+    def fix(a, b):
         """
         Marks two components as fixed to each other.
         :param a:
@@ -134,7 +137,8 @@ class BodyPart(PosableGroup):
         """
         a.create_connection(b)
 
-    def add_joint(self, joint):
+    @staticmethod
+    def add_joint(joint):
         """
         Adds a joint to this model.
         :param joint:

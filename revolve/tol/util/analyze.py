@@ -53,7 +53,8 @@ def list_extremities(node):
         return [node]
 
     # Otherwise return the starting point for all extremities on child nodes
-    return list(itertools.chain(*(list_extremities(c.node) for c in node.child_connections())))
+    return list(itertools.chain(*(list_extremities(c.node)
+                                  for c in node.child_connections())))
 
 
 def joints_per_extremity(node):
@@ -69,5 +70,5 @@ def count_connections(node):
     """
     :type node: Node
     """
-    return len(node.get_neural_connections()) + sum(count_connections(c.node)
-                                                    for c in node.child_connections())
+    return len(node.get_neural_connections()) + \
+           sum(count_connections(c.node) for c in node.child_connections())
