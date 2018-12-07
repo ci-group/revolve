@@ -44,10 +44,10 @@ class NonBlockingStreamReader(object):
 
     def readline(self, timeout=None):
         try:
-            line = self._q.get(block=timeout is not None,
-                               timeout=timeout)
+            line = self._q.get(block=timeout is not None, timeout=timeout).decode("utf-8")
+                            
             if self._prefix:
-                return "[{}] {}".format(self._prefix, line.decode("utf-8"))
+                return "[{}] {}".format(self._prefix, line)
             else:
                 return line
 

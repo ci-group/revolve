@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-
+#!/usr/bin/env python3
 import os
 import sys
 
@@ -37,7 +36,7 @@ class OnlineEvolutionSupervisor(Supervisor):
 if __name__ == "__main__":
 
     supervisor = OnlineEvolutionSupervisor(
-        manager_cmd=None,
+        manager_cmd=os.path.join(here, "manager.py"),
         world_file="worlds/gait-learning.world",
         gazebo_cmd="gazebo",
         gazebo_args=["--verbose"],
@@ -45,5 +44,5 @@ if __name__ == "__main__":
         models_dir_path=os.path.join(rvpath, 'models')
     )
 
-    ret = supervisor.launch_gazebo()
+    ret = supervisor.launch()
     sys.exit(ret)

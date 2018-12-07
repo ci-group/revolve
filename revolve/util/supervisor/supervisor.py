@@ -155,6 +155,7 @@ class Supervisor(object):
               )
 
     def launch_gazebo(self):
+        print("WARNING! launching only gazebo, no manager")
         self._launch_gazebo()
 
         # Wait for the end
@@ -364,7 +365,8 @@ class Supervisor(object):
 
             try:
                 out = process.stdout.readline().decode('utf-8')
-                sys.stdout.write("{}\n".format(out))
+                if len(out) > 0:
+                    sys.stdout.write("[gazebo-launch] {}".format(out))
                 if ready_str in out:
                     ready = True
             except IOError:
@@ -373,7 +375,8 @@ class Supervisor(object):
             if not mswindows:
                 try:
                     err = process.stderr.readline().decode('utf-8')
-                    sys.stderr.write("[gazebo-launch] {}".format(err))
+                    if len(err) > 0:
+                        sys.stderr.write("[gazebo-launch] {}".format(err))
                 except IOError:
                     pass
 
