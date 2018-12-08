@@ -13,7 +13,6 @@ from revolve.convert.yaml import yaml_to_robot
 from revolve.logging import logger
 from revolve.tol.config import parser
 from revolve.tol.manage import World
-from revolve.util import wait_for
 
 
 async def run():
@@ -81,13 +80,12 @@ async def run():
     robot_manager1 = await future1
     robot_manager2 = await future2
 
-    # I usually start the world paused, un-pause it here. Note that
-    # pause again returns a future for when the request is sent,
-    # that future in turn resolves when a response has been received.
-    # This is the general convention for all message actions in the
-    # world manager. `wait_for` saves the hassle of grabbing the
-    # intermediary future in this case.
-    await (wait_for(world.pause(False)))
+    # I usually start the world paused, un-pause it here. Note that pause
+    # again returns a future for when the request is sent, that future in
+    # turn resolves when a response has been received. This is the general
+    # convention for all message actions in the world manager. `wait_for`
+    # saves the hassle of grabbing the intermediary future in this case.
+    await world.pause(False)
 
     # Start a run loop to do some stuff
     while True:

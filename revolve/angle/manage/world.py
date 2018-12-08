@@ -29,6 +29,7 @@ from ...util import multi_future, Time, wait_for
 from revolve.spec.msgs import ModelInserted, RobotStates
 from revolve.spec.msgs import BoundingBox
 
+
 class WorldManager(manage.WorldManager):
     """
     A WorldManager utility class with methods more suited to

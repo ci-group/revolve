@@ -128,35 +128,35 @@ class Robot(RvRobot):
             'inputs', 'outputs', 'hidden', 'conn'
         ]
 
-    def write_robot(self, world, details_file, csv_writer):
-        """
-        :param world:
-        :param details_file:
-        :param csv_writer:
-        :return:
-        """
-        with open(details_file, 'w') as f:
-            f.write(self.robot.SerializeToString())
-
-        row = [getattr(world, 'current_run', 0), self.robot.id,
-               world.age()]
-        row += list(self.parent_ids) if self.parent_ids else ['', '']
-        row += [self.size, self.last_position.x,
-                self.last_position.y, self.last_position.z]
-
-        root = self.tree.root
-        inputs, outputs, hidden = root.io_count(recursive=True)
-        row += [
-            count_extremities(root),
-            count_joints(root),
-            count_motors(root),
-            inputs,
-            outputs,
-            hidden,
-            count_connections(root)
-        ]
-
-        csv_writer.writerow(row)
+    # def write_robot(self, world, details_file, csv_writer):
+    #     """
+    #     :param world:
+    #     :param details_file:
+    #     :param csv_writer:
+    #     :return:
+    #     """
+    #     with open(details_file, 'w') as f:
+    #         f.write(self.robot.SerializeToString())
+    #
+    #     row = [getattr(world, 'current_run', 0), self.robot.id,
+    #            world.age()]
+    #     row += list(self.parent_ids) if self.parent_ids else ['', '']
+    #     row += [self.size, self.last_position.x,
+    #             self.last_position.y, self.last_position.z]
+    #
+    #     root = self.tree.root
+    #     inputs, outputs, hidden = root.io_count(recursive=True)
+    #     row += [
+    #         count_extremities(root),
+    #         count_joints(root),
+    #         count_motors(root),
+    #         inputs,
+    #         outputs,
+    #         hidden,
+    #         count_connections(root)
+    #     ]
+    #
+    #     csv_writer.writerow(row)
 
     def fitness(self):
         """

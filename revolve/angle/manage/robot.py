@@ -80,7 +80,7 @@ class Robot(object):
         :return:
         :rtype: bool
         """
-        with open(details_file, 'w') as f:
+        with open(details_file, 'wb') as f:
             f.write(self.robot.SerializeToString())
 
         row = [self.robot.id]

@@ -105,8 +105,8 @@ class BodyGenerator(object):
 
         root_part_type = self.choose_part(
                 parts=self.root_parts,
-                parent_part=None,
-                root_part=None,
+                parent=None,
+                body=None,
                 root=True)
         root_part = root_specs[root_part_type]
         body.root.id = "bodygen-root"
@@ -278,7 +278,6 @@ class BodyGenerator(object):
 
     @staticmethod
     def choose_attachment(
-            self,
             attachments,
             root_part
     ):
@@ -295,7 +294,6 @@ class BodyGenerator(object):
 
     @staticmethod
     def choose_target_slot(
-            self,
             new_part,
             parent,
             root_part

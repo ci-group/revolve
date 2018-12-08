@@ -54,30 +54,3 @@ def multi_future(children, quiet_exceptions=()):
             f.add_done_callback(callback)
 
     return future
-
-
-async def wait_for(coro):
-    """
-    This function was created to counter the common
-    pattern where you do this:
-
-    ```
-    fut = yield From(some_func())
-    result = yield From(fut)
-    ```
-
-    which can instead now be done like this:
-
-    ```
-    result = yield From(wait_for(some_func())
-    ```
-
-    saving an annoying couple of lines of code
-    every time.
-
-    :param coro: A coroutine
-    :return:
-    """
-    fut = await coro
-    result = await fut
-    return result
