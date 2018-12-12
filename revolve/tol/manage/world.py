@@ -21,7 +21,7 @@ from revolve.sdfbuilder import SDF, Model, Pose, Link
 from ..config import constants, parser, str_to_address, make_revolve_config
 from ..build import get_builder, get_simulation_robot
 from ..spec import get_tree_generator
-from revolve.util import multi_future, wait_for
+from revolve.util import multi_future
 from .robot import Robot
 from ..scenery import Wall, BirthClinic
 from ..logging import logger

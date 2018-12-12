@@ -25,7 +25,7 @@ from ...gazebo import manage, RequestHandler
 from ...spec import Robot as PbRobot
 from .robot import Robot
 from ...logging import logger
-from ...util import multi_future, Time, wait_for
+from ...util import multi_future, Time
 from revolve.spec.msgs import ModelInserted, RobotStates
 from revolve.spec.msgs import BoundingBox
 
@@ -211,9 +211,9 @@ class WorldManager(manage.WorldManager):
             self._update_states
         )
 
-        await (wait_for(self.set_state_update_frequency(
+        await (self.set_state_update_frequency(
                 freq=self.state_update_frequency
-        )))
+        ))
 
         self.battery_handler = await (RequestHandler.create(
                 manager=self.manager,
@@ -241,13 +241,13 @@ class WorldManager(manage.WorldManager):
             return False
 
         # Pause the world
-        await (wait_for(self.pause()))
+        await (self.pause())
 
         # Obtain a copy of the current world SDF from Gazebo and write it to
         # file
-        response = await (wait_for(self.request_handler.do_gazebo_request(
+        response = await (self.request_handler.do_gazebo_request(
                 request="world_sdf"
-        )))
+        ))
         if response.response == "error":
             logger.warning("WARNING: requesting world state resulted in "
                            "error. Snapshot failed.")
