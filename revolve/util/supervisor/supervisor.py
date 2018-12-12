@@ -206,7 +206,7 @@ class Supervisor(object):
 
             # We could do this a lot less often, but this way we get
             # output once every second.
-            time.sleep(10.0)
+            time.sleep(0.1)
 
     def _pass_through_stdout(self):
         """
@@ -319,11 +319,13 @@ class Supervisor(object):
         print("Launching experiment manager...")
         args = self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
-        self.procs['manager'] = subprocess.Popen(
+        process = subprocess.Popen(
                 args,
                 bufsize=1,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
+
+        self.procs['manager'] = process
         self._add_output_stream('manager')
 
     @staticmethod

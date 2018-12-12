@@ -36,7 +36,8 @@ class OnlineEvolutionSupervisor(Supervisor):
 if __name__ == "__main__":
 
     supervisor = OnlineEvolutionSupervisor(
-        manager_cmd=os.path.join(here, "manager.py"),
+        manager_cmd='python3',
+        manager_args=['-u', os.path.join(here, "manager.py")],
         world_file="worlds/gait-learning.world",
         gazebo_cmd="gazebo",
         gazebo_args=["--verbose"],
