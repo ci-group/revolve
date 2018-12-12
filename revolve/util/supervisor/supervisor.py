@@ -213,11 +213,11 @@ class Supervisor(object):
         Passes process piped standard out through to normal stdout
         :return:
         """
-        for stdout, stderr in list(self.streams.values()):
+        for NBSRout, NBSRerr in list(self.streams.values()):
             try:
                 for _ in range(1000):
-                    out = stdout.readline(0.005)
-                    err = stderr.readline(0.005)
+                    out = NBSRout.readline(0.005)
+                    err = NBSRerr.readline(0.005)
 
                     if not out and not err:
                         break
@@ -227,11 +227,11 @@ class Supervisor(object):
 
                     if err:
                         self.write_stderr(err)
-            except Exception:
-                pass
+            except Exception as e:
+                print("Exception while handling file reading:\n{}".format(e), file=sys.stderr)
 
     @staticmethod
-    def write_stdout(self, data):
+    def write_stdout(data):
         """
         Overridable method to write to stdout, useful if you
         want to apply some kind of filter, or write to a file
@@ -242,7 +242,8 @@ class Supervisor(object):
         """
         sys.stdout.write(data)
 
-    def write_stderr(self, data):
+    @staticmethod
+    def write_stderr(data):
         """
         Overridable method to write to stderr, useful if you
         want to apply some kind of filter, or write to a file

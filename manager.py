@@ -83,8 +83,7 @@ async def run():
     # I usually start the world paused, un-pause it here. Note that pause
     # again returns a future for when the request is sent, that future in
     # turn resolves when a response has been received. This is the general
-    # convention for all message actions in the world manager. `wait_for`
-    # saves the hassle of grabbing the intermediary future in this case.
+    # convention for all message actions in the world manager.
     await world.pause(False)
 
     # Start a run loop to do some stuff
