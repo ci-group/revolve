@@ -71,7 +71,7 @@ PointIntensitySensor::PointIntensitySensor(
 /////////////////////////////////////////////////
 void PointIntensitySensor::Read(double *_input)
 {
-  double distance = this->model_->WorldPose().Pos().Distance(this->point_);
+  auto distance = this->model_->WorldPose().Pos().Distance(this->point_);
 
   if (distance < this->r_)
   {

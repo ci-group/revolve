@@ -32,9 +32,9 @@ using namespace revolve::gazebo;
 
 ThymioBrain::ThymioBrain(
     ::gazebo::physics::ModelPtr _model,
-    sdf::ElementPtr _node,
-    std::vector< MotorPtr > &_motors,
-    std::vector< SensorPtr > &_sensors)
+    sdf::ElementPtr /* _node */,
+    std::vector< MotorPtr > &/* _motors */,
+    std::vector< SensorPtr > &/* _sensors */)
 {
   std::cout << "Hello!" << std::endl;
   this->robot_ = _model;
@@ -45,8 +45,8 @@ ThymioBrain::~ThymioBrain() = default;
 
 void ThymioBrain::Update(
     const std::vector< MotorPtr > &_motors,
-    const std::vector< SensorPtr > &_sensors,
-    double _time,
+    const std::vector< SensorPtr > &/* _sensors */,
+    double /* _time */,
     double _step)
 {
   std::random_device rd;

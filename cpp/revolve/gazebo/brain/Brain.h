@@ -50,8 +50,8 @@ namespace revolve
       public: virtual void Update(
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors,
-          double _time,
-          double _step) = 0;
+          const double _time,
+          const double _step) = 0;
     };
   } /* namespace gazebo */
 } /* namespace revolve */

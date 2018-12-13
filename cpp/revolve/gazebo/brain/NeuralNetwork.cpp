@@ -50,10 +50,10 @@ void neuronHelper(
 
 /////////////////////////////////////////////////
 NeuralNetwork::NeuralNetwork(
-    ::gazebo::physics::ModelPtr _model,
-    sdf::ElementPtr _node,
-    std::vector< MotorPtr > &_motors,
-    std::vector< SensorPtr > &_sensors)
+    const ::gazebo::physics::ModelPtr &_model,
+    const sdf::ElementPtr &_node,
+    const std::vector< MotorPtr > &_motors,
+    const std::vector< SensorPtr > &_sensors)
     : flipState_(false)
     , nInputs_(0)
     , nOutputs_(0)
@@ -303,7 +303,7 @@ NeuralNetwork::NeuralNetwork(
 NeuralNetwork::~NeuralNetwork() = default;
 
 /////////////////////////////////////////////////
-void NeuralNetwork::Step(double _time)
+void NeuralNetwork::Step(const double _time)
 {
   unsigned int i = 0;
   unsigned int j = 0;
@@ -394,8 +394,8 @@ void NeuralNetwork::Step(double _time)
 void NeuralNetwork::Update(
     const std::vector< MotorPtr > &_motors,
     const std::vector< SensorPtr > &_sensors,
-    double _time,
-    double _step)
+    const double _time,
+    const double _step)
 {
   boost::mutex::scoped_lock lock(networkMutex_);
 
@@ -411,7 +411,7 @@ void NeuralNetwork::Update(
 
   // Since the output neurons are the first in the state
   // array we can just use it to update the motors directly.
-  double *output = flipState_ ? &state2_[0] : &state1_[0];
+  auto output = flipState_ ? &state2_[0] : &state1_[0];
 
   // Send new signals to the motors
   p = 0;
@@ -482,15 +482,19 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
     // weights down, then zero out the last entry
     s = sizeof(inputWeights_[0]);
     double *weightArrays[] = {
-        inputWeights_, outputWeights_, hiddenWeights_
+        inputWeights_,
+        outputWeights_,
+        hiddenWeights_
     };
     unsigned int sizes[] = {
-        nInputs_, nOutputs_, nHidden_
+        nInputs_,
+        nOutputs_,
+        nHidden_
     };
 
-    for (unsigned int k = 0; k < 3; ++k)
+    for (size_t k = 0; k < 3; ++k)
     {
-      auto *weights = weightArrays[k];
+      auto weights = weightArrays[k];
       auto size = sizes[k];
 
       for (j = 0; j < size; ++j)
@@ -612,7 +616,7 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
 void NeuralNetwork::ConnectionHelper(
     const std::string &_src,
     const std::string &_dst,
-    double _weight)
+    const double _weight)
 {
   if (not layerMap_.count(_src))
   {

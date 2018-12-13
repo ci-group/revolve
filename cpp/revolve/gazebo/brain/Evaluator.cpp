@@ -47,11 +47,10 @@ void Evaluator::Reset()
 /////////////////////////////////////////////////
 double Evaluator::Fitness()
 {
-  double dS = std::sqrt(
-      std::pow(this->previousPosition_.Pos().X() -
-               this->currentPosition_.Pos().X(), 2) +
-      std::pow(this->previousPosition_.Pos().Y() -
-               this->currentPosition_.Pos().Y(), 2));
+  auto dS = std::sqrt(std::pow(this->previousPosition_.Pos().X() -
+                               this->currentPosition_.Pos().X(), 2) +
+                      std::pow(this->previousPosition_.Pos().Y() -
+                               this->currentPosition_.Pos().Y(), 2));
   this->previousPosition_ = this->currentPosition_;
   return dS / this->evaluationRate_;
 }

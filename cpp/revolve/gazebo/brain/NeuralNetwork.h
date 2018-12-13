@@ -75,10 +75,10 @@ namespace revolve
       /// \param[in] _motors Reference to a motor list, it be reordered
       /// \param[in] _sensors Reference to a sensor list, it might be reordered
       public: NeuralNetwork(
-          ::gazebo::physics::ModelPtr _model,
-          sdf::ElementPtr _node,
-          std::vector< MotorPtr > &_motors,
-          std::vector< SensorPtr > &_sensors);
+          const ::gazebo::physics::ModelPtr &_model,
+          const sdf::ElementPtr &_node,
+          const std::vector< MotorPtr > &_motors,
+          const std::vector< SensorPtr > &_sensors);
 
       /// \brief Destructor
       public: virtual ~NeuralNetwork();
@@ -91,11 +91,11 @@ namespace revolve
       public:  virtual void Update(
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors,
-          double _time,
-          double _step);
+          const double _time,
+          const double _step);
 
       /// \brief Steps the neural network
-      protected: void Step(double _time);
+      protected: void Step(const double _time);
 
       /// \brief Request handler to modify the neural network
       protected: void Modify(ConstModifyNeuralNetworkPtr &_request);
@@ -172,7 +172,7 @@ namespace revolve
       private: void ConnectionHelper(
           const std::string &_src,
           const std::string &_dst,
-          double _weight);
+          const double _weight);
     };
   } /* namespace gazebo */
 } /* namespace revolve */

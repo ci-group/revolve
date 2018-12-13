@@ -68,10 +68,10 @@ namespace revolve
       /// \param[in] _sensors: vector list of robot's sensors
       /// \return pointer to the RLPower class object
       public: RLPower(
-          ::gazebo::physics::ModelPtr _model,
-          sdf::ElementPtr _node,
-          std::vector< MotorPtr > &_motors,
-          std::vector< SensorPtr > &_sensors);
+          const ::gazebo::physics::ModelPtr &_model,
+          const sdf::ElementPtr &_node,
+          const std::vector< MotorPtr > &_motors,
+          const std::vector< SensorPtr > &_sensors);
 
       /// \brief Destructor
       public: ~RLPower() override;
@@ -92,10 +92,10 @@ namespace revolve
       protected: struct Config;
 
       /// \brief Static method to parse received configuration file
-      public: static Config ParseSDF(sdf::ElementPtr brain);
+      public: static Config ParseSDF(const sdf::ElementPtr &_brain);
 
       /// \brief Steps through the splines
-      protected: void Step(double time);
+      protected: void Step(const double _time);
 
       /// \brief
       protected: struct Config
@@ -113,7 +113,7 @@ namespace revolve
       };
 
       /// \brief Request handler to modify the neural network
-      protected: void Modify(ConstModifyPolicyPtr &req);
+      protected: void Modify(ConstModifyPolicyPtr &_request);
 
       /// \brief Transport node
       protected: ::gazebo::transport::NodePtr node_;
@@ -131,7 +131,7 @@ namespace revolve
       private: void UpdatePolicy(const size_t _numSplines);
 
       /// \brief  Load saved policy from JSON file
-      private: void LoadPolicy(std::string const &policyPath);
+      private: void LoadPolicy(const std::string &_policyPath);
 
       /// \brief Generate interpolated spline based on number of sampled control
       /// points in 'source_y'

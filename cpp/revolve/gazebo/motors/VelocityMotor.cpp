@@ -70,7 +70,7 @@ void VelocityMotor::Update(
     double /*step*/)
 {
   // Just one network output, which is the first
-  double output = outputs[0];
+  auto output = outputs[0];
 
   // Motor noise in range +/- noiseLevel * actualValue
   output += ((2 * ignition::math::Rand::DblUniform() * this->noise_) -

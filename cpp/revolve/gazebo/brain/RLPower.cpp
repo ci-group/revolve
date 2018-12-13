@@ -37,10 +37,10 @@ using namespace revolve::gazebo;
 
 /////////////////////////////////////////////////
 RLPower::RLPower(
-    ::gazebo::physics::ModelPtr _model,
-    sdf::ElementPtr _node,
-    std::vector< MotorPtr > &_motors,
-    std::vector< SensorPtr > &_sensors)
+    const ::gazebo::physics::ModelPtr &_model,
+    const sdf::ElementPtr &/* _node */,
+    const std::vector< MotorPtr > &_motors,
+    const std::vector< SensorPtr > &/* _sensors */)
     : generationCounter_(0)
     , cycleStartTime_(-1)
     , startTime_(-1)
@@ -80,7 +80,7 @@ RLPower::~RLPower() = default;
 /////////////////////////////////////////////////
 void RLPower::Update(
     const std::vector< MotorPtr > &_motors,
-    const std::vector< SensorPtr > &_sensors,
+    const std::vector< SensorPtr > &/* _sensors */,
     double _time,
     double _step)
 {
@@ -473,7 +473,7 @@ double RLPower::Fitness()
   return this->evaluator_->Fitness();
 }
 
-void RLPower::Modify(ConstModifyPolicyPtr &req)
+void RLPower::Modify(ConstModifyPolicyPtr &/* _request */)
 {
   boost::mutex::scoped_lock lock(this->rlpowerMutex_);
 
