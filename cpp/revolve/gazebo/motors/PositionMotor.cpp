@@ -37,7 +37,6 @@ PositionMotor::PositionMotor(
 {
   // Retrieve upper / lower limit from joint set in parent constructor
   // Truncate ranges to [-pi, pi]
-  /// TODO: Milan fix
   this->upperLimit_ = std::fmin(M_PI, this->joint_->UpperLimit(0));
   this->lowerLimit_ = std::fmax(-M_PI, this->joint_->LowerLimit(0));
   this->fullRange_ = ((this->upperLimit_ - this->lowerLimit_ + 1e-12) >=
@@ -64,7 +63,7 @@ PositionMotor::PositionMotor(
   // updateConnection_ = gz::event::Events::ConnectWorldUpdateBegin(boost::bind(
   //   &PositionMotor::OnUpdate, this, _1));
 
-  double maxEffort = joint_->GetEffortLimit(0);
+  auto maxEffort = joint_->GetEffortLimit(0);
   joint_->SetParam("fmax", 0, maxEffort);
 }
 
@@ -85,15 +84,14 @@ void PositionMotor::Update(
   double output = outputs[0];
 
   // Motor noise in range +/- noiseLevel * actualValue
-  /// TODO: Milan fix
   output += ((2 * ignition::math::Rand::DblUniform() * this->noise_) -
              this->noise_) *
             output;
 
   // Truncate output to [0, 1]
-  // HACK Don't actually target the full joint range, this way
-  // a low update rate won't mess with the joint constraints as much leading
-  // to a more stable system.
+  // Note: Don't actually target the full joint range, this way a low update
+  // rate won't mess with the joint constraints as much leading to a more
+  // stable system.
   output = fmin(fmax(1e-5, output), 0.99999);
   this->positionTarget_ = this->lowerLimit_ +
                           (output * (this->upperLimit_ - this->lowerLimit_));
@@ -105,7 +103,7 @@ void PositionMotor::Update(
 /////////////////////////////////////////////////
 void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
 {
-  gz::common::Time stepTime = _simTime - this->prevUpdateTime_;
+  auto stepTime = _simTime - this->prevUpdateTime_;
   if (stepTime <= 0)
   {
     // Only respond to positive step times
@@ -129,8 +127,8 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
     position += (position > 0 ? -2 * M_PI : 2 * M_PI);
   }
 
-  double error = position - this->positionTarget_;
-  double cmd = this->pid_.Update(error, stepTime);
+  auto error = position - this->positionTarget_;
+  auto cmd = this->pid_.Update(error, stepTime);
 
   this->joint_->SetParam("vel", 0, cmd);
 }

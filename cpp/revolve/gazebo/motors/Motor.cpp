@@ -54,37 +54,43 @@ unsigned int Motor::Outputs()
 }
 
 /////////////////////////////////////////////////
-gz::common::PID Motor::CreatePid(sdf::ElementPtr pidElem)
+gz::common::PID Motor::CreatePid(sdf::ElementPtr _sdfPID)
 {
-  double pv = 0, iv = 0, dv = 0, iMax = 0, iMin = 0, cmdMax = 0, cmdMin = 0;
+  auto pv = 0.0;
+  auto iv = 0.0;
+  auto dv = 0.0;
+  auto iMax = 0.0;
+  auto iMin = 0.0;
+  auto cmdMax = 1.0;
+  auto cmdMin = -1.0;
 
-  if (pidElem->HasElement("rv:p"))
+  if (_sdfPID->HasElement("rv:p"))
   {
-    pv = pidElem->GetElement("rv:p")->Get< double >();
+    pv = _sdfPID->GetElement("rv:p")->Get< double >();
   }
-  if (pidElem->HasElement("rv:i"))
+  if (_sdfPID->HasElement("rv:i"))
   {
-    iv = pidElem->GetElement("rv:i")->Get< double >();
+    iv = _sdfPID->GetElement("rv:i")->Get< double >();
   }
-  if (pidElem->HasElement("rv:d"))
+  if (_sdfPID->HasElement("rv:d"))
   {
-    dv = pidElem->GetElement("rv:d")->Get< double >();
+    dv = _sdfPID->GetElement("rv:d")->Get< double >();
   }
-  if (pidElem->HasElement("rv:i_max"))
+  if (_sdfPID->HasElement("rv:i_max"))
   {
-    iMax = pidElem->GetElement("rv:i_max")->Get< double >();
+    iMax = _sdfPID->GetElement("rv:i_max")->Get< double >();
   }
-  if (pidElem->HasElement("rv:i_min"))
+  if (_sdfPID->HasElement("rv:i_min"))
   {
-    iMin = pidElem->GetElement("rv:i_min")->Get< double >();
+    iMin = _sdfPID->GetElement("rv:i_min")->Get< double >();
   }
-  if (pidElem->HasElement("rv:cmd_max"))
+  if (_sdfPID->HasElement("rv:cmd_max"))
   {
-    cmdMax = pidElem->GetElement("rv:cmd_max")->Get< double >();
+    cmdMax = _sdfPID->GetElement("rv:cmd_max")->Get< double >();
   }
-  if (pidElem->HasElement("rv:cmd_min"))
+  if (_sdfPID->HasElement("rv:cmd_min"))
   {
-    cmdMin = pidElem->GetElement("rv:cmd_min")->Get< double >();
+    cmdMin = _sdfPID->GetElement("rv:cmd_min")->Get< double >();
   }
 
   return gz::common::PID(pv, iv, dv, iMax, iMin, cmdMax, cmdMin);

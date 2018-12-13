@@ -53,7 +53,7 @@ namespace revolve
       /// motor to decide how to interpret this. This is a pointer to an
       /// array of values, out of which the motor should read the first `n`
       /// values if it specifies `n` outputs.
-      /// \param[in[ step Actuation time in seconds
+      /// \param[in] step Actuation time in seconds
       public: virtual void Update(
           double *_output,
           double _step) = 0;
@@ -71,7 +71,7 @@ namespace revolve
       /// \brief Create PID element
       /// \param pid Pointer to the rv:pid element
       /// \return Gazebo PID
-      public: static ::gazebo::common::PID CreatePid(sdf::ElementPtr _pid);
+      public: static ::gazebo::common::PID CreatePid(sdf::ElementPtr _sdfPID);
 
       /// \brief The model this motor is part of
       protected: ::gazebo::physics::ModelPtr model_;
