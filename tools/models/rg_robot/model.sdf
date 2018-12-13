@@ -139,7 +139,7 @@
 <upper>7.853982e-01</upper>
 <effort>1.765800e-01</effort>
 <velocity>5.235988e+00</velocity></limit></axis></joint>
-<plugin name="robot_controller" filename="libtolrobotcontrol.so"><rv:robot_config xmlns:rv="https://github.com/ElteHupkes/revolve"><rv:update_rate>1.000000e+01</rv:update_rate>
+<plugin name="robot_controller" filename="libRobotControlPlugin.so"><rv:robot_config xmlns:rv="https://github.com/ElteHupkes/revolve"><rv:update_rate>1.000000e+01</rv:update_rate>
 <rv:brain><rv:neuron layer="input" type="Input" id="Core-in-5" part_id="Core" />
 <rv:neuron layer="input" type="Input" id="Core-in-4" part_id="Core" />
 <rv:neuron layer="input" type="Input" id="Core-in-1" part_id="Core" />

@@ -411,7 +411,7 @@
       <parent>chassis</parent>
     </joint>
 
-    <plugin name="robot_controller" filename="libtolrobotcontrol.so">
+    <plugin name="robot_controller" filename="libRobotControlPlugin.so">
       <rv:robot_config xmlns:rv="https://github.com/ElteHupkes/revolve">
         <rv:update_rate>8.000000e+00</rv:update_rate>
 

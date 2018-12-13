@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-from sdfbuilder import SDF
-from sdfbuilder.math import Vector3
-
-from revolve.build.sdf import RobotBuilder, BodyBuilder, NeuralNetBuilder
+from revolve.build.sdf import RobotBuilder
+from revolve.build.sdf import BodyBuilder
+from revolve.build.sdf import NeuralNetBuilder
 from revolve.convert import yaml_to_robot
+from revolve.sdfbuilder import SDF
+from revolve.sdfbuilder.math import Vector3
 
 from .generated_sdf import body_spec, brain_spec
 
@@ -49,7 +50,7 @@ brain:
 
 bot = yaml_to_robot(body_spec, brain_spec, bot_yaml)
 builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
-model = builder.get_sdf_model(bot, "libtolrobotcontrol.so")
+model = builder.get_sdf_model(bot, "libRobotControlPlugin.so")
 model.translate(Vector3(0, 0, 0.5))
 sdf = SDF()
 sdf.add_element(model)

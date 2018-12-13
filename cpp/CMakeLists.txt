@@ -79,7 +79,7 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 # TODO: This part is currently a mess, and it should be handeled better
 find_package(Protobuf REQUIRED)
 
-# Find the protobuf import directory for Gazebo. Found in this
+# Find the Protobuf import directory for Gazebo. Found in this
 # tutorial: http://gazebosim.org/tutorials?tut=custom_messages&cat=transport
 set(GAZEBO_PROTOBUF_DIR)
 foreach(ITR ${GAZEBO_INCLUDE_DIRS})
@@ -103,10 +103,9 @@ set(SPEC_DIR "${CMAKE_SOURCE_DIR}/cpp/revolve/msgs")
 # All protobuf files we need, including the Gazebo ones
 file(GLOB_RECURSE REVOLVE_PROTOS ${SPEC_DIR}/*.proto)
 
-# Do the protobuf generation by hand for more flexibility. I'm generating
-# the files in a subdirectory such that it can potentially be added to
-# the include path for work-in-progress projects I co-develop with
-# this.
+# Do the protobuf generation by hand for more flexibility. The files are
+# generated in a subdirectory such that it can potentially be added to the
+# include path for work-in-progress projects I co-develop with this.
 # Copied most of this code from
 # http://stackoverflow.com/questions/29346488/protobuf-generate-cpp-not-generating-src-and-header-files
 # Also see
@@ -154,7 +153,7 @@ set_source_files_properties(
 
 # Plugin C++ files
 file(GLOB_RECURSE
-	 REVOLVE_GZ_SRC
+     REVOLVE_GZ_SRC
      revolve/gazebo/brain/*.cpp
      revolve/gazebo/motors/*.cpp
      revolve/gazebo/sensors/*.cpp
@@ -171,49 +170,49 @@ file(GLOB_RECURSE
 
 # Generate spec library with the messages
 add_library(
-        revolve-proto STATIC
-        ${PROTO_SRCS}
+    revolve-proto STATIC
+    ${PROTO_SRCS}
 )
 set_target_properties(revolve-proto PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(
-        revolve-proto
-        ${PROTOBUF_LIBRARIES}
+    revolve-proto
+    ${PROTOBUF_LIBRARIES}
 )
 
 # Create Revolve bundle plugin
 add_library(
-        revolve-gazebo
-        ${REVOLVE_GZ_SRC}
+    revolve-gazebo
+    ${REVOLVE_GZ_SRC}
 )
 target_link_libraries(
-        revolve-gazebo
-        ${GAZEBO_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${GSL_LIBRARIES}
+    revolve-gazebo
+    ${GAZEBO_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${GSL_LIBRARIES}
 )
 
 # Create World plugin
 add_library(
-        revolveworldcontrol SHARED
-        revolve/gazebo/plugin/register_world_plugin.cpp
+    WorldControlPlugin SHARED
+    revolve/gazebo/plugin/register_world_plugin.cpp
 )
 target_link_libraries(
-        revolveworldcontrol
-        revolve-gazebo
-        revolve-proto
-        ${GAZEBO_LIBRARIES}
+    WorldControlPlugin
+    revolve-gazebo
+    revolve-proto
+    ${GAZEBO_LIBRARIES}
 )
 
 # Create Robot plugin
 add_library(
-        tolrobotcontrol SHARED
-        revolve/gazebo/plugin/register_robot_plugin.cpp
+    RobotControlPlugin SHARED
+    revolve/gazebo/plugin/register_robot_plugin.cpp
 )
 target_link_libraries(
-        tolrobotcontrol
-        revolve-gazebo
-        revolve-proto
-        ${GAZEBO_LIBRARIES}
+    RobotControlPlugin
+    revolve-gazebo
+    revolve-proto
+    ${GAZEBO_LIBRARIES}
 )
 
 # Install
