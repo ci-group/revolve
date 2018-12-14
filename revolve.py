@@ -2,6 +2,7 @@
 import os
 import sys
 
+from revolve import parser
 from revolve.util import Supervisor
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -34,7 +35,7 @@ class OnlineEvolutionSupervisor(Supervisor):
 
 
 if __name__ == "__main__":
-
+    configuration = parser.parse_args()
     supervisor = OnlineEvolutionSupervisor(
         manager_cmd='python3',
         manager_args=['-u', os.path.join(here, "examples/manager.py")],

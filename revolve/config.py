@@ -35,14 +35,15 @@ class CustomParser(argparse.ArgumentParser):
 
         return [k] if const else [k, v]
 
-    def write_to_file(self, args, file):
+    @staticmethod
+    def write_to_file(args, file):
         """
-        Takes the result of `parse_args` and writes it back
-        to a file.
+        Takes the result of `parse_args` and writes it back to a file.
         """
-        lines = ["%s=%s\n" % (k, args.__dict__[k]) for k in sorted(args.__dict__.keys())]
-        with open(file, 'w') as o:
-            o.writelines(lines)
+        lines = ["{key}={value}\n".format(key=k, value=args.__dict__[k]) for k
+                 in sorted(args.__dict__.keys())]
+        with open(file, 'w') as configuration_output:
+            configuration_output.writelines(lines)
 
 
 def str_to_bool(v):
@@ -92,9 +93,9 @@ parser.add_argument(
 parser.add_argument(
     '--evaluation-time',
     default=12, type=float,
-    help="The size of the `speed window` for each robot, i.e. the number of past (simulation) seconds "
-         "over which its speed is evaluated. In offline evolution, this determines the length"
-         "of the experiment run."
+    help="The size of the `speed window` for each robot, i.e. the number of "
+         "past (simulation) seconds over which its speed is evaluated. In "
+         "offline evolution, this determines the length of the experiment run."
 )
 
 parser.add_argument(
@@ -136,7 +137,8 @@ parser.add_argument(
 parser.add_argument(
     '--enforce-planarity',
     default=True, type=str_to_bool,
-    help="Force bricks to be in default orientation and disable parametric bar joint rotation."
+    help="Force bricks to be in default orientation and disable parametric "
+         "bar joint rotation."
 )
 
 parser.add_argument(

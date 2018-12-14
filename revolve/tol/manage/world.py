@@ -4,48 +4,41 @@ from __future__ import print_function
 import os
 import time
 
-# Pygazebo
 from pygazebo.msg import model_pb2
 from pygazebo.msg import poses_stamped_pb2
 from pygazebo.msg import world_control_pb2
 from pygazebo.msg import world_stats_pb2
 
-# Revolve / sdfbuilder
+from revolve import parser, str_to_address, make_revolve_config
 from revolve.angle import Tree, Crossover, Mutator, WorldManager
 from revolve.angle.robogen.spec import make_planar
-
-from revolve.sdfbuilder.math import Vector3, Quaternion
 from revolve.sdfbuilder import SDF, Model, Pose, Link
-
-# Local
-from ..config import constants, parser, str_to_address, make_revolve_config
-from ..build import get_builder, get_simulation_robot
-from ..spec import get_tree_generator
 from revolve.util import multi_future
-from .robot import Robot
-from ..scenery import Wall, BirthClinic
-from ..logging import logger
 
-# Construct a message base from the time. This should make
-# it unique enough for consecutive use when the script
-# is restarted.
+from .robot import Robot
+from ..config import constants
+from ..build import get_builder, get_simulation_robot
+from ..logging import logger
+from ..scenery import Wall
+from ..spec import get_tree_generator
+
+# Construct a message base from the time. This should make it unique enough
+# for consecutive use when the script is restarted.
 _a = time.time()
 MSG_BASE = int(_a - 14e8 + (_a - int(_a)) * 1e5)
 
 
 class World(WorldManager):
     """
-    A class that is used to manage the world, meaning it provides
-    methods to insert / remove robots and request information
-    about where they are.
+    A class that is used to manage the world, meaning it provides methods to
+    insert / remove robots and request information about where they are.
 
-    The world class contains a number of coroutines, usually from
-    a request / response perspective. These methods thus work with
-    two futures - one for the request to complete, one for the
-    response to arrive. The convention for these methods is to
-    always yield the first future, because it has proven problematic
-    to send multiple messages over the same channel, so a request
-    is always sent until completion. The methods then return the
+    The world class contains a number of coroutines, usually from a
+    request/response perspective. These methods thus work with two futures -
+    one for the request to complete, one for the response to arrive. The
+    convention for these methods is to always yield the first future, because it
+    has proven problematic to send multiple messages over the same channel,
+    so a request is always sent until completion. The methods then return the
     future that resolves when the response is delivered.
     """
 

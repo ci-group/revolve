@@ -9,12 +9,12 @@ newpath = os.path.join(current_dir, "..")
 sys.path.append(newpath)
 
 from pygazebo.pygazebo import DisconnectError
-from revolve.sdfbuilder import Pose
-from revolve.sdfbuilder.math import Vector3
 
+from revolve import parser
 from revolve.angle import Tree
 from revolve.convert.yaml import yaml_to_robot
-from revolve.tol.config import parser
+from revolve.sdfbuilder import Pose
+from revolve.sdfbuilder.math import Vector3
 from revolve.tol.manage import World
 
 
