@@ -5,20 +5,14 @@ import asyncio
 import logging
 import sys
 
-from pygazebo import Manager
-from pygazebo.msg.request_pb2 import Request as AnalyzeRequest
-
-from revolve.sdfbuilder import SDF, Link, Model
+from revolve.sdfbuilder import SDF
 from revolve.sdfbuilder.sensor import Sensor
 
 from ..spec import BodyAnalysisResponse
-from ..build.sdf import BodyPart
-
 from .connect import connect, RequestHandler
 
-# Message ID sequencer, start at some high value to
-# prevent ID clashes (don't know if this would ever be
-# a problem though).
+# Message ID sequencer, start at some high value to prevent ID clashes
+# (don't know if this would ever be a problem though).
 _counter = 1234321000
 
 

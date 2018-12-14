@@ -8,7 +8,7 @@ from revolve.sdfbuilder.structure import Mesh, Visual, Collision
 from revolve.sdfbuilder.math import Vector3
 from revolve.sdfbuilder.util import number_format as nf
 
-from ..config import constants
+from .. import constants
 
 # Radius and height without scaling
 MESH_DIAMETER = 4.0

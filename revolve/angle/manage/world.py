@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-# Global imports
-import asyncio
 import csv
 import os
 import pickle
@@ -10,24 +8,23 @@ import shutil
 import sys
 import traceback
 
+from asyncio import Future
 from datetime import datetime
 
-from asyncio import Future
-
-from pygazebo.msg import gz_string_pb2, request_pb2, response_pb2
+from pygazebo.msg import gz_string_pb2
 
 from revolve.sdfbuilder import SDF
 from revolve.sdfbuilder.math import Vector3
-
-
-# Local imports
-from ...gazebo import manage, RequestHandler
-from ...spec import Robot as PbRobot
-from .robot import Robot
-from ...logging import logger
-from ...util import multi_future, Time
-from revolve.spec.msgs import ModelInserted, RobotStates
 from revolve.spec.msgs import BoundingBox
+from revolve.spec.msgs import ModelInserted
+from revolve.spec.msgs import RobotStates
+
+from .robot import Robot
+from ...gazebo import manage
+from ...gazebo import RequestHandler
+from ...logging import logger
+from ...util import multi_future
+from ...util import Time
 
 
 class WorldManager(manage.WorldManager):

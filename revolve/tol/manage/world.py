@@ -15,10 +15,10 @@ from revolve.angle.robogen.spec import make_planar
 from revolve.sdfbuilder import SDF, Model, Pose, Link
 from revolve.util import multi_future
 
+from .. import logger
+from .. import constants
 from .robot import Robot
-from ..config import constants
 from ..build import get_builder, get_simulation_robot
-from ..logging import logger
 from ..scenery import Wall
 from ..spec import get_tree_generator
 

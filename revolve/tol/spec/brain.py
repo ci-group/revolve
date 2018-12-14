@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from revolve.generate import NeuralNetworkGenerator
 from revolve.spec import default_neural_net
 
-from ..config import constants
+from .. import constants
 
 
 def get_brain_spec(conf):
