@@ -36,17 +36,13 @@ class Supervisor(object):
     Utility class that allows you to automatically restore a crashing
     experiment and continue to run it from a snapshotted. It does so
     by assuming a snapshot functionality similar to that in Revolve.Angle's
-    WorldManager. The supervisor launches subprocesses for (a) a world,
-    (b) a body analyzer and (c) your manager / experiment. It determines
-     a fixed output directory for this experiment run, which is provided
-    to the manager with the `restore_arg` argument.
+    WorldManager. The supervisor launches subprocesses for (a) a world 
+    and (b) your manager / experiment. It determines a fixed output directory
+    for this experiment run, which is provided to the manager with 
+    the `restore_arg` argument.
 
-    The only way the experiment is considered finished is if (c) finishes with
-    a zero exit code. If (a) or (b) shut down or (c) shuts down with a
-    nonzero exit code, this is considered a failure, which will result in
-    all processes being killed and restarted. When the manager is restarted,
-    it will receive the given `restore_arg` with the snapshot directory,
-    and it should restore the world state from there.
+    The experiment is considered finished if any of the processes exit with 0
+    code. If any of processes exit with non zero code, the experiment dies.
     """
 
     def __init__(self,
@@ -55,7 +51,6 @@ class Supervisor(object):
                  output_directory=None,
                  manager_args=None,
                  simulator_cmd="gzserver",
-                 analyzer_cmd=None,
                  simulator_args=None,
                  restore_arg="--restore-directory",
                  snapshot_world_file="snapshot.world",
@@ -73,8 +68,6 @@ class Supervisor(object):
                                  restore directory.
         :param manager_args: Commands to pass to the manager
         :param simulator_cmd: Command to runs the Simulator
-        :param analyzer_cmd: Command to run the analyzer with, leave `None` for
-                             no analyzer.
         :param simulator_args: Arguments to the Simulator, *excluding* the world file name
         :param restore_arg: Argument used to pass the snapshot/restore
                             directory name to the manager. Note that the
@@ -99,9 +92,6 @@ class Supervisor(object):
         self.snapshot_world_file = snapshot_world_file
         self.restore_arg = restore_arg
         self.simulator_args = simulator_args if simulator_args is not None else ["-u"]
-        self.analyzer_cmd = analyzer_cmd \
-            if isinstance(analyzer_cmd, list) or not analyzer_cmd \
-            else [analyzer_cmd]
         self.simulator_cmd = simulator_cmd \
             if isinstance(simulator_cmd, list) else [simulator_cmd]
         self.manager_args = manager_args if manager_args is not None else []
@@ -184,7 +174,6 @@ class Supervisor(object):
             os.mkdir(self.snapshot_directory)
 
         print("Launching all processes...")
-        # self._launch_analyzer()
         self._launch_simulator()
         self._launch_manager()
 
@@ -279,20 +268,6 @@ class Supervisor(object):
         """
         self.streams[name] = (NBSR(self.procs[name].stdout, name),
                               NBSR(self.procs[name].stderr, name))
-
-    def _launch_analyzer(self, ready_str="Body analyzer ready"):
-        """
-        Launches the analyzer.
-        :return:
-        """
-        if not self.analyzer_cmd:
-            return
-
-        print("Launching analyzer...")
-        self.procs['analyzer'] = self._launch_with_ready_str(
-                cmd=self.analyzer_cmd,
-                ready_str=ready_str)
-        self._add_output_stream('analyzer')
 
     def _launch_simulator(self, ready_str="World plugin loaded", output_tag="simulator"):
         """
