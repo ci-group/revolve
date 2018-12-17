@@ -54,9 +54,9 @@ class Supervisor(object):
                  world_file,
                  output_directory=None,
                  manager_args=None,
-                 gazebo_cmd="gzserver",
+                 simulator_cmd="gzserver",
                  analyzer_cmd=None,
-                 gazebo_args=None,
+                 simulator_args=None,
                  restore_arg="--restore-directory",
                  snapshot_world_file="snapshot.world",
                  restore_directory=None,
@@ -72,20 +72,20 @@ class Supervisor(object):
                                  directory, which will be the parent of the
                                  restore directory.
         :param manager_args: Commands to pass to the manager
-        :param gazebo_cmd: Command to run Gazebo with
+        :param simulator_cmd: Command to runs the Simulator
         :param analyzer_cmd: Command to run the analyzer with, leave `None` for
                              no analyzer.
-        :param gazebo_args: Arguments to Gazebo, *excluding* the world file name
+        :param simulator_args: Arguments to the Simulator, *excluding* the world file name
         :param restore_arg: Argument used to pass the snapshot/restore
                             directory name to the manager. Note that the
                             output directory is not passed as part of this
                             name, just the relative path.
         :param snapshot_world_file:
         :param restore_directory:
-        :param plugins_dir_path: Full path (or relative to cwd) to the gazebo
+        :param plugins_dir_path: Full path (or relative to cwd) to the simulator
                                  plugins directory (setting env variable
                                  GAZEBO_PLUGIN_PATH).
-        :param models_dir_path: Full path (or relative to cwd) to the gazebo
+        :param models_dir_path: Full path (or relative to cwd) to the simulator
                                 models directory (setting env variable
                                 GAZEBO_MODEL_PATH).
         """
@@ -98,12 +98,12 @@ class Supervisor(object):
                 self.restore_directory)
         self.snapshot_world_file = snapshot_world_file
         self.restore_arg = restore_arg
-        self.gazebo_args = gazebo_args if gazebo_args is not None else ["-u"]
+        self.simulator_args = simulator_args if simulator_args is not None else ["-u"]
         self.analyzer_cmd = analyzer_cmd \
             if isinstance(analyzer_cmd, list) or not analyzer_cmd \
             else [analyzer_cmd]
-        self.gazebo_cmd = gazebo_cmd \
-            if isinstance(gazebo_cmd, list) else [gazebo_cmd]
+        self.simulator_cmd = simulator_cmd \
+            if isinstance(simulator_cmd, list) else [simulator_cmd]
         self.manager_args = manager_args if manager_args is not None else []
         self.manager_args += [self.restore_arg, self.snapshot_directory]
 
@@ -141,22 +141,22 @@ class Supervisor(object):
 
         print("Created Supervisor with:"
               "\n\t- manager command: {} {}"
-              "\n\t- gazebo command: {} {}"
+              "\n\t- simulator command: {} {}"
               "\n\t- world file: {}"
-              "\n\t- gazebo plugin dir: {}"
-              "\n\t- gazebo models dir: {}"
+              "\n\t- simulator plugin dir: {}"
+              "\n\t- simulator models dir: {}"
               .format(manager_cmd,
                       manager_args,
-                      gazebo_cmd,
-                      gazebo_args,
+                      simulator_cmd,
+                      simulator_args,
                       world_file,
                       plugins_dir_path,
                       models_dir_path)
               )
 
-    def launch_gazebo(self):
-        print("WARNING! launching only gazebo, no manager")
-        self._launch_gazebo()
+    def launch_simulator(self):
+        print("WARNING! launching only simulator, no manager")
+        self._launch_simulator()
 
         # Wait for the end
         while True:
@@ -185,7 +185,7 @@ class Supervisor(object):
 
         print("Launching all processes...")
         # self._launch_analyzer()
-        self._launch_gazebo()
+        self._launch_simulator()
         self._launch_manager()
 
         while True:
@@ -294,23 +294,24 @@ class Supervisor(object):
                 ready_str=ready_str)
         self._add_output_stream('analyzer')
 
-    def _launch_gazebo(self, ready_str="World plugin loaded"):
+    def _launch_simulator(self, ready_str="World plugin loaded", output_tag="simulator"):
         """
-        Launches Gazebo
+        Launches the simulator
         :return:
         """
-        print("Launching Gazebo...")
-        gz_args = self.gazebo_cmd + self.gazebo_args
+        print("Launching the simulator...")
+        gz_args = self.simulator_cmd + self.simulator_args
         snapshot_world = os.path.join(
                 self.snapshot_directory,
                 self.snapshot_world_file)
         world = snapshot_world \
             if os.path.exists(snapshot_world) else self.world_file
         gz_args.append(world)
-        self.procs['gazebo'] = self._launch_with_ready_str(
+        self.procs[output_tag] = self._launch_with_ready_str(
                 cmd=gz_args,
-                ready_str=ready_str)
-        self._add_output_stream('gazebo')
+                ready_str=ready_str,
+                output_tag=output_tag)
+        self._add_output_stream(output_tag)
 
     def _launch_manager(self):
         """
@@ -329,7 +330,7 @@ class Supervisor(object):
         self._add_output_stream('manager')
 
     @staticmethod
-    def _launch_with_ready_str(cmd, ready_str):
+    def _launch_with_ready_str(cmd, ready_str, output_tag="simulator"):
         """
         :param cmd:
         :param ready_str:
@@ -369,7 +370,7 @@ class Supervisor(object):
             try:
                 out = process.stdout.readline().decode('utf-8')
                 if len(out) > 0:
-                    sys.stdout.write("[gazebo-launch] {}".format(out))
+                    sys.stdout.write("[{}-launch] {}".format(output_tag, out))
                 if ready_str in out:
                     ready = True
             except IOError:
@@ -379,7 +380,7 @@ class Supervisor(object):
                 try:
                     err = process.stderr.readline().decode('utf-8')
                     if len(err) > 0:
-                        sys.stderr.write("[gazebo-launch] {}".format(err))
+                        sys.stderr.write("[{}-launch] {}".format(output_tag, err))
                 except IOError:
                     pass
 
