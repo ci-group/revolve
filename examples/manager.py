@@ -10,12 +10,12 @@ sys.path.append(newpath)
 
 from pygazebo.pygazebo import DisconnectError
 
-from revolve import parser
-from revolve.angle import Tree
-from revolve.convert.yaml import yaml_to_robot
-from revolve.sdfbuilder import Pose
-from revolve.sdfbuilder.math import Vector3
-from revolve.tol.manage import World
+from pyrevolve import parser
+from pyrevolve.angle import Tree
+from pyrevolve.convert.yaml import yaml_to_robot
+from pyrevolve.sdfbuilder import Pose
+from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.tol.manage import World
 
 
 async def run():

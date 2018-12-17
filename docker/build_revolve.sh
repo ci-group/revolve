@@ -4,7 +4,7 @@ set -e
 # Build Revolve
 cd /revolve
 mkdir -p build && cd build
-cmake ../cpp \
+cmake ../cpprevolve \
       -DCMAKE_BUILD_TYPE="Release"
 make -j4
 

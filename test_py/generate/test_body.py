@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import random
 import unittest
 
-from revolve.generate import BodyGenerator
-from revolve.spec import BodyImplementation, PartSpec, ParamSpec, NormalDistParamSpec
+from pyrevolve.generate import BodyGenerator
+from pyrevolve.spec import BodyImplementation, PartSpec, ParamSpec, NormalDistParamSpec
 
 # Some imaginary body specification
 body_spec = BodyImplementation(

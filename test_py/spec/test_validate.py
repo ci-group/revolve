@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import unittest
 
-from revolve.spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec, ParamSpec, Robot, BodyPart
-from revolve.spec import RobotSpecificationException as SpecError, RobotValidator
+from pyrevolve.spec import BodyImplementation, NeuralNetImplementation, PartSpec, NeuronSpec, ParamSpec, Robot, BodyPart
+from pyrevolve.spec import RobotSpecificationException as SpecError, RobotValidator
 
 # Imaginary specification for the tests
 body_spec = BodyImplementation(
