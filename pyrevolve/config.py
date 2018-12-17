@@ -209,7 +209,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--manager',
-    default='offline_evolve.py', type=str,
+    default='experiments/examples/manager.py', type=str,
     help="Determine which manager to use."
 )
 

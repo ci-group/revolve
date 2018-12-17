@@ -5,7 +5,7 @@ import asyncio
 
 # Add `..` folder in search path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-newpath = os.path.join(current_dir, "..")
+newpath = os.path.join(current_dir, '..', '..')
 sys.path.append(newpath)
 
 from pygazebo.pygazebo import DisconnectError
