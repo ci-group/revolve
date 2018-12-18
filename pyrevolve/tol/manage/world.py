@@ -82,7 +82,7 @@ class World(WorldManager):
 
         # Write settings to config file
         if self.output_directory:
-            parser.write_to_file(
+            parser.record(
                     args=conf,
                     file=os.path.join(self.output_directory, "settings.conf")
             )
