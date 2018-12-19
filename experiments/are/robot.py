@@ -1,5 +1,6 @@
 import os
 import sys
+import voxelmesh
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 newpath = os.path.join(current_dir, '..', '..')
@@ -13,6 +14,10 @@ class ARERobot:
         self.position = sdfbuilder.math.Vector3(0,0,2)
         self.rotation = sdfbuilder.math.Quaternion(1,0,0,0)
         self.controller_plugin = "libRobotControlPlugin.so"
+        self.smooth=False
+
+        self.voxel_mesh = voxelmesh.VoxelMesh(20)
+        self.voxel_mesh.create_sphere_in_volume(10.0, self.smooth)
     
     def sdf(self):
         model = self._build_model_node()
@@ -60,8 +65,12 @@ class ARERobot:
         return plugin
 
     def _build_body_node(self):
+        collada_uri = '/tmp/test.dae'
+        collada_mesh = self.voxel_mesh.collada(marching_cubes=self.smooth, generate_normals=False)
+        collada_mesh.write(collada_uri)
         sphere = sdfbuilder.Geometry()
-        sphere.add_element(sdfbuilder.geometry.Sphere(radius=.5))
+        # sphere.add_element(sdfbuilder.geometry.Sphere(radius=.5))
+        sphere.add_element(sdfbuilder.geometry.Mesh(uri=collada_uri))
         
         sphere_link = sdfbuilder.Link("sphere_link")
         sphere_collision = sdfbuilder.Collision(

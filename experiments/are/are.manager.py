@@ -4,7 +4,6 @@ import sys
 import asyncio
 
 import robot
-import voxelmesh
 
 # Add `..` folder in search path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -63,9 +62,6 @@ async def run():
 
     example_robot = robot.ARERobot(name="ARE_blob")
     are_robot_sdf = example_robot.sdf()
-
-    voxel_mesh = voxelmesh.VoxelMesh()
-    collada_mesh = voxel_mesh.collada()
 
     print("\nINSERTING ROBOT SDF\n\n{}\n\n".format(are_robot_sdf))
     await world.insert_model(
