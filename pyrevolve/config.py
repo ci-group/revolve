@@ -36,7 +36,7 @@ class CustomParser(argparse.ArgumentParser):
         return [k] if const else [k, v]
 
     @staticmethod
-    def write_to_file(args, file):
+    def record(args, file):
         """
         Takes the result of `parse_args` and writes it back to a file.
         """
