@@ -203,7 +203,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--world',
-    default='offline-evolve.world', type=str,
+    default='worlds/gait-learning.world', type=str,
     help="Determine which world to use."
 )
 

@@ -80,7 +80,7 @@ class BodyBuilder(AspectBuilder):
             plugin.add_elements(motors)
 
     @staticmethod
-    def _build_analyzer_body(self, model, body_parts, connections):
+    def _build_analyzer_body(model, body_parts, connections):
         """
         Builds a model from body parts in analyzer mode - i.e.
         one link per body part to allow collision detection.
@@ -387,7 +387,7 @@ class RobotBuilder(object):
         config = Element(
                 tag_name='rv:robot_config',
                 attributes={
-                    'xmlns:rv': 'https://github.com/ElteHupkes/revolve'
+                    'xmlns:rv': 'https://github.com/ci-group/revolve'
                 })
         config.add_element(Element(
                 tag_name='rv:update_rate',

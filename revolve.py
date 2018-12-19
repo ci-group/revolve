@@ -40,7 +40,7 @@ if __name__ == "__main__":
         manager_cmd='python3',
         # manager_args=['-u', os.path.join(here, "experiments/examples/manager.py")],
         manager_args=['-u', settings.manager],
-        world_file="worlds/gait-learning.world",
+        world_file=settings.world,
         simulator_cmd="gazebo",
         simulator_args=["--verbose"],
         plugins_dir_path=os.path.join(rvpath, 'build', 'lib'),
