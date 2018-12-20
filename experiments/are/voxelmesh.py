@@ -29,10 +29,10 @@ def create_sphere_in_volume(volumeData: PolyVoxCore.RawVolumeuint8, radius: floa
                 volumeData.setVoxel(PolyVoxCore.Vector3Dint32_t(x,y,z), uVoxelValue)    
 
 class VoxelMesh:
-    def __init__(self, half_resolution: int):
+    def __init__(self, resolution: int):
         self.volumeData = PolyVoxCore.RawVolumeuint8(
-            PolyVoxCore.Region(PolyVoxCore.Vector3Dint32_t(-half_resolution,-half_resolution,-half_resolution),
-                            PolyVoxCore.Vector3Dint32_t(half_resolution,half_resolution,half_resolution)
+            PolyVoxCore.Region(PolyVoxCore.Vector3Dint32_t(0,0,0),
+                            PolyVoxCore.Vector3Dint32_t(resolution,resolution,resolution)
             )
         )
     
@@ -63,6 +63,8 @@ class VoxelMesh:
             generate_normals = False
         else:
             polyvox_mesh = self.get_marching_cubes_mesh()
+
+        voxel_object_centre = self.volumeData.getEnclosingRegion().getCentre()
 
         n_vertices = polyvox_mesh.getNoOfVertices()
         n_indices = polyvox_mesh.getNoOfIndices()
@@ -125,6 +127,22 @@ class VoxelMesh:
         matnode  = collada.scene.MaterialNode("materialref", collada_material, inputs=[])
         geomnode = collada.scene.GeometryNode(geometry, [matnode])
         node     = collada.scene.Node("node0", children=[geomnode])
+        
+        # recenter
+        recenter_transform = collada.scene.TranslateTransform(
+            -voxel_object_centre.x,
+            -voxel_object_centre.y,
+            -voxel_object_centre.z,
+        )
+        node.transforms.append(recenter_transform)
+
+        # # scale voxel units from `m` to `cm`
+        # scale_transform = collada.scene.ScaleTransform(
+        #     0.1,
+        #     0.1,
+        #     0.1,
+        # )
+        # node.transforms.append(scale_transform)
 
         myscene = collada.scene.Scene("myscene", [node])
         collada_mesh.scenes.append(myscene)
@@ -134,7 +152,7 @@ class VoxelMesh:
 
 
 if __name__ == "__main__":
-    voxel_mesh = VoxelMesh(20)
-    voxel_mesh.create_sphere_in_volume(10.0, True)
+    voxel_mesh = VoxelMesh(resolution=20)
+    voxel_mesh.create_sphere_in_volume(radius=10.0, smooth=True)
     collada_mesh = voxel_mesh.collada(marching_cubes=True, generate_normals=True)
     collada_mesh.write('/tmp/test.dae')

@@ -13,11 +13,12 @@ class ARERobot:
         self.name = name
         self.position = sdfbuilder.math.Vector3(0,0,2)
         self.rotation = sdfbuilder.math.Quaternion(1,0,0,0)
+        self.scale    = sdfbuilder.math.Vector3(0.1, 0.1, 0.1)
         self.controller_plugin = "libRobotControlPlugin.so"
         self.smooth=False
 
-        self.voxel_mesh = voxelmesh.VoxelMesh(20)
-        self.voxel_mesh.create_sphere_in_volume(10.0, self.smooth)
+        self.voxel_mesh = voxelmesh.VoxelMesh(resolution=20)
+        self.voxel_mesh.create_sphere_in_volume(radius=10.0, smooth=self.smooth)
     
     def sdf(self):
         model = self._build_model_node()
@@ -70,7 +71,7 @@ class ARERobot:
         collada_mesh.write(collada_uri)
         sphere = sdfbuilder.Geometry()
         # sphere.add_element(sdfbuilder.geometry.Sphere(radius=.5))
-        sphere.add_element(sdfbuilder.geometry.Mesh(uri=collada_uri))
+        sphere.add_element(sdfbuilder.geometry.Mesh(uri=collada_uri, scale=self.scale))
         
         sphere_link = sdfbuilder.Link("sphere_link")
         sphere_collision = sdfbuilder.Collision(

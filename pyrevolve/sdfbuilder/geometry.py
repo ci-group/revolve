@@ -19,14 +19,17 @@ class Mesh(Element):
     """
     Children:
     - [1] URI
-    - [1] Submesh
-    - [1] Scale
+    - [opt] Submesh
+    - [opt] Scale
     """
     TAG_NAME = "mesh"
-    def __init__(self, uri: str):
-        super().__init__(elements=[
+    def __init__(self, uri: str, scale=None):
+        elements = [
             URI(text=uri)
-        ])
+        ]
+        if scale is not None:
+            elements.append(_Scale(scale.x, scale.y, scale.z))
+        super().__init__(elements=elements)
 
 class URI(Element):
     TAG_NAME = "uri"
@@ -43,8 +46,8 @@ class SubMesh(Element):
     def __init__(self):
         raise NotImplementedError()
 
-class Scale(Element):
+class _Scale(Element):
     TAG_NAME = "scale"
-    def __init__(self):
-        raise NotImplementedError()
+    def __init__(self, x:float, y:float, z:float):
+        super().__init__(body="{} {} {}".format(x,y,z))
     
