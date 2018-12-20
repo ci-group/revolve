@@ -1,27 +1,30 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+from __future__ import absolute_import
+
 from setuptools import setup
 
-setup(name='revolve',
-      version='0.2',
+setup(name='pyrevolve',
+      version='0.3',
       description='Revolve: robot evolution framework',
-      author='Elte Hupkes',
-      author_email='elte@hupkes.org',
+      author='CI Group',
+      author_email='m.decarlo@vu.nl',
       url='https://github.com/ci-group/revolve',
-      packages=['revolve',
-                'revolve.angle',
-                'revolve.build',
-                'revolve.build.sdf',
-                'revolve.convert',
-                'revolve.gazebo',
-                'revolve.generate',
-                'revolve.spec',
-                'revolve.util'
-               ],
-      install_requires=['numpy',
-                        'protobuf',
-                        'pygazebo',
-                        'PyYAML',
-                        'sdfbuilder',
-                        'psutil'
-                       ]
-      )
+      packages=[
+          'pyrevolve',
+          'pyrevolve.angle',
+          'pyrevolve.build',
+          'pyrevolve.build.sdf',
+          'pyrevolve.convert',
+          'pyrevolve.gazebo',
+          'pyrevolve.generate',
+          'pyrevolve.spec',
+          'pyrevolve.sdfbuilder',
+          'pyrevolve.util',
+      ],
+      install_requires=[
+          'numpy',
+          'protobuf',
+          'pygazebo',
+          'PyYAML',
+          'psutil',
+      ])

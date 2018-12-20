@@ -1,6 +1,9 @@
 #!/bin/sh
 # Generate Python protobuf files
-protoc -I ../cpp/revolve/msgs -I /usr/local/include/gazebo-6.5/gazebo/msgs/proto --python_out=../revolve/spec/msgs/ ../cpp/revolve/msgs/*.proto
+protoc -I ../cpp/revolve/msgs \
+       -I /usr/local/include/gazebo-9/gazebo/msgs/proto \
+       --python_out=../revolve/spec/msgs/ \
+       ../cpp/revolve/msgs/*.proto
 
 # Correctly reference imported Gazebo messages
 sed -E 's/import vector3d_pb2/from pygazebo.msg import vector3d_pb2/g' ../revolve/spec/msgs/*.py

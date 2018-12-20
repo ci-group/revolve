@@ -491,7 +491,7 @@
         </limit>
       </axis>
     </joint>
-    <plugin name="robot_controller" filename="libtolrobotcontrol.so">
+    <plugin name="robot_controller" filename="libRobotControlPlugin.so">
       <rv:robot_config xmlns:rv="https://github.com/ElteHupkes/revolve">
         <rv:update_rate>1.000000e+01</rv:update_rate>
         <rv:brain>
