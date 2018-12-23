@@ -21,8 +21,7 @@
 
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
-#include <revolve/gazebo/brain/NeuralNetwork.h>
-#include <revolve/gazebo/brain/RLPower.h>
+#include <revolve/gazebo/brains/Brains.h>
 
 #include "RobotController.h"
 
