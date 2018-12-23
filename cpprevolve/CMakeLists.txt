@@ -154,7 +154,7 @@ set_source_files_properties(
 # Plugin C++ files
 file(GLOB_RECURSE
      REVOLVE_GZ_SRC
-     revolve/gazebo/brain/*.cpp
+     revolve/gazebo/brains/*.cpp
      revolve/gazebo/motors/*.cpp
      revolve/gazebo/sensors/*.cpp
      revolve/gazebo/plugin/BodyAnalyzer.cpp
