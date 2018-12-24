@@ -353,6 +353,11 @@ parser.add_argument(
     help="The physics step size configured in the simulation world file."
          "This needs to match in order to configure some physics parameters."
 )
+parser.add_argument(
+        '--learner',
+        default='ann', type=str,
+        help="The learner used for robot's gait learning."
+)
 
 
 def make_revolve_config(conf):
@@ -361,4 +366,6 @@ def make_revolve_config(conf):
     object.
     """
     conf.enable_wheel_parts = False
+
+    conf.brain_conf = {'learner': conf.learner}
     return conf

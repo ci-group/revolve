@@ -6,12 +6,14 @@ from pyrevolve.sdfbuilder import Model, Element, Link, FixedJoint
 from pyrevolve.sdfbuilder.math import Quaternion, Vector3
 from pyrevolve.sdfbuilder.util import number_format as nf
 
-from ...spec import Robot, BodyPart as PbBodyPart, BodyImplementation, \
-    NeuralNetImplementation
+from ...spec import BodyImplementation
+from ...spec import NeuralNetImplementation
 from ...spec.exception import err
 
-from .neural_net import Neuron, NeuralConnection
-from .body import Component, BodyPart
+from .neural_net import Neuron
+from .neural_net import NeuralConnection
+from .body import Component
+from .body import BodyPart
 from .body.exception import ComponentException
 
 
