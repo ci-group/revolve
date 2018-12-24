@@ -23,14 +23,12 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    conf = parser.parse_args()
+    settings = parser.parse_args()
 
-    conf.output_directory = "output"
-    conf.restore_directory = "restore"
-    with open("models/robot_26.yaml", 'r') as yamlfile:
-        bot_yaml1 = yamlfile.read()
+    with open("models/robot_26.yaml", 'r') as yaml_file:
+        bot_yaml1 = yaml_file.read()
 
-    world = await World.create(conf)
+    world = await World.create(settings)
 
     # These are useful when working with YAML
     body_spec = world.builder.body_builder.spec
