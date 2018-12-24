@@ -253,13 +253,13 @@ parser.add_argument(
 # provided with `--restore-directory`
 parser.add_argument(
     '--output-directory',
-    default=None, type=str,
+    default="output", type=str,
     help="Directory where robot statistics are written."
 )
 
 parser.add_argument(
     '--restore-directory',
-    default=None, type=str,
+    default="restore", type=str,
     help="Explicit subdirectory of the output directory, if a world "
          "state is present in this directory it will be restored."
 )
