@@ -190,7 +190,15 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
 
   auto brain = _sdf->GetElement("rv:brain");
-  brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
+  auto learner = brain->GetAttribute("learner")->GetAsString();
+  if ("ann" == learner)
+  {
+    brain_.reset(new NeuralNetwork(this->model_, brain, motors_, sensors_));
+  }
+  else if ("rlpower" == learner)
+  {
+    brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
+  }
 }
 
 /////////////////////////////////////////////////
