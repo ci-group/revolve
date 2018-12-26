@@ -132,7 +132,7 @@ void RLPower::InitialisePolicy(size_t _numSplines)
     this->currentPolicy_ = std::make_shared< Policy >(_numSplines);
   }
 
-  for (size_t i = 0; i < _numSplines; i++)
+  for (size_t i = 0; i < _numSplines; ++i)
   {
     Spline spline(this->sourceYSize_);
     for (size_t j = 0; j < this->sourceYSize_; ++j)
@@ -148,7 +148,7 @@ void RLPower::InitialisePolicy(size_t _numSplines)
     this->interpolationCache_ = std::make_shared< Policy >(_numSplines);
   }
 
-  for (size_t i = 0; i < _numSplines; i++)
+  for (size_t i = 0; i < _numSplines; ++i)
   {
     this->interpolationCache_->at(i).resize(this->numInterpolationPoints_, 0);
   }
@@ -179,26 +179,26 @@ void RLPower::InterpolateCubic(
 
   // init x
   auto step_size = RLPower::CYCLE_LENGTH / sourceYSize;
-  for (size_t i = 0; i < N; i++)
+  for (size_t i = 0; i < N; ++i)
   {
     x[i] = step_size * i;
   }
 
   // init xNew
   step_size = CYCLE_LENGTH / destinatioYSize;
-  for (size_t i = 0; i < destinatioYSize; i++)
+  for (size_t i = 0; i < destinatioYSize; ++i)
   {
     xNew[i] = step_size * i;
   }
 
-  for (size_t j = 0; j < _numSplines; j++)
+  for (size_t j = 0; j < _numSplines; ++j)
   {
     auto &sourceYLine = _sourceY->at(j);
     auto &destinationYLine = _destinationY->at(j);
 
     // init y
     // TODO use memcpy
-    for (size_t i = 0; i < sourceYSize; i++)
+    for (size_t i = 0; i < sourceYSize; ++i)
     {
       y[i] = sourceYLine[i];
     }
@@ -208,7 +208,7 @@ void RLPower::InterpolateCubic(
 
     gsl_spline_init(spline, x, y, N);
 
-    for (size_t i = 0; i < destinatioYSize; i++)
+    for (size_t i = 0; i < destinatioYSize; ++i)
     {
       destinationYLine[i] = gsl_spline_eval(spline, xNew[i], acc);
     }
@@ -230,7 +230,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
 
   // Insert ranked policy in list
   PolicyPtr backupPolicy = std::make_shared< Policy >(_numSplines);
-  for (size_t i = 0; i < _numSplines; i++)
+  for (size_t i = 0; i < _numSplines; ++i)
   {
     auto &spline = this->currentPolicy_->at(i);
     backupPolicy->at(i) = Spline(spline.begin(), spline.end());
@@ -295,9 +295,9 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   {
     // Generate random policy if number of stored policies is less then
     // `maxRankedPolicies_`
-    for (size_t i = 0; i < _numSplines; i++)
+    for (size_t i = 0; i < _numSplines; ++i)
     {
-      for (size_t j = 0; j < this->sourceYSize_; j++)
+      for (size_t j = 0; j < this->sourceYSize_; ++j)
       {
         (*this->currentPolicy_)[i][j] = dist(mt);
       }
@@ -327,10 +327,10 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       totalFitness = fitness1 + fitness2;
 
       // For each spline
-      for (size_t i = 0; i < _numSplines; i++)
+      for (size_t i = 0; i < _numSplines; ++i)
       {
         // And for each control point
-        for (size_t j = 0; j < this->sourceYSize_; j++)
+        for (size_t j = 0; j < this->sourceYSize_; ++j)
         {
           // Apply modifier
           auto splinePoint = 0.0;
@@ -363,10 +363,10 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
 
       // For each spline
       // TODO: Verify that this should is correct formula
-      for (size_t i = 0; i < _numSplines; i++)
+      for (size_t i = 0; i < _numSplines; ++i)
       {
         // And for each control point
-        for (size_t j = 0; j < this->sourceYSize_; j++)
+        for (size_t j = 0; j < this->sourceYSize_; ++j)
         {
           // Apply modifier
           auto splinePoint = 0.0;
@@ -408,7 +408,7 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
 
   // Copy current policy for resizing
   Policy policy_copy(this->currentPolicy_->size());
-  for (size_t i = 0; i < _numSplines; i++)
+  for (size_t i = 0; i < _numSplines; ++i)
   {
     auto &spline = this->currentPolicy_->at(i);
     policy_copy[i] = Spline(spline.begin(), spline.end());
@@ -422,7 +422,7 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
   {
     auto policy = it.second;
 
-    for (size_t j = 0; j < _numSplines; j++)
+    for (size_t j = 0; j < _numSplines; ++j)
     {
       auto &spline = policy->at(j);
       policy_copy[j] = Spline(spline.begin(), spline.end());
@@ -505,7 +505,7 @@ void RLPower::Output(
   auto x_b = (x_a + 1) % this->numInterpolationPoints_;
 
   // linear interpolation for every actuator
-  for (size_t i = 0; i < _numSplines; i++)
+  for (size_t i = 0; i < _numSplines; ++i)
   {
     auto y_a = this->interpolationCache_->at(i)[x_a];
     auto y_b = this->interpolationCache_->at(i)[x_b];

@@ -55,7 +55,7 @@ void ThymioBrain::Update(
 
   auto numMotors = _motors.size();
   auto *output = new double[numMotors];
-  for (size_t i = 0; i < numMotors; i++)
+  for (size_t i = 0; i < numMotors; ++i)
   {
     output[i] += std::abs(dist(mt));
   }
