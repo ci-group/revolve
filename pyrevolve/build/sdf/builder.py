@@ -346,7 +346,7 @@ class RobotBuilder(object):
         self.body_builder = body_builder
         self.brain_builder = brain_builder
 
-    def get_sdf_model(
+    def sdf_robot(
             self,
             robot,
             controller_plugin=None,

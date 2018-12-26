@@ -368,7 +368,7 @@ def generate_robot(robot_id=0):
 
 
 def robot_to_sdf(robot, name="test_bot", plugin_controller=None):
-    model = builder.get_sdf_model(
+    model = builder.sdf_robot(
             robot=robot,
             controller_plugin=plugin_controller,
             update_rate=UPDATE_RATE,

@@ -50,7 +50,7 @@ brain:
 
 bot = yaml_to_robot(body_spec, brain_spec, bot_yaml)
 builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
-model = builder.get_sdf_model(bot, "libRobotControlPlugin.so")
+model = builder.sdf_robot(bot, "libRobotControlPlugin.so")
 model.translate(Vector3(0, 0, 0.5))
 sdf = SDF()
 sdf.add_element(model)

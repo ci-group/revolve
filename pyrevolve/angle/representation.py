@@ -44,7 +44,7 @@ class Tree(object):
         # Maps node IDs to nodes for looked up nodes
         self._nodes = {}
 
-    def to_robot(self, robot_id=0):
+    def to_protobot(self, robot_id=0):
         """
         Turns this tree representation into a protobuf robot. This
         first calls `build` on the root node so its internal structure

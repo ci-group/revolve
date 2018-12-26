@@ -47,7 +47,7 @@ async def run():
             body_spec=body_spec)
     pose = Pose(position=Vector3(0, 0, 0.05))
     future = await (world.insert_robot(
-            tree=robot_tree,
+            py_bot=robot_tree,
             pose=pose,
             # name="robot_26"
     ))

@@ -18,7 +18,7 @@ from pyrevolve.util import multi_future
 from .. import logger
 from .. import constants
 from .robot import Robot
-from ..build import get_builder, get_simulation_robot
+from ..build import get_builder, to_sdfbot
 from ..scenery import Wall
 from ..spec import get_tree_generator
 
@@ -193,14 +193,14 @@ class World(WorldManager):
                 lambda _: logger.debug("Done inserting population."))
         return future
 
-    def get_simulation_sdf(self, robot, robot_name, initial_battery=0.0):
+    def to_sdfbot(self, robot, robot_name, initial_battery=0.0):
         """
         :param robot:
         :param robot_name:
         :param initial_battery:
         :return:
         """
-        return get_simulation_robot(
+        return to_sdfbot(
                 robot=robot,
                 name=robot_name,
                 builder=self.builder,
