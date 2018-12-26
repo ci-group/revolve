@@ -22,9 +22,6 @@
 
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
-
 namespace revolve
 {
   namespace gazebo
@@ -41,17 +38,17 @@ namespace revolve
 
     class Evaluator;
 
-    typedef boost::shared_ptr< Brain > BrainPtr;
+    typedef std::shared_ptr< Brain > BrainPtr;
 
-    typedef boost::shared_ptr< Motor > MotorPtr;
+    typedef std::shared_ptr< Motor > MotorPtr;
 
-    typedef boost::shared_ptr< VirtualSensor > SensorPtr;
+    typedef std::shared_ptr< VirtualSensor > SensorPtr;
 
-    typedef boost::shared_ptr< MotorFactory > MotorFactoryPtr;
+    typedef std::shared_ptr< MotorFactory > MotorFactoryPtr;
 
-    typedef boost::shared_ptr< SensorFactory > SensorFactoryPtr;
+    typedef std::shared_ptr< SensorFactory > SensorFactoryPtr;
 
-    typedef boost::shared_ptr< Evaluator > EvaluatorPtr;
+    typedef std::shared_ptr< Evaluator > EvaluatorPtr;
 
     typedef std::vector< double > Spline;
 
