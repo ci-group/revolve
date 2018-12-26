@@ -26,7 +26,8 @@ async def run():
     settings = parser.parse_args()
 
     with open("models/robot_26.yaml", 'r') as yaml_file:
-        bot_yaml1 = yaml_file.read()
+        bot_yaml = yaml_file.read()
+    settings.genome = "\n".join(bot_yaml.splitlines()).replace("\'", "\"")
 
     world = await World.create(settings)
 
@@ -38,7 +39,7 @@ async def run():
     proto_bot = yaml_to_robot(
             body_spec=body_spec,
             nn_spec=brain_spec,
-            yaml=bot_yaml1)
+            yaml=bot_yaml)
 
     robot_tree = Tree.from_body_brain(
             body=proto_bot.body,

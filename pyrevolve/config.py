@@ -358,6 +358,12 @@ parser.add_argument(
         default='ann', type=str,
         help="The learner used for robot's gait learning."
 )
+parser.add_argument(
+        '--genome',
+        default=None, type=str,
+        help="A robot's genome in YAML format. It is easier to transfer it "
+             "than to convert it from SDF."
+)
 
 
 def make_revolve_config(conf):
@@ -367,5 +373,8 @@ def make_revolve_config(conf):
     """
     conf.enable_wheel_parts = False
 
-    conf.brain_conf = {'learner': conf.learner}
+    conf.brain_conf = {
+        'learner': conf.learner,
+        'genome': conf.genome,
+    }
     return conf
