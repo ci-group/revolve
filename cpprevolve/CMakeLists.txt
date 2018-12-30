@@ -62,6 +62,9 @@ include_directories(${Boost_INCLUDE_DIRS})
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 
+find_package(yaml-cpp REQUIRED)
+include_directories(${YAML_CPP_INCLUDE_DIR})
+
 # Find Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
@@ -189,6 +192,7 @@ target_link_libraries(
     ${GAZEBO_LIBRARIES}
     ${Boost_LIBRARIES}
     ${GSL_LIBRARIES}
+    ${YAML_CPP_LIBRARIES}
 )
 
 # Create World plugin
