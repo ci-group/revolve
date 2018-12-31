@@ -160,6 +160,7 @@ file(GLOB_RECURSE
      revolve/gazebo/brains/*.cpp
      revolve/gazebo/motors/*.cpp
      revolve/gazebo/sensors/*.cpp
+     revolve/gazebo/util/*.cpp
      revolve/gazebo/plugin/BodyAnalyzer.cpp
      revolve/gazebo/plugin/RobotController.cpp
      revolve/gazebo/plugin/WorldController.cpp
