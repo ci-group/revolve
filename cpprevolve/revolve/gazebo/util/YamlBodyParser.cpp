@@ -61,9 +61,6 @@ BodyPart::~BodyPart()
 }
 
 ///////////////////////////////////////////////////
-YamlBodyParser::YamlBodyParser() = default;
-
-///////////////////////////////////////////////////
 YamlBodyParser::YamlBodyParser(const std::string &_genome)
 {
   YAML::Node yaml_genome = YAML::Load(_genome);
