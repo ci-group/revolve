@@ -4,7 +4,7 @@ from __future__ import print_function
 from pyrevolve.build.sdf import RobotBuilder
 from pyrevolve.build.sdf import BodyBuilder
 from pyrevolve.build.sdf import NeuralNetBuilder
-from pyrevolve.convert import yaml_to_robot
+from pyrevolve.convert import yaml_to_proto
 from pyrevolve.sdfbuilder import SDF
 from pyrevolve.sdfbuilder.math import Vector3
 
@@ -48,7 +48,7 @@ brain:
       period: 3
 '''
 
-bot = yaml_to_robot(body_spec, brain_spec, bot_yaml)
+bot = yaml_to_proto(body_spec, brain_spec, bot_yaml)
 builder = RobotBuilder(BodyBuilder(body_spec), NeuralNetBuilder(brain_spec))
 model = builder.sdf_robot(bot, "libRobotControlPlugin.so")
 model.translate(Vector3(0, 0, 0.5))

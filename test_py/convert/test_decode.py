@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from pyrevolve.convert import yaml_to_robot
+from pyrevolve.convert import yaml_to_proto
 from pyrevolve.spec import PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
 from pyrevolve.spec import BodyImplementation, NeuralNetImplementation
 
@@ -198,7 +198,7 @@ brain_spec = NeuralNetImplementation({
 
 
 def ytr(yaml):
-    return yaml_to_robot(body_spec, brain_spec, yaml)
+    return yaml_to_proto(body_spec, brain_spec, yaml)
 
 
 class TestConvertYaml(unittest.TestCase):
