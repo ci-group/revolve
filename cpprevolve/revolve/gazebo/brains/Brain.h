@@ -27,6 +27,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <gazebo/common/common.hh>
+#include <gazebo/gazebo.hh>
 
 #include <revolve/gazebo/Types.h>
 
@@ -52,6 +53,9 @@ namespace revolve
           const std::vector< SensorPtr > &_sensors,
           const double _time,
           const double _step) = 0;
+
+      /// \brief Transport node
+      protected: ::gazebo::transport::NodePtr node_;
     };
   } /* namespace gazebo */
 } /* namespace revolve */
