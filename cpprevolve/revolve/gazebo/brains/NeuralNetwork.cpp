@@ -172,7 +172,7 @@ NeuralNetwork::NeuralNetwork(
   // We iterate a part's motors and just assign every
   // neuron we find in order.
   std::map< std::string, unsigned int > outputCountMap;
-  unsigned int outPos = 0;
+  unsigned int outputsIndex = 0;
   for (const auto &motor : _motors)
   {
     auto partId = motor->PartId();
@@ -195,12 +195,12 @@ NeuralNetwork::NeuralNetwork(
         throw std::runtime_error("Robot brains error");
       }
 
-      neuronHelper(&params_[outPos * MAX_NEURON_PARAMS],
-                   &types_[outPos],
+      neuronHelper(&params_[outputsIndex * MAX_NEURON_PARAMS],
+                   &types_[outputsIndex],
                    details->second);
-      positionMap_[neuronId.str()] = outPos;
+      positionMap_[neuronId.str()] = outputsIndex;
       toProcess.erase(neuronId.str());
-      outPos++;
+      ++outputsIndex;
     }
   }
 
@@ -257,18 +257,18 @@ NeuralNetwork::NeuralNetwork(
   }
 
   // Add hidden neurons
-  outPos = 0;
+  outputsIndex = 0;
   for (const auto &neuronId : hiddenNeurons)
   {
     // Position relative to hidden neurons
-    positionMap_[neuronId] = outPos;
+    positionMap_[neuronId] = outputsIndex;
 
     // Offset with output neurons within params / types
-    auto pos = nOutputs_ + outPos;
+    auto pos = nOutputs_ + outputsIndex;
     neuronHelper(&params_[pos * MAX_NEURON_PARAMS],
                  &types_[pos],
                  neuronMap[neuronId]);
-    outPos++;
+    outputsIndex++;
   }
 
   // Decode connections
