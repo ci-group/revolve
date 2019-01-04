@@ -20,10 +20,10 @@ message BodyPart {
 
 // BodyConnection message
 message BodyConnection {
-  // Identificator of a source
-  required int32 src = 1;
-  // Identificator of a destination
-  required int32 dst = 2;
+  // Identifier of a source slot
+  required int32 src_slot = 1;
+  // Identifier of a destination slot
+  required int32 dst_slot = 2;
   // BodyPart message
   required BodyPart part = 3;
 }

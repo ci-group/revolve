@@ -93,9 +93,9 @@ class BodyDecoder(object):
         :rtype: BodyConnection
         """
         conn = part.child.add()
-        conn.src = src
-        conn.dst = conf['slot'] if 'slot' in conf else 0
-        conn.part.CopyFrom(self._process_body_part(conf, conn.dst))
+        conn.src_slot = src
+        conn.dst_slot = conf['slot'] if 'slot' in conf else 0
+        conn.part.CopyFrom(self._process_body_part(conf, conn.dst_slot))
 
 
 class NeuralNetworkDecoder(object):

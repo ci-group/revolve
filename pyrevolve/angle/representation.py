@@ -18,7 +18,7 @@ def _create_subtree(body_part, brain, body_spec):
     node = Node(body_part, neurons, body_spec)
     for conn in body_part.child:
         subtree = _create_subtree(conn.part, brain, body_spec)
-        node.set_connection(conn.src, conn.dst, subtree)
+        node.set_connection(conn.src_slot, conn.dst_slot, subtree)
 
     return node
 
@@ -273,8 +273,8 @@ class Node(object):
         # Process body part children recursively
         for connection in self.child_connections():
             conn = into_part.child.add()
-            conn.src = connection.from_slot
-            conn.dst = connection.to_slot
+            conn.src_slot = connection.from_slot
+            conn.dst_slot = connection.to_slot
             connection.node.build(conn.part, brain, internalize=internalize)
 
         if internalize:

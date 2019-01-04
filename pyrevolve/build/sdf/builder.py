@@ -281,8 +281,8 @@ class BodyBuilder(AspectBuilder):
             cn, bp, cmp, mtr = self._process_body_part(
                     part=conn.part,
                     parent=body_part,
-                    src_slot=conn.src,
-                    dst_slot=conn.dst)
+                    src_slot=conn.src_slot,
+                    dst_slot=conn.dst_slot)
             components += cmp
             motors += mtr
             body_parts += bp
