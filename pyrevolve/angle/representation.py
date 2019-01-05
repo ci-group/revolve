@@ -175,6 +175,8 @@ class Node(object):
         self.part.id = part.id
         self.part.type = part.type
         self.part.orientation = part.orientation
+        self.part.x = part.x
+        self.part.y = part.y
 
         if part.HasField("label"):
             self.part.label = part.label
