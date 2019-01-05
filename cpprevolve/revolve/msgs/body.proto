@@ -8,14 +8,18 @@ message BodyPart {
   required string id = 1;
   // Type designator for a body part
   required string type = 2;
+  // The x-coordinate in 2-dimensional plane
+  required int32 x = 3;
+  // The y-coordinate in 2-dimensional plane
+  required int32 y = 4;
   // Orientation of a body part
-  required double orientation = 3;
+  required double orientation = 5;
   // Designation of a child node pointer in a tree representation
-  repeated BodyConnection child = 4;
+  repeated BodyConnection child = 6;
   // Parameters for a ParametricBarJoint
-  repeated Parameter param = 5;
+  repeated Parameter param = 7;
   // Label for a body part
-  optional string label = 6;
+  optional string label = 8;
 }
 
 // BodyConnection message
