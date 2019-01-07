@@ -253,6 +253,8 @@ class BodyBuilder(AspectBuilder):
 
         # Set the arity
         kwargs['arity'] = spec.arity
+        kwargs['x'] = part.x
+        kwargs['y'] = part.y
         body_part = body_part_class(part.id, self.conf, **kwargs)
         """ :type : BodyPart"""
 

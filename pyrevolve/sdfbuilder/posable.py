@@ -305,16 +305,18 @@ class Posable(Element):
         # This explains how to do the alignment easily:
         # http://stackoverflow.com/questions/21828801/how-to-find-correct-rotation-from-one-vector-to-another
 
-        # We define coordinate systems in which "normal", "tangent" and "normal x tangent" are
-        # the x, y and z axes ("normal x tangent" is the cross product). We then determine two
-        # rotation matrices, one for the rotation of the standard basis to "my" (R1):
+        # We define coordinate systems in which "normal", "tangent" and
+        # "normal x tangent" are the x, y and z axes ("normal x tangent" is
+        # the cross product). We then determine two rotation matrices,
+        # one for the rotation of the standard basis to "my" (R1):
         my_x = my_normal.normalized()
         my_y = my_tangent.normalized()
         my_z = my_x.cross(my_y)
 
-        # Note that we are going to determine an absolute rotation, so we need the vectors
-        # in the local frame rather than in the parent frame. We also determine a rotation
-        # matrix for the rotation of "at" (R2):
+        # Note that we are going to determine an absolute rotation,
+        # so we need the vectors in the local frame rather than in the parent
+        #  frame. We also determine a rotation matrix for the rotation of
+        # "at" (R2):
         at_x = of.to_parent_direction(-at_normal).normalized()
         at_y = of.to_parent_direction(at_tangent).normalized()
         at_z = at_x.cross(at_y)
