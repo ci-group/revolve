@@ -12,8 +12,8 @@ class VREPSupervisor(Supervisor):
                  restore_directory=None,
                  snapshot_world_file="snapshot.world",
                  manager_args=None,
-                 vrep_cmd="vrep",
-                 vrep_args=None,
+                 simulator_cmd="vrep",
+                 simulator_args=None,
                  vrep_folder=None,
                  plugins_dir_path=None,
                  models_dir_path=None):
@@ -22,8 +22,8 @@ class VREPSupervisor(Supervisor):
         :param world_file: Full path (or relative to cwd) to the world file 
                            to load.
         :param manager_args: Commands to pass to the manager
-        :param vrep_cmd: Command to run VREP with
-        :param vrep_args: Arguments to VREP
+        :param simulator_cmd: Command to run VREP with
+        :param simulator_args: Arguments to VREP
         :param vrep_folder: Folder where to create the link to plugins and models
         :param plugins_dir_path: Full path (or relative to cwd) to the VREP
                                  plugins directory (creating a link into the vrep folder).
@@ -38,17 +38,17 @@ class VREPSupervisor(Supervisor):
                 self.output_directory,
                 self.restore_directory)
         self.snapshot_world_file = snapshot_world_file
-        self.restore_arg = None
+        self.restore_arg = "--restore"
         self.analyzer_cmd = None
         self.world_file = os.path.abspath(world_file)
         if vrep_folder is not None:
             self.vrep_folder = os.path.abspath(vrep_folder)
         else:
-            self.vrep_folder = os.path.dirname(shutil.which(vrep_cmd))
+            self.vrep_folder = os.path.dirname(shutil.which(simulator_cmd))
 
         # VREP command and arguments
-        self.gazebo_cmd = [vrep_cmd]
-        self.gazebo_args = vrep_args if vrep_args is not None else [] 
+        self.simulator_cmd = [simulator_cmd]
+        self.simulator_args = simulator_args if simulator_args is not None else [] 
 
         # Manager command and arguments
         self.manager_cmd = manager_cmd \
@@ -57,6 +57,9 @@ class VREPSupervisor(Supervisor):
 
         self.streams = {}
         self.procs = {}
+
+        self.plugins_dir_path_link = None
+        self.models_dir_path_link = None
 
         # Terminate all processes when the supervisor exits
         atexit.register(self._terminate_all)
@@ -91,8 +94,8 @@ class VREPSupervisor(Supervisor):
               "\n\t- vrep models dir: {}"
               .format(manager_cmd,
                       manager_args,
-                      vrep_cmd,
-                      vrep_args,
+                      simulator_cmd,
+                      simulator_args,
                       world_file,
                       self.plugins_dir_path,
                       self.models_dir_path)
@@ -103,24 +106,10 @@ class VREPSupervisor(Supervisor):
         Cleanup revolve links in VREP
         :return:
         """
-        os.remove(self.plugins_dir_path_link)
-        os.remove(self.models_dir_path_link)
+        if self.plugins_dir_path_link is not None:
+            os.remove(self.plugins_dir_path_link)
+        if self.models_dir_path_link is not None:
+            os.remove(self.models_dir_path_link)
 
-    def _launch_gazebo(self, ready_str="World plugin loaded"):
-        """
-        Launches Gazebo
-        :return:
-        """
-        print("Launching VREP...")
-        gz_args = self.gazebo_cmd + self.gazebo_args
-        snapshot_world = os.path.join(
-                self.snapshot_directory,
-                self.snapshot_world_file)
-        world = snapshot_world \
-            if os.path.exists(snapshot_world) else self.world_file
-        gz_args.append(world)
-        self.procs['vrep'] = self._launch_with_ready_str(
-                cmd=gz_args,
-                ready_str=ready_str,
-                output_tag="vrep")
-        self._add_output_stream('vrep')
+    def _launch_simulator(self, ready_str="Revolve plugin loaded", output_tag="vrep"):
+        super()._launch_simulator(ready_str="Plugin 'SDF': load succeeded.", output_tag=output_tag)
