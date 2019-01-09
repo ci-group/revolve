@@ -15,7 +15,7 @@ from pyrevolve.angle import Tree
 from pyrevolve.convert.yaml import yaml_to_robot
 from pyrevolve.sdfbuilder import Pose
 from pyrevolve.sdfbuilder.math import Vector3
-from pyrevolve.tol.manage import World
+from pyrevolve.tol.manage import World, VREPWorld
 
 
 async def run():
@@ -30,7 +30,12 @@ async def run():
     with open("models/robot_26.yaml", 'r') as yamlfile:
         bot_yaml1 = yamlfile.read()
 
-    world = await World.create(conf)
+    if conf.vrep:
+        world = VREPWorld.create(conf)
+        world.pause(False)
+        world.pause(True)
+    else:
+        world = await World.create(conf)
 
     # These are useful when working with YAML
     body_spec = world.builder.body_builder.spec
@@ -38,29 +43,37 @@ async def run():
 
     # Create a robot from YAML
     proto_bot = yaml_to_robot(
-            body_spec=body_spec,
-            nn_spec=brain_spec,
-            yaml=bot_yaml1)
+        body_spec=body_spec,
+        nn_spec=brain_spec,
+        yaml=bot_yaml1)
 
     robot_tree = Tree.from_body_brain(
-            body=proto_bot.body,
-            brain=proto_bot.brain,
-            body_spec=body_spec)
+        body=proto_bot.body,
+        brain=proto_bot.brain,
+        body_spec=body_spec)
     pose = Pose(position=Vector3(0, 0, 0.05))
-    future = await (world.insert_robot(
-            tree=robot_tree,
-            pose=pose,
-            # name="robot_26"
-    ))
-    robot_manager = await future
+    # future = await (world.insert_robot(
+    #         tree=robot_tree,
+    #         pose=pose,
+    #         # robot_name="robot_26"
+    # ))
+    # robot_manager = await future
 
-    await world.pause(False)
+    world.insert_robot(
+        tree=robot_tree,
+        pose=pose,
+        robot_name="robot_42"
+    )
+
+    # await world.pause(False)
+    world.pause(False)
 
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
-        print("Robot fitness is {fitness}".format(
-                fitness=robot_manager.fitness()))
+        #TODO remove because it's not supported by VREP yet
+        # print("Robot fitness is {fitness}".format(
+        #         fitness=robot_manager.fitness()))
         await asyncio.sleep(10.0)
 
 

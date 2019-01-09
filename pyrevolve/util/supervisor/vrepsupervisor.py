@@ -54,6 +54,7 @@ class VREPSupervisor(Supervisor):
         self.manager_cmd = manager_cmd \
             if isinstance(manager_cmd, list) else [manager_cmd]
         self.manager_args = manager_args if manager_args is not None else []
+        self.manager_args.append('--vrep')
 
         self.streams = {}
         self.procs = {}

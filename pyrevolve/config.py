@@ -354,6 +354,11 @@ parser.add_argument(
          "This needs to match in order to configure some physics parameters."
 )
 
+parser.add_argument(
+    '--vrep', action='store_const',
+    const=True, default=False,
+    help="Use the VREP simulator instead of gazebo"
+)
 
 def make_revolve_config(conf):
     """

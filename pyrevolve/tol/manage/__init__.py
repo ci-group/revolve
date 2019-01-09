@@ -1,3 +1,4 @@
 from __future__ import absolute_import
 
 from .world import World
+from ...vrep.manage.world import WorldManager as VREPWorld

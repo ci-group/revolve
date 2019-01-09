@@ -310,6 +310,10 @@ class Mesh(Geometry):
 
     def __init__(self, uri, scale=None, **kwargs):
         super(Mesh, self).__init__(**kwargs)
+        #TODO VREP only fix
+        if uri.startswith("model://"):
+            import os
+            uri = "model://{}/{}".format(os.path.join("models"), uri[8:])
         self.uri = uri
         self.scale = scale
 
