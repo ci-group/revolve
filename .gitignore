@@ -62,6 +62,9 @@ target/
 # PyCharm project files
 .idea
 
+# Visual Studio Code
+/.vscode/
+
 # Virtual env
 .venv*/
 

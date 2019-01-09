@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import unittest
 
-from revolve.util import Time
+from pyrevolve.util import Time
 
 
 class TestTime(unittest.TestCase):

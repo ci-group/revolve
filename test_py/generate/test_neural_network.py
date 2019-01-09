@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import random
 import unittest
 
-from revolve.generate import NeuralNetworkGenerator
-from revolve.spec import NeuralNetImplementation, NeuronSpec
+from pyrevolve.generate import NeuralNetworkGenerator
+from pyrevolve.spec import NeuralNetImplementation, NeuronSpec
 
 
 brain_spec = NeuralNetImplementation(

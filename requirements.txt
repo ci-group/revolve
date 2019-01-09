@@ -1,4 +1,4 @@
-argparse==1.2.1
+argparse>=1.2.1
 asyncio==3.4.3
 futures==3.0.2
 numpy>=1.9.2
