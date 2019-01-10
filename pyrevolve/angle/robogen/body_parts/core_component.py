@@ -32,7 +32,8 @@ class CoreComponent(BodyPart, ColorMixin):
         self.link = self.create_component(Box(WIDTH, WIDTH, HEIGHT, MASS), "box",
                                           visual=Mesh("model://rg_robot/meshes/CoreComponent.dae"))
 
-        if not self.conf.disable_sensors:
+        #TODO VREP IMU are disabled in vrep, to avoid crash
+        if not self.conf.disable_sensors and not self.conf.vrep:
             # Now we will add the IMU sensor. First, we must
             # create a sensor in SDF. The sensor must have a name which
             # is unique for the robot - `add_sensor` ensures this for us
