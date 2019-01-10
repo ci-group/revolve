@@ -18,24 +18,9 @@ from pyrevolve.sdfbuilder.math import Vector3
 from pyrevolve.tol.manage import World, VREPWorld
 
 
-async def run():
-    """
-    The main coroutine, which is started below.
-    """
-    # Parse command line / file input arguments
-    conf = parser.parse_args()
-
-    conf.output_directory = "output"
-    conf.restore_directory = "restore"
-    with open("models/robot_26.yaml", 'r') as yamlfile:
+def insert_robot(world, filename, conf):
+    with open(os.path.join("models", filename), 'r') as yamlfile:
         bot_yaml1 = yamlfile.read()
-
-    if conf.vrep:
-        world = VREPWorld.create(conf)
-        world.pause(False)
-        world.pause(True)
-    else:
-        world = await World.create(conf)
 
     # These are useful when working with YAML
     body_spec = world.builder.body_builder.spec
@@ -62,8 +47,30 @@ async def run():
     world.insert_robot(
         tree=robot_tree,
         pose=pose,
-        robot_name="robot_42"
+        robot_name=filename
     )
+
+
+async def run():
+    """
+    The main coroutine, which is started below.
+    """
+    # Parse command line / file input arguments
+    conf = parser.parse_args()
+
+    conf.output_directory = "output"
+    conf.restore_directory = "restore"
+
+    if conf.vrep:
+        world = VREPWorld.create(conf)
+        world.pause(False)
+        world.pause(True)
+    else:
+        world = await World.create(conf)
+
+    insert_robot(world, "robot_26.yaml", conf)
+    # insert_robot(world, "robot_26.yaml", conf)
+    # insert_robot(world, "robot_150.yaml", conf)
 
     # await world.pause(False)
     world.pause(False)
@@ -71,7 +78,7 @@ async def run():
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
-        #TODO remove because it's not supported by VREP yet
+        #TODO removed because it's not supported by VREP yet
         # print("Robot fitness is {fitness}".format(
         #         fitness=robot_manager.fitness()))
         await asyncio.sleep(10.0)
