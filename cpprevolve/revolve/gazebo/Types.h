@@ -20,6 +20,7 @@
 #ifndef REVOLVE_GZ_MODEL_TYPES_H_
 #define REVOLVE_GZ_MODEL_TYPES_H_
 
+#include <memory>
 #include <vector>
 
 namespace revolve
