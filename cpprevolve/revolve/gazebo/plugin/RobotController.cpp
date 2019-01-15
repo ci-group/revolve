@@ -17,6 +17,8 @@
 *
 */
 
+#include  <stdexcept>
+
 #include <gazebo/sensors/sensors.hh>
 
 #include <revolve/gazebo/motors/MotorFactory.h>
@@ -202,6 +204,10 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   else if ("diff_cpg" == learner)
   {
     brain_.reset(new DifferentialCPG(this->model_, brain, motors_, sensors_));
+  }
+  else
+  {
+    throw std::runtime_error("Robot brain is not defined.");
   }
 }
 
