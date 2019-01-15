@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env sh
+
 # Generate Python protobuf files
 protoc -I ../cpprevolve/revolve/msgs \
        -I /usr/local/include/gazebo-9/gazebo/msgs/proto \
