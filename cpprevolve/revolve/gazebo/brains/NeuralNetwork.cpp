@@ -105,7 +105,7 @@ NeuralNetwork::NeuralNetwork(
     {
       std::cerr << "Missing required neuron attributes (id or layer). '"
                 << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
     auto layer = neuron->GetAttribute("layer")->GetAsString();
     auto neuronId = neuron->GetAttribute("id")->GetAsString();
@@ -113,7 +113,7 @@ NeuralNetwork::NeuralNetwork(
     if (layerMap_.count(neuronId))
     {
       std::cerr << "Duplicate neuron ID '" << neuronId << "'" << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     layerMap_[neuronId] = layer;
@@ -126,7 +126,7 @@ NeuralNetwork::NeuralNetwork(
         std::cerr << "The number of input neurons(" << (nInputs_ + 1)
                   << ") is greater than the maximum allowed one ("
                   << MAX_INPUT_NEURONS << ")" << std::endl;
-        throw std::runtime_error("Robot brains error");
+        throw std::runtime_error("Robot brain error");
       }
 
       toProcess.insert(neuronId);
@@ -139,7 +139,7 @@ NeuralNetwork::NeuralNetwork(
         std::cerr << "The number of output neurons(" << (nOutputs_ + 1)
                   << ") is greater than the maximum allowed  ("
                   << MAX_OUTPUT_NEURONS << ")"<< std::endl;
-        throw std::runtime_error("Robot brains error");
+        throw std::runtime_error("Robot brain error");
       }
 
       toProcess.insert(neuronId);
@@ -153,7 +153,7 @@ NeuralNetwork::NeuralNetwork(
                   << (hiddenNeurons.size() + 1)
                   << ") is greater than the maximum allowed one ("
                   << MAX_HIDDEN_NEURONS << ")" << std::endl;
-        throw std::runtime_error("Robot brains error");
+        throw std::runtime_error("Robot brain error");
       }
 
       hiddenNeurons.push_back(neuronId);
@@ -162,7 +162,7 @@ NeuralNetwork::NeuralNetwork(
     else
     {
       std::cerr << "Unknown neuron layer '" << layer << "'." << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     neuron = neuron->GetNextElement("rv:neuron");
@@ -192,7 +192,7 @@ NeuralNetwork::NeuralNetwork(
       {
         std::cerr << "Required output neuron " << neuronId.str()
                   << " for motor could not be located" << std::endl;
-        throw std::runtime_error("Robot brains error");
+        throw std::runtime_error("Robot brain error");
       }
 
       neuronHelper(&params_[outputsIndex * MAX_NEURON_PARAMS],
@@ -227,7 +227,7 @@ NeuralNetwork::NeuralNetwork(
       {
         std::cerr << "Required input neuron " << neuronId.str()
                   << " for sensor could not be located" << std::endl;
-        throw std::runtime_error("Robot brains error");
+        throw std::runtime_error("Robot brain error");
       }
 
       // Input neurons can currently not have a type, so
@@ -253,7 +253,7 @@ NeuralNetwork::NeuralNetwork(
 
     std::cerr << "Create virtual sensor and motors for input / output"
         " neurons that you would like to control manually.";
-    throw std::runtime_error("Robot brains error");
+    throw std::runtime_error("Robot brain error");
   }
 
   // Add hidden neurons
@@ -283,7 +283,7 @@ NeuralNetwork::NeuralNetwork(
     {
       std::cerr << "Missing required connection attributes (`src`, `dst` "
           "or `weight`)." << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     auto src = connection->GetAttribute("src")->GetAsString();
@@ -383,7 +383,7 @@ void NeuralNetwork::Step(const double _time)
         // Unsupported type should never happen
         std::cerr << "Invalid neuron type during processing, must be a bug."
                   << std::endl;
-        throw std::runtime_error("Robot brains error");
+        throw std::runtime_error("Robot brain error");
     }
   }
 
@@ -435,7 +435,7 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
     if (not positionMap_.count(id))
     {
       std::cerr << "Unknown neuron ID `" << id << "`" << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     if ("hidden" not_eq layerMap_[id])
@@ -445,7 +445,7 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
           << id
           << "`, it is not a hidden neuron."
           << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     auto pos = positionMap_[id];
@@ -559,7 +559,7 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
           << MAX_HIDDEN_NEURONS
           << ") is already reached."
           << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     auto neuron = _request->add_hidden(i);
@@ -567,7 +567,7 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
     if (layerMap_.count(id))
     {
       std::cerr << "Adding duplicate neuron ID `" << id << "`" << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     positionMap_[id] = nHidden_;
@@ -587,7 +587,7 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
     if (not positionMap_.count(id))
     {
       std::cerr << "Unknown neuron ID `" << id << "`" << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     auto pos = positionMap_[id];
@@ -596,7 +596,7 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
     if ("input" == layer)
     {
       std::cerr << "Input neurons cannot be modified." << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     neuronHelper(&params_[pos * MAX_NEURON_PARAMS], &types_[pos], neuron);
@@ -621,13 +621,13 @@ void NeuralNetwork::ConnectionHelper(
   if (not layerMap_.count(_src))
   {
     std::cerr << "Source neuron '" << _src << "' is unknown." << std::endl;
-    throw std::runtime_error("Robot brains error");
+    throw std::runtime_error("Robot brain error");
   }
 
   if (not layerMap_.count(_dst))
   {
     std::cerr << "Destination neuron '" << _dst << "' is unknown." << std::endl;
-    throw std::runtime_error("Robot brains error");
+    throw std::runtime_error("Robot brain error");
   }
 
   auto srcLayer = layerMap_[_src];
@@ -643,7 +643,7 @@ void NeuralNetwork::ConnectionHelper(
         << _dst
         << "' is an input neuron."
         << std::endl;
-    throw std::runtime_error("Robot brains error");
+    throw std::runtime_error("Robot brain error");
   }
   else if ("hidden" == dstLayer)
   {
@@ -676,7 +676,7 @@ void neuronHelper(
   if (not neuron->HasAttribute("type"))
   {
     std::cerr << "Missing required `type` attribute for neuron." << std::endl;
-    throw std::runtime_error("Robot brains error");
+    throw std::runtime_error("Robot brain error");
   }
 
   const auto type = neuron->GetAttribute("type")->GetAsString();
@@ -691,7 +691,7 @@ void neuronHelper(
           << type
           << "` neuron requires `rv:bias` and `rv:gain` elements."
           << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     // Set bias and gain parameters
@@ -708,7 +708,7 @@ void neuronHelper(
     {
       std::cerr << "An `Oscillator` neuron requires `rv:period`, "
           "`rv:phase_offset` and `rv:amplitude` elements." << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     // Set period, phase offset and gain
@@ -719,7 +719,7 @@ void neuronHelper(
   else
   {
     std::cerr << "Unsupported neuron type `" << type << '`' << std::endl;
-    throw std::runtime_error("Robot brains error");
+    throw std::runtime_error("Robot brain error");
   }
 }
 
@@ -737,7 +737,7 @@ void neuronHelper(
     {
       std::cerr << "A `" << type
                 << "` neuron requires exactly two parameters." << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     // Set bias and gain parameters
@@ -752,7 +752,7 @@ void neuronHelper(
     {
       std::cerr << "A `" << type
                 << "` neuron requires exactly three parameters." << std::endl;
-      throw std::runtime_error("Robot brains error");
+      throw std::runtime_error("Robot brain error");
     }
 
     params[0] = neuron.param(0).value();
@@ -762,6 +762,6 @@ void neuronHelper(
   else
   {
     std::cerr << "Unsupported neuron type `" << type << '`' << std::endl;
-    throw std::runtime_error("Robot brains error");
+    throw std::runtime_error("Robot brain error");
   }
 }

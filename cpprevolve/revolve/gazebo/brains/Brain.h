@@ -12,9 +12,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *
-* Description: Specifies a utility `Brain` base class. If your brains doesn't
+* Description: Specifies a utility `Brain` base class. If your brain doesn't
 *              fit this model, something else can easily be used by simply
-*              ignoring the default brains behavior in the `RobotController`.
+*              ignoring the default brain behavior in the `RobotController`.
 * Author: Elte Hupkes
 *
 */
