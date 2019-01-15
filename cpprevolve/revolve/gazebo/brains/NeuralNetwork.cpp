@@ -130,7 +130,7 @@ NeuralNetwork::NeuralNetwork(
       }
 
       toProcess.insert(neuronId);
-      nInputs_++;
+      ++nInputs_;
     }
     else if ("output" == layer)
     {
@@ -143,7 +143,7 @@ NeuralNetwork::NeuralNetwork(
       }
 
       toProcess.insert(neuronId);
-      nOutputs_++;
+      ++nOutputs_;
     }
     else if ("hidden" == layer)
     {
@@ -157,7 +157,7 @@ NeuralNetwork::NeuralNetwork(
       }
 
       hiddenNeurons.push_back(neuronId);
-      nHidden_++;
+     ++nHidden_;
     }
     else
     {
@@ -185,7 +185,7 @@ NeuralNetwork::NeuralNetwork(
     {
       std::stringstream neuronId;
       neuronId << partId << "-out-" << outputCountMap[partId];
-      outputCountMap[partId]++;
+      ++outputCountMap[partId];
 
       auto details = neuronMap.find(neuronId.str());
       if (details == neuronMap.end())
@@ -206,7 +206,7 @@ NeuralNetwork::NeuralNetwork(
 
   // Create sensor input neurons
   std::map< std::string, unsigned int > inputCountMap;
-  unsigned int inPos = 0;
+  unsigned int inputsIndex = 0;
   for (const auto &sensor : _sensors)
   {
     auto partId = sensor->PartId();
@@ -220,7 +220,7 @@ NeuralNetwork::NeuralNetwork(
     {
       std::stringstream neuronId;
       neuronId << partId << "-in-" << inputCountMap[partId];
-      inputCountMap[partId]++;
+      ++inputCountMap[partId];
 
       auto details = neuronMap.find(neuronId.str());
       if (details == neuronMap.end())
@@ -232,9 +232,9 @@ NeuralNetwork::NeuralNetwork(
 
       // Input neurons can currently not have a type, so
       // there is no need to process it.
-      positionMap_[neuronId.str()] = inPos;
+      positionMap_[neuronId.str()] = inputsIndex;
       toProcess.erase(neuronId.str());
-      inPos++;
+      ++inputsIndex;
     }
   }
 
@@ -268,7 +268,7 @@ NeuralNetwork::NeuralNetwork(
     neuronHelper(&params_[pos * MAX_NEURON_PARAMS],
                  &types_[pos],
                  neuronMap[neuronId]);
-    outputsIndex++;
+    ++outputsIndex;
   }
 
   // Decode connections
@@ -541,12 +541,12 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
       auto layer = layerMap_[iter->first];
       if ("hidden" == layer and positionMap_[iter->first] > pos)
       {
-        positionMap_[iter->first]--;
+        --positionMap_[iter->first];
       }
     }
 
-    nHidden_--;
-    nNonInputs_--;
+    --nHidden_;
+    --nNonInputs_;
   }
 
   // Add new requested hidden neurons
@@ -575,8 +575,8 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
 
     unsigned int pos = nOutputs_ + nHidden_;
     neuronHelper(&params_[pos * MAX_NEURON_PARAMS], &types_[pos], neuron);
-    nHidden_++;
-    nNonInputs_++;
+    ++nHidden_;
+    ++nNonInputs_;
   }
 
   // Update parameters of existing neurons
