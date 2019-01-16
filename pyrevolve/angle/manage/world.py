@@ -366,14 +366,7 @@ class WorldManager(manage.WorldManager):
         :param tree:
         :return:
         """
-        # if not self.analyzer:
-        #     raise RuntimeError("World.analyze_tree(): No analyzer configured.")
-
-        robot = tree.to_robot(self.get_robot_id())
-        # ret = yield From(self.analyzer.analyze_robot(robot, builder=self.builder))
-        # if ret is None:
-        #     logger.error("Error in robot analysis, skipping.")
-        #     raise Return(None)
+        robot = tree.to_protobot(self.get_robot_id())
 
         # TODO: Fix this by sending SDF to Gazebo and returning a bounding box
         bbox = BoundingBox()
@@ -390,7 +383,7 @@ class WorldManager(manage.WorldManager):
 
     async def insert_robot(
             self,
-            tree,
+            py_bot,
             pose,
             name=None,
             initial_battery=0.0,
@@ -408,11 +401,11 @@ class WorldManager(manage.WorldManager):
         i.e. the message that confirms the robot has been inserted, a
         future is returned.
 
-        :param tree:
-        :type tree: Tree
-        :param pose: Insertion pose
+        :param py_bot:
+        :type py_bot: Python tree structure of a robot
+        :param pose: Insertion pose of a robot
         :type pose: Pose
-        :param name: Robot name
+        :param name: (Unique) name of a robot
         :type name: str
         :param initial_battery: Initial battery level
         :param parents:
@@ -422,12 +415,12 @@ class WorldManager(manage.WorldManager):
         robot_name = "gen__"+str(robot_id) \
             if name is None else str(name)
 
-        robot = tree.to_robot(robot_id)
-        sdf = self.get_simulation_sdf(
-                robot=robot,
+        proto_bot = py_bot.to_protobot(robot_id)
+        sdf_bot = self.to_sdfbot(
+                robot=proto_bot,
                 robot_name=robot_name,
                 initial_battery=initial_battery)
-        sdf.elements[0].set_pose(pose)
+        sdf_bot.elements[0].set_pose(pose)
 
         if self.output_directory:
             robot_file_path = os.path.join(
@@ -435,15 +428,15 @@ class WorldManager(manage.WorldManager):
                     'robot_{}.sdf'.format(robot_id)
             )
             with open(robot_file_path, 'w') as f:
-                f.write(str(sdf))
+                f.write(str(sdf_bot))
 
         future = Future()
-        insert_future = await (self.insert_model(sdf))
+        insert_future = await self.insert_model(sdf_bot)
         # TODO: Unhandled error in exception handler. Fix this.
         insert_future.add_done_callback(lambda fut: self._robot_inserted(
                 robot_name=robot_name,
-                tree=tree,
-                robot=robot,
+                tree=py_bot,
+                robot=proto_bot,
                 initial_battery=initial_battery,
                 parents=parents,
                 msg=fut.result(),
@@ -451,7 +444,7 @@ class WorldManager(manage.WorldManager):
         ))
         return future
 
-    def get_simulation_sdf(
+    def to_sdfbot(
             self,
             robot,
             robot_name,

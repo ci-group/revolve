@@ -30,7 +30,9 @@ class Motor(Element):
             part_id,
             motor_id,
             joint=None,
-            motor_type=None
+            motor_type=None,
+            x=None,
+            y=None
     ):
         """
         :param part_id: ID of the part this motor belongs to. This is
@@ -54,6 +56,8 @@ class Motor(Element):
         self.part_id = part_id
         self.motor_id = motor_id
         self.type = motor_type
+        self.x = x
+        self.y = y
 
     def render_attributes(self):
         """
@@ -63,7 +67,9 @@ class Motor(Element):
         attrs.update({
             'type': self.type if self.type is not None else self.MOTOR_TYPE,
             'part_id': self.part_id,
-            'id': '{}__{}'.format(self.part_id, self.motor_id)
+            'id': '{}__{}'.format(self.part_id, self.motor_id),
+            'x': self.x,
+            'y': self.y,
         })
 
         if self.joint is not None:
@@ -137,7 +143,15 @@ class PIDMotor(Motor):
     # PID motors have a general C++ controller
     MOTOR_TYPE = 'pid'
 
-    def __init__(self, part_id, motor_id, joint, pid=None, motor_type=None):
+    def __init__(
+            self,
+            part_id,
+            motor_id,
+            joint,
+            pid=None,
+            motor_type=None,
+            x=None,
+            y=None):
         """
         :param part_id:
         :param motor_id:
@@ -150,7 +164,10 @@ class PIDMotor(Motor):
                 part_id=part_id,
                 motor_id=motor_id,
                 joint=joint,
-                motor_type=motor_type)
+                motor_type=motor_type,
+                x=x,
+                y=x
+        )
         self.pid = PID() if pid is None else pid
 
     def render_elements(self):

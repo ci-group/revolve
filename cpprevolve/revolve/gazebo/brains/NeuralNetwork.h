@@ -103,9 +103,6 @@ namespace revolve
       /// \brief Mutex for stepping / updating the network
       protected: boost::mutex networkMutex_;
 
-      /// \brief Transport node
-      protected: ::gazebo::transport::NodePtr node_;
-
       /// \brief Network modification subscriber
       protected: ::gazebo::transport::SubscriberPtr alterSub_;
 

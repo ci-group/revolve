@@ -36,10 +36,10 @@ class OnlineEvolutionSupervisor(Supervisor):
 
 if __name__ == "__main__":
     settings = parser.parse_args()
+    manager_settings = sys.argv[1:]
     supervisor = OnlineEvolutionSupervisor(
-        manager_cmd='python3',
-        # manager_args=['-u', os.path.join(here, "experiments/examples/manager.py")],
-        manager_args=['-u', settings.manager],
+        manager_cmd=settings.manager,
+        manager_args=manager_settings,
         world_file=settings.world,
         simulator_cmd="gazebo",
         simulator_args=["--verbose"],

@@ -115,9 +115,6 @@ namespace revolve
       /// \brief Request handler to modify the neural network
       protected: void Modify(ConstModifyPolicyPtr &_request);
 
-      /// \brief Transport node
-      protected: ::gazebo::transport::NodePtr node_;
-
       /// \brief Mutex for stepping / updating the network
       protected: boost::mutex rlpowerMutex_;
 

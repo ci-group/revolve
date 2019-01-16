@@ -10,7 +10,7 @@ from .decode import BodyDecoder, NeuralNetworkDecoder
 from .proto_to_yaml import BodyEncoder, NeuralNetworkEncoder
 
 
-def yaml_to_robot(body_spec, nn_spec, yaml):
+def yaml_to_proto(body_spec, nn_spec, yaml):
     """
     :param body_spec:
     :type body_spec: BodyImplementation
@@ -24,7 +24,7 @@ def yaml_to_robot(body_spec, nn_spec, yaml):
     return obj.get_protobuf(yaml)
 
 
-def robot_to_yaml(body_spec, nn_spec, bot_pb):
+def proto_to_yaml(body_spec, nn_spec, bot_pb):
     """
     :param body_spec:
     :type body_spec: BodyImplementation

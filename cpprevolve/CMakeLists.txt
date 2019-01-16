@@ -62,6 +62,9 @@ include_directories(${Boost_INCLUDE_DIRS})
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 
+find_package(yaml-cpp REQUIRED)
+include_directories(${YAML_CPP_INCLUDE_DIR})
+
 # Find Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
@@ -154,9 +157,10 @@ set_source_files_properties(
 # Plugin C++ files
 file(GLOB_RECURSE
      REVOLVE_GZ_SRC
-     revolve/gazebo/brain/*.cpp
+     revolve/gazebo/brains/*.cpp
      revolve/gazebo/motors/*.cpp
      revolve/gazebo/sensors/*.cpp
+     revolve/gazebo/util/*.cpp
      revolve/gazebo/plugin/BodyAnalyzer.cpp
      revolve/gazebo/plugin/RobotController.cpp
      revolve/gazebo/plugin/WorldController.cpp
@@ -189,6 +193,7 @@ target_link_libraries(
     ${GAZEBO_LIBRARIES}
     ${Boost_LIBRARIES}
     ${GSL_LIBRARIES}
+    ${YAML_CPP_LIBRARIES}
 )
 
 # Create World plugin
