@@ -15,7 +15,7 @@ RUN apt-get install -y build-essential      \
                        python               \
                        python-pip           \
                        xsltproc
-RUN apt-get install -y libgazebo9-dev gazebo9
+RUN apt-get install -y libgazebo9-dev gazebo9 -libyaml-cpp-dev
 
 ADD . /revolve
 RUN /revolve/docker/build_revolve.sh
