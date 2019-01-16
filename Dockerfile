@@ -13,9 +13,10 @@ RUN apt-get install -y build-essential      \
                        mercurial            \
                        pkg-config           \
                        python               \
-                       python-pip           \
+                       python-pip3          \
+                       libyaml-cpp-dev      \
                        xsltproc
-RUN apt-get install -y libgazebo9-dev gazebo9 libyaml-cpp-dev
+RUN apt-get install -y libgazebo9-dev gazebo9
 
 ADD . /revolve
 RUN /revolve/docker/build_revolve.sh
