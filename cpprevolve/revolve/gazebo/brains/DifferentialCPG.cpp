@@ -19,10 +19,14 @@
  *
  */
 
-#include "DifferentialCPG.h"
+#include <cstdlib>
+#include <map>
+#include <tuple>
+
 #include "../motors/Motor.h"
 #include "../sensors/Sensor.h"
-#include "../util/YamlBodyParser.h"
+
+#include "DifferentialCPG.h"
 
 namespace gz = gazebo;
 
@@ -32,8 +36,8 @@ using namespace revolve::gazebo;
 DifferentialCPG::DifferentialCPG(
     const ::gazebo::physics::ModelPtr &_model,
     const sdf::ElementPtr _settings,
-    const std::vector< revolve::gazebo::MotorPtr > &_motors,
-    const std::vector< revolve::gazebo::SensorPtr > &_sensors)
+    const std::vector< revolve::gazebo::MotorPtr > &/*_motors*/,
+    const std::vector< revolve::gazebo::SensorPtr > &/*_sensors*/)
     : flipState_(false)
 {
   // Create transport node
@@ -46,8 +50,8 @@ DifferentialCPG::DifferentialCPG(
 //      "~/" + name + "/modify_diff_cpg", &DifferentialCPG::Modify,
 //      this);
 
-  auto numMotors = _motors.size();
-  auto numSensors = _sensors.size();
+//  auto numMotors = _motors.size();
+//  auto numSensors = _sensors.size();
 
   if (not _settings->HasElement("rv:brain"))
   {
@@ -75,8 +79,13 @@ DifferentialCPG::DifferentialCPG(
       throw std::runtime_error("Robot brain error");
     }
     auto motorId = motor->GetAttribute("part_id")->GetAsString();
-    auto coordX = motor->GetAttribute("x")->GetAsString();
-    auto coordY = motor->GetAttribute("y")->GetAsString();
+    auto coordX = std::atoi(motor->GetAttribute("x")->GetAsString().c_str());
+    auto coordY = std::atoi(motor->GetAttribute("y")->GetAsString().c_str());
+
+    this->positions_[motorId] = {coordX, coordY};
+    this->neurons_[{coordX, coordY, 1}] = {1, 0};
+    this->neurons_[{coordX, coordY, -1}] = {1, 0};
+
 //    TODO: Add this check
 //    if (this->layerMap_.count({x, y}))
 //    {
@@ -85,21 +94,35 @@ DifferentialCPG::DifferentialCPG(
 //      throw std::runtime_error("Robot brain error");
 //    }
 
-//    this->bias_[{coordX, coordY}] = 0;
-//    this->gain_[std::make_tuple(coordX, coordY)] = 0;
-
-//    auto AtoB =
-//    this->connections_[std::make_tuple(coordX, coordY, 1, coordX, coordY, -1);] = 1;
-//    auto BtoA = ;
-//    this->connections_[std::make_tuple(coordX, coordY, -1, coordX, coordY, 1)] = 1;
-
-    motorsMap[motorId] = motor;
-    toProcess.insert(motorId);
-
     motor = motor->GetNextElement("rv:motor");
   }
 
+  // Add connections between neighbouring neurons
+  for (const auto &position : this->positions_)
+  {
+    int x, y; std::tie(x, y) = position.second;
 
+    if (this->connections_.count({x, y, 1, x, y, -1}))
+    {
+      continue;
+    }
+    if (this->connections_.count({x, y, -1, x, y, 1}))
+    {
+      continue;
+    }
+    this->connections_[{x, y, 1, x, y, -1}] = 1.0;
+    this->connections_[{x, y, -1, x, y, 1}] = 1.0;
+
+    for (const auto &neighbour : this->positions_)
+    {
+      int nearX, nearY; std::tie(nearX, nearY) = position.second;
+      if (++x == nearX or ++y == nearY or --x == nearX or --y == nearY)
+      {
+        this->connections_[{x, y, 1, nearX, nearY, 1}] = 1.0;
+        this->connections_[{nearX, nearY, 1, x, y, 1}] = 1.0;
+      }
+    }
+  }
 }
 
 /////////////////////////////////////////////////
@@ -109,7 +132,7 @@ DifferentialCPG::~DifferentialCPG() = default;
 void DifferentialCPG::Update(
     const std::vector< revolve::gazebo::MotorPtr > &_motors,
     const std::vector< revolve::gazebo::SensorPtr > &_sensors,
-    const double _time,
+    const double /*_time*/,
     const double _step)
 {
   boost::mutex::scoped_lock lock(this->networkMutex_);
