@@ -51,7 +51,7 @@ void neuronHelper(
 /////////////////////////////////////////////////
 NeuralNetwork::NeuralNetwork(
     const ::gazebo::physics::ModelPtr &_model,
-    const sdf::ElementPtr &_node,
+    const sdf::ElementPtr &_settings,
     const std::vector< MotorPtr > &_motors,
     const std::vector< SensorPtr > &_sensors)
     : flipState_(false)
@@ -61,17 +61,17 @@ NeuralNetwork::NeuralNetwork(
     , nNonInputs_(0)
 {
   // Create transport node
-  node_.reset(new gz::transport::Node());
-  node_->Init();
+  this->node_.reset(new gz::transport::Node());
+  this->node_->Init();
 
   auto name = _model->GetName();
   // Listen to network modification requests
-  alterSub_ = node_->Subscribe(
+  this->alterSub_ = this->node_->Subscribe(
       "~/" + name + "/modify_neural_network", &NeuralNetwork::Modify,
       this);
 
   // Initialize weights, input and states to zero by default
-  std::memset(inputWeights_, 0, sizeof(inputWeights_));
+  std::memset(this->inputWeights_, 0, sizeof(inputWeights_));
   std::memset(outputWeights_, 0, sizeof(outputWeights_));
   std::memset(hiddenWeights_, 0, sizeof(hiddenWeights_));
   std::memset(state1_, 0, sizeof(state1_));
@@ -96,8 +96,8 @@ NeuralNetwork::NeuralNetwork(
 
   // Fetch the first neuron; note the HasElement call is necessary to
   // prevent SDF from complaining if no neurons are present.
-  auto neuron = _node->HasElement("rv:neuron")
-                ? _node->GetElement("rv:neuron")
+  auto neuron = _settings->HasElement("rv:neuron")
+                ? _settings->GetElement("rv:neuron")
                 : sdf::ElementPtr();
   while (neuron)
   {
@@ -110,18 +110,18 @@ NeuralNetwork::NeuralNetwork(
     auto layer = neuron->GetAttribute("layer")->GetAsString();
     auto neuronId = neuron->GetAttribute("id")->GetAsString();
 
-    if (layerMap_.count(neuronId))
+    if (this->layerMap_.count(neuronId))
     {
       std::cerr << "Duplicate neuron ID '" << neuronId << "'" << std::endl;
       throw std::runtime_error("Robot brain error");
     }
 
-    layerMap_[neuronId] = layer;
+    this->layerMap_[neuronId] = layer;
     neuronMap[neuronId] = neuron;
 
     if ("input" == layer)
     {
-      if (nInputs_ >= MAX_INPUT_NEURONS)
+      if (this->nInputs_ >= MAX_INPUT_NEURONS)
       {
         std::cerr << "The number of input neurons(" << (nInputs_ + 1)
                   << ") is greater than the maximum allowed one ("
@@ -130,11 +130,11 @@ NeuralNetwork::NeuralNetwork(
       }
 
       toProcess.insert(neuronId);
-      ++nInputs_;
+      ++(this->nInputs_);
     }
     else if ("output" == layer)
     {
-      if (nOutputs_ >= MAX_OUTPUT_NEURONS)
+      if (this->nOutputs_ >= MAX_OUTPUT_NEURONS)
       {
         std::cerr << "The number of output neurons(" << (nOutputs_ + 1)
                   << ") is greater than the maximum allowed  ("
@@ -241,7 +241,7 @@ NeuralNetwork::NeuralNetwork(
   // Check if there are any input / output neurons which have not
   // yet been processed. This is an error - every input / output
   // neuron should be connected to at least a virtual motor / sensor.
-  if (toProcess.size())
+  if (toProcess.empty())
   {
     std::cerr << "The following input / output neurons were"
         " defined, but not attached to any sensor / motor:" << std::endl;
@@ -273,8 +273,8 @@ NeuralNetwork::NeuralNetwork(
 
   // Decode connections
   nNonInputs_ = nOutputs_ + nHidden_;
-  auto connection = _node->HasElement("rv:neural_connection")
-                    ? _node->GetElement("rv:neural_connection")
+  auto connection = _settings->HasElement("rv:neural_connection")
+                    ? _settings->GetElement("rv:neural_connection")
                     : sdf::ElementPtr();
   while (connection)
   {
@@ -308,54 +308,56 @@ void NeuralNetwork::Step(const double _time)
   unsigned int i = 0;
   unsigned int j = 0;
 
-  if (nOutputs_ == 0)
+  if (this->nOutputs_ == 0)
   {
     return;
   }
 
   double *curState, *nextState;
-  if (flipState_)
+  if (this->flipState_)
   {
-    curState = state2_;
-    nextState = state1_;
+    curState = this->state2_;
+    nextState = this->state1_;
   }
   else
   {
-    curState = state1_;
-    nextState = state2_;
+    curState = this->state1_;
+    nextState = this->state2_;
   }
 
 
   unsigned int maxNonInputs = MAX_HIDDEN_NEURONS + MAX_OUTPUT_NEURONS;
-  for (i = 0; i < nNonInputs_; ++i)
+  for (i = 0; i < this->nNonInputs_; ++i)
   {
     double curNeuronActivation = 0;
 
     // Add input neuron values
-    for (j = 0; j < nInputs_; ++j)
+    for (j = 0; j < this->nInputs_; ++j)
     {
-      curNeuronActivation += inputWeights_[maxNonInputs * j + i] * input_[j];
+      curNeuronActivation += this->inputWeights_[maxNonInputs * j + i]
+                             * this->input_[j];
     }
 
     // Add output neuron values
-    for (j = 0; j < nOutputs_; ++j)
+    for (j = 0; j < this->nOutputs_; ++j)
     {
-      curNeuronActivation += outputWeights_[maxNonInputs * j + i] * curState[j];
+      curNeuronActivation += this->outputWeights_[maxNonInputs * j + i]
+                             * curState[j];
     }
 
     // Add hidden neuron values
-    for (j = 0; j < nHidden_; ++j)
+    for (j = 0; j < this->nHidden_; ++j)
     {
-      curNeuronActivation +=
-          hiddenWeights_[maxNonInputs * j + i] * curState[nOutputs_ + j];
+      curNeuronActivation += this->hiddenWeights_[maxNonInputs * j + i]
+                             * curState[this->nOutputs_ + j];
     }
 
     unsigned int base = MAX_NEURON_PARAMS * i;
-    switch (types_[i])
+    switch (this->types_[i])
     {
       case SIGMOID:
         /* params are bias, gain */
-        curNeuronActivation -= params_[base];
+        curNeuronActivation -= this->params_[base];
         nextState[i] =
             1.0 / (1.0 + exp(-params_[base + 1] * curNeuronActivation));
         break;
@@ -372,8 +374,8 @@ void NeuralNetwork::Step(const double _time)
         double gain = params_[base + 2];
 
         /* Value in [0, 1] */
-        nextState[i] =((sin((2.0 * M_PI / period) *
-                            (_time - period * phaseOffset))) + 1.0) / 2.0;
+        nextState[i] = ((sin((2.0 * M_PI / period) *
+                       (_time - period * phaseOffset))) + 1.0) / 2.0;
 
         /* set output to be in [0.5 - gain/2, 0.5 + gain/2] */
         nextState[i] = (0.5 - (gain / 2.0) + nextState[i] * gain);
@@ -387,7 +389,7 @@ void NeuralNetwork::Step(const double _time)
     }
   }
 
-  flipState_ = not flipState_;
+  this->flipState_ = not this->flipState_;
 }
 
 /////////////////////////////////////////////////
@@ -397,7 +399,7 @@ void NeuralNetwork::Update(
     const double _time,
     const double _step)
 {
-  boost::mutex::scoped_lock lock(networkMutex_);
+  boost::mutex::scoped_lock lock(this->networkMutex_);
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
