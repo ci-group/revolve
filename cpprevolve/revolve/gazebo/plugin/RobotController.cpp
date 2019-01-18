@@ -203,7 +203,7 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
   else if ("diff_cpg" == learner)
   {
-    brain_.reset(new DifferentialCPG(this->model_, brain, motors_, sensors_));
+    brain_.reset(new DifferentialCPG(this->model_, _sdf, motors_, sensors_));
   }
   else
   {

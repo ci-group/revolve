@@ -31,7 +31,7 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 DifferentialCPG::DifferentialCPG(
     const ::gazebo::physics::ModelPtr &_model,
-    const sdf::ElementPtr &_node,
+    const sdf::ElementPtr _settings,
     const std::vector< revolve::gazebo::MotorPtr > &_motors,
     const std::vector< revolve::gazebo::SensorPtr > &_sensors)
     : flipState_(false)
@@ -49,8 +49,55 @@ DifferentialCPG::DifferentialCPG(
   auto numMotors = _motors.size();
   auto numSensors = _sensors.size();
 
-  auto genome = _node->GetAttribute("genome")->GetAsString();
-  auto parser = new YamlBodyParser(genome);
+  if (not _settings->HasElement("rv:brain"))
+  {
+    std::cerr << "No robot brain detected, this is probably an error."
+              << std::endl;
+    return;
+  }
+
+  // Map of ID to motor element
+  std::map< std::string, sdf::ElementPtr > motorsMap;
+
+  // Set for tracking all collected inputs/outputs
+  std::set< std::string > toProcess;
+
+  std::cout << _settings->GetDescription() << std::endl;
+  auto motor = _settings->HasElement("rv:motor")
+               ? _settings->GetElement("rv:motor")
+               : sdf::ElementPtr();
+  while(motor)
+  {
+    if (not motor->HasAttribute("x") or not motor->HasAttribute("y"))
+    {
+      std::cerr << "Missing required motor attributes (x- and/or y- coordinate)"
+                << std::endl;
+      throw std::runtime_error("Robot brain error");
+    }
+    auto motorId = motor->GetAttribute("part_id")->GetAsString();
+    auto coordX = motor->GetAttribute("x")->GetAsString();
+    auto coordY = motor->GetAttribute("y")->GetAsString();
+//    TODO: Add this check
+//    if (this->layerMap_.count({x, y}))
+//    {
+//      std::cerr << "Duplicate motor ID '" << x << "," << y << "'" <<
+//      std::endl;
+//      throw std::runtime_error("Robot brain error");
+//    }
+
+//    this->bias_[{coordX, coordY}] = 0;
+//    this->gain_[std::make_tuple(coordX, coordY)] = 0;
+
+//    auto AtoB =
+//    this->connections_[std::make_tuple(coordX, coordY, 1, coordX, coordY, -1);] = 1;
+//    auto BtoA = ;
+//    this->connections_[std::make_tuple(coordX, coordY, -1, coordX, coordY, 1)] = 1;
+
+    motorsMap[motorId] = motor;
+    toProcess.insert(motorId);
+
+    motor = motor->GetNextElement("rv:motor");
+  }
 
 
 }
@@ -65,4 +112,27 @@ void DifferentialCPG::Update(
     const double _time,
     const double _step)
 {
+  boost::mutex::scoped_lock lock(this->networkMutex_);
+
+  auto numMotors = _motors.size();
+
+  // Read sensor data and feed the neural network
+  unsigned int p = 0;
+  for (const auto &sensor : _sensors)
+  {
+    sensor->Read(&input_[p]);
+    p += sensor->Inputs();
+  }
+
+  // TODO Update diffCPG
+  auto *output = new double[numMotors];
+//  this->Output(numMotors, _time, output);
+
+  // Send new signals to the motors
+  p = 0;
+  for (const auto &motor: _motors)
+  {
+    motor->Update(&output[p], _step);
+    p += motor->Outputs();
+  }
 }
