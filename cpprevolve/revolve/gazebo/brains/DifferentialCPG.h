@@ -69,11 +69,15 @@ namespace revolve
       /// \param[in] _sensors Sensor list
       /// \param[in] _time Current world time
       /// \param[in] _step Current time step
-      public:  virtual void Update(
+      public: virtual void Update(
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors,
           const double _time,
           const double _step);
+
+      protected: void Step(
+          const double _time,
+          double *_output);
 
       /// \brief One input state for each input neuron
       protected: double input_[MAX_INPUT_NEURONS];
@@ -91,7 +95,7 @@ namespace revolve
       // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
       // values are a bias and a gain of each neuron.
       protected: std::map< std::tuple< int, int, int >,
-                           std::tuple< double, double > > neurons_;
+                           std::tuple< double, double, double > > neurons_;
 
       /// \brief Register of connections between neighnouring neurons
       /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
