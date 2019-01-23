@@ -83,13 +83,7 @@ DifferentialCPG::DifferentialCPG(
     this->neurons_[{coordX, coordY, 1}] = {1.f, 0.f, 0.f};
     this->neurons_[{coordX, coordY, -1}] = {1.f, 0.f, 0.f};
 
-//    TODO: Add this check
-//    if (this->layerMap_.count({x, y}))
-//    {
-//      std::cerr << "Duplicate motor ID '" << x << "," << y << "'" <<
-//      std::endl;
-//      throw std::runtime_error("Robot brain error");
-//    }
+//    TODO: Add check for duplicate coordinates
 
     motor = motor->GetNextElement("rv:motor");
   }
