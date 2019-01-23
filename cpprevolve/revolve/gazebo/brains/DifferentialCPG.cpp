@@ -50,14 +50,11 @@ DifferentialCPG::DifferentialCPG(
 //      "~/" + name + "/modify_diff_cpg", &DifferentialCPG::Modify,
 //      this);
 
-//  auto numMotors = _motors.size();
-//  auto numSensors = _sensors.size();
-
   if (not _settings->HasElement("rv:brain"))
   {
     std::cerr << "No robot brain detected, this is probably an error."
               << std::endl;
-    return;
+    throw std::runtime_error("DifferentialCPG brain did not receive settings");
   }
 
   // Map of ID to motor element
