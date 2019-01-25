@@ -184,6 +184,7 @@ SensorFactoryPtr RobotController::SensorFactory(
 /////////////////////////////////////////////////
 void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 {
+  std::cout << "Maarten: Robot brain has been loaded" << std::endl;
   if (not _sdf->HasElement("rv:brain"))
   {
     std::cerr << "No robot brain detected, this is probably an error."

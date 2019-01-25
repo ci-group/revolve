@@ -64,7 +64,7 @@ namespace revolve
       /// \details Methods allows reading and writing the battery level in
       /// the robot SDF. This is mostly useful for the `BatterySensor` to
       /// obtain the battery state, and storing it in the SDF also means it
-      /// will be adequately backed up in an eventual snapshot.
+      /// will be adequately backed             <rv:d>0.000000e+00</rv:d>up in an eventual snapshot.
       public: double BatteryLevel();
 
       /// \brief Sets the battery level if possible

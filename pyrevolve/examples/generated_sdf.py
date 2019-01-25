@@ -6,15 +6,19 @@ from __future__ import division
 from __future__ import print_function
 
 import math
-
-from sdfbuilder.sensor import Sensor as SdfSensor
-from sdfbuilder.math import Vector3
-from sdfbuilder import SDF, Limit
-from sdfbuilder.structure import Box as BoxGeom, Cylinder as CylinderGeom
+import sys
+print("Actual system path is ", sys.path)
 
 # Module imports
 from pyrevolve.generate import BodyGenerator
 from pyrevolve.generate import NeuralNetworkGenerator
+
+
+from pyrevolve.sdfbuilder.sensor import Sensor as SdfSensor
+from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.sdfbuilder import SDF, Limit
+from pyrevolve.sdfbuilder.structure import Box as BoxGeom, Cylinder as CylinderGeom
+
 
 from pyrevolve.spec import BodyImplementation
 from pyrevolve.spec import default_neural_net

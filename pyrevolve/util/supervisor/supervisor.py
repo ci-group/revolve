@@ -293,7 +293,7 @@ class Supervisor(object):
         :return:
         """
         print("Launching experiment manager...")
-        args = self.manager_cmd + self.manager_args
+        args = ['python3', '-u'] + self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
         process = subprocess.Popen(
                 args,

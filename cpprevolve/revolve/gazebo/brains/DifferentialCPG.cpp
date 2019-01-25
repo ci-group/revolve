@@ -22,11 +22,11 @@
 #include <cstdlib>
 #include <map>
 #include <tuple>
-
 #include "../motors/Motor.h"
 #include "../sensors/Sensor.h"
 
 #include "DifferentialCPG.h"
+
 
 namespace gz = gazebo;
 
@@ -66,7 +66,6 @@ DifferentialCPG::DifferentialCPG(
   // Set for tracking all collected inputs/outputs
   std::set< std::string > toProcess;
 
-  std::cout << _settings->GetDescription() << std::endl;
   auto motor = _settings->HasElement("rv:motor")
                ? _settings->GetElement("rv:motor")
                : sdf::ElementPtr();
@@ -97,6 +96,11 @@ DifferentialCPG::DifferentialCPG(
     motor = motor->GetNextElement("rv:motor");
   }
 
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::normal_distribution< double > dist(0, 0.0002);
+  std::cout << dist(mt) << std::endl;
+
   // Add connections between neighbouring neurons
   for (const auto &position : this->positions_)
   {
@@ -111,8 +115,8 @@ DifferentialCPG::DifferentialCPG(
     {
       continue;
     }
-    this->connections_[{x, y, 1, x, y, -1}] = 1.f;
-    this->connections_[{x, y, -1, x, y, 1}] = 1.f;
+    this->connections_[{x, y, 1, x, y, -1}] = dist(mt);
+    this->connections_[{x, y, -1, x, y, 1}] = dist(mt);
 
     for (const auto &neighbour : this->positions_)
     {
@@ -139,7 +143,6 @@ void DifferentialCPG::Update(
   boost::mutex::scoped_lock lock(this->networkMutex_);
 
   auto numMotors = _motors.size();
-  std::cout << _time << std::endl;
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
@@ -149,6 +152,10 @@ void DifferentialCPG::Update(
     p += sensor->Inputs();
   }
 
+  // Call Limbo here to see what's the most promising point?
+  // If done, return the weights for the connections
+  // Update the connection weights directly afterwards
+
   // TODO Update diffCPG
   auto *output = new double[numMotors];
   this->Step(_time, output);
@@ -157,7 +164,7 @@ void DifferentialCPG::Update(
   p = 0;
   for (const auto &motor: _motors)
   {
-    std::cout << motor->PartId() << std::endl;
+    //std::cout << motor->PartId() << std::endl;
     motor->Update(&output[p], _step);
     p += motor->Outputs();
   }

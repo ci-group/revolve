@@ -1,3 +1,6 @@
+#set(CMAKE_CXX_STANDARD "c++0x")
+#add_definitions(-std=c++11)
+
 # CMake Required Version
 cmake_minimum_required (VERSION 2.8.12)
 
@@ -6,6 +9,7 @@ project (Revolve)
 
 # Initial setups
 # _____________________________________________________________________________
+
 
 # CMake flag to help local projects find the build dir
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
@@ -177,6 +181,8 @@ add_library(
     revolve-proto STATIC
     ${PROTO_SRCS}
 )
+
+
 set_target_properties(revolve-proto PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(
     revolve-proto

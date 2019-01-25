@@ -502,7 +502,7 @@
           <rv:neuron layer="input" type="Input" id="Core-in-3" part_id="Core" />
           <rv:neuron layer="input" type="Input" id="Core-in-2" part_id="Core" />
           <rv:neuron layer="output" type="Oscillator" id="ActiveHinge-out-0" part_id="ActiveHinge">
-            <rv:period>8.000000e+00</rv:period>
+            <rv:period>0.1000000e+00</rv:period>
             <rv:amplitude>2.000000e+00</rv:amplitude>
             <rv:phase_offset>0.000000e+00</rv:phase_offset>
           </rv:neuron>

@@ -47,6 +47,9 @@ void Evaluator::Reset()
 /////////////////////////////////////////////////
 double Evaluator::Fitness()
 {
+
+  std::cout << "Maarten: CPP evaluator is used" << std::endl;
+
   auto dS = std::sqrt(std::pow(this->previousPosition_.Pos().X() -
                                this->currentPosition_.Pos().X(), 2) +
                       std::pow(this->previousPosition_.Pos().Y() -
