@@ -6,7 +6,8 @@ Revolve body generator based on RoboGen framework
 class RevolveBot():
     """
     Basic robot description class that contains robot's body and/or brain
-    structures, ID and several other necessary parameters.
+    structures, ID and several other necessary parameters. Capable of reading
+    a robot's sdf mode
     """
 
     def __init__(self, id=None):
@@ -62,6 +63,13 @@ class RevolveBot():
 
         self.load(robot, type)
 
+    def render2d(self):
+        """
+
+        :return:
+        """
+        pass
+
     def save(self, path, type='yaml'):
         """
         Save robot's description on a given file path in a specified format
@@ -82,13 +90,14 @@ class RevolveBot():
 
     def to_proto(self):
         """
-
+        We wouln't use proto anymore here, right?
         :return:
         """
         return ''
 
     def to_sdf(self):
         """
+        Converts yaml to sdf
 
         :return:
         """
@@ -96,14 +105,16 @@ class RevolveBot():
 
     def to_yaml(self):
         """
+        Converts sdf to yaml
 
         :return:
         """
         return ''
 
-    def render2d(self):
+    def update_substrate(self):
         """
 
         :return:
         """
-        pass
+        return ''
+
