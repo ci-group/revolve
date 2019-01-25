@@ -18,8 +18,21 @@ body_spec = BodyImplementation(
             arity=2,
             inputs=2,
             outputs=2,
-            params=[ParamSpec("param_a", default=-1, min_value=-2, max_value=0, max_inclusive=False),
-                    NormalDistParamSpec("param_b", mean=15, stddev=5, default=15)]
+            params=[
+                ParamSpec(
+                        "param_a",
+                        default=-1,
+                        min_value=-2,
+                        max_value=0,
+                        max_inclusive=False
+                ),
+                NormalDistParamSpec(
+                        "param_b",
+                        mean=15,
+                        stddev=5,
+                        default=15
+                )
+            ]
         ),
         "SomePart": PartSpec(arity=1, inputs=3, outputs=3)
     }
@@ -64,28 +77,36 @@ class TestBodyGenerator(unittest.TestCase):
         )
 
         body = gen.generate()
-        self.assertEquals("Core", body.root.type, "Root type should be 'Core' (seed %d)." % seed)
-        self.assertEquals(0, len(body.root.child), "Too many inputs were generated (seed %d)." % seed)
+        self.assertEquals("Core", body.root.type,
+                          "Root type should be 'Core' (seed %d)." % seed)
+        self.assertEquals(0, len(body.root.child),
+                          "Too many inputs were generated (seed %d)." % seed)
 
         gen.max_inputs = 100
         gen.max_outputs = 2
 
         body = gen.generate()
-        self.assertEquals(0, len(body.root.child), "Too many outputs were generated (seed %d)." % seed)
+        self.assertEquals(
+                0, len(body.root.child),
+                "Too many outputs were generated (seed {}).".format(seed))
 
-        # This leaves enough room for a 2Params child, but not enough for a SomePart child
+        # This leaves enough room for a 2Params child, but not enough for a
+        # SomePart child
         gen.max_outputs = 4
         body = gen.generate()
-        self.assertEquals(_count_parts(body.root), 1,
-                          "One child part should be present (seed %d)." % seed)
-        self.assertEquals("2Params", body.root.child[0].part.type,
-                          "Child part should be of type 2Params (seed %d)." % seed)
+        self.assertEquals(
+                _count_parts(body.root), 1,
+                "One child part should be present (seed {}).".format(seed))
+        self.assertEquals(
+                "2Params", body.root.child[0].part.type,
+                "Child part should be of type 2Params (seed {}).".format(seed))
 
         gen.max_inputs = gen.max_outputs = 100
         gen.max_parts = 1
         body = gen.generate()
-        self.assertEquals(0, _count_parts(body.root),
-                          "No child parts should be present (seed %d)." % seed)
+        self.assertEquals(
+                0, _count_parts(body.root),
+                "No child parts should be present (seed {}).".format(seed))
 
     def test_valid(self):
         """
@@ -107,4 +128,6 @@ class TestBodyGenerator(unittest.TestCase):
         )
 
         body = gen.generate()
-        self.assertTrue(body.IsInitialized(), "Incomplete body (seed %d)." % seed)
+        self.assertTrue(
+                body.IsInitialized(),
+                "Incomplete body (seed {}).".format(seed))

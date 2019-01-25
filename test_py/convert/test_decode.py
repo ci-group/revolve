@@ -263,72 +263,77 @@ class TestConvertYaml(unittest.TestCase):
         # Make sure all required fields are set
         self.assertTrue(robot.IsInitialized())
 
-        self.assertEquals(0, robot.id, "Robot ID not correctly set.")
+        self.assertEqual(0, robot.id, "Robot ID not correctly set.")
 
         root = robot.body.root
-        self.assertEquals("Core", root.id, "Root ID not correctly set. (%s)" % root.id)
+        self.assertEqual("Core", root.id, "Root ID not correctly set. (%s)" % root.id)
 
-        self.assertEquals(2, len(root.child), "Root should have two children.")
+        self.assertEqual(2, len(root.child), "Root should have two children.")
 
         sub1_conn = root.child[0]
         sub2_conn = root.child[1]
 
         # Check connection sources / destinations
-        self.assertEquals(0, sub1_conn.src)
-        self.assertEquals(1, sub2_conn.src)
-        self.assertEquals(1, sub1_conn.dst)
-        self.assertEquals(0, sub2_conn.dst)
+        self.assertEqual(0, sub1_conn.src_slot)
+        self.assertEqual(1, sub2_conn.src_slot)
+        self.assertEqual(1, sub1_conn.dst_slot)
+        self.assertEqual(0, sub2_conn.dst_slot)
 
         sub1 = sub1_conn.part
         sub2 = sub2_conn.part
 
         # Check types
-        self.assertEquals("2Params", sub1.type)
-        self.assertEquals("2Params", sub2.type)
+        self.assertEqual("2Params", sub1.type)
+        self.assertEqual("2Params", sub2.type)
 
         # Check parameter lists
         sub1params = [p.value for p in sub1.param]
         sub2params = [p.value for p in sub2.param]
 
-        self.assertEquals([-1, 15], sub1params)
-        self.assertEquals([10, 20], sub2params)
+        self.assertEqual([-1, 15], sub1params)
+        self.assertEqual([10, 20], sub2params)
 
         # Check the brain
         brain = robot.brain
 
         # 1 + 2 + 2 output, 2 + 2 + 2 input, 3 hidden
-        self.assertEquals(14, len(brain.neuron))
-        self.assertEquals(len(brain.connection), 2)
+        self.assertEqual(14, len(brain.neuron))
+        self.assertEqual(len(brain.connection), 2)
 
         conn0 = brain.connection[0]
-        self.assertEquals("Sub1-out-1", conn0.src)
-        self.assertEquals("Sub1-out-1", conn0.dst)
-        self.assertEquals(2, conn0.weight)
+        self.assertEqual("Sub1-out-1", conn0.src_slot)
+        self.assertEqual("Sub1-out-1", conn0.dst_slot)
+        self.assertEqual(2, conn0.weight)
 
         conn1 = brain.connection[1]
-        self.assertEquals("Sub2-in-1", conn1.src)
-        self.assertEquals("Sub1-out-1", conn1.dst)
-        self.assertEquals(0, conn1.weight)
+        self.assertEqual("Sub2-in-1", conn1.src_slot)
+        self.assertEqual("Sub1-out-1", conn1.dst_slot)
+        self.assertEqual(0, conn1.weight)
 
         hidden1 = [a for a in brain.neuron if a.id == "Hidden1"][0]
         hidden1params = [p.value for p in hidden1.param]
-        self.assertEquals([0.1, 0.2, 0.3], hidden1params)
-        self.assertEquals("Oscillator", hidden1.type)
-        self.assertEquals("Sub1", hidden1.partId)
+        self.assertEqual([0.1, 0.2, 0.3], hidden1params)
+        self.assertEqual("Oscillator", hidden1.type)
+        self.assertEqual("Sub1", hidden1.partId)
 
         hidden2 = [a for a in brain.neuron if a.id == "Hidden2"][0]
         hidden2params = [p.value for p in hidden2.param]
-        self.assertEquals([0, 0, 0], hidden2params)
-        self.assertEquals("Oscillator", hidden2.type)
+        self.assertEqual([0, 0, 0], hidden2params)
+        self.assertEqual("Oscillator", hidden2.type)
 
         hidden3 = [a for a in brain.neuron if a.id == "Hidden3"][0]
-        self.assertEquals("Simple", hidden3.type)
+        self.assertEqual("Simple", hidden3.type)
 
         sub1 = [a for a in brain.neuron if a.id == "Sub1-out-1"][0]
-        self.assertTrue(sub1.HasField("partId"), "Sub1 output neuron should have part ID.")
-        self.assertEquals("Sub1", sub1.partId, "Sub1 output neuron should have `Sub1` part ID.")
+        self.assertTrue(
+                sub1.HasField("partId"),
+                "Sub1 output neuron should have part ID.")
+        self.assertEqual(
+                "Sub1", sub1.partId,
+                "Sub1 output neuron should have `Sub1` part ID.")
         sub1params = [p.value for p in sub1.param]
-        self.assertEquals([0, 10, 0], sub1params)
+        self.assertEqual([0, 10, 0], sub1params)
+
 
 if __name__ == '__main__':
     unittest.main()

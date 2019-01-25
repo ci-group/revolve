@@ -4,10 +4,10 @@ Body generation utilities,
 from __future__ import absolute_import
 
 import random
+
 from pyrevolve.spec import BodyImplementation
 from pyrevolve.spec import PartSpec
 from pyrevolve.spec import BodyPart
-
 from pyrevolve.spec.msgs import Body
 
 
@@ -105,8 +105,8 @@ class BodyGenerator(object):
 
         root_part_type = self.choose_part(
                 parts=self.root_parts,
-                parent=None,
-                body=None,
+                parent_part=None,
+                root_part=None,
                 root=True)
         root_part = root_specs[root_part_type]
         body.root.id = "bodygen-root"
@@ -164,8 +164,8 @@ class BodyGenerator(object):
                 continue
 
             conn = parent.child.add()
-            conn.src = slot
-            conn.dst = target_slot
+            conn.src_slot = slot
+            conn.dst_slot = target_slot
             conn.part.id = "bodygen-{}".format(counter)
             conn.part.type = new_part_type
             self.initialize_part(new_part, conn.part, parent, body.root)
@@ -259,7 +259,13 @@ class BodyGenerator(object):
         """
         return random.uniform(0, 360)
 
-    def choose_part(self, parts, parent_part, root_part, root=False):
+    def choose_part(
+            self,
+            parts,
+            parent_part,
+            root_part,
+            root=False
+    ):
         """
         Overridable method to choose a body part from a list
         of part type identifiers. This method may return
@@ -327,7 +333,13 @@ class FixedOrientationBodyGenerator(BodyGenerator):
     """
     ORIENTATIONS = [0, 90, 180, 270]
 
-    def choose_orientation(self, new_part, parent_part, root_part, root=False):
+    def choose_orientation(
+            self,
+            new_part,
+            parent_part,
+            root_part,
+            root=False
+    ):
         """
         :param parent_part:
         :param root_part:

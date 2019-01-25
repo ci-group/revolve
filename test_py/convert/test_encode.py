@@ -5,12 +5,16 @@ the YAML converter to create the basic protobuf message.
 from __future__ import absolute_import
 
 import unittest
-
-from pyrevolve.convert import yaml_to_proto, proto_to_yaml
-from pyrevolve.spec import PartSpec, NeuronSpec, ParamSpec, RobotSpecificationException as SpecErr
-from pyrevolve.spec import BodyImplementation, NeuralNetImplementation
 import yaml
 
+from pyrevolve.convert import yaml_to_proto
+from pyrevolve.convert import proto_to_yaml
+from pyrevolve.spec import PartSpec
+from pyrevolve.spec import NeuronSpec
+from pyrevolve.spec import ParamSpec
+from pyrevolve.spec import RobotSpecificationException as SpecErr
+from pyrevolve.spec import BodyImplementation
+from pyrevolve.spec import NeuralNetImplementation
 
 # the basic yaml object that will be altered for the diffent test cases
 basic_yaml_object = '''\
@@ -52,11 +56,11 @@ brain:
     Sub2-out-0:
       type: Oscillator
   connections:
-    - src: Sub1-out-1
-      dst: Sub1-out-1
+    - src_slot: Sub1-out-1
+      dst_slot: Sub1-out-1
       weight: 2
-    - src: Sub2-in-1
-      dst: Sub1-out-1
+    - src_slot: Sub2-in-1
+      dst_slot: Sub1-out-1
 '''
 # the body and brain specifications
 body_spec = BodyImplementation({
@@ -69,7 +73,10 @@ body_spec = BodyImplementation({
         arity=2,
         inputs=2,
         outputs=2,
-        params=[ParamSpec("param_a", default=-1), ParamSpec("param_b", default=15)]
+        params=[
+            ParamSpec("param_a", default=-1),
+            ParamSpec("param_b", default=15)
+        ]
     )
 })
 
@@ -96,10 +103,10 @@ part_not_in_spec = yaml_to_proto(body_spec, brain_spec, basic_yaml_object)
 part_not_in_spec.body.root.type = "NonExistent"
 
 arity_fail = yaml_to_proto(body_spec, brain_spec, basic_yaml_object)
-arity_fail.body.root.child[0].src = 5
+arity_fail.body.root.child[0].src_slot = 5
 
 slot_reuse = yaml_to_proto(body_spec, brain_spec, basic_yaml_object)
-slot_reuse.body.root.child[0].part.child[0].src = 1
+slot_reuse.body.root.child[0].part.child[0].src_slot = 1
 
 duplicate_part_id = yaml_to_proto(body_spec, brain_spec, basic_yaml_object)
 duplicate_part_id.body.root.child[0].part.id = "Core"
@@ -168,11 +175,18 @@ class TestConvertYaml(unittest.TestCase):
         yaml_robot = rty(protobuf_robot)
         robot = yaml.load(yaml_robot)
 
-        self.assertEquals(0, robot["id"], "Robot ID not correctly set.")
+        self.assertEqual(
+                0, robot["id"],
+                "Robot ID not correctly set.")
 
-        self.assertEquals("Core", robot["body"]["id"], "Root ID not correctly set. (%s)" % robot["body"]["id"])
+        self.assertEqual(
+                "Core", robot["body"]["id"],
+                "Root ID not correctly set. (%s)" % robot["body"]["id"])
 
-        self.assertEquals(2, len(robot["body"]["children"]), "Root should have two children.")
+        self.assertEqual(
+                2, len(robot["body"]["children"]),
+                "Root should have two children.")
+
 
 if __name__ == '__main__':
     unittest.main()
