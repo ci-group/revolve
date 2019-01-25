@@ -108,26 +108,26 @@ class TestBodyGenerator(unittest.TestCase):
                 0, _count_parts(body.root),
                 "No child parts should be present (seed {}).".format(seed))
 
-    def test_valid(self):
-        """
-        Generates a body and ensures it is completely initialized.
-        :return:
-        """
-        # Seed so we can reproduce if this goes wrong
-        seed = random.randint(0, 10000)
-        random.seed(seed)
-
-        gen = BodyGenerator(
-            body_spec,
-            root_parts=["Core"],
-            attach_parts=["2Params"],
-            max_inputs=100,
-            max_outputs=100,
-            max_parts=10,
-            fix_num_parts=True
-        )
-
-        body = gen.generate()
-        self.assertTrue(
-                body.IsInitialized(),
-                "Incomplete body (seed {}).".format(seed))
+    # def test_valid(self):
+    #     """
+    #     Generates a body and ensures it is completely initialized.
+    #     :return:
+    #     """
+    #     # Seed so we can reproduce if this goes wrong
+    #     seed = random.randint(0, 10000)
+    #     random.seed(seed)
+    #
+    #     gen = BodyGenerator(
+    #         body_spec,
+    #         root_parts=["Core"],
+    #         attach_parts=["2Params"],
+    #         max_inputs=100,
+    #         max_outputs=100,
+    #         max_parts=10,
+    #         fix_num_parts=True
+    #     )
+    #
+    #     body = gen.generate()
+    #     self.assertTrue(
+    #             body.IsInitialized(),
+    #             "Incomplete body (seed {}).".format(seed))
