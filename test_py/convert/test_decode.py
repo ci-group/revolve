@@ -212,25 +212,25 @@ class TestConvertYaml(unittest.TestCase):
         Tests some body part exceptions
         :return:
         """
-        with self.assertRaisesRegexp(SpecErr, 'body'):
+        with self.assertRaisesRegex(SpecErr, 'body'):
             ytr(test_missing_body)
 
-        with self.assertRaisesRegexp(SpecErr, 'ID'):
+        with self.assertRaisesRegex(SpecErr, 'ID'):
             ytr(test_missing_part_id)
 
-        with self.assertRaisesRegexp(SpecErr, 'type'):
+        with self.assertRaisesRegex(SpecErr, 'type'):
             ytr(test_missing_part_type)
 
-        with self.assertRaisesRegexp(SpecErr, 'spec'):
+        with self.assertRaisesRegex(SpecErr, 'spec'):
             ytr(test_part_not_in_spec)
 
-        with self.assertRaisesRegexp(SpecErr, 'arity'):
+        with self.assertRaisesRegex(SpecErr, 'arity'):
             ytr(test_arity_fail)
 
-        with self.assertRaisesRegexp(SpecErr, 'attached'):
+        with self.assertRaisesRegex(SpecErr, 'attached'):
             ytr(test_slot_reuse)
 
-        with self.assertRaisesRegexp(SpecErr, 'Duplicate'):
+        with self.assertRaisesRegex(SpecErr, 'Duplicate'):
             ytr(test_duplicate_part_id)
 
     def test_simple_brain_exceptions(self):
@@ -238,19 +238,19 @@ class TestConvertYaml(unittest.TestCase):
         Tests some brain exceptions
         :return:
         """
-        with self.assertRaisesRegexp(SpecErr, 'Unknown'):
+        with self.assertRaisesRegex(SpecErr, 'Unknown'):
             ytr(test_unknown_neuron_type)
 
-        with self.assertRaisesRegexp(SpecErr, 'Duplicate'):
+        with self.assertRaisesRegex(SpecErr, 'Duplicate'):
             ytr(test_duplicate_neuron_id)
 
-        with self.assertRaisesRegexp(SpecErr, 'unknown'):
+        with self.assertRaisesRegex(SpecErr, 'unknown'):
             ytr(test_unknown_param_neuron)
 
-        with self.assertRaisesRegexp(SpecErr, 'input'):
+        with self.assertRaisesRegex(SpecErr, 'input'):
             ytr(test_input_destination_neuron)
 
-        with self.assertRaisesRegexp(SpecErr, 'Input'):
+        with self.assertRaisesRegex(SpecErr, 'Input'):
             ytr(test_input_params)
 
     def test_simple_robot(self):
@@ -301,13 +301,13 @@ class TestConvertYaml(unittest.TestCase):
         self.assertEqual(len(brain.connection), 2)
 
         conn0 = brain.connection[0]
-        self.assertEqual("Sub1-out-1", conn0.src_slot)
-        self.assertEqual("Sub1-out-1", conn0.dst_slot)
+        self.assertEqual("Sub1-out-1", conn0.src)
+        self.assertEqual("Sub1-out-1", conn0.dst)
         self.assertEqual(2, conn0.weight)
 
         conn1 = brain.connection[1]
-        self.assertEqual("Sub2-in-1", conn1.src_slot)
-        self.assertEqual("Sub1-out-1", conn1.dst_slot)
+        self.assertEqual("Sub2-in-1", conn1.src)
+        self.assertEqual("Sub1-out-1", conn1.dst)
         self.assertEqual(0, conn1.weight)
 
         hidden1 = [a for a in brain.neuron if a.id == "Hidden1"][0]

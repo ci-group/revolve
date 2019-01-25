@@ -56,11 +56,11 @@ brain:
     Sub2-out-0:
       type: Oscillator
   connections:
-    - src_slot: Sub1-out-1
-      dst_slot: Sub1-out-1
+    - src: Sub1-out-1
+      dst: Sub1-out-1
       weight: 2
-    - src_slot: Sub2-in-1
-      dst_slot: Sub1-out-1
+    - src: Sub2-in-1
+      dst: Sub1-out-1
 '''
 # the body and brain specifications
 body_spec = BodyImplementation({
