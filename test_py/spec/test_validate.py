@@ -237,24 +237,24 @@ class TestValidate(unittest.TestCase):
 
         # Test some connections
         a = brain.connection.add()
-        a.src_slot = "hidden"
-        a.dst_slot = "Part1-in-0"
+        a.src = "hidden"
+        a.dst = "Part1-in-0"
 
         # Wrong number of parameters for oscillator
         with self.assertRaisesRegex(SpecError, "input"):
             validate_robot(robot)
 
-        a.dst_slot = "Part1-out-1"
+        a.dst = "Part1-out-1"
 
         # Create duplicate connection
         b = brain.connection.add()
-        b.src_slot = "hidden"
-        b.dst_slot = "Part1-out-1"
+        b.src = "hidden"
+        b.dst = "Part1-out-1"
 
         with self.assertRaisesRegex(SpecError, "Duplicate"):
             validate_robot(robot)
 
-        b.dst_slot = "Part1-out-0"
+        b.dst = "Part1-out-0"
 
         # Again, this should be fine
         validate_robot(robot)

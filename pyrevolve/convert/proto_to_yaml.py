@@ -74,7 +74,7 @@ class BodyEncoder(object):
             yaml_part['children'] = {}
 
             for connection in connections:
-                conn_src = connection.src
+                conn_src = connection.src_slot
 
                 if conn_src >= spec.arity:
                     err("Cannot attach to slot {} of part '{}' with arity "
@@ -87,8 +87,8 @@ class BodyEncoder(object):
                 self._process_body_connection(connection, yaml_part)
 
     def _process_body_connection(self, connection, yaml_part):
-        conn_src = connection.src
-        conn_dst = connection.dst
+        conn_src = connection.src_slot
+        conn_dst = connection.dst_slot
         conn_part = connection.part
 
         if conn_src is None:
