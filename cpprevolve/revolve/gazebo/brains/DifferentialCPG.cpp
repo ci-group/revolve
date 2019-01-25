@@ -185,17 +185,15 @@ void DifferentialCPG::Step(
   }
 
   i = 0; auto j = 0;
-  auto *output = new double[this->neurons_.size() / 2];
   for (auto &neuron : this->neurons_)
   {
     double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
     neuron.second = {biasA, gainA, nextState[i]};
     if (i % 2 == 0)
     {
-      output[j] = nextState[i];
+      _output[j] = nextState[i];
       j++;
     }
     ++i;
   }
-  _output = output;
 }
