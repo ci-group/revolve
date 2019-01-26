@@ -7,10 +7,13 @@ cmake_minimum_required (VERSION 2.8.12)
 # Project name
 project (Revolve)
 
-# Initial setups
 # _____________________________________________________________________________
 
+# Added for BO
+# Allow Eigen/core to be included via <Eigen/core>
 
+# Initial setups
+# _____________________________________________________________________________
 # CMake flag to help local projects find the build dir
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
@@ -55,8 +58,24 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   #    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif ()
 
+
+# NLopt (for limbo)
+find_package(NLOpt REQUIRED)
+set(NLOPT_INCLUDE_DIR "/home/maarten/Documents/nlopt/build/")
+include_directories(${NLOPT_INCLUDE_DIR})
+
+# Limbo
+include_directories(/home/maarten/projects/revolve-simulator/revolve/limbo)
+
+
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+
 # Finding dependencies
 # _____________________________________________________________________________
+
+
 
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS system)
@@ -101,6 +120,7 @@ include_directories(
     ${GAZEBO_PROTO_INCLUDE}
 )
 
+
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
@@ -127,6 +147,7 @@ endif()
 
 # Include the directory where the protobuf files will be placed
 include_directories(${PROTO_OUTPUT_BASE})
+
 
 file(MAKE_DIRECTORY ${PROTO_OUTPUT_BASE}/revolve/msgs)
 foreach(RV_PROTO ${REVOLVE_PROTOS})
@@ -187,6 +208,7 @@ set_target_properties(revolve-proto PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(
     revolve-proto
     ${PROTOBUF_LIBRARIES}
+    nlopt
 )
 
 # Create Revolve bundle plugin

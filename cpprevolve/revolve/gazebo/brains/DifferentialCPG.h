@@ -25,7 +25,12 @@
 #include <map>
 #include <tuple>
 
+#include "Evaluator.h"
 #include "Brain.h"
+
+// Maarten
+// #include <cmath> // Doesn't work
+
 
 /// These numbers are quite arbitrary. It used to be in:13 out:8 for the
 /// Arduino, but I upped them both to 20 to accommodate other scenarios.
@@ -45,65 +50,87 @@
 
 namespace revolve
 {
-  namespace gazebo
-  {
-    class DifferentialCPG
-        : public Brain
+    namespace gazebo
     {
-      /// \brief Constructor
-      /// \param[in] _modelName Name of the robot
-      /// \param[in] _node The brain node
-      /// \param[in] _motors Reference to a motor list, it be reordered
-      /// \param[in] _sensors Reference to a sensor list, it might be reordered
-      public: DifferentialCPG(
-          const ::gazebo::physics::ModelPtr &_model,
-          const sdf::ElementPtr _settings,
-          const std::vector< MotorPtr > &_motors,
-          const std::vector< SensorPtr > &_sensors);
+        class DifferentialCPG
+                : public Brain
+        {
+            /// \brief Constructor
+            /// \param[in] _modelName Name of the robot
+            /// \param[in] _node The brain node
+            /// \param[in] _motors Reference to a motor list, it be reordered
+            /// \param[in] _sensors Reference to a sensor list, it might be reordered
+        public: DifferentialCPG(
+                    const ::gazebo::physics::ModelPtr &_model,
+                    const sdf::ElementPtr _settings,
+                    const std::vector< MotorPtr > &_motors,
+                    const std::vector< SensorPtr > &_sensors);
 
-      /// \brief Destructor
-      public: virtual ~DifferentialCPG();
+            /// \brief Destructor
+        public: virtual ~DifferentialCPG();
 
-      /// \brief The default update method for the controller
-      /// \param[in] _motors Motor list
-      /// \param[in] _sensors Sensor list
-      /// \param[in] _time Current world time
-      /// \param[in] _step Current time step
-      public: virtual void Update(
-          const std::vector< MotorPtr > &_motors,
-          const std::vector< SensorPtr > &_sensors,
-          const double _time,
-          const double _step);
+            /// \brief The default update method for the controller
+            /// \param[in] _motors Motor list
+            /// \param[in] _sensors Sensor list
+            /// \param[in] _time Current world time
+            /// \param[in] _step Current time step
+        public: virtual void Update(
+                    const std::vector< MotorPtr > &_motors,
+                    const std::vector< SensorPtr > &_sensors,
+                    const double _time,
+                    const double _step);
 
-      protected: void Step(
-          const double _time,
-          double *_output);
+        protected: void Step(
+                    const double _time,
+                    double *_output);
 
-      /// \brief One input state for each input neuron
-      protected: double input_[MAX_INPUT_NEURONS];
+            /// \brief One input state for each input neuron
+        protected: double input_[MAX_INPUT_NEURONS];
 
-      /// \brief Used to determine the current state array.
-      /// \example false := state1, true := state2.
-      protected: bool flipState_;
+            /// \brief Used to determine the current state array.
+            /// \example false := state1, true := state2.
+        protected: bool flipState_;
 
-      /// \brief Register of motor IDs and their x,y-coordinates
-      protected: std::map< std::string, std::tuple< int, int > >
-          positions_;
+            /// \brief Register of motor IDs and their x,y-coordinates
+        protected: std::map< std::string, std::tuple< int, int > >
+                    positions_;
 
-      /// \brief Register of individual neurons in x,y,z-coordinates
-      /// \details x,y-coordinates define position of a robot's module and
-      // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
-      // values are a bias and a gain of each neuron.
-      protected: std::map< std::tuple< int, int, int >,
-                           std::tuple< double, double, double > > neurons_;
+            /// \brief Register of individual neurons in x,y,z-coordinates
+            /// \details x,y-coordinates define position of a robot's module and
+            // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
+            // values are a bias and a gain of each neuron.
+        protected: std::map< std::tuple< int, int, int >,
+                    std::tuple< double, double, double > > neurons_;
 
-      /// \brief Register of connections between neighnouring neurons
-      /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
-      // define a connection.
-      protected: std::map< std::tuple< int, int, int, int, int, int >,
-                           double > connections_;
-    };
-  }
+            /// \brief Register of connections between neighnouring neurons
+            /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
+            // define a connection.
+        protected: std::map< std::tuple< int, int, int, int, int, int >,
+                    double > connections_;
+
+
+        // ADAPTED BY MAARTEN UNDERNEATH
+        // C.f. RLPower
+        /// \brief evaluation rate
+        private: double evaluationRate_;
+
+        /// \brief Maximal number of evaluations
+        private: size_t maxEvaluations_;
+
+        /// \brief Retrieves fitness for the current policy
+        private: double Fitness();
+
+        /// \brief Pointer to the fitness evaluator
+        private: EvaluatorPtr evaluator_ = NULL;
+
+        /// \brief Callable at each iteration (or each n iterations) or t seconds
+        public: void BO();
+
+        public: struct Params;
+
+        };
+
+    }
 }
 
 #endif //REVOLVE_DIFFERENTIALCPG_H_

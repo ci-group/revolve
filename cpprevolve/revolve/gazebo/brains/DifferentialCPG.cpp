@@ -19,18 +19,29 @@
  *
  */
 
+// Existing macros from Milan
 #include <cstdlib>
 #include <map>
 #include <tuple>
 #include "../motors/Motor.h"
 #include "../sensors/Sensor.h"
-
 #include "DifferentialCPG.h"
+#include "eigen3/Eigen/Core"
+#include <kernel/kernel.hpp>
+#include <tools.hpp>
 
+// Macros for limbo
+#include "/home/maarten/Documents/nlopt/build/src/api/nlopt.hpp"
+#include "bayes_opt/boptimizer.hpp"
 
+// It probably is bad to have two namespaces
 namespace gz = gazebo;
-
 using namespace revolve::gazebo;
+using namespace limbo;
+
+#ifndef USE_NLOPT
+#define USE_NLOPT //installed NLOPTdim_in
+#endif
 
 /////////////////////////////////////////////////
 DifferentialCPG::DifferentialCPG(
@@ -44,7 +55,13 @@ DifferentialCPG::DifferentialCPG(
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
 
-  auto name = _model->GetName();
+  // Maarten: Limbo parameters
+
+  // Maarten: Initialize evaluator
+  this->evaluationRate_ = 30.0;
+  this->maxEvaluations_ = 1000;
+
+    auto name = _model->GetName();
   // Listen to network modification requests
 //  alterSub_ = node_->Subscribe(
 //      "~/" + name + "/modify_diff_cpg", &DifferentialCPG::Modify,
@@ -128,6 +145,12 @@ DifferentialCPG::DifferentialCPG(
       }
     }
   }
+
+
+    // Maarten; Start the evaluator
+    //this->evaluator_.reset(new Evaluator(this->evaluationRate_));
+
+
 }
 
 /////////////////////////////////////////////////
@@ -215,3 +238,78 @@ void DifferentialCPG::Step(
   }
   _output = output;
 }
+
+void DifferentialCPG::BO(){
+
+    // Get fitness for BO
+    auto fitness = this->evaluator_->Fitness();
+}
+
+
+
+// Make this function here that Limbo calls to evaluate fitness.
+// In turn, this function will call Evaluate::
+struct eval_func{
+    // Set input dimension (only once)
+    static constexpr size_t input_size = 10;
+
+    // number of input dimension (x.size())
+    BO_PARAM(size_t, dim_in, input_size);
+
+    // number of dimenions of the result (res.size())
+    BO_PARAM(size_t, dim_out, 1);
+
+    // the function to be optimized
+    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const {
+      // NOTE THAT YOU DON'T MAKE A MISTAKE BY PROBING f(x_t), and getting the
+      // previous fitness, namely f(x_(t-1))
+
+      // Input dimension for all functions
+      size_t dim_in = input_size;
+
+      /********** 2# SCHWEFEL function N Dimensions **************/
+        auto xx = x;
+
+        // transfer interval from [0, 1] to [-500, 500]
+        for (int i = 0; i < dim_in; i++) {
+          xx[i] = 1000. * x[i] - 500.;
+          //std::cout<< xx[i] << std::endl;
+        }
+
+        double sum = 0.;
+        for (size_t i = 0; i < dim_in; i++) {
+          sum = sum + xx[i] * sin(sqrt(abs(xx[i])));
+        }
+
+        double obj = 418.9829 * dim_in - sum;
+        //std::cout << "Objective is" << obj << std::endl;
+        return tools::make_vector(-obj); //maximum = 0 with (420.9687, ...,420.9687)     }
+    }
+};
+
+// Parmameters
+struct DifferentialCPG::Params {
+    struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
+    };
+// depending on which internal optimizer we use, we need to import different parameters
+#ifdef USE_NLOPT
+    struct opt_nloptnograd : public defaults::opt_nloptnograd {
+    };
+#elif defined(USE_LIBCMAES)
+    struct opt_cmaes : public defaults::opt_cmaes {
+    };
+#endif
+
+    struct kernel : public defaults::kernel {
+        BO_PARAM(double, noise, 0.00000001);
+
+        BO_PARAM(bool, optimize_noise, false);
+    };
+
+    struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
+        BO_PARAM(bool, stats_enabled, true);
+
+        BO_PARAM(bool, bounded, true); //false
+    };
+};
+
