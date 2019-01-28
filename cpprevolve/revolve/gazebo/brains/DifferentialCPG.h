@@ -102,6 +102,8 @@ namespace revolve
       // define a connection.
       protected: std::map< std::tuple< int, int, int, int, int, int >,
                            double > connections_;
+
+      private: double *nextState_;
     };
   }
 }

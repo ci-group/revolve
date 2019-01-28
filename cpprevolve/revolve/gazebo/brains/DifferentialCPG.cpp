@@ -57,12 +57,6 @@ DifferentialCPG::DifferentialCPG(
     throw std::runtime_error("DifferentialCPG brain did not receive settings");
   }
 
-  // Map of ID to motor element
-  std::map< std::string, sdf::ElementPtr > motorsMap;
-
-  // Set for tracking all collected inputs/outputs
-  std::set< std::string > toProcess;
-
   std::cout << _settings->GetDescription() << std::endl;
   auto motor = _settings->HasElement("rv:motor")
                ? _settings->GetElement("rv:motor")
@@ -115,10 +109,16 @@ DifferentialCPG::DifferentialCPG(
       }
     }
   }
+
+  // Initialise array of neuron states for Update() method
+  this->nextState_ = new double[this->neurons_.size()];
 }
 
 /////////////////////////////////////////////////
-DifferentialCPG::~DifferentialCPG() = default;
+DifferentialCPG::~DifferentialCPG()
+{
+  delete[] this->nextState_;
+}
 
 /////////////////////////////////////////////////
 void DifferentialCPG::Update(
@@ -130,7 +130,6 @@ void DifferentialCPG::Update(
   boost::mutex::scoped_lock lock(this->networkMutex_);
 
   auto numMotors = _motors.size();
-  std::cout << _time << std::endl;
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
@@ -148,7 +147,6 @@ void DifferentialCPG::Update(
   p = 0;
   for (const auto &motor: _motors)
   {
-    std::cout << motor->PartId() << std::endl;
     motor->Update(&output[p], _step);
     p += motor->Outputs();
   }
@@ -158,11 +156,11 @@ void DifferentialCPG::Step(
     const double _time,
     double *_output)
 {
-  auto *nextState = new double[this->neurons_.size()];
-
   auto i = 0;
   for (const auto &neuron : this->neurons_)
   {
+    // The map key is representing x-, y-, and z-coordinates of a neuron and
+    // map value represents bias, gain, and current state of the neuron.
     int x, y, z; std::tie(x, y, z) = neuron.first;
     double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
 
@@ -180,7 +178,7 @@ void DifferentialCPG::Step(
       }
     }
 
-    nextState[i] = stateA + (inputA * _time);
+    this->nextState_[i] = stateA + (inputA * _time);
     ++i;
   }
 
@@ -188,10 +186,10 @@ void DifferentialCPG::Step(
   for (auto &neuron : this->neurons_)
   {
     double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
-    neuron.second = {biasA, gainA, nextState[i]};
+    neuron.second = {biasA, gainA, this->nextState_[i]};
     if (i % 2 == 0)
     {
-      _output[j] = nextState[i];
+      _output[j] = this->nextState_[i];
       j++;
     }
     ++i;
