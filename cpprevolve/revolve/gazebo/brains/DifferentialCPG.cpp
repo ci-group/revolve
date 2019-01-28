@@ -101,7 +101,8 @@ DifferentialCPG::DifferentialCPG(
 
     for (const auto &neighbour : this->positions_)
     {
-      int nearX, nearY; std::tie(nearX, nearY) = neighbour.second;
+      int nearX, nearY;
+      std::tie(nearX, nearY) = neighbour.second;
       if ((x+1) == nearX or (y+1) == nearY or (x-1) == nearX or (y-1) == nearY)
       {
         this->connections_[{x, y, 1, nearX, nearY, 1}] = 1.f;
@@ -161,8 +162,11 @@ void DifferentialCPG::Step(
   {
     // The map key is representing x-, y-, and z-coordinates of a neuron and
     // map value represents bias, gain, and current state of the neuron.
-    int x, y, z; std::tie(x, y, z) = neuron.first;
-    double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
+    int x, y, z;
+    std::tie(x, y, z) = neuron.first;
+
+    double biasA, gainA, stateA;
+    std::tie(biasA, gainA, stateA) = neuron.second;
 
     auto inputA = 0.f;
     for (auto const &connection : this->connections_)
@@ -185,7 +189,9 @@ void DifferentialCPG::Step(
   i = 0; auto j = 0;
   for (auto &neuron : this->neurons_)
   {
-    double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
+    double biasA, gainA, stateA;
+    std::tie(biasA, gainA, stateA) = neuron.second;
+
     neuron.second = {biasA, gainA, this->nextState_[i]};
     if (i % 2 == 0)
     {
