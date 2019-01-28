@@ -1,6 +1,3 @@
-#set(CMAKE_CXX_STANDARD "c++0x")
-#add_definitions(-std=c++11)
-
 # CMake Required Version
 cmake_minimum_required (VERSION 2.8.12)
 
@@ -126,6 +123,7 @@ list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 # Directory where the .proto files reside within revolve
 set(SPEC_DIR "${CMAKE_SOURCE_DIR}/cpprevolve/revolve/msgs")
+message(${SPEC_DIR})
 
 # All protobuf files we need, including the Gazebo ones
 file(GLOB_RECURSE REVOLVE_PROTOS ${SPEC_DIR}/*.proto)
@@ -216,6 +214,8 @@ add_library(
     revolve-gazebo
     ${REVOLVE_GZ_SRC}
 )
+
+
 target_link_libraries(
     revolve-gazebo
     ${GAZEBO_LIBRARIES}

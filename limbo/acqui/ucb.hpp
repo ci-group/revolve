@@ -46,10 +46,11 @@
 #ifndef LIMBO_ACQUI_UCB_HPP
 #define LIMBO_ACQUI_UCB_HPP
 
-#include "/usr/include/eigen3/Eigen/Core"
+#include <Eigen/Core>
 
-#include "limbo/opt/optimizer.hpp"
-#include "limbo/tools/macros.hpp"
+// Limbo macros
+#include "opt/optimizer.hpp"
+#include "tools/macros.hpp"
 
 namespace limbo {
     namespace defaults {

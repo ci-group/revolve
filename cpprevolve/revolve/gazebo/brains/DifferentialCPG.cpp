@@ -26,21 +26,26 @@
 #include "../motors/Motor.h"
 #include "../sensors/Sensor.h"
 #include "DifferentialCPG.h"
-#include "eigen3/Eigen/Core"
-#include <kernel/kernel.hpp>
-#include <tools.hpp>
+#include <Eigen/Core>
 
 // Macros for limbo
-#include "/home/maarten/Documents/nlopt/build/src/api/nlopt.hpp"
+#include "src/api/nlopt.hpp"
 #include "bayes_opt/boptimizer.hpp"
+#include "kernel/kernel.hpp"
+#include <tools.hpp>
+
+// Casually trying things to allow for succesful compilation
+// #include "/home/maarten/Documents/nlopt/build/src/api/nlopt.h" // new, but didn't work. Bad idea
+
 
 // It probably is bad to have two namespaces
 namespace gz = gazebo;
 using namespace revolve::gazebo;
 using namespace limbo;
 
+
 #ifndef USE_NLOPT
-#define USE_NLOPT //installed NLOPTdim_in
+#define USE_NLOPT //installed NLOPT
 #endif
 
 /////////////////////////////////////////////////
@@ -288,7 +293,7 @@ struct eval_func{
 };
 
 // Parmameters
-struct DifferentialCPG::Params {
+struct DifferentialCPG::Params{
     struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
     };
 // depending on which internal optimizer we use, we need to import different parameters
