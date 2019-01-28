@@ -107,6 +107,8 @@ namespace revolve
 
         // ADAPTED BY MAARTEN UNDERNEATH
         // C.f. RLPower
+        public: void BO();
+
         /// \brief evaluation rate
         private: double evaluationRate_;
 
@@ -117,13 +119,16 @@ namespace revolve
         private: double Fitness();
 
         /// \brief Pointer to the fitness evaluator
-        private: EvaluatorPtr evaluator_ = NULL;
+        protected: EvaluatorPtr evaluator_ = NULL;
 
-        /// \brief Callable at each iteration (or each n iterations) or t seconds
-        public: void BO();
-
+        /// \brief Holder for BO parameters
         public: struct Params;
 
+        /// \brief Holder for Limbo's required eval_func struct
+        public: struct eval_func;
+
+        /// \brief
+        private: double startTime_;
         };
 
     }

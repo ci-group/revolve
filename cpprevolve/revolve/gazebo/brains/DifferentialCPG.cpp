@@ -33,41 +33,44 @@
 #include "bayes_opt/boptimizer.hpp"
 #include "kernel/kernel.hpp"
 #include <tools.hpp>
-
-// Casually trying things to allow for succesful compilation
-// #include "/home/maarten/Documents/nlopt/build/src/api/nlopt.h" // new, but didn't work. Bad idea
+#include <kernel/exp.hpp>
+#include "init/lhs.hpp"
+#include "model/gp.hpp"
+#include "acqui/ucb.hpp"
 
 
 // It probably is bad to have two namespaces
 namespace gz = gazebo;
 using namespace revolve::gazebo;
-using namespace limbo;
-
 
 #ifndef USE_NLOPT
 #define USE_NLOPT //installed NLOPT
 #endif
 
-/////////////////////////////////////////////////
+/**
+ * Constructor for DifferentialCPG class.
+ *
+ * @param _model
+ * @param _settings
+ */
 DifferentialCPG::DifferentialCPG(
-    const ::gazebo::physics::ModelPtr &_model,
-    const sdf::ElementPtr _settings,
-    const std::vector< revolve::gazebo::MotorPtr > &/*_motors*/,
-    const std::vector< revolve::gazebo::SensorPtr > &/*_sensors*/)
-    : flipState_(false)
+        const ::gazebo::physics::ModelPtr &_model,
+        const sdf::ElementPtr _settings,
+        const std::vector< revolve::gazebo::MotorPtr > &/*_motors*/,
+        const std::vector< revolve::gazebo::SensorPtr > &/*_sensors*/)
+        : flipState_(false)
+        , startTime_ (-1)
 {
-  // Create transport node
-  this->node_.reset(new gz::transport::Node());
-  this->node_->Init();
+    // Create transport node
+    this->node_.reset(new gz::transport::Node());
+    this->node_->Init();
 
-  // Maarten: Limbo parameters
-
-  // Maarten: Initialize evaluator
-  this->evaluationRate_ = 30.0;
-  this->maxEvaluations_ = 1000;
+    // Initialize evaluator
+    this->evaluationRate_ = 30.0;
+    this->maxEvaluations_ = 1000;
 
     auto name = _model->GetName();
-  // Listen to network modification requests
+    // Listen to network modification requests
 //  alterSub_ = node_->Subscribe(
 //      "~/" + name + "/modify_diff_cpg", &DifferentialCPG::Modify,
 //      this);
@@ -75,37 +78,37 @@ DifferentialCPG::DifferentialCPG(
 //  auto numMotors = _motors.size();
 //  auto numSensors = _sensors.size();
 
-  if (not _settings->HasElement("rv:brain"))
-  {
-    std::cerr << "No robot brain detected, this is probably an error."
-              << std::endl;
-    return;
-  }
-
-  // Map of ID to motor element
-  std::map< std::string, sdf::ElementPtr > motorsMap;
-
-  // Set for tracking all collected inputs/outputs
-  std::set< std::string > toProcess;
-
-  auto motor = _settings->HasElement("rv:motor")
-               ? _settings->GetElement("rv:motor")
-               : sdf::ElementPtr();
-  while(motor)
-  {
-    if (not motor->HasAttribute("x") or not motor->HasAttribute("y"))
+    if (not _settings->HasElement("rv:brain"))
     {
-      std::cerr << "Missing required motor attributes (x- and/or y- coordinate)"
-                << std::endl;
-      throw std::runtime_error("Robot brain error");
+        std::cerr << "No robot brain detected, this is probably an error."
+                  << std::endl;
+        return;
     }
-    auto motorId = motor->GetAttribute("part_id")->GetAsString();
-    auto coordX = std::atoi(motor->GetAttribute("x")->GetAsString().c_str());
-    auto coordY = std::atoi(motor->GetAttribute("y")->GetAsString().c_str());
 
-    this->positions_[motorId] = {coordX, coordY};
-    this->neurons_[{coordX, coordY, 1}] = {1.f, 0.f, 0.f};
-    this->neurons_[{coordX, coordY, -1}] = {1.f, 0.f, 0.f};
+    // Map of ID to motor element
+    std::map< std::string, sdf::ElementPtr > motorsMap;
+
+    // Set for tracking all collected inputs/outputs
+    std::set< std::string > toProcess;
+
+    auto motor = _settings->HasElement("rv:motor")
+                 ? _settings->GetElement("rv:motor")
+                 : sdf::ElementPtr();
+    while(motor)
+    {
+        if (not motor->HasAttribute("x") or not motor->HasAttribute("y"))
+        {
+            std::cerr << "Missing required motor attributes (x- and/or y- coordinate)"
+                      << std::endl;
+            throw std::runtime_error("Robot brain error");
+        }
+        auto motorId = motor->GetAttribute("part_id")->GetAsString();
+        auto coordX = std::atoi(motor->GetAttribute("x")->GetAsString().c_str());
+        auto coordY = std::atoi(motor->GetAttribute("y")->GetAsString().c_str());
+
+        this->positions_[motorId] = {coordX, coordY};
+        this->neurons_[{coordX, coordY, 1}] = {1.f, 0.f, 0.f};
+        this->neurons_[{coordX, coordY, -1}] = {1.f, 0.f, 0.f};
 
 //    TODO: Add this check
 //    if (this->layerMap_.count({x, y}))
@@ -115,146 +118,186 @@ DifferentialCPG::DifferentialCPG(
 //      throw std::runtime_error("Robot brain error");
 //    }
 
-    motor = motor->GetNextElement("rv:motor");
-  }
-
-  std::random_device rd;
-  std::mt19937 mt(rd());
-  std::normal_distribution< double > dist(0, 0.0002);
-  std::cout << dist(mt) << std::endl;
-
-  // Add connections between neighbouring neurons
-  for (const auto &position : this->positions_)
-  {
-    auto name = position.first;
-    int x, y; std::tie(x, y) = position.second;
-
-    if (this->connections_.count({x, y, 1, x, y, -1}))
-    {
-      continue;
-    }
-    if (this->connections_.count({x, y, -1, x, y, 1}))
-    {
-      continue;
-    }
-    this->connections_[{x, y, 1, x, y, -1}] = dist(mt);
-    this->connections_[{x, y, -1, x, y, 1}] = dist(mt);
-
-    for (const auto &neighbour : this->positions_)
-    {
-      int nearX, nearY; std::tie(nearX, nearY) = neighbour.second;
-      if ((x+1) == nearX or (y+1) == nearY or (x-1) == nearX or (y-1) == nearY)
-      {
-        this->connections_[{x, y, 1, nearX, nearY, 1}] = 1.f;
-        this->connections_[{nearX, nearY, 1, x, y, 1}] = 1.f;
-      }
-    }
-  }
-
-
-    // Maarten; Start the evaluator
-    //this->evaluator_.reset(new Evaluator(this->evaluationRate_));
-
-
-}
-
-/////////////////////////////////////////////////
-DifferentialCPG::~DifferentialCPG() = default;
-
-/////////////////////////////////////////////////
-void DifferentialCPG::Update(
-    const std::vector< revolve::gazebo::MotorPtr > &_motors,
-    const std::vector< revolve::gazebo::SensorPtr > &_sensors,
-    const double _time,
-    const double _step)
-{
-  boost::mutex::scoped_lock lock(this->networkMutex_);
-
-  auto numMotors = _motors.size();
-
-  // Read sensor data and feed the neural network
-  unsigned int p = 0;
-  for (const auto &sensor : _sensors)
-  {
-    sensor->Read(&input_[p]);
-    p += sensor->Inputs();
-  }
-
-  // Call Limbo here to see what's the most promising point?
-  // If done, return the weights for the connections
-  // Update the connection weights directly afterwards
-
-  // TODO Update diffCPG
-  auto *output = new double[numMotors];
-  this->Step(_time, output);
-
-  // Send new signals to the motors
-  p = 0;
-  for (const auto &motor: _motors)
-  {
-    //std::cout << motor->PartId() << std::endl;
-    motor->Update(&output[p], _step);
-    p += motor->Outputs();
-  }
-}
-
-void DifferentialCPG::Step(
-    const double _time,
-    double *_output)
-{
-  auto *nextState = new double[this->neurons_.size()];
-
-  auto i = 0;
-  for (const auto &neuron : this->neurons_)
-  {
-    int x, y, z; std::tie(x, y, z) = neuron.first;
-    double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
-
-    auto inputA = 0.f;
-    for (auto const &connection : this->connections_)
-    {
-      int x1, y1, z1, x2, y2, z2;
-      std::tie(x1, y1, z1, x2, y2, z2) = connection.first;
-      auto weightBA = connection.second;
-
-      if (x2 == x and y2 == y and z2 == z)
-      {
-        auto input = std::get<2>(this->neurons_[{x1, y1, z1}]);
-        inputA += weightBA * input + biasA;
-      }
+        motor = motor->GetNextElement("rv:motor");
     }
 
-    nextState[i] = stateA + (inputA * _time);
-    ++i;
-  }
+    // Random initialization of neuron connections
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::normal_distribution< double > dist(0, 1);
+    std::cout << dist(mt) << std::endl;
 
-  i = 0; auto j = 0;
-  auto *output = new double[this->neurons_.size() / 2];
-  for (auto &neuron : this->neurons_)
-  {
-    double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
-    neuron.second = {biasA, gainA, nextState[i]};
-    if (i % 2 == 0)
+    // Add connections between neighbouring neurons
+    for (const auto &position : this->positions_)
     {
-      output[j] = nextState[i];
-      j++;
+        auto name = position.first;
+        int x, y; std::tie(x, y) = position.second;
+
+        if (this->connections_.count({x, y, 1, x, y, -1}))
+        {
+            continue;
+        }
+        if (this->connections_.count({x, y, -1, x, y, 1}))
+        {
+            continue;
+        }
+        this->connections_[{x, y, 1, x, y, -1}] = dist(mt);
+        this->connections_[{x, y, -1, x, y, 1}] = dist(mt);
+
+        for (const auto &neighbour : this->positions_)
+        {
+            int nearX, nearY; std::tie(nearX, nearY) = neighbour.second;
+            if ((x+1) == nearX or (y+1) == nearY or (x-1) == nearX or (y-1) == nearY)
+            {
+                this->connections_[{x, y, 1, nearX, nearY, 1}] = 1.f;
+                this->connections_[{nearX, nearY, 1, x, y, 1}] = 1.f;
+            }
+        }
     }
-    ++i;
-  }
-  _output = output;
+
+
+
+
+    // Initiate the cpp Evaluator
+    this->evaluator_.reset(new Evaluator(this->evaluationRate_));
 }
 
 void DifferentialCPG::BO(){
+    // Initiate BO
+    using Mean_t = limbo::mean::Data<Params>;
+    using Kernel_t = limbo::kernel::Exp<Params>;
+    using GP_t = limbo::model::GP<Params, Kernel_t, Mean_t>;
+    using Init_t = limbo::init::LHS<Params>;
+    using Acqui_t = limbo::acqui::UCB<Params, GP_t>;
 
-    // Get fitness for BO
-    auto fitness = this->evaluator_->Fitness();
+    // Run BO. Note that this fires up BO for a specified number of iterations. Still need to find how this can ben connected to
+    limbo::bayes_opt::BOptimizer<Params, limbo::initfun<Init_t>, limbo::modelfun<GP_t>, limbo::acquifun<Acqui_t>> boptimizer;
+    boptimizer.optimize(eval_func());
+
+    // Get best sample
+    auto best_fitness = boptimizer.best_observation()(0);
+
+    // Show best fitness
+    std::cout << "Best fitness: " << best_fitness << std::endl;
 }
 
+/**
+ * Destructor
+ */
+DifferentialCPG::~DifferentialCPG() = default;
 
+/**
+ * Callback function that defines the movement of the robot
+ *
+ * @param _motors
+ * @param _sensors
+ * @param _time
+ * @param _step
+ */
+void DifferentialCPG::Update(
+        const std::vector< revolve::gazebo::MotorPtr > &_motors,
+        const std::vector< revolve::gazebo::SensorPtr > &_sensors,
+        const double _time,
+        const double _step)
+{
+    // Prevent two threads from accessing the same resource at the same time
+    boost::mutex::scoped_lock lock(this->networkMutex_);
 
-// Make this function here that Limbo calls to evaluate fitness.
-// In turn, this function will call Evaluate::
-struct eval_func{
+    // Define the number of motors used. This
+    auto numMotors = _motors.size();
+
+    // Read sensor data and feed the neural network
+    unsigned int p = 0;
+    for (const auto &sensor : _sensors)
+    {
+        sensor->Read(&input_[p]);
+        p += sensor->Inputs();
+    }
+
+    // TODO Call Limbo here to see what's the most promising point?
+    // If done, return the weights for the connections
+    // Update the connection weights directly afterwards
+
+    // Evaluate policy on certain time limit
+    if ((_time - this->startTime_) > this->evaluationRate_) {
+
+        // Evaluation policy here
+        this->startTime_ = _time;
+        this->evaluator_->Reset();
+    }
+
+    // I don't know yet what happens here.
+    auto *output = new double[numMotors];
+    this->Step(_time, output);
+
+    // Send new signals to the motors
+    p = 0;
+    for (const auto &motor: _motors) {
+        //std::cout << motor->PartId() << std::endl;
+        motor->Update(&output[p], _step);
+        p += motor->Outputs();
+    }
+
+}
+
+/**
+ * Step function
+ *
+ * @param _time
+ * @param _output
+ */
+void DifferentialCPG::Step(
+        const double _time,
+        double *_output)
+{
+    auto *nextState = new double[this->neurons_.size()];
+
+    auto i = 0;
+    for (const auto &neuron : this->neurons_)
+    {
+        int x, y, z; std::tie(x, y, z) = neuron.first;
+        double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
+
+        auto inputA = 0.f;
+        for (auto const &connection : this->connections_)
+        {
+            int x1, y1, z1, x2, y2, z2;
+            std::tie(x1, y1, z1, x2, y2, z2) = connection.first;
+            auto weightBA = connection.second;
+
+            if (x2 == x and y2 == y and z2 == z)
+            {
+                auto input = std::get<2>(this->neurons_[{x1, y1, z1}]);
+                inputA += weightBA * input + biasA;
+            }
+        }
+
+        nextState[i] = stateA + (inputA * _time);
+        ++i;
+    }
+
+    i = 0; auto j = 0;
+    auto *output = new double[this->neurons_.size() / 2];
+    for (auto &neuron : this->neurons_)
+    {
+        double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
+        neuron.second = {biasA, gainA, nextState[i]};
+        if (i % 2 == 0)
+        {
+            output[j] = nextState[i];
+            j++;
+        }
+        ++i;
+    }
+    _output = output;
+}
+
+/**
+ * Struct called by limbo for BO. This function should call Evaluate. Not sure how I
+ * will combine this with Update() yet.
+ *
+ */
+struct DifferentialCPG::eval_func{
     // Set input dimension (only once)
     static constexpr size_t input_size = 10;
 
@@ -264,54 +307,53 @@ struct eval_func{
     // number of dimenions of the result (res.size())
     BO_PARAM(size_t, dim_out, 1);
 
-    // the function to be optimized
+    // The function to be optimized. X is the maximum of the acquisition function
     Eigen::VectorXd operator()(const Eigen::VectorXd& x) const {
-      // NOTE THAT YOU DON'T MAKE A MISTAKE BY PROBING f(x_t), and getting the
-      // previous fitness, namely f(x_(t-1))
+        // NOTE THAT YOU DON'T MAKE A MISTAKE BY PROBING f(x_t), and getting the
+        // previous fitness, namely f(x_(t-1))
 
-      // Input dimension for all functions
-      size_t dim_in = input_size;
-
-      /********** 2# SCHWEFEL function N Dimensions **************/
         auto xx = x;
 
-        // transfer interval from [0, 1] to [-500, 500]
-        for (int i = 0; i < dim_in; i++) {
-          xx[i] = 1000. * x[i] - 500.;
-          //std::cout<< xx[i] << std::endl;
+        // Map [0,1] to
+        for (int i = 0; i < input_size; i++) {
+            xx[i] = 1000. * x[i] - 500.;
+            //std::cout<< xx[i] << std::endl;
         }
 
-        double sum = 0.;
-        for (size_t i = 0; i < dim_in; i++) {
-          sum = sum + xx[i] * sin(sqrt(abs(xx[i])));
-        }
+        // Get fitness for BO
+        auto fitness = this->Fitness();
 
-        double obj = 418.9829 * dim_in - sum;
+        // Debugging purposes
         //std::cout << "Objective is" << obj << std::endl;
-        return tools::make_vector(-obj); //maximum = 0 with (420.9687, ...,420.9687)     }
+
+        // Return the 1D vector that limbo requires. Note that Limbo solves a maximization problem.
+        return limbo::tools::make_vector(fitness);
     }
 };
 
-// Parmameters
+/**
+ * Struct that holds the parameters on which BO is called
+ */
 struct DifferentialCPG::Params{
-    struct bayes_opt_boptimizer : public defaults::bayes_opt_boptimizer {
+    struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
     };
+
 // depending on which internal optimizer we use, we need to import different parameters
 #ifdef USE_NLOPT
-    struct opt_nloptnograd : public defaults::opt_nloptnograd {
+    struct opt_nloptnograd : public limbo::defaults::opt_nloptnograd {
     };
 #elif defined(USE_LIBCMAES)
-    struct opt_cmaes : public defaults::opt_cmaes {
+    struct opt_cmaes : public lm::defaults::opt_cmaes {
     };
 #endif
 
-    struct kernel : public defaults::kernel {
+    struct kernel : public limbo::defaults::kernel {
         BO_PARAM(double, noise, 0.00000001);
 
         BO_PARAM(bool, optimize_noise, false);
     };
 
-    struct bayes_opt_bobase : public defaults::bayes_opt_bobase {
+    struct bayes_opt_bobase : public limbo::defaults::bayes_opt_bobase {
         BO_PARAM(bool, stats_enabled, true);
 
         BO_PARAM(bool, bounded, true); //false
