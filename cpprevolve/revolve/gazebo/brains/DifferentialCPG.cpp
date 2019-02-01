@@ -151,6 +151,8 @@ void DifferentialCPG::Update(
     motor->Update(&output[p], _step);
     p += motor->Outputs();
   }
+
+  delete[] output;
 }
 
 void DifferentialCPG::Step(
