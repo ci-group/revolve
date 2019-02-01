@@ -134,8 +134,6 @@ void DifferentialCPG::Update(
 {
   boost::mutex::scoped_lock lock(this->networkMutex_);
 
-  auto numMotors = _motors.size();
-
   // Read sensor data and feed the neural network
   unsigned int p = 0;
   for (const auto &sensor : _sensors)
