@@ -54,6 +54,9 @@ namespace revolve
           const double _time,
           const double _step) = 0;
 
+      /// \brief Mutex for stepping / updating the network
+      protected: boost::mutex networkMutex_;
+
       /// \brief Transport node
       protected: ::gazebo::transport::NodePtr node_;
     };

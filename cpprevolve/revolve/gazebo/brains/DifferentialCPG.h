@@ -22,6 +22,9 @@
 #ifndef REVOLVE_DIFFERENTIALCPG_H_
 #define REVOLVE_DIFFERENTIALCPG_H_
 
+#include <map>
+#include <tuple>
+
 #include "Brain.h"
 
 namespace revolve
@@ -38,7 +41,7 @@ namespace revolve
       /// \param[in] _sensors Reference to a sensor list, it might be reordered
       public: DifferentialCPG(
           const ::gazebo::physics::ModelPtr &_model,
-          const sdf::ElementPtr &_node,
+          const sdf::ElementPtr _settings,
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors);
 
@@ -50,15 +53,41 @@ namespace revolve
       /// \param[in] _sensors Sensor list
       /// \param[in] _time Current world time
       /// \param[in] _step Current time step
-      public:  virtual void Update(
+      public: virtual void Update(
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors,
           const double _time,
           const double _step);
 
-      /// \brief Used to determine the current state array.
-      /// \example false := state1, true := state2.
-      protected: bool flipState_;
+      protected: void Step(
+          const double _time,
+          double *_output);
+
+      /// \brief Register of motor IDs and their x,y-coordinates
+      protected: std::map< std::string, std::tuple< int, int > >
+          positions_;
+
+      /// \brief Register of individual neurons in x,y,z-coordinates
+      /// \details x,y-coordinates define position of a robot's module and
+      // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
+      // values are a bias and a gain of each neuron.
+      protected: std::map< std::tuple< int, int, int >,
+                           std::tuple< double, double, double > > neurons_;
+
+      /// \brief Register of connections between neighnouring neurons
+      /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
+      // define a connection.
+      protected: std::map< std::tuple< int, int, int, int, int, int >,
+                           double > connections_;
+
+      /// \brief Used to determine the next state array
+      private: double *nextState_;
+
+      /// \brief One input state for each input neuron
+      private: double *input_;
+
+      /// \brief Used to determine the output to the motors array
+      private: double *output_;
     };
   }
 }
