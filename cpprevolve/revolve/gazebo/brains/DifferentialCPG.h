@@ -27,22 +27,6 @@
 
 #include "Brain.h"
 
-/// These numbers are quite arbitrary. It used to be in:13 out:8 for the
-/// Arduino, but I upped them both to 20 to accommodate other scenarios.
-/// Should really be enforced in the Python code, this implementation should
-/// not be the limit.
-#define MAX_INPUT_NEURONS 20
-#define MAX_OUTPUT_NEURONS 20
-
-/// Arbitrary value
-#define MAX_HIDDEN_NEURONS 30
-
-/// Convenience
-#define MAX_NON_INPUT_NEURONS (MAX_HIDDEN_NEURONS + MAX_OUTPUT_NEURONS)
-
-/// (bias, tau, gain) or (phase offset, period, gain)
-#define MAX_NEURON_PARAMS 3
-
 namespace revolve
 {
   namespace gazebo
@@ -79,13 +63,6 @@ namespace revolve
           const double _time,
           double *_output);
 
-      /// \brief One input state for each input neuron
-      protected: double input_[MAX_INPUT_NEURONS];
-
-      /// \brief Used to determine the current state array.
-      /// \example false := state1, true := state2.
-      protected: bool flipState_;
-
       /// \brief Register of motor IDs and their x,y-coordinates
       protected: std::map< std::string, std::tuple< int, int > >
           positions_;
@@ -103,7 +80,14 @@ namespace revolve
       protected: std::map< std::tuple< int, int, int, int, int, int >,
                            double > connections_;
 
+      /// \brief Used to determine the next state array
       private: double *nextState_;
+
+      /// \brief One input state for each input neuron
+      private: double *input_;
+
+      /// \brief Used to determine the output to the motors array
+      private: double *output_;
     };
   }
 }

@@ -36,9 +36,11 @@ using namespace revolve::gazebo;
 DifferentialCPG::DifferentialCPG(
     const ::gazebo::physics::ModelPtr &_model,
     const sdf::ElementPtr _settings,
-    const std::vector< revolve::gazebo::MotorPtr > &/*_motors*/,
-    const std::vector< revolve::gazebo::SensorPtr > &/*_sensors*/)
-    : flipState_(false)
+    const std::vector< revolve::gazebo::MotorPtr > &_motors,
+    const std::vector< revolve::gazebo::SensorPtr > &_sensors)
+    : nextState_(nullptr)
+    , input_(new double[_sensors.size()])
+    , output_(new double[_motors.size()])
 {
   // Create transport node
   this->node_.reset(new gz::transport::Node());
@@ -119,6 +121,8 @@ DifferentialCPG::DifferentialCPG(
 DifferentialCPG::~DifferentialCPG()
 {
   delete[] this->nextState_;
+  delete[] this->input_;
+  delete[] this->output_;
 }
 
 /////////////////////////////////////////////////
@@ -136,23 +140,19 @@ void DifferentialCPG::Update(
   unsigned int p = 0;
   for (const auto &sensor : _sensors)
   {
-    sensor->Read(&input_[p]);
+    sensor->Read(this->input_ + p);
     p += sensor->Inputs();
   }
 
-  // TODO Update diffCPG
-  auto *output = new double[numMotors];
-  this->Step(_time, output);
+  this->Step(_time, this->output_);
 
   // Send new signals to the motors
   p = 0;
   for (const auto &motor: _motors)
   {
-    motor->Update(&output[p], _step);
+    motor->Update(this->output_ + p, _step);
     p += motor->Outputs();
   }
-
-  delete[] output;
 }
 
 void DifferentialCPG::Step(
