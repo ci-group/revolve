@@ -168,15 +168,15 @@ namespace revolve
             double range_ub;
 
         private:
-            double bo_next_step_time;
-
-        private:
             std::vector<Eigen::VectorXd> observations;
 
         private:
             std::vector<Eigen::VectorXd> samples;
 
-        /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
+        private:
+            int n_weights;
+
+            /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
         private:
             struct evaluation_function;
         };

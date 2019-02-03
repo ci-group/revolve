@@ -58,7 +58,6 @@ using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
 
-
 #ifndef USE_NLOPT
 #define USE_NLOPT //installed NLOPT
 #endif
@@ -202,22 +201,21 @@ void DifferentialCPG::BO_init(){
     this->current_iteration = 0;
     this->max_iterations = 100;
     this->initial_samples = 3;
-    this->range_lb = 0.f;
-    this->range_ub = 1.f;
-    this->bo_next_step_time = 5.0;
+    this->range_lb = -0.5;
+    this->range_ub = 2.f;
 
-    // TODO: Temporary, ask Milan
-    int n_neurons = 10;
+    // TODO: Temporary: ask milan
+    this->n_weights = 10;
 
     // For all #initial_samples
     for (int i = 0; i < this->initial_samples; i++){
-        // Working variable to hold a random number for each neuron
-        Eigen::VectorXd initial_sample(n_neurons);
+        // Working variable to hold a random number for each weight to be optimized
+        Eigen::VectorXd initial_sample(this->n_weights);
 
-        // For all neurons
-        for (int j = 0; j < n_neurons; j++) {
-            // Generate a random number in [0, range_length]
-            float f = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (this->range_ub - this->range_lb)));
+        // For all weights
+        for (int j = 0; j < this->n_weights; j++) {
+            // Generate a random number in [0, 1]. Transform later
+            double f = ((double) rand() / (RAND_MAX));
 
             // Append f to vector
             initial_sample(j) = f;
@@ -226,7 +224,6 @@ void DifferentialCPG::BO_init(){
         // Save vector in samples.
         this->samples.push_back(initial_sample);
     }
-
 
 }
 
@@ -265,7 +262,7 @@ void DifferentialCPG::BO_step(){
         for(int i = 0; i < this->current_iteration; i++){
             auto my_vector = this->samples.at(i);
             std::cout << "Sample " << i << " : ";
-            for(int j = 0; j < 10; j++){
+            for(int j = 0; j < this->n_weights; j++){
                 std::cout <<  my_vector(j) << ", ";
             }
             std::cout << " Fitness: " << this->observations.at(i) << std::endl;
@@ -281,13 +278,17 @@ void DifferentialCPG::BO_step(){
         this->samples.push_back(x);
     }
 
-    // Update the weights here with the values at x (ask Milan)
-    // Debugging purposes:
-    /*
+    // Process new sample
     for(int i=0; i <x.size(); i ++){
-        std::cout << "x(" << std::to_string(i) << ")= " << x(i) << std::endl;
+        // Transform the weights to the desired interval
+        auto xx = x(i)*(this->range_ub - this->range_lb) + this->range_lb;
+
+        // Set the connection weights with xx (ask Milan)
+
+
+        // Verbose
+        std::cout << "x(" << i << ")= " << x(i) << " ;Transformed: " << xx << std::endl;
     }
-    */
 
     // Update counter
     this->current_iteration +=1;
