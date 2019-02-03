@@ -201,9 +201,10 @@ void DifferentialCPG::BO_init(){
     // Parameters
     this->current_iteration = 0;
     this->max_iterations = 100;
-    this->initial_samples = 10;
+    this->initial_samples = 3;
     this->range_lb = 0.f;
     this->range_ub = 1.f;
+    this->bo_next_step_time = 5.0;
 
     // TODO: Temporary, ask Milan
     int n_neurons = 10;
@@ -222,20 +223,25 @@ void DifferentialCPG::BO_init(){
             initial_sample(j) = f;
         }
 
-        // Save vector in observations.
-        this->observations.push_back(initial_sample);
+        // Save vector in samples.
+        this->samples.push_back(initial_sample);
     }
+
+
 }
 
 
 void DifferentialCPG::BO_step(){
-    // Holder for sample solution
+    // Holder for sample
     Eigen::VectorXd x;
 
     // Get Fitness if we already did an evaluation
     if (this->current_iteration > 0){
         // Get fitness
         double fitness = this->evaluator->Fitness();
+
+        // Verbose
+        std::cout << "Iteration number " << this->current_iteration << " has fitness " << fitness << std::endl;
 
         // Limbo requires fitness value to be of type Eigen::VectorXd
         Eigen::VectorXd observation = Eigen::VectorXd(1);
@@ -248,15 +254,25 @@ void DifferentialCPG::BO_step(){
     // In case we are not done with initial random sampling yet
     if (this->current_iteration < this->initial_samples){
         // Take one of the pre-sampled random samples, and update the weights later
-        x = this->observations.at(this->current_iteration);
+        x = this->samples.at(this->current_iteration);
     }
     // In case we are done with the initial random sampling
     else{
         // Specify bayesian optimizer
         limbo::bayes_opt::BOptimizer<Params, limbo::initfun<Init_t>, limbo::modelfun<GP_t>, limbo::acquifun<Acqui_t>> boptimizer;
 
-        // Optimize. Pass dummy evaluation function and observations found.
-        boptimizer.optimize(DifferentialCPG::evaluation_function(), this->observations);
+        // Verbose: print all samples
+        for(int i = 0; i < this->current_iteration; i++){
+            auto my_vector = this->samples.at(i);
+            std::cout << "Sample " << i << " : ";
+            for(int j = 0; j < 10; j++){
+                std::cout <<  my_vector(j) << ", ";
+            }
+            std::cout << " Fitness: " << this->observations.at(i) << std::endl;
+        }
+
+        // Optimize. Pass dummy evaluation function and observations .
+        boptimizer.optimize(DifferentialCPG::evaluation_function(), this->samples, this->observations);
 
         // Get new sample
         x = boptimizer.last_sample();
@@ -267,9 +283,11 @@ void DifferentialCPG::BO_step(){
 
     // Update the weights here with the values at x (ask Milan)
     // Debugging purposes:
+    /*
     for(int i=0; i <x.size(); i ++){
-        std::cout << x(i) << std::endl;
+        std::cout << "x(" << std::to_string(i) << ")= " << x(i) << std::endl;
     }
+    */
 
     // Update counter
     this->current_iteration +=1;
@@ -307,9 +325,6 @@ void DifferentialCPG::Update(
         sensor->Read(&input_[p]);
         p += sensor->Inputs();
     }
-
-    // Debugging
-    std::cout << "Update function is called" << std::endl;
 
     // Evaluate policy on certain time limit
     if ((_time - this->startTime_) > this->evaluationRate_) {

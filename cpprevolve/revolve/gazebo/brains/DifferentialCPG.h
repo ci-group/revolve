@@ -167,6 +167,8 @@ namespace revolve
         private:
             double range_ub;
 
+        private:
+            double bo_next_step_time;
 
         private:
             std::vector<Eigen::VectorXd> observations;
