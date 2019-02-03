@@ -180,11 +180,9 @@ namespace limbo {
                 return this->_samples[std::distance(rewards.begin(), max_e)];
             }
 
-            /// Return the last sample. Used for implementation with revolve
-            template <typename AggregatorFunction = FirstElem>
-            const Eigen::VectorXd& last_sample(const AggregatorFunction& afun = AggregatorFunction()) const
-            {
-                return this->_samples.end();
+            /// Return a reference to the last sample. Used for implementation with revolve
+            const Eigen::VectorXd& last_sample(){
+                return this->_samples.back();
             }
 
             const model_t& model() const { return _model; }

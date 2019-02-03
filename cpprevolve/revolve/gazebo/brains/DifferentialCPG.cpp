@@ -238,7 +238,8 @@ void DifferentialCPG::BO_step(){
         double fitness = this->evaluator->Fitness();
 
         // Limbo requires fitness value to be of type Eigen::VectorXd
-        Eigen::VectorXd observation = Eigen::VectorXd(fitness);
+        Eigen::VectorXd observation = Eigen::VectorXd(1);
+        observation(0) = fitness;
 
         // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
         this->observations.push_back(observation);
