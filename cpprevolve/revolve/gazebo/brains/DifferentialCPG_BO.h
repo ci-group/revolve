@@ -1,50 +1,10 @@
-//| Copyright Inria May 2015
-//| This project has received funding from the European Research Council (ERC) under
-//| the European Union's Horizon 2020 research and innovation programme (grant
-//| agreement No 637972) - see http://www.resibots.eu
-//|
-//| Contributor(s):
-//|   - Jean-Baptiste Mouret (jean-baptiste.mouret@inria.fr)
-//|   - Antoine Cully (antoinecully@gmail.com)
-//|   - Konstantinos Chatzilygeroudis (konstantinos.chatzilygeroudis@inria.fr)
-//|   - Federico Allocati (fede.allocati@gmail.com)
-//|   - Vaios Papaspyros (b.papaspyros@gmail.com)
-//|   - Roberto Rama (bertoski@gmail.com)
-//|
-//| This software is a computer library whose purpose is to optimize continuous,
-//| black-box functions. It mainly implements Gaussian processes and Bayesian
-//| optimization.
-//| Main repository: http://github.com/resibots/limbo
-//| Documentation: http://www.resibots.eu/limbo
-//|
-//| This software is governed by the CeCILL-C license under French law and
-//| abiding by the rules of distribution of free software.  You can  use,
-//| modify and/ or redistribute the software under the terms of the CeCILL-C
-//| license as circulated by CEA, CNRS and INRIA at the following URL
-//| "http://www.cecill.info".
-//|
-//| As a counterpart to the access to the source code and  rights to copy,
-//| modify and redistribute granted by the license, users are provided only
-//| with a limited warranty  and the software's author,  the holder of the
-//| economic rights,  and the successive licensors  have only  limited
-//| liability.
-//|
-//| In this respect, the user's attention is drawn to the risks associated
-//| with loading,  using,  modifying and/or developing or reproducing the
-//| software by the user in light of its specific status of free software,
-//| that may mean  that it is complicated to manipulate,  and  that  also
-//| therefore means  that it is reserved for developers  and  experienced
-//| professionals having in-depth computer knowledge. Users are therefore
-//| encouraged to load and test the software's suitability as regards their
-//| requirements in conditions enabling the security of their systems and/or
-//| data to be ensured and,  more generally, to use and operate it in the
-//| same conditions as regards security.
-//|
-//| The fact that you are presently reading this means that you have had
-//| knowledge of the CeCILL-C license and that you accept its terms.
-//|
-#ifndef LIMBO_BAYES_OPT_BOPTIMIZER_HPP
-#define LIMBO_BAYES_OPT_BOPTIMIZER_HPP
+//
+// Created by maarten on 03/02/19.
+//
+
+#ifndef REVOLVE_BOPTIMIZER_CPG_H
+#define REVOLVE_BOPTIMIZER_CPG_H
+
 
 #include <algorithm>
 #include <iostream>
@@ -57,55 +17,17 @@
 
 #include <boost/parameter/aux_/void.hpp>
 #include <Eigen/Core>
+#include <limbo/bayes_opt/bo_base.hpp>
+#include <limbo/tools/macros.hpp>
+#include <limbo/tools/random_generator.hpp>
 
-#include "bayes_opt/bo_base.hpp"
-#include "tools/macros.hpp"
-#include "tools/random_generator.hpp"
 #ifdef USE_NLOPT
-#include "opt/nlopt_no_grad.hpp"
+#include "/home/maarten/Dropbox/BO/BO/limbo/opt/nlopt_no_grad.hpp"
 #elif defined USE_LIBCMAES
 #include "opt/cmaes.hpp"
 #else
 #include "opt/grid_search.hpp"
 #endif
-
-
-// support functions
-inline double sign(double x)
-{
-    if (x < 0)
-        return -1;
-    if (x > 0)
-        return 1;
-    return 0;
-}
-
-inline double sqr(double x)
-{
-    return x * x;
-};
-
-inline double hat(double x)
-{
-    if (x != 0)
-        return std::log(std::abs(x));
-    return 0;
-}
-
-inline double c1(double x)
-{
-    if (x > 0)
-        return 10;
-    return 5.5;
-}
-
-inline double c2(double x)
-{
-    if (x > 0)
-        return 7.9;
-    return 3.1;
-}
-
 
 namespace limbo {
     namespace defaults {
@@ -168,6 +90,8 @@ namespace limbo {
 //                using acquiopt_t = opt::GridSearch<Params>;
 //#endif
             };
+            // By Maarten
+
             /// link to the corresponding BoBase (useful for typedefs)
             using base_t = BoBase<Params, A1, A2, A3, A4, A5, A6>;
             using model_t = typename base_t::model_t;
@@ -251,6 +175,13 @@ namespace limbo {
                 return this->_samples[std::distance(rewards.begin(), max_e)];
             }
 
+            /// Return the last sample. Used for implementation with revolve
+            template <typename AggregatorFunction = FirstElem>
+            const Eigen::VectorXd& last_sample(const AggregatorFunction& afun = AggregatorFunction()) const
+            {
+                return this->_samples.end();
+            }
+
             const model_t& model() const { return _model; }
 
         protected:
@@ -274,4 +205,9 @@ namespace limbo {
         using BOptimizerHPOpt = BOptimizer<Params, modelfun<_default_hp::model_t<Params>>, acquifun<_default_hp::acqui_t<Params>>, A1, A2, A3, A4>;
     }
 }
-#endif
+
+
+
+
+
+#endif //REVOLVE_BOPTIMIZER_CPG_H

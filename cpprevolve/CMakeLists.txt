@@ -57,13 +57,22 @@ endif ()
 
 
 # NLopt (for limbo)
-find_package(NLOpt REQUIRED)
 set(NLOPT_INCLUDE_DIR "/home/maarten/Documents/nlopt/build/")
+find_package(NLOpt REQUIRED)
 include_directories(${NLOPT_INCLUDE_DIR})
 
 # Limbo
-include_directories(/home/maarten/projects/revolve-simulator/revolve/limbo)
+# set(LIMBO_DIR /usr/include/limbo/)
+#file(GLOB headers /usr/include/limbo/src/limbo/*.hpp)
+#message("Headers are" )
+#foreach(variable_name ${headers})
+#    message(${variable_name})
+#endforeach()
 
+#find_package(LIMBO REQUIRED PATHS /usr/include/limbo/build)
+#include_directories(/usr/include/limbo)
+
+#include_directories(/home/maarten/projects/revolve-simulator/revolve/limbo)
 
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -213,7 +222,7 @@ target_link_libraries(
 add_library(
     revolve-gazebo
     ${REVOLVE_GZ_SRC}
-)
+        revolve/gazebo/brains/DifferentialCPG_BO.h)
 
 
 target_link_libraries(

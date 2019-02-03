@@ -23,25 +23,29 @@
 #include <cstdlib>
 #include <map>
 #include <tuple>
+#include "DifferentialCPG.h"
 #include "../motors/Motor.h"
 #include "../sensors/Sensor.h"
-#include "DifferentialCPG.h"
-#include <Eigen/Core>
+#include "DifferentialCPG_BO.h"
 
-// Macros for limbo
-#include "src/api/nlopt.hpp"
-#include "bayes_opt/boptimizer.hpp"
-#include "kernel/kernel.hpp"
-#include <tools.hpp>
-#include <kernel/exp.hpp>
-#include "init/lhs.hpp"
-#include "model/gp.hpp"
-#include "acqui/ucb.hpp"
+// Macros for limbo are imported via DIfferentialCPG.h
+#include "/home/maarten/Dropbox/BO/BO/limbo/opt/nlopt_no_grad.hpp"
 
+// Redo this as soon as you know that everything works
+// #include "/src/api/nlopt.hpp" // Fails compiling, worked before
+#include "/home/maarten/Documents/nlopt/build/src/api/nlopt.hpp"
 
 // It probably is bad to have two namespaces
 namespace gz = gazebo;
 using namespace revolve::gazebo;
+
+// Probably not so nice. I will do this differently later
+using Mean_t = limbo::mean::Data<DifferentialCPG::Params>;
+using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
+using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
+using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
+using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
+
 
 #ifndef USE_NLOPT
 #define USE_NLOPT //installed NLOPT
@@ -155,30 +159,73 @@ DifferentialCPG::DifferentialCPG(
         }
     }
 
-
-
+    // Initialize BO
+    this->BO_init();
 
     // Initiate the cpp Evaluator
-    this->evaluator_.reset(new Evaluator(this->evaluationRate_));
+    this->evaluator.reset(new Evaluator(this->evaluationRate_));
 }
 
-void DifferentialCPG::BO(){
-    // Initiate BO
-    using Mean_t = limbo::mean::Data<Params>;
-    using Kernel_t = limbo::kernel::Exp<Params>;
-    using GP_t = limbo::model::GP<Params, Kernel_t, Mean_t>;
-    using Init_t = limbo::init::LHS<Params>;
-    using Acqui_t = limbo::acqui::UCB<Params, GP_t>;
+void DifferentialCPG::BO_init(){
+    // void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
+    this->current_iteration = 0;
+    this->max_iterations = 100;
+    this->initial_samples = 10;
+    this->range_lb = -1.f;
+    this->range_ub = 1.f;
 
-    // Run BO. Note that this fires up BO for a specified number of iterations. Still need to find how this can ben connected to
-    limbo::bayes_opt::BOptimizer<Params, limbo::initfun<Init_t>, limbo::modelfun<GP_t>, limbo::acquifun<Acqui_t>> boptimizer;
-    boptimizer.optimize(eval_func());
+    //  Generate random initial points
+    std::vector<Eigen::VectorXd> initial_sample_list = LHS_Sample
+    for (observation in initial_sample_list){
+        this->observations.push_back(observation);
+    }
+}
 
-    // Get best sample
-    auto best_fitness = boptimizer.best_observation()(0);
 
-    // Show best fitness
-    std::cout << "Best fitness: " << best_fitness << std::endl;
+void DifferentialCPG::BO_step(){
+    // Holder for sample solution
+    Eigen::VectorXd x;
+
+    // Get Fitness if we already did an evaluation
+    if (this->current_iteration > 0){
+        // Get fitness
+        double fitness = this->evaluator->Fitness();
+
+        // Limbo requires fitness value to be of type Eigen::VectorXd
+        Eigen::VectorXd observation = Eigen::VectorXd(fitness);
+
+        // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
+        this->observations.push_back(observation);
+    }
+
+    // In case we are not done with initial random sampling yet
+    if (this->current_iteration < this->initial_samples){
+        // Take one of the pre-sampled random samples, and update the weights later
+        x = this->observations.at(this->current_iteration);
+    }
+    // In case we are done with the initial random sampling
+    else{
+        // Specify bayesian optimizer
+        limbo::bayes_opt::BOptimizer<Params, limbo::initfun<Init_t>, limbo::modelfun<GP_t>, limbo::acquifun<Acqui_t>> boptimizer;
+
+        // Optimize: Think about what to do here with the evaluation function
+        boptimizer.optimize(DifferentialCPG::eval_func());
+
+        // Get new sample
+        x = boptimizer.last_sample();
+
+        // Save this x_hat_star
+        this->samples.push_back(x);
+    }
+
+    // Update the weights here with the values at x (ask Milan)
+    // Debugging purposes:
+    for(auto element: x){
+        std::cout << element << std::endl;
+    }
+
+    // Update counter
+    this->current_iteration +=1;
 }
 
 /**
@@ -214,16 +261,17 @@ void DifferentialCPG::Update(
         p += sensor->Inputs();
     }
 
-    // TODO Call Limbo here to see what's the most promising point?
-    // If done, return the weights for the connections
-    // Update the connection weights directly afterwards
+    // Debugging
+    std::cout << "Update function is called" << std::endl;
 
     // Evaluate policy on certain time limit
     if ((_time - this->startTime_) > this->evaluationRate_) {
+        // Call iteration of BO
+        this->BO_step();
 
         // Evaluation policy here
         this->startTime_ = _time;
-        this->evaluator_->Reset();
+        this->evaluator->Reset();
     }
 
     // I don't know yet what happens here.
@@ -292,44 +340,6 @@ void DifferentialCPG::Step(
     _output = output;
 }
 
-/**
- * Struct called by limbo for BO. This function should call Evaluate. Not sure how I
- * will combine this with Update() yet.
- *
- */
-struct DifferentialCPG::eval_func{
-    // Set input dimension (only once)
-    static constexpr size_t input_size = 10;
-
-    // number of input dimension (x.size())
-    BO_PARAM(size_t, dim_in, input_size);
-
-    // number of dimenions of the result (res.size())
-    BO_PARAM(size_t, dim_out, 1);
-
-    // The function to be optimized. X is the maximum of the acquisition function
-    Eigen::VectorXd operator()(const Eigen::VectorXd& x) const {
-        // NOTE THAT YOU DON'T MAKE A MISTAKE BY PROBING f(x_t), and getting the
-        // previous fitness, namely f(x_(t-1))
-
-        auto xx = x;
-
-        // Map [0,1] to
-        for (int i = 0; i < input_size; i++) {
-            xx[i] = 1000. * x[i] - 500.;
-            //std::cout<< xx[i] << std::endl;
-        }
-
-        // Get fitness for BO
-        auto fitness = this->Fitness();
-
-        // Debugging purposes
-        //std::cout << "Objective is" << obj << std::endl;
-
-        // Return the 1D vector that limbo requires. Note that Limbo solves a maximization problem.
-        return limbo::tools::make_vector(fitness);
-    }
-};
 
 /**
  * Struct that holds the parameters on which BO is called
@@ -338,7 +348,7 @@ struct DifferentialCPG::Params{
     struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
     };
 
-// depending on which internal optimizer we use, we need to import different parameters
+    // depending on which internal optimizer we use, we need to import different parameters
 #ifdef USE_NLOPT
     struct opt_nloptnograd : public limbo::defaults::opt_nloptnograd {
     };
@@ -358,5 +368,24 @@ struct DifferentialCPG::Params{
 
         BO_PARAM(bool, bounded, true); //false
     };
+
+    // 1 Iteration as we will perform limbo step by step
+    struct stop_maxiterations : public limbo::defaults::stop_maxiterations {
+        BO_PARAM(int, iterations, 1);
+    };
 };
 
+struct DifferentialCPG::evaluation_function{
+        // Set input dimension (only once)
+        static constexpr size_t input_size = 10;
+
+        // number of input dimension (x.size())
+        BO_PARAM(size_t, dim_in, input_size);
+
+        // number of dimenions of the result (res.size())
+        BO_PARAM(size_t, dim_out, 1);
+
+        Eigen::VectorXd operator()(const Eigen::VectorXd &x) const {
+            return limbo::tools::make_vector(0);
+        };
+};

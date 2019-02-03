@@ -27,6 +27,16 @@
 
 #include "Evaluator.h"
 #include "Brain.h"
+#include <limbo/model/gp.hpp>
+#include <limbo/init/lhs.hpp>
+#include <limbo/model/gp.hpp>
+#include <limbo/kernel/exp.hpp>
+#include <limbo/tools/macros.hpp>
+#include <limbo/model/gp.hpp>
+#include <limbo/acqui/ucb.hpp>
+#include <limbo/bayes_opt/bo_base.hpp>
+#include <limbo/mean/mean.hpp>
+#include <Eigen/Core>
 
 /// These numbers are quite arbitrary. It used to be in:13 out:8 for the
 /// Arduino, but I upped them both to 20 to accommodate other scenarios.
@@ -46,91 +56,137 @@
 
 namespace revolve
 {
-    namespace gazebo
-    {
+    namespace gazebo {
         class DifferentialCPG
-                : public Brain
-        {
+                : public Brain {
             /// \brief Constructor
             /// \param[in] _modelName Name of the robot
             /// \param[in] _node The brain node
             /// \param[in] _motors Reference to a motor list, it be reordered
             /// \param[in] _sensors Reference to a sensor list, it might be reordered
-        public: DifferentialCPG(
+        public:
+            DifferentialCPG(
                     const ::gazebo::physics::ModelPtr &_model,
                     const sdf::ElementPtr _settings,
-                    const std::vector< MotorPtr > &_motors,
-                    const std::vector< SensorPtr > &_sensors);
+                    const std::vector<MotorPtr> &_motors,
+                    const std::vector<SensorPtr> &_sensors);
 
             /// \brief Destructor
-        public: virtual ~DifferentialCPG();
+        public:
+            virtual ~DifferentialCPG();
 
             /// \brief The default update method for the controller
             /// \param[in] _motors Motor list
             /// \param[in] _sensors Sensor list
             /// \param[in] _time Current world time
             /// \param[in] _step Current time step
-        public: virtual void Update(
-                    const std::vector< MotorPtr > &_motors,
-                    const std::vector< SensorPtr > &_sensors,
+        public:
+            virtual void Update(
+                    const std::vector<MotorPtr> &_motors,
+                    const std::vector<SensorPtr> &_sensors,
                     const double _time,
                     const double _step);
 
-        protected: void Step(
+        protected:
+            void Step(
                     const double _time,
                     double *_output);
 
             /// \brief One input state for each input neuron
-        protected: double input_[MAX_INPUT_NEURONS];
+        protected:
+            double input_[MAX_INPUT_NEURONS];
 
             /// \brief Used to determine the current state array.
             /// \example false := state1, true := state2.
-        protected: bool flipState_;
+        protected:
+            bool flipState_;
 
             /// \brief Register of motor IDs and their x,y-coordinates
-        protected: std::map< std::string, std::tuple< int, int > >
+        protected:
+            std::map<std::string, std::tuple<int, int> >
                     positions_;
 
             /// \brief Register of individual neurons in x,y,z-coordinates
             /// \details x,y-coordinates define position of a robot's module and
             // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
             // values are a bias and a gain of each neuron.
-        protected: std::map< std::tuple< int, int, int >,
-                    std::tuple< double, double, double > > neurons_;
+        protected:
+            std::map<std::tuple<int, int, int>,
+                    std::tuple<double, double, double> > neurons_;
 
             /// \brief Register of connections between neighnouring neurons
             /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
             // define a connection.
-        protected: std::map< std::tuple< int, int, int, int, int, int >,
-                    double > connections_;
+        protected:
+            std::map<std::tuple<int, int, int, int, int, int>,
+                    double> connections_;
 
 
-        // ADAPTED BY MAARTEN UNDERNEATH
-        // C.f. RLPower
-        public: void BO();
+            // ADAPTED BY MAARTEN UNDERNEATH
 
-        /// \brief evaluation rate
-        private: double evaluationRate_;
+            /// \brief Init BO loop
+        public:
+            void BO_init();
 
-        /// \brief Maximal number of evaluations
-        private: size_t maxEvaluations_;
+            /// \brief Main BO loop
+        public:
+            void BO_step();
 
-        /// \brief Retrieves fitness for the current policy
-        private: double Fitness();
+            /// \brief evaluation rate
+        private:
+            double evaluationRate_;
 
-        /// \brief Pointer to the fitness evaluator
-        protected: EvaluatorPtr evaluator_ = NULL;
+            /// \brief Maximal number of evaluations
+        private:
+            size_t maxEvaluations_;
 
-        /// \brief Holder for BO parameters
-        public: struct Params;
+            /// \brief Retrieves fitness for the current policy
+        private:
+            double Fitness();
 
-        /// \brief Holder for Limbo's required eval_func struct
-        public: struct eval_func;
+            /// \brief Pointer to the fitness evaluator
+        protected:
+            EvaluatorPtr evaluator;
 
-        /// \brief
-        private: double startTime_;
+            /// \brief Holder for BO parameters
+        public:
+            struct Params;
+
+            /// \brief Holder for Limbo's required eval_func struct
+        public:
+            struct eval_func;
+
+            /// \brief
+        private:
+            double startTime_;
+
+            /// \brief BO attributes
+        private:
+            size_t current_iteration;
+
+        private:
+            size_t max_iterations;
+
+        private:
+            size_t initial_samples;
+
+        private:
+            double range_lb;
+
+        private:
+            double range_ub;
+
+
+        private:
+            std::vector<Eigen::VectorXd> observations;
+
+        private:
+            std::vector<Eigen::VectorXd> samples;
+
+        /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
+        private:
+            struct evaluation_function;
         };
-
     }
 }
 

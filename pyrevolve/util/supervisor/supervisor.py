@@ -195,7 +195,7 @@ class Supervisor(object):
 
             # We could do this a lot less often, but this way we get
             # output once every second.
-            time.sleep(0.1)
+            time.sleep(1)
 
     def _pass_through_stdout(self):
         """
