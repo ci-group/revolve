@@ -102,12 +102,17 @@ namespace limbo {
 
             /// The main function (run the Bayesian optimization algorithm)
             template <typename StateFunction, typename AggregatorFunction = FirstElem>
-            void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
+            void optimize(const StateFunction& sfun, std::vector<Eigen::VectorXd> all_observations, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
             {
                 this->_init(sfun, afun, reset); //reset
 
-                if (!this->_observations.empty())
+                // Maarten: set observations
+                this->_observations = all_observations;
+
+                if (!this->_observations.empty()) {
+                    std::cout << "Observation set is empty \n";
                     _model.compute(this->_samples, this->_observations);
+                }
                 else
                     _model = model_t(StateFunction::dim_in(), StateFunction::dim_out());
 

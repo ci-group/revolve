@@ -26,7 +26,19 @@
 #include "DifferentialCPG.h"
 #include "../motors/Motor.h"
 #include "../sensors/Sensor.h"
+
+// Limbo
 #include "DifferentialCPG_BO.h"
+#include <limbo/model/gp.hpp>
+#include <limbo/init/lhs.hpp>
+#include <limbo/model/gp.hpp>
+#include <limbo/kernel/exp.hpp>
+#include <limbo/tools/macros.hpp>
+#include <limbo/model/gp.hpp>
+#include <limbo/acqui/ucb.hpp>
+#include <limbo/acqui/gp_ucb.hpp>
+#include <limbo/bayes_opt/bo_base.hpp>
+#include <limbo/mean/mean.hpp>
 
 // Macros for limbo are imported via DIfferentialCPG.h
 #include "/home/maarten/Dropbox/BO/BO/limbo/opt/nlopt_no_grad.hpp"
@@ -166,18 +178,52 @@ DifferentialCPG::DifferentialCPG(
     this->evaluator.reset(new Evaluator(this->evaluationRate_));
 }
 
+/*
+ * Dummy function for limbo
+ */
+struct DifferentialCPG::evaluation_function{
+    // Set input dimension (only once)
+    static constexpr size_t input_size = 10;
+
+    // number of input dimension (x.size())
+    BO_PARAM(size_t, dim_in, input_size);
+
+    // number of dimenions of the result (res.size())
+    BO_PARAM(size_t, dim_out, 1);
+
+    Eigen::VectorXd operator()(const Eigen::VectorXd &x) const {
+        return limbo::tools::make_vector(0);
+    };
+};
+
+
 void DifferentialCPG::BO_init(){
-    // void optimize(const StateFunction& sfun, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
+    // Parameters
     this->current_iteration = 0;
     this->max_iterations = 100;
     this->initial_samples = 10;
-    this->range_lb = -1.f;
+    this->range_lb = 0.f;
     this->range_ub = 1.f;
 
-    //  Generate random initial points
-    std::vector<Eigen::VectorXd> initial_sample_list = LHS_Sample
-    for (observation in initial_sample_list){
-        this->observations.push_back(observation);
+    // TODO: Temporary, ask Milan
+    int n_neurons = 10;
+
+    // For all #initial_samples
+    for (int i = 0; i < this->initial_samples; i++){
+        // Working variable to hold a random number for each neuron
+        Eigen::VectorXd initial_sample(n_neurons);
+
+        // For all neurons
+        for (int j = 0; j < n_neurons; j++) {
+            // Generate a random number in [0, range_length]
+            float f = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (this->range_ub - this->range_lb)));
+
+            // Append f to vector
+            initial_sample(j) = f;
+        }
+
+        // Save vector in observations.
+        this->observations.push_back(initial_sample);
     }
 }
 
@@ -208,8 +254,8 @@ void DifferentialCPG::BO_step(){
         // Specify bayesian optimizer
         limbo::bayes_opt::BOptimizer<Params, limbo::initfun<Init_t>, limbo::modelfun<GP_t>, limbo::acquifun<Acqui_t>> boptimizer;
 
-        // Optimize: Think about what to do here with the evaluation function
-        boptimizer.optimize(DifferentialCPG::eval_func());
+        // Optimize. Pass dummy evaluation function and observations found.
+        boptimizer.optimize(DifferentialCPG::evaluation_function(), this->observations);
 
         // Get new sample
         x = boptimizer.last_sample();
@@ -220,8 +266,8 @@ void DifferentialCPG::BO_step(){
 
     // Update the weights here with the values at x (ask Milan)
     // Debugging purposes:
-    for(auto element: x){
-        std::cout << element << std::endl;
+    for(int i=0; i <x.size(); i ++){
+        std::cout << x(i) << std::endl;
     }
 
     // Update counter
@@ -373,19 +419,40 @@ struct DifferentialCPG::Params{
     struct stop_maxiterations : public limbo::defaults::stop_maxiterations {
         BO_PARAM(int, iterations, 1);
     };
-};
 
-struct DifferentialCPG::evaluation_function{
-        // Set input dimension (only once)
-        static constexpr size_t input_size = 10;
+    struct kernel_exp : public limbo::defaults::kernel_exp {
+        /// @ingroup kernel_defaults
+        BO_PARAM(double, sigma_sq, 0.001);
+        BO_PARAM(double, l, 0.2); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
+    };
 
-        // number of input dimension (x.size())
-        BO_PARAM(size_t, dim_in, input_size);
+    struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
+        /// @ingroup kernel_defaults
+        BO_PARAM(int, k, 4); // k number of columns used to compute M
+        /// @ingroup kernel_defaults
+        BO_PARAM(double, sigma_sq, 1); //brochu2010tutorial p.9 without sigma_sq
+    };
 
-        // number of dimenions of the result (res.size())
-        BO_PARAM(size_t, dim_out, 1);
+    struct kernel_maternfivehalves : public limbo::defaults::kernel_maternfivehalves
+    {
+        BO_PARAM(double, sigma_sq,1.0); //brochu2010tutorial p.9 without sigma_sq
+        BO_PARAM(double, l, 0.3); //characteristic length scale
+    };
 
-        Eigen::VectorXd operator()(const Eigen::VectorXd &x) const {
-            return limbo::tools::make_vector(0);
-        };
+    struct acqui_gpucb : public limbo::defaults::acqui_gpucb {
+        //UCB(x) = \mu(x) + \kappa \sigma(x).
+        BO_PARAM(double, delta, 0.525); // default delta = 0.1, delta in (0,1) convergence guaranteed
+    };
+
+    struct init_lhs : public limbo::defaults::init_lhs{
+        BO_PARAM(int, samples, 100);
+    };
+
+    struct acqui_ucb : public limbo::defaults::acqui_ucb {
+        //UCB(x) = \mu(x) + \alpha \sigma(x). high alpha have high exploration
+        //iterations is high, alpha can be low for high accuracy in enough iterations.
+        // In contrast, the low iterations should have high alpha for high
+        // searching in limited iterations, which guarantee to optimal.
+        BO_PARAM(double, alpha, 1.0); // default alpha = 0.5
+    };
 };

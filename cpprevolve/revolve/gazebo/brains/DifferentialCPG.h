@@ -27,15 +27,6 @@
 
 #include "Evaluator.h"
 #include "Brain.h"
-#include <limbo/model/gp.hpp>
-#include <limbo/init/lhs.hpp>
-#include <limbo/model/gp.hpp>
-#include <limbo/kernel/exp.hpp>
-#include <limbo/tools/macros.hpp>
-#include <limbo/model/gp.hpp>
-#include <limbo/acqui/ucb.hpp>
-#include <limbo/bayes_opt/bo_base.hpp>
-#include <limbo/mean/mean.hpp>
 #include <Eigen/Core>
 
 /// These numbers are quite arbitrary. It used to be in:13 out:8 for the
