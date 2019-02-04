@@ -112,6 +112,8 @@ namespace revolve
             std::map<std::tuple<int, int, int, int, int, int>,
                     double> connections_;
 
+            /// \brief Name of the robot
+        private: ::gazebo::physics::ModelPtr robot_;
 
             // ADAPTED BY MAARTEN UNDERNEATH
 

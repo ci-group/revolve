@@ -79,12 +79,10 @@ DifferentialCPG::DifferentialCPG(
     // Create transport node
     this->node_.reset(new gz::transport::Node());
     this->node_->Init();
-
-    // Initialize evaluator
-    this->evaluationRate_ = 30.0;
-    this->maxEvaluations_ = 1000;
+    this->robot_ = _model;
 
     auto name = _model->GetName();
+
     // Listen to network modification requests
 //  alterSub_ = node_->Subscribe(
 //      "~/" + name + "/modify_diff_cpg", &DifferentialCPG::Modify,
@@ -198,11 +196,12 @@ struct DifferentialCPG::evaluation_function{
 
 void DifferentialCPG::BO_init(){
     // Parameters
+    this->evaluationRate_ = 75.0;
     this->current_iteration = 0;
     this->max_iterations = 100;
     this->initial_samples = 3;
-    this->range_lb = -0.5;
-    this->range_ub = 2.f;
+    this->range_lb = 0.f;
+    this->range_ub = 4.f;
 
     // TODO: Temporary: ask milan
     this->n_weights = 10;
@@ -283,11 +282,11 @@ void DifferentialCPG::BO_step(){
         // Transform the weights to the desired interval
         auto xx = x(i)*(this->range_ub - this->range_lb) + this->range_lb;
 
-        // Set the connection weights with xx (ask Milan)
+        // TODO: Set the connection weights with xx (ask Milan)
 
 
         // Verbose
-        std::cout << "x(" << i << ")= " << x(i) << " ;Transformed: " << xx << std::endl;
+        // std::cout << "x(" << i << ")= " << x(i) << " ;Transformed: " << xx << std::endl;
     }
 
     // Update counter
@@ -329,6 +328,10 @@ void DifferentialCPG::Update(
 
     // Evaluate policy on certain time limit
     if ((_time - this->startTime_) > this->evaluationRate_) {
+        // Update position
+        auto currPosition = this->robot_->WorldPose();
+        this->evaluator->Update(currPosition);
+
         // Call iteration of BO
         this->BO_step();
 
@@ -374,7 +377,9 @@ void DifferentialCPG::Step(
         {
             int x1, y1, z1, x2, y2, z2;
             std::tie(x1, y1, z1, x2, y2, z2) = connection.first;
-            auto weightBA = connection.second;
+
+            //auto weightBA = connection.second;
+            auto weightBA = this->samples.back()(i)*(this->range_ub - this->range_lb) + this->range_lb;
 
             if (x2 == x and y2 == y and z2 == z)
             {
