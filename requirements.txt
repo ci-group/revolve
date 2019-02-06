@@ -5,5 +5,7 @@ numpy>=1.9.2
 PyYAML>=3.11
 protobuf>=3.0.0
 psutil==3.4.2
+matplotlib
+
 
 -e git+https://github.com/ci-group/pygazebo.git@py2to3#egg=pygazebo

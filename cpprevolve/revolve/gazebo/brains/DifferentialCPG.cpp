@@ -19,15 +19,16 @@
  *
  */
 
-// Existing macros from Milan
+// Various macros
 #include <cstdlib>
 #include <map>
 #include <tuple>
 #include "DifferentialCPG.h"
 #include "../motors/Motor.h"
 #include "../sensors/Sensor.h"
+#include <time.h>
 
-// Limbo
+// Limbo macros
 #include "DifferentialCPG_BO.h"
 #include <limbo/model/gp.hpp>
 #include <limbo/init/lhs.hpp>
@@ -196,36 +197,74 @@ struct DifferentialCPG::evaluation_function{
 
 void DifferentialCPG::BO_init(){
     // Parameters
-    this->evaluationRate_ = 75.0;
+    this->evaluationRate_ = 40.0;
     this->current_iteration = 0;
-    this->max_iterations = 100;
-    this->initial_samples = 3;
+    this->initial_samples = 2;
+    this->max_learning_iterations = 5; // set this to be the maximum iterations that learning is allowd
+    this->noLearningIterations = 5; // Number of iterations to walk with best controller in the end
     this->range_lb = 0.f;
-    this->range_ub = 4.f;
+    this->range_ub = 1.f;
+    this->initialization_method = "RS";
+    this->runAnalytics = true;
+
+    /*
+    // Limbo BO Parameters
+    this->alpha = 0.5; // Acqui_UCB. Default 0.5
+    this->delta = 0.3; // Acqui GP-UCB. Default 0.1. Convergence guaranteed in (0,1)
+    this->l = 0.2; // Kernel width. Assumes equally sized ranges over dimensions
+    this->sigma_sq = 0.001; // Kernel variance. 0.001 recommended
+    this->k = 4; // EXP-ARD kernel. Number of columns used to compute M.
+    */
 
     // TODO: Temporary: ask milan
     this->n_weights = 10;
 
-    // For all #initial_samples
-    for (int i = 0; i < this->initial_samples; i++){
-        // Working variable to hold a random number for each weight to be optimized
-        Eigen::VectorXd initial_sample(this->n_weights);
+    // Random sampling
+    if(this->initialization_method == "RS") {
+        for (int i = 0; i < this->initial_samples; i++) {
+            // Working variable to hold a random number for each weight to be optimized
+            Eigen::VectorXd initial_sample(this->n_weights);
 
-        // For all weights
-        for (int j = 0; j < this->n_weights; j++) {
-            // Generate a random number in [0, 1]. Transform later
-            double f = ((double) rand() / (RAND_MAX));
+            // For all weights
+            for (int j = 0; j < this->n_weights; j++) {
+                // Generate a random number in [0, 1]. Transform later
+                double f = ((double) rand() / (RAND_MAX));
 
-            // Append f to vector
-            initial_sample(j) = f;
+                // Append f to vector
+                initial_sample(j) = f;
+            }
+
+            // Save vector in samples.
+            this->samples.push_back(initial_sample);
         }
+    }
+        // Latin Hypercube Sampling
+    else if(this->initialization_method == "LHS"){
 
-        // Save vector in samples.
-        this->samples.push_back(initial_sample);
     }
 
 }
 
+void DifferentialCPG::getFitness(){
+    // Get fitness
+    double fitness = this->evaluator->Fitness();
+
+    // Save sample if it is the best seen so far
+    if(fitness >this->best_fitness){
+        this->best_fitness = fitness;
+        this->best_sample = this->samples.back();
+    }
+
+    // Verbose
+    std::cout << "Iteration number " << this->current_iteration << " has fitness " << fitness << std::endl;
+
+    // Limbo requires fitness value to be of type Eigen::VectorXd
+    Eigen::VectorXd observation = Eigen::VectorXd(1);
+    observation(0) = fitness;
+
+    // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
+    this->observations.push_back(observation);
+}
 
 void DifferentialCPG::BO_step(){
     // Holder for sample
@@ -234,17 +273,7 @@ void DifferentialCPG::BO_step(){
     // Get Fitness if we already did an evaluation
     if (this->current_iteration > 0){
         // Get fitness
-        double fitness = this->evaluator->Fitness();
-
-        // Verbose
-        std::cout << "Iteration number " << this->current_iteration << " has fitness " << fitness << std::endl;
-
-        // Limbo requires fitness value to be of type Eigen::VectorXd
-        Eigen::VectorXd observation = Eigen::VectorXd(1);
-        observation(0) = fitness;
-
-        // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
-        this->observations.push_back(observation);
+        this->getFitness();
     }
 
     // In case we are not done with initial random sampling yet
@@ -252,20 +281,10 @@ void DifferentialCPG::BO_step(){
         // Take one of the pre-sampled random samples, and update the weights later
         x = this->samples.at(this->current_iteration);
     }
-    // In case we are done with the initial random sampling
+        // In case we are done with the initial random sampling
     else{
         // Specify bayesian optimizer
         limbo::bayes_opt::BOptimizer<Params, limbo::initfun<Init_t>, limbo::modelfun<GP_t>, limbo::acquifun<Acqui_t>> boptimizer;
-
-        // Verbose: print all samples
-        for(int i = 0; i < this->current_iteration; i++){
-            auto my_vector = this->samples.at(i);
-            std::cout << "Sample " << i << " : ";
-            for(int j = 0; j < this->n_weights; j++){
-                std::cout <<  my_vector(j) << ", ";
-            }
-            std::cout << " Fitness: " << this->observations.at(i) << std::endl;
-        }
 
         // Optimize. Pass dummy evaluation function and observations .
         boptimizer.optimize(DifferentialCPG::evaluation_function(), this->samples, this->observations);
@@ -275,18 +294,6 @@ void DifferentialCPG::BO_step(){
 
         // Save this x_hat_star
         this->samples.push_back(x);
-    }
-
-    // Process new sample
-    for(int i=0; i <x.size(); i ++){
-        // Transform the weights to the desired interval
-        auto xx = x(i)*(this->range_ub - this->range_lb) + this->range_lb;
-
-        // TODO: Set the connection weights with xx (ask Milan)
-
-
-        // Verbose
-        // std::cout << "x(" << i << ")= " << x(i) << " ;Transformed: " << xx << std::endl;
     }
 
     // Update counter
@@ -332,8 +339,26 @@ void DifferentialCPG::Update(
         auto currPosition = this->robot_->WorldPose();
         this->evaluator->Update(currPosition);
 
-        // Call iteration of BO
-        this->BO_step();
+        // If we are still learning
+        if(this->current_iteration < (this->initial_samples + this->max_learning_iterations)){
+            this->BO_step();
+            std::cout << "I am learning \n";
+        }
+        // If we are finished learning but are cooling down
+        else if((this->current_iteration >= (this->initial_samples + this->max_learning_iterations))
+        && (this->current_iteration < (this->initial_samples + this->max_learning_iterations + this->noLearningIterations))){
+            // Only get fitness for updating
+            this->getFitness();
+            this->samples.push_back(this->best_sample);
+            this->current_iteration += 1;
+            std::cout << "I am cooling down \n";
+        }
+        // Else we don't want to update anything, but save data from this run once.
+        else if(this->runAnalytics) {
+                this->getAnalytics();
+                this->runAnalytics = false;
+            std::cout << "I am finished \n";
+        }
 
         // Evaluation policy here
         this->startTime_ = _time;
@@ -379,7 +404,13 @@ void DifferentialCPG::Step(
             std::tie(x1, y1, z1, x2, y2, z2) = connection.first;
 
             //auto weightBA = connection.second;
-            auto weightBA = this->samples.back()(i)*(this->range_ub - this->range_lb) + this->range_lb;
+            // When we are still learning
+            auto weightBA = this->samples.back()(i) * (this->range_ub - this->range_lb) + this->range_lb;
+
+            // TODO: replace. If we are finished learning, take best sample seen so far
+            if(this->current_iteration >= this->max_learning_iterations + this->initial_samples + this->noLearningIterations) {
+                weightBA = this->best_sample(i);
+            }
 
             if (x2 == x and y2 == y and z2 == z)
             {
@@ -432,9 +463,10 @@ struct DifferentialCPG::Params{
     };
 
     struct bayes_opt_bobase : public limbo::defaults::bayes_opt_bobase {
-        BO_PARAM(bool, stats_enabled, true);
+        // set stats_enabled to prevent creating all the directories
+        BO_PARAM(bool, stats_enabled, false);
 
-        BO_PARAM(bool, bounded, true); //false
+        BO_PARAM(bool, bounded, true);
     };
 
     // 1 Iteration as we will perform limbo step by step
@@ -452,29 +484,91 @@ struct DifferentialCPG::Params{
         /// @ingroup kernel_defaults
         BO_PARAM(int, k, 4); // k number of columns used to compute M
         /// @ingroup kernel_defaults
-        BO_PARAM(double, sigma_sq, 1); //brochu2010tutorial p.9 without sigma_sq
+        BO_PARAM(double, sigma_sq, 0.001); //brochu2010tutorial p.9 without sigma_sq
     };
 
     struct kernel_maternfivehalves : public limbo::defaults::kernel_maternfivehalves
     {
-        BO_PARAM(double, sigma_sq,1.0); //brochu2010tutorial p.9 without sigma_sq
-        BO_PARAM(double, l, 0.3); //characteristic length scale
+        BO_PARAM(double, sigma_sq, 0.001); //brochu2010tutorial p.9 without sigma_sq
+        BO_PARAM(double, l, 0.2); //characteristic length scale
     };
 
     struct acqui_gpucb : public limbo::defaults::acqui_gpucb {
         //UCB(x) = \mu(x) + \kappa \sigma(x).
-        BO_PARAM(double, delta, 0.525); // default delta = 0.1, delta in (0,1) convergence guaranteed
+        BO_PARAM(double, delta, 0.1); // default delta = 0.1, delta in (0,1) convergence guaranteed
     };
 
+    // We do Random Sampling manually to allow for incorporation in our loop
     struct init_lhs : public limbo::defaults::init_lhs{
-        BO_PARAM(int, samples, 100);
+        BO_PARAM(int, samples, 0);
     };
 
     struct acqui_ucb : public limbo::defaults::acqui_ucb {
         //UCB(x) = \mu(x) + \alpha \sigma(x). high alpha have high exploration
         //iterations is high, alpha can be low for high accuracy in enough iterations.
-        // In contrast, the low iterations should have high alpha for high
+        // In contrast, the lsow iterations should have high alpha for high
         // searching in limited iterations, which guarantee to optimal.
-        BO_PARAM(double, alpha, 1.0); // default alpha = 0.5
+        BO_PARAM(double, alpha, 0.5); // default alpha = 0.5
     };
 };
+
+
+void DifferentialCPG::getAnalytics(){
+    // Generate directory name
+    std::string directoryName = "output/cpg_bo/";
+    directoryName += std::to_string(time(0)) + "/";
+    std::system(("mkdir -p " + directoryName).c_str());
+
+    // Write parameters to file
+    std::ofstream myFile;
+    myFile.open(directoryName + "parameters.txt");
+    myFile << "Dimensions: " << this->n_weights << "\n";
+    // TODO
+    //myFile << "Kernel used: " << kernel_used << "\n";
+    //myFile << "Acqui. function used: " << acqui_used << "\n";
+    //myFile << "Initialization method used: " << initialization_used << "\n";
+    myFile << "UCB alpha: " << Params::acqui_ucb::alpha() << "\n";
+    myFile << "GP-UCB delta: " << Params::acqui_gpucb::delta() << "\n";
+    myFile << "Kernel noise: " << Params::kernel::noise() << "\n";
+    myFile << "No. of iterations: " << Params::stop_maxiterations::iterations() << "\n";
+    myFile << "EXP Kernel l: " << Params::kernel_exp::l() << "\n";
+    myFile << "EXP Kernel sigma_sq: " << Params::kernel_exp::sigma_sq() << "\n";
+    myFile << "EXP-ARD Kernel k: "<< Params::kernel_squared_exp_ard::k() << "\n";
+    myFile << "EXP-ARD Kernel sigma_sq: "<< Params::kernel_squared_exp_ard::sigma_sq() << "\n";
+    myFile << "MFH Kernel sigma_sq: "<< Params::kernel_maternfivehalves::sigma_sq() << "\n";
+    myFile << "MFH Kernel l: "<< Params::kernel_maternfivehalves::l() << "\n\n";
+    myFile.close();
+
+    // Save data from run
+    std::ofstream myObservationsFile;
+    myObservationsFile.open(directoryName + "observations.txt");
+    std::ofstream mySamplesFile;
+    mySamplesFile.open(directoryName + "samples.txt");
+
+    // Print to files: TODO: GET LAST FITNESS AS WELL S.T. WE CAN GET RID OF -1
+    for(int i = 0; i < (this->observations.size()); i++){
+        auto mySample = this->samples.at(i);
+
+        for(int j = 0; j < this->n_weights; j++){
+            mySamplesFile << mySample(j) << ", ";
+        }
+        mySamplesFile << "\n";
+
+        // When the samples are commented out, it works.
+        myObservationsFile << this->observations.at(i) << "\n";
+    }
+
+    // Close files
+    myObservationsFile.close();
+    mySamplesFile.close();
+
+    // Call python file to construct plots
+    std::string pythonPlotCommand = "python3 experiments/RunAnalysisBO.py "
+            + directoryName
+            + " "
+            + std::to_string((int)this->initial_samples)
+            + " "
+            + std::to_string((int)this->noLearningIterations);
+    std::system(pythonPlotCommand.c_str());
+
+}

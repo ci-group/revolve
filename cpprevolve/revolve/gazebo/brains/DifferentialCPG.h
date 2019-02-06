@@ -149,6 +149,12 @@ namespace revolve
         public:
             struct eval_func;
 
+        private:
+            double best_fitness;
+
+        private:
+            Eigen::VectorXd best_sample;
+
             /// \brief
         private:
             double startTime_;
@@ -158,16 +164,22 @@ namespace revolve
             size_t current_iteration;
 
         private:
-            size_t max_iterations;
+            size_t max_learning_iterations;
 
         private:
             size_t initial_samples;
+
+        private:
+            size_t noLearningIterations;
 
         private:
             double range_lb;
 
         private:
             double range_ub;
+
+        private:
+            std::string initialization_method;
 
         private:
             std::vector<Eigen::VectorXd> observations;
@@ -181,6 +193,15 @@ namespace revolve
             /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
         private:
             struct evaluation_function;
+
+        private:
+            bool runAnalytics;
+
+        public:
+            void getAnalytics();
+
+        private:
+            void getFitness();
         };
     }
 }
