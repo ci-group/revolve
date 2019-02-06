@@ -115,8 +115,6 @@ namespace revolve
             /// \brief Name of the robot
         private: ::gazebo::physics::ModelPtr robot_;
 
-            // ADAPTED BY MAARTEN UNDERNEATH
-
             /// \brief Init BO loop
         public:
             void BO_init();
@@ -133,9 +131,9 @@ namespace revolve
         private:
             size_t maxEvaluations_;
 
-            /// \brief Retrieves fitness for the current policy
+            /// \brief Get fitness
         private:
-            double Fitness();
+            void getFitness();
 
             /// \brief Pointer to the fitness evaluator
         protected:
@@ -145,15 +143,13 @@ namespace revolve
         public:
             struct Params;
 
-            /// \brief Holder for Limbo's required eval_func struct
-        public:
-            struct eval_func;
-
+            /// \brief Best fitness seen so far
         private:
-            double best_fitness;
+            double bestFitness;
 
+            /// \brief Sample corresponding to best fitness
         private:
-            Eigen::VectorXd best_sample;
+            Eigen::VectorXd bestSample;
 
             /// \brief
         private:
@@ -161,47 +157,55 @@ namespace revolve
 
             /// \brief BO attributes
         private:
-            size_t current_iteration;
+            size_t currentIteration;
 
+            /// \brief Max number of iterations learning is allowed
         private:
-            size_t max_learning_iterations;
+            size_t maxLearningIterations;
 
+            /// \brief Number of initial samples
         private:
-            size_t initial_samples;
+            size_t initialSamples;
 
+            /// \brief Cool down period
         private:
             size_t noLearningIterations;
 
+            /// \brief Limbo optimizes in [0,1]
         private:
-            double range_lb;
+            double rangeLB;
 
+            /// \brief Limbo optimizes in [0,1]
         private:
-            double range_ub;
+            double rangeUB;
 
+            /// \brief How to take initial random samples
         private:
-            std::string initialization_method;
+            std::string initializationMethod;
 
+            /// \brief All fitnesses seen so far. Called observations in limbo context
         private:
             std::vector<Eigen::VectorXd> observations;
 
+            /// \brief All samples seen so far.
         private:
             std::vector<Eigen::VectorXd> samples;
 
+            /// \brief The number of weights to optimize
         private:
-            int n_weights;
+            int nWeights;
 
             /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
         private:
-            struct evaluation_function;
+            struct evaluationFunction;
 
+            /// \brief Boolean to enable/disable constructing plots
         private:
             bool runAnalytics;
 
+            /// \brief Automatically generate plots
         public:
             void getAnalytics();
-
-        private:
-            void getFitness();
         };
     }
 }

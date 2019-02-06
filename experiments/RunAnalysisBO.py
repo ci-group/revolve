@@ -12,7 +12,7 @@ def plot_output(my_directory, my_data, x1, x2):
     font = {'size'   : 20}
     matplotlib.rc('font', **font)
 
-    # Matplotlib
+    # Set up plot
     plt.figure(figsize=(14, 14))
     plt.xlabel("#Evaluations")
     plt.ylabel("Fitness")
@@ -36,10 +36,8 @@ def get_data(my_directory, filename):
     return my_data
 
 
-
 # Main
 fitness_data = get_data(root_directory, "observations.txt")
 plot_output(root_directory, fitness_data, n_initial_samples, n_no_learning_iterations)
 
-
-print(fitness_data)
+print("Plots are constructed \n")

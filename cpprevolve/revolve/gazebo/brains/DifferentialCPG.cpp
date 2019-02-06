@@ -138,7 +138,7 @@ DifferentialCPG::DifferentialCPG(
     // Random initialization of neuron connections
     std::random_device rd;
     std::mt19937 mt(rd());
-    std::normal_distribution< double > dist(0, 1);
+    std::uniform_real_distribution< double > dist(0, 1);
     std::cout << dist(mt) << std::endl;
 
     // Add connections between neighbouring neurons
@@ -179,7 +179,7 @@ DifferentialCPG::DifferentialCPG(
 /*
  * Dummy function for limbo
  */
-struct DifferentialCPG::evaluation_function{
+struct DifferentialCPG::evaluationFunction{
     // Set input dimension (only once)
     static constexpr size_t input_size = 10;
 
@@ -197,14 +197,14 @@ struct DifferentialCPG::evaluation_function{
 
 void DifferentialCPG::BO_init(){
     // Parameters
-    this->evaluationRate_ = 40.0;
-    this->current_iteration = 0;
-    this->initial_samples = 2;
-    this->max_learning_iterations = 5; // set this to be the maximum iterations that learning is allowd
-    this->noLearningIterations = 5; // Number of iterations to walk with best controller in the end
-    this->range_lb = 0.f;
-    this->range_ub = 1.f;
-    this->initialization_method = "RS";
+    this->evaluationRate_ = 60.0;
+    this->currentIteration = 0;
+    this->initialSamples = 20;
+    this->maxLearningIterations = 60; // set this to be the maximum iterations that learning is allowd
+    this->noLearningIterations = 20; // Number of iterations to walk with best controller in the end
+    this->rangeLB = 0.f;
+    this->rangeUB = 1.f;
+    this->initializationMethod = "RS";
     this->runAnalytics = true;
 
     /*
@@ -217,16 +217,16 @@ void DifferentialCPG::BO_init(){
     */
 
     // TODO: Temporary: ask milan
-    this->n_weights = 10;
+    this->nWeights = 10;
 
     // Random sampling
-    if(this->initialization_method == "RS") {
-        for (int i = 0; i < this->initial_samples; i++) {
+    if(this->initializationMethod == "RS") {
+        for (int i = 0; i < this->initialSamples; i++) {
             // Working variable to hold a random number for each weight to be optimized
-            Eigen::VectorXd initial_sample(this->n_weights);
+            Eigen::VectorXd initial_sample(this->nWeights);
 
             // For all weights
-            for (int j = 0; j < this->n_weights; j++) {
+            for (int j = 0; j < this->nWeights; j++) {
                 // Generate a random number in [0, 1]. Transform later
                 double f = ((double) rand() / (RAND_MAX));
 
@@ -239,7 +239,7 @@ void DifferentialCPG::BO_init(){
         }
     }
         // Latin Hypercube Sampling
-    else if(this->initialization_method == "LHS"){
+    else if(this->initializationMethod == "LHS"){
 
     }
 
@@ -250,13 +250,13 @@ void DifferentialCPG::getFitness(){
     double fitness = this->evaluator->Fitness();
 
     // Save sample if it is the best seen so far
-    if(fitness >this->best_fitness){
-        this->best_fitness = fitness;
-        this->best_sample = this->samples.back();
+    if(fitness >this->bestFitness){
+        this->bestFitness = fitness;
+        this->bestSample = this->samples.back();
     }
 
     // Verbose
-    std::cout << "Iteration number " << this->current_iteration << " has fitness " << fitness << std::endl;
+    std::cout << "Iteration number " << this->currentIteration << " has fitness " << fitness << std::endl;
 
     // Limbo requires fitness value to be of type Eigen::VectorXd
     Eigen::VectorXd observation = Eigen::VectorXd(1);
@@ -271,15 +271,15 @@ void DifferentialCPG::BO_step(){
     Eigen::VectorXd x;
 
     // Get Fitness if we already did an evaluation
-    if (this->current_iteration > 0){
+    if (this->currentIteration > 0){
         // Get fitness
         this->getFitness();
     }
 
     // In case we are not done with initial random sampling yet
-    if (this->current_iteration < this->initial_samples){
+    if (this->currentIteration < this->initialSamples){
         // Take one of the pre-sampled random samples, and update the weights later
-        x = this->samples.at(this->current_iteration);
+        x = this->samples.at(this->currentIteration);
     }
         // In case we are done with the initial random sampling
     else{
@@ -287,7 +287,7 @@ void DifferentialCPG::BO_step(){
         limbo::bayes_opt::BOptimizer<Params, limbo::initfun<Init_t>, limbo::modelfun<GP_t>, limbo::acquifun<Acqui_t>> boptimizer;
 
         // Optimize. Pass dummy evaluation function and observations .
-        boptimizer.optimize(DifferentialCPG::evaluation_function(), this->samples, this->observations);
+        boptimizer.optimize(DifferentialCPG::evaluationFunction(), this->samples, this->observations);
 
         // Get new sample
         x = boptimizer.last_sample();
@@ -297,7 +297,7 @@ void DifferentialCPG::BO_step(){
     }
 
     // Update counter
-    this->current_iteration +=1;
+    this->currentIteration +=1;
 }
 
 /**
@@ -340,23 +340,23 @@ void DifferentialCPG::Update(
         this->evaluator->Update(currPosition);
 
         // If we are still learning
-        if(this->current_iteration < (this->initial_samples + this->max_learning_iterations)){
+        if(this->currentIteration < (this->initialSamples + this->maxLearningIterations)){
             this->BO_step();
             std::cout << "I am learning \n";
         }
-        // If we are finished learning but are cooling down
-        else if((this->current_iteration >= (this->initial_samples + this->max_learning_iterations))
-        && (this->current_iteration < (this->initial_samples + this->max_learning_iterations + this->noLearningIterations))){
+            // If we are finished learning but are cooling down
+        else if((this->currentIteration >= (this->initialSamples + this->maxLearningIterations))
+                && (this->currentIteration < (this->initialSamples + this->maxLearningIterations + this->noLearningIterations))){
             // Only get fitness for updating
             this->getFitness();
-            this->samples.push_back(this->best_sample);
-            this->current_iteration += 1;
+            this->samples.push_back(this->bestSample);
+            this->currentIteration += 1;
             std::cout << "I am cooling down \n";
         }
-        // Else we don't want to update anything, but save data from this run once.
+            // Else we don't want to update anything, but save data from this run once.
         else if(this->runAnalytics) {
-                this->getAnalytics();
-                this->runAnalytics = false;
+            this->getAnalytics();
+            this->runAnalytics = false;
             std::cout << "I am finished \n";
         }
 
@@ -372,7 +372,6 @@ void DifferentialCPG::Update(
     // Send new signals to the motors
     p = 0;
     for (const auto &motor: _motors) {
-        //std::cout << motor->PartId() << std::endl;
         motor->Update(&output[p], _step);
         p += motor->Outputs();
     }
@@ -405,11 +404,11 @@ void DifferentialCPG::Step(
 
             //auto weightBA = connection.second;
             // When we are still learning
-            auto weightBA = this->samples.back()(i) * (this->range_ub - this->range_lb) + this->range_lb;
+            auto weightBA = this->samples.back()(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
 
             // TODO: replace. If we are finished learning, take best sample seen so far
-            if(this->current_iteration >= this->max_learning_iterations + this->initial_samples + this->noLearningIterations) {
-                weightBA = this->best_sample(i);
+            if(this->currentIteration >= this->maxLearningIterations + this->initialSamples + this->noLearningIterations) {
+                weightBA = this->bestSample(i);
             }
 
             if (x2 == x and y2 == y and z2 == z)
@@ -522,7 +521,7 @@ void DifferentialCPG::getAnalytics(){
     // Write parameters to file
     std::ofstream myFile;
     myFile.open(directoryName + "parameters.txt");
-    myFile << "Dimensions: " << this->n_weights << "\n";
+    myFile << "Dimensions: " << this->nWeights << "\n";
     // TODO
     //myFile << "Kernel used: " << kernel_used << "\n";
     //myFile << "Acqui. function used: " << acqui_used << "\n";
@@ -549,7 +548,7 @@ void DifferentialCPG::getAnalytics(){
     for(int i = 0; i < (this->observations.size()); i++){
         auto mySample = this->samples.at(i);
 
-        for(int j = 0; j < this->n_weights; j++){
+        for(int j = 0; j < this->nWeights; j++){
             mySamplesFile << mySample(j) << ", ";
         }
         mySamplesFile << "\n";
@@ -564,11 +563,11 @@ void DifferentialCPG::getAnalytics(){
 
     // Call python file to construct plots
     std::string pythonPlotCommand = "python3 experiments/RunAnalysisBO.py "
-            + directoryName
-            + " "
-            + std::to_string((int)this->initial_samples)
-            + " "
-            + std::to_string((int)this->noLearningIterations);
+                                    + directoryName
+                                    + " "
+                                    + std::to_string((int)this->initialSamples)
+                                    + " "
+                                    + std::to_string((int)this->noLearningIterations);
     std::system(pythonPlotCommand.c_str());
 
 }
