@@ -197,15 +197,15 @@ struct DifferentialCPG::evaluationFunction{
 
 void DifferentialCPG::BO_init(){
     // Parameters
-    this->evaluationRate_ = 60.0;
+    this->evaluationRate_ = 50.0;
     this->currentIteration = 0;
     this->initialSamples = 20;
-    this->maxLearningIterations = 60; // set this to be the maximum iterations that learning is allowd
-    this->noLearningIterations = 20; // Number of iterations to walk with best controller in the end
-    this->rangeLB = 0.f;
-    this->rangeUB = 1.f;
-    this->initializationMethod = "RS";
-    this->runAnalytics = true;
+    this->maxLearningIterations = 50; // Maximum iterations that learning is allowed
+    this->noLearningIterations = 5; // Number of iterations to walk with best controller in the end
+    this->rangeLB = -2.f;
+    this->rangeUB = 2.f;
+    this->initializationMethod = "LHS"; // {RS, LHS}
+    this->runAnalytics = true; // Automatically construct plots
 
     /*
     // Limbo BO Parameters
@@ -240,7 +240,51 @@ void DifferentialCPG::BO_init(){
     }
         // Latin Hypercube Sampling
     else if(this->initializationMethod == "LHS"){
+        // Information purposes
+        std::cout << "Sample method: " << this->initializationMethod << std::endl;
 
+        // Check
+        if(this->initialSamples % this->nWeights != 0){
+            std::cout << "Warning: Ideally the number of initial samples is a multiple of nWeights for LHS sampling \n";
+        }
+
+        // Working variables
+        double myRange = 1.f/this->initialSamples;
+
+        // If we have n dimensions, create n such vectors that we will permute
+        std::vector<std::vector<int>> allDimensions;
+
+        // Fill vectors
+        for (int i=0; i < this->nWeights; i++){
+            std::vector<int> oneDimension;
+
+            // Prepare for vector permutation
+            for (int j = 0; j < this->initialSamples; j++){
+                oneDimension.push_back(j);
+            }
+
+            // Vector permutation
+            std::random_shuffle(oneDimension.begin(), oneDimension.end() );
+
+            // Save permuted vector
+            allDimensions.push_back(oneDimension);
+        }
+
+        // For all samples
+        for (int i = 0; i < this->initialSamples; i++){
+            // Initialize Eigen::VectorXd here.
+            Eigen::VectorXd initialSample(this->nWeights);
+
+            // For all dimensions
+            for (int j = 0; j < this->nWeights; j++){
+                // Take a LHS
+                initialSample(j) = allDimensions.at(j).at(i)*myRange + ((double) rand() / (RAND_MAX))*myRange;
+            }
+
+
+            // Append sample to samples
+            this->samples.push_back(initialSample);
+        }
     }
 
 }
@@ -346,7 +390,7 @@ void DifferentialCPG::Update(
         }
             // If we are finished learning but are cooling down
         else if((this->currentIteration >= (this->initialSamples + this->maxLearningIterations))
-                && (this->currentIteration < (this->initialSamples + this->maxLearningIterations + this->noLearningIterations))){
+                and (this->currentIteration < (this->initialSamples + this->maxLearningIterations + this->noLearningIterations))){
             // Only get fitness for updating
             this->getFitness();
             this->samples.push_back(this->bestSample);
@@ -407,9 +451,10 @@ void DifferentialCPG::Step(
             auto weightBA = this->samples.back()(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
 
             // TODO: replace. If we are finished learning, take best sample seen so far
-            if(this->currentIteration >= this->maxLearningIterations + this->initialSamples + this->noLearningIterations) {
-                weightBA = this->bestSample(i);
+            if(this->currentIteration >= this->maxLearningIterations + this->initialSamples) {
+                weightBA = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
             }
+
 
             if (x2 == x and y2 == y and z2 == z)
             {
@@ -540,7 +585,7 @@ void DifferentialCPG::getAnalytics(){
 
     // Save data from run
     std::ofstream myObservationsFile;
-    myObservationsFile.open(directoryName + "observations.txt");
+    myObservationsFile.open(directoryName + "fitnesses.txt");
     std::ofstream mySamplesFile;
     mySamplesFile.open(directoryName + "samples.txt");
 

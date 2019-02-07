@@ -18,7 +18,7 @@ def plot_output(my_directory, my_data, x1, x2):
     plt.ylabel("Fitness")
     plt.title("CPG + BO")
     plt.axvline(x=x1, color="green", linestyle="dashed")
-    plt.axvline(x=x2, color="red", linestyle="dashed")
+    plt.axvline(x=len(my_data) - x2, color="red", linestyle="dashed")
     plt.grid()
     plt.plot(my_data)
 
@@ -37,7 +37,7 @@ def get_data(my_directory, filename):
 
 
 # Main
-fitness_data = get_data(root_directory, "observations.txt")
+fitness_data = get_data(root_directory, "fitnesses.txt")
 plot_output(root_directory, fitness_data, n_initial_samples, n_no_learning_iterations)
 
 print("Plots are constructed \n")

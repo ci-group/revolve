@@ -55,157 +55,125 @@ namespace revolve
             /// \param[in] _node The brain node
             /// \param[in] _motors Reference to a motor list, it be reordered
             /// \param[in] _sensors Reference to a sensor list, it might be reordered
-        public:
-            DifferentialCPG(
+        public: DifferentialCPG(
                     const ::gazebo::physics::ModelPtr &_model,
                     const sdf::ElementPtr _settings,
                     const std::vector<MotorPtr> &_motors,
                     const std::vector<SensorPtr> &_sensors);
 
             /// \brief Destructor
-        public:
-            virtual ~DifferentialCPG();
+        public: virtual ~DifferentialCPG();
 
             /// \brief The default update method for the controller
             /// \param[in] _motors Motor list
             /// \param[in] _sensors Sensor list
             /// \param[in] _time Current world time
             /// \param[in] _step Current time step
-        public:
-            virtual void Update(
+        public: virtual void Update(
                     const std::vector<MotorPtr> &_motors,
                     const std::vector<SensorPtr> &_sensors,
                     const double _time,
                     const double _step);
 
-        protected:
-            void Step(
+        protected: void Step(
                     const double _time,
                     double *_output);
 
             /// \brief One input state for each input neuron
-        protected:
-            double input_[MAX_INPUT_NEURONS];
+        protected: double input_[MAX_INPUT_NEURONS];
 
             /// \brief Used to determine the current state array.
             /// \example false := state1, true := state2.
-        protected:
-            bool flipState_;
+        protected: bool flipState_;
 
             /// \brief Register of motor IDs and their x,y-coordinates
-        protected:
-            std::map<std::string, std::tuple<int, int> >
+        protected: std::map<std::string, std::tuple<int, int> >
                     positions_;
 
             /// \brief Register of individual neurons in x,y,z-coordinates
             /// \details x,y-coordinates define position of a robot's module and
             // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
             // values are a bias and a gain of each neuron.
-        protected:
-            std::map<std::tuple<int, int, int>,
+        protected: std::map<std::tuple<int, int, int>,
                     std::tuple<double, double, double> > neurons_;
 
             /// \brief Register of connections between neighnouring neurons
             /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
             // define a connection.
-        protected:
-            std::map<std::tuple<int, int, int, int, int, int>,
+        protected: std::map<std::tuple<int, int, int, int, int, int>,
                     double> connections_;
 
             /// \brief Name of the robot
         private: ::gazebo::physics::ModelPtr robot_;
 
             /// \brief Init BO loop
-        public:
-            void BO_init();
+        public: void BO_init();
 
             /// \brief Main BO loop
-        public:
-            void BO_step();
+        public: void BO_step();
 
             /// \brief evaluation rate
-        private:
-            double evaluationRate_;
+        private: double evaluationRate_;
 
             /// \brief Maximal number of evaluations
-        private:
-            size_t maxEvaluations_;
+        private: size_t maxEvaluations_;
 
             /// \brief Get fitness
-        private:
-            void getFitness();
+        private: void getFitness();
 
             /// \brief Pointer to the fitness evaluator
-        protected:
-            EvaluatorPtr evaluator;
+        protected: EvaluatorPtr evaluator;
 
             /// \brief Holder for BO parameters
-        public:
-            struct Params;
+        public: struct Params;
 
             /// \brief Best fitness seen so far
-        private:
-            double bestFitness;
+        private: double bestFitness;
 
             /// \brief Sample corresponding to best fitness
-        private:
-            Eigen::VectorXd bestSample;
+        private: Eigen::VectorXd bestSample;
 
             /// \brief
-        private:
-            double startTime_;
+        private: double startTime_;
 
             /// \brief BO attributes
-        private:
-            size_t currentIteration;
+        private: size_t currentIteration;
 
             /// \brief Max number of iterations learning is allowed
-        private:
-            size_t maxLearningIterations;
+        private: size_t maxLearningIterations;
 
             /// \brief Number of initial samples
-        private:
-            size_t initialSamples;
+        private: size_t initialSamples;
 
             /// \brief Cool down period
-        private:
-            size_t noLearningIterations;
+        private: size_t noLearningIterations;
 
             /// \brief Limbo optimizes in [0,1]
-        private:
-            double rangeLB;
+        private: double rangeLB;
 
             /// \brief Limbo optimizes in [0,1]
-        private:
-            double rangeUB;
+        private: double rangeUB;
 
             /// \brief How to take initial random samples
-        private:
-            std::string initializationMethod;
+        private: std::string initializationMethod;
 
             /// \brief All fitnesses seen so far. Called observations in limbo context
-        private:
-            std::vector<Eigen::VectorXd> observations;
+        private: std::vector<Eigen::VectorXd> observations;
 
             /// \brief All samples seen so far.
-        private:
-            std::vector<Eigen::VectorXd> samples;
+        private: std::vector<Eigen::VectorXd> samples;
 
             /// \brief The number of weights to optimize
-        private:
-            int nWeights;
+        private: int nWeights;
 
             /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
-        private:
-            struct evaluationFunction;
+        private: struct evaluationFunction;
 
             /// \brief Boolean to enable/disable constructing plots
-        private:
-            bool runAnalytics;
+        private: bool runAnalytics;
 
             /// \brief Automatically generate plots
-        public:
-            void getAnalytics();
+        public: void getAnalytics();
         };
     }
 }
