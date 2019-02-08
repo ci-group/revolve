@@ -32,7 +32,7 @@
 namespace limbo {
     namespace defaults {
         struct bayes_opt_boptimizer {
-            BO_PARAM(int, hp_period, -1); // ? lan
+            BO_PARAM(int, hp_period, -1);
         };
     }
     BOOST_PARAMETER_TEMPLATE_KEYWORD(acquiopt)
