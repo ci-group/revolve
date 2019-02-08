@@ -1,8 +1,15 @@
 from __future__ import division
+
 import numpy as np
-from .transformations import quaternion_multiply, quaternion_matrix, quaternion_from_matrix, euler_from_quaternion, \
-    quaternion_about_axis, quaternion_conjugate, quaternion_inverse, quaternion_from_euler
-import itertools
+
+from .transformations import quaternion_multiply
+from .transformations import quaternion_matrix
+from .transformations import quaternion_from_matrix
+from .transformations import euler_from_quaternion
+from .transformations import quaternion_about_axis
+from .transformations import quaternion_conjugate
+from .transformations import quaternion_inverse
+from .transformations import quaternion_from_euler
 
 # Epsilon value used for zero comparisons
 EPSILON = 1e-5
@@ -32,8 +39,10 @@ class VectorBase(object):
         else:
             self.data = np.array(args, dtype=np.float_, copy=True)
 
-        assert len(self.data) == self.LENGTH, \
-            "Invalid data size %d, expecting %d" % (len(self.data), self.LENGTH)
+        if len(self.data) != self.LENGTH:
+            raise AssertionError("Invalid data size {}, expecting {}".format(
+                    len(self.data),
+                    self.LENGTH))
 
     def __copy__(self):
         """
@@ -69,8 +78,8 @@ class VectorBase(object):
         """
         try:
             idx = self.ATTRS.index(item)
-        except:
-            raise AttributeError("Unknown attribute `%s`" % item)
+        except AttributeError:
+            raise AttributeError("Unknown attribute `{}`".format(item))
 
         return self.data[idx]
 
@@ -167,7 +176,8 @@ class Vector3(VectorBase):
         :param other:
         :return:
         """
-        assert len(self) == len(other), "Cannot add different length vectors."
+        if len(self) != len(other):
+            raise AssertionError("Cannot add different length vectors.")
         return Vector3([x + y for x, y in zip(self, other)])
 
     def __sub__(self, other):
@@ -184,7 +194,8 @@ class Vector3(VectorBase):
         """
         :param other:
         """
-        assert len(self) == len(other), "Cannot add different length vectors."
+        if len(self) != len(other):
+            raise AssertionError("Cannot add different length vectors.")
         self[0] += other[0]
         self[1] += other[1]
         self[2] += other[2]
@@ -194,7 +205,8 @@ class Vector3(VectorBase):
         """
         :param other:
         """
-        assert len(self) == len(other), "Cannot add different length vectors."
+        if len(self) != len(other):
+            raise AssertionError("Cannot add different length vectors.")
         self[0] -= other[0]
         self[1] -= other[1]
         self[2] -= other[2]
@@ -256,18 +268,16 @@ class Vector3(VectorBase):
         """
         return np.dot(self.data, v1.data)
 
-    def parallellism(self, other):
+    def parallelism(self, other):
         """
-        Check whether the given vectors parallel, opposite
-        or not parallel.
-        Returns one of the OPPOSITE / PARALLEL / NOT_PARALLEL
-        "constants"
-        :param b:
-        :type b: Vector3
-        :return:
+        Check whether the given vectors parallel, opposite or not parallel.
+        :param other:
+        :type other: Vector3
+        :return: Returns one of OPPOSITE / PARALLEL / NOT_PARALLEL "constants"
         :rtype: int
         """
-        assert isinstance(other, Vector3)
+        if not isinstance(other, Vector3):
+            raise AssertionError("Vector is not an instance of Vector3")
         dot = self.normalized().dot(other.normalized())
         if dot <= (-1 + EPSILON):
             return OPPOSITE
@@ -278,13 +288,13 @@ class Vector3(VectorBase):
 
     def parallel_to(self, b):
         """
-        Shortcut method to `self.parallellism(a, b) == PARALLEL`
+        Shortcut method to `self.parallelism(a, b) == PARALLEL`
         :param b:
         :type b: Vector3
         :return:
         :rtype: bool
         """
-        return self.parallellism(b) == PARALLEL
+        return self.parallelism(b) == PARALLEL
 
     def orthogonal_to(self, b):
         """
@@ -295,7 +305,8 @@ class Vector3(VectorBase):
         :return:
         :rtype bool
         """
-        assert isinstance(b, Vector3)
+        if not isinstance(b, Vector3):
+            return AssertionError("Vector is not an instance of Vector3")
         return abs(self.normalized().dot(b.normalized())) <= EPSILON
 
 
@@ -344,7 +355,8 @@ class Quaternion(VectorBase):
         :param other:
         :return:
         """
-        assert isinstance(other, Quaternion)
+        if not isinstance(other, Quaternion):
+            raise AssertionError("Vector is not an instance of Quaternion")
         self.data[:] = quaternion_multiply(self, other)
 
     def get_matrix(self):
@@ -423,7 +435,8 @@ class RotationMatrix(object):
             else:
                 self.data = data
 
-        assert self.data.shape == (4, 4), "Invalid data size."
+        if self.data.shape != (4, 4):
+            raise AssertionError("Invalid data size.")
 
     def __copy__(self):
         """
@@ -471,14 +484,17 @@ class RotationMatrix(object):
             vec = np.array([other.x, other.y, other.z, 1])
             return Vector3(np.dot(self.data, vec)[:3])
         else:
-            raise ValueError("Unknown multiplication between `RotationMatrix` and `%s`" % other.__class__)
+            raise ValueError(
+                    "Unknown multiplication between `RotationMatrix` and "
+                    "`{}`".format(other.__class__))
 
     def __imul__(self, other):
         """
         :param other:
         :return:
         """
-        assert isinstance(other, RotationMatrix)
+        if not isinstance(other, RotationMatrix):
+            raise AssertionError("Vector is not an instance of RotationMatrix")
         self.data = np.array(np.dot(self.data, other.data))
 
     def get_quaternion(self):

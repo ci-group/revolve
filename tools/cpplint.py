@@ -326,40 +326,40 @@ def ParseNolintSuppressions(filename, raw_line, linenum, error):
 
 
 def ResetNolintSuppressions():
-  "Resets the set of NOLINT suppressions to empty."
-  _error_suppressions.clear()
+    "Resets the set of NOLINT suppressions to empty."
+    _error_suppressions.clear()
 
 
 def IsErrorSuppressedByNolint(category, linenum):
-  """Returns true if the specified error category is suppressed on this line.
+    """Returns true if the specified error category is suppressed on this line.
 
-  Consults the global error_suppressions map populated by
-  ParseNolintSuppressions/ResetNolintSuppressions.
+    Consults the global error_suppressions map populated by
+    ParseNolintSuppressions/ResetNolintSuppressions.
 
-  Args:
-    category: str, the category of the error.
-    linenum: int, the current line number.
-  Returns:
-    bool, True iff the error should be suppressed due to a NOLINT comment.
-  """
-  return (linenum in _error_suppressions.get(category, set()) or
-          linenum in _error_suppressions.get(None, set()))
+    Args:
+      category: str, the category of the error.
+      linenum: int, the current line number.
+    Returns:
+      bool, True iff the error should be suppressed due to a NOLINT comment.
+    """
+    return (linenum in _error_suppressions.get(category, set()) or
+            linenum in _error_suppressions.get(None, set()))
 
 def Match(pattern, s):
-  """Matches the string with the pattern, caching the compiled regexp."""
-  # The regexp compilation caching is inlined in both Match and Search for
-  # performance reasons; factoring it out into a separate function turns out
-  # to be noticeably expensive.
-  if not pattern in _regexp_compile_cache:
-    _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
-  return _regexp_compile_cache[pattern].match(s)
+    """Matches the string with the pattern, caching the compiled regexp."""
+    # The regexp compilation caching is inlined in both Match and Search for
+    # performance reasons; factoring it out into a separate function turns out
+    # to be noticeably expensive.
+    if not pattern in _regexp_compile_cache:
+      _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
+    return _regexp_compile_cache[pattern].match(s)
 
 
 def Search(pattern, s):
-  """Searches the string for the pattern, caching the compiled regexp."""
-  if not pattern in _regexp_compile_cache:
-    _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
-  return _regexp_compile_cache[pattern].search(s)
+    """Searches the string for the pattern, caching the compiled regexp."""
+    if not pattern in _regexp_compile_cache:
+      _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
+    return _regexp_compile_cache[pattern].search(s)
 
 
 class _IncludeState(dict):
@@ -478,7 +478,9 @@ class _IncludeState(dict):
         # enough that the header is associated with this file.
         self._section = self._OTHER_H_SECTION
     else:
-      assert header_type == _OTHER_HEADER
+      if header_type != _OTHER_HEADER:
+        raise AssertionError('Header type is different from {}'.format(
+                _OTHER_HEADER))
       self._section = self._OTHER_H_SECTION
 
     if last_section != self._section:
@@ -841,20 +843,20 @@ _RE_PATTERN_CLEANSE_LINE_C_COMMENTS = re.compile(
 
 
 def IsCppString(line):
-  """Does line terminate so, that the next symbol is in string constant.
+    """Does line terminate so, that the next symbol is in string constant.
 
-  This function does not consider single-line nor multi-line comments.
+    This function does not consider single-line nor multi-line comments.
 
-  Args:
-    line: is a partial line of code starting from the 0..n.
+    Args:
+      line: is a partial line of code starting from the 0..n.
 
-  Returns:
-    True, if next character appended to 'line' is inside a
-    string constant.
-  """
+    Returns:
+      True, if next character appended to 'line' is inside a
+      string constant.
+    """
 
-  line = line.replace(r'\\', 'XX')  # after this, \\" does not match to \"
-  return ((line.count('"') - line.count(r'\"') - line.count("'\"'")) & 1) == 1
+    line = line.replace(r'\\', 'XX')  # after this, \\" does not match to \"
+    return ((line.count('"') - line.count(r'\"') - line.count("'\"'")) & 1) == 1
 
 
 def FindNextMultiLineCommentStart(lines, lineix):
@@ -2112,25 +2114,25 @@ def CheckCheck(filename, clean_lines, linenum, error):
 
 
 def GetLineWidth(line):
-  """Determines the width of the line in column positions.
+    """Determines the width of the line in column positions.
 
-  Args:
-    line: A string, which may be a Unicode string.
+    Args:
+      line: A string, which may be a Unicode string.
 
-  Returns:
-    The width of the line in column positions, accounting for Unicode
-    combining characters and wide characters.
-  """
-  if isinstance(line, unicode):
-    width = 0
-    for uc in unicodedata.normalize('NFC', line):
-      if unicodedata.east_asian_width(uc) in ('W', 'F'):
-        width += 2
-      elif not unicodedata.combining(uc):
-        width += 1
-    return width
-  else:
-    return len(line)
+    Returns:
+      The width of the line in column positions, accounting for Unicode
+      combining characters and wide characters.
+    """
+    if isinstance(line, unicode):
+      width = 0
+      for uc in unicodedata.normalize('NFC', line):
+        if unicodedata.east_asian_width(uc) in ('W', 'F'):
+          width += 2
+        elif not unicodedata.combining(uc):
+          width += 1
+      return width
+    else:
+      return len(line)
 
 
 def CheckStyle(filename, clean_lines, linenum, file_extension, class_state,
@@ -2456,10 +2458,12 @@ def _GetTextInside(text, start_pattern):
     return None
   start_position = match.end(0)
 
-  assert start_position > 0, (
-      'start_pattern must ends with an opening punctuation.')
-  assert text[start_position - 1] in matching_punctuation, (
-      'start_pattern must ends with an opening punctuation.')
+  if start_position <= 0:
+      raise AssertionError(
+              'start_pattern must ends with an opening punctuation.')
+  if text[start_position - 1] not in matching_punctuation:
+      raise AssertionError(
+              'start_pattern must ends with an opening punctuation.')
   # Stack of closing punctuations we expect to have in text after position.
   punctuation_stack = [matching_punctuation[text[start_position - 1]]]
   position = start_position

@@ -69,7 +69,7 @@ class YamlToRobot(object):
         :return:
         :rtype: Robot
         """
-        obj = yaml.load(stream)
+        obj = yaml.safe_load(stream)
 
         robot = Robot()
         robot.id = obj.get('id', 0)

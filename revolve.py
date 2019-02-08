@@ -47,6 +47,6 @@ if __name__ == "__main__":
         models_dir_path=os.path.join(rvpath, 'models')
     )
 
-    ret = supervisor.launch()
-    # ret = supervisor.launch_simulator()
+    # ret = supervisor.launch()
+    ret = supervisor.launch_simulator()
     sys.exit(ret)

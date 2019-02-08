@@ -173,7 +173,7 @@ class TestConvertYaml(unittest.TestCase):
 
         protobuf_robot = yaml_to_proto(body_spec, brain_spec, basic_yaml_object)
         yaml_robot = rty(protobuf_robot)
-        robot = yaml.load(yaml_robot)
+        robot = yaml.safe_load(yaml_robot)
 
         self.assertEqual(
                 0, robot["id"],

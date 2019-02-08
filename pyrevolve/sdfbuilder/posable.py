@@ -349,13 +349,13 @@ class Posable(Element):
         at_parent_normal = of.to_parent_direction(-at_normal)
         if not my_parent_normal.parallel_to(at_parent_normal):
             print("Vector angle: %f" % my_parent_normal.angle(at_parent_normal), file=sys.stderr)
-            assert False, "Normal vectors failed to align!"
+            raise AssertionError("Normal vectors failed to align!")
 
         parent_tangent = self.to_parent_direction(my_tangent)
         at_parent_tangent = of.to_parent_direction(at_tangent)
         if not parent_tangent.parallel_to(at_parent_tangent):
             print("Vector angle: %f" % parent_tangent.angle(at_parent_tangent), file=sys.stderr)
-            assert False, "Tangent vectors failed to align!"
+            raise AssertionError("Tangent vectors failed to align!")
 
         # Finally, translate so that `my` lands at `at`
         my_pos = self.to_parent_frame(my)
