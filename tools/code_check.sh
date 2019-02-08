@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 # Jenkins will pass -xml, in which case we want to generate XML output
-xmlout=0
-if test "${1}" = "-xmldir" -a -n "${2}"; then
-  xmlout=1
-  xml_dir=${2}
+xml_out=0
+if test "$1" = "-xmldir" -a -n "$2"; then
+  xml_out=1
+  xml_dir=$2
   mkdir -p ${xml_dir}
   rm -rf ${xml_dir}/*.xml
   # Assuming that Jenkins called, the `build` directory is sibling to src dir
@@ -16,8 +16,10 @@ fi
 
 # Identify cppcheck version
 CPPCHECK_VERSION=`cppcheck --version | sed -e 's@Cppcheck @@'`
-CPPCHECK_LT_157=`echo "${CPPCHECK_VERSION} 1.57" | \
-                 awk '{if (${1} < ${2}) print 1; else print 0}'`
+CPPCHECK_LT_157=`echo "$CPPCHECK_VERSION 1.57" | \
+                 awk '{if ($1 < $2) print 1; else print 0}'`
+CPPCHECK_GE_169=`echo "$CPPCHECK_VERSION 1.69" | \
+                 awk '{if ($1 >= $2) print 1; else print 0}'`
 
 QUICK_CHECK=0
 if test "${1}" = "--quick"
@@ -38,7 +40,7 @@ then
   CHECK_FILES=""
   while read line; do
     for f in ${line}; do
-      CHECK_FILES="${CHECK_FILES} `echo ${f} | grep '\.[ch][ch]*$' | grep -v '^deps'`"
+      CHECK_FILES="${CHECK_FILES} `echo ${f} | grep '\.[ch][ch]*$' | grep -v '^deps' | grep -v test_fixture/gtest`"
     done
   done
   CPPCHECK_FILES="${CHECK_FILES}"
@@ -48,9 +50,9 @@ else
   CHECK_DIRS="./cpprevolve"
   if [[ ${CPPCHECK_LT_157} -eq 1 ]]; then
     # cppcheck is older than 1.57, so don't check header files (issue #907)
-    CPPCHECK_FILES=`find ${CHECK_DIRS} -name "*.cc"`
+    CPPCHECK_FILES=`find ${CHECK_DIRS} -name "*.cc" | grep -v test_fixture/gtest`
   else
-    CPPCHECK_FILES=`find ${CHECK_DIRS} -name "*.cc" -o -name "*.hh"`
+    CPPCHECK_FILES=`find ${CHECK_DIRS} -name "*.cc" -o -name "*.hh" | grep -v test_fixture/gtest`
   fi
   CPPLINT_FILES=`find ${CHECK_DIRS} -name "*.cc" \
                                   -o -name "*.hh" \
@@ -61,34 +63,25 @@ else
 fi
 
 SUPPRESS=/tmp/gazebo_cpp_check.suppress
-echo "*:gazebo/common/STLLoader.cc:94" > ${SUPPRESS}
-echo "*:gazebo/common/STLLoader.cc:105" >> ${SUPPRESS}
-echo "*:gazebo/common/STLLoader.cc:126" >> ${SUPPRESS}
-echo "*:gazebo/common/STLLoader.cc:149" >> ${SUPPRESS}
 # (warning) Redundant code: Found a statement that begins with string constant.
-echo "*:gazebo/common/SVGLoader.cc:687" >> ${SUPPRESS}
+echo "*:gazebo/common/SVGLoader.cc:869" > ${SUPPRESS}
 echo "*:examples/plugins/custom_messages/custom_messages.cc:22" >> ${SUPPRESS}
-echo "*:examples/stand_alone/test_fixture/gtest/*" >> ${SUPPRESS}
+# STOP: before use this suppress list please consider to use inline
+# cppcheck-suppress comments
 
 # Not defined FREEIMAGE_COLORORDER
 echo "*:gazebo/common/Image.cc:1" >> ${SUPPRESS}
 
-# The follow suppression is useful when checking for missing includes.
-# It's disable for now because checking for missing includes is very
-# time consuming. See CPPCHECK_CMD3.
-# Only precise (12.04) and raring (13.04) need this. Fixed from Saucy on.
-if [[ -n "$(which lsb_release)" ]]; then
-   case `lsb_release -s -d | sed 's:Ubuntu ::' | cut -c1-5` in
-       "12.04" | "13.04" )
-         echo "missingIncludeSystem" >> ${SUPPRESS}
-       ;;
-   esac
+# Disable noExplicitConstructor warnings in gazebo7 release series
+# (release expected in 01/25/2017) relaxed to 31/01/2015
+if [[ ${CPPCHECK_GE_169} -eq 1 ]] && [[ `date '+%Y%m%d'` -lt 20170131 ]]; then
+  echo "noExplicitConstructor" >> ${SUPPRESS}
 fi
 
 #cppcheck.
 # MAKE_JOBS is used in jenkins. If not set or run manually, default to 1
 [[ -z ${MAKE_JOBS} ]] && MAKE_JOBS=1
-CPPCHECK_BASE="cppcheck -j${MAKE_JOBS} -DGAZEBO_VISIBLE=1 -q --suppressions-list=${SUPPRESS}"
+CPPCHECK_BASE="cppcheck -j${MAKE_JOBS} --inline-suppr -DGAZEBO_VISIBLE=1 -q --suppressions-list=${SUPPRESS}"
 if [[ ${CPPCHECK_LT_157} -eq 0 ]]; then
   # use --language argument if 1.57 or greater (issue #907)
   CPPCHECK_BASE="${CPPCHECK_BASE} --language=c++"
@@ -106,11 +99,11 @@ CPPCHECK_CMD2="--enable=unusedFunction ${CPPCHECK_FILES}"
 
 # Checking for missing includes is very time consuming. This is disabled
 # for now
-# CPPCHECK_CMD3="-j 4 --enable=missingInclude $CPPCHECK_FILES"\
+# CPPCHECK_CMD3="-j 4 --enable=missingInclude ${CPPCHECK_FILES}"\
 # " ${CPPCHECK_INCLUDES}"
 CPPCHECK_CMD3=""
 
-if [[ ${xmlout} -eq 1 ]]; then
+if [[ ${xml_out} -eq 1 ]]; then
   # Performance, style, portability, and information
   (${CPPCHECK_BASE} --xml ${CPPCHECK_CMD1}) 2> ${xml_dir}/cppcheck.xml
 
@@ -119,7 +112,7 @@ if [[ ${xmlout} -eq 1 ]]; then
 elif [[ ${QUICK_CHECK} -eq 1 ]]; then
   for f in ${CHECK_FILES}; do
     prefix=`basename ${f} | sed -e 's@\..*$@@'`
-    ext=`echo $f | sed -e 's@^.*\.@@'`
+    ext=`echo ${f} | sed -e 's@^.*\.@@'`
     tmp2="${QUICK_TMP}"."${ext}"
     tmp2base=`basename "${QUICK_TMP}"`
     hg cat -r ${QUICK_SOURCE} ${hg_root}/${f} > ${tmp2}
@@ -161,7 +154,7 @@ else
 fi
 
 # cpplint
-if [[ ${xmlout} -eq 1 ]]; then
+if [[ ${xml_out} -eq 1 ]]; then
   (echo ${CPPLINT_FILES} | xargs python tools/cpplint.py 2>&1) \
     | python tools/cpplint_to_cppcheckxml.py 2> ${xml_dir}/cpplint.xml
 elif [[ ${QUICK_CHECK} -eq 0 ]]; then
@@ -169,7 +162,7 @@ elif [[ ${QUICK_CHECK} -eq 0 ]]; then
 fi
 
 # msg_check.py
-if [[ ${xmlout} -eq 1 ]]; then
+if [[ ${xml_out} -eq 1 ]]; then
   ./tools/msg_check.py xml 2> ${xml_dir}/msg_check.xml
 else
   ./tools/msg_check.py 2>&1
