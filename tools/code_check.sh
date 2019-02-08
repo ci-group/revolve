@@ -17,7 +17,7 @@ fi
 # Identify cppcheck version
 CPPCHECK_VERSION=`cppcheck --version | sed -e 's@Cppcheck @@'`
 CPPCHECK_LT_157=`echo "${CPPCHECK_VERSION} 1.57" | \
-                 awk '{if ($1 < $2) print 1; else print 0}'`
+                 awk '{if (${1} < ${2}) print 1; else print 0}'`
 
 QUICK_CHECK=0
 if test "${1}" = "--quick"
@@ -46,7 +46,7 @@ then
   QUICK_TMP=`mktemp -t asdfXXXXXXXXXX`
 else
   CHECK_DIRS="./cpprevolve"
-  if [ ${CPPCHECK_LT_157} -eq 1 ]; then
+  if [[ ${CPPCHECK_LT_157} -eq 1 ]]; then
     # cppcheck is older than 1.57, so don't check header files (issue #907)
     CPPCHECK_FILES=`find ${CHECK_DIRS} -name "*.cc"`
   else
@@ -87,27 +87,27 @@ fi
 
 #cppcheck.
 # MAKE_JOBS is used in jenkins. If not set or run manually, default to 1
-[ -z ${MAKE_JOBS} ] && MAKE_JOBS=1
+[[ -z ${MAKE_JOBS} ]] && MAKE_JOBS=1
 CPPCHECK_BASE="cppcheck -j${MAKE_JOBS} -DGAZEBO_VISIBLE=1 -q --suppressions-list=${SUPPRESS}"
-if [ ${CPPCHECK_LT_157} -eq 0 ]; then
+if [[ ${CPPCHECK_LT_157} -eq 0 ]]; then
   # use --language argument if 1.57 or greater (issue #907)
   CPPCHECK_BASE="${CPPCHECK_BASE} --language=c++"
 fi
-CPPCHECK_INCLUDES="-I gazebo/rendering/skyx/include -I . -I $build_dir"\
-" -I $build_dir/gazebo/msgs -I deps -I deps/opende/include -I test"
+CPPCHECK_INCLUDES="-I gazebo/rendering/skyx/include -I . -I ${build_dir}"\
+" -I ${build_dir}/gazebo/msgs -I deps -I deps/opende/include -I test"
 CPPCHECK_RULES="--rule-file=./tools/cppcheck_rules/issue_581.rule"\
 " --rule-file=./tools/cppcheck_rules/issue_906.rule"
 CPPCHECK_CMD1A="-j 4 --enable=style,performance,portability,information"
-CPPCHECK_CMD1B="${CPPCHECK_RULES} $CPPCHECK_FILES"
-CPPCHECK_CMD1="${CPPCHECK_CMD1A} ${CPPCHECK_CMD1}B"
+CPPCHECK_CMD1B="${CPPCHECK_RULES} ${CPPCHECK_FILES}"
+CPPCHECK_CMD1="${CPPCHECK_CMD1A} ${CPPCHECK_CMD1B}"
 # This command used to be part of the script but was removed since our API
 # provides many functions that Gazebo does not use internally
-CPPCHECK_CMD2="--enable=unusedFunction $CPPCHECK_FILES"
+CPPCHECK_CMD2="--enable=unusedFunction ${CPPCHECK_FILES}"
 
 # Checking for missing includes is very time consuming. This is disabled
 # for now
 # CPPCHECK_CMD3="-j 4 --enable=missingInclude $CPPCHECK_FILES"\
-# " $CPPCHECK_INCLUDES"
+# " ${CPPCHECK_INCLUDES}"
 CPPCHECK_CMD3=""
 
 if [[ ${xmlout} -eq 1 ]]; then
@@ -118,18 +118,18 @@ if [[ ${xmlout} -eq 1 ]]; then
   (${CPPCHECK_BASE} --xml ${CPPCHECK_CMD3}) 2> ${xml_dir}/cppcheck-configuration.xml
 elif [[ ${QUICK_CHECK} -eq 1 ]]; then
   for f in ${CHECK_FILES}; do
-    prefix=`basename $f | sed -e 's@\..*$@@'`
+    prefix=`basename ${f} | sed -e 's@\..*$@@'`
     ext=`echo $f | sed -e 's@^.*\.@@'`
-    tmp2="${QUICK_TMP}"."$ext"
+    tmp2="${QUICK_TMP}"."${ext}"
     tmp2base=`basename "${QUICK_TMP}"`
     hg cat -r ${QUICK_SOURCE} ${hg_root}/${f} > ${tmp2}
 
-    # Fix suppressions for tmp files
+    # Fix suppression for tmp files
     sed -i -e "s@${f}@${tmp2}@" ${SUPPRESS}
 
     # Skip cppcheck for header files if cppcheck is old
     DO_CPPCHECK=0
-    if [[ $ext = 'cc' ]]; then
+    if [[ ${ext} = 'cc' ]]; then
       DO_CPPCHECK=1
     elif [[ ${CPPCHECK_LT_157} -eq 0 ]]; then
       DO_CPPCHECK=1
@@ -146,7 +146,7 @@ elif [[ ${QUICK_CHECK} -eq 1 ]]; then
     sed -i -e "s@${tmp2}@${f}@" ${SUPPRESS}
 
     python ${hg_root}/tools/cpplint.py ${tmp2} 2>&1 \
-      | sed -e "s@${tmp2}@${f}@g" -e "s@${tmp2}base@$prefix@g" \
+      | sed -e "s@${tmp2}@${f}@g" -e "s@${tmp2}base@${prefix}@g" \
       | grep -v 'Total errors found: 0'
 
     rm ${tmp2}
