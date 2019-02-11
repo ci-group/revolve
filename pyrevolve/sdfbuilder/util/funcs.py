@@ -1,7 +1,6 @@
 """
 General utility functions
 """
-from ..math.classes import EPSILON
 
 
 def number_format(number):

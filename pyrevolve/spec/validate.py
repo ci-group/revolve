@@ -5,11 +5,6 @@ from pyrevolve.spec import NeuralNetImplementation
 from pyrevolve.spec import PartSpec
 from pyrevolve.spec import NeuronSpec
 
-from pyrevolve.spec.msgs import Robot
-from pyrevolve.spec.msgs import BodyPart
-from pyrevolve.spec.msgs import NeuralConnection
-from pyrevolve.spec.msgs import BodyConnection
-
 from pyrevolve.spec.exception import err
 
 

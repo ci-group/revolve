@@ -10,15 +10,12 @@ import traceback
 
 from asyncio import Future
 from datetime import datetime
-
 from pygazebo.msg import gz_string_pb2
 
-from pyrevolve.sdfbuilder import SDF
 from pyrevolve.sdfbuilder.math import Vector3
 from pyrevolve.spec.msgs import BoundingBox
 from pyrevolve.spec.msgs import ModelInserted
 from pyrevolve.spec.msgs import RobotStates
-
 from .robot import Robot
 from ...gazebo import manage
 from ...gazebo import RequestHandler
@@ -344,7 +341,7 @@ class WorldManager(manage.WorldManager):
         :type max_attempts: int
         :return:
         """
-        for i in range(max_attempts):
+        for _ in range(max_attempts):
             tree = self.generator.generate_tree()
 
             ret = await self.analyze_tree(tree)

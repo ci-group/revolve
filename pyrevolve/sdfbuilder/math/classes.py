@@ -78,7 +78,7 @@ class VectorBase(object):
         """
         try:
             idx = self.ATTRS.index(item)
-        except AttributeError:
+        except:
             raise AttributeError("Unknown attribute `{}`".format(item))
 
         return self.data[idx]

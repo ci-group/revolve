@@ -9,8 +9,6 @@ from __future__ import absolute_import
 
 import itertools
 
-from pyrevolve.angle.representation import Tree, Node
-
 
 def count_extremities(node):
     """

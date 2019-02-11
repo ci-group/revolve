@@ -4,10 +4,11 @@ from __future__ import absolute_import
 
 import yaml
 
-from ..spec import BodyImplementation, NeuralNetImplementation
 from ..spec.msgs import *
-from .decode import BodyDecoder, NeuralNetworkDecoder
-from .proto_to_yaml import BodyEncoder, NeuralNetworkEncoder
+from .decode import BodyDecoder
+from .decode import NeuralNetworkDecoder
+from .proto_to_yaml import BodyEncoder
+from .proto_to_yaml import NeuralNetworkEncoder
 
 
 def yaml_to_proto(body_spec, nn_spec, yaml):

@@ -4,11 +4,6 @@ from __future__ import print_function
 import os
 import time
 
-from pygazebo.msg import model_pb2
-from pygazebo.msg import poses_stamped_pb2
-from pygazebo.msg import world_control_pb2
-from pygazebo.msg import world_stats_pb2
-
 from pyrevolve import parser, str_to_address, make_revolve_config
 from pyrevolve.angle import Tree, Crossover, Mutator, WorldManager
 from pyrevolve.angle.robogen.spec import make_planar
@@ -169,7 +164,7 @@ class World(WorldManager):
             if not gen:
                 return None
 
-            tree, robot, bbox = gen
+            tree, _, bbox = gen
             trees.append(tree)
             bboxes.append(bbox)
 

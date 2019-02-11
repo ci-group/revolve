@@ -1,6 +1,5 @@
 from ..element import Element
 from ..util import number_format as nf
-from ..math import Vector3
 
 
 class Friction(Element):
@@ -11,8 +10,15 @@ class Friction(Element):
 
     TAG_NAME = "friction"
 
-    def __init__(self, friction=None, friction2=None, fdir1=None,
-                 slip1=None, slip2=None, rolling_friction=None, **kwargs):
+    def __init__(
+            self,
+            friction=None,
+            friction2=None,
+            fdir1=None,
+            slip1=None,
+            slip2=None,
+            rolling_friction=None,
+            **kwargs):
         """
 
         :param friction1:

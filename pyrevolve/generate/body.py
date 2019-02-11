@@ -5,9 +5,6 @@ from __future__ import absolute_import
 
 import random
 
-from pyrevolve.spec import BodyImplementation
-from pyrevolve.spec import PartSpec
-from pyrevolve.spec import BodyPart
 from pyrevolve.spec.msgs import Body
 
 

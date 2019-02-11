@@ -8,8 +8,7 @@ from .util import number_format as nf
 
 class Pose(Element):
     """
-    An SDF "pose" element, which is an x, y, z position
-    plus a roll, pitch, yaw.
+    An SDF "pose" element, which is an x, y, z position plus a roll, pitch, yaw.
     """
 
     TAG_NAME = 'pose'
@@ -39,28 +38,25 @@ class Pose(Element):
 
 class Posable(Element):
     """
-    Posable is a base class for elements with a name
-    and a pose.
+    Posable is a base class for elements with a name and a pose.
     """
 
-    # Whether the pose for this element is in the parent frame
-    # or not. A joint, for instance, has a pose, but it is
-    # expressed in the child link frame. A parent posable
-    # can use this property to decide not to affect this
+    # Whether the pose for this element is in the parent frame or not. A
+    # joint, for instance, has a pose, but it is expressed in the child link
+    # frame. A parent posable can use this property to decide not to affect this
     # element with transformations.
     PARENT_FRAME = True
 
-    # It might be desirable to have posable functionality without
-    # rendering a pose tag (in a compound geometry for instance).
-    # In this case, set this to false in subclasses.
+    # It might be desirable to have posable functionality without rendering a
+    # pose tag (in a compound geometry for instance). In this case, set this
+    # to false in subclasses.
     RENDER_POSE = True
 
     def __init__(self, name, pose=None, **kwargs):
         """
         :param name:
         :type name: str
-        :param pose: Initial pose, origin with zero rotation
-                     if not specified.
+        :param pose: Initial pose, origin with zero rotation if not specified.
         :type pose: Pose
         :param kwargs:
         :return:
@@ -72,8 +68,7 @@ class Posable(Element):
 
     def set_pose(self, pose):
         """
-        Shortcut call over `set_position` and `set_rotation` for
-        a given pose.
+        Shortcut call over `set_position` and `set_rotation` for a given pose.
         :param pose:
         :type pose: Pose
         :return:
@@ -162,8 +157,7 @@ class Posable(Element):
 
     def rotate_around(self, axis, angle, relative_to_child=True):
         """
-        Rotates this posable `angle` degrees around the given
-        directional vector.
+        Rotates this posable `angle` degrees around the given directional vector
         :param axis:
         :type axis: Vector3
         :param angle:
@@ -181,7 +175,8 @@ class Posable(Element):
 
     def to_parent_direction(self, vec):
         """
-        Returns the given direction vector / rotation quaternion relative to the parent frame.
+        Returns the given direction vector / rotation quaternion relative to
+        the parent frame.
         :param vec: Vector or quaternion in the local frame
         :type vec: Vector3|Quaternion
         :return:
@@ -191,7 +186,8 @@ class Posable(Element):
 
     def to_local_direction(self, vec):
         """
-        Returns the given direction vector / rotation quaternion relative to the local frame
+        Returns the given direction vector / rotation quaternion relative to
+        the local frame
         :param vec: Direction vector or orientation in the parent frame
         :type vec: Vector3|Quaternion
         :return:
@@ -239,8 +235,8 @@ class Posable(Element):
 
     def to_sibling_direction(self, vec, sibling):
         """
-        Returns the given direction vector / orientation quaternion
-        relative to the frame of a sibling
+        Returns the given direction vector / orientation quaternion relative
+        to the frame of a sibling
         :param vec: Direction vector / orientation quaternion in the child frame
         :type vec: Vector3|Quaternion
         :param sibling: The sibling posable
@@ -254,19 +250,18 @@ class Posable(Element):
     def align(self, my, my_normal, my_tangent, at,
               at_normal, at_tangent, of, relative_to_child=True):
         """
-        Rotates and translates this posable, such that the
-        ends of the vectors `my` and `at` touch, aligning
-        such that `my_normal` points in the opposite direction of `at_normal`
-        and `my_tangent` and `at_tangent` align.
+        Rotates and translates this posable, such that the ends of the
+        vectors `my` and `at` touch, aligning such that `my_normal` points in
+        the opposite direction of `at_normal` and `my_tangent` and
+        `at_tangent` align.
 
-        The two posables need to be in the same parent frame
-        for this to work.
+        The two posables need to be in the same parent frame for this to work.
 
-        You can choose to specify the positions and orientations either in the parent
-        frame or in the child frame using the final argument to this method.
-        Be aware that representing orientation vectors in the parent frame
-        merely means that they are already rotated with respect to their parent,
-        not translated.
+        You can choose to specify the positions and orientations either in
+        the parent frame or in the child frame using the final argument to
+        this method. Be aware that representing orientation vectors in the
+        parent frame merely means that they are already rotated with respect
+        to their parent, not translated.
         :param my:
         :type my: Vector3
         :param my_normal:
@@ -321,27 +316,25 @@ class Posable(Element):
         at_y = of.to_parent_direction(at_tangent).normalized()
         at_z = at_x.cross(at_y)
 
-        # For which we do use the parent frame.
-        # We now want to provide the rotation matrix from R1 to R2.
-        # The easiest way to visualize this is if we first perform
-        # the inverse rotation from R1 back to the standard basis,
-        # and then rotate to R2.
+        # For which we do use the parent frame. We now want to provide the
+        # rotation matrix from R1 to R2. The easiest way to visualize this is
+        #  if we first perform the inverse rotation from R1 back to the
+        # standard basis, and then rotate to R2.
         r1 = RotationMatrix()
         r2 = RotationMatrix()
 
-        # Warning: `RotationMatrix` is a Matrix4 that can potentially
-        # do translations. We want to assign the first block of
-        # these matrices only. Syntax is numpy arrays.
+        # Warning: `RotationMatrix` is a Matrix4 that can potentially do
+        # translations. We want to assign the first block of these matrices
+        # only. Syntax is numpy arrays.
         r1[:3, 0], r1[:3, 1], r1[:3, 2] = my_x, my_y, my_z
         r2[:3, 0], r2[:3, 1], r2[:3, 2] = at_x, at_y, at_z
 
-        # The columns of r1 are orthonormal, so we can simply
-        # transpose the matrix to get the inverse rotation
+        # The columns of r1 are orthonormal, so we can simply transpose the
+        # matrix to get the inverse rotation
         r1.transpose()
 
         # The final rotation is the inverse of r1, followed by r2
         # (left multiplication)
-        """:type : RotationMatrix"""
         rotation = r2 * r1
         self.set_rotation(rotation.get_quaternion())
 
@@ -436,21 +429,21 @@ class PosableGroup(Posable):
 
         posables = self.get_affected_posables()
         for posable in posables:
-            # Get the position and rotation of the child relative
-            # to this posable's root (i.e. as if the posable was in [0, 0]
-            # with no rotation)
+            # Get the position and rotation of the child relative to this
+            # posable's root (i.e. as if the posable was in [0, 0] with no
+            # rotation)
             orig_position = inv_rotation * (posable.get_position() - root_position)
 
-            # The original rotation follows from multiplying the child's rotation
-            # with this group's inverse rotation
+            # The original rotation follows from multiplying the child's
+            # rotation with this group's inverse rotation
             orig_rotation = inv_rotation * posable.get_rotation()
 
-            # New position means rotating the original point according to the new
-            # rotation, and adding the current position
+            # New position means rotating the original point according to the
+            # new rotation, and adding the current position
             new_position = (rotation * orig_position) + root_position
 
-            # New rotation is acquired by multiplying the new rotation
-            # with the existing rotation
+            # New rotation is acquired by multiplying the new rotation with
+            # the existing rotation
             new_rotation = rotation * orig_rotation
 
             posable.set_position(new_position)

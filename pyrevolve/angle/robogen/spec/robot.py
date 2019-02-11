@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from ... import TreeGenerator, Node
+from ... import TreeGenerator
 
 
 class RobogenTreeGenerator(TreeGenerator):

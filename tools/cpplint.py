@@ -297,32 +297,32 @@ _RE_SUPPRESSION = re.compile(r'\bNOLINT\b(\([^)]*\))?')
 _error_suppressions = {}
 
 def ParseNolintSuppressions(filename, raw_line, linenum, error):
-  """Updates the global list of error-suppressions.
+    """Updates the global list of error-suppressions.
 
-  Parses any NOLINT comments on the current line, updating the global
-  error_suppressions store.  Reports an error if the NOLINT comment
-  was malformed.
+    Parses any NOLINT comments on the current line, updating the global
+    error_suppressions store.  Reports an error if the NOLINT comment
+    was malformed.
 
-  Args:
-    filename: str, the name of the input file.
-    raw_line: str, the line of input text, with comments.
-    linenum: int, the number of the current line.
-    error: function, an error handler.
-  """
-  # FIXME(adonovan): "NOLINT(" is misparsed as NOLINT(*).
-  matched = _RE_SUPPRESSION.search(raw_line)
-  if matched:
-    category = matched.group(1)
-    if category in (None, '(*)'):  # => "suppress all"
-      _error_suppressions.setdefault(None, set()).add(linenum)
-    else:
-      if category.startswith('(') and category.endswith(')'):
-        category = category[1:-1]
-        if category in _ERROR_CATEGORIES:
-          _error_suppressions.setdefault(category, set()).add(linenum)
+    Args:
+      filename: str, the name of the input file.
+      raw_line: str, the line of input text, with comments.
+      linenum: int, the number of the current line.
+      error: function, an error handler.
+    """
+    # FIXME(adonovan): "NOLINT(" is misparsed as NOLINT(*).
+    matched = _RE_SUPPRESSION.search(raw_line)
+    if matched:
+        category = matched.group(1)
+        if category in (None, '(*)'):  # => "suppress all"
+          _error_suppressions.setdefault(None, set()).add(linenum)
         else:
-          error(filename, linenum, 'readability/nolint', 5,
-                'Unknown NOLINT error category: %s' % category)
+            if category.startswith('(') and category.endswith(')'):
+                category = category[1:-1]
+                if category in _ERROR_CATEGORIES:
+                  _error_suppressions.setdefault(category, set()).add(linenum)
+                else:
+                  error(filename, linenum, 'readability/nolint', 5,
+                        'Unknown NOLINT error category: %s' % category)
 
 
 def ResetNolintSuppressions():
@@ -1037,18 +1037,18 @@ def GetHeaderGuardCPPVariable(filename):
 
 
 def CheckForHeaderGuard(filename, lines, error):
-  """Checks that the file contains a header guard.
+    """Checks that the file contains a header guard.
 
-  Logs an error if no #ifndef header guard is present.  For other
-  headers, checks that the full pathname is used.
+    Logs an error if no #ifndef header guard is present.  For other
+    headers, checks that the full pathname is used.
 
-  Args:
-    filename: The name of the C++ header file.
-    lines: An array of strings, each representing a line of the file.
-    error: The function to call with any errors found.
-  """
+    Args:
+      filename: The name of the C++ header file.
+      lines: An array of strings, each representing a line of the file.
+      error: The function to call with any errors found.
+    """
 
-  cppvar = GetHeaderGuardCPPVariable(filename)
+    cppvar = GetHeaderGuardCPPVariable(filename)
 
   ifndef = None
   ifndef_linenum = 0
@@ -1075,28 +1075,6 @@ def CheckForHeaderGuard(filename, lines, error):
           'No #ifndef header guard found, suggested CPP variable is: %s' %
           cppvar)
     return
-
-  # The guard should be PATH_FILE_H_, but we also allow PATH_FILE_H__
-  # for backward compatibility.
-  #if ifndef != cppvar:
-  #  error_level = 0
-  #  if ifndef != cppvar + '_':
-  #    error_level = 5
-
-  #  ParseNolintSuppressions(filename, lines[ifndef_linenum], ifndef_linenum,
-  #                          error)
-  #  error(filename, ifndef_linenum, 'build/header_guard', error_level,
-  #        '#ifndef header guard has wrong style, please use: %s' % cppvar)
-
-  #if endif != ('#endif  // %s' % cppvar):
-  #  error_level = 0
-  #  if endif != ('#endif  // %s' % (cppvar + '_')):
-  #    error_level = 5
-
-  #  ParseNolintSuppressions(filename, lines[endif_linenum], endif_linenum,
-  #                          error)
-  #  error(filename, endif_linenum, 'build/header_guard', error_level,
-  #        '#endif line should be "#endif  // %s"' % cppvar)
 
 
 def CheckForUnicodeReplacementCharacters(filename, lines, error):

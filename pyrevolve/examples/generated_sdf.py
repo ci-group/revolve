@@ -7,10 +7,10 @@ from __future__ import print_function
 
 import math
 
-from sdfbuilder.sensor import Sensor as SdfSensor
-from sdfbuilder.math import Vector3
-from sdfbuilder import SDF, Limit
-from sdfbuilder.structure import Box as BoxGeom, Cylinder as CylinderGeom
+from pyrevolve.sdfbuilder.sensor import Sensor as SdfSensor
+from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.sdfbuilder import SDF, Limit
+from pyrevolve.sdfbuilder.structure import Box as BoxGeom
 
 # Module imports
 from pyrevolve.generate import BodyGenerator
@@ -31,7 +31,6 @@ from pyrevolve.build.sdf import BodyBuilder
 from pyrevolve.build.sdf import NeuralNetBuilder
 from pyrevolve.build.sdf import VelocityMotor
 from pyrevolve.build.sdf import PID
-from pyrevolve.build.sdf import Sensor
 
 # Some configuration
 # This is the number of times per second we will call our
@@ -49,7 +48,7 @@ color_params = [
 
 class ColorMixin(object):
     """
-    Mixin class for "colorable" parts. Needs to be mixed
+    Mixin class for "color" parts. Needs to be mixed
     in with a body part, or it won't work.
     """
 
@@ -58,7 +57,10 @@ class ColorMixin(object):
         Applies the "red", "green" and "blue" arguments
         to all links in this body part.
         """
-        self.make_color(self.part_params["red"], self.part_params["green"], self.part_params["blue"])
+        self.make_color(
+                self.part_params["red"],
+                self.part_params["green"],
+                self.part_params["blue"])
 
 
 # Below, we define some body parts

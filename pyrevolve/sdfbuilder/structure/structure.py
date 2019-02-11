@@ -1,9 +1,10 @@
 """
 Collision / visual and geometry like classes
 """
-from ..posable import Posable, PosableGroup
+from ..posable import Posable
+from ..posable import PosableGroup
 from ..element import Element
-from .geometries import Geometry, CompoundGeometry
+from .geometries import CompoundGeometry
 
 
 class Structure(Posable):
@@ -57,7 +58,6 @@ class Structure(Posable):
             return super(Structure, self).render()
 
         geometries = self.geometry.geometries
-        """ :type : [Geometry] """
 
         elements = []
         for i in range(len(geometries)):

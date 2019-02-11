@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 
-from ..spec import BodyImplementation, NeuralNetImplementation
-from ..spec.msgs import Body, BodyPart, NeuralNetwork
 from ..spec.exception import err
+from ..spec.msgs import Body
+from ..spec.msgs import BodyPart
+from ..spec.msgs import NeuralNetwork
 
 
 class BodyDecoder(object):

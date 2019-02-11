@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import copy
 
-from ..spec.msgs import Robot, BodyPart, Neuron, NeuralNetwork, Body
-from ..spec import BodyImplementation
+from ..spec.msgs import Robot
+from ..spec.msgs import BodyPart
 
 
 def _create_subtree(body_part, brain, body_spec):
