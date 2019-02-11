@@ -27,8 +27,8 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 BatterySensor::BatterySensor(
     ::gazebo::physics::ModelPtr _model,
-    std::string _partId,
-    std::string _sensorId)
+    const std::string &_partId,
+    const std::string &_sensorId)
     : VirtualSensor(_model, _partId, _sensorId, 1)
 {
   // Find the revolve plugin to get the battery data

@@ -28,8 +28,8 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 PositionMotor::PositionMotor(
     gz::physics::ModelPtr _model,
-    std::string _partId,
-    std::string _motorId,
+    const std::string &_partId,
+    const std::string &_motorId,
     sdf::ElementPtr _motor)
     : JointMotor(_model, _partId, _motorId, _motor, 1)
     , positionTarget_(0)

@@ -30,8 +30,8 @@ using namespace revolve::gazebo;
 ImuSensor::ImuSensor(
     ::gazebo::physics::ModelPtr _model,
     sdf::ElementPtr _sensor,
-    std::string _partId,
-    std::string _sensorId)
+    const std::string &_partId,
+    const std::string &_sensorId)
     : Sensor(_model, _sensor, _partId, _sensorId, 6)
 {
   this->castSensor_ = std::dynamic_pointer_cast< gz::sensors::ImuSensor >(

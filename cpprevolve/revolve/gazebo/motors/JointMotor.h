@@ -39,10 +39,10 @@ namespace revolve
       /// \brief[in] _outputs Number of motor outputs
       public: JointMotor(
           ::gazebo::physics::ModelPtr _model,
-          std::string _partId,
-          std::string _motorId,
+          const std::string &_partId,
+          const std::string &_motorId,
           sdf::ElementPtr _motor,
-          unsigned int _outputs);
+          const unsigned int _outputs);
 
       /// \brief Destructor
       public: virtual ~JointMotor();

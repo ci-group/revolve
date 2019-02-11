@@ -37,8 +37,8 @@ namespace revolve
       /// \brief[in] _sensorId Sensor identifier
       public: BatterySensor(
           ::gazebo::physics::ModelPtr _model,
-          std::string _partId,
-          std::string _sensorId);
+          const std::string &_partId,
+          const std::string &_sensorId);
 
       /// \brief Reads the battery value
       /// \param[in,out] _input: Input parameter of the sensor

@@ -42,10 +42,10 @@ namespace revolve
       /// alternative is position driven)
       /// \param motor The derivative gain of the motor's PID controller
       public: VelocityMotor(
-              ::gazebo::physics::ModelPtr model,
-              std::string partId,
-              std::string motorId,
-              sdf::ElementPtr motor);
+            ::gazebo::physics::ModelPtr _model,
+            const std::string &_partId,
+            const std::string &_motorId,
+            sdf::ElementPtr _motor);
 
       /// \brief Destructor
       public: virtual ~VelocityMotor();
