@@ -196,7 +196,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--gazebo-cmd',
+    '--simulator-cmd',
     default='gzserver', type=str,
     help="Determine wether to use gzserver or gazebo."
 )
@@ -209,7 +209,8 @@ parser.add_argument(
 
 parser.add_argument(
     '--manager',
-    default='experiments/examples/manager.py', type=str,
+    # default='experiments/examples/manager.py',
+    type=str,
     help="Determine which manager to use."
 )
 

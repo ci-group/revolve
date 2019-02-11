@@ -145,7 +145,7 @@ class Supervisor(object):
               )
 
     def launch_simulator(self):
-        print("WARNING! launching only simulator, no manager")
+        print("\nNOTE: launching only a simulator, not a manager script!\n")
         self._launch_simulator()
 
         # Wait for the end

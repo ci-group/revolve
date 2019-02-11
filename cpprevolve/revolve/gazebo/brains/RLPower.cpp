@@ -38,9 +38,9 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 RLPower::RLPower(
     const ::gazebo::physics::ModelPtr &_model,
-    const sdf::ElementPtr &/* _node */,
+    const sdf::ElementPtr &_node,
     const std::vector< MotorPtr > &_motors,
-    const std::vector< SensorPtr > &/* _sensors */)
+    const std::vector< SensorPtr > &_sensors)
     : generationCounter_(0)
     , cycleStartTime_(-1)
     , startTime_(-1)
