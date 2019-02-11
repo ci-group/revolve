@@ -48,13 +48,19 @@ namespace revolve
       public: void Update(const ignition::math::Pose3d &_pose);
 
       /// \brief Previous position of a robot
-      private: ignition::math::Pose3d previousPosition_;
+      public: ignition::math::Pose3d previousPosition_;
 
       /// \brief Current position of a robot
-      private: ignition::math::Pose3d currentPosition_;
+      public: ignition::math::Pose3d currentPosition_;
 
       /// \brief
       private: double evaluationRate_;
+
+      private: int counter;
+      private: double bestFitnessLeft;
+      private: double bestFitnessRight;
+      private: double bestFitnessGait;
+
     };
   }
 }

@@ -30,7 +30,10 @@ Evaluator::Evaluator(const double _evaluationRate)
 {
   assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
   this->evaluationRate_ = _evaluationRate;
-
+  this->counter = 0;
+  this->bestFitnessGait = 0;
+  this->bestFitnessLeft = 0;
+  this->bestFitnessRight = 0;
   this->currentPosition_.Reset();
   this->previousPosition_.Reset();
 }
@@ -42,21 +45,83 @@ Evaluator::~Evaluator() = default;
 void Evaluator::Reset()
 {
   this->previousPosition_ = this->currentPosition_;
+  this->counter++;
 }
 
 /////////////////////////////////////////////////
 double Evaluator::Fitness()
 {
-    auto dS = this->currentPosition_.Pos().X() - this->previousPosition_.Pos().X();
-    /*
-  auto dS = std::sqrt(std::pow(this->previousPosition_.Pos().X() -
-                               this->currentPosition_.Pos().X(), 2)); +
-                      std::pow(this->previousPosition_.Pos().Y() -
-                               this->currentPosition_.Pos().Y(), 2));
-   */
+  // Verbose
+  std::cout << "Iteration: " << this->counter << "\n";
 
-  this->previousPosition_ = this->currentPosition_;
-  return dS / this->evaluationRate_;
+  // Argument
+  std::string controllerType = "leftTurn";
+
+  // Parameter penalty for moving (for the steering controllers)
+  double p = 0.0;
+
+  // Working variable
+  double dS = 0;
+  double gait = std::sqrt(std::pow(this->previousPosition_.Pos().X() -
+                                   this->currentPosition_.Pos().X(), 2) +
+                          std::pow(this->previousPosition_.Pos().Y() -
+                                   this->currentPosition_.Pos().Y(), 2));
+
+  std::cout << "Gait is " << gait/this->evaluationRate_ << std::endl;
+  if (controllerType == "gait"){
+    return (gait/this->evaluationRate_);
+  }
+
+  // Get angles in degrees in case of left/right turn controller
+  auto c = 180.0/3.14159;
+  auto x1 =this->previousPosition_.Rot().X()*c;
+  auto y1 =this->previousPosition_.Rot().Y()*c;
+  auto z1 =this->previousPosition_.Rot().Z()*c;
+  auto x2 =this->currentPosition_.Rot().X()*c;
+  auto y2 =this->currentPosition_.Rot().Y()*c;
+  auto z2 =this->currentPosition_.Rot().Z()*c;
+
+  std::cout << "Previous angles: " << x1 << ", " << y1 << ", " << z1
+            <<std::endl;
+  std::cout << "Current angles: " << x2 << ", " << y2 << ", " << z2 <<
+            std::endl;
+  std::cout << "Scaled angle difference: "
+  << (z2 - z1)/this->evaluationRate_ << "\n \n";
+
+  //TODO: Deal with 2*PI boundary
+  if (controllerType == "leftTurn"){
+    // UPDATE LINE TEMPORARY ONLY!!!!!
+    this->previousPosition_ = this->currentPosition_;
+    this->counter++;
+    double fitness = (z2 - z1 - p*gait)/this->evaluationRate_;
+    if (fitness > this->bestFitnessLeft){
+      this->bestFitnessLeft = fitness;
+    }
+    std::cout << "Best left fitness is " << this->bestFitnessLeft << std::endl;
+    // UPPER LINE TEMPORARY ONLY!!!!!
+    return (z2 - z1 - p*gait)/this->evaluationRate_;
+  }
+  else if (controllerType == "rightTurn"){
+    // UPDATE LINE TEMPORARY ONLY!!!!!
+    this->previousPosition_ = this->currentPosition_;
+    this->counter++;
+    double fitness = (z1 - z2 - p*gait)/this->evaluationRate_;
+    if (fitness > this->bestFitnessRight){
+      this->bestFitnessLeft = fitness;
+    }
+    std::cout << "Best right fitness is " << this->bestFitnessRight <<
+    std::endl;
+    // UPPER LINE TEMPORARY ONLY!!!!!
+
+    return (z1 - z2 - p*gait)/this->evaluationRate_;
+  }
+  else{
+    std::cout << "No valid controller specified \n";
+  }
+
+  // Update position: This need to be done manually with reset after the
+  // fitness function is called using the reset function
+  // this->previousPosition_ = this->currentPosition_;
 }
 
 /////////////////////////////////////////////////

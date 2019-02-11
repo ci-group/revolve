@@ -56,10 +56,10 @@ RLPower::RLPower(
 
   this->robot_ = _model;
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 30.0;
+  this->evaluationRate_ = 50.0;
   this->numInterpolationPoints_ = 100;
   this->maxEvaluations_ = 1000;
-  this->maxRankedPolicies_ = 10;
+  this->maxRankedPolicies_ = 50;
   this->sigma_ = 0.8;
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
@@ -97,6 +97,10 @@ void RLPower::Update(
   if ((_time - this->startTime_) > this->evaluationRate_ and
       this->generationCounter_ < this->maxEvaluations_)
   {
+    auto currPosition = this->robot_->WorldPose();
+    //std::cout << "Rotation is" << currPosition.Rot() << "\n";
+    this->evaluator_->Update(currPosition);
+
     this->UpdatePolicy(numMotors);
     this->startTime_ = _time;
     this->evaluator_->Reset();
@@ -114,8 +118,7 @@ void RLPower::Update(
     p += motor->Outputs();
   }
 
-  auto currPosition = this->robot_->WorldPose();
-  this->evaluator_->Update(currPosition);
+
   delete[] output;
 }
 
@@ -227,7 +230,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
 {
   // Calculate fitness for current policy
   auto currFitness = this->Fitness();
-
+  //std::cout << "Fitness is " << currFitness << std::endl;
   // Insert ranked policy in list
   PolicyPtr backupPolicy = std::make_shared< Policy >(_numSplines);
   for (size_t i = 0; i < _numSplines; ++i)
@@ -264,7 +267,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   /// Actual policy generation
 
   /// Determine which mutation operator to use
-  /// Default, for algorithms A and B, is used standard normal distribution
+  /// Default, for algorithms A and B, is used standard normal distributionyp
   /// with decaying sigma. For algorithms C and D, is used normal distribution
   /// with self-adaptive sigma.
   std::random_device rd;
