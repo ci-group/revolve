@@ -16,9 +16,9 @@ fi
 
 # Identify cppcheck version
 CPPCHECK_VERSION=`cppcheck --version | sed -e 's@Cppcheck @@'`
-CPPCHECK_LT_157=`echo "$CPPCHECK_VERSION 1.57" | \
+CPPCHECK_LT_157=`echo "${CPPCHECK_VERSION} 1.57" | \
                  awk '{if ($1 < $2) print 1; else print 0}'`
-CPPCHECK_GE_169=`echo "$CPPCHECK_VERSION 1.69" | \
+CPPCHECK_GE_169=`echo "${CPPCHECK_VERSION} 1.69" | \
                  awk '{if ($1 >= $2) print 1; else print 0}'`
 
 QUICK_CHECK=0
@@ -50,16 +50,16 @@ else
   CHECK_DIRS="./cpprevolve"
   if [[ ${CPPCHECK_LT_157} -eq 1 ]]; then
     # cppcheck is older than 1.57, so don't check header files (issue #907)
-    CPPCHECK_FILES=`find ${CHECK_DIRS} -name "*.cc" | grep -v test_fixture/gtest`
+    CPPCHECK_FILES=$(find ${CHECK_DIRS} -name "*.cc" | grep -v test_fixture/gtest)
   else
-    CPPCHECK_FILES=`find ${CHECK_DIRS} -name "*.cc" -o -name "*.hh" | grep -v test_fixture/gtest`
+    CPPCHECK_FILES=$(find ${CHECK_DIRS} -name "*.cc" -o -name "*.hh" | grep -v test_fixture/gtest)
   fi
-  CPPLINT_FILES=`find ${CHECK_DIRS} -name "*.cc" \
+  CPPLINT_FILES=$(find ${CHECK_DIRS} -name "*.cc" \
                                   -o -name "*.hh" \
                                   -o -name "*.c" \
                                   -o -name "*.h" \
                                   -o -name "*.cpp" | \
-                                  grep -v test_fixture/gtest`
+                                  grep -v test_fixture/gtest)
 fi
 
 SUPPRESS=/tmp/gazebo_cpp_check.suppress
@@ -74,7 +74,7 @@ echo "*:gazebo/common/Image.cc:1" >> ${SUPPRESS}
 
 # Disable noExplicitConstructor warnings in gazebo7 release series
 # (release expected in 01/25/2017) relaxed to 31/01/2015
-if [[ ${CPPCHECK_GE_169} -eq 1 ]] && [[ `date '+%Y%m%d'` -lt 20170131 ]]; then
+if [[ ${CPPCHECK_GE_169} -eq 1 ]] && [[ $(date '+%Y%m%d') -lt 20170131 ]]; then
   echo "noExplicitConstructor" >> ${SUPPRESS}
 fi
 
@@ -111,10 +111,10 @@ if [[ ${xml_out} -eq 1 ]]; then
   (${CPPCHECK_BASE} --xml ${CPPCHECK_CMD3}) 2> ${xml_dir}/cppcheck-configuration.xml
 elif [[ ${QUICK_CHECK} -eq 1 ]]; then
   for f in ${CHECK_FILES}; do
-    prefix=`basename ${f} | sed -e 's@\..*$@@'`
-    ext=`echo ${f} | sed -e 's@^.*\.@@'`
+    prefix=$(basename ${f} | sed -e 's@\..*$@@')
+    ext=$(echo ${f} | sed -e 's@^.*\.@@')
     tmp2="${QUICK_TMP}"."${ext}"
-    tmp2base=`basename "${QUICK_TMP}"`
+    tmp2base=$(basename "${QUICK_TMP}")
     hg cat -r ${QUICK_SOURCE} ${hg_root}/${f} > ${tmp2}
 
     # Fix suppression for tmp files
