@@ -5,29 +5,23 @@
 #ifndef REVOLVE_BOPTIMIZER_CPG_H
 #define REVOLVE_BOPTIMIZER_CPG_H
 
+#ifndef USE_NLOPT
+#define USE_NLOPT
+#endif
 
+// Standard libraries
 #include <algorithm>
 #include <iostream>
 #include <iterator>
 #include <sys/time.h>
 
-#ifndef USE_NLOPT
-#define USE_NLOPT
-#endif
-
+// External libraries
 #include <boost/parameter/aux_/void.hpp>
 #include <Eigen/Core>
 #include <limbo/bayes_opt/bo_base.hpp>
 #include <limbo/tools/macros.hpp>
 #include <limbo/tools/random_generator.hpp>
-
-#ifdef USE_NLOPT
-#include "/home/maarten/Dropbox/BO/BO/limbo/opt/nlopt_no_grad.hpp"
-#elif defined USE_LIBCMAES
-#include "opt/cmaes.hpp"
-#else
-#include "opt/grid_search.hpp"
-#endif
+#include <limbo/opt/nlopt_no_grad.hpp>
 
 namespace limbo {
     namespace defaults {

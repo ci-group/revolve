@@ -22,12 +22,16 @@
 #ifndef REVOLVE_DIFFERENTIALCPG_H_
 #define REVOLVE_DIFFERENTIALCPG_H_
 
+// Standard libraries
 #include <map>
 #include <tuple>
 
+// External libraries
+#include <Eigen/Core>
+
+// Project headers
 #include "Evaluator.h"
 #include "Brain.h"
-#include <Eigen/Core>
 
 /// These numbers are quite arbitrary. It used to be in:13 out:8 for the
 /// Arduino, but I upped them both to 20 to accommodate other scenarios.
@@ -209,6 +213,9 @@ namespace revolve
       void getAnalytics();
 
       public: size_t getNWeights();
+
+      public: double fMax;
+
     };
   }
 }

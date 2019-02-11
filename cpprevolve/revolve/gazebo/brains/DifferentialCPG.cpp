@@ -18,20 +18,19 @@
  * Date: December 29, 2018
  *
  */
+#ifndef USE_NLOPT
+#define USE_NLOPT
+#endif
 
-// Various macros
+// STL macros
 #include <cstdlib>
 #include <map>
-#include <tuple>
-#include "DifferentialCPG.h"
-#include "../motors/Motor.h"
-#include "../sensors/Sensor.h"
-#include <time.h>
 #include <algorithm>
 #include <random>
+#include <tuple>
+#include <time.h>
 
-// Limbo macros
-#include "DifferentialCPG_BO.h"
+// Other libraries
 #include <limbo/acqui/ucb.hpp>
 #include <limbo/acqui/gp_ucb.hpp>
 #include <limbo/bayes_opt/bo_base.hpp>
@@ -40,19 +39,22 @@
 #include <limbo/model/gp.hpp>
 #include <limbo/mean/mean.hpp>
 #include <limbo/tools/macros.hpp>
+#include <limbo/opt/nlopt_no_grad.hpp>
 
-// Macros for limbo are imported via DIfferentialCPG.h
-#include "/home/maarten/Dropbox/BO/BO/limbo/opt/nlopt_no_grad.hpp"
+// Project headers
+#include "../motors/Motor.h"
 
-// Redo this as soon as you know that everything works
-// #include "/src/api/nlopt.hpp" // Fails compiling, worked before
-#include "/home/maarten/Documents/nlopt/build/src/api/nlopt.hpp"
+#include "../sensors/Sensor.h"
 
-// It probably is bad to have two namespaces
+#include "DifferentialCPG.h"
+
+#include "DifferentialCPG_BO.h"
+
+// Define namespaces
 namespace gz = gazebo;
 using namespace revolve::gazebo;
 
-// Probably not so nice. I will do this differently later
+// Probably not so nice
 using Mean_t = limbo::mean::Data<DifferentialCPG::Params>;
 using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
@@ -81,7 +83,6 @@ DifferentialCPG::DifferentialCPG(
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
   this->robot_ = _model;
-
   auto name = _model->GetName();
 
   // Listen to network modification requests
@@ -183,7 +184,7 @@ DifferentialCPG::DifferentialCPG(
  */
 struct DifferentialCPG::evaluationFunction{
   // number of input dimension (samples.size())
-  BO_PARAM(size_t, dim_in, 2);
+  BO_PARAM(size_t, dim_in, 14);
 
   // number of dimenions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -195,20 +196,21 @@ struct DifferentialCPG::evaluationFunction{
 
 void DifferentialCPG::BO_init(){
   // Parameters
-  this->evaluationRate_ = 10.0;
+  this->evaluationRate_ = 120.0;
   this->currentIteration = 0;
-  this->nInitialSamples = 4;
+  this->nInitialSamples = 14;
   // Maximum iterations that learning is allowed
-  this->maxLearningIterations = 40;
-  this->noLearningIterations = 10; // Number of iterations to walk with best
+  this->maxLearningIterations = 300;
+  this->noLearningIterations = 20; // Number of iterations to walk with best
   // controller in the end
   this->rangeLB = 0.f;
   this->rangeUB = 1.f;
-  this->initializationMethod = "ORT"; // {RS, LHS, ORT}
+  this->initializationMethod = "LHS"; // {RS, LHS, ORT}
   this->runAnalytics = true; // Automatically construct plots
+  this->fMax = 1.0;
   // We only want to optimize the weights for now. Maybe later we can do
   // bias/gain.
-  this->nWeights = 2;//this->connections_.size();
+  this->nWeights = this->connections_.size();
   std::cout << "Number of connections (hence weights) are "
             << this->nWeights
             << std::endl;
@@ -229,7 +231,7 @@ void DifferentialCPG::BO_init(){
 
   // Random sampling
   if(this->initializationMethod == "RS") {
-    for (int i = 0; i < this->nInitialSamples; i++) {
+    for (size_t i = 0; i < this->nInitialSamples; i++) {
       // Working variable to hold a random number for each weight to be optimized
       Eigen::VectorXd initialSample(this->nWeights);
 
@@ -270,7 +272,7 @@ void DifferentialCPG::BO_init(){
       std::vector<int> oneDimension;
 
       // Prepare for vector permutation
-      for (int j = 0; j < this->nInitialSamples; j++){
+      for (size_t j = 0; j < this->nInitialSamples; j++){
         oneDimension.push_back(j);
       }
 
@@ -282,7 +284,7 @@ void DifferentialCPG::BO_init(){
     }
 
     // For all samples
-    for (int i = 0; i < this->nInitialSamples; i++){
+    for (size_t i = 0; i < this->nInitialSamples; i++){
       // Initialize Eigen::VectorXd here.
       Eigen::VectorXd initialSample(this->nWeights);
 
@@ -320,7 +322,7 @@ void DifferentialCPG::BO_init(){
     for (int i = 0; i < this->nWeights; i++) {
       // Holder for one dimension
       std::vector<int> oneDimension;
-      for (int j = 0; j < this->nInitialSamples; j++) {
+      for (size_t j = 0; j < this->nInitialSamples; j++) {
         oneDimension.push_back(j);
       }
 
@@ -332,7 +334,7 @@ void DifferentialCPG::BO_init(){
     }
 
     // Draw nInitialSamples
-    for (int i = 0; i < this->nInitialSamples; i++) {
+    for (size_t i = 0; i < this->nInitialSamples; i++) {
       // Initiate new sample
       Eigen::VectorXd initialSample(this->nWeights);
 
@@ -436,7 +438,7 @@ void DifferentialCPG::BO_step(){
 
     // Optimize. Pass dummy evaluation function and observations .
     boptimizer.optimize(DifferentialCPG::evaluationFunction(),
-        this->samples, this->observations);
+                        this->samples, this->observations);
 
     // Get new sample
     x = boptimizer.last_sample();
@@ -485,9 +487,13 @@ void DifferentialCPG::Update(
   // Evaluate policy on certain time limit
   if ((_time - this->startTime_) > this->evaluationRate_) {
     // Update position
-    auto currPosition = this->robot_->WorldPose();
-    this->evaluator->Update(currPosition);
-
+    this->evaluator->Update(this->robot_->WorldPose());
+    /*
+    std::cout << "XYZ: ";
+    std::cout << this->currPosition_.Pos().X() << ", ";
+    std::cout << this->currPosition_.Pos().Y() << ", ";
+    std::cout << this->currPosition_.Pos().Z() << "\n";
+    */
     // If we are still learning
     if(this->currentIteration < (this->nInitialSamples + this->maxLearningIterations)){
       this->BO_step();
@@ -515,14 +521,29 @@ void DifferentialCPG::Update(
   }
 
   // I don't know yet what happens here.
-  auto *output = new double[numMotors];
-  this->Step(_time, output);
-
+  double *output = new double[numMotors];
+  /*
+  std::cout << "cp1 \n";
+  for(int n; n < numMotors; n++){
+    std::cout << output[n] << ", ";
+  }
+  std::cout << "\n";
+  */
+  this->Step(_time, output); // SOMETHIGN GOES WRONG HERE, AS CP1 IS FINE,
+  // BUT CP2 IS NOT
+  //std::cout << "cp2 \n";
+  /*
+  for(int n; n < numMotors; n++){
+    std::cout << output[n] << ", ";
+  }
+  std::cout << "\n";
+  */
   // Send new signals to the motors
   p = 0;
   for (const auto &motor: _motors) {
     motor->Update(&output[p], _step);
     p += motor->Outputs();
+    //std::cout << "Signal is " << output[p] << "\n";
   }
 
 }
@@ -544,6 +565,10 @@ void DifferentialCPG::Step(
   {
     int x, y, z; std::tie(x, y, z) = neuron.first;
     double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
+    biasA = 0;
+    gainA = 1;
+    //std::cout << "Bias/Gain/State: " <<biasA << ", " << gainA << ", " <<
+    //stateA << "\n";
 
     auto inputA = 0.f;
     for (auto const &connection : this->connections_)
@@ -563,31 +588,56 @@ void DifferentialCPG::Step(
 
       if (x2 == x and y2 == y and z2 == z)
       {
-        auto input = std::get<2>(this->neurons_[{x1, y1, z1}]);
-        inputA += weightBA * input + biasA;
+        // INPUT IS ALWAYS 0, which is where the error is
+        // Access last element in the tuple
+        //auto input = std::get<0>(this->neurons_[{x1, y1, z1}]);
+        /*
+        std::cout << "cp5: Input x is " << std::get<0>(this->neurons_[{x1, y1, z1}]) << std::endl;
+        std::cout << "cp5: Input y is " << std::get<1>(this->neurons_[{x1,y1,
+                                                                       z1}]) << std::endl;
+        std::cout << "cp5: Input z is " << std::get<2>(this->neurons_[{x1,
+                                                                       y1, z1}]) << std::endl;
+        */
+        // Get new x position for CPG input
+        auto input = this->robot_->WorldPose().Pos().X();
+        //std::cout << "cp5 " << input << std::endl;
+        //std::cout << "Input is " << input << "\n";
+        // inputA += weightBA * input + biasA
+        inputA += (weightBA * input - biasA)*gainA;
       }
     }
 
+    //std::cout << "Time is " << _time << std::endl;
+
     nextState[i] = stateA + (inputA * _time);
+    // std::cout << "Nextstate[i] is " << nextState[i] <<std::endl;
+
     ++i;
   }
 
   i = 0; auto j = 0;
   auto *output = new double[this->neurons_.size() / 2];
+
+  //std::cout << "c3: Lenght of output: " << this->neurons_.size() << std::endl;
+
   for (auto &neuron : this->neurons_)
   {
     double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
     neuron.second = {biasA, gainA, nextState[i]};
     if (i % 2 == 0)
     {
-      output[j] = nextState[i];
+      // Apply saturation formula
+      auto x = nextState[i];
+      output[j] = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->fMax))
+                              -1);
+      //std::cout << j << ": " << output[j] << std::endl;
       j++;
     }
     ++i;
   }
   _output = output;
-}
 
+}
 
 /**
  * Struct that holds the parameters on which BO is called
@@ -695,7 +745,7 @@ void DifferentialCPG::getAnalytics(){
   mySamplesFile.open(directoryName + "samples.txt");
 
   // Print to files: TODO: GET LAST FITNESS AS WELL S.T. WE CAN GET RID OF -1
-  for(int i = 0; i < (this->observations.size()); i++){
+  for(size_t i = 0; i < (this->observations.size()); i++){
     auto mySample = this->samples.at(i);
 
     for(int j = 0; j < this->nWeights; j++){
