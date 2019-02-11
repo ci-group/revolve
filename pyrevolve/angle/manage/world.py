@@ -144,14 +144,16 @@ class WorldManager(manage.WorldManager):
                 self.write_robots.writerow(self.robots_header())
                 self.write_poses.writerow(self.poses_header())
 
-    def robots_header(self):
+    @staticmethod
+    def robots_header():
         """
         Returns the header to be written to the robots file
         :return:
         """
         return ['id', 'parent1', 'parent2', 'battery_level']
 
-    def poses_header(self):
+    @staticmethod
+    def poses_header():
         """
         Returns the header to be written to the poses file
         :return:
@@ -176,8 +178,8 @@ class WorldManager(manage.WorldManager):
                 world_address=world_address,
                 state_update_frequency=pose_update_frequency
         )
-        await (self._init(builder=None, generator=None))
-        return (self)
+        await self._init(builder=None, generator=None)
+        return self
 
     async def teardown(self):
         """

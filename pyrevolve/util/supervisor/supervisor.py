@@ -293,6 +293,7 @@ class Supervisor(object):
         :return:
         """
         print("Launching experiment manager...")
+        os.environ['PYTHONUNBUFFERED'] = 'True'
         args = self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
         process = subprocess.Popen(

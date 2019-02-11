@@ -90,7 +90,7 @@ class World(WorldManager):
         :return:
         """
         self = cls(_private=cls._PRIVATE, conf=conf)
-        await (self._init())
+        await self._init()
         return self
 
     def robots_header(self):
