@@ -397,7 +397,7 @@ void DifferentialCPG::BO_init(){
 
 void DifferentialCPG::getFitness(){
   // Get fitness
-  double fitness = this->evaluator->Fitness();
+  double fitness = this->evaluator->Fitness("");
 
   // Save sample if it is the best seen so far
   if(fitness >this->bestFitness){

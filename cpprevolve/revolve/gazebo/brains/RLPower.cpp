@@ -59,12 +59,15 @@ RLPower::RLPower(
   this->evaluationRate_ = 50.0;
   this->numInterpolationPoints_ = 100;
   this->maxEvaluations_ = 1000;
-  this->maxRankedPolicies_ = 50;
+  this->maxRankedPolicies_ = 25;
   this->sigma_ = 0.8;
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
-
   this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
+
+  // Generate end-point for targeted locomotion
+  this->goalX = ((double) rand() / (RAND_MAX))*10 - 5; // In [-5,5]
+  this->goalY = ((double) rand() / (RAND_MAX))*10 - 5; // In [-5,5]
 
   // Generate first random policy
   auto numMotors = _motors.size();
@@ -117,7 +120,6 @@ void RLPower::Update(
     motor->Update(&output[p], _step);
     p += motor->Outputs();
   }
-
 
   delete[] output;
 }
@@ -229,7 +231,7 @@ void RLPower::InterpolateCubic(
 void RLPower::UpdatePolicy(const size_t _numSplines)
 {
   // Calculate fitness for current policy
-  auto currFitness = this->Fitness();
+  auto currFitness = this->Fitness("gait");
   //std::cout << "Fitness is " << currFitness << std::endl;
   // Insert ranked policy in list
   PolicyPtr backupPolicy = std::make_shared< Policy >(_numSplines);
@@ -471,9 +473,9 @@ const double RLPower::CYCLE_LENGTH = 5;
 // sigma decay
 const double RLPower::SIGMA = 0.98;
 
-double RLPower::Fitness()
+double RLPower::Fitness(std::string controllerType)
 {
-  return this->evaluator_->Fitness();
+  return this->evaluator_->Fitness(controllerType);
 }
 
 void RLPower::Modify(ConstModifyPolicyPtr &/* _request */)

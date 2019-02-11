@@ -159,7 +159,7 @@ namespace revolve
 
       /// \brief Retrieves fitness for the current policy
       /// \return
-      private: double Fitness();
+      private: double Fitness(std::string controllerType);
 
       /// \brief Writes current spline to file
       private: void LogCurrentSpline();
@@ -224,6 +224,9 @@ namespace revolve
       /// \brief Container for best ranked policies
       private: std::map< double, PolicyPtr, std::greater< double>>
           rankedPolicies_;
+
+      private: double goalX;
+      private: double goalY;
     };
   }
 }

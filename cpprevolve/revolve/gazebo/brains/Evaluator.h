@@ -41,7 +41,7 @@ namespace revolve
 
       /// \brief Retrieve the fitness
       /// \return A fitness value according to a given formula
-      public: double Fitness();
+      public: double Fitness(std::string controllerType); // {rightTurn, leftTurn, gait}
 
       /// \brief Update the position
       /// \param[in] _pose Current position of a robot
@@ -56,11 +56,12 @@ namespace revolve
       /// \brief
       private: double evaluationRate_;
 
-      private: int counter;
+      /// \brief Added for targeted locomotion
+      private: int iteration;
       private: double bestFitnessLeft;
       private: double bestFitnessRight;
       private: double bestFitnessGait;
-
+      private: double penalty;
     };
   }
 }
