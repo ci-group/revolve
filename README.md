@@ -34,7 +34,7 @@ We would like to thank all contributors of Revolve project!
 
 Special thanks to [Elte Hupkes](https://github.com/ElteHupkes/) who designed the codebase and professor [Gusz Eiben](https://www.cs.vu.nl/~gusz/) whose energy is pusshing the project forward.
 Many thanks to [Milan Jelisavcic](https://github.com/milanjelisavcic/) and [Matteo De Carlo](https://github.com/portaloffreedom/) for redesigning and simplifying the codebase.
-For the complete list of contributors see [AUTHORS.md](https://github.com/ci-group/revolve/blob/master/AUTHORS.md).
+For the complete list of contributors see [AUTHORS.md](https://github.com/ci-group/revolve/blob/master/AUTHORS).
 
 ## For more information
 * [EvoSphere Website](https://evosphere.eu/)
