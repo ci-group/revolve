@@ -37,7 +37,7 @@ for detailed instructions, and how to build from source.*
 ## Contribution guidelines
 
 If you want to contribute to Revolve, be sure to review the [contribution
-guidelines](CONTRIBUTING.md).By participating, you are expected to
+guidelines](CONTRIBUTING.md). By participating, you are expected to
 uphold this code.
 
 We use [GitHub issues](https://github.com/ci-group/revolve/issues) for
@@ -45,6 +45,8 @@ tracking requests and bugs.
 
 The Revolve project strives to abide by generally accepted best practices in open-source software development:
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2520/badge)](https://bestpractices.coreinfrastructure.org/projects/2520)
+[![CircleCI](https://circleci.com/gh/ci-group/revolve.svg?style=svg)](https://circleci.com/gh/ci-group/revolve)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5443e24ddd4d413b897206b546d5600e)](https://www.codacy.com/app/ci-group/revolve?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ci-group/revolve/&amp;utm_campaign=Badge_Grade)
 
 ## Contributors
 
