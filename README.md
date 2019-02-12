@@ -25,7 +25,32 @@ given a set of constraints.
 
 ## Instalation
 
-For the details, see [wiki pages](https://github.com/ci-group/revolve/wiki).
+The current system is supported  for Linux and Mac OS X platforms.
+If all pre-requirements are satisfied, to install the current release run:
+
+```bash
+git clone https://github.com/ci-group/revolve.git
+cd ./revolve
+mkdir -p build && cd build
+cmake ..
+make -j4
+```
+
+Within the `revolve` root directory create Python virtual environment:
+
+```bash
+virtualenv --python python3 .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+To verify the build:
+```bash
+./revolve.py
+```
+
+*See [Installation Instructions for Revolve](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Revolve)
+for detailed instructions, and how to build from source.*
 
 ## Contribution guidelines
 
@@ -40,6 +65,7 @@ The Revolve project strives to abide by generally accepted best practices in ope
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2520/badge)](https://bestpractices.coreinfrastructure.org/projects/2520)
 
 ## Contributors
+
 We would like to thank all contributors of Revolve project!
 
 Special thanks to [Elte Hupkes](https://github.com/ElteHupkes/) who designed the codebase and professor [Gusz Eiben](https://www.cs.vu.nl/~gusz/) whose energy is pusshing the project forward.
@@ -47,6 +73,7 @@ Many thanks to [Milan Jelisavcic](https://github.com/milanjelisavcic/) and [Matt
 For the complete list of contributors see [AUTHORS](AUTHORS).
 
 ## For more information
+
 * [EvoSphere Website](https://evosphere.eu/)
 * [CIGroup Website](https://www.cs.vu.nl/ci/)
 
