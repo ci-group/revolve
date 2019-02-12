@@ -34,7 +34,7 @@ To verify the build run:
 *See [Installation Instructions for Revolve](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Revolve)
 for detailed instructions, and how to build from source.*
 
-#### *Try your first TensorFlow program*
+#### *Try your first Revolve program*
 
 While `./revolve.py` is running, in another terminal window start the same virtual environment:
 ```shell
