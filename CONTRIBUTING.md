@@ -6,7 +6,7 @@ sh tools/code_check.sh
 
 The tool does not catch all style errors. See the Style section below for more information.
 
-# Ten Tips for Clean Code
+## Ten Tips for Clean Code
 1. You are responsible for the quality of your code
 1. When writing code, use meaningful names
 1. Write code that expresses the intent
@@ -18,7 +18,7 @@ The tool does not catch all style errors. See the Style section below for more i
 1. Independent architecture
 1. Practice, practice, practice
 
-# Coding Rules
+## Coding Rules
 
 1. Write tests
     > A pull request will only be accepted if it has tested. See the Test coverage section below for more information.
@@ -33,7 +33,7 @@ The tool does not catch all style errors. See the Style section below for more i
     > A large pull request is hard to review and will take a long time. It is worth your time to split a large pull request into multiple smaller pull requests.
 
 
-# Style
+## Style
 
 1. `this` pointer
 
@@ -101,5 +101,20 @@ The tool does not catch all style errors. See the Style section below for more i
 > 
 > `speed *= 0.44704; // miles per hour to meters per second` : Bad
 
-
 [gazebo-source](http://gazebosim.org/tutorials?tut=contrib_code&cat=development)
+
+## `git comit` message guidelines
+
+The seven rules of a great Git commit message
+
+    Keep in mind: This has all been said before.
+
+1. Separate subject from body with a blank line
+1. Limit the subject line to 50 characters
+1. Capitalize the subject line
+1. Do not end the subject line with a period
+1. Use the imperative mood in the subject line
+1. Wrap the body at 72 characters
+1. Use the body to explain what and why vs. how
+
+[git-source](https://chris.beams.io/posts/git-commit/)
