@@ -29,12 +29,22 @@ For the details, see [wiki pages](https://github.com/ci-group/revolve/wiki).
 
 ## Contribution guidelines
 
+If you want to contribute to Revolve, be sure to review the [contribution
+guidelines](CONTRIBUTING.md).By participating, you are expected to
+uphold this code.
+
+We use [GitHub issues](https://github.com/ci-group/revolve/issues) for
+tracking requests and bugs.
+
+The Revolve project strives to abide by generally accepted best practices in open-source software development:
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2520/badge)](https://bestpractices.coreinfrastructure.org/projects/2520)
+
 ## Contributors
 We would like to thank all contributors of Revolve project!
 
 Special thanks to [Elte Hupkes](https://github.com/ElteHupkes/) who designed the codebase and professor [Gusz Eiben](https://www.cs.vu.nl/~gusz/) whose energy is pusshing the project forward.
 Many thanks to [Milan Jelisavcic](https://github.com/milanjelisavcic/) and [Matteo De Carlo](https://github.com/portaloffreedom/) for redesigning and simplifying the codebase.
-For the complete list of contributors see [AUTHORS.md](https://github.com/ci-group/revolve/blob/master/AUTHORS).
+For the complete list of contributors see [AUTHORS](AUTHORS).
 
 ## For more information
 * [EvoSphere Website](https://evosphere.eu/)
