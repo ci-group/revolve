@@ -1,5 +1,7 @@
 # Revolve - Robot evolution framework
 
+<img  align="right" width="200" height="179"  src="/docs/revolve-logo.png">
+
 **Revolve** is an open source software framework for robot evolution providing C++ and Python libraries to create,
 simulate and manage robots in the Gazebo general-purpose robot simulator. Given a specification, a robot body can be constructed by Revolve from a tree structure, starting with a root node extending to other body parts through its attachment slots. Revolve also ships with some simple generator classes, which can generate arbitrary robot bodies from scratch given a set of constraints.
 
