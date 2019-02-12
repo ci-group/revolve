@@ -26,13 +26,38 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-To verify the build:
+To verify the build run:
 ```bash
-./revolve.py
+(.venv) ./revolve.py
 ```
 
 *See [Installation Instructions for Revolve](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Revolve)
 for detailed instructions, and how to build from source.*
+
+#### *Try your first TensorFlow program*
+
+While `./revolve.py` is running, in another terminal window start the same virtual environment:
+```shell
+cd ./revolve/
+source .venv/bin/activate
+(.venv) python
+```
+
+```python
+>>> import asyncio
+>>> from pyrevolve.gazebo.manage import WorldManager as World
+>>> async def run():
+...     world = await World.create()
+...     await world.pause(True)
+...     print("Hello Revolve! I paused Gazebo.")
+... 
+>>> loop = asyncio.get_event_loop()
+>>> loop.run_until_complete(run())
+Hello Revolve! I paused Gazebo.
+```
+
+Learn more examples about how to do specific tasks in Revolve at the
+[tutorials page of Revolve wiki](https://github.com/ci-group/revolve/wiki#tutorials).
 
 ## Contribution guidelines
 
