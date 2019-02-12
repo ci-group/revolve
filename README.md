@@ -8,7 +8,7 @@ Revolve was originally developed and is maintained by researchers and engineers 
 ## Installation
 
 The current system is supported  for Linux and Mac OS X platforms.
-If all pre-requirements are satisfied, to install the current release run:
+If all [pre-requirements](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Gazebo) are satisfied, to install the current release run:
 
 ```bash
 git clone https://github.com/ci-group/revolve.git
