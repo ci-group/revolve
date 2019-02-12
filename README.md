@@ -23,7 +23,7 @@ that can be directly used in Gazebo.
 Revolve also ships with some simple generator classes, which can generate arbitrary robot bodies from scratch
 given a set of constraints.
 
-## Instalation
+## Installation
 
 The current system is supported  for Linux and Mac OS X platforms.
 If all pre-requirements are satisfied, to install the current release run:
