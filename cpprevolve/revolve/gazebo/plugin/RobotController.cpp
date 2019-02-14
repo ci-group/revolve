@@ -17,12 +17,13 @@
 *
 */
 
+#include  <stdexcept>
+
 #include <gazebo/sensors/sensors.hh>
 
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
-#include <revolve/gazebo/brain/NeuralNetwork.h>
-#include <revolve/gazebo/brain/RLPower.h>
+#include <revolve/gazebo/brains/Brains.h>
 
 #include "RobotController.h"
 
@@ -191,7 +192,23 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
 
   auto brain = _sdf->GetElement("rv:brain");
-  brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
+  auto learner = brain->GetAttribute("learner")->GetAsString();
+  if ("ann" == learner)
+  {
+    brain_.reset(new NeuralNetwork(this->model_, brain, motors_, sensors_));
+  }
+  else if ("rlpower" == learner)
+  {
+    brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
+  }
+  else if ("diff_cpg" == learner)
+  {
+    brain_.reset(new DifferentialCPG(this->model_, _sdf, motors_, sensors_));
+  }
+  else
+  {
+    throw std::runtime_error("Robot brain is not defined.");
+  }
 }
 
 /////////////////////////////////////////////////

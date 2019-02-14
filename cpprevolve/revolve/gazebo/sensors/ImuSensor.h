@@ -40,8 +40,8 @@ namespace revolve
       public: ImuSensor(
           ::gazebo::physics::ModelPtr _model,
           sdf::ElementPtr _sensor,
-          std::string _partId,
-          std::string _sensorId);
+          const std::string &_partId,
+          const std::string &_sensorId);
 
       /// \brief Destructor
       public: virtual ~ImuSensor();

@@ -1,9 +1,10 @@
 """
 Collision / visual and geometry like classes
 """
-from ..posable import Posable, PosableGroup
+from ..posable import Posable
+from ..posable import PosableGroup
 from ..element import Element
-from .geometries import Geometry, CompoundGeometry
+from .geometries import CompoundGeometry
 
 
 class Structure(Posable):
@@ -57,7 +58,6 @@ class Structure(Posable):
             return super(Structure, self).render()
 
         geometries = self.geometry.geometries
-        """ :type : [Geometry] """
 
         elements = []
         for i in range(len(geometries)):
@@ -95,7 +95,11 @@ class Visual(Structure):
         if color.index('/') < 0:
             color = "Gazebo/"+color.title()
 
-        self.add_element(Material(body="<script><name>%s</name></script>" % color))
+        self.add_element(Material(
+                body="\n"
+                     "<script>\n"
+                     "  <name>{}</name>\n"
+                     "</script>".format(color)))
 
     def add_color(self, r, g, b, a=1):
         """
@@ -104,10 +108,16 @@ class Visual(Structure):
         specular set to (0.1, 0.1, 0.1, a).
         :return:
         """
-        color = '%.2f %.2f %.2f %.2f' % (r, g, b, a)
-        specular = '0.1 0.1 0.1 %.2f' % a
-        self.add_element(Material(body="<ambient>%s</ambient><diffuse>%s</diffuse><specular>%s</specular>" %
-                                       (color, color, specular)))
+        color = '{r} {g} {b} {a}'.format(r=r, g=g, b=b, a=a)
+        specular = '0.1 0.1 0.1 {}'.format(a)
+        self.add_element(Material(
+                body="\n"
+                     "  <ambient>{ambient}</ambient>\n"
+                     "  <diffuse>{diffuse}</diffuse>\n"
+                     "  <specular>{specular}</specular>\n".format(
+                        ambient=color,
+                        diffuse=color,
+                        specular=specular)))
 
 
 class StructureCombination(PosableGroup):

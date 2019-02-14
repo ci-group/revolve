@@ -9,7 +9,9 @@ from .posable import Posable
 from .element import Element
 from .physics import Inertial
 from .structure import Collision, Visual
-from .structure.geometries import Geometry, Box, Cylinder, Sphere
+from .structure.geometries import Box
+from .structure.geometries import Cylinder
+from .structure.geometries import Sphere
 
 
 class Link(Posable):
@@ -29,7 +31,6 @@ class Link(Posable):
 
         # Only create inertial if required
         self.inertial = kwargs.get("inertial", None)
-        """:type : Inertial"""
 
         self.self_collide = kwargs.get("self_collide", None)
 
@@ -43,7 +44,9 @@ class Link(Posable):
             elements.append(self.inertial)
 
         if self.self_collide is not None:
-            elements.append(Element(tag_name="self_collide", body=str(self.self_collide)))
+            elements.append(Element(
+                    tag_name="self_collide",
+                    body=str(self.self_collide)))
 
         return elements
 
@@ -78,7 +81,16 @@ class Link(Posable):
         for visual in self.get_elements_of_type(Visual):
             visual.add_color(r, g, b, a)
 
-    def make_box(self, mass, x, y, z, collision=True, visual=True, inertia=True, name_prefix=""):
+    def make_box(
+            self,
+            mass,
+            x,
+            y,
+            z,
+            collision=True,
+            visual=True,
+            inertia=True,
+            name_prefix=""):
         """
         Shortcut method to `make_geometry` with a box.
 
@@ -92,11 +104,24 @@ class Link(Posable):
         :param name_prefix:
         :return: Newly created visual and collision elements, if applicable
         """
-        return self.make_geometry(Box(x, y, z, mass), collision=collision,
-                                  visual=visual, inertia=inertia, name_prefix=name_prefix)
+        return self.make_geometry(
+                geometry=Box(x, y, z, mass),
+                collision=collision,
+                visual=visual,
+                inertia=inertia,
+                name_prefix=name_prefix)
 
-    def make_cylinder(self, mass, radius, length, collision=True, visual=True,
-                      inertia=True, name_prefix="", tube=False, r1=None):
+    def make_cylinder(
+            self,
+            mass,
+            radius,
+            length,
+            collision=True,
+            visual=True,
+            inertia=True,
+            name_prefix="",
+            tube=False,
+            r1=None):
         """
         Shortcut method to `make_geometry` with a cylinder.
         :param mass:
@@ -110,11 +135,22 @@ class Link(Posable):
         :param r1: If `tube` is `True`, inner radius of the tube
         :return:
         """
-        return self.make_geometry(Cylinder(radius, length, mass=mass, tube=tube, r1=r1), collision=collision,
-                                  visual=visual, inertia=inertia, name_prefix=name_prefix)
+        return self.make_geometry(
+                geometry=Cylinder(radius, length, mass=mass, tube=tube, r1=r1),
+                collision=collision,
+                visual=visual,
+                inertia=inertia,
+                name_prefix=name_prefix)
 
-    def make_sphere(self, mass, radius, collision=True, visual=True, inertia=True,
-                    name_prefix="", solid=True):
+    def make_sphere(
+            self,
+            mass,
+            radius,
+            collision=True,
+            visual=True,
+            inertia=True,
+            name_prefix="",
+            solid=True):
         """
         Shortcut method to `make_geometry` with a cylinder.
         :param mass:
@@ -126,8 +162,12 @@ class Link(Posable):
         :param solid: Whether the sphere is solid
         :return:
         """
-        return self.make_geometry(Sphere(radius, mass=mass, solid=solid), collision=collision,
-                                  visual=visual, inertia=inertia, name_prefix=name_prefix)
+        return self.make_geometry(
+                geometry=Sphere(radius, mass=mass, solid=solid),
+                collision=collision,
+                visual=visual,
+                inertia=inertia,
+                name_prefix=name_prefix)
 
     def calculate_inertial(self):
         """
@@ -183,7 +223,11 @@ class Link(Posable):
 
         return com
 
-    def align_center_of_mass(self, types=(Posable,), recursive=False, elements=None):
+    def align_center_of_mass(
+            self,
+            types=(Posable,),
+            recursive=False,
+            elements=None):
         """
         Aligns all elements within this link to get the center of mass
         to be at the link's origin. By default, all first level `Posable`
@@ -208,8 +252,13 @@ class Link(Posable):
 
         return translation
 
-    def make_geometry(self, geometry, collision=True, visual=True,
-                      inertia=True, name_prefix=""):
+    def make_geometry(
+            self,
+            geometry,
+            collision=True,
+            visual=True,
+            inertia=True,
+            name_prefix=""):
         """
         Gives a link a certain geometry by creating visual and collision objects
         as desired. This should only be called once for a Link, unless

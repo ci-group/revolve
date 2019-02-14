@@ -20,28 +20,29 @@
 #include <string>
 
 #include "VelocityMotor.h"
+#include "JointMotor.h"
 
 namespace gz = gazebo;
 
 using namespace revolve::gazebo;
 
 VelocityMotor::VelocityMotor(
-    ::gazebo::physics::ModelPtr model,
-    std::string partId,
-    std::string motorId,
-    sdf::ElementPtr motor)
-    : JointMotor(model, partId, motorId, motor, 1)
+      ::gazebo::physics::ModelPtr _model,
+      const std::string &_partId,
+      const std::string &_motorId,
+      sdf::ElementPtr _motor)
+    : JointMotor(_model, _partId, _motorId, _motor, 1)
     , velocityTarget_(0)
     , noise_(0)
 {
-  if (motor->HasElement("rv:pid"))
+  if (_motor->HasElement("rv:pid"))
   {
-    auto pidElem = motor->GetElement("rv:pid");
+    auto pidElem = _motor->GetElement("rv:pid");
     this->pid_ = Motor::CreatePid(pidElem);
   }
 
-  if (not motor->HasAttribute("min_velocity") or
-      not motor->HasAttribute("max_velocity"))
+  if (not _motor->HasAttribute("min_velocity") or
+      not _motor->HasAttribute("max_velocity"))
   {
     std::cerr << "Missing servo min/max velocity parameters, "
         "velocity will be zero." << std::endl;
@@ -49,8 +50,8 @@ VelocityMotor::VelocityMotor(
   }
   else
   {
-    motor->GetAttribute("min_velocity")->Get(this->minVelocity_);
-    motor->GetAttribute("max_velocity")->Get(this->maxVelocity_);
+    _motor->GetAttribute("min_velocity")->Get(this->minVelocity_);
+    _motor->GetAttribute("max_velocity")->Get(this->maxVelocity_);
   }
 
   // I've asked this question at the Gazebo forums: https://tinyurl.com/y7he7y8l

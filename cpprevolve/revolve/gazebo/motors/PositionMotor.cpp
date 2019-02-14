@@ -28,8 +28,8 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 PositionMotor::PositionMotor(
     gz::physics::ModelPtr _model,
-    std::string _partId,
-    std::string _motorId,
+    const std::string &_partId,
+    const std::string &_motorId,
     sdf::ElementPtr _motor)
     : JointMotor(_model, _partId, _motorId, _motor, 1)
     , positionTarget_(0)
@@ -92,7 +92,7 @@ void PositionMotor::Update(
   // Note: Don't actually target the full joint range, this way a low update
   // rate won't mess with the joint constraints as much leading to a more
   // stable system.
-  output = fmin(fmax(1e-5, output), 0.99999);
+  output = std::fmin(std::fmax(1e-5, output), 0.99999);
   this->positionTarget_ = this->lowerLimit_ +
                           (output * (this->upperLimit_ - this->lowerLimit_));
 

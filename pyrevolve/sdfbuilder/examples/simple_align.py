@@ -1,7 +1,9 @@
 from __future__ import print_function
-import sys
-from sdfbuilder import Link, Model, SDF
-from sdfbuilder.math import Vector3
+
+from pyrevolve.sdfbuilder import Link
+from pyrevolve.sdfbuilder import Model
+from pyrevolve.sdfbuilder import SDF
+from pyrevolve.sdfbuilder.math import Vector3
 
 # Create two similar boxes
 link1 = Link("box1")

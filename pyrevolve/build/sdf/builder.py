@@ -6,12 +6,14 @@ from pyrevolve.sdfbuilder import Model, Element, Link, FixedJoint
 from pyrevolve.sdfbuilder.math import Quaternion, Vector3
 from pyrevolve.sdfbuilder.util import number_format as nf
 
-from ...spec import Robot, BodyPart as PbBodyPart, BodyImplementation, \
-    NeuralNetImplementation
+from ...spec import BodyImplementation
+from ...spec import NeuralNetImplementation
 from ...spec.exception import err
 
-from .neural_net import Neuron, NeuralConnection
-from .body import Component, BodyPart
+from .neural_net import Neuron
+from .neural_net import NeuralConnection
+from .body import Component
+from .body import BodyPart
 from .body.exception import ComponentException
 
 
@@ -251,6 +253,8 @@ class BodyBuilder(AspectBuilder):
 
         # Set the arity
         kwargs['arity'] = spec.arity
+        kwargs['x'] = part.x
+        kwargs['y'] = part.y
         body_part = body_part_class(part.id, self.conf, **kwargs)
         """ :type : BodyPart"""
 
@@ -279,8 +283,8 @@ class BodyBuilder(AspectBuilder):
             cn, bp, cmp, mtr = self._process_body_part(
                     part=conn.part,
                     parent=body_part,
-                    src_slot=conn.src,
-                    dst_slot=conn.dst)
+                    src_slot=conn.src_slot,
+                    dst_slot=conn.dst_slot)
             components += cmp
             motors += mtr
             body_parts += bp
@@ -344,7 +348,7 @@ class RobotBuilder(object):
         self.body_builder = body_builder
         self.brain_builder = brain_builder
 
-    def get_sdf_model(
+    def sdf_robot(
             self,
             robot,
             controller_plugin=None,

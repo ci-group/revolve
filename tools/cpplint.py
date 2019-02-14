@@ -297,69 +297,69 @@ _RE_SUPPRESSION = re.compile(r'\bNOLINT\b(\([^)]*\))?')
 _error_suppressions = {}
 
 def ParseNolintSuppressions(filename, raw_line, linenum, error):
-  """Updates the global list of error-suppressions.
+    """Updates the global list of error-suppressions.
 
-  Parses any NOLINT comments on the current line, updating the global
-  error_suppressions store.  Reports an error if the NOLINT comment
-  was malformed.
+    Parses any NOLINT comments on the current line, updating the global
+    error_suppressions store.  Reports an error if the NOLINT comment
+    was malformed.
 
-  Args:
-    filename: str, the name of the input file.
-    raw_line: str, the line of input text, with comments.
-    linenum: int, the number of the current line.
-    error: function, an error handler.
-  """
-  # FIXME(adonovan): "NOLINT(" is misparsed as NOLINT(*).
-  matched = _RE_SUPPRESSION.search(raw_line)
-  if matched:
-    category = matched.group(1)
-    if category in (None, '(*)'):  # => "suppress all"
-      _error_suppressions.setdefault(None, set()).add(linenum)
-    else:
-      if category.startswith('(') and category.endswith(')'):
-        category = category[1:-1]
-        if category in _ERROR_CATEGORIES:
-          _error_suppressions.setdefault(category, set()).add(linenum)
+    Args:
+      filename: str, the name of the input file.
+      raw_line: str, the line of input text, with comments.
+      linenum: int, the number of the current line.
+      error: function, an error handler.
+    """
+    # FIXME(adonovan): "NOLINT(" is misparsed as NOLINT(*).
+    matched = _RE_SUPPRESSION.search(raw_line)
+    if matched:
+        category = matched.group(1)
+        if category in (None, '(*)'):  # => "suppress all"
+          _error_suppressions.setdefault(None, set()).add(linenum)
         else:
-          error(filename, linenum, 'readability/nolint', 5,
-                'Unknown NOLINT error category: %s' % category)
+            if category.startswith('(') and category.endswith(')'):
+                category = category[1:-1]
+                if category in _ERROR_CATEGORIES:
+                  _error_suppressions.setdefault(category, set()).add(linenum)
+                else:
+                  error(filename, linenum, 'readability/nolint', 5,
+                        'Unknown NOLINT error category: %s' % category)
 
 
 def ResetNolintSuppressions():
-  "Resets the set of NOLINT suppressions to empty."
-  _error_suppressions.clear()
+    "Resets the set of NOLINT suppressions to empty."
+    _error_suppressions.clear()
 
 
 def IsErrorSuppressedByNolint(category, linenum):
-  """Returns true if the specified error category is suppressed on this line.
+    """Returns true if the specified error category is suppressed on this line.
 
-  Consults the global error_suppressions map populated by
-  ParseNolintSuppressions/ResetNolintSuppressions.
+    Consults the global error_suppressions map populated by
+    ParseNolintSuppressions/ResetNolintSuppressions.
 
-  Args:
-    category: str, the category of the error.
-    linenum: int, the current line number.
-  Returns:
-    bool, True iff the error should be suppressed due to a NOLINT comment.
-  """
-  return (linenum in _error_suppressions.get(category, set()) or
-          linenum in _error_suppressions.get(None, set()))
+    Args:
+      category: str, the category of the error.
+      linenum: int, the current line number.
+    Returns:
+      bool, True iff the error should be suppressed due to a NOLINT comment.
+    """
+    return (linenum in _error_suppressions.get(category, set()) or
+            linenum in _error_suppressions.get(None, set()))
 
 def Match(pattern, s):
-  """Matches the string with the pattern, caching the compiled regexp."""
-  # The regexp compilation caching is inlined in both Match and Search for
-  # performance reasons; factoring it out into a separate function turns out
-  # to be noticeably expensive.
-  if not pattern in _regexp_compile_cache:
-    _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
-  return _regexp_compile_cache[pattern].match(s)
+    """Matches the string with the pattern, caching the compiled regexp."""
+    # The regexp compilation caching is inlined in both Match and Search for
+    # performance reasons; factoring it out into a separate function turns out
+    # to be noticeably expensive.
+    if not pattern in _regexp_compile_cache:
+      _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
+    return _regexp_compile_cache[pattern].match(s)
 
 
 def Search(pattern, s):
-  """Searches the string for the pattern, caching the compiled regexp."""
-  if not pattern in _regexp_compile_cache:
-    _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
-  return _regexp_compile_cache[pattern].search(s)
+    """Searches the string for the pattern, caching the compiled regexp."""
+    if not pattern in _regexp_compile_cache:
+      _regexp_compile_cache[pattern] = sre_compile.compile(pattern)
+    return _regexp_compile_cache[pattern].search(s)
 
 
 class _IncludeState(dict):
@@ -478,7 +478,9 @@ class _IncludeState(dict):
         # enough that the header is associated with this file.
         self._section = self._OTHER_H_SECTION
     else:
-      assert header_type == _OTHER_HEADER
+      if header_type != _OTHER_HEADER:
+        raise AssertionError('Header type is different from {}'.format(
+                _OTHER_HEADER))
       self._section = self._OTHER_H_SECTION
 
     if last_section != self._section:
@@ -841,20 +843,20 @@ _RE_PATTERN_CLEANSE_LINE_C_COMMENTS = re.compile(
 
 
 def IsCppString(line):
-  """Does line terminate so, that the next symbol is in string constant.
+    """Does line terminate so, that the next symbol is in string constant.
 
-  This function does not consider single-line nor multi-line comments.
+    This function does not consider single-line nor multi-line comments.
 
-  Args:
-    line: is a partial line of code starting from the 0..n.
+    Args:
+      line: is a partial line of code starting from the 0..n.
 
-  Returns:
-    True, if next character appended to 'line' is inside a
-    string constant.
-  """
+    Returns:
+      True, if next character appended to 'line' is inside a
+      string constant.
+    """
 
-  line = line.replace(r'\\', 'XX')  # after this, \\" does not match to \"
-  return ((line.count('"') - line.count(r'\"') - line.count("'\"'")) & 1) == 1
+    line = line.replace(r'\\', 'XX')  # after this, \\" does not match to \"
+    return ((line.count('"') - line.count(r'\"') - line.count("'\"'")) & 1) == 1
 
 
 def FindNextMultiLineCommentStart(lines, lineix):
@@ -1035,18 +1037,18 @@ def GetHeaderGuardCPPVariable(filename):
 
 
 def CheckForHeaderGuard(filename, lines, error):
-  """Checks that the file contains a header guard.
+    """Checks that the file contains a header guard.
 
-  Logs an error if no #ifndef header guard is present.  For other
-  headers, checks that the full pathname is used.
+    Logs an error if no #ifndef header guard is present.  For other
+    headers, checks that the full pathname is used.
 
-  Args:
-    filename: The name of the C++ header file.
-    lines: An array of strings, each representing a line of the file.
-    error: The function to call with any errors found.
-  """
+    Args:
+      filename: The name of the C++ header file.
+      lines: An array of strings, each representing a line of the file.
+      error: The function to call with any errors found.
+    """
 
-  cppvar = GetHeaderGuardCPPVariable(filename)
+    cppvar = GetHeaderGuardCPPVariable(filename)
 
   ifndef = None
   ifndef_linenum = 0
@@ -1073,28 +1075,6 @@ def CheckForHeaderGuard(filename, lines, error):
           'No #ifndef header guard found, suggested CPP variable is: %s' %
           cppvar)
     return
-
-  # The guard should be PATH_FILE_H_, but we also allow PATH_FILE_H__
-  # for backward compatibility.
-  #if ifndef != cppvar:
-  #  error_level = 0
-  #  if ifndef != cppvar + '_':
-  #    error_level = 5
-
-  #  ParseNolintSuppressions(filename, lines[ifndef_linenum], ifndef_linenum,
-  #                          error)
-  #  error(filename, ifndef_linenum, 'build/header_guard', error_level,
-  #        '#ifndef header guard has wrong style, please use: %s' % cppvar)
-
-  #if endif != ('#endif  // %s' % cppvar):
-  #  error_level = 0
-  #  if endif != ('#endif  // %s' % (cppvar + '_')):
-  #    error_level = 5
-
-  #  ParseNolintSuppressions(filename, lines[endif_linenum], endif_linenum,
-  #                          error)
-  #  error(filename, endif_linenum, 'build/header_guard', error_level,
-  #        '#endif line should be "#endif  // %s"' % cppvar)
 
 
 def CheckForUnicodeReplacementCharacters(filename, lines, error):
@@ -2112,25 +2092,25 @@ def CheckCheck(filename, clean_lines, linenum, error):
 
 
 def GetLineWidth(line):
-  """Determines the width of the line in column positions.
+    """Determines the width of the line in column positions.
 
-  Args:
-    line: A string, which may be a Unicode string.
+    Args:
+      line: A string, which may be a Unicode string.
 
-  Returns:
-    The width of the line in column positions, accounting for Unicode
-    combining characters and wide characters.
-  """
-  if isinstance(line, unicode):
-    width = 0
-    for uc in unicodedata.normalize('NFC', line):
-      if unicodedata.east_asian_width(uc) in ('W', 'F'):
-        width += 2
-      elif not unicodedata.combining(uc):
-        width += 1
-    return width
-  else:
-    return len(line)
+    Returns:
+      The width of the line in column positions, accounting for Unicode
+      combining characters and wide characters.
+    """
+    if isinstance(line, unicode):
+      width = 0
+      for uc in unicodedata.normalize('NFC', line):
+        if unicodedata.east_asian_width(uc) in ('W', 'F'):
+          width += 2
+        elif not unicodedata.combining(uc):
+          width += 1
+      return width
+    else:
+      return len(line)
 
 
 def CheckStyle(filename, clean_lines, linenum, file_extension, class_state,
@@ -2456,10 +2436,12 @@ def _GetTextInside(text, start_pattern):
     return None
   start_position = match.end(0)
 
-  assert start_position > 0, (
-      'start_pattern must ends with an opening punctuation.')
-  assert text[start_position - 1] in matching_punctuation, (
-      'start_pattern must ends with an opening punctuation.')
+  if start_position <= 0:
+      raise AssertionError(
+              'start_pattern must ends with an opening punctuation.')
+  if text[start_position - 1] not in matching_punctuation:
+      raise AssertionError(
+              'start_pattern must ends with an opening punctuation.')
   # Stack of closing punctuations we expect to have in text after position.
   punctuation_stack = [matching_punctuation[text[start_position - 1]]]
   position = start_position

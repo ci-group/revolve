@@ -196,7 +196,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--gazebo-cmd',
+    '--simulator-cmd',
     default='gzserver', type=str,
     help="Determine wether to use gzserver or gazebo."
 )
@@ -209,7 +209,8 @@ parser.add_argument(
 
 parser.add_argument(
     '--manager',
-    default='experiments/examples/manager.py', type=str,
+    # default='experiments/examples/manager.py',
+    type=str,
     help="Determine which manager to use."
 )
 
@@ -253,13 +254,13 @@ parser.add_argument(
 # provided with `--restore-directory`
 parser.add_argument(
     '--output-directory',
-    default=None, type=str,
+    default="output", type=str,
     help="Directory where robot statistics are written."
 )
 
 parser.add_argument(
     '--restore-directory',
-    default=None, type=str,
+    default="restore", type=str,
     help="Explicit subdirectory of the output directory, if a world "
          "state is present in this directory it will be restored."
 )
@@ -353,6 +354,17 @@ parser.add_argument(
     help="The physics step size configured in the simulation world file."
          "This needs to match in order to configure some physics parameters."
 )
+parser.add_argument(
+        '--learner',
+        default='ann', type=str,
+        help="The learner used for robot's gait learning."
+)
+parser.add_argument(
+        '--genome',
+        default=None, type=str,
+        help="A robot's genome in YAML format. It is easier to transfer it "
+             "than to convert it from SDF."
+)
 
 
 def make_revolve_config(conf):
@@ -361,4 +373,9 @@ def make_revolve_config(conf):
     object.
     """
     conf.enable_wheel_parts = False
+
+    conf.brain_conf = {
+        'learner': conf.learner,
+        'genome': conf.genome,
+    }
     return conf

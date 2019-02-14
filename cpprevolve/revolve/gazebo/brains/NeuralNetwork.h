@@ -76,7 +76,7 @@ namespace revolve
       /// \param[in] _sensors Reference to a sensor list, it might be reordered
       public: NeuralNetwork(
           const ::gazebo::physics::ModelPtr &_model,
-          const sdf::ElementPtr &_node,
+          const sdf::ElementPtr &_settings,
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors);
 
@@ -99,12 +99,6 @@ namespace revolve
 
       /// \brief Request handler to modify the neural network
       protected: void Modify(ConstModifyNeuralNetworkPtr &_request);
-
-      /// \brief Mutex for stepping / updating the network
-      protected: boost::mutex networkMutex_;
-
-      /// \brief Transport node
-      protected: ::gazebo::transport::NodePtr node_;
 
       /// \brief Network modification subscriber
       protected: ::gazebo::transport::SubscriberPtr alterSub_;

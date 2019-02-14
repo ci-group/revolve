@@ -28,8 +28,8 @@ using namespace revolve::gazebo;
 PointIntensitySensor::PointIntensitySensor(
     sdf::ElementPtr _sensor,
     ::gazebo::physics::ModelPtr _model,
-    std::string _partId,
-    std::string _sensorId)
+    const std::string &_partId,
+    const std::string &_sensorId)
     : VirtualSensor(_model, _partId, _sensorId, 1)
     , maxInput_(1)
     , r_(1)

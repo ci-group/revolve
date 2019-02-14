@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
-from pyrevolve.sdfbuilder import Posable, Joint, Link, Axis
+from pyrevolve.sdfbuilder import Axis
+from pyrevolve.sdfbuilder import Joint
+from pyrevolve.sdfbuilder import Posable
 from pyrevolve.sdfbuilder.math import Vector3
 
 

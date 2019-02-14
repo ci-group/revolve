@@ -10,4 +10,4 @@ make -j4
 
 # Install the Python dependencies
 cd /revolve
-pip install -r requirements.txt
+pip3 install -r requirements.txt

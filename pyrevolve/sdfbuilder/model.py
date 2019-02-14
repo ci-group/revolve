@@ -31,5 +31,5 @@ class Model(Posable):
         :return:
         """
         #TODO change static to true/false (minor case)
-        static = "<static>%d</static>" % int(self.static)
+        static = "\n<static>%d</static>\n" % int(self.static)
         return super(Model, self).render_elements() + [static]

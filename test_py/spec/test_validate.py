@@ -74,40 +74,40 @@ class TestValidate(unittest.TestCase):
         root.id = "Core"
         root.type = "InvalidType"
 
-        with self.assertRaisesRegexp(SpecError, "part type"):
+        with self.assertRaisesRegex(SpecError, "part type"):
             validate_robot(robot)
 
         # Make type valid, add invalid connection
         root.type = "CoreComponent"
         conn1 = root.child.add()
-        conn1.src = -1
-        conn1.dst = 5
+        conn1.src_slot = -1
+        conn1.dst_slot = 5
 
-        with self.assertRaisesRegexp(SpecError, "source slot"):
+        with self.assertRaisesRegex(SpecError, "source slot"):
             validate_robot(robot)
 
-        conn1.src = 2
-        with self.assertRaisesRegexp(SpecError, "source slot"):
+        conn1.src_slot = 2
+        with self.assertRaisesRegex(SpecError, "source slot"):
             validate_robot(robot)
 
-        conn1.src = 1
+        conn1.src_slot = 1
         part1 = conn1.part
         part1.id = "Core"
         part1.type = "2Params"
         part1.orientation = 0
 
-        with self.assertRaisesRegexp(SpecError, "Duplicate"):
+        with self.assertRaisesRegex(SpecError, "Duplicate"):
             validate_robot(robot)
 
         # Make the ID valid, connection dst slot is not
         part1.id = "Part1"
-        with self.assertRaisesRegexp(SpecError, "destination slot"):
+        with self.assertRaisesRegex(SpecError, "destination slot"):
             validate_robot(robot)
 
-        conn1.dst = 0
+        conn1.dst_slot = 0
 
         # Parameter count is now wrong
-        with self.assertRaisesRegexp(SpecError, "parameters"):
+        with self.assertRaisesRegex(SpecError, "parameters"):
             validate_robot(robot)
 
         p1 = part1.param.add()
@@ -116,7 +116,7 @@ class TestValidate(unittest.TestCase):
         p2.value = 0
 
         # Parameter count correct, but the parameters are just out of range
-        with self.assertRaisesRegexp(SpecError, "range"):
+        with self.assertRaisesRegex(SpecError, "range"):
             validate_robot(robot)
 
         p1.value = -0.5
@@ -125,20 +125,20 @@ class TestValidate(unittest.TestCase):
         # Add a child at slot connected to parent
         part1conn = part1.child.add()
         part1conn.part.CopyFrom(_get_simple_part("Part1Nest1"))
-        part1conn.src = 0
-        part1conn.dst = 1
+        part1conn.src_slot = 0
+        part1conn.dst_slot = 1
 
-        with self.assertRaisesRegexp(SpecError, "occupied"):
+        with self.assertRaisesRegex(SpecError, "occupied"):
             validate_robot(robot)
 
-        part1conn.src = 1
+        part1conn.src_slot = 1
 
         part1conn2 = part1.child.add()
         part1conn2.part.CopyFrom(_get_simple_part("Part1Nest1"))
-        part1conn2.src = 1
-        part1conn2.dst = 0
+        part1conn2.src_slot = 1
+        part1conn2.dst_slot = 0
 
-        with self.assertRaisesRegexp(SpecError, "occupied"):
+        with self.assertRaisesRegex(SpecError, "occupied"):
             validate_robot(robot)
 
     def test_brain_errors(self):
@@ -154,13 +154,13 @@ class TestValidate(unittest.TestCase):
         root.type = "CoreComponent"
 
         conn = root.child.add()
-        conn.src = 0
-        conn.dst = 0
+        conn.src_slot = 0
+        conn.dst_slot = 0
         conn.part.CopyFrom(_get_simple_part("Part1"))
 
         # The first error we'll get is we're missing
         # expected neurons.
-        with self.assertRaisesRegexp(SpecError, "expected"):
+        with self.assertRaisesRegex(SpecError, "expected"):
             validate_robot(robot)
 
         # Add a bunch of input and output neurons
@@ -183,19 +183,19 @@ class TestValidate(unittest.TestCase):
 
         # Layer of Core-out-0 neuron is incorrect
         n[0].layer = "input"
-        with self.assertRaisesRegexp(SpecError, "should be in layer"):
+        with self.assertRaisesRegex(SpecError, "should be in layer"):
             validate_robot(robot)
 
         n[0].layer = "output"
 
         # Core-out-0 neuron should be assigned to a part
-        with self.assertRaisesRegexp(SpecError, "should have a part"):
+        with self.assertRaisesRegex(SpecError, "should have a part"):
             validate_robot(robot)
 
         n[0].partId = "Fake"
 
         # Non-existing part ID
-        with self.assertRaisesRegexp(SpecError, "Unknown part"):
+        with self.assertRaisesRegex(SpecError, "Unknown part"):
             validate_robot(robot)
 
         n[0].partId = n[1].partId = n[2].partId = "Core"
@@ -203,7 +203,7 @@ class TestValidate(unittest.TestCase):
 
         # Input neuron should be "Input"
         n[1].type = "Oscillator"
-        with self.assertRaisesRegexp(SpecError, "layer 'input'"):
+        with self.assertRaisesRegex(SpecError, "layer 'input'"):
             validate_robot(robot)
 
         n[1].type = "Input"
@@ -212,20 +212,20 @@ class TestValidate(unittest.TestCase):
         hidden = brain.neuron.add()
         hidden.id, hidden.layer = "Core-out-0", "hidden"
 
-        with self.assertRaisesRegexp(SpecError, "Duplicate"):
+        with self.assertRaisesRegex(SpecError, "Duplicate"):
             validate_robot(robot)
 
         hidden.type = "Fake"
         hidden.param.add()
         hidden.id = "hidden"
 
-        with self.assertRaisesRegexp(SpecError, "Unspecified"):
+        with self.assertRaisesRegex(SpecError, "Unspecified"):
             validate_robot(robot)
 
         hidden.type = "Oscillator"
 
         # Wrong number of parameters for oscillator
-        with self.assertRaisesRegexp(SpecError, "parameters"):
+        with self.assertRaisesRegex(SpecError, "parameters"):
             validate_robot(robot)
 
         hidden.param.add()
@@ -241,7 +241,7 @@ class TestValidate(unittest.TestCase):
         a.dst = "Part1-in-0"
 
         # Wrong number of parameters for oscillator
-        with self.assertRaisesRegexp(SpecError, "input"):
+        with self.assertRaisesRegex(SpecError, "input"):
             validate_robot(robot)
 
         a.dst = "Part1-out-1"
@@ -251,13 +251,14 @@ class TestValidate(unittest.TestCase):
         b.src = "hidden"
         b.dst = "Part1-out-1"
 
-        with self.assertRaisesRegexp(SpecError, "Duplicate"):
+        with self.assertRaisesRegex(SpecError, "Duplicate"):
             validate_robot(robot)
 
         b.dst = "Part1-out-0"
 
         # Again, this should be fine
         validate_robot(robot)
+
 
 if __name__ == '__main__':
     unittest.main()

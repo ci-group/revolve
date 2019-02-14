@@ -7,7 +7,6 @@ generator resulting in a neural network.
 """
 from __future__ import absolute_import
 
-from ..generate import NeuralNetworkGenerator, BodyGenerator
 from .representation import Tree
 
 
@@ -39,5 +38,3 @@ class TreeGenerator(object):
         brain = self.brain_gen.generate_from_body(body, self.body_gen.spec)
 
         return Tree.from_body_brain(body, brain, self.body_gen.spec)
-
-

@@ -3,5 +3,5 @@ set -e
 
 # Run Python unittests
 cd /revolve
-python -m unittest discover test_py/
+python3 -m unittest discover test_py/
 

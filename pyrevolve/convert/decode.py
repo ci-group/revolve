@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 
-from ..spec import BodyImplementation, NeuralNetImplementation
-from ..spec.msgs import Body, BodyPart, NeuralNetwork
 from ..spec.exception import err
+from ..spec.msgs import Body
+from ..spec.msgs import BodyPart
+from ..spec.msgs import NeuralNetwork
 
 
 class BodyDecoder(object):
@@ -31,71 +32,143 @@ class BodyDecoder(object):
         body.root.CopyFrom(self._process_body_part(obj['body']))
         return body
 
-    def _process_body_part(self, conf, dst_slot=None):
+    def _process_body_part(self, part, dst_slot=None, x=0, y=0):
         """
-        :param conf:
+        :param part:
         :return:
         :rtype: BodyPart
         """
-        part = BodyPart()
+        proto_part = BodyPart()
+        proto_part.x = x
+        proto_part.y = y
 
-        if 'id' not in conf:
+        if 'id' not in part:
             err("Missing part ID.")
 
-        part.id = part_id = conf['id']
+        proto_part.id = part_id = part['id']
         if part_id in self.part_ids:
             err("Duplicate part ID '{}'".format(part_id))
         self.part_ids.add(part_id)
 
-        if 'type' not in conf:
+        if 'type' not in part:
             err("Missing part type.")
-        part.type = part_type = conf['type']
+        proto_part.type = part_type = part['type']
 
-        spec = self.spec.get(part_type)
-        if spec is None:
+        proto_template = self.spec.get(part_type)
+        if proto_template is None:
             err("Part type '{}' not in implementation spec.".format(part_type))
 
         # Check destination slot arity
-        if dst_slot is not None and dst_slot >= spec.arity:
+        if dst_slot is not None and dst_slot >= proto_template.arity:
             err("Cannot attach part '%s' with arity %d at slot %d" %
-                (part_id, spec.arity, dst_slot))
+                (part_id, proto_template.arity, dst_slot))
 
         # Add part parameters
-        part.orientation = conf.get('orientation', 0)
+        proto_part.orientation = part.get('orientation', 0)
 
-        params = spec.serialize_params(conf.get('params', {}))
+        params = proto_template.serialize_params(part.get('params', {}))
         for param in params:
-            p = part.param.add()
+            p = proto_part.param.add()
             p.value = param
 
         # Add children
-        children = conf.get('children', {})
-        for src in children:
-            if src >= spec.arity:
+        children = part.get('children', {})
+        for child_id in children:
+            if child_id >= proto_template.arity:
                 err("Cannot attach to slot {} of part '{}' with arity "
-                    "{}.".format(src, part_id, spec.arity))
+                    "{}.".format(child_id, part_id, proto_template.arity))
 
-            if src == dst_slot:
+            if child_id == dst_slot:
                 err("Part '{}': Attempt to use slot {} for child which is "
-                    "already attached to parent.".format(part_id, src))
-            self._process_body_connection(part, src, children[src])
+                    "already attached to parent.".format(part_id, child_id))
+            childs_orientation = self._rotation(
+                    arity=proto_template.arity,
+                    parents_slot=child_id,
+                    rotation=proto_part.orientation)
+            childs_x, childs_y = self._coordinates(
+                    rotation=childs_orientation,
+                    init_x=proto_part.x,
+                    init_y=proto_part.y
+            )
+            self._process_body_connection(
+                    proto_part,
+                    child_id,
+                    children[child_id],
+                    childs_x,
+                    childs_y)
 
-        return part
+        return proto_part
 
-    def _process_body_connection(self, part, src, conf):
+    def _process_body_connection(
+            self,
+            parent_part,
+            src_slot,
+            child_part,
+            x,
+            y):
         """
-        :param part:
-        :type part: BodyPart
-        :param src: Slot on parent
-        :type src: int
-        :param conf:
+        :param parent_part:
+        :type parent_part: BodyPart
+        :param src_slot: Slot on parent
+        :type src_slot: int
+        :param child_part:
         :return:
         :rtype: BodyConnection
         """
-        conn = part.child.add()
-        conn.src = src
-        conn.dst = conf['slot'] if 'slot' in conf else 0
-        conn.part.CopyFrom(self._process_body_part(conf, conn.dst))
+        conn = parent_part.child.add()
+        conn.src_slot = src_slot
+        conn.dst_slot = child_part['slot'] if 'slot' in child_part else 0
+        conn.part.CopyFrom(self._process_body_part(
+                part=child_part,
+                dst_slot=conn.dst_slot,
+                x=x,
+                y=y))
+
+    @staticmethod
+    def _rotation(arity, parents_slot, rotation):
+        """
+        Method that determines the rotation of a module
+        :param arity:
+        :param parents_slot:
+        :param rotation:
+        :return:
+        :rtype: int
+        """
+        if arity is 2:
+            return (rotation + 180.0) % 360.0 if parents_slot is 0 else rotation
+        elif arity is 4:
+            if parents_slot is 0:
+                return (rotation + 180.0) % 360.0
+            elif parents_slot is 1:
+                return (rotation + 0.0) % 360.0
+            elif parents_slot is 2:
+                return (rotation + 270) % 360.0
+            elif parents_slot is 3:
+                return (rotation + 90.0) % 360.0
+        else:
+            err("Unsupported parents slot provided.")
+
+    @staticmethod
+    def _coordinates(rotation, init_x, init_y):
+        """
+        Method that determines the coordinates of a module
+        :param rotation:
+        :param init_x:
+        :param init_y:
+        :return:
+        :rtype: tuple
+        """
+        rotation = int(rotation)
+        if rotation == 0:
+            return (init_x + 1), init_y
+        elif rotation == 90:
+            return init_x, (init_y + 1)
+        elif rotation == 180:
+            return (init_x - 1), init_y
+        elif rotation == 270:
+            return init_x, (init_y - 1)
+        else:
+            err("Unsupported parents rotation angle provided.")
 
 
 class NeuralNetworkDecoder(object):

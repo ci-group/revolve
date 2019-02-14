@@ -19,7 +19,7 @@ def get_builder(conf):
     )
 
 
-def get_simulation_robot(
+def to_sdfbot(
         robot,
         name,
         builder,
@@ -37,14 +37,13 @@ def get_simulation_robot(
     battery = None if battery_charge is None else BasicBattery(battery_charge)
     brain_conf = None if not hasattr(conf, 'brain_conf') else conf.brain_conf
 
-    model = builder.get_sdf_model(
+    model = builder.sdf_robot(
             robot=robot,
             controller_plugin="libRobotControlPlugin.so",
             update_rate=conf.controller_update_rate,
             name=name,
             battery=battery,
-            brain_conf=brain_conf
-    )
+            brain_conf=brain_conf)
 
     apply_surface_parameters(model, conf.world_step_size)
 

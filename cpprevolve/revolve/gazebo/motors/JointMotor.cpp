@@ -28,10 +28,10 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 JointMotor::JointMotor(
     ::gazebo::physics::ModelPtr _model,
-    std::string _partId,
-    std::string _motorId,
+    const std::string &_partId,
+    const std::string &_motorId,
     sdf::ElementPtr _motor,
-    unsigned int _outputs)
+    const unsigned int _outputs)
     : Motor(_model, _partId, _motorId, _outputs)
 {
   if (not _motor->HasAttribute("joint"))

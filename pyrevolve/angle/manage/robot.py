@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import numpy as np
 from collections import deque
 
 from pyrevolve.sdfbuilder.math import Vector3
 from pyrevolve.util import Time
-import numpy as np
 
 
 class Robot(object):

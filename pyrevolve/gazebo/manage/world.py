@@ -4,8 +4,6 @@ from __future__ import absolute_import
 # Global / system
 import time
 
-import asyncio
-
 from pygazebo.msg import world_control_pb2
 
 # Revolve

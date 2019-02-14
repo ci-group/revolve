@@ -12,7 +12,7 @@ from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
 from pyrevolve.angle import Tree
-from pyrevolve.convert.yaml import yaml_to_robot
+from pyrevolve.convert.yaml import yaml_to_proto
 from pyrevolve.sdfbuilder import Pose
 from pyrevolve.sdfbuilder.math import Vector3
 from pyrevolve.tol.manage import World
@@ -23,24 +23,23 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    conf = parser.parse_args()
+    settings = parser.parse_args()
 
-    conf.output_directory = "output"
-    conf.restore_directory = "restore"
-    with open("models/robot_26.yaml", 'r') as yamlfile:
-        bot_yaml1 = yamlfile.read()
+    with open("models/robot_26.yaml", 'r') as yaml_file:
+        bot_yaml = yaml_file.read()
+    settings.genome = "\n".join(bot_yaml.splitlines()).replace("\'", "\"")
 
-    world = await World.create(conf)
+    world = await World.create(settings)
 
     # These are useful when working with YAML
     body_spec = world.builder.body_builder.spec
     brain_spec = world.builder.brain_builder.spec
 
     # Create a robot from YAML
-    proto_bot = yaml_to_robot(
+    proto_bot = yaml_to_proto(
             body_spec=body_spec,
             nn_spec=brain_spec,
-            yaml=bot_yaml1)
+            yaml=bot_yaml)
 
     robot_tree = Tree.from_body_brain(
             body=proto_bot.body,
@@ -48,7 +47,7 @@ async def run():
             body_spec=body_spec)
     pose = Pose(position=Vector3(0, 0, 0.05))
     future = await (world.insert_robot(
-            tree=robot_tree,
+            py_bot=robot_tree,
             pose=pose,
             # name="robot_26"
     ))

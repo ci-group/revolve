@@ -28,9 +28,9 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 Motor::Motor(
     ::gazebo::physics::ModelPtr _model,
-    std::string _partId,
-    std::string _motorId,
-    unsigned int outputNeurons)
+    const std::string &_partId,
+    const std::string &_motorId,
+    const unsigned int outputNeurons)
     : model_(_model)
     , partId_(_partId)
     , motorId_(_motorId)

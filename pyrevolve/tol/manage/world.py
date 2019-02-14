@@ -4,11 +4,6 @@ from __future__ import print_function
 import os
 import time
 
-from pygazebo.msg import model_pb2
-from pygazebo.msg import poses_stamped_pb2
-from pygazebo.msg import world_control_pb2
-from pygazebo.msg import world_stats_pb2
-
 from pyrevolve import parser, str_to_address, make_revolve_config
 from pyrevolve.angle import Tree, Crossover, Mutator, WorldManager
 from pyrevolve.angle.robogen.spec import make_planar
@@ -18,7 +13,7 @@ from pyrevolve.util import multi_future
 from .. import logger
 from .. import constants
 from .robot import Robot
-from ..build import get_builder, get_simulation_robot
+from ..build import get_builder, to_sdfbot
 from ..scenery import Wall
 from ..spec import get_tree_generator
 
@@ -95,7 +90,7 @@ class World(WorldManager):
         :return:
         """
         self = cls(_private=cls._PRIVATE, conf=conf)
-        await (self._init())
+        await self._init()
         return self
 
     def robots_header(self):
@@ -169,7 +164,7 @@ class World(WorldManager):
             if not gen:
                 return None
 
-            tree, robot, bbox = gen
+            tree, _, bbox = gen
             trees.append(tree)
             bboxes.append(bbox)
 
@@ -193,14 +188,14 @@ class World(WorldManager):
                 lambda _: logger.debug("Done inserting population."))
         return future
 
-    def get_simulation_sdf(self, robot, robot_name, initial_battery=0.0):
+    def to_sdfbot(self, robot, robot_name, initial_battery=0.0):
         """
         :param robot:
         :param robot_name:
         :param initial_battery:
         :return:
         """
-        return get_simulation_robot(
+        return to_sdfbot(
                 robot=robot,
                 name=robot_name,
                 builder=self.builder,

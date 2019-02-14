@@ -8,10 +8,7 @@ import random
 import itertools
 
 from pyrevolve.spec import NeuralNetwork
-from pyrevolve.spec import Neuron
 from pyrevolve.spec import NeuralNetImplementation
-from pyrevolve.spec import NeuronSpec
-from pyrevolve.spec import Body
 from pyrevolve.spec import BodyImplementation
 
 from pyrevolve.util import decide

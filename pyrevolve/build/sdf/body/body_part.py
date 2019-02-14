@@ -70,6 +70,8 @@ class BodyPart(PosableGroup):
         # is defined in the spec, there is usually no need to set it
         # in the body part itself.
         self.arity = kwargs.get('arity', None)
+        self.x = kwargs.get('x', None)
+        self.y = kwargs.get('y', None)
 
         # List of components which have been added thusfar
         self.components = []

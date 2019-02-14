@@ -1066,12 +1066,11 @@ def euler_matrix(ai, aj, ak, axes='sxyz'):
 
     """
     try:
-        firstaxis, parity, repetition, frame = _AXES2TUPLE[axes]
+        first_axis, parity, repetition, frame = _AXES2TUPLE[axes]
     except (AttributeError, KeyError):
-        _TUPLE2AXES[axes]  # validation
-        firstaxis, parity, repetition, frame = axes
+        first_axis, parity, repetition, frame = axes
 
-    i = firstaxis
+    i = first_axis
     j = _NEXT_AXIS[i + parity]
     k = _NEXT_AXIS[i - parity + 1]
 

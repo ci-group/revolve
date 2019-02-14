@@ -145,7 +145,7 @@ class Supervisor(object):
               )
 
     def launch_simulator(self):
-        print("WARNING! launching only simulator, no manager")
+        print("\nNOTE: launching only a simulator, not a manager script!\n")
         self._launch_simulator()
 
         # Wait for the end
@@ -293,6 +293,7 @@ class Supervisor(object):
         :return:
         """
         print("Launching experiment manager...")
+        os.environ['PYTHONUNBUFFERED'] = 'True'
         args = self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
         process = subprocess.Popen(

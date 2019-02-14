@@ -38,11 +38,11 @@ def get_analysis_robot(robot, builder):
     :type builder: BodyBuilder
     :return:
     """
-    model = builder.get_sdf_model(
+    model = builder.sdf_robot(
             robot=robot,
-            analyzer_mode=True,
             controller_plugin=None,
-            name="analyze_bot")
+            name="analyze_bot",
+            analyzer_mode=True)
     model.remove_elements_of_type(Sensor, recursive=True)
     sdf = SDF()
     sdf.add_element(model)

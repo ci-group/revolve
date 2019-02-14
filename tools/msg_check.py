@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import os
-import sys
 import re
+import sys
 
 # Get current working directory
 cwd = os.getcwd()
@@ -17,9 +17,9 @@ if len(sys.argv) > 1 and sys.argv[1] == "xml":
   sys.stderr.write('''<results>\n''')
  
 # Iterate over all the .proto files
-for filename in os.listdir(cwd + "/cpp/revolve/msgs"):
+for filename in os.listdir(cwd + "/cpprevolve/revolve/msgs"):
   if filename.endswith('.proto'):
-    with open(cwd + "/cpp/revolve/msgs/" + filename, 'r') as f:
+    with open(cwd + "/cpprevolve/revolve/msgs/" + filename, 'r') as f:
       for line in f.readlines():
         # Get the "/// \interface (*)" 
         iface_match = re.search('^///\s\\\\interface\s+.*$', line)
