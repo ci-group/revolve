@@ -14,24 +14,26 @@ If all [pre-requirements](https://github.com/ci-group/revolve/wiki/Installation-
 
 ```bash
 git clone https://github.com/ci-group/revolve.git
-cd ./revolve
+export SIM_HOME=`pwd` && cd $SIM_HOME/revolve
 mkdir -p build && cd build
 cmake ..
 make -j4
 ```
 
-Within the `revolve` root directory create Python virtual environment:
+Within the `revolve/` root directory create Python virtual environment:
 
 ```bash
+cd $SIM_HOME/revolve
 virtualenv --python python3 .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-To verify the build run:
+To verify the build, run following command to open the Gazebo simulator:
 ```bash
-(.venv) ./revolve.py
+(.venv) ./revolve.py --simulator-cmd=gazebo
 ```
+If you want to have an overview of all possible Revolve commands, run `./revolve.py --help`.
 
 *See [Installation Instructions for Revolve](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Revolve)
 for detailed instructions, and how to build from source.*
