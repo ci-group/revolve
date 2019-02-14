@@ -227,6 +227,21 @@ namespace revolve
 
       private: double goalX;
       private: double goalY;
+      private: double bestFitnessGait;
+      private: double bestFitnessLeft;
+      private: double bestFitnessRight;
+      private: int learningPeriod;
+      private: double eps;
+      private: double psi;
+
+      // Gait learning
+      private: PolicyPtr bestPolicyGait = NULL;
+      private: PolicyPtr bestInterpolationCacheGait = NULL;
+      private: PolicyPtr bestPolicyLeft = NULL;
+      private: PolicyPtr bestInterpolationCacheLeft = NULL;
+      private: PolicyPtr bestPolicyRight = NULL;
+      private: PolicyPtr bestInterpolationCacheRight = NULL;
+
     };
   }
 }

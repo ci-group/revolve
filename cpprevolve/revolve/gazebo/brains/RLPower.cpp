@@ -56,8 +56,9 @@ RLPower::RLPower(
 
   this->robot_ = _model;
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 50.0;
+  this->evaluationRate_ = 100.0;
   this->numInterpolationPoints_ = 100;
+  this->learningPeriod = 25;
   this->maxEvaluations_ = 1000;
   this->maxRankedPolicies_ = 25;
   this->sigma_ = 0.8;
@@ -68,6 +69,11 @@ RLPower::RLPower(
   // Generate end-point for targeted locomotion
   this->goalX = ((double) rand() / (RAND_MAX))*10 - 5; // In [-5,5]
   this->goalY = ((double) rand() / (RAND_MAX))*10 - 5; // In [-5,5]
+  this->bestFitnessGait = 0;
+  this->bestFitnessLeft = 0;
+  this->bestFitnessRight = 0;
+  this->eps = 0.1;
+  this->psi = 20.0;
 
   // Generate first random policy
   auto numMotors = _motors.size();
@@ -100,10 +106,13 @@ void RLPower::Update(
   if ((_time - this->startTime_) > this->evaluationRate_ and
       this->generationCounter_ < this->maxEvaluations_)
   {
+    // Get current position and update it to later obtain fitness
     auto currPosition = this->robot_->WorldPose();
-    //std::cout << "Rotation is" << currPosition.Rot() << "\n";
     this->evaluator_->Update(currPosition);
 
+    this->robot_->
+
+    // Update policy
     this->UpdatePolicy(numMotors);
     this->startTime_ = _time;
     this->evaluator_->Reset();
@@ -231,8 +240,98 @@ void RLPower::InterpolateCubic(
 void RLPower::UpdatePolicy(const size_t _numSplines)
 {
   // Calculate fitness for current policy
-  auto currFitness = this->Fitness("gait");
-  //std::cout << "Fitness is " << currFitness << std::endl;
+  auto currentFitnessGait= this->Fitness("gait");
+  auto currentFitnessLeft= this->Fitness("left");
+  auto currentFitnessRight= this->Fitness("right");
+
+  /*
+  // Compare with best left turn policy
+  if (currentFitnessLeft > this->bestFitnessLeft){
+    // Verbose
+    std::cout << "Update best policy for left turn \n";
+
+    // Save this fitness  for future comparison
+    this->bestFitnessLeft = currentFitnessLeft;
+
+    // Save this policy
+    this->bestPolicyLeft = this->currentPolicy_;
+    this->bestInterpolationCacheLeft = this->interpolationCache_;
+  }
+
+  // Compare with best left turn policy
+  if (currentFitnessRight > this->bestFitnessRight){
+    // Verbose
+    std::cout << "Update best policy for right turn \n";
+
+    // Save this fitness  for future comparison
+    this->bestFitnessRight = currentFitnessRight;
+
+    // Save this policy
+    this->bestPolicyRight = this->currentPolicy_;
+    this->bestInterpolationCacheRight = this->interpolationCache_;
+  }
+   */
+
+  // Compare with best gait policy
+  if (currentFitnessGait > this->bestFitnessGait){
+    // Verbose
+    std::cout << "Update best policy \n";
+    // Save this fitness  for future comparison
+    this->bestFitnessGait = currentFitnessGait;
+
+    // Save this policy
+    this->bestPolicyGait = this->currentPolicy_;
+    this->bestInterpolationCacheGait = this->interpolationCache_;
+  }
+
+  // Learning part
+  std::string learnOrientation = "";
+  std::string moveOrientation = "";
+
+  size_t n_init = this->maxRankedPolicies_;
+  if (this->generationCounter_ < 2*n_init){
+    learnOrientation = "gait";
+    moveOrientation = "gait";
+    std::cout << "Orientation: gait";
+  }
+  /*
+  else if (this->generationCounter_ < 3*n_init){
+    learnOrientation = "left";
+    moveOrientation = "left";
+    std::cout << "Orientation: left";
+  }
+  else if (this->generationCounter_ < 4*n_init){
+    learnOrientation = "right";
+    moveOrientation = "right";
+    std::cout << "Orientation: right";
+  }
+   */
+  // When we enter the logical part
+  else{
+    // Logical part based on angle between robot face and object
+    std::cout << "Perform logical part \n";
+
+    learnOrientation = "None";
+    moveOrientation = "gait";
+  }
+
+  // Working variable
+  double currFitness = 0.f;
+
+  // The selected direction is the one which we will learn for in the next iteration
+  if (learnOrientation == "left"){
+    currFitness = currentFitnessLeft;
+  }
+  else if(learnOrientation == "right"){
+    currFitness = currentFitnessRight;
+  }
+  else if(learnOrientation == "gait"){
+    currFitness = currentFitnessGait;
+  }
+  else if(learnOrientation != "None"){
+    std::cout << "Invalid orientation given";
+  }
+
   // Insert ranked policy in list
   PolicyPtr backupPolicy = std::make_shared< Policy >(_numSplines);
   for (size_t i = 0; i < _numSplines; ++i)
@@ -250,8 +349,6 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     auto last = std::prev(this->rankedPolicies_.end());
     this->rankedPolicies_.erase(last);
   }
-
-  // TODO: Record fitnesses and policies
 
   // Update generation counter and check is it finished
   this->generationCounter_++;
@@ -396,11 +493,37 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     }
   }
 
-  // cache update
-  this->InterpolateCubic(
-      _numSplines,
-      this->currentPolicy_.get(),
-      this->interpolationCache_.get());
+  // Set best in case we are finished with learning
+  if(learnOrientation == "None"){
+    // Verbose
+    std::cout << "Finished learning. Now pick the best policy with fitness ";
+
+    // Select relevant policy
+    if(moveOrientation == "left"){
+      std::cout  << this->bestFitnessLeft << "\n";
+      this->currentPolicy_ = this->bestPolicyLeft;
+      this->interpolationCache_ = this->bestInterpolationCacheLeft;
+    }
+    else if(moveOrientation == "right"){
+      std::cout  << this->bestFitnessRight << "\n";
+      this->currentPolicy_ = this->bestPolicyRight;
+      this->interpolationCache_ = this->bestInterpolationCacheRight;
+    }
+    else if(moveOrientation == "gait"){
+      std::cout  << this->bestFitnessGait << "\n";
+      this->currentPolicy_ = this->bestPolicyGait;
+      this->interpolationCache_ = this->bestInterpolationCacheGait;
+    }
+    else{
+      std::cout << "Incorrect direction given \n";
+    }
+  }
+  // In case we want to continue learning
+  else
+  {
+    // cache update
+    this->InterpolateCubic(_numSplines, this->currentPolicy_.get(), this->interpolationCache_.get());
+  }
 }
 
 /////////////////////////////////////////////////

@@ -86,7 +86,7 @@ double Evaluator::Fitness(std::string controllerType)
     return (gait/this->evaluationRate_);
   }
   //TODO: Deal with 2*PI boundary
-  else if (controllerType == "leftTurn"){
+  else if (controllerType == "left"){
     // Obtain fitness
     double fitness = (z2 - z1 - this->penalty*gait)/this->evaluationRate_;
 
@@ -100,7 +100,7 @@ double Evaluator::Fitness(std::string controllerType)
 
     return fitness;
   }
-  else if (controllerType == "rightTurn"){
+  else if (controllerType == "right"){
     // Obtain fitness
     double fitness = (z1 - z2 - this->penalty*gait)/this->evaluationRate_;
 
