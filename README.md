@@ -1,5 +1,3 @@
-# Revolve - Robot evolution framework
-
 <img  align="right" width="150" height="150"  src="/docs/revolve-logo.png">
 
 **Revolve** is an open source software framework for robot evolution providing C++ and Python libraries to create,
