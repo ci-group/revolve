@@ -48,7 +48,7 @@ async def run():
     future = await (world.insert_robot(
             py_bot=robot_tree,
             pose=pose,
-            # name="robot_26"
+            name="robot_26"
     ))
     robot_manager = await future
 
@@ -59,7 +59,7 @@ async def run():
         # Print robot fitness every second
         print("Robot fitness is {fitness}".format(
                 fitness=robot_manager.fitness()))
-        await asyncio.sleep(10.0)
+        await asyncio.sleep(100.0)
 
 
 def main():

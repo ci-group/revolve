@@ -49,16 +49,16 @@ RLPower::RLPower(
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
 
-//  // Listen to network modification requests
-//  this->alterSub_ = this->node_->Subscribe(
-//      "~/" + _modelName + "/modify_spline_policy", &RLPower::Modify,
-//      this);
+  //  // Listen to network modification requests
+  //  this->alterSub_ = this->node_->Subscribe(
+  //      "~/" + _modelName + "/modify_spline_policy", &RLPower::Modify,
+  //      this);
 
   this->robot_ = _model;
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 100.0;
+  this->evaluationRate_ = 30.0;
   this->numInterpolationPoints_ = 100;
-  this->learningPeriod = 25;
+  this->learningPeriod = 10;
   this->maxEvaluations_ = 1000;
   this->maxRankedPolicies_ = 25;
   this->sigma_ = 0.8;
@@ -74,6 +74,11 @@ RLPower::RLPower(
   this->bestFitnessRight = 0;
   this->eps = 0.1;
   this->psi = 20.0;
+
+  // To determine start position
+  this->resetPosition = false;
+  this->bestStartPositionGait = {0,0,0,0,0};
+  this->startPositions = {0,0,0,0,0};
 
   // Generate first random policy
   auto numMotors = _motors.size();
@@ -93,7 +98,7 @@ void RLPower::Update(
     double _time,
     double _step)
 {
-//  boost::mutex::scoped_lock lock(this->rlpowerMutex_);
+  //  boost::mutex::scoped_lock lock(this->rlpowerMutex_);
 
   if (this->startTime_ < 0)
   {
@@ -110,15 +115,18 @@ void RLPower::Update(
     auto currPosition = this->robot_->WorldPose();
     this->evaluator_->Update(currPosition);
 
-    this->robot_->
-
     // Update policy
     this->UpdatePolicy(numMotors);
     this->startTime_ = _time;
     this->evaluator_->Reset();
-  }
 
-  // generate outputs
+    // Save starting position
+    unsigned d = 0;
+    for (auto joint: this->robot_->GetJoints()){
+     this->startPositions[d] = joint->Position(0);
+   }
+  }
+    // generate outputs
   auto *output = new double[numMotors];
   this->Output(numMotors, _time, output);
 
@@ -256,6 +264,8 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     // Save this policy
     this->bestPolicyLeft = this->currentPolicy_;
     this->bestInterpolationCacheLeft = this->interpolationCache_;
+    this->bestStartPositionLeft = this->startPositions.back();
+
   }
 
   // Compare with best left turn policy
@@ -269,6 +279,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     // Save this policy
     this->bestPolicyRight = this->currentPolicy_;
     this->bestInterpolationCacheRight = this->interpolationCache_;
+    this->bestStartPositionRight = this->startPositions.back();
   }
    */
 
@@ -282,6 +293,11 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     // Save this policy
     this->bestPolicyGait = this->currentPolicy_;
     this->bestInterpolationCacheGait = this->interpolationCache_;
+
+    // Save starting positions
+    for(unsigned ki = 0; ki <5; ki++){
+      this->bestStartPositionGait[ki] = this->startPositions[ki];
+    }
   }
 
   // Learning part
@@ -289,24 +305,24 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   std::string moveOrientation = "";
 
   size_t n_init = this->maxRankedPolicies_;
-  if (this->generationCounter_ < 2*n_init){
+  if (this->generationCounter_ < n_init + this->learningPeriod){
     learnOrientation = "gait";
     moveOrientation = "gait";
     std::cout << "Orientation: gait";
   }
-  /*
-  else if (this->generationCounter_ < 3*n_init){
-    learnOrientation = "left";
-    moveOrientation = "left";
-    std::cout << "Orientation: left";
-  }
-  else if (this->generationCounter_ < 4*n_init){
-    learnOrientation = "right";
-    moveOrientation = "right";
-    std::cout << "Orientation: right";
-  }
-   */
-  // When we enter the logical part
+    /*
+    else if (this->generationCounter_ < n_init + 2*this->learningPeriod){
+      learnOrientation = "left";
+      moveOrientation = "left";
+      std::cout << "Orientation: left";
+    }
+    else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
+      learnOrientation = "right";
+      moveOrientation = "right";
+      std::cout << "Orientation: right";
+    }
+     */
+    // When we enter the logical part
   else{
     // Logical part based on angle between robot face and object
     std::cout << "Perform logical part \n";
@@ -513,12 +529,26 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       std::cout  << this->bestFitnessGait << "\n";
       this->currentPolicy_ = this->bestPolicyGait;
       this->interpolationCache_ = this->bestInterpolationCacheGait;
+
+      // Make sure we're on a path feasible for the best solution found so far
+      /*
+      if(!this->resetPosition){
+        unsigned i = 0;
+        for (auto joint: this->robot_->GetJoints()){
+          joint->SetForce(0, 0.0);
+          joint->SetPosition(0, this->bestStartPositionGait(i));
+          joint->SetForce(0, 0.0);
+          i++;
+        }
+        this->resetPosition = true;
+      }
+       */
     }
     else{
       std::cout << "Incorrect direction given \n";
     }
   }
-  // In case we want to continue learning
+    // In case we want to continue learning
   else
   {
     // cache update
