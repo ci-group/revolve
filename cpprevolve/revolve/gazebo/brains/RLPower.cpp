@@ -56,9 +56,9 @@ RLPower::RLPower(
 
   this->robot_ = _model;
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 30.0;
+  this->evaluationRate_ = 60.0;
   this->numInterpolationPoints_ = 100;
-  this->learningPeriod = 10;
+  this->learningPeriod = 3;
   this->maxEvaluations_ = 1000;
   this->maxRankedPolicies_ = 25;
   this->sigma_ = 0.8;
@@ -76,9 +76,9 @@ RLPower::RLPower(
   this->psi = 20.0;
 
   // To determine start position
-  this->resetPosition = false;
-  this->bestStartPositionGait = {0,0,0,0,0};
-  this->startPositions = {0,0,0,0,0};
+  this->resetPosition = 0;
+  this->bestStartPositionGait = {0.0,0.0,0.0,0.0,0.0};
+  this->startPositions = {0.0,0.0,0.0,0.0,0.0};
 
   // Generate first random policy
   auto numMotors = _motors.size();
@@ -531,18 +531,22 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       this->interpolationCache_ = this->bestInterpolationCacheGait;
 
       // Make sure we're on a path feasible for the best solution found so far
-      /*
-      if(!this->resetPosition){
+      if(this->resetPosition == 0){
+        std::cout << "UPDATE START POSITION ONCE \n";
+
         unsigned i = 0;
         for (auto joint: this->robot_->GetJoints()){
           joint->SetForce(0, 0.0);
-          joint->SetPosition(0, this->bestStartPositionGait(i));
+          joint->SetPosition(0, this->bestStartPositionGait[i]);
           joint->SetForce(0, 0.0);
           i++;
+
         }
-        this->resetPosition = true;
+        this->resetPosition = 1;
+        std::cout << "cp3: Reset position \n";
+
       }
-       */
+    std::cout << "cp4: finished learning \n";
     }
     else{
       std::cout << "Incorrect direction given \n";
@@ -552,6 +556,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   else
   {
     // cache update
+    std::cout << "cp1: I am learning \n";
     this->InterpolateCubic(_numSplines, this->currentPolicy_.get(), this->interpolationCache_.get());
   }
 }

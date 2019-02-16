@@ -29,7 +29,6 @@
 
 #include <boost/thread/mutex.hpp>
 #include <gazebo/gazebo.hh>
-#include <Eigen/Core>
 
 #include <revolve/msgs/spline_policy.pb.h>
 
@@ -238,11 +237,12 @@ namespace revolve
       // Implementing start position: For one strange reason, this doesn't work when I use std::vector
       // THen I keep on getting weird (and various messages when launching gz
 
-      public: std::vector<double> startPositions;
-      public: std::vector<double> bestStartPositionGait;
-      public: std::vector<double> bestStartPositionLeft;
-      public: std::vector<double> bestStartPositionRight;
-      public: bool resetPosition;
+
+      private: std::vector<double> startPositions;
+      private: std::vector<double> bestStartPositionGait;
+//      private: std::vector<double> bestStartPositionLeft;
+//      private: std::vector<double> bestStartPositionRight;
+      public: int resetPosition;
 
 
       // Gait learning
