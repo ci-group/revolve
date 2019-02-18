@@ -31,7 +31,7 @@ Evaluator::Evaluator(const double _evaluationRate)
   assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
   this->evaluationRate_ = _evaluationRate;
   this->iteration = 0;
-  this->penalty = 0;  // Parameter penalty for moving (for the steering controllers), e.g. 10
+  this->penalty = 7.0;  // Parameter penalty for moving (for the steering controllers), e.g. 10
   this->bestFitnessGait = 0;
   this->bestFitnessLeft = 0;
   this->bestFitnessRight = 0;
@@ -60,20 +60,20 @@ double Evaluator::Fitness(std::string controllerType)
 
   // Get angles in degrees for left/right turn controller
   auto c = 180.0/3.14159;
-  auto z1 =this->previousPosition_.Rot().Z()*c;
-  auto z2 =this->currentPosition_.Rot().Z()*c;
+  auto z1 = this->previousPosition_.Rot().Z()*c;
+  auto z2 = this->currentPosition_.Rot().Z()*c;
 
   // Verbose
   std::cout << "\nIteration: " << this->iteration << "\n";
   std::cout << "Previous position: " << this->previousPosition_.Pos().X() << ", " << this->previousPosition_.Pos().Y() << std::endl;
   std::cout << "Current position " << this->currentPosition_.Pos().X() << ", "<< this->currentPosition_.Pos().Y() << std::endl;
-  std::cout << "Previous z-angle: " << z1 << std::endl;
-  std::cout << "Current z-angle: " << z2 << std::endl;
+  //std::cout << "Previous z-angle: " << z1 << std::endl;
+  //std::cout << "Current z-angle: " << z2 << std::endl;
 
   // Enter controllers
   if (controllerType == "gait"){
-    // Obtain fitness
-    double fitness = gait/this->evaluationRate_;
+    // Obtain fitness, as defined in https://doi.org/10.1162/ARTL_a_00223
+    double fitness = std::pow(100.0*gait/this->evaluationRate_,6);
 
     // Update best fitness
     if (fitness > this->bestFitnessGait){
@@ -83,7 +83,7 @@ double Evaluator::Fitness(std::string controllerType)
     // Verbose
     std::cout << "Gait: Fitness: " <<  fitness  << ". Best: " << this->bestFitnessGait << std::endl;
 
-    return (gait/this->evaluationRate_);
+    return (fitness);
   }
   //TODO: Deal with 2*PI boundary
   else if (controllerType == "left"){

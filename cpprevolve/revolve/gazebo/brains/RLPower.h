@@ -237,21 +237,22 @@ namespace revolve
       // Implementing start position: For one strange reason, this doesn't work when I use std::vector
       // THen I keep on getting weird (and various messages when launching gz
 
-
-      private: std::vector<double> startPositions;
-      private: std::vector<double> bestStartPositionGait;
+//      private: std::vector<double> startPositions;
+//      private: std::vector<double> bestStartPositionGait;
 //      private: std::vector<double> bestStartPositionLeft;
 //      private: std::vector<double> bestStartPositionRight;
+      public: int resetPositionGait;
+      public: int resetPositionLeft;
+      public: int resetPositionRight;
       public: int resetPosition;
 
-
       // Gait learning
-      private: PolicyPtr bestPolicyGait = NULL;
-      private: PolicyPtr bestInterpolationCacheGait = NULL;
-      private: PolicyPtr bestPolicyLeft = NULL;
-      private: PolicyPtr bestInterpolationCacheLeft = NULL;
-      private: PolicyPtr bestPolicyRight = NULL;
-      private: PolicyPtr bestInterpolationCacheRight = NULL;
+      private: PolicyPtr bestPolicyGait;
+      private: PolicyPtr bestInterpolationCacheGait;
+      private: PolicyPtr bestPolicyLeft;
+      private: PolicyPtr bestInterpolationCacheLeft;
+      private: PolicyPtr bestPolicyRight;
+      private: PolicyPtr bestInterpolationCacheRight;
     };
   }
 }
