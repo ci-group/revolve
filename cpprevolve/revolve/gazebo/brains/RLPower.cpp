@@ -16,6 +16,7 @@
 * Author: Milan Jelisavcic
 * Date: March 28, 2016
 *
+* TODO: <Remove reset robot (first fix the robot's angle>
 */
 
 #include <fstream>
@@ -78,8 +79,7 @@ RLPower::RLPower(
   //  this->resetPositionGait = 0;
   //  this->resetPositionLeft = 0;
   //  this->resetPositionRight = 0;
-    this->resetPosition = 0;
-
+  this->resetPosition = 0;
 
   // Generate first random policy
   auto numMotors = _motors.size();
@@ -142,13 +142,6 @@ void RLPower::Update(
     this->evaluator_->Update(currPosition);
     // Set the current as previous position
     this->evaluator_->Reset();
-
-    //    // Save starting position
-//    unsigned d = 0;
-//    for (auto joint: this->robot_->GetJoints()){
-//      this->startPositions[d] = joint->Position(0);
-//      d++;
-//    }
 
   }
   // generate outputs
@@ -313,243 +306,214 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     // Save this policy
     *this->bestPolicyGait = *this->currentPolicy_;
     *this->bestInterpolationCacheGait = *this->interpolationCache_;
-
-    // Debugging for current policy
-    for (int i = 0; i < 5;i++){
-      auto spline = this->currentPolicy_->at(i);
-      for(auto en:spline){
-        std::cout << en <<",";
-      }
-      std::cout << std::endl;
-    }
-
-
-    /*
-    std::cout << "cp11\n";
-    for (size_t i = 0; i < _numSplines; ++i)
-    {
-      std::cout << this->interpolationCache_->at(i)[0] << ", " << this->interpolationCache_->at(i)[1] << std::endl;
-    }
-    std::cout << "cp11\n";
-    for (size_t i = 0; i < _numSplines; ++i)
-    {
-      std::cout << this->bestInterpolationCacheGait->at(i)[0] << ", " << this->bestInterpolationCacheGait->at(i)[1] << std::endl;
-    }
-    */
   }
 
-  // Learning part: Gets over-ridden
-  std::string learnOrientation = "";
+  // Learning part: Gets over-written
   std::string moveOrientation = "";
 
   size_t n_init = this->maxRankedPolicies_;
   if (this->generationCounter_ < n_init + this->learningPeriod){
-    learnOrientation = "left";
-    moveOrientation = "left";
-    std::cout << "Orientation: left";
-  }
-  /*
-  else if (this->generationCounter_ < n_init + 2*this->learningPeriod){
-    learnOrientation = "left";
-    moveOrientation = "left";
-    std::cout << "Orientation: left";
-  }
-  else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
-    learnOrientation = "right";
     moveOrientation = "right";
     std::cout << "Orientation: right";
   }
+    /*
+    else if (this->generationCounter_ < n_init + 2*this->learningPeriod){
+      moveOrientation = "left";
+      std::cout << "Orientation: left";
+    }
+    else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
+      moveOrientation = "right";
+      std::cout << "Orientation: right";
+    }
+         */
     // When we enter the logical part
-  */
-   else{
+  else{
     // Logical part based on angle between robot face and object
     std::cout << "Perform logical part \n";
 
-    learnOrientation = "None";
-    moveOrientation = "left";
+    // E.g. decide to move right
+    moveOrientation = "right";
   }
 
-  // Working variable
-  double currFitness = 0.f;
 
-  // The selected direction is the one which we will learn for in the next iteration
-  if (learnOrientation == "left"){
-    currFitness = currentFitnessLeft;
-  }
-  else if(learnOrientation == "right"){
-    currFitness = currentFitnessRight;
-  }
-  else if(learnOrientation == "gait"){
-    currFitness = currentFitnessGait;
-  }
-  else if(learnOrientation != "None"){
-    std::cout << "Invalid orientation given";
-  }
 
-  // Insert ranked policy in list
-  PolicyPtr backupPolicy = std::make_shared< Policy >(_numSplines);
-  for (size_t i = 0; i < _numSplines; ++i)
-  {
-    auto &spline = this->currentPolicy_->at(i);
-    backupPolicy->at(i) = Spline(spline.begin(), spline.end());
+  //If we still want to learn, i.e. create a new policy
+  if(this->generationCounter_ < n_init + this->learningPeriod){
+    // Working variable
+    double currFitness = 0.f;
 
-    spline.resize(this->sourceYSize_);
-  }
-  this->rankedPolicies_.insert({currFitness, backupPolicy});
-
-  // Remove worst policies
-  while (this->rankedPolicies_.size() > this->maxRankedPolicies_)
-  {
-    auto last = std::prev(this->rankedPolicies_.end());
-    this->rankedPolicies_.erase(last);
-  }
-
-  // Update generation counter and check is it finished
-  this->generationCounter_++;
-  if (this->generationCounter_ == this->maxEvaluations_)
-  {
-    std::exit(0);
-  }
-
-  // Increase spline points if it is a time
-  if (this->generationCounter_ % this->stepRate_ == 0)
-  {
-    std::cout << "cp7: \n Increase spline points \n";
-    this->IncreaseSplinePoints(_numSplines);
-  }
-
-  /// Actual policy generation
-
-  /// Determine which mutation operator to use
-  /// Default, for algorithms A and B, is used standard normal distributionyp
-  /// with decaying sigma. For algorithms C and D, is used normal distribution
-  /// with self-adaptive sigma.
-  std::random_device rd;
-  std::mt19937 mt(rd());
-
-  if (this->algorithmType_ == "C" or this->algorithmType_ == "D")
-  {
-    // uncorrelated mutation with one step size
-    std::mt19937 sigma_mt(rd());
-    std::normal_distribution< double > sigma_dist(0, 1);
-    this->sigma_ = this->sigma_ * std::exp(this->tau_ * sigma_dist(sigma_mt));
-  }
-  else
-  {
-    // Default is decaying sigma
-    if (this->rankedPolicies_.size() >= this->maxRankedPolicies_)
-    {
-      this->sigma_ *= SIGMA;
+    // The selected direction is the one which we will learn for in the next iteration
+    if (moveOrientation == "left"){
+      currFitness = currentFitnessLeft;
     }
-  }
-  std::normal_distribution< double > dist(0, this->sigma_);
+    else if(moveOrientation == "right"){
+      currFitness = currentFitnessRight;
+    }
+    else if(moveOrientation == "gait"){
+      currFitness = currentFitnessGait;
+    }
 
-  /// Determine which selection operator to use
-  /// Default, for algorithms A and C, is used ten parent crossover
-  /// For algorithms B and D, is used two parent crossover with binary
-  /// tournament selection
-  if (this->rankedPolicies_.size() < this->maxRankedPolicies_)
-  {
-    // Generate random policy if number of stored policies is less then
-    // `maxRankedPolicies_`
-    for (size_t i = 0; i < _numSplines; ++i)
+    // Insert ranked policy in list
+    PolicyPtr backupPolicy = std::make_shared< Policy >(_numSplines);
+    for (size_t i = 0; i < _numSplines; ++i){
+      auto &spline = this->currentPolicy_->at(i);
+      backupPolicy->at(i) = Spline(spline.begin(), spline.end());
+
+      spline.resize(this->sourceYSize_);
+    }
+
+    this->rankedPolicies_.insert({currFitness, backupPolicy});
+
+    // Remove worst policies
+    while (this->rankedPolicies_.size() > this->maxRankedPolicies_)
     {
-      for (size_t j = 0; j < this->sourceYSize_; ++j)
+      auto last = std::prev(this->rankedPolicies_.end());
+      this->rankedPolicies_.erase(last);
+    }
+
+    // Update generation counter and check is it finished
+    this->generationCounter_++;
+    if (this->generationCounter_ == this->maxEvaluations_)
+    {
+      std::exit(0);
+    }
+
+    // Increase spline points if it is a time
+    if (this->generationCounter_ % this->stepRate_ == 0)
+    {
+      std::cout << "cp7: \n Increase spline points \n";
+      this->IncreaseSplinePoints(_numSplines);
+    }
+
+    /// Actual policy generation
+
+    /// Determine which mutation operator to use
+    /// Default, for algorithms A and B, is used standard normal distributionyp
+    /// with decaying sigma. For algorithms C and D, is used normal distribution
+    /// with self-adaptive sigma.
+    std::random_device rd;
+    std::mt19937 mt(rd());
+
+    if (this->algorithmType_ == "C" or this->algorithmType_ == "D")
+    {
+      // uncorrelated mutation with one step size
+      std::mt19937 sigma_mt(rd());
+      std::normal_distribution< double > sigma_dist(0, 1);
+      this->sigma_ = this->sigma_ * std::exp(this->tau_ * sigma_dist(sigma_mt));
+    }
+    else
+    {
+      // Default is decaying sigma
+      if (this->rankedPolicies_.size() >= this->maxRankedPolicies_)
       {
-        (*this->currentPolicy_)[i][j] = dist(mt);
+        this->sigma_ *= SIGMA;
       }
     }
-  }
-  else if (this->generationCounter_ < this->maxRankedPolicies_ + this->learningPeriod)
-  {
-    // Generate new policy using weighted crossover operator
-    auto totalFitness = 0.0;
-    if (this->algorithmType_ == "B" or this->algorithmType_ == "D")
+    std::normal_distribution< double > dist(0, this->sigma_);
+
+    /// Determine which selection operator to use
+    /// Default, for algorithms A and C, is used ten parent crossover
+    /// For algorithms B and D, is used two parent crossover with binary
+    /// tournament selection
+    if (this->rankedPolicies_.size() < this->maxRankedPolicies_)
     {
-      // k-selection tournament
-      auto parent1 = this->BinarySelection();
-      auto parent2 = parent1;
-      while (parent2 == parent1)
-      {
-        parent2 = this->BinarySelection();
-      }
-
-      auto fitness1 = parent1->first;
-      auto fitness2 = parent2->first;
-
-      auto policy1 = parent1->second;
-      auto policy2 = parent2->second;
-
-      // TODO: Verify what should be total fitness in binary
-      totalFitness = fitness1 + fitness2;
-
-      // For each spline
+      // Generate random policy if number of stored policies is less then
+      // `maxRankedPolicies_`
       for (size_t i = 0; i < _numSplines; ++i)
       {
-        // And for each control point
         for (size_t j = 0; j < this->sourceYSize_; ++j)
         {
-          // Apply modifier
-          auto splinePoint = 0.0;
-          splinePoint +=
-              ((policy1->at(i)[j] - (*this->currentPolicy_)[i][j])) *
-              (fitness1 / totalFitness);
-          splinePoint +=
-              ((policy2->at(i)[j] - (*this->currentPolicy_)[i][j])) *
-              (fitness2 / totalFitness);
-
-          // Add a mutation + current
-          // TODO: Verify do we use current in this case
-          splinePoint += dist(mt) + (*this->currentPolicy_)[i][j];
-
-          // Set a newly generated point as current
-          (*this->currentPolicy_)[i][j] = splinePoint;
+          (*this->currentPolicy_)[i][j] = dist(mt);
         }
       }
     }
     else
     {
-      // Default is all parents selection
-
-      // Calculate first total sum of fitnesses
-      for (auto const &it : this->rankedPolicies_)
+      // Generate new policy using weighted crossover operator
+      auto totalFitness = 0.0;
+      if (this->algorithmType_ == "B" or this->algorithmType_ == "D")
       {
-        auto fitness = it.first;
-        totalFitness += fitness;
-      }
-
-      // For each spline
-      // TODO: Verify that this should is correct formula
-      for (size_t i = 0; i < _numSplines; ++i)
-      {
-        // And for each control point
-        for (size_t j = 0; j < this->sourceYSize_; ++j)
+        // k-selection tournament
+        auto parent1 = this->BinarySelection();
+        auto parent2 = parent1;
+        while (parent2 == parent1)
         {
-          // Apply modifier
-          auto splinePoint = 0.0;
-          for (auto const &it : this->rankedPolicies_)
+          parent2 = this->BinarySelection();
+        }
+
+        auto fitness1 = parent1->first;
+        auto fitness2 = parent2->first;
+
+        auto policy1 = parent1->second;
+        auto policy2 = parent2->second;
+
+        // TODO: Verify what should be total fitness in binary
+        totalFitness = fitness1 + fitness2;
+
+        // For each spline
+        for (size_t i = 0; i < _numSplines; ++i)
+        {
+          // And for each control point
+          for (size_t j = 0; j < this->sourceYSize_; ++j)
           {
-            auto fitness = it.first;
-            auto policy = it.second;
+            // Apply modifier
+            auto splinePoint = 0.0;
+            splinePoint += ((policy1->at(i)[j] - (*this->currentPolicy_)[i][j])) * (fitness1 / totalFitness);
+            splinePoint += ((policy2->at(i)[j] - (*this->currentPolicy_)[i][j])) * (fitness2 / totalFitness);
 
-            splinePoint +=
-                ((policy->at(i)[j] - (*this->currentPolicy_)[i][j])) *
-                (fitness / totalFitness);
+            // Add a mutation + current
+            // TODO: Verify do we use current in this case
+            splinePoint += dist(mt) + (*this->currentPolicy_)[i][j];
+
+            // Set a newly generated point as current
+            (*this->currentPolicy_)[i][j] = splinePoint;
           }
+        }
+      }
+      else
+      {
+        // Default is all parents selection
+        // Calculate first total sum of fitnesses
+        for (auto const &it : this->rankedPolicies_)
+        {
+          auto fitness = it.first;
+          totalFitness += fitness;
+        }
 
-          // Add a mutation + current
-          // TODO: Verify do we use 'current_policy_' in this case
-          splinePoint += dist(mt) + (*this->currentPolicy_)[i][j];
+        // For each spline
+        // TODO: Verify that this should is correct formula
+        for (size_t i = 0; i < _numSplines; ++i)
+        {
+          // And for each control point
+          for (size_t j = 0; j < this->sourceYSize_; ++j)
+          {
+            // Apply modifier
+            auto splinePoint = 0.0;
+            for (auto const &it : this->rankedPolicies_)
+            {
+              auto fitness = it.first;
+              auto policy = it.second;
 
-          // Set a newly generated point as current
-          (*this->currentPolicy_)[i][j] = splinePoint;
+              splinePoint += ((policy->at(i)[j] - (*this->currentPolicy_)[i][j])) * (fitness / totalFitness);
+            }
+
+            // Add a mutation + current
+            // TODO: Verify do we use 'current_policy_' in this case
+            splinePoint += dist(mt) + (*this->currentPolicy_)[i][j];
+
+            // Set a newly generated point as current
+            (*this->currentPolicy_)[i][j] = splinePoint;
+          }
         }
       }
     }
-  }
 
+    // cache update
+    std::cout << "cp1: I am learning \n";
+    this->InterpolateCubic(_numSplines, this->currentPolicy_.get(), this->interpolationCache_.get());
+  }
   // Set best in case we are finished with learning
-  if(learnOrientation == "None"){
+  else{
     // Verbose
     std::cout << "Finished learning. Now pick the best policy with fitness ";
 
@@ -578,31 +542,13 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
         }
         std::cout << std::endl;
       }
+      //        // Allow left and right controller to go back to init place again
+      //        this->resetPositionGait = 1;
+      //        this->resetPositionLeft = 0;
+      //        this->resetPositionRight = 0;
+      //        std::cout << "\ncp3: Current position \n";
+      //      }
 
-//      // Make sure we're on a path feasible for the best solution found so far
-//      if(this->resetPositionGait == 0){
-//        std::cout << "cp6: Load best starting position: ";
-//        unsigned i = 0;
-//        for (auto joint: this->robot_->GetJoints()){
-//          std::cout << this->bestStartPositionGait[i] << ", ";
-//          //joint->SetForce(0, 0.0);
-//          joint->SetPosition(0, this->bestStartPositionGait[i]);
-//          //joint->SetForce(0, 0.0);
-//          i++;
-//        }
-
-//        // Allow left and right controller to go back to init place again
-//        this->resetPositionGait = 1;
-//        this->resetPositionLeft = 0;
-//        this->resetPositionRight = 0;
-
-//        std::cout << "\ncp3: Current position \n";
-//
-//        i = 0;
-//        for (auto joint: this->robot_->GetJoints()){
-//          std::cout << joint->Position(0) << ", ";
-//        }
-//      }
       std::cout << "\n cp4: finished learning \n";
     }
     else{
@@ -612,14 +558,6 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       this->resetPosition=1;
       this->robot_->Reset();
     }
-
-  }
-    // In case we want to continue learning
-  else
-  {
-    // cache update
-    std::cout << "cp1: I am learning \n";
-    this->InterpolateCubic(_numSplines, this->currentPolicy_.get(), this->interpolationCache_.get());
   }
 }
 
