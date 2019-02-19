@@ -47,7 +47,7 @@ Evaluator::~Evaluator() = default;
 void Evaluator::Reset()
 {
   this->previousPosition_ = this->currentPosition_;
-  this->previousAngle = this->currentPosition_.Rot().Yaw()*180.0/3.14159;
+  this->previousAngle = this->currentPosition_.Rot().Yaw()*180.0/M_PI;
   this->iteration++;
 }
 /////////////////////////////////////////////////
@@ -60,7 +60,7 @@ double Evaluator::Fitness(std::string controllerType)
                                    this->currentPosition_.Pos().Y(), 2));
 
   // Get Z-angle in degrees
-  double zAngleFromOrigin = this->currentPosition_.Rot().Yaw()*180.0/3.14159;
+  double zAngleFromOrigin = this->currentPosition_.Rot().Yaw()*180.0/M_PI;
   double currentAngle = zAngleFromOrigin - this->previousAngle;
 
   // If we cross the boundary point from positive to negative
@@ -97,7 +97,6 @@ double Evaluator::Fitness(std::string controllerType)
 
     return (fitness);
   }
-  //TODO: Deal with 2*PI boundary
   else if (controllerType == "left"){
     // Obtain fitness
     double fitness = (currentAngle- this->penalty*gait)/this->evaluationRate_;

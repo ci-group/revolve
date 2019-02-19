@@ -56,9 +56,9 @@ RLPower::RLPower(
 
   this->robot_ = _model;
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 50.0;
+  this->evaluationRate_ = 60.0;
   this->numInterpolationPoints_ = 100; // Was 100
-  this->learningPeriod = 3;
+  this->learningPeriod = 7;
   this->maxEvaluations_ = 1000;
   this->maxRankedPolicies_ = 10;
   this->sigma_ = 0.8;
@@ -74,12 +74,6 @@ RLPower::RLPower(
   this->bestFitnessRight = 0;
   this->eps = 0.1;
   this->psi = 20.0;
-
-  //  // To determine start position
-  //  this->resetPositionGait = 0;
-  //  this->resetPositionLeft = 0;
-  //  this->resetPositionRight = 0;
-  this->resetPosition = 0;
 
   // Generate first random policy
   auto numMotors = _motors.size();
@@ -135,18 +129,6 @@ void RLPower::Update(
     this->UpdatePolicy(numMotors);
     this->startTime_ = _time;
 
-    // If we are still learning
-    if(this->generationCounter_ < this->maxRankedPolicies_ + this->learningPeriod)
-    {
-      // Reset starting position for learning!
-      std::cout << "Reset starting position \n";
-      this->robot_->Reset();
-    }
-
-    // We now have a new position again due to the reset.
-    currPosition = this->robot_->WorldPose();
-    // Set new initial position as current position
-    this->evaluator_->Update(currPosition);
     // Set the current as previous position
     this->evaluator_->Reset();
 
@@ -564,11 +546,6 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     }
     else{
       std::cout << "Incorrect direction given \n";
-    }
-    // Reset position one last time
-    if (this->resetPosition == 0){
-      this->resetPosition=1;
-      this->robot_->Reset();
     }
   }
 }
