@@ -62,6 +62,7 @@ namespace revolve
       private: double bestFitnessRight;
       private: double bestFitnessGait;
       private: double penalty;
+      private: double previousAngle;
     };
   }
 }

@@ -29,6 +29,7 @@ using namespace revolve::gazebo;
 Evaluator::Evaluator(const double _evaluationRate)
 {
   assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
+  this->previousAngle = 0;
   this->evaluationRate_ = _evaluationRate;
   this->iteration = 0;
   this->penalty = 7.0;  // Parameter penalty for moving (for the steering controllers), e.g. 10
@@ -46,6 +47,7 @@ Evaluator::~Evaluator() = default;
 void Evaluator::Reset()
 {
   this->previousPosition_ = this->currentPosition_;
+  this->previousAngle = this->currentPosition_.Rot().Yaw()*180.0/3.14159;
   this->iteration++;
 }
 /////////////////////////////////////////////////
@@ -57,18 +59,28 @@ double Evaluator::Fitness(std::string controllerType)
                           std::pow(this->previousPosition_.Pos().Y() -
                                    this->currentPosition_.Pos().Y(), 2));
 
+  // Get Z-angle in degrees
+  double zAngleFromOrigin = this->currentPosition_.Rot().Yaw()*180.0/3.14159;
+  double currentAngle = zAngleFromOrigin - this->previousAngle;
 
-  // Get angles in degrees for left/right turn controller
-  auto c = 180.0/3.14159;
-  auto z1 = this->previousPosition_.Rot().Z()*c;
-  auto z2 = this->currentPosition_.Rot().Z()*c;
+  // If we cross the boundary point from positive to negative
+  if(this->previousAngle > 90 and zAngleFromOrigin < -90){
+    currentAngle = 180 - this->previousAngle + 180 + zAngleFromOrigin;
+    std::cout << "Crossed boundary from negative to positive \n";
+  }
+  // If we cross the boundary point from negative to positive
+  else if(this->previousAngle < -90 and zAngleFromOrigin >90){
+    currentAngle =-(180 + this->previousAngle + 180 - zAngleFromOrigin);
+    std::cout << "Crossed boundary from positive to negative \n";
+  }
 
   // Verbose
   std::cout << "\nIteration: " << this->iteration << "\n";
   std::cout << "Previous position: " << this->previousPosition_.Pos().X() << ", " << this->previousPosition_.Pos().Y() << std::endl;
   std::cout << "Current position " << this->currentPosition_.Pos().X() << ", "<< this->currentPosition_.Pos().Y() << std::endl;
-  //std::cout << "Previous z-angle: " << z1 << std::endl;
-  //std::cout << "Current z-angle: " << z2 << std::endl;
+  std::cout << "Previous z-angle: " << this->previousAngle << std::endl;
+  std::cout << "Current z-angle: " << zAngleFromOrigin << std::endl;
+  std::cout << "Degrees travelled: " << currentAngle <<std::endl;
 
   // Enter controllers
   if (controllerType == "gait"){
@@ -88,7 +100,7 @@ double Evaluator::Fitness(std::string controllerType)
   //TODO: Deal with 2*PI boundary
   else if (controllerType == "left"){
     // Obtain fitness
-    double fitness = (z2 - z1 - this->penalty*gait)/this->evaluationRate_;
+    double fitness = (currentAngle- this->penalty*gait)/this->evaluationRate_;
 
     // Update best fitness
     if (fitness > this->bestFitnessLeft){
@@ -102,7 +114,7 @@ double Evaluator::Fitness(std::string controllerType)
   }
   else if (controllerType == "right"){
     // Obtain fitness
-    double fitness = (z1 - z2 - this->penalty*gait)/this->evaluationRate_;
+    double fitness = (-currentAngle - this->penalty*gait)/this->evaluationRate_;
 
     // Update best fitness
     if (fitness > this->bestFitnessRight){

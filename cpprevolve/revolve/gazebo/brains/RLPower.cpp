@@ -58,7 +58,7 @@ RLPower::RLPower(
   this->algorithmType_ = "D";
   this->evaluationRate_ = 50.0;
   this->numInterpolationPoints_ = 100; // Was 100
-  this->learningPeriod = 10;
+  this->learningPeriod = 3;
   this->maxEvaluations_ = 1000;
   this->maxRankedPolicies_ = 10;
   this->sigma_ = 0.8;
@@ -85,13 +85,20 @@ RLPower::RLPower(
   auto numMotors = _motors.size();
   this->InitialisePolicy(numMotors);
 
-  // Save best policy
+  // Initialize: Save best policy
   this->bestPolicyGait = std::make_shared< Policy >(numMotors);
   this->bestPolicyLeft = std::make_shared< Policy >(numMotors);
   this->bestPolicyRight = std::make_shared< Policy >(numMotors);
   this->bestInterpolationCacheGait = std::make_shared< Policy >(numMotors);
   this->bestInterpolationCacheLeft = std::make_shared< Policy >(numMotors);
   this->bestInterpolationCacheRight = std::make_shared< Policy >(numMotors);
+
+  // Initialize policies. Problem must be here
+  //this->rankedPoliciesGait = std::map< double, PolicyPtr, std::greater< double>;
+  //this->rankedPoliciesRight = std::map< double, PolicyPtr, std::greater< double>>();
+  //this->rankedPoliciesLeft = std::map< double, PolicyPtr, std::greater< double>>();
+
+
 
   // Start the evaluator
   this->evaluator_.reset(new Evaluator(this->evaluationRate_));
@@ -265,10 +272,12 @@ void RLPower::InterpolateCubic(
 /////////////////////////////////////////////////
 void RLPower::UpdatePolicy(const size_t _numSplines)
 {
+  std::string moveOrientation;
+
   // Calculate fitness for current policy
-  auto currentFitnessGait= this->Fitness("gait");
   auto currentFitnessLeft= this->Fitness("left");
   auto currentFitnessRight= this->Fitness("right");
+  auto currentFitnessGait= this->Fitness("gait");
 
   // Compare with best left turn policy
   if (currentFitnessLeft > this->bestFitnessLeft){
@@ -308,40 +317,35 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     *this->bestInterpolationCacheGait = *this->interpolationCache_;
   }
 
-  // Learning part: Gets over-written
-  std::string moveOrientation = "";
-
+  // Set orientation for next iteration
   size_t n_init = this->maxRankedPolicies_;
   if (this->generationCounter_ < n_init + this->learningPeriod){
     moveOrientation = "right";
+    std::cout << "Orientation: gait";
+  }
+  else if (this->generationCounter_ < n_init + 2*this->learningPeriod){
+    moveOrientation = "right";
+    std::cout << "Orientation: left";
+  }
+  else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
+    moveOrientation = "right";
     std::cout << "Orientation: right";
   }
-    /*
-    else if (this->generationCounter_ < n_init + 2*this->learningPeriod){
-      moveOrientation = "left";
-      std::cout << "Orientation: left";
-    }
-    else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
-      moveOrientation = "right";
-      std::cout << "Orientation: right";
-    }
-         */
     // When we enter the logical part
   else{
     // Logical part based on angle between robot face and object
     std::cout << "Perform logical part \n";
 
-    // E.g. decide to move right
+    // TODO: <decide to move right/left/gait>
     moveOrientation = "right";
   }
-
-
 
   //If we still want to learn, i.e. create a new policy
   if(this->generationCounter_ < n_init + this->learningPeriod){
     // Working variable
-    double currFitness = 0.f;
+    //double currFitness = currentFitnessGait;
 
+    /*
     // The selected direction is the one which we will learn for in the next iteration
     if (moveOrientation == "left"){
       currFitness = currentFitnessLeft;
@@ -352,24 +356,46 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     else if(moveOrientation == "gait"){
       currFitness = currentFitnessGait;
     }
+     */
+    //////////////////////////////////////////////////////////
+    /// THE SEQUEL NEEDS TO BE PERFORMED FOR ALL THREE SUB-BRAINS
+    ////////////////////////////////////////////////////////////
 
-    // Insert ranked policy in list
-    PolicyPtr backupPolicy = std::make_shared< Policy >(_numSplines);
-    for (size_t i = 0; i < _numSplines; ++i){
-      auto &spline = this->currentPolicy_->at(i);
-      backupPolicy->at(i) = Spline(spline.begin(), spline.end());
-
-      spline.resize(this->sourceYSize_);
-    }
-
-    this->rankedPolicies_.insert({currFitness, backupPolicy});
-
-    // Remove worst policies
-    while (this->rankedPolicies_.size() > this->maxRankedPolicies_)
+    for(int j=0; j <3; j++)
     {
-      auto last = std::prev(this->rankedPolicies_.end());
-      this->rankedPolicies_.erase(last);
+      // Insert ranked policy in list
+      PolicyPtr backupPolicy = std::make_unique< Policy >(_numSplines);
+
+      for (size_t i = 0; i < _numSplines; ++i)
+      {
+        auto &spline = this->currentPolicy_->at(i);
+        backupPolicy->at(i) = Spline(spline.begin(), spline.end());
+
+        spline.resize(this->sourceYSize_);
+      }
+
+
+      // Insert ranked policy in list
+      if(j==0)this->rankedPoliciesGait.insert({currentFitnessGait, backupPolicy});
+//      if(j==1)this->rankedPoliciesLeft.insert({(double)(0.52), backupPolicy});
+//      if(j==2)this->rankedPoliciesRight.insert({(double)(0.52), backupPolicy});
     }
+
+    // Remove worst policies: TODO <Combine when the current bug is fixed>
+    while (this->rankedPoliciesGait.size() > this->maxRankedPolicies_){
+      auto last = std::prev(this->rankedPoliciesGait.end());
+      this->rankedPoliciesGait.erase(last);
+    }
+
+//    while (this->rankedPoliciesLeft.size() > this->maxRankedPolicies_){
+//      auto last1 = std::prev(this->rankedPoliciesLeft.end());
+//      this->rankedPoliciesLeft.erase(last1);
+//    }
+//
+//    while (this->rankedPoliciesRight.size() > this->maxRankedPolicies_){
+//      auto last2 = std::prev(this->rankedPoliciesRight.end());
+//      this->rankedPoliciesRight.erase(last2);
+//    }
 
     // Update generation counter and check is it finished
     this->generationCounter_++;
@@ -404,7 +430,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     else
     {
       // Default is decaying sigma
-      if (this->rankedPolicies_.size() >= this->maxRankedPolicies_)
+      if (this->rankedPoliciesGait.size() >= this->maxRankedPolicies_)
       {
         this->sigma_ *= SIGMA;
       }
@@ -415,7 +441,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     /// Default, for algorithms A and C, is used ten parent crossover
     /// For algorithms B and D, is used two parent crossover with binary
     /// tournament selection
-    if (this->rankedPolicies_.size() < this->maxRankedPolicies_)
+    if (this->rankedPoliciesGait.size() < this->maxRankedPolicies_)
     {
       // Generate random policy if number of stored policies is less then
       // `maxRankedPolicies_`
@@ -423,6 +449,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       {
         for (size_t j = 0; j < this->sourceYSize_; ++j)
         {
+          // TODO <IS THIS CORRECT FOR SUB_BRAINS?>
           (*this->currentPolicy_)[i][j] = dist(mt);
         }
       }
@@ -472,9 +499,11 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       }
       else
       {
+        // TODO: <FIX THIS NEATLY>
+        std::cout << "cp12: WE SHOULDN'T GET HERE. \n";
         // Default is all parents selection
         // Calculate first total sum of fitnesses
-        for (auto const &it : this->rankedPolicies_)
+        for (auto const &it : this->rankedPoliciesGait)
         {
           auto fitness = it.first;
           totalFitness += fitness;
@@ -489,7 +518,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
           {
             // Apply modifier
             auto splinePoint = 0.0;
-            for (auto const &it : this->rankedPolicies_)
+            for (auto const &it : this->rankedPoliciesGait)
             {
               auto fitness = it.first;
               auto policy = it.second;
@@ -508,11 +537,11 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       }
     }
 
-    // cache update
+    // Cache update for all sub-brains
     std::cout << "cp1: I am learning \n";
     this->InterpolateCubic(_numSplines, this->currentPolicy_.get(), this->interpolationCache_.get());
   }
-  // Set best in case we are finished with learning
+    // Set best in case we are finished with learning
   else{
     // Verbose
     std::cout << "Finished learning. Now pick the best policy with fitness ";
@@ -532,28 +561,11 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       std::cout  << this->bestFitnessGait << " (gait) \n";
       *this->currentPolicy_ = *this->bestPolicyGait;
       *this->interpolationCache_ = *this->bestInterpolationCacheGait;
-
-      // Debugging
-      std::cout << " cp10 \n";
-      for (int i = 0; i < 5;i++){
-        auto spline = this->bestPolicyGait->at(i);
-        for(auto en:spline){
-          std::cout << en <<",";
-        }
-        std::cout << std::endl;
-      }
-      //        // Allow left and right controller to go back to init place again
-      //        this->resetPositionGait = 1;
-      //        this->resetPositionLeft = 0;
-      //        this->resetPositionRight = 0;
-      //        std::cout << "\ncp3: Current position \n";
-      //      }
-
-      std::cout << "\n cp4: finished learning \n";
     }
     else{
       std::cout << "Incorrect direction given \n";
     }
+    // Reset position one last time
     if (this->resetPosition == 0){
       this->resetPosition=1;
       this->robot_->Reset();
@@ -581,7 +593,19 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
 
   this->InterpolateCubic(0, &policy_copy, this->currentPolicy_.get());
 
-  for (auto &it : this->rankedPolicies_)
+  /*
+  // TODO: <Call for gait/left/right?>?
+  auto tempPolicy = this->rankedPoliciesGait;
+
+  if(moveOrientation == "left"){
+    tempPolicy = this->rankedPoliciesLeft;
+  }
+  else if(moveOrientation == "right"){
+    tempPolicy = this->rankedPoliciesRight;
+  }
+   */
+
+  for (auto &it : this->rankedPoliciesGait)
   {
     auto policy = it.second;
 
@@ -612,8 +636,22 @@ std::map< double, PolicyPtr >::iterator RLPower::BinarySelection()
   } while (pindex1 == pindex2);
 
   // Set iterators to begin of the 'ranked_policies_' map
-  auto individual1 = this->rankedPolicies_.begin();
-  auto individual2 = this->rankedPolicies_.begin();
+  auto individual1 = this->rankedPoliciesGait.begin();
+  auto individual2 = this->rankedPoliciesGait.begin();
+
+  /*
+  // Get parents based on moving (learning if we're here) orientation
+  if(moveOrientation == "left"){
+    // Set iterators to begin of the 'ranked_policies_' map
+    individual1 = this->rankedPoliciesLeft.begin();
+    individual2 = this->rankedPoliciesLeft.begin();
+  }
+  else if(moveOrientation == "right"){
+    individual1 = this->rankedPoliciesRight.begin();
+    individual2 = this->rankedPoliciesRight.begin();
+  }
+
+   */
 
   // Move iterators to indices positions
   std::advance(individual1, pindex1);

@@ -222,8 +222,14 @@ namespace revolve
       private: std::string policyLoadPath_;
 
       /// \brief Container for best ranked policies
-      private: std::map< double, PolicyPtr, std::greater< double>>
-          rankedPolicies_;
+      //private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesGait;
+      //private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesLeft;
+      private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesGait; //Uncomment this and you get odd errors
+
+      //Uncomment this or below and you OFTEN get odd errors:
+      //      // // [simulator] *** Error in `gzserver': malloc(): memory corruption: 0x00007fe194cd80a0 ***
+      //      // Exit code 0 right after compilation
+      //      // Exit code 255 right after compilation
 
       private: double goalX;
       private: double goalY;
@@ -234,25 +240,17 @@ namespace revolve
       private: double eps;
       private: double psi;
 
-      // Implementing start position: For one strange reason, this doesn't work when I use std::vector
-      // THen I keep on getting weird (and various messages when launching gz
-
-//      private: std::vector<double> startPositions;
-//      private: std::vector<double> bestStartPositionGait;
-//      private: std::vector<double> bestStartPositionLeft;
-//      private: std::vector<double> bestStartPositionRight;
-      public: int resetPositionGait;
-      public: int resetPositionLeft;
-      public: int resetPositionRight;
+      // various
       public: int resetPosition;
 
-      // Gait learning
+      // Policies for sub-brains
       private: PolicyPtr bestPolicyGait;
       private: PolicyPtr bestInterpolationCacheGait;
       private: PolicyPtr bestPolicyLeft;
       private: PolicyPtr bestInterpolationCacheLeft;
       private: PolicyPtr bestPolicyRight;
       private: PolicyPtr bestInterpolationCacheRight;
+
     };
   }
 }
