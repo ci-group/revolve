@@ -1,9 +1,15 @@
 """
 Class containing the body parts to compose a Robogen robot
 """
-
 from collections import OrderedDict
 
+from pyrevolve.sdfbuilder import Link
+from pyrevolve.sdfbuilder.structure import Box 
+from pyrevolve.sdfbuilder.structure import Collision
+from pyrevolve.sdfbuilder.structure import Visual
+from pyrevolve.sdfbuilder.structure import Mesh
+
+# KKK:????KEEP IT???  class Module():  
 class RevolveModule():
     """
     Base class allowing for constructing Robogen components in an overviewable manner
@@ -23,9 +29,18 @@ class RevolveModule():
         return self.rgb if self.rgb is not None else self.DEFAULT_COLOR
 
     @staticmethod
+    # KKK: has self been forgotten here ?
     def FromYaml(yaml_object):
+        """
+        From a yaml object, creates a data struture of interconnected body modules. 
+        Standard names for modules are: 
+        CoreComponent
+        ActiveHinge
+        FixedBrick
+        FixedBrickSensor
+        """
         mod_type = yaml_object['type']
-        if mod_type == 'CoreComponent' or mod_type == 'Core':
+        if mod_type == 'CoreComponent':
             module = CoreModule()
         elif mod_type == 'ActiveHinge':
             module = ActiveHingeModule()
@@ -100,14 +115,13 @@ class RevolveModule():
         Tests if the robot tree is valid (recursively)
         :return: True if the robot tree is valid
         """
-        raise NotImplementedError("robot tree validation not yet implemented")
+        raise NotImplementedError("Robot tree validation not yet implemented")
 
     def to_sdf(self):
         """
 
         :return:
         """
-
         return ''
 
 
@@ -119,6 +133,33 @@ class CoreModule(RevolveModule):
 
     def __init__(self):
         super().__init__()
+
+    def to_sdf(self):
+        """
+        Converts the CoreComponent to SDF format
+        :return:
+        """        
+        # TODO: Scale needs to be checked
+        scale = 0.5
+        mesh = Mesh(
+            uri="model://rg_robot/meshes/CoreComponent.dae",
+            scale=scale
+        )
+
+        visual = Visual(name="visual_{}".format(self.id), geometry=mesh)
+        collision = Collision(
+            name="collision_{}".format(self.id),
+            geometry=Box(1.0, 1.0, 1.0, mass=0.3)
+        )
+
+        link = Link(
+            name="link_{}".format(self.id),
+            self_collide=True,
+            elements=[visual, collision]
+        )
+        link.make_color(r=self.rgb[0], g=self.rgb[1], b=self.rgb[2], a=1.0)
+
+        return link
 
 
 class ActiveHingeModule(RevolveModule):

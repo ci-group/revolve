@@ -4,10 +4,14 @@ Revolve body generator based on RoboGen framework
 import yaml
 from collections import OrderedDict
 
+from pyrevolve.sdfbuilder import SDF
+from pyrevolve.sdfbuilder import Model
+
 from .revolve_module import CoreModule
 from .revolve_module import ActiveHingeModule
 from .revolve_module import BrickModule
 from .revolve_module import BrickSensorModule
+from .brain_nn import BrainNN
 
 class RevolveBot():
     """
@@ -65,6 +69,9 @@ class RevolveBot():
         yaml_bot = yaml.safe_load(text)
         self._id = yaml_bot['id']
         self._body = CoreModule.FromYaml(yaml_bot['body'])
+        # KKK: should we trycatch lack of body/brain?
+        brain = BrainNN()
+        self._brain = brain.FromYaml(yaml_bot['brain'])
 
     def load_file(self, path, conf_type='yaml'):
         """
@@ -84,7 +91,16 @@ class RevolveBot():
 
         :return:
         """
-        return ''
+        sdf = SDF()
+
+        model = Model(name=self._id)
+        # TODO: Traverse through body elements, retrieve <link>s and
+        # create <joint>s between them
+        elements = None
+        model.add_elements(elements)
+
+        sdf.add_element(model)
+        return sdf
 
     def to_yaml(self):
         """
