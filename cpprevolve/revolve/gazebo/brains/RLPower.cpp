@@ -120,26 +120,42 @@ void RLPower::Update(
   // Evaluate policy on certain time limit
   if ((_time - this->startTime_) > this->evaluationRate_ and
       this->generationCounter_ < this->maxEvaluations_){
-    std::cout << "Face is at: " << this->face << std::endl;
-
     // Get current position and update it to later obtain fitness
     auto currPosition = this->robot_->WorldPose();
     this->evaluator_->Update(currPosition);
 
+    // Set face: TODO: <Determine location and frequency of this>. Dependent on previousPosition - Currentposition
+    if (this->generationCounter_ >= 2){//this->maxRankedPolicies_){
+      this->face = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
+                                        this->evaluator_->previousPosition_.Pos().Y(),
+                                        this->evaluator_->currentPosition_.Pos().X(),
+                                        this->evaluator_->currentPosition_.Pos().Y());
+
+      // Standardize the outcomes
+      if(this->face >90.0 and this->face <=180.0){
+        this->face = -270.0 + this->face;
+      }
+      else{
+        this->face += 90.0;
+      }
+
+      // Show angle of Face and goal to the [1,0]-vector
+      std::cout << "Face is " << this->face << std::endl;
+
+      // Show angle of goal to the [1,0]-vector
+      this->goalAngle = this->getVectorAngle(0.f,
+                                             0.f,
+                                             this->goalX,
+                                             this->goalY);
+
+      std::cout << "Goal is at:  " << this->goalX << ", " << this->goalY << std::endl;
+      std::cout << "Goal angle is " << this->goalAngle << std::endl;
+
+    }
+
     // Update policy
     this->UpdatePolicy(numMotors);
     this->startTime_ = _time;
-
-    // Set face: TODO: <Determine location and frequency of this>. Dependent on previousPosition - Currentposition
-    //  Include condition on gait motion
-    this->face = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
-                                      this->evaluator_->previousPosition_.Pos().Y(),
-                                      this->evaluator_->currentPosition_.Pos().X(),
-                                      this->evaluator_->currentPosition_.Pos().Y());
-
-    // Determine the robot's face by arccos(dotProduct=d1) against (1,0)
-    std::cout << "Face is " << this->face << std::endl;
-
 
     // Set the current as previous position
     this->evaluator_->Reset();
@@ -608,14 +624,14 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
 
   /*
   // TODO: <Call for gait/left/right?>?
-  auto tempPolicy = this->rankedPoliciesGait;
-
-  if(moveOrientation == "left"){
-    tempPolicy = this->rankedPoliciesLeft;
-  }
-  else if(moveOrientation == "right"){
-    tempPolicy = this->rankedPoliciesRight;
-  }
+//  auto tempPolicy = this->rankedPoliciesGait;
+//
+//  if(moveOrientation == "left"){
+//    tempPolicy = this->rankedPoliciesLeft;
+//  }
+//  else if(moveOrientation == "right"){
+//    tempPolicy = this->rankedPoliciesRight;
+//  }
    */
 
   for (auto &it : this->rankedPoliciesGait)
