@@ -58,7 +58,7 @@ RLPower::RLPower(
   this->algorithmType_ = "D";
   this->evaluationRate_ = 60.0;
   this->numInterpolationPoints_ = 100; // Was 100
-  this->learningPeriod = 7;
+  this->learningPeriod = 3;
   this->maxEvaluations_ = 1000;
   this->maxRankedPolicies_ = 10;
   this->sigma_ = 0.8;
@@ -120,7 +120,8 @@ void RLPower::Update(
   // Evaluate policy on certain time limit
   if ((_time - this->startTime_) > this->evaluationRate_ and
       this->generationCounter_ < this->maxEvaluations_){
-    std::cout << "cp9\n";
+    std::cout << "Face is at: " << this->face << std::endl;
+
     // Get current position and update it to later obtain fitness
     auto currPosition = this->robot_->WorldPose();
     this->evaluator_->Update(currPosition);
@@ -129,9 +130,19 @@ void RLPower::Update(
     this->UpdatePolicy(numMotors);
     this->startTime_ = _time;
 
+    // Set face: TODO: <Determine location and frequency of this>. Dependent on previousPosition - Currentposition
+    //  Include condition on gait motion
+    this->face = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
+                                      this->evaluator_->previousPosition_.Pos().Y(),
+                                      this->evaluator_->currentPosition_.Pos().X(),
+                                      this->evaluator_->currentPosition_.Pos().Y());
+
+    // Determine the robot's face by arccos(dotProduct=d1) against (1,0)
+    std::cout << "Face is " << this->face << std::endl;
+
+
     // Set the current as previous position
     this->evaluator_->Reset();
-
   }
   // generate outputs
   auto *output = new double[numMotors];
@@ -251,15 +262,52 @@ void RLPower::InterpolateCubic(
   delete[] x;
 }
 
+// Input: old; new. Function that determines the angle between the resulting vector and the (1,0)-vector
+double RLPower::getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_y){
+  // Get direction vector of input
+  double x2 = p2_x - p1_x;
+  double y2 = p2_y - p1_y;
+
+  // Normalize
+  const double dNorm = std::pow(std::pow(x2,2) + std::pow(y2,2), 0.5);
+  x2 = x2/dNorm;
+  y2 = y2/dNorm;
+
+  std::cout << "Direction vector is " << x2 << ", " << y2 << "\n";
+
+  // Initialize the unit vector
+  double x1 = 1;
+  double y1 = 0;
+
+  // Get arctan2 input
+  double dot = x1*x2 + y1*y2;
+  double det = x1*y2 - y1*x2;
+
+  // Return angle
+  return(std::atan2(det,dot)*180.0/M_PI);
+}
+
 /////////////////////////////////////////////////
 void RLPower::UpdatePolicy(const size_t _numSplines)
 {
   std::string moveOrientation;
 
   // Calculate fitness for current policy
+  auto currentFitnessGait= this->Fitness("gait");
   auto currentFitnessLeft= this->Fitness("left");
   auto currentFitnessRight= this->Fitness("right");
-  auto currentFitnessGait= this->Fitness("gait");
+
+  // Compare with best gait policy
+  if (currentFitnessGait > this->bestFitnessGait){
+    // Verbose
+    std::cout << "Update best policy for gait\n";
+    // Save this fitness  for future comparison
+    this->bestFitnessGait = currentFitnessGait;
+
+    // Save this policy
+    *this->bestPolicyGait = *this->currentPolicy_;
+    *this->bestInterpolationCacheGait = *this->interpolationCache_;
+  }
 
   // Compare with best left turn policy
   if (currentFitnessLeft > this->bestFitnessLeft){
@@ -287,30 +335,18 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     *this->bestInterpolationCacheRight = *this->interpolationCache_;
   }
 
-  // Compare with best gait policy
-  if (currentFitnessGait > this->bestFitnessGait){
-    // Verbose
-    std::cout << "Update best policy for gait\n";
-    // Save this fitness  for future comparison
-    this->bestFitnessGait = currentFitnessGait;
-
-    // Save this policy
-    *this->bestPolicyGait = *this->currentPolicy_;
-    *this->bestInterpolationCacheGait = *this->interpolationCache_;
-  }
-
   // Set orientation for next iteration
   size_t n_init = this->maxRankedPolicies_;
   if (this->generationCounter_ < n_init + this->learningPeriod){
-    moveOrientation = "right";
+    moveOrientation = "gait";
     std::cout << "Orientation: gait";
   }
   else if (this->generationCounter_ < n_init + 2*this->learningPeriod){
-    moveOrientation = "right";
+    moveOrientation = "gait";
     std::cout << "Orientation: left";
   }
   else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
-    moveOrientation = "right";
+    moveOrientation = "gait";
     std::cout << "Orientation: right";
   }
     // When we enter the logical part
@@ -319,7 +355,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     std::cout << "Perform logical part \n";
 
     // TODO: <decide to move right/left/gait>
-    moveOrientation = "right";
+    moveOrientation = "gait";
   }
 
   //If we still want to learn, i.e. create a new policy
@@ -343,25 +379,25 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     /// THE SEQUEL NEEDS TO BE PERFORMED FOR ALL THREE SUB-BRAINS
     ////////////////////////////////////////////////////////////
 
-    for(int j=0; j <3; j++)
+    //    for(int j=0; j <3; j++)
+    //    {
+    // Insert ranked policy in list
+    PolicyPtr backupPolicy = std::make_unique< Policy >(_numSplines);
+
+    for (size_t i = 0; i < _numSplines; ++i)
     {
-      // Insert ranked policy in list
-      PolicyPtr backupPolicy = std::make_unique< Policy >(_numSplines);
+      auto &spline = this->currentPolicy_->at(i);
+      backupPolicy->at(i) = Spline(spline.begin(), spline.end());
 
-      for (size_t i = 0; i < _numSplines; ++i)
-      {
-        auto &spline = this->currentPolicy_->at(i);
-        backupPolicy->at(i) = Spline(spline.begin(), spline.end());
-
-        spline.resize(this->sourceYSize_);
-      }
-
-
-      // Insert ranked policy in list
-      if(j==0)this->rankedPoliciesGait.insert({currentFitnessGait, backupPolicy});
-//      if(j==1)this->rankedPoliciesLeft.insert({(double)(0.52), backupPolicy});
-//      if(j==2)this->rankedPoliciesRight.insert({(double)(0.52), backupPolicy});
+      spline.resize(this->sourceYSize_);
     }
+
+
+    // Insert ranked policy in list
+    this->rankedPoliciesGait.insert({currentFitnessGait, backupPolicy});
+    // this->rankedPoliciesLeft.insert({(double)(0.52), backupPolicy});
+    // this->rankedPoliciesRight.insert({(double)(0.52), backupPolicy});
+    //    }
 
     // Remove worst policies: TODO <Combine when the current bug is fixed>
     while (this->rankedPoliciesGait.size() > this->maxRankedPolicies_){
@@ -369,15 +405,15 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       this->rankedPoliciesGait.erase(last);
     }
 
-//    while (this->rankedPoliciesLeft.size() > this->maxRankedPolicies_){
-//      auto last1 = std::prev(this->rankedPoliciesLeft.end());
-//      this->rankedPoliciesLeft.erase(last1);
-//    }
-//
-//    while (this->rankedPoliciesRight.size() > this->maxRankedPolicies_){
-//      auto last2 = std::prev(this->rankedPoliciesRight.end());
-//      this->rankedPoliciesRight.erase(last2);
-//    }
+    //    while (this->rankedPoliciesLeft.size() > this->maxRankedPolicies_){
+    //      auto last1 = std::prev(this->rankedPoliciesLeft.end());
+    //      this->rankedPoliciesLeft.erase(last1);
+    //    }
+    //
+    //    while (this->rankedPoliciesRight.size() > this->maxRankedPolicies_){
+    //      auto last2 = std::prev(this->rankedPoliciesRight.end());
+    //      this->rankedPoliciesRight.erase(last2);
+    //    }
 
     // Update generation counter and check is it finished
     this->generationCounter_++;

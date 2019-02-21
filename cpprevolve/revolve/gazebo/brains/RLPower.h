@@ -222,11 +222,9 @@ namespace revolve
       private: std::string policyLoadPath_;
 
       /// \brief Container for best ranked policies
-      //private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesGait;
+      private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesGait;
+      //private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesRight;  //Uncomment this and you get odd errors
       //private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesLeft;
-      private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesGait; //Uncomment this and you get odd errors
-
-      //Uncomment this or below and you OFTEN get odd errors:
       //      // // [simulator] *** Error in `gzserver': malloc(): memory corruption: 0x00007fe194cd80a0 ***
       //      // Exit code 0 right after compilation
       //      // Exit code 255 right after compilation
@@ -239,9 +237,8 @@ namespace revolve
       private: int learningPeriod;
       private: double eps;
       private: double psi;
-
-      // various
-      public: int resetPosition;
+      private: double face;
+      private: double goalAngle;
 
       // Policies for sub-brains
       private: PolicyPtr bestPolicyGait;
@@ -251,7 +248,10 @@ namespace revolve
       private: PolicyPtr bestPolicyRight;
       private: PolicyPtr bestInterpolationCacheRight;
 
-    };
+      // Determine face
+      private: double getVectorAngle(double x1, double y1, double x2, double y2);
+
+      };
   }
 }
 
