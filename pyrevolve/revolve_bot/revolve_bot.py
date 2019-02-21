@@ -99,17 +99,17 @@ class RevolveBot():
 
         return yaml.dump(yaml_dict)
 
-    def save_file(self, path, type='yaml'):
+    def save_file(self, path, conf_type='yaml'):
         """
         Save robot's description on a given file path in a specified format
         :param path:
-        :param type:
+        :param conf_type:
         :return:
         """
         robot = ''
-        if 'yaml' == type:
+        if 'yaml' == conf_type:
             robot = self.to_yaml()
-        elif 'sdf' == type:
+        elif 'sdf' == conf_type:
             robot = self.to_sdf()
 
         with open(path, 'w') as robot_file:
