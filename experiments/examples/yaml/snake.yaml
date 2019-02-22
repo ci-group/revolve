@@ -1,0 +1,77 @@
+---
+body:
+  id          : Core
+  type        : Core
+  params:
+    red: 0.94
+    green: 0.98
+    blue: 0.05
+  children    :
+    0:
+      id          : Leg00Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg00
+          type        : FixedBrick
+          params:
+            red: 0.94
+            green: 0.98
+            blue: 0.05
+          orientation : -90
+          children    :
+            1:
+              id          : Leg01Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              children    :
+                1:
+                  id          : Leg01
+                  type        : FixedBrick
+                  params:
+                    red: 0.94
+                    green: 0.98
+                    blue: 0.05
+                  orientation : 0
+    1:
+      id          : Leg10Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg10
+          type        : FixedBrick
+          params:
+            red: 0.94
+            green: 0.98
+            blue: 0.05
+          orientation : -90
+          children    :
+            1:
+              id          : Leg11Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              children    :
+                1:
+                  id          : Leg11
+                  type        : FixedBrick
+                  params:
+                    red: 0.94
+                    green: 0.98
+                    blue: 0.05
+                  orientation : 0
