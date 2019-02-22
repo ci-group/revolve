@@ -69,6 +69,7 @@ namespace revolve
       /// \return pointer to the RLPower class object
       public: RLPower(
           const ::gazebo::physics::ModelPtr &_model,
+          const ::gazebo::physics::ModelPtr &_goalBox,
           const sdf::ElementPtr &_node,
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors);
@@ -157,6 +158,8 @@ namespace revolve
           const double _time,
           double *_output);
 
+      private: void SetRandomGoalBox();
+
       /// \brief Retrieves fitness for the current policy
       /// \return
       private: double Fitness(std::string controllerType);
@@ -215,6 +218,9 @@ namespace revolve
       /// \brief Name of the robot
       private: ::gazebo::physics::ModelPtr robot_;
 
+      // Set world
+      public: ::gazebo::physics::ModelPtr goalBox_;
+
       /// \brief Type of the used algorithm
       private: std::string algorithmType_;
 
@@ -239,6 +245,7 @@ namespace revolve
       private: double psi;
       private: double face;
       private: double goalAngle;
+      private: double distToObject;
 
       // Policies for sub-brains
       private: PolicyPtr bestPolicyGait;

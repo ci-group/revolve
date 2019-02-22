@@ -34,7 +34,9 @@
     <include>
       <uri>model://test_bot</uri>
     </include>
-
+    <include>
+      <uri>model://box</uri>
+    </include>
     <gui fullscreen='0'>
       <camera name='user_camera'>
         <pose frame=''>0.407182 -0.446632 1.00088 0 1.06364 2.56819</pose>

@@ -45,11 +45,21 @@ async def run():
             brain=proto_bot.brain,
             body_spec=body_spec)
     pose = Pose(position=Vector3(0, 0, 0.05))
+
+    # First robot
     future = await (world.insert_robot(
             py_bot=robot_tree,
             pose=pose,
             name="robot_26"
     ))
+
+    # # Second robot
+    # future2 = await (world.insert_robot(
+    #         py_box=box_tree,
+    #         pose = Pose(position=Vector3(0, 0, 0.)),
+    #         name = "goal"
+    # ))
+
     robot_manager = await future
 
     await world.pause(False)

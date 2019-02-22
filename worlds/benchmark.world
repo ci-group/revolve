@@ -1,9 +1,14 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
   <world name="default">
+      <include>
+          <uri>model://my_model</uri>
+          <pose>0.3 0.5 0.9 0 0 0</pose>
+      </include>
     <scene>
         <origin_visual>0</origin_visual>
         <grid>0</grid>
+
     </scene>
     <physics type="ode">
       <max_step_size>0.003</max_step_size>
@@ -33,7 +38,9 @@
     <include>
       <uri>model://tol_ground</uri>
     </include>
-
+    <include>
+      <uri>model://box</uri>
+    </include>
     <plugin name="tol-control" filename="libtolworldcontrol.so" />
   </world>
 </sdf>

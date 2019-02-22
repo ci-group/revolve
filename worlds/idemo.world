@@ -4,7 +4,7 @@
     <scene>
         <origin_visual>0</origin_visual>
         <grid>0</grid>
-        <sky><time>12</time></sky>
+     <sky><time>12</time></sky>
     </scene>
     <gui>
         <plugin name="interactive-evolution" filename="libtolinteractiveevolution.so" />

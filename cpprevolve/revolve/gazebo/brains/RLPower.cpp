@@ -39,6 +39,7 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 RLPower::RLPower(
     const ::gazebo::physics::ModelPtr &_model,
+    const ::gazebo::physics::ModelPtr &_goalBox,
     const sdf::ElementPtr &/* _node */,
     const std::vector< MotorPtr > &_motors,
     const std::vector< SensorPtr > &/* _sensors */)
@@ -46,17 +47,14 @@ RLPower::RLPower(
     , cycleStartTime_(-1)
     , startTime_(-1)
 {
-  // Create transport node
-  this->node_.reset(new gz::transport::Node());
-  this->node_->Init();
   //  // Listen to network modification requests
   //  this->alterSub_ = this->node_->Subscribe(
   //      "~/" + _modelName + "/modify_spline_policy", &RLPower::Modify,
   //      this);
 
-  this->robot_ = _model;
+  // Parameters
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 60.0;
+  this->evaluationRate_ = 40.0;
   this->numInterpolationPoints_ = 100; // Was 100
   this->learningPeriod = 3;
   this->maxEvaluations_ = 1000;
@@ -64,16 +62,18 @@ RLPower::RLPower(
   this->sigma_ = 0.8;
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
-  this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
+  this->eps = 0.1;
+  this->psi = 15.0;
 
-  // Generate end-point for targeted locomotion
-  this->goalX = ((double) rand() / (RAND_MAX))*10 - 5; // In [-5,5]
-  this->goalY = ((double) rand() / (RAND_MAX))*10 - 5; // In [-5,5]
+  // Working variables
+  this->node_.reset(new gz::transport::Node());
+  this->node_->Init();
+  this->robot_ = _model;
+  this->goalBox_ = _goalBox;
+  this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
   this->bestFitnessGait = 0;
   this->bestFitnessLeft = 0;
   this->bestFitnessRight = 0;
-  this->eps = 0.1;
-  this->psi = 20.0;
 
   // Generate first random policy
   auto numMotors = _motors.size();
@@ -92,10 +92,23 @@ RLPower::RLPower(
   //this->rankedPoliciesRight = std::map< double, PolicyPtr, std::greater< double>>();
   //this->rankedPoliciesLeft = std::map< double, PolicyPtr, std::greater< double>>();
 
-
+  // Set goalbox
+  this->SetRandomGoalBox();
 
   // Start the evaluator
   this->evaluator_.reset(new Evaluator(this->evaluationRate_));
+}
+
+
+void RLPower::SetRandomGoalBox(){
+    // Generate end-point for targeted locomotion
+    this->goalX = ((double) rand() / (RAND_MAX))*10 - 5; // In [-5,5]
+    this->goalY = ((double) rand() / (RAND_MAX))*10 - 5; // In [-5,5]
+
+    // Update goal box
+    auto newPose = ::ignition::math::Pose3d();
+    newPose.Set(goalX, goalY, 0.0, 0.0, 0.0, 0.0);
+    this->goalBox_->SetWorldPose(newPose);
 }
 
 /////////////////////////////////////////////////
@@ -121,8 +134,15 @@ void RLPower::Update(
   if ((_time - this->startTime_) > this->evaluationRate_ and
       this->generationCounter_ < this->maxEvaluations_){
     // Get current position and update it to later obtain fitness
-    auto currPosition = this->robot_->WorldPose();
-    this->evaluator_->Update(currPosition);
+    this->evaluator_->Update(this->robot_->WorldPose());
+
+    // Get distance to object
+    this->distToObject = std::pow(
+        std::pow(this->goalX - this->evaluator_->currentPosition_.Pos().X(), 2) +
+        std::pow(this->goalY - this->evaluator_->currentPosition_.Pos().Y(), 2)
+        , 0.5);
+
+    std::cout << "Distance to object " << distToObject;
 
     // Set face: TODO: <Determine location and frequency of this>. Dependent on previousPosition - Currentposition
     if (this->generationCounter_ >= 2){//this->maxRankedPolicies_){
@@ -139,18 +159,11 @@ void RLPower::Update(
         this->face += 90.0;
       }
 
-      // Show angle of Face and goal to the [1,0]-vector
-      std::cout << "Face is " << this->face << std::endl;
-
       // Show angle of goal to the [1,0]-vector
       this->goalAngle = this->getVectorAngle(0.f,
                                              0.f,
                                              this->goalX,
                                              this->goalY);
-
-      std::cout << "Goal is at:  " << this->goalX << ", " << this->goalY << std::endl;
-      std::cout << "Goal angle is " << this->goalAngle << std::endl;
-
     }
 
     // Update policy
@@ -289,8 +302,6 @@ double RLPower::getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_
   x2 = x2/dNorm;
   y2 = y2/dNorm;
 
-  std::cout << "Direction vector is " << x2 << ", " << y2 << "\n";
-
   // Initialize the unit vector
   double x1 = 1;
   double y1 = 0;
@@ -355,24 +366,40 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   size_t n_init = this->maxRankedPolicies_;
   if (this->generationCounter_ < n_init + this->learningPeriod){
     moveOrientation = "gait";
-    std::cout << "Orientation: gait";
+    std::cout << "Orientation: gait\n";
   }
   else if (this->generationCounter_ < n_init + 2*this->learningPeriod){
     moveOrientation = "gait";
-    std::cout << "Orientation: left";
+    std::cout << "Orientation: left\n";
   }
   else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
     moveOrientation = "gait";
-    std::cout << "Orientation: right";
+    std::cout << "Orientation: right\n";
   }
     // When we enter the logical part
   else{
-    // Logical part based on angle between robot face and object
-    std::cout << "Perform logical part \n";
+    // Calculate angle difference between face and object
+    double angleDifference = this->goalAngle - this->face;
+    if(angleDifference > 180){
+      angleDifference  = -(360.f - angleDifference);
+    }
+    else if(angleDifference < - 180){
+      angleDifference  = (360.f + angleDifference);
+    }
 
-    // TODO: <decide to move right/left/gait>
-    moveOrientation = "gait";
+    // Determine the angle.
+    if(angleDifference < -this->psi){
+      moveOrientation = "right";
+    }
+    else if (angleDifference > this->psi){
+      moveOrientation = "left";
+    }
+    else{
+      moveOrientation = "gait";
+    }
   }
+
+  this->generationCounter_++; // TODO: <Probably wrong>
 
   //If we still want to learn, i.e. create a new policy
   if(this->generationCounter_ < n_init + this->learningPeriod){
@@ -432,7 +459,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     //    }
 
     // Update generation counter and check is it finished
-    this->generationCounter_++;
+    // this->generationCounter_++;
     if (this->generationCounter_ == this->maxEvaluations_)
     {
       std::exit(0);
@@ -463,7 +490,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     }
     else
     {
-      // Default is decaying sigma
+      // Default is decayig sigma
       if (this->rankedPoliciesGait.size() >= this->maxRankedPolicies_)
       {
         this->sigma_ *= SIGMA;
