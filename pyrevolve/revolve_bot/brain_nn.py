@@ -20,7 +20,7 @@ class BrainNN():
         Standard names for modules are: 
         """
         if 'neurons' not in yaml_object:
-            raise KeyError('Network must have neurons.')
+            raise KeyError('Network must have nodes.')
 
         if 'params' not in yaml_object:
             raise KeyError('Network must have params.')
@@ -39,10 +39,58 @@ class BrainNN():
         for k_node in yaml_object['params']:
             params = Params()
             params.generate_params(yaml_object['params'][k_node])
-            self.params[k_node] = node
+            self.params[k_node] = params
 
-        return [self.nodes, self.connections, self.params]
 
+
+    def to_yaml(self):
+        
+        yaml_dict_brain = OrderedDict()
+
+        yaml_dict_neurons = OrderedDict()
+        for node in self.nodes:
+            yaml_dict_neurons[node] = { 
+                'id': self.nodes[node].id,
+                'layer': self.nodes[node].layer,
+                'part_id': self.nodes[node].part_id,
+                'type': self.nodes[node].type
+            }
+        yaml_dict_brain['neurons'] = yaml_dict_neurons
+
+
+        yaml_dict_connections = []
+        if self.connections:
+            for edge in self.connections:
+                yaml_dict_connections.append({ 
+                    'dst': edge.dst,
+                    'src': edge.src,
+                    'weight': edge.weight,
+                })
+                
+            yaml_dict_brain['connections'] = yaml_dict_connections
+
+        yaml_dict_params = OrderedDict()
+        for node in self.params:
+            yaml_dict_params[node] = {}
+
+            if self.params[node].bias != None:
+                yaml_dict_params[node]['bias'] = self.params[node].bias
+                
+            if self.params[node].gain != None:
+                yaml_dict_params[node]['gain'] = self.params[node].gain
+                
+            if self.params[node].period != None:
+                yaml_dict_params[node]['period'] = self.params[node].period
+                
+            if self.params[node].phase_offset != None:
+                yaml_dict_params[node]['phase_offset'] = self.params[node].phase_offset
+                
+            if self.params[node].amplitude != None:
+                yaml_dict_params[node]['amplitude'] = self.params[node].amplitude
+
+        yaml_dict_brain['params'] = yaml_dict_params
+
+        return yaml_dict_brain
 
 
 class Node():
@@ -61,12 +109,6 @@ class Node():
         self.part_id = yaml_object_node['part_id']
         self.type = yaml_object_node['type']
 
-        print('----')
-        print(self.id)
-        print(self.layer)
-        print(self.part_id)
-        print(self.type)
-
 class Connection():
 
     def __init__(self):
@@ -79,11 +121,6 @@ class Connection():
         self.dst = yaml_object_connection['dst']
         self.src = yaml_object_connection['src']
         self.weight = yaml_object_connection['weight']
-
-        print('---------')
-        print(self.dst)
-        print(self.src)
-        print(self.weight)
 
 
 class Params():
@@ -107,10 +144,3 @@ class Params():
             self.bias = yaml_object_node['bias']
         if 'gain' in yaml_object_node:
             self.gain = yaml_object_node['gain']
-
-        print('----')
-        print(self.period)
-        print(self.phase_offset)
-        print(self.amplitude)
-        print(self.bias)
-        print(self.gain)

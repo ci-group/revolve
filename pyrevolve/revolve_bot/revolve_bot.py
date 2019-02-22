@@ -49,7 +49,7 @@ class RevolveBot():
         """
         pass
 
-    def load(self, text, conf_type='yaml'):
+    def load(self, text, conf_type, brain_type):
         """
         Load robot's description from a string and parse it to Python structure
         :param text: Robot's description string
@@ -57,11 +57,11 @@ class RevolveBot():
         :return:
         """
         if 'yaml' == conf_type:
-            self.load_yaml(text)
+            self.load_yaml(text, brain_type)
         elif 'sdf' == conf_type:
             raise NotImplementedError("Loading from SDF not yet implemented")
 
-    def load_yaml(self, text):
+    def load_yaml(self, text, brain_type):
         """
         Load robot's description from a yaml string
         :param text: Robot's yaml description
@@ -70,10 +70,11 @@ class RevolveBot():
         self._id = yaml_bot['id']
         self._body = CoreModule.FromYaml(yaml_bot['body'])
         # KKK: should we trycatch lack of body/brain?
-        brain = BrainNN()
-        self._brain = brain.FromYaml(yaml_bot['brain'])
+        if brain_type == 'nn':
+            self._brain = BrainNN()
+        self._brain.FromYaml(yaml_bot['brain'])
 
-    def load_file(self, path, conf_type='yaml'):
+    def load_file(self, path, conf_type='yaml', brain_type='nn'):
         """
         Read robot's description from a file and parse it to Python structure
         :param path: Robot's description file path
@@ -83,7 +84,7 @@ class RevolveBot():
         with open(path, 'r') as robot_file:
             robot = robot_file.read()
 
-        self.load(robot, conf_type)
+        self.load(robot, conf_type, brain_type)
 
     def to_sdf(self):
         """
@@ -104,14 +105,14 @@ class RevolveBot():
 
     def to_yaml(self):
         """
-        Converts sdf to yaml
+        Converts robot data structure to yaml
 
         :return:
         """
         yaml_dict = OrderedDict()
         yaml_dict['id'] = self._id
         yaml_dict['body'] = self._body.to_yaml()
-        yaml_dict['brain'] = {} # TODO dump also brain
+        yaml_dict['brain'] = self._brain.to_yaml()
 
         return yaml.dump(yaml_dict)
 

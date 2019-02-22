@@ -7,4 +7,4 @@ if __name__ == "__main__":
     # robot.load_file("/home/karinemiras/projects/revolve/models/robot_26.yaml")
     robot.load_file("/home/karinemiras/projects/revolve/experiments/examples/yaml/robot_5.yaml")
     
-    #robot.save_file("/tmp/test.yaml")
+    robot.save_file("/tmp/test.yaml")
