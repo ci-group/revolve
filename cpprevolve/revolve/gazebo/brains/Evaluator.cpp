@@ -75,8 +75,7 @@ double Evaluator::Fitness(std::string controllerType)
   }
 
   // Verbose
-  std::cout << "\nIteration: " << this->iteration << "\n";
-  std::cout << "Previous position: " << this->previousPosition_.Pos().X() << ", " << this->previousPosition_.Pos().Y() << std::endl;
+  std::cout << "\nPrevious position: " << this->previousPosition_.Pos().X() << ", " << this->previousPosition_.Pos().Y() << std::endl;
   std::cout << "Current position " << this->currentPosition_.Pos().X() << ", "<< this->currentPosition_.Pos().Y() << std::endl;
   std::cout << "Previous z-angle: " << this->previousAngle << std::endl;
   std::cout << "Current z-angle: " << zAngleFromOrigin << std::endl;

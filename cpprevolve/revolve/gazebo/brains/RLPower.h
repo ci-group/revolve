@@ -160,6 +160,9 @@ namespace revolve
 
       private: void SetRandomGoalBox();
 
+      // Determine angle between a vector the [1,0] vector.
+      private: double getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_y);
+
       /// \brief Retrieves fitness for the current policy
       /// \return
       private: double Fitness(std::string controllerType);
@@ -229,11 +232,9 @@ namespace revolve
 
       /// \brief Container for best ranked policies
       private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesGait;
-//      private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesRight__;  //Uncomment this and you get odd errors
-//      private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesLeft__;
-      //      // // [simulator] *** Error in `gzserver': malloc(): memory corruption: 0x00007fe194cd80a0 ***
-      //      // Exit code 0 right after compilation
-      //      // Exit code 255 right after compilation
+      private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesRight;
+      private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesLeft;
+
 
       private: double goalX;
       private: double goalY;
@@ -242,10 +243,11 @@ namespace revolve
       private: double bestFitnessRight;
       private: int learningPeriod;
       private: double eps;
-      private: double psi;
+      private: double phi;
       private: double face;
       private: double goalAngle;
       private: double distToObject;
+      private: std::string moveOrientation;
 
       // Policies for sub-brains
       private: PolicyPtr bestPolicyGait;
@@ -255,8 +257,6 @@ namespace revolve
       private: PolicyPtr bestPolicyRight;
       private: PolicyPtr bestInterpolationCacheRight;
 
-      // Determine angle between a vector the [1,0] vector.
-      private: double getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_y);
       };
   }
 }
