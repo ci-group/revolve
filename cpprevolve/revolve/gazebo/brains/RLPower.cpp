@@ -62,7 +62,7 @@ RLPower::RLPower(
   this->sigma_ = 0.8;
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
-  this->eps = 0.1;
+  this->eps = 10.0;
   this->psi = 15.0;
 
   // Working variables
@@ -121,6 +121,7 @@ void RLPower::Update(
     double _time,
     double _step)
 {
+
   //  boost::mutex::scoped_lock lock(this->rlpowerMutex_);
 
   if (this->startTime_ < 0)
@@ -142,7 +143,13 @@ void RLPower::Update(
         std::pow(this->goalY - this->evaluator_->currentPosition_.Pos().Y(), 2)
         , 0.5);
 
+    // Debugging
     std::cout << "Distance to object " << distToObject;
+
+    // Re-initiate target when close enough
+    if(this->distToObject < this->eps){
+      this->SetRandomGoalBox();
+    }
 
     // Set face: TODO: <Determine location and frequency of this>. Dependent on previousPosition - Currentposition
     if (this->generationCounter_ >= 2){//this->maxRankedPolicies_){
