@@ -54,16 +54,16 @@ RLPower::RLPower(
 
   // Parameters
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 60.0;
+  this->evaluationRate_ = 70.0;
   this->numInterpolationPoints_ = 100;
-  this->learningPeriod = 2;
+  this->learningPeriod = 10;
   this->maxEvaluations_ = 1000;
-  this->maxRankedPolicies_ = 3;
+  this->maxRankedPolicies_ = 10;
   this->sigma_ = 0.8;
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
   this->eps = 0.3;
-  this->phi = 20.0;
+  this->phi = 7.5;
 
   // Working variables
   this->node_.reset(new gz::transport::Node());
@@ -158,21 +158,6 @@ void RLPower::Update(
 
     // Set face: TODO: <Determine location and frequency of this>. Dependent on previousPosition - Currentposition
     if (this->generationCounter_ >=2){// this->maxRankedPolicies_){
-      if(this->moveOrientation == "gait"){
-        this->face = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
-                                          this->evaluator_->previousPosition_.Pos().Y(),
-                                          this->evaluator_->currentPosition_.Pos().X(),
-                                          this->evaluator_->currentPosition_.Pos().Y());
-
-        // Standardize the outcomes
-        if(this->face >90.0 and this->face <=180.0){
-          this->face = -270.0 + this->face;
-        }
-        else{
-          this->face += 90.0;
-        }
-      }
-
       std::cout << "Goal coordinates: " << this->goalX << ", " << this->goalY << std::endl;
       std::cout << "Goal angle: " << this->goalAngle << std::endl;
 
@@ -180,7 +165,9 @@ void RLPower::Update(
       this->goalAngle = this->getVectorAngle(0.f,
                                              0.f,
                                              this->goalX,
-                                             this->goalY);
+                                             this->goalY,
+                                             0.f,
+                                             -1.f);
     }
 
     // Update policy
@@ -310,8 +297,8 @@ void RLPower::InterpolateCubic(
   delete[] x;
 }
 
-// Input: old; new. Function that determines the angle between the resulting vector and the (1,0)-vector
-double RLPower::getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_y){
+// Input: old; new. Function that determines the angle between the resulting vector and the normal [d1_x,d1_y]-vector
+double RLPower::getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_y, double d1_x, double d1_y){
   // Get direction vector of input
   double x2 = p2_x - p1_x;
   double y2 = p2_y - p1_y;
@@ -321,13 +308,9 @@ double RLPower::getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_
   x2 = x2/dNorm;
   y2 = y2/dNorm;
 
-  // Initialize the unit vector
-  double x1 = 1;
-  double y1 = 0;
-
   // Get arctan2 input
-  double dot = x1*x2 + y1*y2;
-  double det = x1*y2 - y1*x2;
+  double dot = d1_x*x2 + d1_y*y2;
+  double det = d1_x*y2 - d1_y*x2;
 
   // Return angle
   return(std::atan2(det,dot)*180.0/M_PI);
@@ -352,11 +335,24 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   }
     // When we enter the logical part
   else{
-    double angleDifference = this->goalAngle - this->face;
+    // Get angle we will move in under gait sub-brain
+    double robot_angle = this->robot_->WorldPose().Rot().Yaw()*180.0/M_PI;
+    double move_angle = this->face + robot_angle;
+
+    if(move_angle >=180.0){
+      move_angle -= 360;
+    }
+    else if (move_angle <= -180){
+      move_angle += 360;
+    }
+
+    double angleDifference = this->goalAngle - move_angle;
+    if(angleDifference >180) angleDifference -= 360;
+    else if (angleDifference < -180) angleDifference +=360;
 
     // Calculate angle difference between face and object
-    std::cout << "Robot angle: " << this->robot_->WorldPose().Rot().Yaw()*180.0/M_PI << std::endl;
     std::cout << "Face angle: " << this->face << std::endl;
+    std::cout << "Move angle " << move_angle << std::endl;
     std::cout << "Angle difference is " << angleDifference << std::endl;
 
     std::cout << "Main brain: Go ";
@@ -368,7 +364,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     }
 
     // Determine the angle.
-    if(angleDifference > this->phi){
+    if(angleDifference > this->phi and angleDifference > -this->phi){
       this->moveOrientation = "left";
       std::cout << " left \n";
     }
@@ -396,6 +392,26 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     if (currentFitnessGait > this->bestFitnessGait){
       // Verbose
       std::cout << "Update best policy for gait\n";
+      std::cout << "Old face: "<< this->face "\n";
+
+      // Update face
+      this->face = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
+                                        this->evaluator_->previousPosition_.Pos().Y(),
+                                        this->evaluator_->currentPosition_.Pos().X(),
+                                        this->evaluator_->currentPosition_.Pos().Y(),
+                                        1.f,
+                                        0.f);
+
+      // Standardize the outcomes
+      if(this->face >90.0 and this->face <=180.0){
+        this->face = -270.0 + this->face;
+      }
+      else{
+        this->face += 90.0;
+      }
+
+      std::cout << "New face: "<< this->face "\n";
+
       // Save this fitness  for future comparison
       this->bestFitnessGait = currentFitnessGait;
 
@@ -474,7 +490,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     // Increase spline points if it is a time
     if (this->generationCounter_ % this->stepRate_ == 0)
     {
-      std::cout << "cp7: \n Increase spline points \n";
+      std::cout << "Increase spline points \n";
       this->IncreaseSplinePoints(_numSplines);
     }
 
@@ -623,7 +639,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       *this->interpolationCache_ = *this->bestInterpolationCacheGait;
     }
     else{
-      std::cout << "Incorrect direction given \n";
+      std::cout << "Incorrect moveOrientation given \n";
     }
   }
 }
@@ -659,7 +675,7 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
     tempPolicy = this->rankedPoliciesRight;
   }
 
-  for (auto &it : this->rankedPoliciesGait)
+  for (auto &it : tempPolicy)
   {
     auto policy = it.second;
 

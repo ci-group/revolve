@@ -161,7 +161,7 @@ namespace revolve
       private: void SetRandomGoalBox();
 
       // Determine angle between a vector the [1,0] vector.
-      private: double getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_y);
+      private: double getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_y, double d1_x, double d1_y);
 
       /// \brief Retrieves fitness for the current policy
       /// \return
