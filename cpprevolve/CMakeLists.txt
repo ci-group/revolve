@@ -222,7 +222,7 @@ target_link_libraries(
 add_library(
     revolve-gazebo
     ${REVOLVE_GZ_SRC}
-    revolve/gazebo/brains/DifferentialCPG_BO.h revolve/gazebo/brains/RLPower.h)
+    revolve/gazebo/brains/DifferentialCPG_BO.h revolve/gazebo/brains/RLPowerTargeted.h)
 
 
 target_link_libraries(

@@ -32,12 +32,13 @@ Evaluator::Evaluator(const double _evaluationRate)
   this->previousAngle = 0;
   this->evaluationRate_ = _evaluationRate;
   this->iteration = 0;
-  this->penalty = 7.0;  // Parameter penalty for moving (for the steering controllers), e.g. 10
+  this->penalty = 10.0;
   this->bestFitnessGait = 0;
   this->bestFitnessLeft = 0;
   this->bestFitnessRight = 0;
   this->currentPosition_.Reset();
   this->previousPosition_.Reset();
+  this->printOutput = true;
 }
 
 /////////////////////////////////////////////////
@@ -49,6 +50,7 @@ void Evaluator::Reset()
   this->previousPosition_ = this->currentPosition_;
   this->previousAngle = this->currentPosition_.Rot().Yaw()*180.0/M_PI;
   this->iteration++;
+  this->printOutput = true;
 }
 /////////////////////////////////////////////////
 double Evaluator::Fitness(std::string controllerType)
@@ -75,16 +77,19 @@ double Evaluator::Fitness(std::string controllerType)
   }
 
   // Verbose
+  if(this->printOutput){
   std::cout << "\nPrevious position: " << this->previousPosition_.Pos().X() << ", " << this->previousPosition_.Pos().Y() << std::endl;
   std::cout << "Current position " << this->currentPosition_.Pos().X() << ", "<< this->currentPosition_.Pos().Y() << std::endl;
   std::cout << "Previous z-angle: " << this->previousAngle << std::endl;
   std::cout << "Current z-angle: " << zAngleFromOrigin << std::endl;
-  std::cout << "Degrees travelled: " << currentAngle <<std::endl;
+  std::cout << "Degrees travelled: " << currentAngle << "\n\n";
+  this->printOutput = false;
+  }
 
   // Enter controllers
   if (controllerType == "gait"){
     // Obtain fitness, as defined in https://doi.org/10.1162/ARTL_a_00223
-    double fitness = std::pow(100.0*gait/this->evaluationRate_,6);
+    double fitness = gait;//std::pow(100.0*gait/this->evaluationRate_,6);
 
     // Update best fitness
     if (fitness > this->bestFitnessGait){

@@ -235,7 +235,6 @@ namespace revolve
       private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesRight;
       private: std::map< double, PolicyPtr, std::greater< double>> rankedPoliciesLeft;
 
-
       private: double goalX;
       private: double goalY;
       private: double bestFitnessGait;
