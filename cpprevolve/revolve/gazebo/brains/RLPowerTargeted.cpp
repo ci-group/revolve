@@ -54,17 +54,17 @@ RLPower::RLPower(
 
   // Parameters
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 60.0;
+  this->evaluationRate_ = 40.0;
   this->fastEvaluationRate = 7.5;
   this->numInterpolationPoints_ = 100;
   this->learningPeriod = 20;
   this->maxEvaluations_ = 4000;
   this->maxRankedPolicies_ = 20;
-  this->sigma_ = 1.30;
-  this->sigmaPolicy = 1.30;
+  this->sigma_ = 1.50;
+  this->sigmaPolicy = 1.50;
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
-  this->eps = 0.25;
+  this->eps = 0.2;
   this->phiMin = 2.0;
 
   // Working variables
@@ -105,10 +105,10 @@ void RLPower::SetRandomGoalBox(){
   std::cout << "SetrandomGoalBox \n";
 
   // Set new position that is sufficiently far away
-  while(this->distToObject <= 0.5){
+  while(this->distToObject <= 1.0){
     // Generate new goal points in the neighbourhood of the robot
-    this->goalX = ((double) rand() / (RAND_MAX))*2.f - 1.0 + this->evaluator_->currentPosition_.Pos().X();
-    this->goalY = ((double) rand() / (RAND_MAX))*2.f - 1.0 + this->evaluator_->currentPosition_.Pos().Y();
+    this->goalX = ((double) rand() / (RAND_MAX))*3.f - 1.5 + this->evaluator_->currentPosition_.Pos().X();
+    this->goalY = ((double) rand() / (RAND_MAX))*3.f - 1.5 + this->evaluator_->currentPosition_.Pos().Y();
 
     // Check distance
     this->distToObject = std::pow(
@@ -397,8 +397,9 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     }
 
     double objectRadius = 0.05;
-    double phiSides = atan(objectRadius/this->distToObject)*180.0/M_PI;
-    std::cout << "phiCorrected will be " << phiSides << std::endl;
+    double robotRadius = 0.05;
+    double approxFactor = 0.8;
+    double phiSides = atan(approxFactor*(robotRadius + objectRadius)/this->distToObject)*180.0/M_PI;
 
     // Determine the angle.
     if(angleDifference > std::max(this->phiMin, phiSides) and angleDifference > -this->phiMin){
@@ -413,6 +414,8 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       this->moveOrientation = "gait";
       std::cout << "gait with controller fitness " << this->bestFitnessGait << "\n";
     }
+
+    std::cout << "phiCorrected is: " << phiSides << std::endl;
   }
 
 //  // Force logic
@@ -420,6 +423,29 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
 
   // Update generation counter
   this->generationCounter_++;
+
+
+//  // Update face
+//  double robotMoveAngle = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
+//                                               this->evaluator_->previousPosition_.Pos().Y(),
+//                                               this->evaluator_->currentPosition_.Pos().X(),
+//                                               this->evaluator_->currentPosition_.Pos().Y(),
+//                                               1.f,
+//                                               0.f);
+//  double startAngle = this->evaluator_->previousPosition_.Rot().Yaw()*180.0/M_PI;
+//
+//  this->face = robotMoveAngle - startAngle;
+//  if(this->face > 180){
+//    this->face -= 360;
+//  }
+//  else if (this->face < -180){
+//    this->face +=360;
+//  }
+//
+//  std::cout << "Start angle " << startAngle << "\n";
+//  std::cout << "Robot angle " << robotMoveAngle << "\n";
+//  std::cout << "New face: "<< this->face << "\n";
+
 
   //If we still want to learn, i.e. create a new policy
   if(this->generationCounter_ <= n_init + 3*this->learningPeriod){
@@ -435,21 +461,24 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       std::cout << "Old face: "<< this->face << "\n";
 
       // Update face
-      this->face = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
+      double robotMoveAngle = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
                                         this->evaluator_->previousPosition_.Pos().Y(),
                                         this->evaluator_->currentPosition_.Pos().X(),
                                         this->evaluator_->currentPosition_.Pos().Y(),
-                                        1.f,
-                                        0.f);
+                                        0.f,
+                                        -1.f);
+      double startAngle = this->evaluator_->previousPosition_.Rot().Yaw()*180.0/M_PI;
 
-      // Standardize the outcomes
-      if(this->face >90.0 and this->face <=180.0){
-        this->face = -270.0 + this->face;
+      this->face = robotMoveAngle - startAngle;
+      if(this->face > 180){
+        this->face -= 360;
       }
-      else{
-        this->face += 90.0;
+      else if (this->face < -180){
+        this->face +=360;
       }
 
+      std::cout << "Start angle " << startAngle << "\n";
+      std::cout << "Robot angle " << robotMoveAngle << "\n";
       std::cout << "New face: "<< this->face << "\n";
 
       // Save this fitness  for future comparison
@@ -531,7 +560,6 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     // Increase spline points if it is a time
     if (this->generationCounter_ % this->stepRate_ == 0)
     {
-      std::cout << "Generationcounter: " << this->generationCounter_ << ". Steprate " << this->stepRate_ << "Increase spline points \n";
       this->IncreaseSplinePoints(_numSplines);
     }
 

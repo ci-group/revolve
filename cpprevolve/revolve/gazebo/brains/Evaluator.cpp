@@ -33,7 +33,7 @@ Evaluator::Evaluator(const double _evaluationRate)
   this->evaluationRate_ = _evaluationRate;
   this->iteration = 0;
   this->penaltyTurn = 0.05;
-  this->penaltyGait = 7.0;
+  this->penaltyGait = 20.0;
   this->bestFitnessGait = 0;
   this->bestFitnessLeft = 0;
   this->bestFitnessRight = 0;
