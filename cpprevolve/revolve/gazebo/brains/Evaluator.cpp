@@ -32,7 +32,8 @@ Evaluator::Evaluator(const double _evaluationRate)
   this->previousAngle = 0;
   this->evaluationRate_ = _evaluationRate;
   this->iteration = 0;
-  this->penalty = 10.0;
+  this->penaltyTurn = 0.05;
+  this->penaltyGait = 7.0;
   this->bestFitnessGait = 0;
   this->bestFitnessLeft = 0;
   this->bestFitnessRight = 0;
@@ -89,7 +90,7 @@ double Evaluator::Fitness(std::string controllerType)
   // Enter controllers
   if (controllerType == "gait"){
     // Obtain fitness, as defined in https://doi.org/10.1162/ARTL_a_00223
-    double fitness = gait;//std::pow(100.0*gait/this->evaluationRate_,6);
+    double fitness = gait - this->penaltyTurn*abs(currentAngle);//std::pow(100.0*gait/this->evaluationRate_,6);
 
     // Update best fitness
     if (fitness > this->bestFitnessGait){
@@ -103,7 +104,7 @@ double Evaluator::Fitness(std::string controllerType)
   }
   else if (controllerType == "left"){
     // Obtain fitness
-    double fitness = (currentAngle- this->penalty*gait)/this->evaluationRate_;
+    double fitness = (currentAngle- this->penaltyGait*gait)/this->evaluationRate_;
 
     // Update best fitness
     if (fitness > this->bestFitnessLeft){
@@ -117,7 +118,7 @@ double Evaluator::Fitness(std::string controllerType)
   }
   else if (controllerType == "right"){
     // Obtain fitness
-    double fitness = (-currentAngle - this->penalty*gait)/this->evaluationRate_;
+    double fitness = (-currentAngle - this->penaltyGait*gait)/this->evaluationRate_;
 
     // Update best fitness
     if (fitness > this->bestFitnessRight){

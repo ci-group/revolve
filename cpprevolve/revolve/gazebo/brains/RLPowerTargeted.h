@@ -211,6 +211,7 @@ namespace revolve
 
       /// \brief Noise in generatePolicy() function
       private: double sigma_;
+      private: double sigmaPolicy;
 
       /// \brief Tau deviation for self-adaptive sigma
       private: double tau_;
@@ -242,11 +243,12 @@ namespace revolve
       private: double bestFitnessRight;
       private: int learningPeriod;
       private: double eps;
-      private: double phi;
+      private: double phiMin;
       private: double face;
       private: double goalAngle;
       private: double distToObject;
       private: std::string moveOrientation;
+      private: double fastEvaluationRate;
 
       // Policies for sub-brains
       private: PolicyPtr bestPolicyGait;

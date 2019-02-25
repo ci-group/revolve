@@ -54,16 +54,18 @@ RLPower::RLPower(
 
   // Parameters
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 50.0;
+  this->evaluationRate_ = 60.0;
+  this->fastEvaluationRate = 7.5;
   this->numInterpolationPoints_ = 100;
-  this->learningPeriod = 6;
-  this->maxEvaluations_ = 1000;
-  this->maxRankedPolicies_ = 6;
-  this->sigma_ = 0.8;
+  this->learningPeriod = 20;
+  this->maxEvaluations_ = 4000;
+  this->maxRankedPolicies_ = 20;
+  this->sigma_ = 1.30;
+  this->sigmaPolicy = 1.30;
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
   this->eps = 0.25;
-  this->phi = 10.0;
+  this->phiMin = 2.0;
 
   // Working variables
   this->node_.reset(new gz::transport::Node());
@@ -103,10 +105,10 @@ void RLPower::SetRandomGoalBox(){
   std::cout << "SetrandomGoalBox \n";
 
   // Set new position that is sufficiently far away
-  while(this->distToObject <= 1.0){
+  while(this->distToObject <= 0.5){
     // Generate new goal points in the neighbourhood of the robot
-    this->goalX = ((double) rand() / (RAND_MAX))*3.f - 1.5 + this->evaluator_->currentPosition_.Pos().X();
-    this->goalY = ((double) rand() / (RAND_MAX))*3.f - 1.5 + this->evaluator_->currentPosition_.Pos().Y();
+    this->goalX = ((double) rand() / (RAND_MAX))*2.f - 1.0 + this->evaluator_->currentPosition_.Pos().X();
+    this->goalY = ((double) rand() / (RAND_MAX))*2.f - 1.0 + this->evaluator_->currentPosition_.Pos().Y();
 
     // Check distance
     this->distToObject = std::pow(
@@ -144,6 +146,7 @@ void RLPower::Update(
   if ((_time - this->startTime_) > this->evaluationRate_){
     if(this->generationCounter_ < this->maxEvaluations_){
       std::cout << "Iteration: " << this->generationCounter_ << std::endl;
+      std::cout << "Sigma is: " << this->sigma_ <<std::endl;
 
       // Get current position and update it to later obtain fitness
       this->evaluator_->Update(this->robot_->WorldPose());
@@ -190,6 +193,9 @@ void RLPower::Update(
     if(this->generationCounter_ == this->maxRankedPolicies_ + 3*this->learningPeriod + 1){
       this->distToObject = 0.f;
       this->SetRandomGoalBox();
+
+      // Allow for more smooth moving
+      this->evaluationRate_ = this->fastEvaluationRate;
     }
   }
 
@@ -340,16 +346,25 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     std::cout << "Orientation: random\n";
   }
   else if (this->generationCounter_ < n_init + this->learningPeriod){
+    if (this->generationCounter_ == n_init){
+      this->sigma_ = this->sigmaPolicy;
+    }
     this->moveOrientation = "gait";
     std::cout << "Orientation: gait\n";
   }
   else if (this->generationCounter_ < n_init + 2*this->learningPeriod){
-    this->moveOrientation = "left";
-    std::cout << "Orientation: left\n";
-  }
-  else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
+    if (this->generationCounter_ == n_init + this->learningPeriod){
+      this->sigma_ = this->sigmaPolicy;
+    }
     this->moveOrientation = "right";
     std::cout << "Orientation: right\n";
+  }
+  else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
+    if (this->generationCounter_ == n_init + 2*this->learningPeriod){
+      this->sigma_ = this->sigmaPolicy;
+    }
+    this->moveOrientation = "left";
+    std::cout << "Orientation: left\n";
   }
     // When we are finished learning
   else{
@@ -381,20 +396,27 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       angleDifference  = (360.f + angleDifference);
     }
 
+    double objectRadius = 0.05;
+    double phiSides = atan(objectRadius/this->distToObject)*180.0/M_PI;
+    std::cout << "phiCorrected will be " << phiSides << std::endl;
+
     // Determine the angle.
-    if(angleDifference > this->phi and angleDifference > -this->phi){
+    if(angleDifference > std::max(this->phiMin, phiSides) and angleDifference > -this->phiMin){
       this->moveOrientation = "left";
-      std::cout << "left \n";
+      std::cout << "left with controller fitness " << this->bestFitnessLeft << "\n";
     }
-    else if (angleDifference < -this->phi){
+    else if (angleDifference < std::min(-this->phiMin, - phiSides)){
       this->moveOrientation = "right";
-      std::cout << "right \n";
+      std::cout << "right with controller fitness " << this->bestFitnessRight << "\n";
     }
     else{
       this->moveOrientation = "gait";
-      std::cout << "gait \n";
+      std::cout << "gait with controller fitness " << this->bestFitnessGait << "\n";
     }
   }
+
+//  // Force logic
+//  this->moveOrientation = "right";
 
   // Update generation counter
   this->generationCounter_++;
@@ -438,6 +460,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       *this->bestInterpolationCacheGait = *this->interpolationCache_;
     }
 
+    // NOTE: IT'S LIKELY OK TO NOT CONDITION ON MOVEORIENTATINO HERE
     // Compare with best left turn policy
     if (currentFitnessLeft > this->bestFitnessLeft){
       // Verbose
@@ -508,7 +531,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     // Increase spline points if it is a time
     if (this->generationCounter_ % this->stepRate_ == 0)
     {
-      std::cout << "Increase spline points \n";
+      std::cout << "Generationcounter: " << this->generationCounter_ << ". Steprate " << this->stepRate_ << "Increase spline points \n";
       this->IncreaseSplinePoints(_numSplines);
     }
 
@@ -530,6 +553,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     }
     else
     {
+      // Note: Unreachable by construction under algorithm C/D
       // Default is decayig sigma
       if (this->rankedPoliciesGait.size() >= this->maxRankedPolicies_)
       {
@@ -655,6 +679,13 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     else{
       std::cout << "Incorrect moveOrientation given \n";
     }
+
+    // Debugging
+//    std::cout << "Current policy \n";
+//    for (auto &item: *this->currentPolicy_){
+//      std::cout << &item->at(0) << ", ";
+//    }
+
   }
 }
 
@@ -678,14 +709,24 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
 
   this->InterpolateCubic(0, &policy_copy, this->currentPolicy_.get());
 
+  //////////////////////////////////////////////////////////////
   // Call desired policy out of {gait,left,right}
+  // TODO: <WHAT HAPPENS WITH RANDOM?>
   auto tempPolicy = this->rankedPoliciesGait;
 
   if(this->moveOrientation == "left"){
     tempPolicy = this->rankedPoliciesLeft;
+    std::cout << "WARNING: Spline points increased based on left controller \n";
   }
   else if(this->moveOrientation == "right"){
     tempPolicy = this->rankedPoliciesRight;
+    std::cout << "WARNING: Spline points increased based on right controller \n";
+  }
+  else if(this->moveOrientation == "gait"){
+    std::cout << "WARNING: Spline points increased based on gait controller \n";
+  }
+  else{
+    std::cout << "WARNING: Spline points increased based on random controller \n";
   }
 
   for (auto &it : tempPolicy)
@@ -700,6 +741,9 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
     }
     this->InterpolateCubic(0, &policy_copy, policy.get());
   }
+  //////////////////////////////////////////////////////////////
+
+
 }
 
 /////////////////////////////////////////////////
