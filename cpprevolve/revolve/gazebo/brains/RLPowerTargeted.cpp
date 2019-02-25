@@ -60,8 +60,8 @@ RLPower::RLPower(
   this->learningPeriod = 20;
   this->maxEvaluations_ = 4000;
   this->maxRankedPolicies_ = 20;
-  this->sigma_ = 1.50;
-  this->sigmaPolicy = 1.50;
+  this->sigma_ = 2.50;
+  this->sigmaPolicy = 2.50;
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
   this->eps = 0.2;
