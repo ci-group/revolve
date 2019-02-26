@@ -3,9 +3,9 @@ import asyncio
 import os
 import sys
 
-here = os.path.dirname(os.path.abspath(__file__))
-rvpath = os.path.abspath(os.path.join(here, '..', 'revolve'))
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+rvpath = os.path.join(current_dir, '..', '..')
+sys.path.append(rvpath)
 
 from pygazebo.pygazebo import DisconnectError
 
