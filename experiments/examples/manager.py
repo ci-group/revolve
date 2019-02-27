@@ -25,7 +25,7 @@ async def run():
     # Parse command line / file input arguments
     settings = parser.parse_args()
 
-    with open("models/robot_26.yaml", 'r') as yaml_file:
+    with open("experiments/examples/yaml/snake.yaml", 'r') as yaml_file:
         bot_yaml = yaml_file.read()
     settings.genome = "\n".join(bot_yaml.splitlines()).replace("\'", "\"")
 

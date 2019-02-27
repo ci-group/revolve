@@ -28,7 +28,7 @@ class NonBlockingStreamReader(object):
 
             while True:
                 line = stream.readline()
-                if line:
+                if line and line != '\n':
                     queue.put(line)
                 else:
                     # This used to throw an exception, but we cannot
