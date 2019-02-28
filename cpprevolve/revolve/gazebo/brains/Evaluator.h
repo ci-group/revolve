@@ -65,7 +65,13 @@ namespace revolve
       private: double penaltyGait;
       private: double previousAngle;
       private: bool printOutput;
+      private: std::string filename;
+
+      /// \brief Maximum allowed gait for turn controller
       private: double gaitThreshold;
+
+      /// \brief Maximum allowed turn for gait controller
+      private: double turnThreshold;
     };
   }
 }

@@ -35,13 +35,20 @@ Evaluator::Evaluator(const double _evaluationRate)
   this->penaltyTurn = 0.05;
   this->penaltyGait = 1.0; // 1.0: linear; tbd. Ex: 0.03 travelled with 8 degrees. Maybe 100?
   this->gaitThreshold = 0.0004; // Tbd. Now done empirically
+  this->turnThreshold = 1.5; // In degrees
   this->bestFitnessGait = -100.f;
   this->bestFitnessLeft = -100.f;
   this->bestFitnessRight = -100.f;
   this->currentPosition_.Reset();
+  this->filename = "output/rlpower/";
   this->previousPosition_.Reset();
   this->printOutput = true;
+
+  // Create fitness directory
+  this->filename += std::to_string(time(0)) + "/";
+  std::system(("mkdir -p " + this->filename).c_str());
 }
+
 
 /////////////////////////////////////////////////
 Evaluator::~Evaluator() = default;
@@ -53,7 +60,16 @@ void Evaluator::Reset()
   this->previousAngle = this->currentPosition_.Rot().Yaw()*180.0/M_PI;
   this->iteration++;
   this->printOutput = true;
+
+  // Write results to fitness file in format g,l,r
+  std::ofstream fitnessFile;
+  fitnessFile.open(this->filename + "fitness.txt", std::ios::app);
+  fitnessFile << this->bestFitnessGait << ",";
+  fitnessFile << this->bestFitnessLeft << ",";
+  fitnessFile << this->bestFitnessRight << "\n";
+  fitnessFile.close();
 }
+
 /////////////////////////////////////////////////
 double Evaluator::Fitness(std::string controllerType)
 {
@@ -91,8 +107,12 @@ double Evaluator::Fitness(std::string controllerType)
 
   // Enter controllers
   if (controllerType == "gait"){
+    double penalty = 0;
+    if(abs(currentAngle) > this->turnThreshold){
+      penalty = 9999;
+    }
     // Obtain fitness, as defined in https://doi.org/10.1162/ARTL_a_00223
-    double fitness = gait - this->penaltyTurn*abs(currentAngle);//std::pow(100.0*gait/this->evaluationRate_,6);
+    double fitness = gait - penalty;//std::pow(100.0*gait/this->evaluationRate_,6);
 
     // Update best fitness
     if (fitness > this->bestFitnessGait){

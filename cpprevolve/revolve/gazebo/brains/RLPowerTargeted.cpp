@@ -172,19 +172,17 @@ void RLPower::Update(
         this->SetRandomGoalBox();
       }
 
-      // Set face:
-      if (this->generationCounter_ >= this->maxRankedPolicies_){
-        std::cout << "Goal coordinates: " << this->goalX << ", " << this->goalY << std::endl;
-        std::cout << "Goal angle: " << this->goalAngle << std::endl;
+      // Set goal angle:
+      std::cout << "Goal coordinates: " << this->goalX << ", " << this->goalY << std::endl;
+      std::cout << "Goal angle: " << this->goalAngle << std::endl;
 
-        // Show angle of goal
-        this->goalAngle = this->getVectorAngle(this->evaluator_->currentPosition_.Pos().X(),
-                                               this->evaluator_->currentPosition_.Pos().Y(),
-                                               this->goalX,
-                                               this->goalY,
-                                               0.f,
-                                               -1.f);
-      }
+      // Show angle of goal
+      this->goalAngle = this->getVectorAngle(this->evaluator_->currentPosition_.Pos().X(),
+                                             this->evaluator_->currentPosition_.Pos().Y(),
+                                             this->goalX,
+                                             this->goalY,
+                                             0.f,
+                                             -1.f);
 
       // Update policy
       this->UpdatePolicy(numMotors);
@@ -440,11 +438,11 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
 
       // Update face
       double robotMoveAngle = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
-                                        this->evaluator_->previousPosition_.Pos().Y(),
-                                        this->evaluator_->currentPosition_.Pos().X(),
-                                        this->evaluator_->currentPosition_.Pos().Y(),
-                                        0.f,
-                                        -1.f);
+                                                   this->evaluator_->previousPosition_.Pos().Y(),
+                                                   this->evaluator_->currentPosition_.Pos().X(),
+                                                   this->evaluator_->currentPosition_.Pos().Y(),
+                                                   0.f,
+                                                   -1.f);
       double startAngle = this->evaluator_->previousPosition_.Rot().Yaw()*180.0/M_PI;
 
       this->face = robotMoveAngle - startAngle;
