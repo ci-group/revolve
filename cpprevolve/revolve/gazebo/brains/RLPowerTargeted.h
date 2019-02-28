@@ -249,6 +249,7 @@ namespace revolve
       private: double distToObject;
       private: std::string moveOrientation;
       private: double fastEvaluationRate;
+      private: bool setSeed;
 
       // Policies for sub-brains
       private: PolicyPtr bestPolicyGait;

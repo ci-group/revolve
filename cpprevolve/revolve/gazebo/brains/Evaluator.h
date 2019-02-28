@@ -65,6 +65,7 @@ namespace revolve
       private: double penaltyGait;
       private: double previousAngle;
       private: bool printOutput;
+      private: double gaitThreshold;
     };
   }
 }

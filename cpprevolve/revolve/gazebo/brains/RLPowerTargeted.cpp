@@ -52,22 +52,24 @@ RLPower::RLPower(
   //      "~/" + _modelName + "/modify_spline_policy", &RLPower::Modify,
   //      this);
 
-  // Parameters
-  this->algorithmType_ = "D";
-  this->evaluationRate_ = 40.0;
+  // Controller parameters
+  this->setSeed = false;
+  this->sourceYSize_ = 3;
+  this->eps = 0.2;
+  this->phiMin = 2.0;
+  this->evaluationRate_ = 60.0;
   this->fastEvaluationRate = 7.5;
   this->numInterpolationPoints_ = 100;
+  this->maxEvaluations_ = 6000;
   this->learningPeriod = 20;
-  this->maxEvaluations_ = 4000;
+  // Learner parameters
+  this->algorithmType_ = "D";
   this->maxRankedPolicies_ = 20;
   this->sigma_ = 2.50;
   this->sigmaPolicy = 2.50;
   this->tau_ = 0.2;
-  this->sourceYSize_ = 3;
-  this->eps = 0.2;
-  this->phiMin = 2.0;
 
-  // Working variables
+  // Working variables for controller
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
   this->robot_ = _model;
@@ -78,7 +80,7 @@ RLPower::RLPower(
   this->bestFitnessLeft = 0;
   this->bestFitnessRight = 0;
 
-  // Generate first random policy
+  // Generate first random policy for controller
   auto numMotors = _motors.size();
   this->InitialisePolicy(numMotors);
 
@@ -94,6 +96,11 @@ RLPower::RLPower(
   this->rankedPoliciesGait = std::map< double, PolicyPtr, std::greater< double>>();
   this->rankedPoliciesRight = std::map< double, PolicyPtr, std::greater< double>>();
   this->rankedPoliciesLeft = std::map< double, PolicyPtr, std::greater< double>>();
+
+  // Set seed
+  if(this->setSeed){
+    srand(1);
+  }
 
   // Start the evaluator
   this->evaluator_.reset(new Evaluator(this->evaluationRate_));
@@ -146,7 +153,6 @@ void RLPower::Update(
   if ((_time - this->startTime_) > this->evaluationRate_){
     if(this->generationCounter_ < this->maxEvaluations_){
       std::cout << "Iteration: " << this->generationCounter_ << std::endl;
-      std::cout << "Sigma is: " << this->sigma_ <<std::endl;
 
       // Get current position and update it to later obtain fitness
       this->evaluator_->Update(this->robot_->WorldPose());
@@ -171,7 +177,7 @@ void RLPower::Update(
         std::cout << "Goal coordinates: " << this->goalX << ", " << this->goalY << std::endl;
         std::cout << "Goal angle: " << this->goalAngle << std::endl;
 
-        // Show angle of goal to the [1,0]-vector
+        // Show angle of goal
         this->goalAngle = this->getVectorAngle(this->evaluator_->currentPosition_.Pos().X(),
                                                this->evaluator_->currentPosition_.Pos().Y(),
                                                this->goalX,
@@ -336,7 +342,6 @@ double RLPower::getVectorAngle(double p1_x, double p1_y, double p2_x, double p2_
   return(std::atan2(det,dot)*180.0/M_PI);
 }
 
-/////////////////////////////////////////////////
 void RLPower::UpdatePolicy(const size_t _numSplines)
 {
   // Set orientation for next iteration in case we're learning
@@ -398,8 +403,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
 
     double objectRadius = 0.05;
     double robotRadius = 0.05;
-    double approxFactor = 0.8;
-    double phiSides = atan(approxFactor*(robotRadius + objectRadius)/this->distToObject)*180.0/M_PI;
+    double phiSides = atan((robotRadius + objectRadius)/this->distToObject)*180.0/M_PI;
 
     // Determine the angle.
     if(angleDifference > std::max(this->phiMin, phiSides) and angleDifference > -this->phiMin){
@@ -418,34 +422,8 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     std::cout << "phiCorrected is: " << phiSides << std::endl;
   }
 
-//  // Force logic
-//  this->moveOrientation = "right";
-
   // Update generation counter
   this->generationCounter_++;
-
-
-//  // Update face
-//  double robotMoveAngle = this->getVectorAngle(this->evaluator_->previousPosition_.Pos().X(),
-//                                               this->evaluator_->previousPosition_.Pos().Y(),
-//                                               this->evaluator_->currentPosition_.Pos().X(),
-//                                               this->evaluator_->currentPosition_.Pos().Y(),
-//                                               1.f,
-//                                               0.f);
-//  double startAngle = this->evaluator_->previousPosition_.Rot().Yaw()*180.0/M_PI;
-//
-//  this->face = robotMoveAngle - startAngle;
-//  if(this->face > 180){
-//    this->face -= 360;
-//  }
-//  else if (this->face < -180){
-//    this->face +=360;
-//  }
-//
-//  std::cout << "Start angle " << startAngle << "\n";
-//  std::cout << "Robot angle " << robotMoveAngle << "\n";
-//  std::cout << "New face: "<< this->face << "\n";
-
 
   //If we still want to learn, i.e. create a new policy
   if(this->generationCounter_ <= n_init + 3*this->learningPeriod){
@@ -489,7 +467,6 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
       *this->bestInterpolationCacheGait = *this->interpolationCache_;
     }
 
-    // NOTE: IT'S LIKELY OK TO NOT CONDITION ON MOVEORIENTATINO HERE
     // Compare with best left turn policy
     if (currentFitnessLeft > this->bestFitnessLeft){
       // Verbose
@@ -707,17 +684,9 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     else{
       std::cout << "Incorrect moveOrientation given \n";
     }
-
-    // Debugging
-//    std::cout << "Current policy \n";
-//    for (auto &item: *this->currentPolicy_){
-//      std::cout << &item->at(0) << ", ";
-//    }
-
   }
 }
 
-/////////////////////////////////////////////////
 void RLPower::IncreaseSplinePoints(const size_t _numSplines)
 {
   this->sourceYSize_++;
@@ -739,7 +708,6 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
 
   //////////////////////////////////////////////////////////////
   // Call desired policy out of {gait,left,right}
-  // TODO: <WHAT HAPPENS WITH RANDOM?>
   auto tempPolicy = this->rankedPoliciesGait;
 
   if(this->moveOrientation == "left"){
@@ -769,12 +737,9 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
     }
     this->InterpolateCubic(0, &policy_copy, policy.get());
   }
-  //////////////////////////////////////////////////////////////
-
 
 }
 
-/////////////////////////////////////////////////
 std::map< double, PolicyPtr >::iterator RLPower::BinarySelection()
 {
   std::random_device rd;

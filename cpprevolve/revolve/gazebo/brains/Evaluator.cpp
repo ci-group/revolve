@@ -33,10 +33,11 @@ Evaluator::Evaluator(const double _evaluationRate)
   this->evaluationRate_ = _evaluationRate;
   this->iteration = 0;
   this->penaltyTurn = 0.05;
-  this->penaltyGait = 50.0;
-  this->bestFitnessGait = 0;
-  this->bestFitnessLeft = 0;
-  this->bestFitnessRight = 0;
+  this->penaltyGait = 1.0; // 1.0: linear; tbd. Ex: 0.03 travelled with 8 degrees. Maybe 100?
+  this->gaitThreshold = 0.0004; // Tbd. Now done empirically
+  this->bestFitnessGait = -100.f;
+  this->bestFitnessLeft = -100.f;
+  this->bestFitnessRight = -100.f;
   this->currentPosition_.Reset();
   this->previousPosition_.Reset();
   this->printOutput = true;
@@ -83,7 +84,8 @@ double Evaluator::Fitness(std::string controllerType)
   std::cout << "Current position " << this->currentPosition_.Pos().X() << ", "<< this->currentPosition_.Pos().Y() << std::endl;
   std::cout << "Previous z-angle: " << this->previousAngle << std::endl;
   std::cout << "Current z-angle: " << zAngleFromOrigin << std::endl;
-  std::cout << "Degrees travelled: " << currentAngle << "\n\n";
+  std::cout << "Degrees travelled: " << currentAngle << "\n";
+  std::cout << "Relative distance travelled is: " << gait/this->evaluationRate_ << "\n\n";
   this->printOutput = false;
   }
 
@@ -103,8 +105,16 @@ double Evaluator::Fitness(std::string controllerType)
     return (fitness);
   }
   else if (controllerType == "left"){
-    // Obtain fitness
-    double fitness = (currentAngle- this->penaltyGait*gait)/this->evaluationRate_;
+    double penalty;
+    if (gait/this->evaluationRate_ >= this->gaitThreshold){
+      penalty = 9999;
+    }
+    else{
+      penalty = penaltyGait*gait/this->evaluationRate_/this->gaitThreshold;
+    }
+
+      // Obtain fitness
+    double fitness = (currentAngle - penalty)/this->evaluationRate_;
 
     // Update best fitness
     if (fitness > this->bestFitnessLeft){
@@ -117,8 +127,16 @@ double Evaluator::Fitness(std::string controllerType)
     return fitness;
   }
   else if (controllerType == "right"){
+    double penalty;
+    if (gait/this->evaluationRate_ >= this->gaitThreshold){
+      penalty = 9999;
+    }
+    else{
+      penalty = penaltyGait*gait/this->evaluationRate_/this->gaitThreshold;
+    }
+
     // Obtain fitness
-    double fitness = (-currentAngle - this->penaltyGait*gait)/this->evaluationRate_;
+    double fitness = (-currentAngle - penalty)/this->evaluationRate_;
 
     // Update best fitness
     if (fitness > this->bestFitnessRight){
