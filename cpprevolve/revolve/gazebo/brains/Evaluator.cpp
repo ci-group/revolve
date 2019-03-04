@@ -42,6 +42,7 @@ Evaluator::Evaluator(const double _evaluationRate)
   this->currentPosition_.Reset();
   this->previousPosition_.Reset();
   this->printOutput = true;
+  this->moveDirectional = false;
 
   // Create fitness directory
   this->filename = "output/rlpower/";
@@ -88,7 +89,7 @@ double Evaluator::Fitness(std::string controllerType)
     currentAngle = 180 - this->previousAngle + 180 + zAngleFromOrigin;
     std::cout << "Crossed boundary from negative to positive \n";
   }
-  // If we cross the boundary point from negative to positive
+    // If we cross the boundary point from negative to positive
   else if(this->previousAngle < -90 and zAngleFromOrigin >90){
     currentAngle =-(180 + this->previousAngle + 180 - zAngleFromOrigin);
     std::cout << "Crossed boundary from positive to negative \n";
@@ -96,55 +97,62 @@ double Evaluator::Fitness(std::string controllerType)
 
   // Verbose
   if(this->printOutput){
-  std::cout << "\nPrevious position: " << this->previousPosition_.Pos().X() << ", " << this->previousPosition_.Pos().Y() << std::endl;
-  std::cout << "Current position " << this->currentPosition_.Pos().X() << ", "<< this->currentPosition_.Pos().Y() << std::endl;
-  std::cout << "Previous z-angle: " << this->previousAngle << std::endl;
-  std::cout << "Current z-angle: " << zAngleFromOrigin << std::endl;
-  std::cout << "Degrees travelled: " << currentAngle << "\n";
-  std::cout << "Relative distance travelled is: " << gait << "\n\n";
-  this->printOutput = false;
+    std::cout << "\nPrevious position: " << this->previousPosition_.Pos().X() << ", " << this->previousPosition_.Pos().Y() << std::endl;
+    std::cout << "Current position " << this->currentPosition_.Pos().X() << ", "<< this->currentPosition_.Pos().Y() << std::endl;
+    std::cout << "Previous z-angle: " << this->previousAngle << std::endl;
+    std::cout << "Current z-angle: " << zAngleFromOrigin << std::endl;
+    std::cout << "Degrees travelled: " << currentAngle << "\n";
+    std::cout << "Relative distance travelled is: " << gait << "\n\n";
+    this->printOutput = false;
   }
 
   // Enter controllers
   if (controllerType == "gait"){
-    double fitness = 0;
+    if (!this->moveDirectional){
+      double fitness = 0;
 
-    // Fitness higher than 0 if we are within our hard constraint
-    if(abs(currentAngle) < this->turnThreshold){
-      double penalty = 0;
-      fitness = gait - penalty;
+      // Fitness higher than 0 if we are within our hard constraint
+      if (abs(currentAngle) < this->turnThreshold)
+      {
+        double penalty = 0;
+        fitness = gait - penalty;
+      }
+
+      // Update best fitness
+      if (fitness > this->bestFitnessGait)
+      {
+        this->bestFitnessGait = fitness;
+      }
+
+      // Verbose
+      std::cout << "Gait: Fitness: " << fitness << ". Best: " << this->bestFitnessGait << std::endl;
+
+      return (fitness);
     }
+    else
+    {
+      double fitness = 0;
 
-    // Update best fitness
-    if (fitness > this->bestFitnessGait){
-      this->bestFitnessGait = fitness;
+      // Fitness higher than 0 if we are within our hard constraint
+      if (abs(currentAngle) < this->turnThreshold)
+      {
+        double directed = (this->previousPosition_.Pos().X() - this->currentPosition_.Pos().X()) / this->evaluationRate_;
+        double penalty = 0;
+        fitness = directed - penalty;
+      }
+
+      // Update best fitness
+      if (fitness > this->bestFitnessGait)
+      {
+        this->bestFitnessGait = fitness;
+      }
+
+      // Verbose
+      std::cout << "Directed: Fitness: " << fitness << ". Best: " << this->bestFitnessGait << std::endl;
+
+      // Return scaled directed
+      return fitness;
     }
-
-    // Verbose
-    std::cout << "Gait: Fitness: " <<  fitness  << ". Best: " << this->bestFitnessGait << std::endl;
-
-    return (fitness);
-  }
-  else if (controllerType == "directed"){
-    double fitness = 0;
-
-    // Fitness higher than 0 if we are within our hard constraint
-    if(abs(currentAngle) < this->turnThreshold){
-      double directed = (this->previousPosition_.Pos().X() - this->currentPosition_.Pos().X())/this->evaluationRate_;
-      double penalty = 0;
-      fitness = directed - penalty;
-    }
-
-    // Update best fitness
-    if (fitness > this->bestFitnessGait){
-      this->bestFitnessGait = fitness;
-    }
-
-    // Verbose
-    std::cout << "Directed: Fitness: " <<  fitness  << ". Best: " << this->bestFitnessGait << std::endl;
-
-    // Return scaled directed
-    return fitness;
   }
   else if (controllerType == "left"){
     double fitness = 0;
