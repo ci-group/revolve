@@ -46,6 +46,8 @@ class RevolveModule:
             module = BrickModule()
         elif mod_type == 'FixedBrickSensor':
             module = BrickSensorModule()
+        elif mod_type == 'TouchSensor':
+            module = TouchSensorModule()
         else:
             raise NotImplementedError('"{}" module not yet implemented'.format(mod_type))
 
@@ -195,3 +197,14 @@ class BrickSensorModule(RevolveModule):
 
     def __init__(self):
         super().__init__()
+
+
+class TouchSensorModule(RevolveModule):
+    """
+    Inherits class RevolveModule. Creates Robogen sensor module
+    """
+    TYPE = "TouchSensor"
+
+    def __init__(self):
+        super().__init__()
+
