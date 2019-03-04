@@ -9,17 +9,16 @@ from pyrevolve.sdfbuilder.structure import Collision
 from pyrevolve.sdfbuilder.structure import Visual
 from pyrevolve.sdfbuilder.structure import Mesh
 
-# KKK:????KEEP IT???  class Module():  
-class RevolveModule():
+
+class RevolveModule:
     """
     Base class allowing for constructing Robogen components in an overviewable manner
     """
     DEFAULT_COLOR = (0.5, 0.5, 0.5)
-    TYPE = 'NONE'
+    TYPE = None
 
     def __init__(self):
         self.id = None
-        self.slot = None
         self.orientation = None
         self.rgb = None #RevolveModule.DEFAULT_COLOR
         self.substrate_coordinates = None
@@ -29,7 +28,6 @@ class RevolveModule():
         return self.rgb if self.rgb is not None else self.DEFAULT_COLOR
 
     @staticmethod
-    # KKK: has self been forgotten here ?
     def FromYaml(yaml_object):
         """
         From a yaml object, creates a data struture of interconnected body modules. 
@@ -40,7 +38,7 @@ class RevolveModule():
         FixedBrickSensor
         """
         mod_type = yaml_object['type']
-        if mod_type == 'CoreComponent':
+        if mod_type == 'CoreComponent' or mod_type == 'Core':
             module = CoreModule()
         elif mod_type == 'ActiveHinge':
             module = ActiveHingeModule()
@@ -49,14 +47,9 @@ class RevolveModule():
         elif mod_type == 'FixedBrickSensor':
             module = BrickSensorModule()
         else:
-            raise NotImplementedError('"{} module not yet implemented'.format(mod_type))
+            raise NotImplementedError('"{}" module not yet implemented'.format(mod_type))
 
         module.id = yaml_object['id']
-
-        try:
-            module.slot = yaml_object['slot']    
-        except KeyError:
-            module.slot = 0
 
         try:
             module.orientation = yaml_object['orientation']
@@ -80,10 +73,13 @@ class RevolveModule():
         return module
 
     def to_yaml(self):
+        if self.TYPE is None:
+            raise RuntimeError('Module TYPE is not implemented for "{}",'
+                               ' this should be defined.'.format(self.__class__))
+
         yaml_dict_object = OrderedDict()
         yaml_dict_object['id'] = self.id
         yaml_dict_object['type'] = self.TYPE
-        yaml_dict_object['slot'] = self.slot
         yaml_dict_object['orientation'] = self.orientation
 
         if self.rgb is not None:
@@ -93,13 +89,13 @@ class RevolveModule():
                 'blue': self.rgb[2],
             }
 
-        children = self.generate_yaml_children()
+        children = self._generate_yaml_children()
         if children is not None:
             yaml_dict_object['children'] = children
         
         return yaml_dict_object
 
-    def generate_yaml_children(self):
+    def _generate_yaml_children(self):
         has_children = False
 
         children = {}
@@ -115,14 +111,14 @@ class RevolveModule():
         Tests if the robot tree is valid (recursively)
         :return: True if the robot tree is valid
         """
-        raise NotImplementedError("Robot tree validation not yet implemented")
+        raise RuntimeError("Robot tree validation not yet implemented")
 
     def to_sdf(self):
         """
 
         :return:
         """
-        return ''
+        raise NotImplementedError("Module.to_sdf() not implemented")
 
 
 class CoreModule(RevolveModule):
@@ -157,7 +153,8 @@ class CoreModule(RevolveModule):
             self_collide=True,
             elements=[visual, collision]
         )
-        link.make_color(r=self.rgb[0], g=self.rgb[1], b=self.rgb[2], a=1.0)
+        rgb = self.color()
+        link.make_color(r=rgb[0], g=rgb[1], b=rgb[2], a=1.0)
 
         return link
 
@@ -172,7 +169,7 @@ class ActiveHingeModule(RevolveModule):
         super().__init__()
         self.children = {1: None}
 
-    def generate_yaml_children(self):
+    def _generate_yaml_children(self):
         child = self.children[1]
         if child is None:
             return None

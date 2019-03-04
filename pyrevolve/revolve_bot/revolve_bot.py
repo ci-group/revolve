@@ -27,6 +27,7 @@ class RevolveBot():
         self._parents = None
         self._fitness = None
         self._behavioural_measurement = None
+        self._battery_level = None
 
     def measure_behaviour(self):
         """
@@ -49,42 +50,51 @@ class RevolveBot():
         """
         pass
 
-    def load(self, text, conf_type, brain_type):
+    def load(self, text, conf_type):
         """
         Load robot's description from a string and parse it to Python structure
         :param text: Robot's description string
-        :param type: Type of a robot's description format
+        :param conf_type: Type of a robot's description format
         :return:
         """
         if 'yaml' == conf_type:
-            self.load_yaml(text, brain_type)
+            self.load_yaml(text)
         elif 'sdf' == conf_type:
             raise NotImplementedError("Loading from SDF not yet implemented")
 
-    def load_yaml(self, text, brain_type):
+    def load_yaml(self, text):
         """
         Load robot's description from a yaml string
         :param text: Robot's yaml description
         """
         yaml_bot = yaml.safe_load(text)
-        self._id = yaml_bot['id']
+        self._id = yaml_bot['id'] if 'id' in yaml_bot else None
         self._body = CoreModule.FromYaml(yaml_bot['body'])
-        # KKK: should we trycatch lack of body/brain?
-        if brain_type == 'nn':
-            self._brain = BrainNN()
-        self._brain.FromYaml(yaml_bot['brain'])
 
-    def load_file(self, path, conf_type='yaml', brain_type='nn'):
+        if 'brain' in yaml_bot:
+            yaml_brain = yaml_bot['brain']
+            if 'type' not in yaml_brain:
+                raise IOError("brain type not defined, please fix it")
+            brain_type = yaml_brain['type']
+
+            if brain_type == 'neural-network':
+                self._brain = BrainNN()
+                self._brain.FromYaml(yaml_brain)
+
+        else:
+            self._brain = None
+
+    def load_file(self, path, conf_type='yaml'):
         """
         Read robot's description from a file and parse it to Python structure
         :param path: Robot's description file path
-        :param type: Type of a robot's description format
+        :param conf_type: Type of a robot's description format
         :return:
         """
         with open(path, 'r') as robot_file:
             robot = robot_file.read()
 
-        self.load(robot, conf_type, brain_type)
+        self.load(robot, conf_type)
 
     def to_sdf(self):
         """
@@ -112,7 +122,8 @@ class RevolveBot():
         yaml_dict = OrderedDict()
         yaml_dict['id'] = self._id
         yaml_dict['body'] = self._body.to_yaml()
-        yaml_dict['brain'] = self._brain.to_yaml()
+        if self._brain is not None:
+            yaml_dict['brain'] = self._brain.to_yaml()
 
         return yaml.dump(yaml_dict)
 
