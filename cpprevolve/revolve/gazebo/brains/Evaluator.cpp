@@ -37,14 +37,15 @@ Evaluator::Evaluator(const double _evaluationRate)
   this->gaitThreshold = 0.0004; // Tbd. Now done empirically
   this->turnThreshold = 1.5; // In degrees
   this->bestFitnessGait = -100.f;
+  this->bestFitnessDirected = -100.f;
   this->bestFitnessLeft = -100.f;
   this->bestFitnessRight = -100.f;
   this->currentPosition_.Reset();
-  this->filename = "output/rlpower/";
   this->previousPosition_.Reset();
   this->printOutput = true;
 
   // Create fitness directory
+  this->filename = "output/rlpower/";
   this->filename += std::to_string(time(0)) + "/";
   std::system(("mkdir -p " + this->filename).c_str());
 }
@@ -77,7 +78,7 @@ double Evaluator::Fitness(std::string controllerType)
   double gait = std::sqrt(std::pow(this->previousPosition_.Pos().X() -
                                    this->currentPosition_.Pos().X(), 2) +
                           std::pow(this->previousPosition_.Pos().Y() -
-                                   this->currentPosition_.Pos().Y(), 2));
+                                   this->currentPosition_.Pos().Y(), 2))/this->evaluationRate_;
 
   // Get Z-angle in degrees
   double zAngleFromOrigin = this->currentPosition_.Rot().Yaw()*180.0/M_PI;
@@ -101,18 +102,19 @@ double Evaluator::Fitness(std::string controllerType)
   std::cout << "Previous z-angle: " << this->previousAngle << std::endl;
   std::cout << "Current z-angle: " << zAngleFromOrigin << std::endl;
   std::cout << "Degrees travelled: " << currentAngle << "\n";
-  std::cout << "Relative distance travelled is: " << gait/this->evaluationRate_ << "\n\n";
+  std::cout << "Relative distance travelled is: " << gait << "\n\n";
   this->printOutput = false;
   }
 
   // Enter controllers
   if (controllerType == "gait"){
-    double penalty = 0;
-    if(abs(currentAngle) > this->turnThreshold){
-      penalty = 9999;
+    double fitness = 0;
+
+    // Fitness higher than 0 if we are within our hard constraint
+    if(abs(currentAngle) < this->turnThreshold){
+      double penalty = 0;
+      fitness = gait - penalty;
     }
-    // Obtain fitness, as defined in https://doi.org/10.1162/ARTL_a_00223
-    double fitness = gait - penalty;//std::pow(100.0*gait/this->evaluationRate_,6);
 
     // Update best fitness
     if (fitness > this->bestFitnessGait){
@@ -124,17 +126,35 @@ double Evaluator::Fitness(std::string controllerType)
 
     return (fitness);
   }
-  else if (controllerType == "left"){
-    double penalty;
-    if (gait/this->evaluationRate_ >= this->gaitThreshold){
-      penalty = 9999;
-    }
-    else{
-      penalty = penaltyGait*gait/this->evaluationRate_/this->gaitThreshold;
+  else if (controllerType == "directed"){
+    double fitness = 0;
+    double directed = (this->previousPosition_.Pos().X() - this->currentPosition_.Pos().X())/this->evaluationRate_;
+
+    // Fitness higher than 0 if we are within our hard constraint
+    if(abs(currentAngle) < this->turnThreshold){
+      double penalty = 0;
+      fitness = directed - penalty;
     }
 
-      // Obtain fitness
-    double fitness = (currentAngle - penalty)/this->evaluationRate_;
+    // Update best fitness
+    if (fitness > this->bestFitnessDirected){
+      this->bestFitnessDirected = fitness;
+    }
+
+    // Verbose
+    std::cout << "Directed: Fitness: " <<  fitness  << ". Best: " << this->bestFitnessDirected << std::endl;
+
+    // Return scaled directed
+    return fitness;
+  }
+  else if (controllerType == "left"){
+    double fitness = 0;
+
+    // Fitness higher than 0 if we are within our hard constraint
+    if (gait < this->gaitThreshold){
+      double penalty = penaltyGait*gait/this->gaitThreshold;
+      fitness = currentAngle - penalty;
+    }
 
     // Update best fitness
     if (fitness > this->bestFitnessLeft){
@@ -147,16 +167,13 @@ double Evaluator::Fitness(std::string controllerType)
     return fitness;
   }
   else if (controllerType == "right"){
-    double penalty;
-    if (gait/this->evaluationRate_ >= this->gaitThreshold){
-      penalty = 9999;
-    }
-    else{
-      penalty = penaltyGait*gait/this->evaluationRate_/this->gaitThreshold;
-    }
+    double fitness = 0;
 
-    // Obtain fitness
-    double fitness = (-currentAngle - penalty)/this->evaluationRate_;
+    // Fitness higher than 0 if we are within our hard constraint
+    if (gait < this->gaitThreshold){
+      double penalty = penaltyGait*gait/this->gaitThreshold;
+      fitness = -currentAngle - penalty;
+    }
 
     // Update best fitness
     if (fitness > this->bestFitnessRight){
