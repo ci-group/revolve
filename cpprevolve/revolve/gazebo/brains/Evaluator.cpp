@@ -37,7 +37,6 @@ Evaluator::Evaluator(const double _evaluationRate)
   this->gaitThreshold = 0.0004; // Tbd. Now done empirically
   this->turnThreshold = 1.5; // In degrees
   this->bestFitnessGait = -100.f;
-  this->bestFitnessDirected = -100.f;
   this->bestFitnessLeft = -100.f;
   this->bestFitnessRight = -100.f;
   this->currentPosition_.Reset();
@@ -128,21 +127,21 @@ double Evaluator::Fitness(std::string controllerType)
   }
   else if (controllerType == "directed"){
     double fitness = 0;
-    double directed = (this->previousPosition_.Pos().X() - this->currentPosition_.Pos().X())/this->evaluationRate_;
 
     // Fitness higher than 0 if we are within our hard constraint
     if(abs(currentAngle) < this->turnThreshold){
+      double directed = (this->previousPosition_.Pos().X() - this->currentPosition_.Pos().X())/this->evaluationRate_;
       double penalty = 0;
       fitness = directed - penalty;
     }
 
     // Update best fitness
-    if (fitness > this->bestFitnessDirected){
-      this->bestFitnessDirected = fitness;
+    if (fitness > this->bestFitnessGait){
+      this->bestFitnessGait = fitness;
     }
 
     // Verbose
-    std::cout << "Directed: Fitness: " <<  fitness  << ". Best: " << this->bestFitnessDirected << std::endl;
+    std::cout << "Directed: Fitness: " <<  fitness  << ". Best: " << this->bestFitnessGait << std::endl;
 
     // Return scaled directed
     return fitness;
@@ -153,7 +152,7 @@ double Evaluator::Fitness(std::string controllerType)
     // Fitness higher than 0 if we are within our hard constraint
     if (gait < this->gaitThreshold){
       double penalty = penaltyGait*gait/this->gaitThreshold;
-      fitness = currentAngle - penalty;
+      fitness = (currentAngle - penalty)/this->evaluationRate_;
     }
 
     // Update best fitness
@@ -172,7 +171,7 @@ double Evaluator::Fitness(std::string controllerType)
     // Fitness higher than 0 if we are within our hard constraint
     if (gait < this->gaitThreshold){
       double penalty = penaltyGait*gait/this->gaitThreshold;
-      fitness = -currentAngle - penalty;
+      fitness = (-currentAngle - penalty)/this->evaluationRate_;
     }
 
     // Update best fitness

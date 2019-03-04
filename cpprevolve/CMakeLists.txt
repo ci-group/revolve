@@ -131,7 +131,7 @@ include_directories(
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 # Directory where the .proto files reside within revolve
-set(SPEC_DIR "${CMAKE_SOURCE_DIR}/cpprevolve/revolve/msgs")
+set(SPEC_DIR "${CMAKE_SOURCE_DIR}/cpprevolve//revolve/msgs")
 message(${SPEC_DIR})
 
 # All protobuf files we need, including the Gazebo ones
