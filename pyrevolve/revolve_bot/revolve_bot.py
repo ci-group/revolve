@@ -74,8 +74,10 @@ class RevolveBot():
         if 'brain' in yaml_bot:
             yaml_brain = yaml_bot['brain']
             if 'type' not in yaml_brain:
-                raise IOError("brain type not defined, please fix it")
-            brain_type = yaml_brain['type']
+                # raise IOError("brain type not defined, please fix it")
+                brain_type = 'neural-network'
+            else:
+                brain_type = yaml_brain['type']
 
             if brain_type == 'neural-network':
                 self._brain = BrainNN()
