@@ -42,7 +42,7 @@ Evaluator::Evaluator(const double _evaluationRate)
   this->currentPosition_.Reset();
   this->previousPosition_.Reset();
   this->printOutput = true;
-  this->moveDirectional = false;
+  this->moveDirectional = true;
 
   // Create fitness directory
   this->filename = "output/rlpower/";
@@ -136,7 +136,7 @@ double Evaluator::Fitness(std::string controllerType)
       // Fitness higher than 0 if we are within our hard constraint
       if (abs(currentAngle) < this->turnThreshold)
       {
-        double directed = (this->previousPosition_.Pos().X() - this->currentPosition_.Pos().X()) / this->evaluationRate_;
+        double directed = std::sqrt(std::pow((this->previousPosition_.Pos().X() - this->currentPosition_.Pos().X()),2)) / this->evaluationRate_;
         double penalty = 0;
         fitness = directed - penalty;
       }

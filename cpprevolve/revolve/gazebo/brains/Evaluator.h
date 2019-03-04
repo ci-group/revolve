@@ -62,11 +62,11 @@ namespace revolve
       private: double bestFitnessRight;
       private: double bestFitnessGait;
       private: double penaltyTurn;
-      private: bool moveDirectional;
+      public: bool moveDirectional;
       private: double penaltyGait;
       private: double previousAngle;
       private: bool printOutput;
-      private: std::string filename;
+      public: std::string filename;
 
       /// \brief Maximum allowed gait for turn controller
       private: double gaitThreshold;

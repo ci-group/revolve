@@ -57,17 +57,18 @@ RLPower::RLPower(
   this->sourceYSize_ = 3;
   this->eps = 0.2;
   this->phiMin = 2.0;
-  this->evaluationRate_ = 60.0;
+  this->evaluationRate_ = 50.0;
   this->fastEvaluationRate = 7.5;
-  this->numInterpolationPoints_ = 100;
+  this->numInterpolationPoints_ = 200;
   this->maxEvaluations_ = 6000;
-  this->learningPeriod = 20;
+  this->learningPeriod = 100;
+
   // Learner parameters
   this->algorithmType_ = "D";
-  this->maxRankedPolicies_ = 20;
+  this->maxRankedPolicies_ = 30;
   this->sigma_ = 2.50;
   this->sigmaPolicy = 2.50;
-  this->tau_ = 0.2;
+  this->tau_ = 0.5;
 
   // Working variables for controller
   this->node_.reset(new gz::transport::Node());
@@ -108,6 +109,9 @@ RLPower::RLPower(
 
 
 void RLPower::SetRandomGoalBox(){
+  // Goal caught
+  this->goalCount += 1;
+
   // Generate end-point for targeted locomotion that is at least 1 unit of distance away
   std::cout << "SetrandomGoalBox \n";
 
@@ -195,6 +199,9 @@ void RLPower::Update(
 
     // Initiate goal box
     if(this->generationCounter_ == this->maxRankedPolicies_ + 3*this->learningPeriod + 1){
+      // Write parameters and results to file
+      this->getAnalytics();
+
       this->distToObject = 0.f;
       this->SetRandomGoalBox();
 
@@ -710,17 +717,17 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
 
   if(this->moveOrientation == "left"){
     tempPolicy = this->rankedPoliciesLeft;
-    std::cout << "WARNING: Spline points increased based on left controller \n";
+    std::cout << "WARNING: Spline points increased based on left controller: " << this->sourceYSize_ << "\n";
   }
   else if(this->moveOrientation == "right"){
     tempPolicy = this->rankedPoliciesRight;
-    std::cout << "WARNING: Spline points increased based on right controller \n";
+    std::cout << "WARNING: Spline points increased based on right controller: " << this->sourceYSize_ << "\n";
   }
   else if(this->moveOrientation == "gait"){
-    std::cout << "WARNING: Spline points increased based on gait controller \n";
+    std::cout << "WARNING: Spline points increased based on gait controller: " << this->sourceYSize_ << "\n";
   }
   else{
-    std::cout << "WARNING: Spline points increased based on random controller \n";
+    std::cout << "WARNING: Spline points increased based on random controller: " << this->sourceYSize_ << "\n";
   }
 
   for (auto &it : tempPolicy)
@@ -828,4 +835,39 @@ void RLPower::Output(
 
     _output[i] = y_a + ((y_b - y_a) * (x - x_a) / (x_b - x_a));
   }
+}
+
+void RLPower::getAnalytics(){
+  // Open file
+  std::ofstream myFile;
+  myFile.open(this->evaluator_->filename + "parameters.txt");
+
+  // Write parameters to file
+  myFile << "Learning period: "<< this->learningPeriod << "\n";
+  myFile << "Max ranked policies" << this->maxRankedPolicies_ << "\n";
+  myFile << "Max evaluations: " << this->maxEvaluations_ << "\n";
+  myFile << "EvaluationRate: " << this->evaluationRate_<< "\n";
+  myFile << "FastEvaluationRate: " << this->fastEvaluationRate<< "\n";
+  myFile << "Face: " << this->face<< "\n";
+  myFile << "Interpolationpoints: " << this->numInterpolationPoints_<< "\n";
+  myFile << "Goal count: " << this->goalCount << "\n";
+  myFile << "eps: "<< this->eps << "\n";
+  myFile << "phiMin: "<< this->phiMin << "\n";
+  myFile << "Sigma Init: " << this->sigma_ << "\n";
+  myFile << "Sigma Re-init: " << this->sigmaPolicy << "\n";
+  myFile << "Tau: " << this->tau_ <<"\n";
+  myFile << "Directed: " << this->evaluator_->moveDirectional << "\n";
+
+  // Close file
+  myFile.close();
+
+  // Call python file to construct plots
+  std::string pythonPlotCommand = "python3 experiments/RunAnalysisRLPower.py "
+                                  + this->evaluator_->filename
+                                  + " "
+                                  + std::to_string((int)this->maxRankedPolicies_)
+                                  + " "
+                                  + std::to_string((int)3*this->learningPeriod);
+  std::system(pythonPlotCommand.c_str());
+
 }

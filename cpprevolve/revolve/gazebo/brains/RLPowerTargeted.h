@@ -98,6 +98,8 @@ namespace revolve
       /// \brief Steps through the splines
       protected: void Step(const double _time);
 
+      private: void getAnalytics();
+
       /// \brief
       protected: struct Config
       {
@@ -250,6 +252,7 @@ namespace revolve
       private: std::string moveOrientation;
       private: double fastEvaluationRate;
       private: bool setSeed;
+      private: int goalCount = -1;
 
       // Policies for sub-brains
       private: PolicyPtr bestPolicyGait;
