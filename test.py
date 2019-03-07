@@ -2,9 +2,17 @@
 
 import pyrevolve.revolve_bot
 
+import sys
 if __name__ == "__main__":
-    robot = pyrevolve.revolve_bot.RevolveBot()
-    # robot.load_file("/home/karinemiras/projects/revolve/models/robot_26.yaml")
-    robot.load_file("/home/karinemiras/projects/revolve/experiments/examples/yaml/robot_5.yaml")
-    
-    robot.save_file("/tmp/test.yaml")
+
+	
+		for x in range(0, 100):
+			try:
+				robot = pyrevolve.revolve_bot.RevolveBot()
+				robot_path = "/home/vm/Downloads/offspringpop1/robot_{}.yaml".format(x)
+				robot.load_file(robot_path)
+				robot.render2d('img/body_{}.png'.format(x))
+			except Exception as e: 
+				print('Exception {}'.format(e))
+
+

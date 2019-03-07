@@ -13,6 +13,8 @@ from .revolve_module import BrickModule
 from .revolve_module import BrickSensorModule
 from .brain_nn import BrainNN
 
+from .render.render import Render
+
 class RevolveBot():
     """
     Basic robot description class that contains robot's body and/or brain
@@ -71,20 +73,24 @@ class RevolveBot():
         self._id = yaml_bot['id'] if 'id' in yaml_bot else None
         self._body = CoreModule.FromYaml(yaml_bot['body'])
 
-        if 'brain' in yaml_bot:
-            yaml_brain = yaml_bot['brain']
-            if 'type' not in yaml_brain:
-                # raise IOError("brain type not defined, please fix it")
-                brain_type = 'neural-network'
+        try:
+            if 'brain' in yaml_bot:
+                yaml_brain = yaml_bot['brain']
+                if 'type' not in yaml_brain:
+                    # raise IOError("brain type not defined, please fix it")
+                    brain_type = 'neural-network'
+                else:
+                    brain_type = yaml_brain['type']
+
+                if brain_type == 'neural-network':
+                    self._brain = BrainNN()
+                    self._brain.FromYaml(yaml_brain)
+
             else:
-                brain_type = yaml_brain['type']
-
-            if brain_type == 'neural-network':
-                self._brain = BrainNN()
-                self._brain.FromYaml(yaml_brain)
-
-        else:
+                self._brain = None
+        except:
             self._brain = None
+            print('Failed to load brain, setting to None')
 
     def load_file(self, path, conf_type='yaml'):
         """
@@ -152,10 +158,18 @@ class RevolveBot():
         :return:
         """
         return ''
-
-    def render2d(self):
+    
+    def render2d(self, img_path):
         """
-
-        :return:
+        Render 2d representation of robot and store as png
+        :param img_path: path of storing png file
         """
-        raise NotImplementedError("Render2D not yet implemented")
+        if self._body == None:
+            raise RuntimeError('Body not initialized')
+        else:
+            try:
+                render = Render()
+                children = self._body._generate_yaml_children()
+                render.render_robot(children, img_path)
+            except:
+                print('Failed rendering 2d robot')
