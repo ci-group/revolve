@@ -243,7 +243,8 @@ namespace revolve
       private: double bestFitnessGait;
       private: double bestFitnessLeft;
       private: double bestFitnessRight;
-      private: int learningPeriod;
+      private: int learningPeriodGait;
+      private: int learningPeriodTurn;
       private: double eps;
       private: double phiMin;
       private: double face;

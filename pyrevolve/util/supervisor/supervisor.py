@@ -195,7 +195,7 @@ class Supervisor(object):
 
             # We could do this a lot less often, but this way we get
             # output once every second.
-            time.sleep(1)
+            time.sleep(1.0)
 
     def _pass_through_stdout(self):
         """
@@ -359,7 +359,7 @@ class Supervisor(object):
                 except IOError:
                     pass
 
-            time.sleep(0.1)
+            time.sleep(1.0)
 
         # make out and err blocking pipes again
         if not mswindows:

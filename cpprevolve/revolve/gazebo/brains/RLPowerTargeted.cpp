@@ -53,7 +53,7 @@ RLPower::RLPower(
   //      this);
 
   // Controller parameters
-  this->setSeed = false;
+  this->setSeed = true;
   this->sourceYSize_ = 3;
   this->eps = 0.2;
   this->phiMin = 2.0;
@@ -61,14 +61,15 @@ RLPower::RLPower(
   this->fastEvaluationRate = 7.5;
   this->numInterpolationPoints_ = 200;
   this->maxEvaluations_ = 6000;
-  this->learningPeriod = 100;
+  this->learningPeriodGait = 50;
+  this->learningPeriodTurn = 2;
 
   // Learner parameters
+  this->maxRankedPolicies_ = 20;
   this->algorithmType_ = "D";
-  this->maxRankedPolicies_ = 30;
   this->sigma_ = 2.50;
   this->sigmaPolicy = 2.50;
-  this->tau_ = 0.5;
+  this->tau_ = 0.4;
 
   // Working variables for controller
   this->node_.reset(new gz::transport::Node());
@@ -198,7 +199,7 @@ void RLPower::Update(
     }
 
     // Initiate goal box
-    if(this->generationCounter_ == this->maxRankedPolicies_ + 3*this->learningPeriod + 1){
+    if(this->generationCounter_ == this->maxRankedPolicies_ + this->learningPeriodGait +  2*this->learningPeriodTurn + 1){
       // Write parameters and results to file
       this->getAnalytics();
 
@@ -355,22 +356,22 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
     this->moveOrientation = "random";
     std::cout << "Orientation: random\n";
   }
-  else if (this->generationCounter_ < n_init + this->learningPeriod){
+  else if (this->generationCounter_ < n_init + this->learningPeriodGait){
     if (this->generationCounter_ == n_init){
       this->sigma_ = this->sigmaPolicy;
     }
     this->moveOrientation = "gait";
     std::cout << "Orientation: gait\n";
   }
-  else if (this->generationCounter_ < n_init + 2*this->learningPeriod){
-    if (this->generationCounter_ == n_init + this->learningPeriod){
+  else if (this->generationCounter_ < n_init + this->learningPeriodGait + this->learningPeriodTurn){
+    if (this->generationCounter_ == n_init + this->learningPeriodGait){
       this->sigma_ = this->sigmaPolicy;
     }
     this->moveOrientation = "right";
     std::cout << "Orientation: right\n";
   }
-  else if (this->generationCounter_ < n_init + 3*this->learningPeriod){
-    if (this->generationCounter_ == n_init + 2*this->learningPeriod){
+  else if (this->generationCounter_ < n_init + this->learningPeriodGait + 2*this->learningPeriodTurn){
+    if (this->generationCounter_ == n_init + this->learningPeriodGait + this->learningPeriodTurn){
       this->sigma_ = this->sigmaPolicy;
     }
     this->moveOrientation = "left";
@@ -431,7 +432,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   this->generationCounter_++;
 
   //If we still want to learn, i.e. create a new policy
-  if(this->generationCounter_ <= n_init + 3*this->learningPeriod){
+  if(this->generationCounter_ <= n_init + this->learningPeriodGait + this->learningPeriodTurn){
     // Calculate fitness for current policy
     auto currentFitnessGait= this->Fitness("gait");
     auto currentFitnessLeft= this->Fitness("left");
@@ -843,7 +844,8 @@ void RLPower::getAnalytics(){
   myFile.open(this->evaluator_->filename + "parameters.txt");
 
   // Write parameters to file
-  myFile << "Learning period: "<< this->learningPeriod << "\n";
+  myFile << "Learning period gait: "<< this->learningPeriodGait << "\n";
+  myFile << "Learning period turn: "<< this->learningPeriodTurn << "\n";
   myFile << "Max ranked policies" << this->maxRankedPolicies_ << "\n";
   myFile << "Max evaluations: " << this->maxEvaluations_ << "\n";
   myFile << "EvaluationRate: " << this->evaluationRate_<< "\n";
@@ -857,6 +859,7 @@ void RLPower::getAnalytics(){
   myFile << "Sigma Re-init: " << this->sigmaPolicy << "\n";
   myFile << "Tau: " << this->tau_ <<"\n";
   myFile << "Directed: " << this->evaluator_->moveDirectional << "\n";
+  myFile << "Seed used: " << this->setSeed << "\n";
 
   // Close file
   myFile.close();
@@ -867,7 +870,7 @@ void RLPower::getAnalytics(){
                                   + " "
                                   + std::to_string((int)this->maxRankedPolicies_)
                                   + " "
-                                  + std::to_string((int)3*this->learningPeriod);
+                                  + std::to_string((int)(this->learningPeriodGait + 2*this->learningPeriodTurn));
   std::system(pythonPlotCommand.c_str());
 
 }

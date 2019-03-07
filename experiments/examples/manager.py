@@ -69,7 +69,7 @@ async def run():
         # Print robot fitness every second
         print("Robot fitness is {fitness}".format(
                 fitness=robot_manager.fitness()))
-        await asyncio.sleep(100.0)
+        await asyncio.sleep(1000.0)
 
 
 def main():

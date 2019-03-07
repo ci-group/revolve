@@ -136,6 +136,9 @@ double Evaluator::Fitness(std::string controllerType)
       // Fitness higher than 0 if we are within our hard constraint
       if (abs(currentAngle) < this->turnThreshold)
       {
+        // directed fitness is simply x_new - x_old.
+        // You can include an UB here based on tangens:
+        // tan(alpha) = overstaande/aanliggende iff overstaande = tan(alhpa)*aanliggende
         double directed = std::sqrt(std::pow((this->previousPosition_.Pos().X() - this->currentPosition_.Pos().X()),2)) / this->evaluationRate_;
         double penalty = 0;
         fitness = directed - penalty;
