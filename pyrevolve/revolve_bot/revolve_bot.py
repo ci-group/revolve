@@ -2,18 +2,25 @@
 Revolve body generator based on RoboGen framework
 """
 import yaml
+import math
 from collections import OrderedDict
 
 from pyrevolve.sdfbuilder import SDF
-from pyrevolve.sdfbuilder import Model
+from pyrevolve.sdfbuilder import math as SDFmath
+from pyrevolve.sdfbuilder import Model, Element, Link, FixedJoint
+from pyrevolve.sdfbuilder.util import number_format
 
 from .revolve_module import CoreModule
 from .revolve_module import ActiveHingeModule
 from .revolve_module import BrickModule
 from .revolve_module import BrickSensorModule
+from .revolve_module import Orientation
 from .brain_nn import BrainNN
 
-class RevolveBot():
+import xml.etree.ElementTree
+
+
+class RevolveBot:
     """
     Basic robot description class that contains robot's body and/or brain
     structures, ID and several other necessary parameters. Capable of reading
@@ -98,7 +105,130 @@ class RevolveBot():
 
         self.load(robot, conf_type)
 
-    def to_sdf(self):
+    def to_sdf(self, nice_format=None):
+        return self._to_sdf_PYTHON_XML(nice_format)
+
+    @staticmethod
+    def _sdf_attach_module(module_slot, module_orientation: float,
+                           visual, collision,
+                           parent_slot, parent_collision):
+        """
+        Attaches `module` to `parent` using `parent_slot`.
+        It modifies the pose of `visual` and `collision` to move them attached to the
+        `parent_collision`
+        :param module_slot:
+        :param module_orientation: degrees of rotation of the component
+        :param visual:
+        :param collision:
+        :param parent_slot:
+        :param parent_collision:
+        :return:
+        """
+
+        if module_orientation is not None:
+            # Rotate the module_slot.tangent vector over the normal
+            # with the given number of radians to apply
+            # the rotation. Rotating this vector around
+            # the normal should not break their orthogonality.
+            orientation = module_orientation / 180.0 * math.pi
+            rot = SDFmath.Quaternion.from_angle_axis(orientation, module_slot.normal)
+            module_slot.tangent = rot * module_slot.tangent
+
+        visual.align(
+            module_slot,
+            parent_slot,
+            parent_collision,
+            relative_to_child=True
+        )
+        collision.set_position(visual.get_position())
+        collision.set_rotation(visual.get_rotation())
+
+    def _to_sdf_PYTHON_XML(self, nice_format):
+        from xml.etree import ElementTree
+        from pyrevolve import SDF
+
+        sdf_root = ElementTree.Element('sdf', {'version': '1.6'})
+
+        assert (self._id is not None)
+        model = ElementTree.SubElement(sdf_root, 'model', {
+            'name': str(self._id)
+        })
+
+        # TODO make this pose parametric
+        pose = SDF.Pose(SDFmath.Vector3(0, 0, 0.05))
+        model.append(pose)
+
+        link = SDF.BoxLink('Core')
+        model.append(link)
+
+        visual, collision, inertial = self._body.to_sdf('')
+        link.append(visual)
+        link.append(collision)
+        link.append(inertial)
+
+        parent_module = self._body
+        parent_collision = collision
+
+        for slot, module in self._body.iter_children():
+            if module is None:
+                continue
+
+            if type(module) is ActiveHingeModule:
+                print("adding joint")
+                child_link = SDF.BoxLink('{}Leg'.format(slot))
+                # model.append(child_link)
+
+                visual_frame, collision_frame,\
+                    visual_servo, collision_servo = module.to_sdf('{}'.format(slot))
+
+                slot = Orientation(slot)
+                if slot != Orientation.WEST:
+                    pass
+
+                module_slot = module.boxslot_frame(Orientation.SOUTH)
+                parent_slot = parent_module.boxslot(slot)
+                self._sdf_attach_module(module_slot, module.orientation,
+                                        visual_frame, collision_frame,
+                                        parent_slot, parent_collision)
+
+                module_slot = module.boxslot_servo(Orientation.SOUTH)
+                parent_slot = module.boxslot_frame(Orientation.NORTH)
+                self._sdf_attach_module(module_slot, None,
+                                        visual_servo, collision_servo,
+                                        parent_slot, collision_frame)
+
+                link.append(visual_frame)
+                link.append(collision_frame)
+
+                link.append(visual_servo)
+                link.append(collision_servo)
+                # child_link.append(visual_servo)
+                # child_link.append(collision_servo)
+
+            else:
+                print("adding block")
+                visual, collision, inertial = module.to_sdf()
+
+                link.append(visual)
+                link.append(collision)
+
+        def prettify(rough_string, indent='\t'):
+            """Return a pretty-printed XML string for the Element.
+            """
+            import xml.dom.minidom
+            reparsed = xml.dom.minidom.parseString(rough_string)
+            return reparsed.toprettyxml(indent=indent)
+
+        # tree = xml.etree.ElementTree.ElementTree(sdf)
+        res = xml.etree.ElementTree.tostring(sdf_root, encoding='utf8', method='xml')
+        print(res)
+
+        if nice_format is not None:
+            res = prettify(res, nice_format)
+
+        return res
+
+    def _to_sdf_REVOLVE_XML(self):
         """
         Converts yaml to sdf
 
@@ -109,11 +239,69 @@ class RevolveBot():
         model = Model(name=self._id)
         # TODO: Traverse through body elements, retrieve <link>s and
         # create <joint>s between them
-        elements = None
+        elements = [
+            self._sdf_brain_plugin_conf()
+        ]
         model.add_elements(elements)
 
         sdf.add_element(model)
         return sdf
+
+    def _sdf_brain_plugin_conf(
+            self,
+            update_rate=5,
+            controller_plugin='libRobotControlPlugin.so'
+    ):
+        """
+        creates the plugin node with the brain configuration inside
+        :param update_rate: Update rate as used by the default controller
+        :type update_rate: float
+
+        :param controller_plugin: Name of the shared
+        library of the model plugin
+        :type controller_plugin: str
+
+        :return: The sdf model
+        """
+        plugin = Element(
+            tag_name='plugin',
+            attributes={
+                'name': 'robot_controller',
+                'filename': controller_plugin
+            })
+
+        config = Element(
+            tag_name='rv:robot_config',
+            attributes={
+                'xmlns:rv': 'https://github.com/ci-group/revolve'
+            })
+        plugin.add_element(config)
+
+        # update rate
+        config.add_element(Element(
+            tag_name='rv:update_rate',
+            body=number_format(update_rate)))
+
+        # brain
+        if self._brain is not None:
+            brain_config = self._brain.to_sdf()
+            config.add_element(brain_config)
+
+        # TODO sensors
+
+        # TODO motors
+
+        # battery
+        if self._battery_level is not None:
+            battery = Element(tag_name='rv:battery')
+            battery_level = Element(
+                tag_name='rv:level',
+                body=self._battery_level
+            )
+            battery.add_element(battery_level)
+            config.add_element(battery)
+
+        return plugin
 
     def to_yaml(self):
         """

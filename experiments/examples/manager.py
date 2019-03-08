@@ -10,6 +10,7 @@ sys.path.append(newpath)
 
 from pygazebo.pygazebo import DisconnectError
 
+from pyrevolve import revolve_bot
 from pyrevolve import parser
 from pyrevolve.angle import Tree
 from pyrevolve.convert.yaml import yaml_to_proto
@@ -19,6 +20,36 @@ from pyrevolve.tol.manage import World
 
 
 async def run():
+    """
+    The main coroutine, which is started below.
+    """
+    # Parse command line / file input arguments
+    robot = revolve_bot.RevolveBot()
+    robot.load_file("experiments/examples/yaml/spider.yaml")
+    robot.save_file("/tmp/test.yaml")
+    settings = parser.parse_args()
+
+    world = await World.create(settings)
+    await world.pause(True)
+    delete_future = await world.delete_model(robot._id)
+    await delete_future
+
+    sdf_model = robot.to_sdf(nice_format='  ')
+    print(sdf_model)
+    with open('/tmp/test.sdf.xml', 'w') as sdf_file:
+        sdf_file.write(str(sdf_model))
+
+    await asyncio.sleep(0.5)
+    insert_future = await world.insert_model(str(sdf_model))
+    await insert_future
+
+    await world.pause(False)
+
+    # while True:
+    #     await asyncio.sleep(1.0)
+
+
+async def run_old():
     """
     The main coroutine, which is started below.
     """
