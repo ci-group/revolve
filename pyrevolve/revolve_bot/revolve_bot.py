@@ -15,6 +15,7 @@ from .revolve_module import ActiveHingeModule
 from .revolve_module import BrickModule
 from .revolve_module import BrickSensorModule
 from .revolve_module import Orientation
+from .revolve_module import BoxSlot
 from .brain_nn import BrainNN
 
 import xml.etree.ElementTree
@@ -140,8 +141,78 @@ class RevolveBot:
             parent_collision,
             relative_to_child=True
         )
-        collision.set_position(visual.get_position())
         collision.set_rotation(visual.get_rotation())
+        old_translation = collision.get_position()
+        collision.set_position(visual.get_position())
+        collision.translate(collision.to_parent_direction(old_translation))
+
+    def _module_to_sdf(self, module, parent_link, parent_slot: BoxSlot, parent_collision, slot_chain=''):
+        from pyrevolve import SDF
+        slot_chain = '{}{}'.format(slot_chain, parent_slot.orientation.short_repr())
+        links = []
+
+        my_link = parent_link
+        my_collision = None
+
+        if type(module) is ActiveHingeModule:
+            print("adding joint")
+            child_link = SDF.Link('{}_Leg'.format(slot_chain))
+            links.append(child_link)
+
+            visual_frame, collision_frame, \
+            visual_servo, collision_servo, joint = module.to_sdf('{}_'.format(slot_chain))
+
+            # parent_slot = Orientation(parent_slot)
+            if parent_slot != Orientation.WEST:
+                pass
+
+            # parent_slot = parent_module.boxslot(parent_slot)
+            module_slot = module.boxslot_frame(Orientation.SOUTH)
+            self._sdf_attach_module(module_slot, module.orientation,
+                                    visual_frame, collision_frame,
+                                    parent_slot, parent_collision)
+
+            parent_slot = module.boxslot_frame(Orientation.NORTH)
+            module_slot = module.boxslot_servo(Orientation.SOUTH)
+            self._sdf_attach_module(module_slot, None,
+                                    visual_servo, collision_servo,
+                                    parent_slot, collision_frame)
+
+            parent_link.append(visual_frame)
+            parent_link.append(collision_frame)
+
+            child_link.append(visual_servo)
+            child_link.append(collision_servo)
+
+            my_link = child_link
+            my_collision = collision_servo
+
+        else:
+            print("adding block")
+            visual, collision = module.to_sdf('')
+
+            module_slot = module.boxslot(Orientation.SOUTH)
+            self._sdf_attach_module(module_slot, module.orientation,
+                                    visual, collision,
+                                    parent_slot, parent_collision)
+
+            parent_link.append(visual)
+            parent_link.append(collision)
+
+
+
+             = collision
+
+        # recursions on children
+        for my_slot, child_module in module.iter_children():
+            if child_module is None:
+                continue
+
+            my_slot = module.boxslot(Orientation(my_slot))
+            children_links = self._module_to_sdf(child_module, my_link, my_slot, my_collision, slot_chain)
+            links.extend(children_links)
+
+        return links
 
     def _to_sdf_PYTHON_XML(self, nice_format):
         from xml.etree import ElementTree
@@ -158,60 +229,28 @@ class RevolveBot:
         pose = SDF.Pose(SDFmath.Vector3(0, 0, 0.05))
         model.append(pose)
 
-        link = SDF.BoxLink('Core')
-        model.append(link)
-
-        visual, collision, inertial = self._body.to_sdf('')
-        link.append(visual)
-        link.append(collision)
-        link.append(inertial)
+        core_link = SDF.Link('Core')
+        links = [core_link]
+        core_visual, core_collision = self._body.to_sdf('')
+        core_link.append(core_visual)
+        core_link.append(core_collision)
+        # core_link.append(inertial)
 
         parent_module = self._body
-        parent_collision = collision
+        parent_collision = core_collision
 
-        for slot, module in self._body.iter_children():
-            if module is None:
+        for core_slot, child_module in self._body.iter_children():
+            if child_module is None:
                 continue
+            core_slot = parent_module.boxslot(Orientation(core_slot))
+            children_links = self._module_to_sdf(child_module, core_link, core_slot, core_collision)
+            links.extend(children_links)
 
-            if type(module) is ActiveHingeModule:
-                print("adding joint")
-                child_link = SDF.BoxLink('{}Leg'.format(slot))
-                # model.append(child_link)
+        for core_link in links:
+            # TODO core_link.calculate_inertial()
+            model.append(core_link)
 
-                visual_frame, collision_frame,\
-                    visual_servo, collision_servo = module.to_sdf('{}'.format(slot))
-
-                slot = Orientation(slot)
-                if slot != Orientation.WEST:
-                    pass
-
-                module_slot = module.boxslot_frame(Orientation.SOUTH)
-                parent_slot = parent_module.boxslot(slot)
-                self._sdf_attach_module(module_slot, module.orientation,
-                                        visual_frame, collision_frame,
-                                        parent_slot, parent_collision)
-
-                module_slot = module.boxslot_servo(Orientation.SOUTH)
-                parent_slot = module.boxslot_frame(Orientation.NORTH)
-                self._sdf_attach_module(module_slot, None,
-                                        visual_servo, collision_servo,
-                                        parent_slot, collision_frame)
-
-                link.append(visual_frame)
-                link.append(collision_frame)
-
-                link.append(visual_servo)
-                link.append(collision_servo)
-                # child_link.append(visual_servo)
-                # child_link.append(collision_servo)
-
-            else:
-                print("adding block")
-                visual, collision, inertial = module.to_sdf()
-
-                link.append(visual)
-                link.append(collision)
-
+        # XML RENDER PHASE #
         def prettify(rough_string, indent='\t'):
             """Return a pretty-printed XML string for the Element.
             """

@@ -35,6 +35,7 @@ class Material(xml.etree.ElementTree.Element):
 
 class Visual(SDF.Posable):
     def __init__(self, name, position=None, rotation=None):
+        #TODO take color as param
         super().__init__('visual', {
             'name': '{}_visual'.format(name)
         }, position, rotation)
