@@ -1,5 +1,5 @@
 import cairo
-from canvas import Canvas
+from .canvas import Canvas
 from .grid import Grid
 
 class Render:
@@ -28,22 +28,29 @@ class Render:
 		"""Return the id of the module"""
 		return body['id']
 
+	def get_orientation(self, body):
+		"""Return the orientation of the module (hinge)"""
+		return body['orientation']
+
 	def parse_body_to_draw(self, body, canvas):
 		"""Parse the body to the canvas to draw the png"""
 		children_keys = self.get_keys(body)
 		for key in children_keys:
 			# Move in direction of specified slot
 			canvas.move_by_slot(key)
-			type = self.get_type(body[key])
-			if type == 'ActiveHinge':
+			mod_type = self.get_type(body[key])
+			r_orientation = self.get_orientation(body[key])
+			if mod_type == 'ActiveHinge':
+				Canvas.rotating_orientation += r_orientation
 				canvas.draw_hinge()
 				canvas.draw_connector_to_parent()
-			elif type == 'FixedBrick':
+			elif mod_type == 'FixedBrick':
+				Canvas.rotating_orientation += r_orientation
 				canvas.draw_module()
 				canvas.draw_connector_to_parent()
-			elif type == 'TouchSensor':
+			elif mod_type == 'TouchSensor':
+				Canvas.rotating_orientation += r_orientation
 				canvas.save_sensor_position()
-				#canvas.draw_sensor()
 			else:
 				# Unknown element, move back to previous state and jump out of loop
 				self.grid.move_back()

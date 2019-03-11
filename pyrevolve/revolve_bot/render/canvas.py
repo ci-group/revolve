@@ -18,6 +18,12 @@ class Canvas:
 	# Positions for the sensors
 	sensors = []
 
+	# Id of drawn element
+	current_module_id = 0
+
+	# Rotating orientation in regard to parent module
+	rotating_orientation = 0
+
 
 	def __init__(self, width, height, scale):
 		"""Instantiate context and surface"""
@@ -137,6 +143,15 @@ class Canvas:
 		Canvas.x_pos = last_movement[0]
 		Canvas.y_pos = last_movement[1]
 		Canvas.orientation = last_movement[2]	
+		Canvas.rotating_orientation = last_movement[3]
+
+	def sign_id(self):
+		"""Sign module with the id on the upper left corner of block"""
+		self.context.set_font_size(0.3) 
+		self.context.move_to(Canvas.x_pos, Canvas.y_pos + 0.4) 
+		self.context.set_source_rgb(0, 0, 0) 
+		self.context.show_text(str(Canvas.current_module_id))
+		self.context.stroke()
 
 	def draw_controller(self):
 		"""Draw a controller (yellow) in the middle of the canvas"""
@@ -146,29 +161,39 @@ class Canvas:
 		self.context.set_source_rgb(0, 0, 0)
 		self.context.set_line_width(0.01)
 		self.context.stroke()
-		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation])
+		self.sign_id()
+		Canvas.current_module_id += 1		
+		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 
 	def draw_hinge(self):
 		"""Draw a hinge (blue) on the previous object"""
+
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
-		self.context.set_source_rgb(1, 0, 0)
+		if (Canvas.rotating_orientation % 180 == 0):
+			self.context.set_source_rgb(1.0, 0.4, 0.4)
+		else:
+			self.context.set_source_rgb(1, 0, 0)		
 		self.context.fill_preserve()
 		self.context.set_source_rgb(0, 0, 0)
 		self.context.set_line_width(0.01)
 		self.context.stroke()
 		self.calculate_orientation()
-		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation])	
+		self.sign_id()
+		Canvas.current_module_id += 1		
+		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])	
 			
 	def draw_module(self):
 		"""Draw a module (red) on the previous object"""
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
-		self.context.set_source_rgb(0, 0, 255)
+		self.context.set_source_rgb(0, 0, 1)
 		self.context.fill_preserve()
 		self.context.set_source_rgb(0, 0, 0)
 		self.context.set_line_width(0.01)
 		self.context.stroke()
 		self.calculate_orientation()
-		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation])	
+		self.sign_id()
+		Canvas.current_module_id += 1		
+		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 	
 	def calculate_sensor_rectangle_position(self):
 		"""Calculate squeezed sensor rectangle position based on current orientation and last movement direction"""
@@ -199,7 +224,7 @@ class Canvas:
 		x, y, x_scale, y_scale = self.calculate_sensor_rectangle_position()
 		Canvas.sensors.append([x, y, x_scale, y_scale])
 		self.calculate_orientation()
-		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation])		
+		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])		
 
 	def draw_sensors(self):
 		"""Draw all sensors"""
@@ -253,7 +278,7 @@ class Canvas:
 
 	def save_png(self, file_name):
 		"""Store image representation of canvas"""
-		self.surface.write_to_png('img/%s.png' % file_name)
+		self.surface.write_to_png('%s' % file_name)
 
 	def reset_canvas(self):
 		"""Reset canvas variables to default values"""
@@ -263,3 +288,5 @@ class Canvas:
 		Canvas.previous_move = -1
 		Canvas.movement_stack = []
 		Canvas.sensors = []
+		Canvas.current_module_id = 0
+		Canvas.rotating_orientation = 0
