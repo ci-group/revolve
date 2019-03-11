@@ -164,7 +164,7 @@ class RevolveModule:
         return self._brick_to_sdf(tree_depth)
 
     def _brick_to_sdf(self, tree_depth=''):
-        name = 'component_{}{}__box'.format(tree_depth, self.TYPE)
+        name = 'component_{}_{}__box'.format(tree_depth, self.TYPE)
         visual = SDF.Visual(name)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH)
         visual.append(geometry)
@@ -269,8 +269,8 @@ class ActiveHingeModule(RevolveModule):
             return {1: child.to_yaml()}
 
     def to_sdf(self, tree_depth):
-        name_frame = 'component_{}{}__frame'.format(tree_depth, self.TYPE)
-        name_servo = 'component_{}{}__servo'.format(tree_depth, self.TYPE)
+        name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
+        name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
 
         # offset = SDFmath.Vector3(self.COLLISION_BOX_FRAME[0] / 2)
 

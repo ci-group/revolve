@@ -148,8 +148,8 @@ class RevolveBot:
 
     def _module_to_sdf(self, module, parent_link, parent_slot: BoxSlot, parent_collision, slot_chain=''):
         from pyrevolve import SDF
-        slot_chain = '{}{}'.format(slot_chain, parent_slot.orientation.short_repr())
         links = []
+        joints = []
 
         my_link = parent_link
         my_collision = None
@@ -157,14 +157,9 @@ class RevolveBot:
         if type(module) is ActiveHingeModule:
             print("adding joint")
             child_link = SDF.Link('{}_Leg'.format(slot_chain))
-            links.append(child_link)
 
             visual_frame, collision_frame, \
-            visual_servo, collision_servo, joint = module.to_sdf('{}_'.format(slot_chain))
-
-            # parent_slot = Orientation(parent_slot)
-            if parent_slot != Orientation.WEST:
-                pass
+            visual_servo, collision_servo, joint = module.to_sdf('{}'.format(slot_chain))
 
             # parent_slot = parent_module.boxslot(parent_slot)
             module_slot = module.boxslot_frame(Orientation.SOUTH)
@@ -184,12 +179,15 @@ class RevolveBot:
             child_link.append(visual_servo)
             child_link.append(collision_servo)
 
+            links.append(child_link)
+            joints.append(joint)
+
             my_link = child_link
             my_collision = collision_servo
 
         else:
             print("adding block")
-            visual, collision = module.to_sdf('')
+            visual, collision = module.to_sdf(slot_chain)
 
             module_slot = module.boxslot(Orientation.SOUTH)
             self._sdf_attach_module(module_slot, module.orientation,
@@ -207,10 +205,13 @@ class RevolveBot:
                 continue
 
             my_slot = module.boxslot(Orientation(my_slot))
-            children_links = self._module_to_sdf(child_module, my_link, my_slot, my_collision, slot_chain)
+            if type(module) is not ActiveHingeModule:
+                slot_chain = '{}{}'.format(slot_chain, my_slot.orientation.short_repr())
+            children_links, children_joints = self._module_to_sdf(child_module, my_link, my_slot, my_collision, slot_chain)
             links.extend(children_links)
+            joints.extend(children_joints)
 
-        return links
+        return links, joints
 
     def _to_sdf_PYTHON_XML(self, nice_format):
         from xml.etree import ElementTree
@@ -229,20 +230,19 @@ class RevolveBot:
 
         core_link = SDF.Link('Core')
         links = [core_link]
+        joints = []
         core_visual, core_collision = self._body.to_sdf('')
         core_link.append(core_visual)
         core_link.append(core_collision)
-        # core_link.append(inertial)
-
-        parent_module = self._body
-        parent_collision = core_collision
 
         for core_slot, child_module in self._body.iter_children():
             if child_module is None:
                 continue
-            core_slot = parent_module.boxslot(Orientation(core_slot))
-            children_links = self._module_to_sdf(child_module, core_link, core_slot, core_collision)
+            core_slot = self._body.boxslot(Orientation(core_slot))
+            slot_chain = core_slot.orientation.short_repr()
+            children_links, children_joints = self._module_to_sdf(child_module, core_link, core_slot, core_collision, slot_chain)
             links.extend(children_links)
+            joints.extend(children_joints)
 
         for link in links:
             link.align_center_of_mass()

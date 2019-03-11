@@ -39,11 +39,11 @@ async def run():
     with open('/tmp/test.sdf.xml', 'w') as sdf_file:
         sdf_file.write(str(sdf_model))
 
-    await asyncio.sleep(0.5)
+    await asyncio.sleep(1.5)
     insert_future = await world.insert_model(str(sdf_model))
     await insert_future
 
-    await world.pause(False)
+    await world.pause(True)
 
     # while True:
     #     await asyncio.sleep(1.0)
