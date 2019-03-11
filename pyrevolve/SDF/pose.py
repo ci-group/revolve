@@ -23,8 +23,8 @@ class Pose(xml.etree.ElementTree.Element):
 
 class Posable(xml.etree.ElementTree.Element):
     def __init__(self, tag, attrib={}, position=None, rotation=None, **extra):
-        super().__init__(tag, attrib, **extra)
-        self._pose = Pose(position, rotation)
+        super().__init__(tag, attrib=attrib, **extra)
+        self._pose = Pose(position=position, rotation=rotation)
         self.append(self._pose)
 
     @property

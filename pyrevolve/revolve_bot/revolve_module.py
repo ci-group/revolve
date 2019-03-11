@@ -13,6 +13,20 @@ from pyrevolve.sdfbuilder.structure import Mesh
 from pyrevolve import SDF
 
 
+# MEASUREMENT CONVERSION
+def mm(x):
+    return x / 1000.0
+
+
+def cm(x):
+    return x / 100.0
+
+
+def grams(x):
+    return x / 1000.0
+
+
+# Module Orientation
 class Orientation(Enum):
     SOUTH = 0
     NORTH = 1
@@ -155,7 +169,7 @@ class RevolveModule:
         geometry = SDF.MeshGeometry(self.VISUAL_MESH)
         visual.append(geometry)
 
-        collision = SDF.Collision(name)
+        collision = SDF.Collision(name, self.MASS)
         geometry = SDF.BoxGeometry(self.COLLISION_BOX)
         collision.append(geometry)
 
@@ -182,15 +196,7 @@ class CoreModule(RevolveModule):
     VISUAL_MESH = 'model://rg_robot/meshes/CoreComponent.dae'
     SLOT_COORDINATES = 0.089 / 2.0
     COLLISION_BOX = (0.089, 0.089, 0.045)
-    MASS = 1.064000e-01  # TODO fix
-    INERTIA = (  # TODO fix
-        1.143069e-04,
-        0.000000e+00,
-        -1.763242e-38,
-        7.888603e-05,
-        4.198228e-22,
-        1.596582e-04,
-    )
+    MASS = grams(90)
 
     def __init__(self):
         super().__init__()
@@ -245,6 +251,8 @@ class ActiveHingeModule(RevolveModule):
         SDFmath.Vector3(0, 0, 0),
         SDFmath.Vector3(-0.0091, 0, 0),
     )
+    MASS_FRAME = grams(1.7)
+    MASS_SERVO = grams(9)
 
     def __init__(self):
         super().__init__()
@@ -270,7 +278,7 @@ class ActiveHingeModule(RevolveModule):
         geometry = SDF.MeshGeometry(self.VISUAL_MESH_FRAME)
         visual_frame.append(geometry)
 
-        collision_frame = SDF.Collision(name_frame)
+        collision_frame = SDF.Collision(name_frame, self.MASS_FRAME)
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_FRAME)
         collision_frame.append(geometry)
 
@@ -278,7 +286,7 @@ class ActiveHingeModule(RevolveModule):
         geometry = SDF.MeshGeometry(self.VISUAL_MESH_SERVO)
         visual_servo.append(geometry)
 
-        collision_servo = SDF.Collision(name_servo)
+        collision_servo = SDF.Collision(name_servo, self.MASS_SERVO)
         collision_servo.translate(SDFmath.Vector3(0.002375, 0, 0))
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO)
         collision_servo.append(geometry)
@@ -338,15 +346,7 @@ class BrickModule(RevolveModule):
     VISUAL_MESH = 'model://rg_robot/meshes/FixedBrick.dae'
     SLOT_COORDINATES = 3.8e-2 / 2.0
     COLLISION_BOX = (4.1e-2, 4.1e-2, 3.55e-02)
-    MASS = 0.1  # TODO fix
-    INERTIA = (  # TODO fix
-        1.143069e-04,
-        0.000000e+00,
-        -1.763242e-38,
-        7.888603e-05,
-        4.198228e-22,
-        1.596582e-04,
-    )
+    MASS = grams(10.2)
 
     def __init__(self):
         super().__init__()
@@ -374,6 +374,7 @@ class TouchSensorModule(RevolveModule):
     Inherits class RevolveModule. Creates Robogen sensor module
     """
     TYPE = "TouchSensor"
+    MASS = grams(3)
 
     def __init__(self):
         super().__init__()
@@ -424,7 +425,7 @@ class BoxSlot:
 
 class BoxSlotJoints(BoxSlot):
 
-    def __init__(self, boundaries, orientation: Orientation, offset = (SDFmath.Vector3(), SDFmath.Vector3())):
+    def __init__(self, boundaries, orientation: Orientation, offset=(SDFmath.Vector3(), SDFmath.Vector3())):
         self.offset = offset
         super().__init__(boundaries, orientation)
 

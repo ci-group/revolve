@@ -244,9 +244,10 @@ class RevolveBot:
             children_links = self._module_to_sdf(child_module, core_link, core_slot, core_collision)
             links.extend(children_links)
 
-        for core_link in links:
-            # TODO core_link.calculate_inertial()
-            model.append(core_link)
+        for link in links:
+            link.align_center_of_mass()
+            link.calculate_inertial()
+            model.append(link)
 
         # XML RENDER PHASE #
         def prettify(rough_string, indent='\t'):

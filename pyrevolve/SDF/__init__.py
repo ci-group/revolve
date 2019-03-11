@@ -1,5 +1,6 @@
 from .pose import Pose, Posable
-from .link import Link, Inertial
+from .link import Link
+from .inertial import Inertial
 from .geometry import Visual, Collision, MeshGeometry, BoxGeometry
 
 import xml.etree.ElementTree
