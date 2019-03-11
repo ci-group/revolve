@@ -43,6 +43,7 @@ class RevolveModule:
 
     def __init__(self):
         self.id = None
+        self.type = None
         self.orientation = None
         self.rgb = None  # RevolveModule.DEFAULT_COLOR
         self.substrate_coordinates = None
@@ -76,6 +77,8 @@ class RevolveModule:
             raise NotImplementedError('"{}" module not yet implemented'.format(mod_type))
 
         module.id = yaml_object['id']
+
+        module.type = yaml_object['type']
 
         try:
             module.orientation = yaml_object['orientation']
@@ -172,6 +175,22 @@ class RevolveModule:
             (box_geometry[1] / -2.0, box_geometry[1] / 2.0),  # Y
             (box_geometry[2] / -2.0, box_geometry[2] / 2.0),  # Z
         )
+
+    def has_children(self):
+        """
+        Check wheter module has children
+        :return: True if module has children
+        """
+        has_children = False
+
+        if self.children == {1: None}: return False
+
+        
+        for i, child in enumerate(self.children):
+            if child is not None:
+                has_children = True
+
+        return has_children
 
 
 class CoreModule(RevolveModule):

@@ -392,7 +392,6 @@ class RevolveBot:
         else:
             try:
                 render = Render()
-                children = self._body._generate_yaml_children()
-                render.render_robot(children, img_path)
+                render.render_robot(self._body, img_path)
             except:
                 print('Failed rendering 2d robot')

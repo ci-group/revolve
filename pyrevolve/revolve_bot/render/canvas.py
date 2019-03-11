@@ -18,9 +18,6 @@ class Canvas:
 	# Positions for the sensors
 	sensors = []
 
-	# Id of drawn element
-	current_module_id = 0
-
 	# Rotating orientation in regard to parent module
 	rotating_orientation = 0
 
@@ -145,12 +142,16 @@ class Canvas:
 		Canvas.orientation = last_movement[2]	
 		Canvas.rotating_orientation = last_movement[3]
 
-	def sign_id(self):
+	def sign_id(self, mod_id):
 		"""Sign module with the id on the upper left corner of block"""
 		self.context.set_font_size(0.3) 
 		self.context.move_to(Canvas.x_pos, Canvas.y_pos + 0.4) 
 		self.context.set_source_rgb(0, 0, 0) 
-		self.context.show_text(str(Canvas.current_module_id))
+		if type(mod_id) is int:
+			self.context.show_text(str(mod_id))
+		else:
+			mod_id = ''.join(x for x in mod_id if x.isdigit())
+			self.context.show_text(mod_id)
 		self.context.stroke()
 
 	def draw_controller(self):
@@ -161,11 +162,10 @@ class Canvas:
 		self.context.set_source_rgb(0, 0, 0)
 		self.context.set_line_width(0.01)
 		self.context.stroke()
-		self.sign_id()
-		Canvas.current_module_id += 1		
+		self.sign_id(0)
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 
-	def draw_hinge(self):
+	def draw_hinge(self, mod_id):
 		"""Draw a hinge (blue) on the previous object"""
 
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
@@ -178,11 +178,10 @@ class Canvas:
 		self.context.set_line_width(0.01)
 		self.context.stroke()
 		self.calculate_orientation()
-		self.sign_id()
-		Canvas.current_module_id += 1		
+		self.sign_id(mod_id)
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])	
 			
-	def draw_module(self):
+	def draw_module(self, mod_id):
 		"""Draw a module (red) on the previous object"""
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
 		self.context.set_source_rgb(0, 0, 1)
@@ -191,8 +190,7 @@ class Canvas:
 		self.context.set_line_width(0.01)
 		self.context.stroke()
 		self.calculate_orientation()
-		self.sign_id()
-		Canvas.current_module_id += 1		
+		self.sign_id(mod_id)
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 	
 	def calculate_sensor_rectangle_position(self):
@@ -288,5 +286,4 @@ class Canvas:
 		Canvas.previous_move = -1
 		Canvas.movement_stack = []
 		Canvas.sensors = []
-		Canvas.current_module_id = 0
 		Canvas.rotating_orientation = 0
