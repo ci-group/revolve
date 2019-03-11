@@ -199,9 +199,7 @@ class RevolveBot:
             parent_link.append(visual)
             parent_link.append(collision)
 
-
-
-             = collision
+            my_collision = collision
 
         # recursions on children
         for my_slot, child_module in module.iter_children():
