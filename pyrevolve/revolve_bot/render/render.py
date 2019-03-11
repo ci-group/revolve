@@ -1,6 +1,7 @@
 import cairo
 from .canvas import Canvas
 from .grid import Grid
+from ..revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, TouchSensorModule, BrickSensorModule
 
 class Render:
 
@@ -11,19 +12,19 @@ class Render:
 
 	def parse_body_to_draw(self, canvas, module, slot):
 		"""Parse the body to the canvas to draw the png"""
-		if module.type == 'CoreComponent' or module.type == 'Core':
+		if isinstance(module, CoreModule):
 			canvas.draw_controller()
-		elif module.type == 'ActiveHinge':
+		elif isinstance(module, ActiveHingeModule):
 			canvas.move_by_slot(slot)
 			Canvas.rotating_orientation += module.orientation
 			canvas.draw_hinge(module.id)
 			canvas.draw_connector_to_parent()
-		elif module.type == 'FixedBrick':
+		elif isinstance(module, BrickModule):
 			canvas.move_by_slot(slot)
 			Canvas.rotating_orientation += module.orientation
 			canvas.draw_module(module.id)
 			canvas.draw_connector_to_parent()
-		elif module.type == 'TouchSensor':
+		elif isinstance(module, TouchSensorModule) or isinstance(module, BrickSensorModule):
 			canvas.move_by_slot(slot)			
 			Canvas.rotating_orientation += module.orientation
 			canvas.save_sensor_position()
@@ -41,7 +42,7 @@ class Render:
 				
 	def traverse_path_of_robot(self, module, slot):
 		"""Traverse path of robot to obtain visited coordinates"""		
-		if module.type == 'ActiveHinge' or module.type == 'FixedBrick' or module.type == 'TouchSensor':
+		if isinstance(module, ActiveHingeModule) or isinstance(module, BrickModule) or isinstance(module, TouchSensorModule) or isinstance(module, BrickSensorModule):
 			self.grid.move_by_slot(slot)
 			self.grid.add_to_visited()
 		
@@ -64,7 +65,6 @@ class Render:
 			width = abs(robot_dim[0] - robot_dim[1]) + 1
 			height = abs(robot_dim[2] - robot_dim[3]) + 1
 			core_position = [width - robot_dim[1] - 1, height - robot_dim[3] - 1]	
-
 			# Draw canvas
 			cv = Canvas(width, height, 100)
 			cv.set_position(core_position[0], core_position[1])

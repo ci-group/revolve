@@ -43,7 +43,6 @@ class RevolveModule:
 
     def __init__(self):
         self.id = None
-        self.type = None
         self.orientation = None
         self.rgb = None  # RevolveModule.DEFAULT_COLOR
         self.substrate_coordinates = None
@@ -77,8 +76,6 @@ class RevolveModule:
             raise NotImplementedError('"{}" module not yet implemented'.format(mod_type))
 
         module.id = yaml_object['id']
-
-        module.type = yaml_object['type']
 
         try:
             module.orientation = yaml_object['orientation']
