@@ -3,7 +3,7 @@ import yaml
 from collections import OrderedDict
 
 from .revolve_bot import RevolveBot
-from .revolve_module import RevolveModule
+from .revolve_module import RevolveModule, BoxSlot
 
 
 def represent_ordereddict(dumper, data):

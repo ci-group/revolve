@@ -6,16 +6,16 @@ import time
 
 from pyrevolve import parser, str_to_address, make_revolve_config
 from pyrevolve.angle import Tree, Crossover, Mutator, WorldManager
-from pyrevolve.angle.robogen.spec import make_planar
+# from pyrevolve.angle.robogen.spec import make_planar
 from pyrevolve.sdfbuilder import SDF, Model, Pose, Link
 from pyrevolve.util import multi_future
 
 from .. import logger
 from .. import constants
 from .robot import Robot
-from ..build import get_builder, to_sdfbot
+# from ..build import get_builder, to_sdfbot
 from ..scenery import Wall
-from ..spec import get_tree_generator
+# from ..spec import get_tree_generator
 
 # Construct a message base from the time. This should make it unique enough
 # for consecutive use when the script is restarted.
@@ -49,26 +49,26 @@ class World(WorldManager):
                 world_address=str_to_address(conf.world_address),
                 # analyzer_address=str_to_address(conf.analyzer_address),
                 output_directory=conf.output_directory,
-                builder=get_builder(conf),
+                builder=None,
                 state_update_frequency=conf.pose_update_frequency,
-                generator=get_tree_generator(conf),
+                generator=None,
                 restore=conf.restore_directory
         )
 
         self.conf = conf
-        self.crossover = Crossover(
-                body_gen=self.generator.body_gen,
-                brain_gen=self.generator.brain_gen
-        )
-        self.mutator = Mutator(
-                body_gen=self.generator.body_gen,
-                brain_gen=self.generator.brain_gen,
-                p_duplicate_subtree=conf.p_duplicate_subtree,
-                p_swap_subtree=conf.p_swap_subtree,
-                p_delete_subtree=conf.p_delete_subtree,
-                p_remove_brain_connection=conf.p_remove_brain_connection,
-                p_delete_hidden_neuron=conf.p_delete_hidden_neuron
-        )
+        # self.crossover = Crossover(
+        #         body_gen=self.generator.body_gen,
+        #         brain_gen=self.generator.brain_gen
+        # )
+        # self.mutator = Mutator(
+        #         body_gen=self.generator.body_gen,
+        #         brain_gen=self.generator.brain_gen,
+        #         p_duplicate_subtree=conf.p_duplicate_subtree,
+        #         p_swap_subtree=conf.p_swap_subtree,
+        #         p_delete_subtree=conf.p_delete_subtree,
+        #         p_remove_brain_connection=conf.p_remove_brain_connection,
+        #         p_delete_hidden_neuron=conf.p_delete_hidden_neuron
+        # )
 
         # Set to true whenever a reproduction sequence is going on
         # to prevent another one from starting (which cannot happen now
@@ -198,7 +198,7 @@ class World(WorldManager):
         return to_sdfbot(
                 robot=robot,
                 name=robot_name,
-                builder=self.builder,
+                builder=None,
                 conf=self.conf,
                 battery_charge=initial_battery
         )
@@ -247,8 +247,8 @@ class World(WorldManager):
         logger.debug("Crossover succeeded, applying mutation...")
         self.mutator.mutate(child, in_place=True)
 
-        if self.conf.enforce_planarity:
-            make_planar(child.root)
+        # if self.conf.enforce_planarity:
+            # make_planar(child.root)
 
         _, outputs, _ = child.root.io_count(recursive=True)
         if not outputs:

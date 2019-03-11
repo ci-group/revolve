@@ -1,4 +1,5 @@
 ---
+id: example_spider
 body:
   id          : Core
   type        : Core
