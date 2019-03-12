@@ -268,11 +268,10 @@ class ActiveHingeModule(RevolveModule):
         else:
             return {1: child.to_yaml()}
 
-    def to_sdf(self, tree_depth):
+    def to_sdf(self, tree_depth, parent_link, child_link):
         name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
+        name_joint = 'component_{}_{}__joint'.format(tree_depth, self.TYPE)
         name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
-
-        # offset = SDFmath.Vector3(self.COLLISION_BOX_FRAME[0] / 2)
 
         visual_frame = SDF.Visual(name_frame)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH_FRAME)
@@ -291,12 +290,14 @@ class ActiveHingeModule(RevolveModule):
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO)
         collision_servo.append(geometry)
 
-        # TODO
-        joint = None
+        joint = SDF.Joint(name_joint,
+                          parent_link, child_link,
+                          SDFmath.Vector3(0, 1, 0))
+
+        joint.set_position(SDFmath.Vector3(-0.0085, 0, 0))
 
         return visual_frame, collision_frame, \
-               visual_servo, collision_servo, \
-               joint
+               visual_servo, collision_servo, joint
 
     def possible_slots_frame(self):
         box_geometry = self.COLLISION_BOX_FRAME

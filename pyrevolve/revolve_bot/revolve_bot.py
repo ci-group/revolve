@@ -159,7 +159,7 @@ class RevolveBot:
             child_link = SDF.Link('{}_Leg'.format(slot_chain))
 
             visual_frame, collision_frame, \
-            visual_servo, collision_servo, joint = module.to_sdf('{}'.format(slot_chain))
+            visual_servo, collision_servo, joint = module.to_sdf('{}'.format(slot_chain), parent_link, child_link)
 
             # parent_slot = parent_module.boxslot(parent_slot)
             module_slot = module.boxslot_frame(Orientation.SOUTH)
@@ -173,11 +173,17 @@ class RevolveBot:
                                     visual_servo, collision_servo,
                                     parent_slot, collision_frame)
 
+            joint.set_rotation(visual_servo.get_rotation())
+            old_position = joint.get_position()
+            joint.set_position(visual_servo.get_position())
+            joint.translate(joint.to_parent_direction(old_position))
+
             parent_link.append(visual_frame)
             parent_link.append(collision_frame)
 
             child_link.append(visual_servo)
             child_link.append(collision_servo)
+            child_link.add_joint(joint)
 
             links.append(child_link)
             joints.append(joint)
@@ -244,6 +250,9 @@ class RevolveBot:
             links.extend(children_links)
             joints.extend(children_joints)
 
+        for joint in joints:
+            model.append(joint)
+
         for link in links:
             link.align_center_of_mass()
             link.calculate_inertial()
@@ -257,9 +266,7 @@ class RevolveBot:
             reparsed = xml.dom.minidom.parseString(rough_string)
             return reparsed.toprettyxml(indent=indent)
 
-        # tree = xml.etree.ElementTree.ElementTree(sdf)
         res = xml.etree.ElementTree.tostring(sdf_root, encoding='utf8', method='xml')
-        print(res)
 
         if nice_format is not None:
             res = prettify(res, nice_format)

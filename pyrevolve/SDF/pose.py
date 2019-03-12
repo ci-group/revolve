@@ -37,9 +37,17 @@ class Posable(xml.etree.ElementTree.Element):
         self.set_position(pose.position)
 
     def get_position(self):
+        """
+        :return: copy of the internal position
+        :rtype: math.Vector3
+        """
         return self._pose.position.copy()
 
     def get_rotation(self):
+        """
+        :return: copy of the internal rotation
+        :rtype: math.Quaternion
+        """
         return self._pose.rotation.copy()
 
     def set_position(self, position: math.Vector3):

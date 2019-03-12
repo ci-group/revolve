@@ -1,9 +1,10 @@
+import xml.etree.ElementTree
+
 from .pose import Pose, Posable
 from .link import Link
-from .inertial import Inertial
 from .geometry import Visual, Collision, MeshGeometry, BoxGeometry
-
-import xml.etree.ElementTree
+from .inertial import Inertial
+from .joint import Joint
 
 
 def sub_element_text(parent, name, text):

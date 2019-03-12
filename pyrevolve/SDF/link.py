@@ -7,7 +7,7 @@ from pyrevolve.sdfbuilder import math as SDFmath
 
 
 class Link(SDF.Posable):
-    def __init__(self, name, self_collide=True, position=None, rotation=None):
+    def __init__(self, name: str, self_collide=True, position=None, rotation=None):
         super().__init__(
             tag='link',
             attrib={'name': name},
@@ -15,27 +15,53 @@ class Link(SDF.Posable):
             rotation=rotation,
         )
 
-        SDF.sub_element_text(self, 'self_collide', self_collide)
+        self.name = name
         self.size = (0, 0, 0, 0, 0, 0)
         self.inertial = None
         self.collisions = []
+        self.joints = []
+
+        SDF.sub_element_text(self, 'self_collide', self_collide)
 
     def iter_elements(self, condition):
+        """
+        Iterates all the elements that pass the condition statement
+        :param condition: Condition to choose which element to iterate over
+        :type condition: lambda function
+        :return:
+        """
         for elem in self.iter():
             if condition(elem):
                 yield elem
 
     def append(self, subelement):
+        """
+        Appends an xml element to this object.
+
+        If it's a collision, it saves it internally (for calculating the center of mass)
+        :param subelement: XML Element to append
+        """
         if type(subelement) is SDF.Collision:
             self.collisions.append(subelement)
 
         super().append(subelement)
 
     def align_center_of_mass(self):
+        """
+        Aligns the children posable objects relative to the center of mass of this link.
+
+        It calculates the center of mass, and apply this as the center of the Link.
+        All children posable are relative to the position of the Link, so their position needs
+        to be adjusted.
+        :return: the position of the center of mass
+        :rtype: SDFmath.Vector3
+        """
         translation = self.get_center_of_mass()
         self.set_position(translation*2.0)
         for el in self.iter_elements(lambda elem: isinstance(elem, SDF.Posable)):
             el.translate(-translation)
+        for joint in self.joints:
+            joint.translate(-translation)
         return translation
 
     def calculate_inertial(self):
@@ -92,4 +118,11 @@ class Link(SDF.Posable):
 
         return com
 
-
+    def add_joint(self, joint):
+        """
+        Add Joints to the internal list of joints.
+        These joints position will be changed when the function `align_center_of_mass` is called.
+        :param joint: joint whose children is this link
+        :type joint: SDF.Joint
+        """
+        self.joints.append(joint)
