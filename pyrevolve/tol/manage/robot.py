@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 
-from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.SDF.math import Vector3
 
 from pyrevolve.angle import Robot as RvRobot
 from pyrevolve.util import Time

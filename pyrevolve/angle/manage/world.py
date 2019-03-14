@@ -12,7 +12,7 @@ from asyncio import Future
 from datetime import datetime
 from pygazebo.msg import gz_string_pb2
 
-from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.SDF.math import Vector3
 from pyrevolve.spec.msgs import BoundingBox
 from pyrevolve.spec.msgs import ModelInserted
 from pyrevolve.spec.msgs import RobotStates

@@ -4,7 +4,7 @@ from __future__ import division
 import numpy as np
 from collections import deque
 
-from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.SDF.math import Vector3
 from pyrevolve.util import Time
 
 

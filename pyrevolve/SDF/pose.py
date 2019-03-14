@@ -1,14 +1,15 @@
 import sys
 import xml.etree.ElementTree
 
-from pyrevolve.sdfbuilder import math
+from pyrevolve import SDF
+import pyrevolve.SDF.math
 
 
 class Pose(xml.etree.ElementTree.Element):
-    def __init__(self, position: math.Vector3 = None, rotation: math.Quaternion = None):
+    def __init__(self, position: SDF.math.Vector3 = None, rotation: SDF.math.Quaternion = None):
         super().__init__('pose')
-        self.position = math.Vector3() if position is None else position
-        self.rotation = math.Quaternion() if rotation is None else rotation
+        self.position = SDF.math.Vector3() if position is None else position
+        self.rotation = SDF.math.Quaternion() if rotation is None else rotation
 
     @property
     def text(self):
@@ -39,30 +40,30 @@ class Posable(xml.etree.ElementTree.Element):
     def get_position(self):
         """
         :return: copy of the internal position
-        :rtype: math.Vector3
+        :rtype: SDF.math.Vector3
         """
         return self._pose.position.copy()
 
     def get_rotation(self):
         """
         :return: copy of the internal rotation
-        :rtype: math.Quaternion
+        :rtype: SDF.math.Quaternion
         """
         return self._pose.rotation.copy()
 
-    def set_position(self, position: math.Vector3):
+    def set_position(self, position: SDF.math.Vector3):
         self._pose.position = position.copy()
 
-    def set_rotation(self, rotation: math.Quaternion):
+    def set_rotation(self, rotation: SDF.math.Quaternion):
         self._pose.rotation = rotation.copy()
 
-    def translate(self, translation: math.Vector3):
+    def translate(self, translation: SDF.math.Vector3):
         self._pose.position = self._pose.position + translation
 
-    def rotate(self, rotation: math.Quaternion):
+    def rotate(self, rotation: SDF.math.Quaternion):
         self._pose.rotation = rotation * self._pose.rotation
 
-    def rotate_around(self, axis: math.Vector3, angle: float, relative_to_child: bool = True):
+    def rotate_around(self, axis: SDF.math.Vector3, angle: float, relative_to_child: bool = True):
         """
         Rotates this Posable `angle` degrees around the given directional vector
         :param axis:
@@ -74,7 +75,7 @@ class Posable(xml.etree.ElementTree.Element):
         if relative_to_child:
             axis = self.to_parent_direction(axis)
 
-        quat = math.Quaternion.from_angle_axis(angle, axis)
+        quat = SDF.math.Quaternion.from_angle_axis(angle, axis)
         self.rotate(quat)
 
     def to_parent_direction(self, vec):
@@ -82,9 +83,9 @@ class Posable(xml.etree.ElementTree.Element):
         Returns the given direction vector / rotation quaternion relative to
         the parent frame.
         :param vec: Vector or quaternion in the local frame
-        :type vec: math.Vector3|math.Quaternion
+        :type vec: SDF.math.Vector3|SDF.math.Quaternion
         :return:
-        :rtype: math.Vector3|math.Quaternion
+        :rtype: SDF.math.Vector3|SDF.math.Quaternion
         """
         return self._pose.rotation * vec
 
@@ -93,41 +94,41 @@ class Posable(xml.etree.ElementTree.Element):
         Returns the given direction vector / rotation quaternion relative to
         the local frame
         :param vec: Direction vector or orientation in the parent frame
-        :type vec: math.Vector3|math.Quaternion
+        :type vec: SDF.math.Vector3|SDF.math.Quaternion
         :return:
-        :rtype: math.Vector3|math.Quaternion
+        :rtype: SDF.math.Vector3|SDF.math.Quaternion
         """
         return self._pose.rotation.conjugated() * vec
 
-    def to_parent_frame(self, point: math.Vector3):
+    def to_parent_frame(self, point: SDF.math.Vector3):
         """
         Returns the given point relative to the parent frame
         :param point: Point in the local frame
         :return:
-        :rtype: math.Vector3
+        :rtype: SDF.math.Vector3
         """
         position = self._pose.position
         return self.to_parent_direction(point) + position
 
-    def to_local_frame(self, point: math.Vector3):
+    def to_local_frame(self, point: SDF.math.Vector3):
         """
         Returns the given point relative to the local frame
         :param point: Point in the parent frame
         :return:
-        :rtype: math.Vector3
+        :rtype: SDF.math.Vector3
         """
         rotation = self._pose.rotation.conjugated()
         position = self._pose.position
         return rotation * (point - position)
 
-    def to_sibling_frame(self, point: math.Vector3, sibling):
+    def to_sibling_frame(self, point: SDF.math.Vector3, sibling):
         """
         Takes a point and converts it to the frame of a sibling
         :param point:
         :param sibling:
         :type sibling: Posable
         :return: The point in the sibling's frame
-        :rtype: math.Vector3
+        :rtype: SDF.math.Vector3
         """
         # Do this the easy way: convert to parent, then
         # back to sibling
@@ -139,11 +140,11 @@ class Posable(xml.etree.ElementTree.Element):
         Returns the given direction vector / orientation quaternion relative
         to the frame of a sibling
         :param vec: Direction vector / orientation quaternion in the child frame
-        :type vec: math.Vector3|math.Quaternion
+        :type vec: SDF.math.Vector3|SDF.math.Quaternion
         :param sibling: The sibling posable
         :type sibling: Posable
         :return:
-        :rtype: math.Vector3|math.Quaternion
+        :rtype: SDF.math.Vector3|SDF.math.Quaternion
         """
         in_parent = self.to_parent_direction(vec)
         return sibling.to_local_direction(in_parent)
@@ -215,8 +216,8 @@ class Posable(xml.etree.ElementTree.Element):
         # rotation matrix from R1 to R2. The easiest way to visualize this is
         #  if we first perform the inverse rotation from R1 back to the
         # standard basis, and then rotate to R2.
-        r1 = math.RotationMatrix()
-        r2 = math.RotationMatrix()
+        r1 = SDF.math.RotationMatrix()
+        r2 = SDF.math.RotationMatrix()
 
         # Warning: `RotationMatrix` is a Matrix4 that can potentially do
         # translations. We want to assign the first block of these matrices

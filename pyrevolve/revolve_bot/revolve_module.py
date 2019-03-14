@@ -4,12 +4,6 @@ Class containing the body parts to compose a Robogen robot
 from collections import OrderedDict
 from enum import Enum
 
-from pyrevolve.sdfbuilder import Link
-from pyrevolve.sdfbuilder import math as SDFmath
-from pyrevolve.sdfbuilder.structure import Box
-from pyrevolve.sdfbuilder.structure import Collision
-from pyrevolve.sdfbuilder.structure import Visual
-from pyrevolve.sdfbuilder.structure import Mesh
 from pyrevolve import SDF
 
 
@@ -201,34 +195,6 @@ class CoreModule(RevolveModule):
     def __init__(self):
         super().__init__()
 
-    def to_sdf_old(self):
-        """
-        Converts the CoreComponent to SDF format
-        :return:
-        """
-        # TODO: Scale needs to be checked
-        scale = 0.5
-        mesh = Mesh(
-            uri="model://rg_robot/meshes/CoreComponent.dae",
-            scale=scale
-        )
-
-        visual = Visual(name="visual_{}".format(self.id), geometry=mesh)
-        collision = Collision(
-            name="collision_{}".format(self.id),
-            geometry=Box(1.0, 1.0, 1.0, mass=0.3)
-        )
-
-        link = Link(
-            name="link_{}".format(self.id),
-            self_collide=True,
-            elements=[visual, collision]
-        )
-        rgb = self.color()
-        link.make_color(r=rgb[0], g=rgb[1], b=rgb[2], a=1.0)
-
-        return link
-
     def possible_slots(self):
         return (
             (-self.SLOT_COORDINATES, self.SLOT_COORDINATES),  # X
@@ -248,8 +214,8 @@ class ActiveHingeModule(RevolveModule):
     COLLISION_BOX_SERVO = (2.45e-02, 2.575e-02, 1.5e-02)
     # COLLISION_BOX_SERVO = (2.925000e-02, 3.400000e-02, 1.000000e-02)
     COLLISION_BOX_SERVO_OFFSET = (
-        SDFmath.Vector3(0, 0, 0),
-        SDFmath.Vector3(-0.0091, 0, 0),
+        SDF.math.Vector3(0, 0, 0),
+        SDF.math.Vector3(-0.0091, 0, 0),
     )
     MASS_FRAME = grams(1.7)
     MASS_SERVO = grams(9)
@@ -286,15 +252,15 @@ class ActiveHingeModule(RevolveModule):
         visual_servo.append(geometry)
 
         collision_servo = SDF.Collision(name_servo, self.MASS_SERVO)
-        collision_servo.translate(SDFmath.Vector3(0.002375, 0, 0))
+        collision_servo.translate(SDF.math.Vector3(0.002375, 0, 0))
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO)
         collision_servo.append(geometry)
 
         joint = SDF.Joint(name_joint,
                           parent_link, child_link,
-                          SDFmath.Vector3(0, 1, 0))
+                          SDF.math.Vector3(0, 1, 0))
 
-        joint.set_position(SDFmath.Vector3(-0.0085, 0, 0))
+        joint.set_position(SDF.math.Vector3(-0.0085, 0, 0))
 
         return visual_frame, collision_frame, \
                visual_servo, collision_servo, joint
@@ -391,13 +357,13 @@ class BoxSlot:
     def _calculate_box_slot_pos(self, boundaries, slot: Orientation):
         # boundaries = collision_elem.boundaries
         if slot == Orientation.SOUTH:
-            return SDFmath.Vector3(0, boundaries[1][0], 0)
+            return SDF.math.Vector3(0, boundaries[1][0], 0)
         elif slot == Orientation.NORTH:
-            return SDFmath.Vector3(0, boundaries[1][1], 0)
+            return SDF.math.Vector3(0, boundaries[1][1], 0)
         elif slot == Orientation.EAST:
-            return SDFmath.Vector3(boundaries[0][1], 0, 0)
+            return SDF.math.Vector3(boundaries[0][1], 0, 0)
         elif slot == Orientation.WEST:
-            return SDFmath.Vector3(boundaries[0][0], 0, 0)
+            return SDF.math.Vector3(boundaries[0][0], 0, 0)
         else:
             raise RuntimeError('invalid module orientation: {}'.format(slot))
 
@@ -407,37 +373,37 @@ class BoxSlot:
         Return slot tangent
         """
         if slot == Orientation.SOUTH:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.NORTH:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.EAST:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.WEST:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         # elif slot == 4:
         #     # Right face tangent: back face
-        #     return SDFmath.Vector3(0, 1, 0)
+        #     return SDF.math.Vector3(0, 1, 0)
         # elif slot == 5:
         #     # Left face tangent: back face
-        #     return SDFmath.Vector3(0, 1, 0)
+        #     return SDF.math.Vector3(0, 1, 0)
         else:
             raise RuntimeError("Invalid orientation")
 
 
 class BoxSlotJoints(BoxSlot):
 
-    def __init__(self, boundaries, orientation: Orientation, offset=(SDFmath.Vector3(), SDFmath.Vector3())):
+    def __init__(self, boundaries, orientation: Orientation, offset=(SDF.math.Vector3(), SDF.math.Vector3())):
         self.offset = offset
         super().__init__(boundaries, orientation)
 
     def _calculate_box_slot_pos(self, boundaries, slot: Orientation):
         # boundaries = collision_elem.boundaries
         if slot == Orientation.SOUTH:
-            return SDFmath.Vector3(boundaries[0][0], 0, 0) + self.offset[0]
-            # return SDFmath.Vector3(0, boundaries[0][0], 0)
+            return SDF.math.Vector3(boundaries[0][0], 0, 0) + self.offset[0]
+            # return SDF.math.Vector3(0, boundaries[0][0], 0)
         elif slot == Orientation.NORTH:
-            return SDFmath.Vector3(boundaries[0][1], 0, 0) + self.offset[1]
-            # return SDFmath.Vector3(0, boundaries[0][1], 0)
+            return SDF.math.Vector3(boundaries[0][1], 0, 0) + self.offset[1]
+            # return SDF.math.Vector3(0, boundaries[0][1], 0)
         else:
             raise RuntimeError('invalid module orientation: {}'.format(slot))
 
@@ -447,8 +413,8 @@ class BoxSlotJoints(BoxSlot):
         Return slot tangent
         """
         if slot == Orientation.SOUTH:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.NORTH:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         else:
             raise RuntimeError("Invalid orientation")
