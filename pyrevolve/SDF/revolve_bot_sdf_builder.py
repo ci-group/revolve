@@ -49,8 +49,9 @@ def revolve_bot_to_sdf(robot, nice_format):
         model.append(link)
 
     # ADD BRAIN
-    plugin_elem = _sdf_brain_plugin_conf(robot._brain)
-    model.append(plugin_elem)
+    if robot._brain is not None:
+        plugin_elem = _sdf_brain_plugin_conf(robot._brain)
+        model.append(plugin_elem)
 
     # XML RENDER PHASE #
     def prettify(rough_string, indent='\t'):
@@ -181,8 +182,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
             continue
 
         my_slot = module.boxslot(Orientation(my_slot))
-        if type(module) is not ActiveHingeModule:
-            slot_chain = '{}{}'.format(slot_chain, my_slot.orientation.short_repr())
+        slot_chain = '{}{}'.format(slot_chain, my_slot.orientation.short_repr())
         children_links, children_joints = _module_to_sdf(child_module,
                                                          my_link,
                                                          my_slot,
