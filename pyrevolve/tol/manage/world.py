@@ -12,7 +12,7 @@ from pyrevolve.util import multi_future
 
 from .. import logger
 from .. import constants
-from .robot import Robot
+from .robotmanager import RobotManager
 # from ..build import get_builder, to_sdfbot
 # from ..scenery import Wall
 # from ..spec import get_tree_generator
@@ -98,38 +98,26 @@ class World(WorldManager):
         Extends the robots header with a max age
         :return:
         """
-        return Robot.header()
+        return RobotManager.header()
 
     def create_robot_manager(
             self,
-            robot_name,
-            tree,
             robot,
             position,
-            t,
-            battery_level,
-            parents
+            time,
     ):
         """
         Overriding with robot manager with more capabilities.
-        :param robot_name:
-        :param tree:
         :param robot:
         :param position:
-        :param t:
-        :param battery_level:
-        :param parents:
+        :param time:
         :return:
         """
-        return Robot(
+        return RobotManager(
                 conf=self.conf,
-                name=robot_name,
-                tree=tree,
                 robot=robot,
                 position=position,
-                time=t,
-                battery_level=battery_level,
-                parents=parents
+                time=time,
         )
 
     async def add_highlight(self, position, color):

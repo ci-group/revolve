@@ -8,43 +8,34 @@ from pyrevolve.SDF.math import Vector3
 from pyrevolve.util import Time
 
 
-class Robot(object):
+class RobotManager(object):
     """
     Class to manage a single robot with the WorldManager
     """
 
     def __init__(
             self,
-            name,
-            tree,
             robot,
             position,
             time,
             battery_level=0.0,
             speed_window=60,
             warmup_time=0,
-            parents=None
     ):
         """
         :param speed_window:
-        :param name:
-        :param tree:
-        :param robot: Protobuf robot
+        :param robot: RevolveBot
         :param position:
         :type position: Vector3
         :param time:
         :type time: Time
         :param battery_level:
         :type battery_level: float
-        :param parents:
-        :type parents: set
         :return:
         """
         self.warmup_time = warmup_time
         self.speed_window = speed_window
-        self.tree = tree
         self.robot = robot
-        self.name = name
         self.starting_position = position
         self.starting_time = time
         self.battery_level = battery_level
@@ -53,8 +44,6 @@ class Robot(object):
         self.last_update = time
         self.last_mate = None
 
-        self.parent_ids = set() \
-            if parents is None else set(p.robot.id for p in parents)
         self._ds = deque(maxlen=speed_window)
         self._dt = deque(maxlen=speed_window)
         self._positions = deque(maxlen=speed_window)
@@ -68,25 +57,9 @@ class Robot(object):
         self._idx = 0
         self._count = 0
 
-    def write_robot(self, details_file, csv_writer):
-        """
-        Writes this robot to a file. This simply writes the
-        protobuf bot to a file, which can later be recovered
-
-        :param world: The world
-        :param details_file:
-        :param csv_writer:
-        :type csv_writer: csv.writer
-        :return:
-        :rtype: bool
-        """
-        with open(details_file, 'wb') as f:
-            f.write(self.robot.SerializeToString())
-
-        row = [self.robot.id]
-        row += list(self.parent_ids) if self.parent_ids else ['', '']
-        row += [self.get_battery_level()]
-        csv_writer.writerow(row)
+    @property
+    def name(self):
+        return str(self.robot.id)
 
     def update_state(self, world, time, state, poses_file):
         """

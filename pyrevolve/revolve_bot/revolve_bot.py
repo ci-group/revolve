@@ -34,6 +34,32 @@ class RevolveBot:
         self._behavioural_measurement = None
         self._battery_level = None
 
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def body(self):
+        return self._body
+
+    @property
+    def brain(self):
+        return self._brain
+
+    def size(self):
+        robot_size = 1 + self._recursive_size_measurement(self._body)
+        print("calculating robot size: {}".format(robot_size))
+        return robot_size
+
+    def _recursive_size_measurement(self, module):
+        count = 0
+        for _, child in module.iter_children():
+            if child is not None:
+                count += 1 + self._recursive_size_measurement(child)
+
+        return count
+
+
     def measure_behaviour(self):
         """
 
@@ -103,8 +129,8 @@ class RevolveBot:
 
         self.load(robot, conf_type)
 
-    def to_sdf(self, nice_format=None):
-        return SDF.revolve_bot_to_sdf(self, nice_format)
+    def to_sdf(self, pose=SDF.math.Vector3(0, 0, 0.25), nice_format=None):
+        return SDF.revolve_bot_to_sdf(self, pose, nice_format)
 
     def to_yaml(self):
         """

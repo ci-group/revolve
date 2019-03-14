@@ -5,20 +5,19 @@ from pyrevolve import SDF
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, Orientation, BoxSlot
 
 
-def revolve_bot_to_sdf(robot, nice_format):
+def revolve_bot_to_sdf(robot, robot_pose, nice_format):
     from xml.etree import ElementTree
     from pyrevolve import SDF
 
     sdf_root = ElementTree.Element('sdf', {'version': '1.6'})
 
-    assert (robot._id is not None)
+    assert (robot.id is not None)
     model = ElementTree.SubElement(sdf_root, 'model', {
-        'name': str(robot._id)
+        'name': str(robot.id)
     })
 
-    # TODO make this pose parametric
-    pose = SDF.Pose(SDF.math.Vector3(0, 0, 0.25))
-    model.append(pose)
+    pose_elem = SDF.Pose(robot_pose)
+    model.append(pose_elem)
 
     core_link = SDF.Link('Core')
     links = [core_link]
@@ -125,7 +124,6 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
     my_collision = None
 
     if type(module) is ActiveHingeModule:
-        print("adding joint")
         child_link = SDF.Link('{}_Leg'.format(slot_chain))
 
         visual_frame, collision_frame, \
@@ -163,7 +161,6 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
         my_collision = collision_servo
 
     else:
-        print("adding block")
         visual, collision = module.to_sdf(slot_chain)
 
         module_slot = module.boxslot(Orientation.SOUTH)
