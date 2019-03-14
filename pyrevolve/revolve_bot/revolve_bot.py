@@ -17,7 +17,10 @@ from .revolve_module import BrickSensorModule
 from .revolve_module import Orientation
 from .revolve_module import BoxSlot
 from .brain_nn import BrainNN
+
 from .render.render import Render
+from .measure import Measure
+
 import xml.etree.ElementTree
 
 
@@ -46,10 +49,14 @@ class RevolveBot:
 
     def measure_body(self):
         """
-
         :return:
         """
-        pass
+        try:
+            measure = Measure(self._body)
+            measure.measure_size()
+            return measure.measure_all()
+        except Exception as e:
+            print('Exception: {}'.format(e))
 
     def measure_brain(self):
         """

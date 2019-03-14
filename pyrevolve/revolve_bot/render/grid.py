@@ -1,4 +1,15 @@
 class Grid:
+
+	def __init__(self):
+		self.min_x = None
+		self.max_x = None
+		self.min_y = None
+		self.max_y = None
+		self.width = None
+		self.height = None 
+		self.core_position = None
+		self.visited_coordinates = []	
+
 	# Current position of last drawn element
 	x_pos = 0
 	y_pos = 0
@@ -11,9 +22,6 @@ class Grid:
 	
 	# Coordinates and orientation of movements
 	movement_stack = [[0,0,1]]
-
-	# Coordinates of visited positions
-	visited_coordinates = []
 
 	def get_position(self):
 		"""Return current position on x and y axis"""
@@ -125,7 +133,7 @@ class Grid:
 	def add_to_visited(self):
 		"""Add current position to visited coordinates list"""
 		self.calculate_orientation()
-		Grid.visited_coordinates.append([Grid.x_pos, Grid.y_pos])
+		self.visited_coordinates.append([Grid.x_pos, Grid.y_pos])
 		Grid.movement_stack.append([Grid.x_pos, Grid.y_pos, Grid.orientation])
 
 	def calculate_grid_dimensions(self):
@@ -133,12 +141,22 @@ class Grid:
 		max_x = 0
 		min_y = 0
 		max_y = 0
-		for coorinate in Grid.visited_coordinates:
+		for coorinate in self.visited_coordinates:
 			min_x = coorinate[0] if coorinate[0] < min_x else min_x
 			max_x = coorinate[0] if coorinate[0] > max_x else max_x
 			min_y = coorinate[1] if coorinate[1] < min_y else min_y
 			max_y = coorinate[1] if coorinate[1] > max_y else max_y
-		return [min_x, max_x, min_y, max_y]
+		
+		self.min_x = min_x
+		self.max_x = max_x
+		self.min_y = min_y
+		self.max_y = max_y
+		self.width = abs(min_x - max_x) + 1
+		self.height = abs(min_y - max_y) + 1
+
+	def calculate_core_position(self):
+		self.core_position = [self.width - self.max_x - 1, self.height - self.max_y - 1]	
+		return self.core_position
 
 	def reset_grid(self):
 		Grid.x_pos = 0
@@ -146,4 +164,3 @@ class Grid:
 		Grid.orientation = 1
 		Grid.previous_move = -1
 		Grid.movement_stack = [[0,0,1]]
-		Grid.visited_coordinates = []

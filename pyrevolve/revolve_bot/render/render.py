@@ -9,9 +9,13 @@ class Render:
 		"""Instantiate grid"""
 		self.grid = Grid()
 
-
 	def parse_body_to_draw(self, canvas, module, slot):
-		"""Parse the body to the canvas to draw the png"""
+		"""
+		Parse the body to the canvas to draw the png
+		@param canvas: instance of the Canvas class
+		@param module: body of the robot
+		@param slot: parent slot of module
+		"""
 		if isinstance(module, CoreModule):
 			canvas.draw_controller()
 		elif isinstance(module, ActiveHingeModule):
@@ -25,7 +29,7 @@ class Render:
 			canvas.draw_module(module.id)
 			canvas.draw_connector_to_parent()
 		elif isinstance(module, TouchSensorModule) or isinstance(module, BrickSensorModule):
-			canvas.move_by_slot(slot)			
+			canvas.move_by_slot(slot)
 			Canvas.rotating_orientation += module.orientation
 			canvas.save_sensor_position()
 
@@ -34,44 +38,73 @@ class Render:
 			for core_slot, child_module in module.iter_children():
 				if child_module is None:
 					continue
-				self.parse_body_to_draw(canvas, child_module, core_slot)		
-			canvas.move_back()						
+				self.parse_body_to_draw(canvas, child_module, core_slot)
+			canvas.move_back()
 		else:
 			# Element has no children, move back to previous state
 			canvas.move_back()
-				
-	def traverse_path_of_robot(self, module, slot):
-		"""Traverse path of robot to obtain visited coordinates"""		
+
+	def traverse_path_of_robot(self, 
+							   module, 
+							   slot, 
+							   include_sensors=True, 
+							   horizontal_only=False, 
+							   vertical_only=False, 
+							   mirrored_traversal=False):
+		"""
+		Traverse path of robot to obtain visited coordinates
+		@param module: body of the robot
+		@param slot: attachment of parent slot
+		@param include_sensors: add sensors to visisted_cooridnates if True
+		@param horizontal_only: traverse only the modules in the horizontal child nodes of the core
+		@param vertical_only: traverse only the modules in the vertical child nodes of the core
+		@param mirrored_traversal: traverse mirrored side of body in orientation
+		"""
 		if isinstance(module, ActiveHingeModule) or isinstance(module, BrickModule) or isinstance(module, TouchSensorModule) or isinstance(module, BrickSensorModule):
 			self.grid.move_by_slot(slot)
-			self.grid.add_to_visited()
-		
+			if include_sensors or (isinstance(module, ActiveHingeModule) or isinstance(module, BrickModule)):
+				self.grid.add_to_visited()
+
 		if module.has_children():
 			# Traverse path of children of module
 			for core_slot, child_module in module.iter_children():
+				if (
+						isinstance(module, CoreModule) and 
+						(
+							(horizontal_only and mirrored_traversal and core_slot is not 2) or 
+							(horizontal_only and not mirrored_traversal and core_slot is not 3) or 
+							(vertical_only and mirrored_traversal and core_slot is not 0) or 
+							(vertical_only and not mirrored_traversal and core_slot is not 1)
+						)
+					):
+					continue
 				if child_module is None:
 					continue
-				self.traverse_path_of_robot(child_module, core_slot)	
-			self.grid.move_back()						
+				self.traverse_path_of_robot(child_module, core_slot, include_sensors)
+			self.grid.move_back()
 		else:
 			# Element has no children, move back to previous state
 			self.grid.move_back()
 
 	def render_robot(self, body, image_path):
+		"""
+		Render robot and save image file
+		@param body: body of robot
+		@param image_path: file path for saving image
+		"""
 		try:
 			# Calculate dimensions of drawing and core position
 			self.traverse_path_of_robot(body, 0)
-			robot_dim = self.grid.calculate_grid_dimensions()
-			width = abs(robot_dim[0] - robot_dim[1]) + 1
-			height = abs(robot_dim[2] - robot_dim[3]) + 1
-			core_position = [width - robot_dim[1] - 1, height - robot_dim[3] - 1]	
+			self.grid.calculate_grid_dimensions()
+			core_position = self.grid.calculate_core_position()
+
 			# Draw canvas
-			cv = Canvas(width, height, 100)
+			cv = Canvas(self.grid.width, self.grid.height, 100)
 			cv.set_position(core_position[0], core_position[1])
 
 			# Draw body of robot
 			self.parse_body_to_draw(cv, body, 0)
-			
+
 			# Draw sensors after, so that they don't get overdrawn
 			cv.draw_sensors()
 
@@ -80,7 +113,6 @@ class Render:
 			# Reset variables to default values
 			cv.reset_canvas()
 			self.grid.reset_grid()
-			
 
-		except Exception as e: 
-			print('Exception {}'.format(e))		
+		except Exception as e:
+			print('Exception {}'.format(e))
