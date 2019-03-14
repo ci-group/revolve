@@ -37,14 +37,13 @@ class Material(xml.etree.ElementTree.Element):
 
 
 class Visual(SDF.Posable):
-    def __init__(self, name, position=None, rotation=None):
-        #TODO take color as param
+    def __init__(self, name, rgb=(0.94, 0.98, 0.05), position=None, rotation=None):
         super().__init__('visual', {
             'name': '{}_visual'.format(name)
         }, position, rotation)
         material = Material(
-            ambient=(0.94, 0.98, 0.05, 1.0),
-            diffuse=(0.94, 0.98, 0.05, 1.0),
+            ambient=(rgb[0], rgb[1], rgb[2], 1.0),
+            diffuse=(rgb[0], rgb[1], rgb[2], 1.0),
             specular=(0.1, 0.1, 0.1, 1.0),
         )
         self.append(material)
