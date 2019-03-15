@@ -12,11 +12,11 @@ from asyncio import Future
 from datetime import datetime
 from pygazebo.msg import gz_string_pb2
 
-from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.SDF.math import Vector3
 from pyrevolve.spec.msgs import BoundingBox
 from pyrevolve.spec.msgs import ModelInserted
 from pyrevolve.spec.msgs import RobotStates
-from .robot import Robot
+from .robotmanager import RobotManager
 from ...gazebo import manage
 from ...gazebo import RequestHandler
 from ...logging import logger
@@ -75,7 +75,7 @@ class WorldManager(manage.WorldManager):
         self.builder = builder
         self.generator = generator
 
-        self.robots = {}
+        self.robot_managers = {}
         self.robot_id = 0
 
         self.start_time = None
@@ -278,7 +278,7 @@ class WorldManager(manage.WorldManager):
         :param data:
         :return:
         """
-        self.robots = data['robots']
+        self.robot_managers = data['robots']
         self.robot_id = data['robot_id']
         self.start_time = data['start_time']
         self.last_time = data['last_time']
@@ -290,7 +290,7 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         return {
-            "robots": self.robots,
+            "robots": self.robot_managers,
             "robot_id": self.robot_id,
             "start_time": self.start_time,
             "last_time": self.last_time
@@ -322,17 +322,17 @@ class WorldManager(manage.WorldManager):
         """
         Returns the list of registered robots
         :return:
-        :rtype: list[Robot]
+        :rtype: list[RobotManager]
         """
-        return list(self.robots.values())
+        return list(self.robot_managers.values())
 
     def get_robot_by_name(self, name):
         """
         :param name:
         :return:
-        :rtype: Robot|None
+        :rtype: RobotManager|None
         """
-        return self.robots.get(name, None)
+        return self.robot_managers.get(name, None)
 
     async def generate_valid_robot(self, max_attempts=100):
         """
@@ -382,11 +382,8 @@ class WorldManager(manage.WorldManager):
 
     async def insert_robot(
             self,
-            py_bot,
-            pose,
-            name=None,
-            initial_battery=0.0,
-            parents=None
+            revolve_bot,
+            pose=Vector3(0, 0, 0.05),
     ):
         """
         Inserts a robot into the world. This consists of two steps:
@@ -400,44 +397,27 @@ class WorldManager(manage.WorldManager):
         i.e. the message that confirms the robot has been inserted, a
         future is returned.
 
-        :param py_bot:
-        :type py_bot: Python tree structure of a robot
+        :param revolve_bot:
+        :type revolve_bot: RevolveBot
         :param pose: Insertion pose of a robot
-        :type pose: Pose
-        :param name: (Unique) name of a robot
-        :type name: str
-        :param initial_battery: Initial battery level
-        :param parents:
+        :type pose: Pose|Vector3
         :return: A future that resolves with the created `Robot` object.
         """
-        robot_id = self.get_robot_id()
-        robot_name = "gen__"+str(robot_id) \
-            if name is None else str(name)
-
-        proto_bot = py_bot.to_protobot(robot_id)
-        sdf_bot = self.to_sdfbot(
-                robot=proto_bot,
-                robot_name=robot_name,
-                initial_battery=initial_battery)
-        sdf_bot.elements[0].set_pose(pose)
+        sdf_bot = revolve_bot.to_sdf(pose).decode('utf8')
 
         if self.output_directory:
             robot_file_path = os.path.join(
                     self.output_directory,
-                    'robot_{}.sdf'.format(robot_id)
+                    'robot_{}.sdf'.format(revolve_bot.id)
             )
             with open(robot_file_path, 'w') as f:
-                f.write(str(sdf_bot))
+                f.write(sdf_bot)
 
         future = Future()
         insert_future = await self.insert_model(sdf_bot)
         # TODO: Unhandled error in exception handler. Fix this.
         insert_future.add_done_callback(lambda fut: self._robot_inserted(
-                robot_name=robot_name,
-                tree=py_bot,
-                robot=proto_bot,
-                initial_battery=initial_battery,
-                parents=parents,
+                robot=revolve_bot,
                 msg=fut.result(),
                 return_future=future
         ))
@@ -464,7 +444,7 @@ class WorldManager(manage.WorldManager):
     async def delete_robot(self, robot):
         """
         :param robot:
-        :type robot: Robot
+        :type robot: RobotManager
         :return:
         """
         # Immediately unregister the robot so no it won't be used
@@ -480,7 +460,7 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         futures = []
-        for bot in list(self.robots.values()):
+        for bot in list(self.robot_managers.values()):
             future = await (self.delete_robot(bot))
             futures.append(future)
 
@@ -488,11 +468,7 @@ class WorldManager(manage.WorldManager):
 
     def _robot_inserted(
             self,
-            robot_name,
-            tree,
             robot,
-            initial_battery,
-            parents,
             msg,
             return_future
     ):
@@ -500,12 +476,7 @@ class WorldManager(manage.WorldManager):
         Registers a newly inserted robot and marks the insertion
         message response as handled.
 
-        :param tree:
-        :param robot_name:
-        :param tree:
-        :param robot:
-        :param initial_battery:
-        :param parents:
+        :param robot: RevolveBot
         :param msg:
         :type msg: pygazebo.msgs.response_pb2.Response
         :param return_future: Future to resolve with the created robot object.
@@ -519,81 +490,57 @@ class WorldManager(manage.WorldManager):
         p = model.pose.position
         position = Vector3(p.x, p.y, p.z)
 
-        robot = self.create_robot_manager(
-                robot_name,
-                tree,
+        robot_manager = self.create_robot_manager(
                 robot,
                 position,
-                time,
-                initial_battery,
-                parents
+                time
         )
-        self.register_robot(robot)
-        return_future.set_result(robot)
+        self.register_robot(robot_manager)
+        return_future.set_result(robot_manager)
 
     def create_robot_manager(
             self,
-            robot_name,
-            tree,
             robot,
             position,
             time,
-            battery_level,
-            parents
     ):
         """
-        :param robot_name:
-        :param tree:
         :param robot:
         :param position:
         :param time:
-        :param battery_level:
-        :param parents:
         :return:
-        :rtype: Robot
+        :rtype: RobotManager
         """
-        return Robot(
-                name=robot_name,
-                tree=tree,
+        return RobotManager(
                 robot=robot,
                 position=position,
                 time=time,
-                battery_level=battery_level,
-                parents=parents
         )
 
-    def register_robot(self, robot):
+    def register_robot(self, robot_manager):
         """
         Registers a robot with its Gazebo ID in the local array.
-        :param robot:
-        :type robot: Robot
+        :param robot_manager:
+        :type robot_manager: RobotManager
         :return:
         """
-        logger.debug("Registering robot {}.".format(robot.name))
+        logger.debug("Registering robot {}.".format(robot_manager.name))
 
-        if robot.name in self.robots:
-            raise ValueError("Duplicate robot: {}".format(robot.name))
+        if robot_manager.name in self.robot_managers:
+            raise ValueError("Duplicate robot: {}".format(robot_manager.name))
 
-        self.robots[robot.name] = robot
-        if self.output_directory:
-            # Write robot details and CSV row to files
-            proto_file = '{}/robot_{}.pb'.format(
-                    self.output_directory,
-                    robot.robot.id)
-            robot.write_robot(
-                    details_file=proto_file,
-                    csv_writer=self.write_robots)
+        self.robot_managers[robot_manager.name] = robot_manager
 
-    def unregister_robot(self, robot):
+    def unregister_robot(self, robot_manager):
         """
         Unregisters the robot with the given ID, usually happens when
         it is deleted.
-        :param robot:
-        :type robot: Robot
+        :param robot_manager:
+        :type robot_manager: RobotManager
         :return:
         """
-        logger.debug("Unregistering robot {}.".format(robot.name))
-        del self.robots[robot.name]
+        logger.debug("Unregistering robot {}.".format(robot_manager.name))
+        del self.robot_managers[robot_manager.name]
 
     async def reset(self, **kwargs):
         """
@@ -660,11 +607,11 @@ class WorldManager(manage.WorldManager):
             self.start_time = t
 
         for state in states.robot_state:
-            robot = self.robots.get(state.name, None)
-            if not robot:
+            robot_manager = self.robot_managers.get(state.name, None)
+            if not robot_manager:
                 continue
 
-            robot.update_state(self, t, state, self.write_poses)
+            robot_manager.update_state(self, t, state, self.write_poses)
 
         self.call_update_triggers()
 

@@ -12,10 +12,7 @@ from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import revolve_bot
 from pyrevolve import parser
-from pyrevolve.angle import Tree
-from pyrevolve.convert.yaml import yaml_to_proto
-from pyrevolve.sdfbuilder import Pose
-from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import World
 
 
@@ -24,66 +21,21 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
+    settings = parser.parse_args()
+
+    # Load a robot from yaml
     robot = revolve_bot.RevolveBot()
     robot.load_file("experiments/examples/yaml/spider.yaml")
-    robot.save_file("/tmp/test.yaml")
-    settings = parser.parse_args()
 
+    # Connect to the simulator and pause
     world = await World.create(settings)
     await world.pause(True)
-    delete_future = await world.delete_model(robot._id)
-    await delete_future
 
-    sdf_model = robot.to_sdf(nice_format='  ')
-    print(sdf_model)
-    with open('/tmp/test.sdf.xml', 'w') as sdf_file:
-        sdf_file.write(str(sdf_model))
+    # Insert the robot in the simulator
+    insert_future = await world.insert_robot(robot, Vector3(0, 0, 0.05))
+    robot_manager = await insert_future
 
-    await asyncio.sleep(1.5)
-    insert_future = await world.insert_model(str(sdf_model))
-    await insert_future
-
-    await world.pause(True)
-
-    # while True:
-    #     await asyncio.sleep(1.0)
-
-
-async def run_old():
-    """
-    The main coroutine, which is started below.
-    """
-    # Parse command line / file input arguments
-    settings = parser.parse_args()
-
-    with open("experiments/examples/yaml/snake.yaml", 'r') as yaml_file:
-        bot_yaml = yaml_file.read()
-    settings.genome = "\n".join(bot_yaml.splitlines()).replace("\'", "\"")
-
-    world = await World.create(settings)
-
-    # These are useful when working with YAML
-    body_spec = world.builder.body_builder.spec
-    brain_spec = world.builder.brain_builder.spec
-
-    # Create a robot from YAML
-    proto_bot = yaml_to_proto(
-            body_spec=body_spec,
-            nn_spec=brain_spec,
-            yaml=bot_yaml)
-
-    robot_tree = Tree.from_body_brain(
-            body=proto_bot.body,
-            brain=proto_bot.brain,
-            body_spec=body_spec)
-    pose = Pose(position=Vector3(0, 0, 0.05))
-    future = await (world.insert_robot(
-            py_bot=robot_tree,
-            pose=pose,
-            # name="robot_26"
-    ))
-    robot_manager = await future
-
+    # Resume simulation
     await world.pause(False)
 
     # Start a run loop to do some stuff
@@ -91,7 +43,7 @@ async def run_old():
         # Print robot fitness every second
         print("Robot fitness is {fitness}".format(
                 fitness=robot_manager.fitness()))
-        await asyncio.sleep(10.0)
+        await asyncio.sleep(1.0)
 
 
 def main():

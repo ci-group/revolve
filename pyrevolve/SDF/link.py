@@ -3,7 +3,6 @@ import sys
 
 from pyrevolve import SDF
 from pyrevolve.SDF.inertial import transform_inertia_tensor
-from pyrevolve.sdfbuilder import math as SDFmath
 
 
 class Link(SDF.Posable):
@@ -54,7 +53,7 @@ class Link(SDF.Posable):
         All children posable are relative to the position of the Link, so their position needs
         to be adjusted.
         :return: the position of the center of mass
-        :rtype: SDFmath.Vector3
+        :rtype: SDF.math.Vector3
         """
         translation = self.get_center_of_mass()
         self.set_position(translation*2.0)
@@ -105,7 +104,7 @@ class Link(SDF.Posable):
         :return: The center of mass as determined by all the collision geometries
         :rtype: Vector3
         """
-        com = SDFmath.Vector3(0, 0, 0)
+        com = SDF.math.Vector3(0, 0, 0)
         total_mass = 0.0
         for collision in self.collisions:
             col_com = collision.get_center_of_mass()
