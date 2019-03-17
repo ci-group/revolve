@@ -95,14 +95,27 @@ class Plasticoding(Genotype):
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.grammar = None
+        self.grammar = {}
         self.intermediate_phenotype = None
         self.phenotype = None
 
     def load_genotype(self, genotype_path):
         with open(genotype_path) as f:
             lines = f.readlines()
-        print(lines[0])
+
+        for line in lines:
+            line_array = line.split(' ')
+            repleceable_symbol = Alphabet(line_array[0])
+            self.grammar[repleceable_symbol] = []
+            rule = line_array[1:len(line_array)-1]
+            for s in rule:
+                s_array = s.split('_')
+                symbol = Alphabet(s_array[0])
+                if len(s_array) > 1:
+                    params = s_array[1].split('|')
+                else:
+                    params = []
+                self.grammar[repleceable_symbol].append([symbol, params])
 
     def develop(self, new_genotype, genotype_path=''):
 
@@ -114,17 +127,16 @@ class Plasticoding(Genotype):
         print('-------debug genotype------')
         for g in self.grammar:
             print('----')
-            print('symbol:',str(g.value))
-
-           # print(self.grammar[g])
-            for i in range(0, len(self.grammar[g])):
-                print(self.grammar[g][i][0].value)
+            print('symbol:', g)
+            #print(self.grammar[g])
+            for j in range(0, len(self.grammar[g])):
+                print(self.grammar[g][j])
 
         self.early_development();
 
     def early_development(self):
         print('-------debug early development------')
-        self.intermediate_phenotype = [Alphabet.CORE_COMPONENT]
+        self.intermediate_phenotype = [[self.conf.axiom_w, []]]
 
         for i in range(0,self.conf.i_iterations):
             print('--iteration--'+str(i))
@@ -132,19 +144,19 @@ class Plasticoding(Genotype):
             position = 0
             for aux_index in range(0, len(self.intermediate_phenotype)):
                 symbol = self.intermediate_phenotype[position]
-                if [symbol,[]] in Alphabet.modules():
-
+                if [symbol[0], []] in Alphabet.modules():
                     # removes symbol
                     self.intermediate_phenotype.pop(position)
                     # replaces by its production rule
-                    for ii in range(0, len(self.grammar[symbol])):
-                        self.intermediate_phenotype.insert(position+ii,self.grammar[symbol][ii][0])
+                    for ii in range(0, len(self.grammar[symbol[0]])):
+                        self.intermediate_phenotype.insert(position+ii,
+                                                           self.grammar[symbol[0]][ii])
                     position = position+ii+1
                 else:
                     position = position + 1
-
+            #print(self.intermediate_phenotype)
             for j in range(0, len(self.intermediate_phenotype)):
-                print(self.intermediate_phenotype[j].value)
+                print(self.intermediate_phenotype[j])
 
     # adds params for symbols that need it
     # in symbol, [0] has the symbol and [1] the params
@@ -152,9 +164,12 @@ class Plasticoding(Genotype):
         if symbol[0] == Alphabet.JOINT_HORIZONTAL \
                 or symbol[0] == Alphabet.JOINT_VERTICAL:
             symbol[1] = [random.uniform(conf.weight_min, conf.weight_max),
-                         random.uniform(conf.oscillator_param_min, conf.oscillator_param_max),
-                         random.uniform(conf.oscillator_param_min, conf.oscillator_param_max),
-                         random.uniform(conf.oscillator_param_min, conf.oscillator_param_max)]
+                         random.uniform(conf.oscillator_param_min,
+                                        conf.oscillator_param_max),
+                         random.uniform(conf.oscillator_param_min,
+                                        conf.oscillator_param_max),
+                         random.uniform(conf.oscillator_param_min,
+                                        conf.oscillator_param_max)]
 
         if symbol[0] == Alphabet.SENSOR  \
                 or symbol[0] == Alphabet.ADD_EDGE \
@@ -171,8 +186,8 @@ class Plasticoding(Genotype):
                 or symbol[0] == Alphabet.MOVE_REF_O:
             intermediate_temp = random.normalvariate(0, 1)
             final_temp = random.normalvariate(0, 1)
-            symbol[1] = [math.ceil(math.sqrt(math.pow(intermediate_temp,2))),
-                         math.ceil(math.sqrt(math.pow(final_temp,2)))]
+            symbol[1] = [math.ceil(math.sqrt(math.pow(intermediate_temp, 2))),
+                         math.ceil(math.sqrt(math.pow(final_temp, 2)))]
 
         return symbol
 

@@ -14,8 +14,8 @@ def random_initialization(conf):
 
     for symbol in Alphabet.modules():
 
-        if symbol[0] == Alphabet.CORE_COMPONENT:
-            grammar[symbol[0]] = [[Alphabet.CORE_COMPONENT, []]]
+        if symbol[0] == conf.axiom_w:
+            grammar[symbol[0]] = [[conf.axiom_w, []]]
         else:
             grammar[symbol[0]] = []
 

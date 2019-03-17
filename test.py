@@ -15,5 +15,5 @@ if __name__ == "__main__":
     # this parameter will be controlled later by the recovery process, recovered robots have their genotypes restored ('new'), istead of initialized ('old')
     gen = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(conf)
     new_genotype = 'new' #  this path will be defined appropriately later
-    #gen.develop(new_genotype, 'experiments/karine_exps/genotype_5.txt')
-    gen.develop(new_genotype)
+    gen.develop(new_genotype, 'experiments/karine_exps/genome0.txt')
+    #gen.develop(new_genotype)
