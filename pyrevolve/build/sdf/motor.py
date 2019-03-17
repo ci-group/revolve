@@ -166,7 +166,7 @@ class PIDMotor(Motor):
                 joint=joint,
                 motor_type=motor_type,
                 x=x,
-                y=x
+                y=y
         )
         self.pid = PID() if pid is None else pid
 
