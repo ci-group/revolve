@@ -1,16 +1,13 @@
 from __future__ import absolute_import
 from __future__ import division
 
-from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.SDF.math import Vector3
 
-from pyrevolve.angle import Robot as RvRobot
+from pyrevolve.angle import RobotManager as RvRobotManager
 from pyrevolve.util import Time
 
-from ..util.analyze import count_connections, count_extremities, count_joints, \
-    count_motors
 
-
-class Robot(RvRobot):
+class RobotManager(RvRobotManager):
     """
     Class to manage a single robot
     """
@@ -18,47 +15,37 @@ class Robot(RvRobot):
     def __init__(
             self,
             conf,
-            name,
-            tree,
             robot,
             position,
             time,
-            battery_level=0.0,
-            parents=None
+            battery_level=0.0
     ):
         """
         :param conf:
-        :param name:
-        :param tree:
-        :param robot: Protobuf robot
+        :param robot: RevolveBot
         :param position:
         :type position: Vector3
         :param time:
         :type time: Time
-        :param parents:
-        :type parents: tuple(Robot, Robot)
         :param battery_level: Battery charge for this robot
         :type battery_level: float
         :return:
         """
         speed_window = int(conf.evaluation_time * conf.pose_update_frequency)
-        super(Robot, self).__init__(
-                name=name,
-                tree=tree,
+        super(RobotManager, self).__init__(
                 robot=robot,
                 position=position,
                 time=time,
                 battery_level=battery_level,
                 speed_window=speed_window,
                 warmup_time=conf.warmup_time,
-                parents=parents
         )
 
         # Set of robots this bot has mated with
         self.mated_with = {}
         self.last_mate = None
         self.conf = conf
-        self.size = len(tree)
+        self.size = robot.size()
         self.battery_level = battery_level
         self.initial_charge = battery_level
 
@@ -67,7 +54,7 @@ class Robot(RvRobot):
         Decides whether or not to mate with the other given robot based on
         its position and speed.
         :param other:
-        :type other: Robot
+        :type other: RobotManager
         :return:
         """
         if self.age() < self.conf.warmup_time:
@@ -207,7 +194,7 @@ class Robot(RvRobot):
         """
         Called when this robot mated with another robot successfully.
         :param other:
-        :type other: Robot
+        :type other: RobotManager
         :return:
         """
         self.last_mate = self.last_update

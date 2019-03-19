@@ -4,15 +4,23 @@ Class containing the body parts to compose a Robogen robot
 from collections import OrderedDict
 from enum import Enum
 
-from pyrevolve.sdfbuilder import Link
-from pyrevolve.sdfbuilder import math as SDFmath
-from pyrevolve.sdfbuilder.structure import Box
-from pyrevolve.sdfbuilder.structure import Collision
-from pyrevolve.sdfbuilder.structure import Visual
-from pyrevolve.sdfbuilder.structure import Mesh
 from pyrevolve import SDF
 
 
+# MEASUREMENT CONVERSION
+def mm(x):
+    return x / 1000.0
+
+
+def cm(x):
+    return x / 100.0
+
+
+def grams(x):
+    return x / 1000.0
+
+
+# Module Orientation
 class Orientation(Enum):
     SOUTH = 0
     NORTH = 1
@@ -150,12 +158,12 @@ class RevolveModule:
         return self._brick_to_sdf(tree_depth)
 
     def _brick_to_sdf(self, tree_depth=''):
-        name = 'component_{}{}__box'.format(tree_depth, self.TYPE)
-        visual = SDF.Visual(name)
+        name = 'component_{}_{}__box'.format(tree_depth, self.TYPE)
+        visual = SDF.Visual(name, self.rgb)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH)
         visual.append(geometry)
 
-        collision = SDF.Collision(name)
+        collision = SDF.Collision(name, self.MASS)
         geometry = SDF.BoxGeometry(self.COLLISION_BOX)
         collision.append(geometry)
 
@@ -198,46 +206,10 @@ class CoreModule(RevolveModule):
     VISUAL_MESH = 'model://rg_robot/meshes/CoreComponent.dae'
     SLOT_COORDINATES = 0.089 / 2.0
     COLLISION_BOX = (0.089, 0.089, 0.045)
-    MASS = 1.064000e-01  # TODO fix
-    INERTIA = (  # TODO fix
-        1.143069e-04,
-        0.000000e+00,
-        -1.763242e-38,
-        7.888603e-05,
-        4.198228e-22,
-        1.596582e-04,
-    )
+    MASS = grams(90)
 
     def __init__(self):
         super().__init__()
-
-    def to_sdf_old(self):
-        """
-        Converts the CoreComponent to SDF format
-        :return:
-        """
-        # TODO: Scale needs to be checked
-        scale = 0.5
-        mesh = Mesh(
-            uri="model://rg_robot/meshes/CoreComponent.dae",
-            scale=scale
-        )
-
-        visual = Visual(name="visual_{}".format(self.id), geometry=mesh)
-        collision = Collision(
-            name="collision_{}".format(self.id),
-            geometry=Box(1.0, 1.0, 1.0, mass=0.3)
-        )
-
-        link = Link(
-            name="link_{}".format(self.id),
-            self_collide=True,
-            elements=[visual, collision]
-        )
-        rgb = self.color()
-        link.make_color(r=rgb[0], g=rgb[1], b=rgb[2], a=1.0)
-
-        return link
 
     def possible_slots(self):
         return (
@@ -256,11 +228,13 @@ class ActiveHingeModule(RevolveModule):
     VISUAL_MESH_SERVO = 'model://rg_robot/meshes/ActiveCardanHinge_Servo_Holder.dae'
     COLLISION_BOX_FRAME = (2.20e-02, 3.575e-02, 1.0e-02)
     COLLISION_BOX_SERVO = (2.45e-02, 2.575e-02, 1.5e-02)
-    # COLLISION_BOX_SERVO = (2.925000e-02, 3.400000e-02, 1.000000e-02)
+    COLLISION_BOX_SERVO_2 = (1.0e-3, 3.4e-2, 3.4e-02)
     COLLISION_BOX_SERVO_OFFSET = (
-        SDFmath.Vector3(0, 0, 0),
-        SDFmath.Vector3(-0.0091, 0, 0),
+        SDF.math.Vector3(0, 0, 0),
+        SDF.math.Vector3(-0.0091, 0, 0),
     )
+    MASS_FRAME = grams(1.7)
+    MASS_SERVO = grams(9)
 
     def __init__(self):
         super().__init__()
@@ -276,34 +250,44 @@ class ActiveHingeModule(RevolveModule):
         else:
             return {1: child.to_yaml()}
 
-    def to_sdf(self, tree_depth):
-        name_frame = 'component_{}{}__frame'.format(tree_depth, self.TYPE)
-        name_servo = 'component_{}{}__servo'.format(tree_depth, self.TYPE)
+    def to_sdf(self, tree_depth, parent_link, child_link):
+        name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
+        name_joint = 'component_{}_{}__joint'.format(tree_depth, self.TYPE)
+        name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
+        name_servo2 = 'component_{}_{}__servo2'.format(tree_depth, self.TYPE)
 
-        # offset = SDFmath.Vector3(self.COLLISION_BOX_FRAME[0] / 2)
-
-        visual_frame = SDF.Visual(name_frame)
+        visual_frame = SDF.Visual(name_frame, self.rgb)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH_FRAME)
         visual_frame.append(geometry)
 
-        collision_frame = SDF.Collision(name_frame)
+        collision_frame = SDF.Collision(name_frame, self.MASS_FRAME)
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_FRAME)
         collision_frame.append(geometry)
 
-        visual_servo = SDF.Visual(name_servo)
+        visual_servo = SDF.Visual(name_servo, self.rgb)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH_SERVO)
         visual_servo.append(geometry)
 
-        collision_servo = SDF.Collision(name_servo)
-        collision_servo.translate(SDFmath.Vector3(0.002375, 0, 0))
+        collision_servo = SDF.Collision(name_servo, self.MASS_SERVO)
+        collision_servo.translate(SDF.math.Vector3(0.002375, 0, 0))
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO)
         collision_servo.append(geometry)
 
-        # TODO
-        joint = None
+        collision_servo_2 = SDF.Collision(name_servo2, 0)
+        collision_servo_2.translate(SDF.math.Vector3(0.01175, 0.001, 0))
+        geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO_2)
+        collision_servo_2.append(geometry)
 
-        return visual_frame, collision_frame, \
-               visual_servo, collision_servo, \
+        joint = SDF.Joint(name_joint,
+                          parent_link, child_link,
+                          SDF.math.Vector3(0, 1, 0))
+
+        joint.set_position(SDF.math.Vector3(-0.0085, 0, 0))
+
+        return visual_frame, \
+               [collision_frame], \
+               visual_servo, \
+               [collision_servo, collision_servo_2], \
                joint
 
     def possible_slots_frame(self):
@@ -354,15 +338,7 @@ class BrickModule(RevolveModule):
     VISUAL_MESH = 'model://rg_robot/meshes/FixedBrick.dae'
     SLOT_COORDINATES = 3.8e-2 / 2.0
     COLLISION_BOX = (4.1e-2, 4.1e-2, 3.55e-02)
-    MASS = 0.1  # TODO fix
-    INERTIA = (  # TODO fix
-        1.143069e-04,
-        0.000000e+00,
-        -1.763242e-38,
-        7.888603e-05,
-        4.198228e-22,
-        1.596582e-04,
-    )
+    MASS = grams(10.2)
 
     def __init__(self):
         super().__init__()
@@ -390,6 +366,7 @@ class TouchSensorModule(RevolveModule):
     Inherits class RevolveModule. Creates Robogen sensor module
     """
     TYPE = "TouchSensor"
+    MASS = grams(3)
 
     def __init__(self):
         super().__init__()
@@ -405,13 +382,13 @@ class BoxSlot:
     def _calculate_box_slot_pos(self, boundaries, slot: Orientation):
         # boundaries = collision_elem.boundaries
         if slot == Orientation.SOUTH:
-            return SDFmath.Vector3(0, boundaries[1][0], 0)
+            return SDF.math.Vector3(0, boundaries[1][0], 0)
         elif slot == Orientation.NORTH:
-            return SDFmath.Vector3(0, boundaries[1][1], 0)
+            return SDF.math.Vector3(0, boundaries[1][1], 0)
         elif slot == Orientation.EAST:
-            return SDFmath.Vector3(boundaries[0][1], 0, 0)
+            return SDF.math.Vector3(boundaries[0][1], 0, 0)
         elif slot == Orientation.WEST:
-            return SDFmath.Vector3(boundaries[0][0], 0, 0)
+            return SDF.math.Vector3(boundaries[0][0], 0, 0)
         else:
             raise RuntimeError('invalid module orientation: {}'.format(slot))
 
@@ -421,37 +398,37 @@ class BoxSlot:
         Return slot tangent
         """
         if slot == Orientation.SOUTH:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.NORTH:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.EAST:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.WEST:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         # elif slot == 4:
         #     # Right face tangent: back face
-        #     return SDFmath.Vector3(0, 1, 0)
+        #     return SDF.math.Vector3(0, 1, 0)
         # elif slot == 5:
         #     # Left face tangent: back face
-        #     return SDFmath.Vector3(0, 1, 0)
+        #     return SDF.math.Vector3(0, 1, 0)
         else:
             raise RuntimeError("Invalid orientation")
 
 
 class BoxSlotJoints(BoxSlot):
 
-    def __init__(self, boundaries, orientation: Orientation, offset = (SDFmath.Vector3(), SDFmath.Vector3())):
+    def __init__(self, boundaries, orientation: Orientation, offset=(SDF.math.Vector3(), SDF.math.Vector3())):
         self.offset = offset
         super().__init__(boundaries, orientation)
 
     def _calculate_box_slot_pos(self, boundaries, slot: Orientation):
         # boundaries = collision_elem.boundaries
         if slot == Orientation.SOUTH:
-            return SDFmath.Vector3(boundaries[0][0], 0, 0) + self.offset[0]
-            # return SDFmath.Vector3(0, boundaries[0][0], 0)
+            return SDF.math.Vector3(boundaries[0][0], 0, 0) + self.offset[0]
+            # return SDF.math.Vector3(0, boundaries[0][0], 0)
         elif slot == Orientation.NORTH:
-            return SDFmath.Vector3(boundaries[0][1], 0, 0) + self.offset[1]
-            # return SDFmath.Vector3(0, boundaries[0][1], 0)
+            return SDF.math.Vector3(boundaries[0][1], 0, 0) + self.offset[1]
+            # return SDF.math.Vector3(0, boundaries[0][1], 0)
         else:
             raise RuntimeError('invalid module orientation: {}'.format(slot))
 
@@ -461,8 +438,8 @@ class BoxSlotJoints(BoxSlot):
         Return slot tangent
         """
         if slot == Orientation.SOUTH:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.NORTH:
-            return SDFmath.Vector3(0, 0, 1)
+            return SDF.math.Vector3(0, 0, 1)
         else:
             raise RuntimeError("Invalid orientation")

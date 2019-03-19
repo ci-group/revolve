@@ -7,14 +7,14 @@ import time
 from pyrevolve import parser, str_to_address, make_revolve_config
 from pyrevolve.angle import Tree, Crossover, Mutator, WorldManager
 # from pyrevolve.angle.robogen.spec import make_planar
-from pyrevolve.sdfbuilder import SDF, Model, Pose, Link
+# from pyrevolve.sdfbuilder import SDF, Model, Pose, Link
 from pyrevolve.util import multi_future
 
 from .. import logger
 from .. import constants
-from .robot import Robot
+from .robotmanager import RobotManager
 # from ..build import get_builder, to_sdfbot
-from ..scenery import Wall
+# from ..scenery import Wall
 # from ..spec import get_tree_generator
 
 # Construct a message base from the time. This should make it unique enough
@@ -98,38 +98,26 @@ class World(WorldManager):
         Extends the robots header with a max age
         :return:
         """
-        return Robot.header()
+        return RobotManager.header()
 
     def create_robot_manager(
             self,
-            robot_name,
-            tree,
             robot,
             position,
-            t,
-            battery_level,
-            parents
+            time,
     ):
         """
         Overriding with robot manager with more capabilities.
-        :param robot_name:
-        :param tree:
         :param robot:
         :param position:
-        :param t:
-        :param battery_level:
-        :param parents:
+        :param time:
         :return:
         """
-        return Robot(
+        return RobotManager(
                 conf=self.conf,
-                name=robot_name,
-                tree=tree,
                 robot=robot,
                 position=position,
-                time=t,
-                battery_level=battery_level,
-                parents=parents
+                time=time,
         )
 
     async def add_highlight(self, position, color):
@@ -265,15 +253,15 @@ class World(WorldManager):
         return child, ret[1]
 
 
-class Highlight(Model):
-    """
-    Model to highlight newly inserted robots / selected parents
-    """
-
-    def __init__(self, name, color, **kwargs):
-        super(Highlight, self).__init__(name, static=True, **kwargs)
-        self.highlight = Link("hl_link")
-        self.highlight.make_cylinder(10e10, 0.4, 0.001, collision=False)
-        r, g, b, a = color
-        self.highlight.make_color(r, g, b, a)
-        self.add_element(self.highlight)
+# class Highlight(Model):
+#     """
+#     Model to highlight newly inserted robots / selected parents
+#     """
+#
+#     def __init__(self, name, color, **kwargs):
+#         super(Highlight, self).__init__(name, static=True, **kwargs)
+#         self.highlight = Link("hl_link")
+#         self.highlight.make_cylinder(10e10, 0.4, 0.001, collision=False)
+#         r, g, b, a = color
+#         self.highlight.make_color(r, g, b, a)
+#         self.add_element(self.highlight)

@@ -23,7 +23,10 @@ class BoxGeometry(xml.etree.ElementTree.Element):
 
 
 class Material(xml.etree.ElementTree.Element):
-    def __init__(self, ambient=(0, 0, 0, 1), diffuse=(0, 0, 0, 1), specular=(0, 0, 0, 1)):
+    def __init__(self,
+                 ambient=(0, 0, 0, 1),
+                 diffuse=(0, 0, 0, 1),
+                 specular=(0, 0, 0, 1)):
         super().__init__('material')
         SDF.sub_element_text(self, 'ambient',
                              '{} {} {} {}'.format(ambient[0], ambient[1], ambient[2], ambient[3]))
@@ -34,14 +37,13 @@ class Material(xml.etree.ElementTree.Element):
 
 
 class Visual(SDF.Posable):
-    def __init__(self, name, position=None, rotation=None):
-        #TODO take color as param
+    def __init__(self, name, rgb=(0.94, 0.98, 0.05), position=None, rotation=None):
         super().__init__('visual', {
             'name': '{}_visual'.format(name)
         }, position, rotation)
         material = Material(
-            ambient=(0.94, 0.98, 0.05, 1.0),
-            diffuse=(0.94, 0.98, 0.05, 1.0),
+            ambient=(rgb[0], rgb[1], rgb[2], 1.0),
+            diffuse=(rgb[0], rgb[1], rgb[2], 1.0),
             specular=(0.1, 0.1, 0.1, 1.0),
         )
         self.append(material)
@@ -69,14 +71,15 @@ class SurfaceProperties(xml.etree.ElementTree.Element):
 
 
 class Collision(SDF.Posable):
-    def __init__(self, name, position=None, rotation=None):
+    def __init__(self, name, mass, position=None, rotation=None):
         super().__init__(
-            'collision',
-            {'name': '{}_collision'.format(name)},
-            position,
-            rotation
+            tag='collision',
+            attrib={'name': '{}_collision'.format(name)},
+            position=position,
+            rotation=rotation
         )
 
+        self.mass = mass
         self._box_geometry = None
 
         surface_properties = SurfaceProperties()
@@ -94,7 +97,21 @@ class Collision(SDF.Posable):
         if self._box_geometry is None:
             raise RuntimeError("This Collision element has no BoxGeometry set")
         return (
-            (self._box_geometry[0] / -2, self._box_geometry[0] / 2),  # X
-            (self._box_geometry[1] / -2, self._box_geometry[1] / 2),  # Y
-            (self._box_geometry[2] / -2, self._box_geometry[2] / 2),  # Z
+            (self._box_geometry[0] / -2.0, self._box_geometry[0] / 2.0),  # X
+            (self._box_geometry[1] / -2.0, self._box_geometry[1] / 2.0),  # Y
+            (self._box_geometry[2] / -2.0, self._box_geometry[2] / 2.0),  # Z
         )
+
+    def get_inertial(self):
+        """
+        Return solid box inertial
+        """
+        r = self.mass / 12.0
+        x, y, z = self._box_geometry
+        ixx = r * (y ** 2 + z ** 2)
+        iyy = r * (x ** 2 + z ** 2)
+        izz = r * (x ** 2 + y ** 2)
+        return SDF.Inertial(mass=self.mass, inertia_xx=ixx, inertia_yy=iyy, inertia_zz=izz)
+
+    def get_center_of_mass(self):
+        return self.get_position()
