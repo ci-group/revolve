@@ -212,7 +212,7 @@ class ActiveHingeModule(RevolveModule):
     VISUAL_MESH_SERVO = 'model://rg_robot/meshes/ActiveCardanHinge_Servo_Holder.dae'
     COLLISION_BOX_FRAME = (2.20e-02, 3.575e-02, 1.0e-02)
     COLLISION_BOX_SERVO = (2.45e-02, 2.575e-02, 1.5e-02)
-    # COLLISION_BOX_SERVO = (2.925000e-02, 3.400000e-02, 1.000000e-02)
+    COLLISION_BOX_SERVO_2 = (1.0e-3, 3.4e-2, 3.4e-02)
     COLLISION_BOX_SERVO_OFFSET = (
         SDF.math.Vector3(0, 0, 0),
         SDF.math.Vector3(-0.0091, 0, 0),
@@ -238,6 +238,7 @@ class ActiveHingeModule(RevolveModule):
         name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
         name_joint = 'component_{}_{}__joint'.format(tree_depth, self.TYPE)
         name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
+        name_servo2 = 'component_{}_{}__servo2'.format(tree_depth, self.TYPE)
 
         visual_frame = SDF.Visual(name_frame, self.rgb)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH_FRAME)
@@ -256,14 +257,22 @@ class ActiveHingeModule(RevolveModule):
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO)
         collision_servo.append(geometry)
 
+        collision_servo_2 = SDF.Collision(name_servo2, 0)
+        collision_servo_2.translate(SDF.math.Vector3(0.01175, 0.001, 0))
+        geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO_2)
+        collision_servo_2.append(geometry)
+
         joint = SDF.Joint(name_joint,
                           parent_link, child_link,
                           SDF.math.Vector3(0, 1, 0))
 
         joint.set_position(SDF.math.Vector3(-0.0085, 0, 0))
 
-        return visual_frame, collision_frame, \
-               visual_servo, collision_servo, joint
+        return visual_frame, \
+               [collision_frame], \
+               visual_servo, \
+               [collision_servo, collision_servo_2], \
+               joint
 
     def possible_slots_frame(self):
         box_geometry = self.COLLISION_BOX_FRAME
