@@ -1,17 +1,17 @@
-import cairo 
+import cairo
 import math
 
 class Canvas:
 	# Current position of last drawn element
 	x_pos = 0
 	y_pos = 0
-	
+
 	# Orientation of robot
 	orientation = 1
-	
+
 	# Direction of last movement
 	previous_move = -1
-	
+
 	# Coordinates and orientation of movements
 	movement_stack = []
 
@@ -31,17 +31,17 @@ class Canvas:
 		self.width = width
 		self.height = height
 		self.scale = scale
-	
+
 
 	def get_position(self):
-		"""Return current position on x and y axis"""		
+		"""Return current position on x and y axis"""
 		return [Canvas.x_pos, Canvas.y_pos]
 
 	def set_position(self, x, y):
 		"""Set position of x and y axis"""
 		Canvas.x_pos = x
 		Canvas.y_pos = y
-	
+
 	def set_orientation(self, orientation):
 		"""Set new orientation of robot"""
 		if orientation in [0, 1, 2, 3]:
@@ -66,13 +66,13 @@ class Canvas:
 		(Canvas.previous_move == 3 and Canvas.orientation == 3) or
 		(Canvas.previous_move == 2 and Canvas.orientation == 2) or
 		(Canvas.previous_move == 1 and Canvas.orientation == 0)):
-			self.set_orientation(0)	
+			self.set_orientation(0)
 		elif ((Canvas.previous_move == 3 and Canvas.orientation == 1) or
 		(Canvas.previous_move == 1 and Canvas.orientation == 3) or
 		(Canvas.previous_move == 0 and Canvas.orientation == 2) or
 		(Canvas.previous_move == 2 and Canvas.orientation == 0)):
-			self.set_orientation(3)				
-		
+			self.set_orientation(3)
+
 	def move_by_slot(self, slot):
 		"""Move in direction by slot id"""
 		if slot == 0:
@@ -81,8 +81,8 @@ class Canvas:
 			self.move_up()
 		elif slot == 2:
 			self.move_right()
-		elif slot == 3: 
-			self.move_left() 
+		elif slot == 3:
+			self.move_left()
 
 	def move_right(self):
 		"""Set position one to the right in correct orientation"""
@@ -95,11 +95,11 @@ class Canvas:
 		elif Canvas.orientation == 3:
 			Canvas.y_pos -= 1
 		Canvas.previous_move = 2
-		
+
 	def move_left(self):
 		"""Set position one to the left"""
 		if Canvas.orientation == 1:
-			Canvas.x_pos -= 1		
+			Canvas.x_pos -= 1
 		elif Canvas.orientation == 2:
 			Canvas.y_pos -= 1
 		elif Canvas.orientation == 0:
@@ -107,7 +107,7 @@ class Canvas:
 		elif Canvas.orientation == 3:
 			Canvas.y_pos += 1
 		Canvas.previous_move = 3
-			
+
 	def move_up(self):
 		"""Set position one upwards"""
 		if Canvas.orientation == 1:
@@ -117,9 +117,9 @@ class Canvas:
 		elif Canvas.orientation == 0:
 			Canvas.y_pos += 1
 		elif Canvas.orientation == 3:
-			Canvas.x_pos -= 1	
+			Canvas.x_pos -= 1
 		Canvas.previous_move = 1
-			
+
 	def move_down(self):
 		"""Set position one downwards"""
 		if Canvas.orientation == 1:
@@ -129,24 +129,24 @@ class Canvas:
 		elif Canvas.orientation == 0:
 			Canvas.y_pos -= 1
 		elif Canvas.orientation == 3:
-			Canvas.x_pos += 1	
+			Canvas.x_pos += 1
 		Canvas.previous_move = 0
-			
-	def move_back(self):	
+
+	def move_back(self):
 		"""Move back to previous state on canvas"""
 		if len(Canvas.movement_stack) > 1:
 			Canvas.movement_stack.pop()
 		last_movement = Canvas.movement_stack[-1]
 		Canvas.x_pos = last_movement[0]
 		Canvas.y_pos = last_movement[1]
-		Canvas.orientation = last_movement[2]	
+		Canvas.orientation = last_movement[2]
 		Canvas.rotating_orientation = last_movement[3]
 
 	def sign_id(self, mod_id):
 		"""Sign module with the id on the upper left corner of block"""
-		self.context.set_font_size(0.3) 
-		self.context.move_to(Canvas.x_pos, Canvas.y_pos + 0.4) 
-		self.context.set_source_rgb(0, 0, 0) 
+		self.context.set_font_size(0.3)
+		self.context.move_to(Canvas.x_pos, Canvas.y_pos + 0.4)
+		self.context.set_source_rgb(0, 0, 0)
 		if type(mod_id) is int:
 			self.context.show_text(str(mod_id))
 		else:
@@ -172,15 +172,15 @@ class Canvas:
 		if (Canvas.rotating_orientation % 180 == 0):
 			self.context.set_source_rgb(1.0, 0.4, 0.4)
 		else:
-			self.context.set_source_rgb(1, 0, 0)		
+			self.context.set_source_rgb(1, 0, 0)
 		self.context.fill_preserve()
 		self.context.set_source_rgb(0, 0, 0)
 		self.context.set_line_width(0.01)
 		self.context.stroke()
 		self.calculate_orientation()
 		self.sign_id(mod_id)
-		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])	
-			
+		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
+
 	def draw_module(self, mod_id):
 		"""Draw a module (red) on the previous object"""
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
@@ -192,7 +192,7 @@ class Canvas:
 		self.calculate_orientation()
 		self.sign_id(mod_id)
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
-	
+
 	def calculate_sensor_rectangle_position(self):
 		"""Calculate squeezed sensor rectangle position based on current orientation and last movement direction"""
 		if (Canvas.previous_move == -1 or
@@ -222,7 +222,7 @@ class Canvas:
 		x, y, x_scale, y_scale = self.calculate_sensor_rectangle_position()
 		Canvas.sensors.append([x, y, x_scale, y_scale])
 		self.calculate_orientation()
-		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])		
+		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 
 	def draw_sensors(self):
 		"""Draw all sensors"""
@@ -272,7 +272,7 @@ class Canvas:
 		self.context.fill_preserve()
 		self.context.set_source_rgb(0, 0, 0)
 		self.context.set_line_width(0.01)
-		self.context.stroke()			
+		self.context.stroke()
 
 	def save_png(self, file_name):
 		"""Store image representation of canvas"""

@@ -53,7 +53,6 @@ class RevolveBot:
         """
         try:
             measure = Measure(self._body)
-            measure.measure_size()
             return measure.measure_all()
         except Exception as e:
             print('Exception: {}'.format(e))
@@ -388,7 +387,7 @@ class RevolveBot:
         :return:
         """
         return ''
-    
+
     def render2d(self, img_path):
         """
         Render 2d representation of robot and store as png

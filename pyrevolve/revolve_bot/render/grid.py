@@ -6,20 +6,20 @@ class Grid:
 		self.min_y = None
 		self.max_y = None
 		self.width = None
-		self.height = None 
+		self.height = None
 		self.core_position = None
-		self.visited_coordinates = []	
+		self.visited_coordinates = []
 
 	# Current position of last drawn element
 	x_pos = 0
 	y_pos = 0
-	
+
 	# Orientation of robot
 	orientation = 1
-	
+
 	# Direction of last movement
 	previous_move = -1
-	
+
 	# Coordinates and orientation of movements
 	movement_stack = [[0,0,1]]
 
@@ -28,10 +28,10 @@ class Grid:
 		return [Grid.x_pos, Grid.y_pos]
 
 	def set_position(self, x, y):
-		"""Set position of x and y axis"""		
+		"""Set position of x and y axis"""
 		Grid.x_pos = x
 		Grid.y_pos = y
-	
+
 	def set_orientation(self, orientation):
 		"""Set new orientation on grid"""
 		if orientation in [0, 1, 2, 3]:
@@ -56,13 +56,13 @@ class Grid:
 		(Grid.previous_move == 3 and Grid.orientation == 3) or
 		(Grid.previous_move == 2 and Grid.orientation == 2) or
 		(Grid.previous_move == 1 and Grid.orientation == 0)):
-			self.set_orientation(0)	
+			self.set_orientation(0)
 		elif ((Grid.previous_move == 3 and Grid.orientation == 1) or
 		(Grid.previous_move == 1 and Grid.orientation == 3) or
 		(Grid.previous_move == 0 and Grid.orientation == 2) or
 		(Grid.previous_move == 2 and Grid.orientation == 0)):
-			self.set_orientation(3)				
-		
+			self.set_orientation(3)
+
 	def move_by_slot(self, slot):
 		"""Move in direction by slot id"""
 		if slot == 0:
@@ -71,8 +71,8 @@ class Grid:
 			self.move_up()
 		elif slot == 2:
 			self.move_right()
-		elif slot == 3: 
-			self.move_left() 
+		elif slot == 3:
+			self.move_left()
 
 	def move_right(self):
 		"""Set position one to the right in correct orientation"""
@@ -85,11 +85,11 @@ class Grid:
 		elif Grid.orientation == 3:
 			Grid.y_pos -= 1
 		Grid.previous_move = 2
-		
+
 	def move_left(self):
 		"""Set position one to the left"""
 		if Grid.orientation == 1:
-			Grid.x_pos -= 1		
+			Grid.x_pos -= 1
 		elif Grid.orientation == 2:
 			Grid.y_pos -= 1
 		elif Grid.orientation == 0:
@@ -97,7 +97,7 @@ class Grid:
 		elif Grid.orientation == 3:
 			Grid.y_pos += 1
 		Grid.previous_move = 3
-			
+
 	def move_up(self):
 		"""Set position one upwards"""
 		if Grid.orientation == 1:
@@ -107,9 +107,9 @@ class Grid:
 		elif Grid.orientation == 0:
 			Grid.y_pos += 1
 		elif Grid.orientation == 3:
-			Grid.x_pos -= 1	
+			Grid.x_pos -= 1
 		Grid.previous_move = 1
-			
+
 	def move_down(self):
 		"""Set position one downwards"""
 		if Grid.orientation == 1:
@@ -119,16 +119,16 @@ class Grid:
 		elif Grid.orientation == 0:
 			Grid.y_pos -= 1
 		elif Grid.orientation == 3:
-			Grid.x_pos += 1	
+			Grid.x_pos += 1
 		Grid.previous_move = 0
-			
+
 	def move_back(self):
 		if len(Grid.movement_stack) > 1:
-			Grid.movement_stack.pop()	
+			Grid.movement_stack.pop()
 		last_movement = Grid.movement_stack[-1]
 		Grid.x_pos = last_movement[0]
 		Grid.y_pos = last_movement[1]
-		Grid.orientation = last_movement[2]				
+		Grid.orientation = last_movement[2]
 
 	def add_to_visited(self):
 		"""Add current position to visited coordinates list"""
@@ -146,7 +146,7 @@ class Grid:
 			max_x = coorinate[0] if coorinate[0] > max_x else max_x
 			min_y = coorinate[1] if coorinate[1] < min_y else min_y
 			max_y = coorinate[1] if coorinate[1] > max_y else max_y
-		
+
 		self.min_x = min_x
 		self.max_x = max_x
 		self.min_y = min_y
@@ -155,7 +155,7 @@ class Grid:
 		self.height = abs(min_y - max_y) + 1
 
 	def calculate_core_position(self):
-		self.core_position = [self.width - self.max_x - 1, self.height - self.max_y - 1]	
+		self.core_position = [self.width - self.max_x - 1, self.height - self.max_y - 1]
 		return self.core_position
 
 	def reset_grid(self):

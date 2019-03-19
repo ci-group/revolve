@@ -44,21 +44,12 @@ class Render:
 			# Element has no children, move back to previous state
 			canvas.move_back()
 
-	def traverse_path_of_robot(self, 
-							   module, 
-							   slot, 
-							   include_sensors=True, 
-							   horizontal_only=False, 
-							   vertical_only=False, 
-							   mirrored_traversal=False):
+	def traverse_path_of_robot(self, module, slot, include_sensors=True):
 		"""
 		Traverse path of robot to obtain visited coordinates
 		@param module: body of the robot
 		@param slot: attachment of parent slot
 		@param include_sensors: add sensors to visisted_cooridnates if True
-		@param horizontal_only: traverse only the modules in the horizontal child nodes of the core
-		@param vertical_only: traverse only the modules in the vertical child nodes of the core
-		@param mirrored_traversal: traverse mirrored side of body in orientation
 		"""
 		if isinstance(module, ActiveHingeModule) or isinstance(module, BrickModule) or isinstance(module, TouchSensorModule) or isinstance(module, BrickSensorModule):
 			self.grid.move_by_slot(slot)
@@ -68,16 +59,6 @@ class Render:
 		if module.has_children():
 			# Traverse path of children of module
 			for core_slot, child_module in module.iter_children():
-				if (
-						isinstance(module, CoreModule) and 
-						(
-							(horizontal_only and mirrored_traversal and core_slot is not 2) or 
-							(horizontal_only and not mirrored_traversal and core_slot is not 3) or 
-							(vertical_only and mirrored_traversal and core_slot is not 0) or 
-							(vertical_only and not mirrored_traversal and core_slot is not 1)
-						)
-					):
-					continue
 				if child_module is None:
 					continue
 				self.traverse_path_of_robot(child_module, core_slot, include_sensors)

@@ -29,20 +29,22 @@ class Measure:
         self.max_permitted_modules = None
 
     def count_branching_bricks(self, module=None):
-        """Count amount of fully branching modules
+        """
+        Count amount of fully branching modules in body
         """
         try:
             if module is None:
                 module = self.body
 
             if module.has_children():
-                children_count = sum(1 for _ in module.iter_children())
-                if (isinstance(module, BrickModule) and children_count == 3) or (isinstance(module, CoreModule) and children_count == 4):
-                    self.branching_modules_count += 1
+                children_count = 0
                 for core_slot, child_module in module.iter_children():
                     if child_module is None:
                         continue
+                    children_count += 1
                     self.count_branching_bricks(child_module)
+                if (isinstance(module, BrickModule) and children_count == 3) or (isinstance(module, CoreModule) and children_count == 4):
+                    self.branching_modules_count += 1
         except Exception as e:
             print('Failed counting branching bricks')
             print('Exception: {}'.format(e))
@@ -57,15 +59,39 @@ class Measure:
             self.branching = 0
             return self.branching
         self.count_branching_bricks()
+        if self.branching_modules_count == 0:
+            self.branching = 0
+            return 0
+
         practical_limit_branching_bricks = math.floor((self.absolute_size-2)/3)
         self.branching = self.branching_modules_count / practical_limit_branching_bricks
         return self.branching
 
-    def calculate_extremities(self, module=None):
+    def calculate_extremities_extensiveness(self, module=None, extremities=False, extensiveness=False):
         """
-        Calculate extremities in body
+        Calculate extremities or extensiveness in body
         """
-        pass
+        try:
+            if module is None:
+                module = self.body
+
+            if module.has_children():
+                children_count = 0
+                for core_slot, child_module in module.iter_children():
+                    if child_module is None:
+                        continue
+                    children_count += 1
+                    if extremities:
+                        self.calculate_extremities_extensiveness(child_module, True, False)
+                    if extensiveness:
+                        self.calculate_extremities_extensiveness(child_module, False, True)
+                if children_count == 1 and not isinstance(module, CoreModule) and extremities:
+                    self.extremities += 1
+                if children_count == 2 and not isinstance(module, CoreModule) and extensiveness:
+                    self.extensiveness += 1
+        except Exception as e:
+            print('Failed calculating extremities or extensiveness')
+            print('Exception: {}'.format(e))
 
     def measure_limbs(self):
         """
@@ -79,15 +105,12 @@ class Measure:
             practical_limit_limbs = self.absolute_size - 1
         else:
             practical_limit_limbs = 2 * math.floor((self.absolute_size-6)/3) + (self.absolute_size - 6) % 3 + 4
-        self.calculate_extremities()
+        self.calculate_extremities_extensiveness(None, True, False)
+        if self.extremities == 0:
+            self.limbs = 0
+            return 0
         self.limbs = self.extremities / practical_limit_limbs
         return self.limbs
-
-    def calculate_extensiveness(self, module=None):
-        """
-        Calculate extensiveness of body
-        """
-        pass
 
     def measure_length_of_limbs(self):
         """
@@ -98,8 +121,8 @@ class Measure:
             self.measure_absolute_size()
         if self.absolute_size < 3:
             self.length_of_limbs = 0
-            return self.length_of_limbs
-        self.calculate_extensiveness()
+            return 0
+        self.calculate_extremities_extensiveness(None, False, True)
         practical_limit_extensiveness = self.absolute_size - 2
         self.length_of_limbs = self.extensiveness / practical_limit_extensiveness
         return self.length_of_limbs
@@ -109,51 +132,33 @@ class Measure:
         Measure symmetry
         """
         try:
-            # Get coordinates of horizontal grid
             render = Render()
-            render.traverse_path_of_robot(self.body, 0, False, True)
-            # Modules branching to the left of the core
-            horizontal_coordinates = render.grid.visited_coordinates
-            render = Render()
-            render.traverse_path_of_robot(self.body, 0, False, True, False, True)
-            render.grid.visited_coordinates
-            # Modules branching to the right of the core
-            horizontal_mirror_coordinates = render.grid.visited_coordinates
+            render.traverse_path_of_robot(self.body, 0, False)
+            coordinates = render.grid.visited_coordinates
 
-            # Calculate horizontal symmetry
-            mirrored_modules_horizontal = 0
-            for module in horizontal_coordinates:
-                if [-module[0], module[1]] in horizontal_mirror_coordinates:
-                    mirrored_modules_horizontal += 1
+            horizontal_mirrored = 0
+            horizontal_total = 0
+            vertical_mirrored = 0
+            vertical_total = 0
+            # Calculate symmetry in body
+            for position in coordinates:
+                if position[0] is not 0:
+                    horizontal_total += 1
+                    if [-position[0], position[1]] in coordinates:
+                        horizontal_mirrored += 1
+                if position[1] is not 0:
+                    vertical_total += 1
+                    if [position[0], -position[1]] in coordinates:
+                        vertical_mirrored += 1
 
-            total_modules_horizontal = len(horizontal_coordinates) + len(horizontal_mirror_coordinates)
-            horizontal_symmetry = mirrored_modules_horizontal / total_modules_horizontal
-
-
-            # Get coordinates of vertical grid
-            render = Render()
-            render.traverse_path_of_robot(self.body, 0, False, False, True)
-            # Modules branching to the top of the core
-            vertical_coordinates = render.grid.visited_coordinates
-            render = Render()
-            render.traverse_path_of_robot(self.body, 0, False, False, True, True)
-            # Modules branching to the bottom of the core            
-            vertical_mirror_coordinates = render.grid.visited_coordinates
-
-            # Calculate vertical symmetry
-            mirrored_modules_vertical = 0
-            for module in vertical_coordinates:
-                if [module[0], -module[1]] in vertical_mirror_coordinates:
-                    mirrored_modules_vertical += 1
-
-            total_modules_vertical = len(vertical_coordinates) + len(vertical_mirror_coordinates)
-            vertical_symmetry = mirrored_modules_vertical / total_modules_vertical
+            horizontal_symmetry = horizontal_mirrored / horizontal_total if horizontal_mirrored > 0 else 0
+            vertical_symmetry = vertical_mirrored / vertical_total if vertical_mirrored > 0 else 0
 
             self.symmetry = max(horizontal_symmetry, vertical_symmetry)
             return self.symmetry
 
         except Exception as e:
-            print('Failed measuring width and height')
+            print('Failed measuring symmetry')
             print('Exception: {}'.format(e))
 
     def measure_coverage(self):
@@ -197,23 +202,24 @@ class Measure:
             self.measure_absolute_size()
         if self.absolute_size < 3:
             self.joints = 0
-            return self.joints
+            return 0
         self.count_active_hinges()
         practical_limit_active_hinges = math.floor((self.absolute_size-1)/2)
         self.joints = self.active_hinges_count / practical_limit_active_hinges
         return self.joints
 
     def measure_proportion(self):
-        """Meaure proportion, specified by the 2d ratio of the body
+        """
+        Meaure proportion, specified by the 2d ratio of the body
         :return:
         """
         if self.width is None or self.height is None:
             self.measure_width_height()
         if self.width < self.height:
             self.proportion = self.width / self.height
-        else
-        self.proportion = self.height / self.width
-        return self.proportion
+        else:
+            self.proportion = self.height / self.width
+            return self.proportion
 
     def measure_absolute_size(self, module=None):
         """
@@ -281,7 +287,17 @@ class Measure:
     def measure_all(self):
         """
         Perform all measurements
+        :return:
         """
+        self.measure_limbs()
+        self.measure_length_of_limbs()
+        self.measure_width_height()
+        self.measure_absolute_size()
+        self.measure_proportion()
+        self.measure_joints()
+        self.measure_coverage()
+        self.measure_symmetry()
+        self.measure_branching()
         return self.get_all_measurements()
 
     def get_all_measurements(self):
@@ -291,14 +307,20 @@ class Measure:
         """
         return {
             'branching': self.branching,
+            'branching_modules_count': self.branching_modules_count,
             'limbs': self.limbs,
             'length_of_limbs': self.length_of_limbs,
             'coverage': self.coverage,
             'joints': self.joints,
+            'hinge_count': self.hinge_count,
+            'active_hinges_count': self.active_hinges_count,
+            'brick_count': self.brick_count,
+            'touch_sensor_count': self.touch_sensor_count,
+            'brick_sensor_count': self.brick_sensor_count,
             'proportion': self.proportion,
             'width': self.width,
             'height': self.height,
             'absolute_size': self.absolute_size,
-            'size': self.size
+            'size': self.size,
             'symmetry': self.symmetry
         }
