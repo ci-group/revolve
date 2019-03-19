@@ -181,6 +181,22 @@ class RevolveModule:
             (box_geometry[2] / -2.0, box_geometry[2] / 2.0),  # Z
         )
 
+    def has_children(self):
+        """
+        Check wheter module has children
+        :return: True if module has children
+        """
+        has_children = False
+
+        if self.children == {1: None}: return False
+
+        
+        for i, child in enumerate(self.children):
+            if child is not None:
+                has_children = True
+
+        return has_children
+
 
 class CoreModule(RevolveModule):
     """
