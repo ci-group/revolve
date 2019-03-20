@@ -177,7 +177,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
         my_collision = collisions_servo[0]
 
     else:
-        visual, collision = module.to_sdf(slot_chain)
+        visual, collision = module.to_sdf(slot_chain, my_link)
 
         module_slot = module.boxslot(Orientation.SOUTH)
         _sdf_attach_module(module_slot, module.orientation,

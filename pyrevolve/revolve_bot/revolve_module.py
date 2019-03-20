@@ -150,14 +150,7 @@ class RevolveModule:
         """
         raise RuntimeError("Robot tree validation not yet implemented")
 
-    def to_sdf(self, tree_depth):
-        """
-
-        :return:
-        """
-        return self._brick_to_sdf(tree_depth)
-
-    def _brick_to_sdf(self, tree_depth=''):
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
         name = 'component_{}_{}__box'.format(tree_depth, self.TYPE)
         visual = SDF.Visual(name, self.rgb)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH)
@@ -249,7 +242,9 @@ class ActiveHingeModule(RevolveModule):
         else:
             return {1: child.to_yaml()}
 
-    def to_sdf(self, tree_depth, parent_link, child_link):
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        assert(parent_link is not None)
+        assert(child_link is not None)
         name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
         name_joint = 'component_{}_{}__joint'.format(tree_depth, self.TYPE)
         name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
@@ -389,6 +384,25 @@ class TouchSensorModule(RevolveModule):
             (0, 0),  # Y
             (0, 0),  # Z
         )
+
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        assert(parent_link is not None)
+        name = 'component_{}_{}'.format(tree_depth, self.TYPE)
+        name_sensor = 'sensor_{}_{}'.format(tree_depth, self.TYPE)
+
+        visual = SDF.Visual(name, self.rgb)
+        geometry = SDF.MeshGeometry(self.VISUAL_MESH)
+        visual.append(geometry)
+
+        collision = SDF.Collision(name, self.MASS)
+        geometry = SDF.BoxGeometry(self.COLLISION_BOX)
+        # collision.translate(SDF.math.Vector3(0.01175, 0.001, 0))
+        collision.append(geometry)
+
+        sensor = SDF.TouchSensor(name_sensor, collision)
+        parent_link.append(sensor)
+
+        return visual, collision
 
 
 class BoxSlot:
