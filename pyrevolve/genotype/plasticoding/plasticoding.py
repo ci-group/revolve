@@ -2,6 +2,12 @@
 
 from enum import Enum
 from pyrevolve.genotype import Genotype
+from pyrevolve.revolve_bot import RevolveBot
+from pyrevolve.revolve_bot.revolve_module import Orientation
+from pyrevolve.revolve_bot.revolve_module import CoreModule
+from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule
+from pyrevolve.revolve_bot.revolve_module import BrickModule
+from pyrevolve.revolve_bot.revolve_module import TouchSensorModule
 import random
 import math
 
@@ -41,46 +47,46 @@ class Alphabet(Enum):
     @staticmethod
     def modules():
         return [
-            [Alphabet.CORE_COMPONENT,[]],
-            [Alphabet.JOINT_HORIZONTAL,[]],
-            [Alphabet.JOINT_VERTICAL,[]],
-            [Alphabet.BLOCK,[]],
-            [Alphabet.SENSOR,[]],
+            [Alphabet.CORE_COMPONENT, []],
+            [Alphabet.JOINT_HORIZONTAL, []],
+            [Alphabet.JOINT_VERTICAL, []],
+            [Alphabet.BLOCK, []],
+            [Alphabet.SENSOR, []],
         ]
 
     @staticmethod
-    def morphologyMountingCommands():
+    def morphology_mounting_commands():
         return [
-            [Alphabet.ADD_RIGHT,[]],
-            [Alphabet.ADD_FRONT,[]],
-            [Alphabet.ADD_LEFT,[]]
+            [Alphabet.ADD_RIGHT, []],
+            [Alphabet.ADD_FRONT, []],
+            [Alphabet.ADD_LEFT, []]
         ]
 
     @staticmethod
-    def morphologyMovingCommands():
+    def morphology_moving_commands():
         return [
-            [Alphabet.MOVE_RIGHT,[]],
-            [Alphabet.MOVE_FRONT,[]],
-            [Alphabet.MOVE_LEFT,[]],
-            [Alphabet.MOVE_BACK,[]]
+            [Alphabet.MOVE_RIGHT, []],
+            [Alphabet.MOVE_FRONT, []],
+            [Alphabet.MOVE_LEFT, []],
+            [Alphabet.MOVE_BACK, []]
         ]
 
     @staticmethod
-    def controllerChangingCommands():
+    def controller_changing_commands():
         return [
-            [Alphabet.ADD_EDGE,[]],
-            [Alphabet.MUTATE_EDGE,[]],
-            [Alphabet.LOOP,[]],
-            [Alphabet.MUTATE_AMP,[]],
-            [Alphabet.MUTATE_PER,[]],
-            [Alphabet.MUTATE_OFF,[]]
+            [Alphabet.ADD_EDGE, []],
+            [Alphabet.MUTATE_EDGE, []],
+            [Alphabet.LOOP, []],
+            [Alphabet.MUTATE_AMP, []],
+            [Alphabet.MUTATE_PER, []],
+            [Alphabet.MUTATE_OFF, []]
         ]
 
     @staticmethod
-    def controllerMovingCommands():
+    def controller_moving_commands():
         return [
-            [Alphabet.MOVE_REF_S,[]],
-            [Alphabet.MOVE_REF_O,[]]
+            [Alphabet.MOVE_REF_S, []],
+            [Alphabet.MOVE_REF_O, []]
         ]
 
 
@@ -98,6 +104,10 @@ class Plasticoding(Genotype):
         self.grammar = {}
         self.intermediate_phenotype = None
         self.phenotype = None
+        self.morph_mounting_container = None
+        self.mounting_reference = None
+        self.mounting_reference_stack = []
+        self.quantity_components = 0
 
     def load_genotype(self, genotype_path):
         with open(genotype_path) as f:
@@ -108,11 +118,11 @@ class Plasticoding(Genotype):
             repleceable_symbol = Alphabet(line_array[0])
             self.grammar[repleceable_symbol] = []
             rule = line_array[1:len(line_array)-1]
-            for s in rule:
-                s_array = s.split('_')
-                symbol = Alphabet(s_array[0])
-                if len(s_array) > 1:
-                    params = s_array[1].split('|')
+            for symbol_array in rule:
+                symbol_array = symbol_array.split('_')
+                symbol = Alphabet(symbol_array[0])
+                if len(symbol_array) > 1:
+                    params = symbol_array[1].split('|')
                 else:
                     params = []
                 self.grammar[repleceable_symbol].append([symbol, params])
@@ -132,9 +142,11 @@ class Plasticoding(Genotype):
             for j in range(0, len(self.grammar[g])):
                 print(self.grammar[g][j])
 
-        self.early_development();
+        self.early_development()
+        self.late_development()
 
     def early_development(self):
+        index_symbol = 0
         print('-------debug early development------')
         self.intermediate_phenotype = [[self.conf.axiom_w, []]]
 
@@ -143,14 +155,15 @@ class Plasticoding(Genotype):
 
             position = 0
             for aux_index in range(0, len(self.intermediate_phenotype)):
+
                 symbol = self.intermediate_phenotype[position]
-                if [symbol[0], []] in Alphabet.modules():
+                if [symbol[index_symbol], []] in Alphabet.modules():
                     # removes symbol
                     self.intermediate_phenotype.pop(position)
                     # replaces by its production rule
-                    for ii in range(0, len(self.grammar[symbol[0]])):
+                    for ii in range(0, len(self.grammar[symbol[index_symbol]])):
                         self.intermediate_phenotype.insert(position+ii,
-                                                           self.grammar[symbol[0]][ii])
+                                                           self.grammar[symbol[index_symbol]][ii])
                     position = position+ii+1
                 else:
                     position = position + 1
@@ -158,36 +171,175 @@ class Plasticoding(Genotype):
             for j in range(0, len(self.intermediate_phenotype)):
                 print(self.intermediate_phenotype[j])
 
+    def late_development(self):
+
+        index_symbol = 0
+        index_params = 1
+        self.phenotype = RevolveBot()
+
+        print('-------debug late development------')
+        for symbol in self.intermediate_phenotype:
+            print('---symbol')
+            print(symbol)
+            # start mounting by the head
+            if symbol[index_symbol] == Alphabet.CORE_COMPONENT:
+                module = CoreModule()
+                self.phenotype._body = module
+                self.quantity_components += 1
+                module.id = 'module'+str(self.quantity_components)
+                print('id')
+                print(self.quantity_components)
+                module.orientation = 0
+                self.mounting_reference = module
+
+            if [symbol[index_symbol], []] in Alphabet.morphology_mounting_commands():
+                self.morph_mounting_container = symbol[index_symbol]
+
+            if [symbol[index_symbol], []] in Alphabet.morphology_moving_commands():
+
+                if symbol[index_symbol] == Alphabet.MOVE_BACK \
+                   and len(self.mounting_reference_stack) > 0:
+                    self.mounting_reference = self.mounting_reference_stack[-1]
+                    self.mounting_reference_stack.pop()
+
+                if symbol[index_symbol] == Alphabet.MOVE_FRONT \
+                   and self.mounting_reference.children[Orientation.NORTH.value] is not None:
+                        if self.mounting_reference.children[Orientation.NORTH.value].TYPE != 'TouchSensor':
+                            self.mounting_reference_stack.append(self.mounting_reference)
+                            self.mounting_reference = \
+                                self.mounting_reference.children[Orientation.NORTH.value]
+
+                if symbol[index_symbol] == Alphabet.MOVE_LEFT \
+                   and self.mounting_reference.TYPE != 'ActiveHinge':
+                        if self.mounting_reference.children[Orientation.WEST.value] is not None:
+                            if self.mounting_reference.children[Orientation.WEST.value].TYPE != 'TouchSensor':
+                                self.mounting_reference_stack.append(self.mounting_reference)
+                                self.mounting_reference = \
+                                    self.mounting_reference.children[Orientation.WEST.value]
+
+                if symbol[index_symbol] == Alphabet.MOVE_RIGHT \
+                   and self.mounting_reference.TYPE != 'ActiveHinge':
+                        if self.mounting_reference.children[Orientation.EAST.value] is not None:
+                            if self.mounting_reference.children[Orientation.EAST.value].TYPE != 'TouchSensor':
+                                self.mounting_reference_stack.append(self.mounting_reference)
+                                self.mounting_reference = \
+                                    self.mounting_reference.children[Orientation.EAST.value]
+
+                if (symbol[index_symbol] == Alphabet.MOVE_RIGHT \
+                   or symbol[index_symbol] == Alphabet.MOVE_LEFT) \
+                   and self.mounting_reference.TYPE == 'ActiveHinge' \
+                   and self.mounting_reference.children[Orientation.NORTH.value] is not None:
+                        self.mounting_reference_stack.append(self.mounting_reference)
+                        self.mounting_reference = \
+                            self.mounting_reference.children[Orientation.NORTH.value]
+
+
+            # mount other body parts
+            if [symbol[index_symbol], []] in Alphabet.modules() \
+                and symbol[index_symbol] != Alphabet.CORE_COMPONENT \
+                    and self.morph_mounting_container is not None:
+
+                if self.mounting_reference.TYPE == 'CoreComponent' \
+                   or self.mounting_reference.TYPE == 'FixedBrick':
+                    slot = self.get_slot(self.morph_mounting_container).value
+                if self.mounting_reference.TYPE == 'ActiveHinge':
+                    slot = Orientation.NORTH.value
+                print('container')
+                print(self.morph_mounting_container)
+                print('mount')
+                print(slot)
+                if self.quantity_components < self.conf.max_structural_modules:
+                    self.new_module(slot,
+                                    symbol[index_symbol])
+            print(self.mounting_reference.children)
+            self.phenotype.render2d('experiments/karine_exps/test.png');
+        self.phenotype.save_file('experiments/karine_exps/test.yaml')
+
+    def get_slot(self, morph_mounting_container):
+
+        slot = None
+        if morph_mounting_container == Alphabet.ADD_FRONT:
+            slot = Orientation.NORTH
+        if morph_mounting_container == Alphabet.ADD_LEFT:
+            slot = Orientation.WEST
+        if morph_mounting_container == Alphabet.ADD_RIGHT:
+            slot = Orientation.EAST
+        return slot
+
+    def get_angle(self, module, parent):
+        angle = 0
+        if module == Alphabet.JOINT_VERTICAL:
+            if parent.TYPE == 'ActiveHinge' \
+                    and parent.orientation == 90:
+                angle = 0
+            else:
+                angle = 90
+        else:
+            if parent.TYPE == 'ActiveHinge' \
+                    and parent.orientation == 90:
+                angle = 270
+        return angle
+
+    def new_module(self, slot, new_module_type):
+
+        if self.mounting_reference.children[slot] is None \
+           and not (new_module_type == Alphabet.SENSOR
+                    and self.mounting_reference.TYPE == 'ActiveHinge'):
+
+            if new_module_type == Alphabet.BLOCK:
+                module = BrickModule()
+            if new_module_type == Alphabet.JOINT_VERTICAL \
+                    or new_module_type == Alphabet.JOINT_HORIZONTAL:
+                module = ActiveHingeModule()
+            if new_module_type == Alphabet.SENSOR:
+                module = TouchSensorModule()
+
+            self.mounting_reference.children[slot] = module
+            self.mounting_reference_stack.append(self.mounting_reference)
+            self.quantity_components += 1
+            module.id = 'module'+str(self.quantity_components)
+            module.orientation = self.get_angle(new_module_type,
+                                                self.mounting_reference)
+            self.morph_mounting_container = None
+
+            if new_module_type != Alphabet.SENSOR:
+                self.mounting_reference = module
+
+
     # adds params for symbols that need it
-    # in symbol, [0] has the symbol and [1] the params
+    @staticmethod
     def build_symbol(symbol, conf):
-        if symbol[0] == Alphabet.JOINT_HORIZONTAL \
-                or symbol[0] == Alphabet.JOINT_VERTICAL:
-            symbol[1] = [random.uniform(conf.weight_min, conf.weight_max),
-                         random.uniform(conf.oscillator_param_min,
-                                        conf.oscillator_param_max),
-                         random.uniform(conf.oscillator_param_min,
-                                        conf.oscillator_param_max),
-                         random.uniform(conf.oscillator_param_min,
-                                        conf.oscillator_param_max)]
 
-        if symbol[0] == Alphabet.SENSOR  \
-                or symbol[0] == Alphabet.ADD_EDGE \
-                or symbol[0] == Alphabet.LOOP:
-            symbol[1] = [random.uniform(conf.weight_min, conf.weight_max)]
+        index_symbol = 0
+        index_params = 1
 
-        if symbol[0] == Alphabet.MUTATE_EDGE \
-            or symbol[0] == Alphabet.MUTATE_AMP \
-            or symbol[0] == Alphabet.MUTATE_PER \
-            or symbol[0] == Alphabet.MUTATE_OFF:
-                symbol[1] = [random.normalvariate(0, 1)]
+        if symbol[index_symbol] == Alphabet.JOINT_HORIZONTAL \
+                or symbol[index_symbol] == Alphabet.JOINT_VERTICAL:
+            symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max),
+                                    random.uniform(conf.oscillator_param_min,
+                                                   conf.oscillator_param_max),
+                                    random.uniform(conf.oscillator_param_min,
+                                                   conf.oscillator_param_max),
+                                    random.uniform(conf.oscillator_param_min,
+                                                   conf.oscillator_param_max)]
 
-        if symbol[0] == Alphabet.MOVE_REF_S \
-                or symbol[0] == Alphabet.MOVE_REF_O:
+        if symbol[index_symbol] == Alphabet.SENSOR  \
+                or symbol[index_symbol] == Alphabet.ADD_EDGE \
+                or symbol[index_symbol] == Alphabet.LOOP:
+            symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max)]
+
+        if symbol[index_symbol] == Alphabet.MUTATE_EDGE \
+            or symbol[index_symbol] == Alphabet.MUTATE_AMP \
+            or symbol[index_symbol] == Alphabet.MUTATE_PER \
+            or symbol[index_symbol] == Alphabet.MUTATE_OFF:
+                symbol[index_params] = [random.normalvariate(0, 1)]
+
+        if symbol[index_symbol] == Alphabet.MOVE_REF_S \
+                or symbol[index_symbol] == Alphabet.MOVE_REF_O:
             intermediate_temp = random.normalvariate(0, 1)
             final_temp = random.normalvariate(0, 1)
-            symbol[1] = [math.ceil(math.sqrt(math.pow(intermediate_temp, 2))),
-                         math.ceil(math.sqrt(math.pow(final_temp, 2)))]
+            symbol[index_params] = [math.ceil(math.sqrt(math.pow(intermediate_temp, 2))),
+                                    math.ceil(math.sqrt(math.pow(final_temp, 2)))]
 
         return symbol
 
@@ -204,7 +356,8 @@ class PlasticodingConfig:
                  weight_min=-1,
                  weight_max=1,
                  axiom_w=Alphabet.CORE_COMPONENT,
-                 i_iterations=3
+                 i_iterations=3,
+                 max_structural_modules=100
                  ):
         self.initialization_genome = initialization_genome
         self.e_max_groups = e_max_groups
@@ -214,3 +367,4 @@ class PlasticodingConfig:
         self.weight_max = weight_max
         self.axiom_w = axiom_w
         self.i_iterations = i_iterations
+        self.max_structural_modules = max_structural_modules
