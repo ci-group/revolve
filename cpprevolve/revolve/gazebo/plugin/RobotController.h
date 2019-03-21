@@ -74,7 +74,7 @@ namespace revolve
       public: void UpdateBattery(ConstRequestPtr &_request);
 
       /// \brief Detects and loads motors in the plugin spec
-      protected: virtual void LoadMotors(const sdf::ElementPtr _sdf);
+      protected: virtual void LoadActuators(const sdf::ElementPtr _sdf);
 
       /// \brief Detects and loads sensors in the plugin spec.
       protected: virtual void LoadSensors(const sdf::ElementPtr _sdf);
