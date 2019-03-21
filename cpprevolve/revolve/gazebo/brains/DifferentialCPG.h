@@ -88,15 +88,6 @@ namespace revolve
           const double _time,
           double *_output);
 
-      /// \brief One input state for each input neuron
-      protected:
-      double input_[MAX_INPUT_NEURONS];
-
-      /// \brief Used to determine the current state array.
-      /// \example false := state1, true := state2.
-      protected:
-      bool flipState_;
-
       /// \brief Register of motor IDs and their x,y-coordinates
       protected:
       std::map< std::string, std::tuple< int, int > > positions_;
@@ -115,6 +106,15 @@ namespace revolve
       protected:
       std::map< std::tuple< int, int, int, int, int, int >, double >
           connections_;
+
+      /// \brief Used to determine the next state array
+      private: double *nextState_;
+
+      /// \brief One input state for each input neuron
+      private: double *input_;
+
+      /// \brief Used to determine the output to the motors array
+      private: double *output_;
 
       /// \brief Name of the robot
       private:

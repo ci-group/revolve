@@ -74,14 +74,17 @@ using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
 DifferentialCPG::DifferentialCPG(
     const ::gazebo::physics::ModelPtr &_model,
     const sdf::ElementPtr _settings,
-    const std::vector< revolve::gazebo::MotorPtr > &/*_motors*/,
-    const std::vector< revolve::gazebo::SensorPtr > &/*_sensors*/)
-    : flipState_(false)
-    , startTime_ (-1)
+    const std::vector< revolve::gazebo::MotorPtr > &_motors,
+    const std::vector< revolve::gazebo::SensorPtr > &_sensors)
+    : nextState_(nullptr)
+    , input_(new double[_sensors.size()])
+    , output_(new double[_motors.size()])
 {
   // Create transport node
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
+
+  // Get Robot
   this->robot_ = _model;
   auto name = _model->GetName();
 
@@ -90,6 +93,7 @@ DifferentialCPG::DifferentialCPG(
   //      "~/" + name + "/modify_diff_cpg", &DifferentialCPG::Modify,
   //      this);
 
+  //  MR1: THESE ARE NOT IN THE NEW CODE
   //  auto numMotors = _motors.size();
   //  auto numSensors = _sensors.size();
 
@@ -97,15 +101,10 @@ DifferentialCPG::DifferentialCPG(
   {
     std::cerr << "No robot brain detected, this is probably an error."
               << std::endl;
-    return;
+    throw std::runtime_error("DifferentialCPG brain did not receive settings");
   }
 
-  // Map of ID to motor element
-  std::map< std::string, sdf::ElementPtr > motorsMap;
-
-  // Set for tracking all collected inputs/outputs
-  std::set< std::string > toProcess;
-
+  std::cout << _settings->GetDescription() << std::endl;
   auto motor = _settings->HasElement("rv:motor")
                ? _settings->GetElement("rv:motor")
                : sdf::ElementPtr();
@@ -121,26 +120,24 @@ DifferentialCPG::DifferentialCPG(
     auto coordX = std::atoi(motor->GetAttribute("x")->GetAsString().c_str());
     auto coordY = std::atoi(motor->GetAttribute("y")->GetAsString().c_str());
 
+    std::cout << "coordX,coordY" << coordX << "," << coordY << std::endl;
+
     this->positions_[motorId] = {coordX, coordY};
     this->neurons_[{coordX, coordY, 1}] = {1.f, 0.f, 0.f};
     this->neurons_[{coordX, coordY, -1}] = {1.f, 0.f, 0.f};
 
-    //    TODO: Add this check
-    //    if (this->layerMap_.count({x, y}))
-    //    {
-    //      std::cerr << "Duplicate motor ID '" << x << "," << y << "'" <<
-    //      std::endl;
-    //      throw std::runtime_error("Robot brain error");
-    //    }
-
+    // TODO: Add check for duplicate coordinates
     motor = motor->GetNextElement("rv:motor");
   }
 
   // Random initialization of neuron connections
+  bool Maarten = true;
+
   std::random_device rd;
   std::mt19937 mt(rd());
   std::uniform_real_distribution< double > dist(0, 1);
   std::cout << dist(mt) << std::endl;
+
 
   // Add connections between neighbouring neurons
   for (const auto &position : this->positions_)
@@ -156,8 +153,15 @@ DifferentialCPG::DifferentialCPG(
     {
       continue;
     }
-    this->connections_[{x, y, 1, x, y, -1}] = dist(mt);
-    this->connections_[{x, y, -1, x, y, 1}] = dist(mt);
+    if(Maarten){
+      this->connections_[{x, y, 1, x, y, -1}] = dist(mt);
+      this->connections_[{x, y, -1, x, y, 1}] = dist(mt);
+    }
+    // Else Milan
+    else{
+      this->connections_[{x, y, 1, x, y, -1}] = 1.f;
+      this->connections_[{x, y, -1, x, y, 1}] = 1.f;
+    }
 
     for (const auto &neighbour : this->positions_)
     {
@@ -170,6 +174,9 @@ DifferentialCPG::DifferentialCPG(
     }
   }
 
+  // Initialise array of neuron states for Update() method
+  this->nextState_ = new double[this->neurons_.size()];
+
   // Initialize BO
   this->BO_init();
 
@@ -177,6 +184,19 @@ DifferentialCPG::DifferentialCPG(
   this->evaluator.reset(new Evaluator(this->evaluationRate_));
 
 }
+
+/**
+ * Destructor
+ */
+DifferentialCPG::~DifferentialCPG()
+{
+  delete[] this->nextState_;
+  delete[] this->input_;
+  delete[] this->output_;
+}
+
+
+// FINISHED TILL HERE: Till line 417 skipped
 
 
 /*
@@ -451,10 +471,10 @@ void DifferentialCPG::BO_step(){
   this->currentIteration +=1;
 }
 
-/**
- * Destructor
- */
-DifferentialCPG::~DifferentialCPG() = default;
+
+// FINISHED TILL HERE
+
+
 
 /**
  * Callback function that defines the movement of the robot
@@ -473,27 +493,23 @@ void DifferentialCPG::Update(
   // Prevent two threads from accessing the same resource at the same time
   boost::mutex::scoped_lock lock(this->networkMutex_);
 
-  // Define the number of motors used. This
-  auto numMotors = _motors.size();
-
   // Read sensor data and feed the neural network
   unsigned int p = 0;
   for (const auto &sensor : _sensors)
   {
-    sensor->Read(&input_[p]);
+    sensor->Read(this->input_ + p);
     p += sensor->Inputs();
   }
+
+  // CORRECT TILL HERE
+  // CORRECT TILL HERE
+  // CORRECT TILL HERE
 
   // Evaluate policy on certain time limit
   if ((_time - this->startTime_) > this->evaluationRate_) {
     // Update position
     this->evaluator->Update(this->robot_->WorldPose());
-    /*
-    std::cout << "XYZ: ";
-    std::cout << this->currPosition_.Pos().X() << ", ";
-    std::cout << this->currPosition_.Pos().Y() << ", ";
-    std::cout << this->currPosition_.Pos().Z() << "\n";
-    */
+
     // If we are still learning
     if(this->currentIteration < (this->nInitialSamples + this->maxLearningIterations)){
       this->BO_step();
@@ -521,31 +537,15 @@ void DifferentialCPG::Update(
   }
 
   // I don't know yet what happens here.
-  double *output = new double[numMotors];
-  /*
-  std::cout << "cp1 \n";
-  for(int n; n < numMotors; n++){
-    std::cout << output[n] << ", ";
-  }
-  std::cout << "\n";
-  */
-  this->Step(_time, output); // SOMETHIGN GOES WRONG HERE, AS CP1 IS FINE,
-  // BUT CP2 IS NOT
-  //std::cout << "cp2 \n";
-  /*
-  for(int n; n < numMotors; n++){
-    std::cout << output[n] << ", ";
-  }
-  std::cout << "\n";
-  */
+  this->Step(_time, this->output_); // SOMETHIGN GOES WRONG HERE, AS CP1 IS FINE,
+
   // Send new signals to the motors
   p = 0;
-  for (const auto &motor: _motors) {
-    motor->Update(&output[p], _step);
+  for (const auto &motor: _motors)
+  {
+    motor->Update(this->output_ + p, _step);
     p += motor->Outputs();
-    //std::cout << "Signal is " << output[p] << "\n";
   }
-
 }
 
 /**
@@ -563,12 +563,13 @@ void DifferentialCPG::Step(
   auto i = 0;
   for (const auto &neuron : this->neurons_)
   {
-    int x, y, z; std::tie(x, y, z) = neuron.first;
-    double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
-    biasA = 0;
-    gainA = 1;
-    //std::cout << "Bias/Gain/State: " <<biasA << ", " << gainA << ", " <<
-    //stateA << "\n";
+    // The map key is representing x-, y-, and z-coordinates of a neuron and
+    // map value represents bias, gain, and current state of the neuron.
+    int x, y, z;
+    std::tie(x, y, z) = neuron.first;
+
+    double biasA, gainA, stateA;
+    std::tie(biasA, gainA, stateA) = neuron.second;
 
     auto inputA = 0.f;
     for (auto const &connection : this->connections_)
@@ -576,11 +577,13 @@ void DifferentialCPG::Step(
       int x1, y1, z1, x2, y2, z2;
       std::tie(x1, y1, z1, x2, y2, z2) = connection.first;
 
+      // When we are not learning
       //auto weightBA = connection.second;
+
       // When we are still learning
       auto weightBA = this->samples.back()(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
 
-      // TODO: replace. If we are finished learning, take best sample seen so far
+      // TODO: replace. Placeholder for when we're finished learning, take best sample seen so far
       if(this->currentIteration >= this->maxLearningIterations + this->nInitialSamples) {
         weightBA = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
       }
@@ -588,22 +591,12 @@ void DifferentialCPG::Step(
 
       if (x2 == x and y2 == y and z2 == z)
       {
-        // INPUT IS ALWAYS 0, which is where the error is
-        // Access last element in the tuple
-        //auto input = std::get<0>(this->neurons_[{x1, y1, z1}]);
-        /*
-        std::cout << "cp5: Input x is " << std::get<0>(this->neurons_[{x1, y1, z1}]) << std::endl;
-        std::cout << "cp5: Input y is " << std::get<1>(this->neurons_[{x1,y1,
-                                                                       z1}]) << std::endl;
-        std::cout << "cp5: Input z is " << std::get<2>(this->neurons_[{x1,
-                                                                       y1, z1}]) << std::endl;
-        */
-        // Get new x position for CPG input
-        auto input = this->robot_->WorldPose().Pos().X();
-        //std::cout << "cp5 " << input << std::endl;
-        //std::cout << "Input is " << input << "\n";
-        // inputA += weightBA * input + biasA
-        inputA += (weightBA * input - biasA)*gainA;
+        //auto input = this->robot_->WorldPose().Pos().X();
+        auto input = std::get<2>(this->neurons_[{x1, y1, z1}]);
+        // TODO: Look into this. Underneath is by Maarten
+        //inputA += (weightBA * input + biasA)*gainA;
+        // Milan:
+        inputA += weightBA * input + biasA;
       }
     }
 
@@ -616,27 +609,23 @@ void DifferentialCPG::Step(
   }
 
   i = 0; auto j = 0;
-  auto *output = new double[this->neurons_.size() / 2];
-
-  //std::cout << "c3: Lenght of output: " << this->neurons_.size() << std::endl;
-
   for (auto &neuron : this->neurons_)
   {
-    double biasA, gainA, stateA; std::tie(biasA, gainA, stateA) = neuron.second;
+    double biasA, gainA, stateA;
+    std::tie(biasA, gainA, stateA) = neuron.second;
+
     neuron.second = {biasA, gainA, nextState[i]};
     if (i % 2 == 0)
     {
       // Apply saturation formula
       auto x = nextState[i];
-      output[j] = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->fMax))
+      _output[j] = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->fMax))
                               -1);
       //std::cout << j << ": " << output[j] << std::endl;
       j++;
     }
     ++i;
   }
-  _output = output;
-
 }
 
 /**
