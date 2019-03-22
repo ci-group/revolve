@@ -120,7 +120,7 @@ DifferentialCPG::DifferentialCPG(
     auto coordX = std::atoi(motor->GetAttribute("x")->GetAsString().c_str());
     auto coordY = std::atoi(motor->GetAttribute("y")->GetAsString().c_str());
 
-    std::cout << "coordX,coordY" << coordX << "," << coordY << std::endl;
+    std::cout << "coordX,coordY = " << coordX << "," << coordY << std::endl;
 
     this->positions_[motorId] = {coordX, coordY};
 
@@ -580,6 +580,8 @@ void DifferentialCPG::Step(
     const double _time,
     double *_output)
 {
+  std::cout << "Nextstates_ are: \n";
+
   auto i = 0;
   // Loop over all neurons that are present. This must include both -1s and +1s.
   // Each neuron's location is defined by a 3-tuple of coordinates, indicating its x,y,z position.
@@ -599,7 +601,7 @@ void DifferentialCPG::Step(
     double biasA, gainA, stateA;
     std::tie(biasA, gainA, stateA) = neuron.second;
 
-    // Define input. FOR WHO????????
+    // Define input for the currently selected neuron.
     auto inputA = 0.f;
 
     // Loop over all the connections between A-neurons in the brain. So not only the ones regarding the currently selected neuron.
@@ -632,70 +634,65 @@ void DifferentialCPG::Step(
       // Recall that you have two kinds of connections between neurons. You have the types that connects
       // A and B together,and the ones that connects neighbour A's with each other. First look at neighbouring As.
 
-      // ============================MILAN================================
-      //            if (x2 == x and y2 == y and z2 == z)
-      //            {
-      //              auto state = std::get<2>(this->neurons_[{x1, y1, z1}]);
-      //              std::cout << "Neuron state is " << state << "\n";
-      //
-      //              // TODO: Look into this. Underneath is by Maarten
-      //              //inputA += (weightBA * input + biasA)*gainA;
-      //              std::cout << "Bias: " << biasA << "\n";
-      //              inputA += weightBA*state + biasA;
-      //            }
-      // ============================MILAN================================
-
-      // ============================MAARTEN================================
       // We will only consider incoming connections
       // Check if the outer-loop neuron is the same as the one that is connected TOWARDS
       if (x == x2 and y == y2 and z == z2){
         // We don't have to check if it is a type A neuron.
         // This is redundant as all connections in connections are type A.
         auto state = std::get<2>(this->neurons_[{x1, y1, z1}]);
-        std::cout << "Neuron state is " << state << "\n";
 
         // Get the state of the A neuron. Is it activation function its current state?
         inputA += weightAA*state;
       }
     }
 
-    // std::cout << "Time is " << _time << std::endl;
-
-    // Wat gebeurd er hier? Ga even terug naar s definitie in het paper van
-    // Milan
-    // this->nextState_[i] = stateA + (inputA * _time);
-
-    // Maarten
+    // Add ODE difference
     double deltaTime = _time - this->previousTime;
-    this->previousTime = _time;
     this->nextState_[i] = stateA + inputA*deltaTime;
 
-    // std::cout << "Nextstate[i] is " << nextState[i] <<std::endl;
+    //std::cout << nextState_[i] << " (" << z << "),"; //nextState doesn't change atm
+    //std::cout << inputA << " (" << z << "),"; // Don't change, but they are not zero. As they are not zero, we expect nextState to change
+    double corrected = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*this->nextState_[i]/this->fMax)) -1);
+    std::cout << "(" << stateA << "," << inputA << "," << deltaTime << "," << inputA*deltaTime << "," << corrected << "," << z << "); ";
 
     ++i;
   }
+  std::cout << "\n";
 
-  i = 0; auto j = 0;
+  // Update time for ODE
+  this->previousTime = _time;
+
+
+  // Todo: Connectie A->B en B->A. All connections in connections_ are after all only between A-neurons that are in eachothers
+  // Moore neighbourhood.
+
+
+
+
+
+
   // Loop over all neurons. Note that this is a new outer for loop
+  i = 0; auto j = 0;
+
   for (auto &neuron : this->neurons_)
   {
     // Get bias gain and state for this neuron. Note that we don't take the coordinates.
     // However, they are implicit as their order did not change.
-    double biasA, gainA, stateA;
+    double bias, gain, state;
     double x,y,z;
     std::tie(x,y,z) = neuron.first;
-    std::cout <<"x,y,z=" << x << ","<< y << "," << z << "\n";
-    std::tie(biasA, gainA, stateA) = neuron.second;
+    //std::cout <<"x,y,z=" << x << ","<< y << "," << z << "\n";
+    std::tie(bias, gain, state) = neuron.second;
 
-    neuron.second = {biasA, gainA, this->nextState_[i]};
-    // todo: heir nakijken.
-    if (i % 2 == 0)
+    neuron.second = {bias, gain, this->nextState_[i]};
+    // Should be one, as output should be based on +1 neurons, which are the A neurons
+    if (i % 2 == 1)
     {
       // Apply saturation formula
       auto x = this->nextState_[i];
-      std::cout << "Before saturation " << j << ": " << x << std::endl;
-      _output[j] = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->fMax)) -1);
-      std::cout << "After saturation " << j << ": " << _output[j] << std::endl;
+      // std::cout << "Before saturation " << j << ": " << x << std::endl;
+      this->output_[j] = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->fMax)) -1);
+      //std::cout << "After saturation " << j << ": " << _output[j] << std::endl;
       j++;
     }
     ++i;

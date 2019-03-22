@@ -216,7 +216,7 @@ namespace revolve
 
       public: double fMax;
 
-      private: double previousTime;
+      private: double previousTime = 0;
     };
   }
 }
