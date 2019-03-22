@@ -86,6 +86,7 @@ DifferentialCPG::DifferentialCPG(
 
   // Get Robot
   this->robot_ = _model;
+  this->nMotors = _motors.size();
   auto name = _model->GetName();
 
   // Listen to network modification requests
@@ -187,7 +188,14 @@ DifferentialCPG::DifferentialCPG(
       // If there is a node that is a Moore neighbour, we set it to be a neighbour for their A-nodes.
       // Thus the connections list only contains connections to the A-neighbourhood, and not the
       // A->B and B->A for some node (which makes sense).
-      if ((x+1) == nearX or (y+1) == nearY or (x-1) == nearX or (y-1) == nearY)
+      int distX = std::abs(x - nearX);
+      int distY = std::abs(y - nearY);
+
+      // For spider this works
+      if (((distX <=2 and distY == 0) or
+          (distY <=2 and distX == 0) or
+          (distX == 1 and distY == 1))
+          and not (distX == 0 and distY ==0))
       {
         this->connections_[{x, y, 1, nearX, nearY, 1}] = 1.f;
         this->connections_[{nearX, nearY, 1, x, y, 1}] = 1.f;
@@ -237,9 +245,10 @@ struct DifferentialCPG::evaluationFunction{
 
 void DifferentialCPG::BO_init(){
   // Parameters
-  this->evaluationRate_ = 120.0;
+  this->evaluationRate_ = 200.0;
   this->currentIteration = 0;
   this->nInitialSamples = 14;
+
   // Maximum iterations that learning is allowed
   this->maxLearningIterations = 300;
   this->noLearningIterations = 20; // Number of iterations to walk with best
@@ -247,16 +256,17 @@ void DifferentialCPG::BO_init(){
   // Controller in the end
   this->rangeLB = -1;
   this->rangeUB = 1;
-  this->initializationMethod = "LHS"; // {RS, LHS, ORT}
-  this->runAnalytics = true; // Automatically construct plots
+  this->initializationMethod = "RS"; // {RS, LHS, ORT}
+  this->runAnalytics = false; // Automatically construct plots
   this->fMax = 1.0;
-  // We only want to optimize the weights for now. Maybe later we can do
-  // bias/gain.
-  this->nWeights = this->connections_.size();
-  std::cout << "Number of connections (hence weights) are "
-            << this->nWeights
-            << std::endl;
 
+  // We only want to optimize the weights for now.
+  this->nWeights = (int)(this->connections_.size()/2) + this->nMotors;
+  std::cout << "Number of weights = connections/2 + nMotors are "
+            << this->connections_.size()/2
+            << " + "
+            << this->nMotors
+            << std::endl;
 
   /*
   // Limbo BO Parameters
@@ -266,7 +276,6 @@ void DifferentialCPG::BO_init(){
   this->sigma_sq = 0.001; // Kernel variance. 0.001 recommended
   this->k = 4; // EXP-ARD kernel. Number of columns used to compute M.
   */
-
 
   // Information purposes
   std::cout << "Sample method: " << this->initializationMethod << std::endl;
@@ -523,10 +532,6 @@ void DifferentialCPG::Update(
     p += sensor->Inputs();
   }
 
-  // CORRECT TILL HERE
-  // CORRECT TILL HERE
-  // CORRECT TILL HERE
-
   // Evaluate policy on certain time limit
   if ((_time - this->startTime_) > this->evaluationRate_) {
     // Update position
@@ -663,6 +668,13 @@ void DifferentialCPG::Step(
         weightBtoA = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
       }
 
+      // Temp
+      std::random_device rd;
+      std::mt19937 mt(rd());
+      std::uniform_real_distribution< double > dist(0, 1);
+      weightBtoA = dist(mt);
+      std::cout << "BA: " << weightBtoA <<",";
+
       // Add to recipientInput
       recipientInput += weightBtoA * senderState;
     }
@@ -682,6 +694,12 @@ void DifferentialCPG::Step(
         weightAtoB = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
       }
 
+      // Temp
+      std::random_device rd;
+      std::mt19937 mt(rd());
+      std::uniform_real_distribution< double > dist(0, 1);
+      weightAtoB = -dist(mt);
+      std::cout << "AB: " << weightAtoB <<",";
       // Add to recipientInput
       recipientInput += weightAtoB * senderState;
     }

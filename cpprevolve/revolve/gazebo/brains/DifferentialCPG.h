@@ -215,6 +215,7 @@ namespace revolve
       public: size_t getNWeights();
 
       public: double fMax;
+      private: size_t nMotors;
 
       private: double previousTime = 0;
     };
