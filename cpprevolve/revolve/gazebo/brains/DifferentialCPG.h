@@ -95,7 +95,7 @@ namespace revolve
       /// \brief Register of individual neurons in x,y,z-coordinates
       /// \details x,y-coordinates define position of a robot's module and
       // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
-      // values are a bias and a gain of each neuron.
+      // values are a bias, gain, state of each neuron.
       protected:
       std::map< std::tuple< int, int, int >, std::tuple< double, double, double > >
           neurons_;
@@ -216,6 +216,7 @@ namespace revolve
 
       public: double fMax;
 
+      private: double previousTime;
     };
   }
 }
