@@ -654,8 +654,14 @@ void DifferentialCPG::Step(
 
       // Select the weight from neuron B towards neuron A. Note that this weight needs to be unique for this connection
       // during the complete optimization process and validation period.
-      // TODO: SELECT CORRECT WEIGHTS
-      double weightBtoA = 0.5;
+      // Note that the neuron list is like -1, +1, -1, +1, for xy1, xy1, xy2,xy2, ...
+      // When we're here then we have z = 1, thus take i - 1 to get the corresponding weight.
+      auto weightBtoA  = this->samples.back()(i - 1) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+
+      // TODO: replace. Placeholder for when we're finished learning, take best sample seen so far
+      if(this->currentIteration >= this->maxLearningIterations + this->nInitialSamples) {
+        weightBtoA = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+      }
 
       // Add to recipientInput
       recipientInput += weightBtoA * senderState;
@@ -667,8 +673,14 @@ void DifferentialCPG::Step(
       auto senderState = std::get<2>(this->neurons_[{x, y, 1}]);
 
       // Select the weight from neuron A towards neuron B.
-      // TODO: SELECT CORRECT WEIGHTS
-      double weightAtoB = 0.5;
+      // Note that the neuron list is like -1, +1, -1, +1, for xy1, xy1, xy2,xy2, ...
+      // When we're here then we have z = -1, thus take i +1 to get the corresponding weight.
+      auto weightAtoB  = this->samples.back()(i+1) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+
+      // TODO: replace. Placeholder for when we're finished learning, take best sample seen so far
+      if(this->currentIteration >= this->maxLearningIterations + this->nInitialSamples) {
+        weightAtoB = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+      }
 
       // Add to recipientInput
       recipientInput += weightAtoB * senderState;
@@ -706,11 +718,12 @@ void DifferentialCPG::Step(
     // Should be one, as output should be based on +1 neurons, which are the A neurons
     if (i % 2 == 1)
     {
+      // TODO: Add Milan's function here as soon as things are working a bit
+      // f(a) = (w_ao*a - bias)*gain
+
       // Apply saturation formula
       auto x = this->nextState_[i];
-      // std::cout << "Before saturation " << j << ": " << x << std::endl;
       this->output_[j] = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->fMax)) -1);
-      //std::cout << "After saturation " << j << ": " << _output[j] << std::endl;
       j++;
     }
     ++i;
