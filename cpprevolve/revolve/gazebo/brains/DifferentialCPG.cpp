@@ -598,11 +598,11 @@ void DifferentialCPG::Step(
     std::tie(x, y, z) = neuron.first;
 
     // Neuron.second accesses the second 3-tuple of a neuron, containing the bias/gain/state.
-    double biasA, gainA, stateA;
-    std::tie(biasA, gainA, stateA) = neuron.second;
+    double recipientBias, recipientGain, recipientState;
+    std::tie(recipientBias, recipientGain, recipientState) = neuron.second;
 
     // Define input for the currently selected neuron.
-    auto inputA = 0.f;
+    auto recipientInput = 0.f;
 
     // Loop over all the connections between A-neurons in the brain. So not only the ones regarding the currently selected neuron.
     // The first element of a connection-type is a 6-tuple, containing the coordinates of neuron1, and the
@@ -615,20 +615,6 @@ void DifferentialCPG::Step(
       int x1, y1, z1, x2, y2, z2;
       std::tie(x1, y1, z1, x2, y2, z2) = connection.first;
 
-      // When we are not learning
-      //auto weightBA = connection.second;
-
-      // When we are still learning, we pick a new weight as part of a policy. Recall that the policy
-      // at this moment is fully defined by its weights. Later we perhaps want to add bias or gain to
-      // optimizer over as well. Weights are in [-1,+1] now.
-      auto weightAA  = this->samples.back()(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
-
-      // TODO: replace. Placeholder for when we're finished learning, take best sample seen so far
-      if(this->currentIteration >= this->maxLearningIterations + this->nInitialSamples) {
-        weightAA = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
-      }
-
-      //std::cout << "WeightBA is " << weightBA << "\n";
       // In the outer for loop, we have taken some neuron. From this neuron, we need to look if it's
       // connected to other nodes. If we have a node that is connected, we will use its input.
       // Recall that you have two kinds of connections between neurons. You have the types that connects
@@ -637,23 +623,64 @@ void DifferentialCPG::Step(
       // We will only consider incoming connections
       // Check if the outer-loop neuron is the same as the one that is connected TOWARDS
       if (x == x2 and y == y2 and z == z2){
+        // When we are not learning
+        // auto senderWeight = connection.second;
+
+        // When we are still learning, we pick a new weight as part of a policy. Recall that the policy
+        // at this moment is fully defined by its weights. Later we perhaps want to add bias or gain to
+        // optimizer over as well. Weights are in [-1,+1] now.
+        auto senderWeight  = this->samples.back()(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+
+        // TODO: replace. Placeholder for when we're finished learning, take best sample seen so far
+        if(this->currentIteration >= this->maxLearningIterations + this->nInitialSamples) {
+          senderWeight = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+        }
+
         // We don't have to check if it is a type A neuron.
         // This is redundant as all connections in connections are type A.
-        auto state = std::get<2>(this->neurons_[{x1, y1, z1}]);
+        auto senderState = std::get<2>(this->neurons_[{x1, y1, z1}]);
 
-        // Get the state of the A neuron. Is it activation function its current state?
-        inputA += weightAA*state;
+        // Get the state (which is the activation value) of the A neuron.
+        recipientInput += senderWeight*senderState;
       }
+    }
+
+    // Add the activation of neuron B->A as well. Note that this is required, as in the connections_ attribute, we only
+    // consider connections that are from A neurons to A neurons, and in particular from Moore neighbouring A neurons to
+    // the recipient neuron.
+    if (z == 1){
+      // Select neuron B that share the same x,y, as neuron A that is currently selected
+      auto senderState = std::get<2>(this->neurons_[{x, y, -1}]);
+
+      // Select the weight from neuron B towards neuron A. Note that this weight needs to be unique for this connection
+      // during the complete optimization process and validation period.
+      // TODO: SELECT CORRECT WEIGHTS
+      double weightBtoA = 0.5;
+
+      // Add to recipientInput
+      recipientInput += weightBtoA * senderState;
+    }
+    else
+    {
+     // Else we are a B neuron, and we need to receive from the A neuron that shares the same x,y-coordinates as the
+     // currently selected neuron.
+      auto senderState = std::get<2>(this->neurons_[{x, y, 1}]);
+
+      // Select the weight from neuron A towards neuron B.
+      // TODO: SELECT CORRECT WEIGHTS
+      double weightAtoB = 0.5;
+
+      // Add to recipientInput
+      recipientInput += weightAtoB * senderState;
     }
 
     // Add ODE difference
     double deltaTime = _time - this->previousTime;
-    this->nextState_[i] = stateA + inputA*deltaTime;
+    this->nextState_[i] = recipientState + recipientInput*deltaTime;
 
-    //std::cout << nextState_[i] << " (" << z << "),"; //nextState doesn't change atm
-    //std::cout << inputA << " (" << z << "),"; // Don't change, but they are not zero. As they are not zero, we expect nextState to change
+    // Debugging
     double corrected = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*this->nextState_[i]/this->fMax)) -1);
-    std::cout << "(" << stateA << "," << inputA << "," << deltaTime << "," << inputA*deltaTime << "," << corrected << "," << z << "); ";
+    std::cout << "(" << recipientState << "," << recipientInput << "," << deltaTime << "," << recipientInput*deltaTime << "," << corrected << "," << z << "); ";
 
     ++i;
   }
@@ -661,15 +688,6 @@ void DifferentialCPG::Step(
 
   // Update time for ODE
   this->previousTime = _time;
-
-
-  // Todo: Connectie A->B en B->A. All connections in connections_ are after all only between A-neurons that are in eachothers
-  // Moore neighbourhood.
-
-
-
-
-
 
   // Loop over all neurons. Note that this is a new outer for loop
   i = 0; auto j = 0;
