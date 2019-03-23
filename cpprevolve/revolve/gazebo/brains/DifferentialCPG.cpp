@@ -124,12 +124,12 @@ DifferentialCPG::DifferentialCPG(
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution< double > dist(0, 1);
-    double stateA = -dist(mt);//*(this->rangeUB - this->rangeLB) + this->rangeLB;
-    double stateB = dist(mt);//*(this->rangeUB - this->rangeLB) + this->rangeLB;
+    double stateA = dist(mt) - 0.5;//*(this->rangeUB - this->rangeLB) + this->rangeLB;
+    double stateB = dist(mt) - 0.5;//*(this->rangeUB - this->rangeLB) + this->rangeLB;
 
-    // Save neurons: bias/gain/state. Make sure initial states are of different sign. TODO: N ECESSARY?
-    this->neurons_[{coordX, coordY, 1}] = {0.f, 0.f, -dist(mt)};
-    this->neurons_[{coordX, coordY, -1}] = {0.f, 0.f, dist(mt)};
+    // Save neurons: bias/gain/state. Make sure initial states are of different sign.
+    this->neurons_[{coordX, coordY, 1}] = {0.f, 0.f, stateA};
+    this->neurons_[{coordX, coordY, -1}] = {0.f, 0.f, stateB};
 
     std::cout << "Initial state A: " << stateA << std::endl;
     std::cout << "Initial state B: " << stateB << std::endl;
@@ -194,6 +194,11 @@ DifferentialCPG::DifferentialCPG(
     }
   }
 
+  // Create directory for output
+  this->directoryName = "output/cpg_bo/";
+  this->directoryName += std::to_string(time(0)) + "/";
+  std::system(("mkdir -p " + this->directoryName).c_str());
+
   // Initialise array of neuron states for Update() method
   this->nextState_ = new double[this->neurons_.size()];
 
@@ -220,9 +225,9 @@ DifferentialCPG::~DifferentialCPG()
  */
 struct DifferentialCPG::evaluationFunction{
   // number of input dimension (samples.size())
-  BO_PARAM(size_t, dim_in, 40);
+  BO_PARAM(size_t, dim_in, 18);
 
-  // number of dimenions of the fitness
+  // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
 
   Eigen::VectorXd operator()(const Eigen::VectorXd &x) const {
@@ -583,7 +588,7 @@ void DifferentialCPG::Step(
   // bias = 0
   // gain = 0
   // state = unif(-1,1);
-  std::cout << "\nneuronCount: (recipientState, recipientInput, deltaTime, recipientInput*deltaTime, corrected, x, y, z)\n";
+   std::cout << "\nneuronCount: (recipientState, recipientInput, deltaTime, recipientInput*deltaTime, corrected, x, y, z)\n";
   for (const auto &neuron : this->neurons_)
   {
     // The map key is representing x-, y-, and z-coordinates of a neuron and
@@ -591,6 +596,7 @@ void DifferentialCPG::Step(
     // Neuron.first accesses the first 3-tuple of a neuron, containing the xyz-coordinates
     int x, y, z;
     std::tie(x, y, z) = neuron.first;
+//    std::cout << "\n\nUpdate state of neuron " << neuronCount << ". Old state: " <<std::get<2>(this->neurons_[{x, y, z}]) << ":\n";
 
     // Neuron.second accesses the second 3-tuple of a neuron, containing the bias/gain/state.
     double recipientBias, recipientGain, recipientState;
@@ -665,6 +671,11 @@ void DifferentialCPG::Step(
 
         // Get the state (which is the activation value) of the A neuron.
         recipientInput += weightFactor*senderWeight*senderState;
+
+//        std::cout << "Receive from (x,y,z) = (" << x1 << "," << y1 << ","<< z1 << "\n";
+//        std::cout << "Current (old) state: " << senderState <<"\n";
+//        std::cout << "Weight: " << weightFactor*senderWeight << "\n";
+//        std::cout << "Activation contribution: " << weightFactor*senderWeight*senderState << "\n";
       }
       k++;
     }
@@ -709,13 +720,19 @@ void DifferentialCPG::Step(
       recipientInput += -1* weightAtoB * senderState;
     }
 
-    // Add ODE difference
-    double deltaTime = _time - this->previousTime;
+//    std::cout << "Receive AB/BA from (x,y,z) = (" << x << "," << y << ","<< -z << "\n";
+//    std::cout << "Current (old) state: " << std::get<2>(this->neurons_[{x, y, -z}]) << "\n";
+//    std::cout << "Weight: " << weight << "\n";
+//    std::cout << "Activation contribution: " << weight*std::get<2>(this->neurons_[{x, y, -z}]) << "\n";
+//    std::cout << "Total activation delta: " << recipientInput << "\n";
+
+    // Add ODE difference: TODO: The system of oscillators is only stable when deltaTime is sufficiently small.
+    double deltaTime = (_time - this->previousTime)/4.0;
     this->nextState_[neuronCount] = recipientState + recipientInput*deltaTime;
 
     // Debugging
     double corrected = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*this->nextState_[neuronCount]/this->fMax)) -1);
-    std::cout << neuronCount << ": (" << recipientState << "," << recipientInput << "," << deltaTime << "," << recipientInput*deltaTime << "," << corrected << "," << x << "," << y << "," << z << "); "<< "AB or BA weight: " << weight << "\n";
+    std::cout << neuronCount << ": (" << recipientState << ","<< this->nextState_[neuronCount] <<"," << recipientInput << "," << deltaTime << "," << recipientInput*deltaTime << "," << corrected << "," << x << "," << y << "," << z << "); "<< "AB or BA weight: " << weight << "\n";
 
     // Update neuron
     if(seenFirst){
@@ -742,7 +759,6 @@ void DifferentialCPG::Step(
     double bias, gain, state;
     double x,y,z;
     std::tie(x,y,z) = neuron.first;
-    //std::cout <<"x,y,z=" << x << ","<< y << "," << z << "\n";
     std::tie(bias, gain, state) = neuron.second;
 
     neuron.second = {bias, gain, this->nextState_[i]};
@@ -759,6 +775,19 @@ void DifferentialCPG::Step(
     }
     ++i;
   }
+
+
+  // Debugging: Write the neuron outputs and put in plot to see if we're still non-oscillatory.
+  // Write parameters to file
+  std::ofstream myFile;
+  myFile.open(this->directoryName + "nextStates.txt", std::ios::app);
+  for(int i = 0; i < this->neurons_.size(); i++){
+    myFile << this->nextState_[i] << ",";
+
+  }
+  myFile << "\n";
+  myFile.close();
+
 }
 
 /**

@@ -117,6 +117,7 @@ namespace revolve
       /// \brief Used to determine the output to the motors array
       private: double *output_;
 
+      private: std::string directoryName;
       /// \brief Name of the robot
       private:
       ::gazebo::physics::ModelPtr robot_;
