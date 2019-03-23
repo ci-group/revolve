@@ -204,16 +204,6 @@ DifferentialCPG::DifferentialCPG(
     }
   }
 
-  // Debugging
-  for(auto connection: this->connections_){
-    int x1,x2,y1,y2, z1,z2;
-    std::tie(x1, y1, z1, x2, y2, z2) = connection.first;
-    auto index = std::get<1>(connection.second);
-    std::cout << x1 << ", " << y1 << ", "<< z1 << ", "<< x2 << ", "<< y2 << ", "<< z2 << " - " << index << "\n";
-
-  }
-
-
   // Initialise array of neuron states for Update() method
   this->nextState_ = new double[this->neurons_.size()];
 
@@ -570,8 +560,7 @@ void DifferentialCPG::Update(
     this->evaluator->Reset();
   }
 
-  // I don't know yet what happens here.
-  this->Step(_time, this->output_); // SOMETHIGN GOES WRONG HERE, AS CP1 IS FINE,
+  this->Step(_time, this->output_);
 
   // Send new signals to the motors
   p = 0;
@@ -592,16 +581,24 @@ void DifferentialCPG::Step(
     const double _time,
     double *_output)
 {
-  std::cout << "Nextstates_ are: \n";
+  // Helpers for setting Wab = -Wba
+  auto i = (int)(this->connections_.size()/2);
+  int neuronCount = 0;
+  bool seenFirst = true;
 
-  auto i = 0;
+  std::cout << "Weights: \n";
+  for(int d = 0; d < this->nWeights; d++){
+    auto w = this->samples.back()(d);
+    std::cout << d << ": " << w * (this->rangeUB - this->rangeLB) + this->rangeLB << "\n";
+  }
+
   // Loop over all neurons that are present. This must include both -1s and +1s.
   // Each neuron's location is defined by a 3-tuple of coordinates, indicating its x,y,z position.
   // Each neuron has 3 attributes: bias/gain/state. At the moment:
   // bias = 0
   // gain = 0
   // state = unif(-1,1);
-  std::cout << "Neuron " << i << " location: \n";
+  std::cout << "neuronCount: (recipientState, recipientInput, deltaTime, recipientInput*deltaTime, corrected, x, y, z)\n";
   for (const auto &neuron : this->neurons_)
   {
     // The map key is representing x-, y-, and z-coordinates of a neuron and
@@ -609,7 +606,6 @@ void DifferentialCPG::Step(
     // Neuron.first accesses the first 3-tuple of a neuron, containing the xyz-coordinates
     int x, y, z;
     std::tie(x, y, z) = neuron.first;
-    std::cout << x << ", " << y << ", " << z << "\n";
 
     // Neuron.second accesses the second 3-tuple of a neuron, containing the bias/gain/state.
     double recipientBias, recipientGain, recipientState;
@@ -623,7 +619,7 @@ void DifferentialCPG::Step(
     std::vector<int> connectionsSeen(this->connections_.size());
     for(size_t k = 0; k < connectionsSeen.size(); ++k) connectionsSeen[k] = -1;
 
-    std::cout << "Connections: \n";
+    //std::cout << "Connections: \n";
     // Loop over all the connections between A-neurons in the brain. So not only the ones regarding the currently selected neuron.
     // The first element of a connection-type is a 6-tuple, containing the coordinates of neuron1, and the
     // coordinates of neuron 2. Element 0,1,2: x,y,z of one neuron. Element 3,4,5: x,y,z, of other neuron.
@@ -652,9 +648,9 @@ void DifferentialCPG::Step(
       }
 
       // Debugging
-//      auto checkWeight  = this->samples.back()(weightIndex) * (this->rangeUB - this->rangeLB) + this->rangeLB;
-//      checkWeight *= weightFactor;
-//      std::cout << x1 << ", " << y1 << ", " << z1 << ", " << x2 << ", " << y2 << ", " << z2 << ". w = " << checkWeight << ". ix = " << weightIndex <<"\n";
+      //      auto checkWeight  = this->samples.back()(weightIndex) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+      //      checkWeight *= weightFactor;
+      //      std::cout << x1 << ", " << y1 << ", " << z1 << ", " << x2 << ", " << y2 << ", " << z2 << ". w = " << checkWeight << ". ix = " << weightIndex <<"\n";
 
       // In the outer for loop, we have taken some neuron. From this neuron, we need to look if it's
       // connected to other nodes. If we have a node that is connected, we will use its input.
@@ -670,7 +666,7 @@ void DifferentialCPG::Step(
         // at this moment is fully defined by its weights. Later we perhaps want to add bias or gain to
         // optimizer over as well. Weights are in [-1,+1] now.
         // Important: we will assume that the list of weights looks like:
-        // [weightsAtoAconnections, weightsAtoBconnections]
+        // [weightsAtoAconnections, weightsOscBconnections]
         auto senderWeight  = this->samples.back()(weightIndex) * (this->rangeUB - this->rangeLB) + this->rangeLB;
 
         // TODO: replace. Placeholder for when we're finished learning, take best sample seen so far
@@ -688,31 +684,23 @@ void DifferentialCPG::Step(
       k++;
     }
 
+    double weight;
     // Add the activation of neuron B->A as well. Note that this is required, as in the connections_ attribute, we only
     // consider connections that are from A neurons to A neurons, and in particular from Moore neighbouring A neurons to
     // the recipient neuron. The index ranges from [n_connections,n_connections + n_motors].
-    if (z == 1){
+    if (z == -1){
       // Select neuron B th at share the same x,y, as neuron A that is currently selected
       auto senderState = std::get<2>(this->neurons_[{x, y, -1}]);
 
-      // Select the weight from neuron B towards neuron A. Note that this weight needs to be unique for this connection
-      // during the complete optimization process and validation period.
-      // Note that the neuron list is like -1, +1, -1, +1, for xy1, xy1, xy2,xy2, ...
-      // When we're here then we have z = 1, thus take i - 1 to get the corresponding weight.
-      auto weightBtoA  = this->samples.back()(i - 1) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+      // Select the weight from neuron B towards neuron A. Note that the neuron list is like -1, +1, -1, +1,
+      // for xy1, xy1, xy2,xy2, ..., and the weight list of the form [....,osc1, osc2,...oscn]
+      auto weightBtoA  = this->samples.back()(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
 
       // TODO: replace. Placeholder for when we're finished learning, take best sample seen so far
       if(this->currentIteration >= this->maxLearningIterations + this->nInitialSamples) {
         weightBtoA = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
       }
-
-      // Temp
-      std::random_device rd;
-      std::mt19937 mt(rd());
-      std::uniform_real_distribution< double > dist(0, 1);
-      weightBtoA = dist(mt);
-      std::cout << "BA: " << weightBtoA <<",";
-
+      weight = weightBtoA;
       // Add to recipientInput
       recipientInput += weightBtoA * senderState;
     }
@@ -722,35 +710,39 @@ void DifferentialCPG::Step(
       // currently selected neuron.
       auto senderState = std::get<2>(this->neurons_[{x, y, 1}]);
 
-      // Select the weight from neuron A towards neuron B.
-      // Note that the neuron list is like -1, +1, -1, +1, for xy1, xy1, xy2,xy2, ...
-      // When we're here then we have z = -1, thus take i +1 to get the corresponding weight.
-      auto weightAtoB  = this->samples.back()(i+1) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+      // Select the weight from neuron A towards neuron B. Note that the neuron list is like -1, +1, -1, +1,
+      // for xy1, xy1, xy2,xy2, ..., and the weight list of the form [....,osc1, osc2,...oscn]. Change signs
+      auto weightAtoB  = this->samples.back()(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
 
       // TODO: replace. Placeholder for when we're finished learning, take best sample seen so far
       if(this->currentIteration >= this->maxLearningIterations + this->nInitialSamples) {
         weightAtoB = this->bestSample(i) * (this->rangeUB - this->rangeLB) + this->rangeLB;
       }
 
-      // Temp
-      std::random_device rd;
-      std::mt19937 mt(rd());
-      std::uniform_real_distribution< double > dist(0, 1);
-      weightAtoB = -dist(mt);
-      std::cout << "AB: " << weightAtoB <<",";
-      // Add to recipientInput
-      recipientInput += weightAtoB * senderState;
+      weight = -1* weightAtoB;
+      // Add to recipientInput.
+      recipientInput += -1* weightAtoB * senderState;
     }
 
     // Add ODE difference
     double deltaTime = _time - this->previousTime;
     this->nextState_[i] = recipientState + recipientInput*deltaTime;
 
+
     // Debugging
     double corrected = this->fMax*((2.0)/(1.0 + std::pow(2.718, -2.0*this->nextState_[i]/this->fMax)) -1);
-    std::cout << "(" << recipientState << "," << recipientInput << "," << deltaTime << "," << recipientInput*deltaTime << "," << corrected << "," << z << "); ";
+    std::cout << neuronCount << ": (" << recipientState << "," << recipientInput << "," << deltaTime << "," << recipientInput*deltaTime << "," << corrected << "," << x << "," << y << "," << z << "); "<< "AB or BA weight: " << weight << "\n";
 
-    ++i;
+    // Update neuron
+    if(seenFirst){
+      seenFirst = false;
+    }
+    else
+    {
+      seenFirst = true;
+      ++i;
+    }
+    neuronCount++;
   }
   std::cout << "\n";
 
