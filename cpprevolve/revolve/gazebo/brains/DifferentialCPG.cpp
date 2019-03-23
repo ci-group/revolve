@@ -779,14 +779,23 @@ void DifferentialCPG::Step(
 
   // Debugging: Write the neuron outputs and put in plot to see if we're still non-oscillatory.
   // Write parameters to file
-  std::ofstream myFile;
-  myFile.open(this->directoryName + "nextStates.txt", std::ios::app);
-  for(int i = 0; i < this->neurons_.size(); i++){
-    myFile << this->nextState_[i] << ",";
+  std::ofstream stateFile;
+  stateFile.open(this->directoryName + "nextStates.txt", std::ios::app);
+  std::ofstream outputFile;
+  outputFile.open(this->directoryName + "outputs.txt", std::ios::app);
 
+  for(int i = 0; i < this->neurons_.size(); i++){
+    stateFile << this->nextState_[i] << ",";
   }
-  myFile << "\n";
-  myFile.close();
+
+  for(int i = 0; i < this->nMotors; i++){
+    outputFile << this->output_[i] << ",";
+  }
+
+  stateFile << "\n";
+  stateFile.close();
+  outputFile << "\n";
+  outputFile.close();
 
 }
 
