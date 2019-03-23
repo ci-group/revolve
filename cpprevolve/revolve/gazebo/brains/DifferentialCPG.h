@@ -105,7 +105,7 @@ namespace revolve
       // define a connection. The second tuple contains 1: the connection value and
       // 2: the weight index corresponding to this connection.
       protected:
-      std::map< std::tuple< int, int, int, int, int, int >, std::tuple<double, int > >
+      std::map< std::tuple< int, int, int, int, int, int >, std::tuple<int, int > >
           connections_;
 
       /// \brief Used to determine the next state array
