@@ -102,9 +102,10 @@ namespace revolve
 
       /// \brief Register of connections between neighnouring neurons
       /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
-      // define a connection.
+      // define a connection. The second tuple contains 1: the connection value and
+      // 2: the weight index corresponding to this connection.
       protected:
-      std::map< std::tuple< int, int, int, int, int, int >, double >
+      std::map< std::tuple< int, int, int, int, int, int >, std::tuple<double, int > >
           connections_;
 
       /// \brief Used to determine the next state array
