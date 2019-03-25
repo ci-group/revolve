@@ -127,7 +127,7 @@ class Plasticoding(Genotype):
                     params = []
                 self.grammar[repleceable_symbol].append([symbol, params])
 
-    def develop(self, new_genotype, genotype_path=''):
+    def develop(self, new_genotype, genotype_path='', id_genotype=None):
 
         if new_genotype == 'new':
             self.grammar = self.conf.initialization_genome(self.conf)
@@ -143,7 +143,7 @@ class Plasticoding(Genotype):
                 print(self.grammar[g][j])
 
         self.early_development()
-        self.late_development()
+        self.late_development(id_genotype)
 
     def early_development(self):
         index_symbol = 0
@@ -171,7 +171,7 @@ class Plasticoding(Genotype):
             for j in range(0, len(self.intermediate_phenotype)):
                 print(self.intermediate_phenotype[j])
 
-    def late_development(self):
+    def late_development(self, id_genotype):
 
         index_symbol = 0
         index_params = 1
@@ -185,7 +185,6 @@ class Plasticoding(Genotype):
             if symbol[index_symbol] == Alphabet.CORE_COMPONENT:
                 module = CoreModule()
                 self.phenotype._body = module
-                self.quantity_components += 1
                 module.id = 'module'+str(self.quantity_components)
                 print('id')
                 print(self.quantity_components)
@@ -202,14 +201,14 @@ class Plasticoding(Genotype):
                     self.mounting_reference = self.mounting_reference_stack[-1]
                     self.mounting_reference_stack.pop()
 
-                if symbol[index_symbol] == Alphabet.MOVE_FRONT \
+                elif symbol[index_symbol] == Alphabet.MOVE_FRONT \
                    and self.mounting_reference.children[Orientation.NORTH.value] is not None:
                         if self.mounting_reference.children[Orientation.NORTH.value].TYPE != 'TouchSensor':
                             self.mounting_reference_stack.append(self.mounting_reference)
                             self.mounting_reference = \
                                 self.mounting_reference.children[Orientation.NORTH.value]
 
-                if symbol[index_symbol] == Alphabet.MOVE_LEFT \
+                elif symbol[index_symbol] == Alphabet.MOVE_LEFT \
                    and self.mounting_reference.TYPE != 'ActiveHinge':
                         if self.mounting_reference.children[Orientation.WEST.value] is not None:
                             if self.mounting_reference.children[Orientation.WEST.value].TYPE != 'TouchSensor':
@@ -217,7 +216,7 @@ class Plasticoding(Genotype):
                                 self.mounting_reference = \
                                     self.mounting_reference.children[Orientation.WEST.value]
 
-                if symbol[index_symbol] == Alphabet.MOVE_RIGHT \
+                elif symbol[index_symbol] == Alphabet.MOVE_RIGHT \
                    and self.mounting_reference.TYPE != 'ActiveHinge':
                         if self.mounting_reference.children[Orientation.EAST.value] is not None:
                             if self.mounting_reference.children[Orientation.EAST.value].TYPE != 'TouchSensor':
@@ -225,7 +224,7 @@ class Plasticoding(Genotype):
                                 self.mounting_reference = \
                                     self.mounting_reference.children[Orientation.EAST.value]
 
-                if (symbol[index_symbol] == Alphabet.MOVE_RIGHT \
+                elif (symbol[index_symbol] == Alphabet.MOVE_RIGHT \
                    or symbol[index_symbol] == Alphabet.MOVE_LEFT) \
                    and self.mounting_reference.TYPE == 'ActiveHinge' \
                    and self.mounting_reference.children[Orientation.NORTH.value] is not None:
@@ -246,14 +245,16 @@ class Plasticoding(Genotype):
                     slot = Orientation.NORTH.value
                 print('container')
                 print(self.morph_mounting_container)
-                print('mount')
-                print(slot)
                 if self.quantity_components < self.conf.max_structural_modules:
                     self.new_module(slot,
                                     symbol[index_symbol])
+            print('ref '+str(self.mounting_reference.id))
+            print(self.mounting_reference.TYPE)
             print(self.mounting_reference.children)
-            self.phenotype.render2d('experiments/karine_exps/test.png');
-        self.phenotype.save_file('experiments/karine_exps/test.yaml')
+
+
+            self.phenotype.render2d('experiments/karine_exps/'+str(id_genotype)+'.png');
+        #self.phenotype.save_file('experiments/karine_exps/'+str(id_genotype)+'.yaml')
 
     def get_slot(self, morph_mounting_container):
 
@@ -282,10 +283,21 @@ class Plasticoding(Genotype):
 
     def new_module(self, slot, new_module_type):
 
+        mount = 'no'
         if self.mounting_reference.children[slot] is None \
            and not (new_module_type == Alphabet.SENSOR
                     and self.mounting_reference.TYPE == 'ActiveHinge'):
+            mount = 'yes'
 
+        if self.mounting_reference.TYPE == 'CoreComponent' \
+                and self.mounting_reference.children[1] is not None \
+                and self.mounting_reference.children[2] is not None \
+                and self.mounting_reference.children[3] is not None \
+                and self.mounting_reference.children[0] is None:
+            slot = 0
+            mount = 'yes'
+
+        if mount == 'yes':
             if new_module_type == Alphabet.BLOCK:
                 module = BrickModule()
             if new_module_type == Alphabet.JOINT_VERTICAL \
@@ -294,15 +306,15 @@ class Plasticoding(Genotype):
             if new_module_type == Alphabet.SENSOR:
                 module = TouchSensorModule()
 
-            self.mounting_reference.children[slot] = module
-            self.mounting_reference_stack.append(self.mounting_reference)
             self.quantity_components += 1
             module.id = 'module'+str(self.quantity_components)
             module.orientation = self.get_angle(new_module_type,
                                                 self.mounting_reference)
+            self.mounting_reference.children[slot] = module
             self.morph_mounting_container = None
 
             if new_module_type != Alphabet.SENSOR:
+                self.mounting_reference_stack.append(self.mounting_reference)
                 self.mounting_reference = module
 
 

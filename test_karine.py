@@ -12,9 +12,14 @@ if __name__ == "__main__":
 
     conf = pyrevolve.genotype.plasticoding.plasticoding.PlasticodingConfig()
 
+   # gen = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(conf)
+   # new_genotype = 'old'  # this path will be defined appropriately later
+    #gen.develop(new_genotype, 'experiments/karine_exps/genome33.txt', 33)
+
     # this parameter will be controlled later by the recovery process, recovered robots have their genotypes restored ('new'), istead of initialized ('old')
-    gen = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(conf)
-    new_genotype = 'old' #  this path will be defined appropriately later
-    gen.develop(new_genotype, 'experiments/karine_exps/genome8.txt')
+    for i in range(0, 100):
+        gen = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(conf)
+        new_genotype = 'old'  # this path will be defined appropriately later
+        gen.develop(new_genotype, 'experiments/karine_exps/genome'+str(i)+'.txt', i)
 
 
