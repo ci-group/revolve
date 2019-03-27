@@ -36,6 +36,7 @@ class RevolveBot:
         self._fitness = None
         self._behavioural_measurement = None
         self._battery_level = None
+        self.substrate_coordinates_all = {(0, 0): 'module0'}
 
     @property
     def id(self):
@@ -61,7 +62,6 @@ class RevolveBot:
                 count += 1 + self._recursive_size_measurement(child)
 
         return count
-
 
     def measure_behaviour(self):
         """
@@ -172,13 +172,56 @@ class RevolveBot:
         with open(path, 'w') as robot_file:
             robot_file.write(robot)
 
-    def update_substrate(self):
+    def update_substrate(self, parent,
+                         parent_direction,
+                         allow_intersections):
         """
         Update all coordinates for body components
 
         :return:
         """
-        return ''
+        dic = {1: 0, 3: 1, 0: 2, 2: 3}
+        inverse_dic = {0: 1, 1: 3, 2: 0, 3: 2}
+
+        for slot, module in enumerate(parent.children):
+
+            # in case it is a joint (dict)
+            if isinstance(module, int):
+                slot = 1
+                module = parent.children[module]
+
+            if module is not None:
+                if module.TYPE != 'TouchSensor':
+
+                    direction = dic[parent_direction.value] + dic[slot]
+                    if direction >= len(dic):
+                        direction = direction - len(dic)
+
+                    new_direction = Orientation(inverse_dic[direction])
+                    if module.substrate_coordinates is None:
+                        if new_direction == Orientation.WEST:
+                            coordinates = [parent.substrate_coordinates[0],
+                                           parent.substrate_coordinates[1] - 1]
+                        if new_direction == Orientation.EAST:
+                            coordinates = [parent.substrate_coordinates[0],
+                                           parent.substrate_coordinates[1] + 1]
+                        if new_direction == Orientation.NORTH:
+                            coordinates = [parent.substrate_coordinates[0] + 1,
+                                           parent.substrate_coordinates[1]]
+                        if new_direction == Orientation.SOUTH:
+                            coordinates = [parent.substrate_coordinates[0] - 1,
+                                           parent.substrate_coordinates[1]]
+
+                        module.substrate_coordinates = coordinates
+
+                        if allow_intersections == 'no' \
+                                and (coordinates[0], coordinates[1]) in self.substrate_coordinates_all:
+                            raise Exception('intersection')
+                        else:
+                            self.substrate_coordinates_all[coordinates[0],
+                                                           coordinates[1]] = module.id
+
+                    self.update_substrate(module, new_direction, allow_intersections)
 
     def render2d(self, img_path):
         """

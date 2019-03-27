@@ -225,12 +225,12 @@ class Plasticoding(Genotype):
                                     self.mounting_reference.children[Orientation.EAST.value]
 
                 elif (symbol[index_symbol] == Alphabet.MOVE_RIGHT \
-                   or symbol[index_symbol] == Alphabet.MOVE_LEFT) \
-                   and self.mounting_reference.TYPE == 'ActiveHinge' \
-                   and self.mounting_reference.children[Orientation.NORTH.value] is not None:
-                        self.mounting_reference_stack.append(self.mounting_reference)
-                        self.mounting_reference = \
-                            self.mounting_reference.children[Orientation.NORTH.value]
+                       or symbol[index_symbol] == Alphabet.MOVE_LEFT) \
+                       and self.mounting_reference.TYPE == 'ActiveHinge' \
+                       and self.mounting_reference.children[Orientation.NORTH.value] is not None:
+                            self.mounting_reference_stack.append(self.mounting_reference)
+                            self.mounting_reference = \
+                                self.mounting_reference.children[Orientation.NORTH.value]
 
 
             # mount other body parts
@@ -246,14 +246,18 @@ class Plasticoding(Genotype):
                 print('container')
                 print(self.morph_mounting_container)
                 if self.quantity_components < self.conf.max_structural_modules:
-                    self.new_module(slot,
-                                    symbol[index_symbol])
+                    try:
+                        self.new_module(slot,
+                                        symbol[index_symbol])
+                    except:
+                        self.mounting_reference_stack[-1].children[slot] = None
+                        break
+
             print('ref '+str(self.mounting_reference.id))
             print(self.mounting_reference.TYPE)
             print(self.mounting_reference.children)
 
-
-            self.phenotype.render2d('experiments/karine_exps/'+str(id_genotype)+'.png');
+        self.phenotype.render2d('experiments/karine_exps/'+str(id_genotype)+'.png')
         #self.phenotype.save_file('experiments/karine_exps/'+str(id_genotype)+'.yaml')
 
     def get_slot(self, morph_mounting_container):
@@ -316,6 +320,11 @@ class Plasticoding(Genotype):
             if new_module_type != Alphabet.SENSOR:
                 self.mounting_reference_stack.append(self.mounting_reference)
                 self.mounting_reference = module
+                print('ADDEEEEEDDDDDDD')
+
+                self.phenotype.update_substrate(self.phenotype._body,
+                                                Orientation.NORTH,
+                                                'no')
 
 
     # adds params for symbols that need it

@@ -210,6 +210,7 @@ class CoreModule(RevolveModule):
 
     def __init__(self):
         super().__init__()
+        self.substrate_coordinates = [0, 0]
 
     def possible_slots(self):
         return (
