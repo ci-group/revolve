@@ -221,7 +221,9 @@ class RevolveBot:
                             self.substrate_coordinates_all[coordinates[0],
                                                            coordinates[1]] = module.id
 
-                    self.update_substrate(module, new_direction, allow_intersections)
+                    self.update_substrate(module,
+                                          new_direction,
+                                          allow_intersections)
 
     def render2d(self, img_path):
         """
