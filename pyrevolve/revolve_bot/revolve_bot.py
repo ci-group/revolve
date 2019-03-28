@@ -172,13 +172,85 @@ class RevolveBot:
         with open(path, 'w') as robot_file:
             robot_file.write(robot)
 
-    def update_substrate(self):
+    def update_substrate(self, raise_for_intersections=False):
         """
         Update all coordinates for body components
 
-        :return:
+        :param raise_for_intersections: enable raising an exception if a collision of coordinates is detected
+        :raises self.ItersectionCollisionException: If a collision of coordinates is detected (and check is enabled)
         """
-        return ''
+        substrate_coordinates_all = {(0, 0): self._body.id}
+        self._body.substrate_coordinates = (0, 0)
+        self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_all)
+
+    class ItersectionCollisionException(Exception):
+        """
+        A collision has been detected when updating the robot coordinates.
+        Check self.substrate_coordinates_map to know more.
+        """
+        def __init__(self, substrate_coordinates_map):
+            super().__init__(self)
+            self.substrate_coordinates_map = substrate_coordinates_map
+
+    def _update_substrate(self,
+                          raise_for_intersections,
+                          parent,
+                          parent_direction,
+                          substrate_coordinates_map):
+        """
+        Internal recursive function for self.update_substrate()
+        :param raise_for_intersections: same as in self.update_substrate
+        :param parent: updates the children of this parent
+        :param parent_direction: the "absolute" orientation of this parent
+        :param substrate_coordinates_map: map for all already explored coordinates(useful for coordinates conflict checks)
+        """
+        dic = {Orientation.NORTH: 0,
+               Orientation.WEST:  1,
+               Orientation.SOUTH: 2,
+               Orientation.EAST:  3}
+        inverse_dic = {0: Orientation.NORTH,
+                       1: Orientation.WEST,
+                       2: Orientation.SOUTH,
+                       3: Orientation.EAST}
+
+        movement_table = {
+            Orientation.NORTH: ( 1,  0),
+            Orientation.WEST:  ( 0, -1),
+            Orientation.SOUTH: (-1,  0),
+            Orientation.EAST:  ( 0,  1),
+        }
+
+        for slot, module in parent.iter_children():
+            if module is None:
+                continue
+
+            slot = Orientation(slot)
+
+            # calculate new direction
+            direction = dic[parent_direction] + dic[slot]
+            if direction >= len(dic):
+                direction = direction - len(dic)
+            new_direction = Orientation(inverse_dic[direction])
+
+            # calculate new coordinate
+            movement = movement_table[new_direction]
+            coordinates = (
+                parent.substrate_coordinates[0] + movement[0],
+                parent.substrate_coordinates[1] + movement[1],
+            )
+            module.substrate_coordinates = coordinates
+
+            # For Karine: If you need to validate old robots, remember to add this condition to this if:
+            # if raise_for_intersections and coordinates in substrate_coordinates_all and type(module) is not TouchSensorModule:
+            if raise_for_intersections:
+                if coordinates in substrate_coordinates_map:
+                    raise self.ItersectionCollisionException(substrate_coordinates_map)
+                substrate_coordinates_map[coordinates] = module.id
+
+            self._update_substrate(raise_for_intersections,
+                                   module,
+                                   new_direction,
+                                   substrate_coordinates_map)
 
     def render2d(self, img_path):
         """
