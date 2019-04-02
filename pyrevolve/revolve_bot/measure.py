@@ -28,14 +28,6 @@ class Measure:
         self.touch_sensor_count = 0
         self.max_permitted_modules = None
 
-    def round(self, number, decimals):
-        """
-        Round number to nearest value to amount of decimals specified
-        @param number: number to round
-        @param decimals: number of decimals
-        """
-        return math.floor((number*(10**decimals)) + 0.5) / (10**decimals)
-
     def count_branching_bricks(self, module=None):
         """
         Count amount of fully branching modules in body
@@ -314,36 +306,11 @@ class Measure:
         self.measure_branching()
         return self.measurement_to_dict()
 
-    def measurement_to_dict(self, round=False, decimals=3):
+    def measurement_to_dict(self):
         """
         Return dict of all measurements
-		@param round: round to amount of decimals if true
-        @param decimals: amount of decimals
         :return:
         """
-        if round:
-            return {
-                'branching': self.round(self.branching, decimals),
-                'branching_modules_count': self.round(self.branching_modules_count, decimals),
-                'limbs': self.round(self.limbs, 3),
-                'extremeties': self.round(self.extremities, 3),
-                'length_of_limbs': self.round(self.length_of_limbs, decimals),
-                'extensiveness': self.round(self.extensiveness, decimals),
-                'coverage': self.round(self.coverage, decimals),
-                'joints': self.round(self.joints, decimals),
-                'hinge_count': self.round(self.hinge_count, decimals),
-                'active_hinges_count': self.round(self.active_hinges_count, decimals),
-                'brick_count': self.round(self.brick_count, decimals),
-                'touch_sensor_count': self.round(self.touch_sensor_count, decimals),
-                'brick_sensor_count': self.round(self.brick_sensor_count, decimals),
-                'proportion': self.round(self.proportion, decimals),
-                'width': self.round(self.width, decimals),
-                'height': self.round(self.height, decimals),
-                'absolute_size': self.round(self.absolute_size, decimals),
-                'size': self.round(self.size, decimals),
-                'symmetry': self.round(self.symmetry, decimals)
-            }
-
         return {
             'branching': self.branching,
             'branching_modules_count': self.branching_modules_count,
