@@ -28,10 +28,12 @@
 
 // External libraries
 #include <Eigen/Core>
+#include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
 
 // Project headers
 #include "Evaluator.h"
 #include "Brain.h"
+
 
 /// These numbers are quite arbitrary. It used to be in:13 out:8 for the
 /// Arduino, but I upped them both to 20 to accommodate other scenarios.
@@ -48,6 +50,11 @@
 
 /// (bias, tau, gain) or (phase offset, period, gain)
 #define MAX_NEURON_PARAMS 3
+
+
+
+
+typedef std::vector< double > state_type;
 
 namespace revolve
 {
@@ -108,8 +115,13 @@ namespace revolve
       std::map< std::tuple< int, int, int, int, int, int >, std::tuple<int, int > >
           connections_;
 
+      /// \brief Runge-Kutta 45 stepper
+      protected: boost::numeric::odeint::runge_kutta4< state_type > stepper;
+
       /// \brief Used to determine the next state array
       private: double *nextState_;
+      private: double *neuronChange;
+      protected: state_type x;
 
       /// \brief One input state for each input neuron
       private: double *input_;
