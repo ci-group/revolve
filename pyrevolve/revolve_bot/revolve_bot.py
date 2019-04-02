@@ -16,6 +16,7 @@ from .revolve_module import BoxSlot
 from .brain_nn import BrainNN
 
 from .render.render import Render
+from .render.brain_graph import BrainGraph
 from .measure import Measure
 
 import xml.etree.ElementTree
@@ -118,8 +119,7 @@ class RevolveBot:
                     brain_type = yaml_brain['type']
 
                 if brain_type == 'neural-network':
-                    self._brain = BrainNN()
-                    self._brain.FromYaml(yaml_brain)
+                    self._brain = BrainNN.FromYaml(yaml_brain)
 
             else:
                 self._brain = None
@@ -251,6 +251,21 @@ class RevolveBot:
                                    module,
                                    new_direction,
                                    substrate_coordinates_map)
+
+    def render_brain(self, img_path):
+        """
+        Render image of brain
+        @param img_path: path to where to store image
+        """
+        if self._brain == None:
+            raise RuntimeError('Brain not initialized')
+        else:
+            try:
+                brain_graph = BrainGraph(self._brain, img_path)
+                brain_graph.brain_to_graph()
+                brain_graph.save_graph()
+            except:
+                print('Failed rendering brain')
 
     def render2d(self, img_path):
         """

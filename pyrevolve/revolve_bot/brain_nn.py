@@ -44,6 +44,8 @@ class BrainNN:
             params.generate_params(yaml_object['params'][k_node])
             brain.params[k_node] = params
 
+        return brain
+
     def to_yaml(self):
         yaml_dict_brain = OrderedDict()
 
