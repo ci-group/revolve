@@ -11,6 +11,7 @@ from .revolve_module import CoreModule
 from .revolve_module import ActiveHingeModule
 from .revolve_module import BrickModule
 from .revolve_module import BrickSensorModule
+from .revolve_module import TouchSensorModule
 from .revolve_module import Orientation
 from .revolve_module import BoxSlot
 from .brain_nn import BrainNN
@@ -36,7 +37,6 @@ class RevolveBot:
         self._fitness = None
         self._behavioural_measurement = None
         self._battery_level = None
-        self.substrate_coordinates_all = {(0, 0): 'module0'}
 
     @property
     def id(self):
@@ -172,58 +172,71 @@ class RevolveBot:
         with open(path, 'w') as robot_file:
             robot_file.write(robot)
 
-    def update_substrate(self, parent,
-                         parent_direction,
-                         allow_intersections):
+    def update_substrate(self, raise_for_intersections=False):
+        substrate_coordinates_all = {(0, 0): self._body.id}
+        self._body.substrate_coordinates = (0, 0)
+        self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_all)
+
+    class ItersectionCollisionException(Exception):
+        def __init__(self, substrate_coordinates_map):
+            super().__init__(self)
+            self.substrate_coordinates_map = substrate_coordinates_map
+
+    def _update_substrate(self,
+                          raise_for_intersections,
+                          parent,
+                          parent_direction,
+                          substrate_coordinates_all):
         """
         Update all coordinates for body components
-
-        :return:
         """
-        dic = {1: 0, 3: 1, 0: 2, 2: 3}
-        inverse_dic = {0: 1, 1: 3, 2: 0, 3: 2}
+        dic = {Orientation.NORTH: 0,
+               Orientation.WEST:  1,
+               Orientation.SOUTH: 2,
+               Orientation.EAST:  3}
+        inverse_dic = {0: Orientation.NORTH,
+                       1: Orientation.WEST,
+                       2: Orientation.SOUTH,
+                       3: Orientation.EAST}
 
-        for slot, module in enumerate(parent.children):
+        movement_table = {
+            Orientation.NORTH: ( 1,  0),
+            Orientation.WEST:  ( 0, -1),
+            Orientation.SOUTH: (-1,  0),
+            Orientation.EAST:  ( 0,  1),
+        }
 
-            # in case it is a joint (dict)
-            if isinstance(module, int):
-                slot = 1
-                module = parent.children[module]
+        for slot, module in parent.iter_children():
+            if module is None:
+                continue
 
-            if module is not None:
-                if module.TYPE != 'TouchSensor':
+            slot = Orientation(slot)
 
-                    direction = dic[parent_direction.value] + dic[slot]
-                    if direction >= len(dic):
-                        direction = direction - len(dic)
+            # calculate new direction
+            direction = dic[parent_direction] + dic[slot]
+            if direction >= len(dic):
+                direction = direction - len(dic)
+            new_direction = Orientation(inverse_dic[direction])
 
-                    new_direction = Orientation(inverse_dic[direction])
-                    if module.substrate_coordinates is None:
-                        if new_direction == Orientation.WEST:
-                            coordinates = [parent.substrate_coordinates[0],
-                                           parent.substrate_coordinates[1] - 1]
-                        if new_direction == Orientation.EAST:
-                            coordinates = [parent.substrate_coordinates[0],
-                                           parent.substrate_coordinates[1] + 1]
-                        if new_direction == Orientation.NORTH:
-                            coordinates = [parent.substrate_coordinates[0] + 1,
-                                           parent.substrate_coordinates[1]]
-                        if new_direction == Orientation.SOUTH:
-                            coordinates = [parent.substrate_coordinates[0] - 1,
-                                           parent.substrate_coordinates[1]]
+            # calculate new coordinate
+            movement = movement_table[new_direction]
+            coordinates = (
+                parent.substrate_coordinates[0] + movement[0],
+                parent.substrate_coordinates[1] + movement[1],
+            )
+            module.substrate_coordinates = coordinates
 
-                        module.substrate_coordinates = coordinates
+            # For Karine: If you need to validate old robots, remember to add this condition to this if:
+            # if raise_for_intersections and coordinates in substrate_coordinates_all and type(module) is not TouchSensorModule:
+            if raise_for_intersections:
+                if coordinates in substrate_coordinates_all:
+                    raise self.ItersectionCollisionException(substrate_coordinates_all)
+                substrate_coordinates_all[coordinates] = module.id
 
-                        if allow_intersections == 'no' \
-                                and (coordinates[0], coordinates[1]) in self.substrate_coordinates_all:
-                            raise Exception('intersection')
-                        else:
-                            self.substrate_coordinates_all[coordinates[0],
-                                                           coordinates[1]] = module.id
-
-                    self.update_substrate(module,
-                                          new_direction,
-                                          allow_intersections)
+            self._update_substrate(raise_for_intersections,
+                                   module,
+                                   new_direction,
+                                   substrate_coordinates_all)
 
     def render2d(self, img_path):
         """
