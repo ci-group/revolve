@@ -403,7 +403,7 @@ class WorldManager(manage.WorldManager):
         :type pose: Pose|Vector3
         :return: A future that resolves with the created `Robot` object.
         """
-        sdf_bot = revolve_bot.to_sdf(pose).decode('utf8')
+        sdf_bot = revolve_bot.to_sdf(pose)
 
         if self.output_directory:
             robot_file_path = os.path.join(

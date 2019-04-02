@@ -3,24 +3,51 @@ from pyrevolve import SDF
 
 
 class Sensor(SDF.Posable):
+    SENSOR_TYPE = None
+
     """
     Generic SDF sensor.
 
     Parent element: Link or Joint
     """
-    def __init__(self, name: str, sensor_type: str, position=None, rotation=None):
+    def __init__(self, name: str, link, module, position=None, rotation=None):
         super().__init__(
             'sensor',
             {
                 'name': name,
-                'type': sensor_type,
+                'type': self.SENSOR_TYPE,
             },
             position,
             rotation,
         )
+        self._name = name
+        self._link = link
+        self._module = module
+
+    def to_robot_config_sdf(self):
+        return xml.etree.ElementTree.Element('rv:sensor', {
+            'link': self._link.name,
+            'sensor': self._name,
+            'type': self.SENSOR_TYPE,
+            'id': '{}_sensor'.format(self._link.name),
+            'part_id': self._module.id,
+        })
+
+
+class IMUSensor(Sensor):
+    SENSOR_TYPE = 'imu'
+    """
+    IMU Sensor
+
+    Parent element: Link or Joint
+    """
+    def __init__(self, name: str, link, module):
+        super().__init__(name, link, module)
+        SDF.sub_element_text(self, 'always_on', True)
 
 
 class CameraSensor(Sensor):
+    SENSOR_TYPE = 'camera'
     """
     Camera Sensor
 
@@ -59,25 +86,27 @@ class CameraSensor(Sensor):
         SDF.sub_element_text(clip, 'near', clip_near)
         SDF.sub_element_text(clip, 'far', clip_far)
 
+        SDF.sub_element_text(self, 'always_on', True)
+
 
 class TouchSensor(Sensor):
+    SENSOR_TYPE = 'contact'
     """
     Touch Sensor element. It references a collision element and transforms it into a touch sensor.
 
     Parent element: Link or Joint
     """
-    def __init__(self, name: str, collision_element):
+    def __init__(self, name: str, collision_element, link, module):
         """
         Constructor
         :param name: name of the sensor
         :param collision_element: name or reference of the collision element
         :type collision_element: str|SDF.Collision
         """
-        super().__init__(
-            name,
-            'contact',
-        )
+        super().__init__(name, link, module)
         collision_element = collision_element if type(collision_element) is str else collision_element.name
         contact = xml.etree.ElementTree.SubElement(self, 'contact')
         SDF.sub_element_text(contact, 'collision', collision_element)
         # SDF.sub_element_text(contact, 'topic', 'topic_{}'.format(collision_element))
+        # SDF.sub_element_text(self, 'update_rate', 8.0)
+        SDF.sub_element_text(self, 'always_on', True)

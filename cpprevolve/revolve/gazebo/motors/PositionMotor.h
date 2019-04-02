@@ -44,15 +44,15 @@ namespace revolve
           ::gazebo::physics::ModelPtr _model,
           const std::string &_partId,
           const std::string &_motorId,
-          sdf::ElementPtr _motor);
+          const sdf::ElementPtr _motor);
 
       /// \brief Destructor
-      public: virtual ~PositionMotor();
+      public: virtual ~PositionMotor() override;
 
       /// \brief
       public: virtual void Update(
           double *_outputs,
-          double _step);
+          double _step) override;
 
       /// \brief World update event function
 //      protected: void OnUpdate(const ::gazebo::common::UpdateInfo info);

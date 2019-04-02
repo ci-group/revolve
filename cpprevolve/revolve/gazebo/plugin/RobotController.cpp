@@ -203,11 +203,11 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   auto brain = _sdf->GetElement("rv:brain");
   auto controller = brain->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
   auto learner = brain->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
-  if ("ann" == learner)
+  if ("offline" == learner and "ann" == controller)
   {
     brain_.reset(new NeuralNetwork(this->model_, brain, motors_, sensors_));
   }
-  else if ("rlpower" == learner)
+  else if ("rlpower" == learner and "spline" == controller)
   {
     brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
   }
