@@ -10,6 +10,7 @@ from .revolve_module import CoreModule, Orientation
 from .brain import Brain, BrainNN, BrainRLPowerSplines
 
 from .render.render import Render
+from .render.brain_graph import BrainGraph
 from .measure import Measure
 
 
@@ -238,6 +239,21 @@ class RevolveBot:
                                    module,
                                    new_direction,
                                    substrate_coordinates_map)
+
+    def render_brain(self, img_path):
+        """
+        Render image of brain
+        @param img_path: path to where to store image
+        """
+        if self._brain == None:
+            raise RuntimeError('Brain not initialized')
+        else:
+            try:
+                brain_graph = BrainGraph(self._brain, img_path)
+                brain_graph.brain_to_graph()
+                brain_graph.save_graph()
+            except:
+                print('Failed rendering brain')
 
     def render2d(self, img_path):
         """
