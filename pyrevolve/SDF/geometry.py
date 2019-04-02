@@ -10,7 +10,13 @@ class MeshGeometry(xml.etree.ElementTree.Element):
 
 
 class BoxGeometry(xml.etree.ElementTree.Element):
+    """
+    Box Geometry. This object is not posable, you have to pose the super-object.
+    """
     def __init__(self, box_size):
+        """
+        :param box_size: list or tuple of 3 elements with the 3 sizes (x,y,z).
+        """
         super().__init__('geometry')
         self._box = (box_size[0], box_size[1], box_size[2])
         mesh = xml.etree.ElementTree.SubElement(self, 'box')
@@ -71,10 +77,17 @@ class SurfaceProperties(xml.etree.ElementTree.Element):
 
 
 class Collision(SDF.Posable):
-    def __init__(self, name, mass, position=None, rotation=None):
+    def __init__(self, name: str, mass: float, position=None, rotation=None):
+        """
+        :param name: Name of the collision element
+        :param mass: Mass of the collision element
+        :param position: position of the collision
+        :param rotation: rotation of the collision
+        """
+        self.name = '{}_collision'.format(name)
         super().__init__(
             tag='collision',
-            attrib={'name': '{}_collision'.format(name)},
+            attrib={'name': self.name},
             position=position,
             rotation=rotation
         )

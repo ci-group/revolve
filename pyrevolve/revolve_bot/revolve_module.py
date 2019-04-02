@@ -150,14 +150,7 @@ class RevolveModule:
         """
         raise RuntimeError("Robot tree validation not yet implemented")
 
-    def to_sdf(self, tree_depth):
-        """
-
-        :return:
-        """
-        return self._brick_to_sdf(tree_depth)
-
-    def _brick_to_sdf(self, tree_depth=''):
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
         name = 'component_{}_{}__box'.format(tree_depth, self.TYPE)
         visual = SDF.Visual(name, self.rgb)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH)
@@ -190,7 +183,6 @@ class RevolveModule:
 
         if self.children == {1: None}: return False
 
-        
         for i, child in enumerate(self.children):
             if child is not None:
                 has_children = True
@@ -250,7 +242,9 @@ class ActiveHingeModule(RevolveModule):
         else:
             return {1: child.to_yaml()}
 
-    def to_sdf(self, tree_depth, parent_link, child_link):
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        assert(parent_link is not None)
+        assert(child_link is not None)
         name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
         name_joint = 'component_{}_{}__joint'.format(tree_depth, self.TYPE)
         name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
@@ -353,12 +347,16 @@ class BrickModule(RevolveModule):
 
 class BrickSensorModule(RevolveModule):
     """
+    TODO not finished
     Inherits class RevolveModule. Creates Robogen brick sensor module
     """
     TYPE = "FixedBrickSensor"
+    VISUAL_MESH = 'model://rg_robot/meshes/FixedBrick.dae'
+    COLLISION_BOX = (4.1e-2, 4.1e-2, 3.55e-02)
 
     def __init__(self):
         super().__init__()
+        raise RuntimeError("Not implemented yet")
 
 
 class TouchSensorModule(RevolveModule):
@@ -366,13 +364,51 @@ class TouchSensorModule(RevolveModule):
     Inherits class RevolveModule. Creates Robogen sensor module
     """
     TYPE = "TouchSensor"
+    VISUAL_MESH = 'model://rg_robot/meshes/TouchSensor.dae'
+    SLOT_COORDINATES = 1e-2 / 2.0
+    COLLISION_BOX = (4.1e-3, 3.1e-2, 1.55e-02)
     MASS = grams(3)
 
     def __init__(self):
         super().__init__()
+        self.children = {}
+
+    def boxslot(self, orientation=None):
+        orientation = Orientation.SOUTH if orientation is None else orientation
+        assert(orientation is Orientation.SOUTH)
+        return BoxSlot(self.possible_slots(), Orientation.WEST)
+
+    def possible_slots(self):
+        return (
+            (-self.SLOT_COORDINATES, 0),  # X
+            (0, 0),  # Y
+            (0, 0),  # Z
+        )
+
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        assert(parent_link is not None)
+        name = 'component_{}_{}'.format(tree_depth, self.TYPE)
+        name_sensor = 'sensor_{}_{}'.format(tree_depth, self.TYPE)
+
+        visual = SDF.Visual(name, self.rgb)
+        geometry = SDF.MeshGeometry(self.VISUAL_MESH)
+        visual.append(geometry)
+
+        collision = SDF.Collision(name, self.MASS)
+        geometry = SDF.BoxGeometry(self.COLLISION_BOX)
+        # collision.translate(SDF.math.Vector3(0.01175, 0.001, 0))
+        collision.append(geometry)
+
+        sensor = SDF.TouchSensor(name_sensor, collision)
+        parent_link.append(sensor)
+
+        return visual, collision
 
 
 class BoxSlot:
+    """
+    Helper class for modules connection slots
+    """
     def __init__(self, boundaries, orientation: Orientation):
         self.orientation = orientation
         self.pos = self._calculate_box_slot_pos(boundaries, orientation)
@@ -422,13 +458,10 @@ class BoxSlotJoints(BoxSlot):
         super().__init__(boundaries, orientation)
 
     def _calculate_box_slot_pos(self, boundaries, slot: Orientation):
-        # boundaries = collision_elem.boundaries
         if slot == Orientation.SOUTH:
             return SDF.math.Vector3(boundaries[0][0], 0, 0) + self.offset[0]
-            # return SDF.math.Vector3(0, boundaries[0][0], 0)
         elif slot == Orientation.NORTH:
             return SDF.math.Vector3(boundaries[0][1], 0, 0) + self.offset[1]
-            # return SDF.math.Vector3(0, boundaries[0][1], 0)
         else:
             raise RuntimeError('invalid module orientation: {}'.format(slot))
 
