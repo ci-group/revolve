@@ -74,6 +74,9 @@ namespace revolve
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors);
 
+      public:
+      void SetWeightMatrix();
+
       /// \brief Destructor
       public:
       virtual ~DifferentialCPG();
@@ -122,6 +125,8 @@ namespace revolve
       private: double *nextState_;
       private: double *neuronChange;
       protected: state_type x;
+
+      protected: std::vector<std::vector<double>> weightMatrix;
 
       /// \brief One input state for each input neuron
       private: double *input_;

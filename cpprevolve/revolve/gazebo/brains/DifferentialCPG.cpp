@@ -125,10 +125,11 @@ DifferentialCPG::DifferentialCPG(
     std::mt19937 mt(rd());
     std::uniform_real_distribution< double > dist(0, 1);
     double stateA = dist(mt) *2.0 - 1.f;//*(this->rangeUB - this->rangeLB) + this->rangeLB;
+    double stateB = dist(mt) *2.0 - 1.f;//*(this->rangeUB - this->rangeLB) + this->rangeLB;
 
     // Save neurons: bias/gain/state. Make sure initial states are of different sign.
-    this->neurons_[{coordX, coordY, 1}] = {0.f, 0.f, -0.707}; // Neuron A
-    this->neurons_[{coordX, coordY, -1}] = {0.f, 0.f, 0.707}; // Neuron B
+    this->neurons_[{coordX, coordY, 1}] = {0.f, 0.f, stateA}; // Neuron A
+    this->neurons_[{coordX, coordY, -1}] = {0.f, 0.f, stateB}; // Neuron B
 
     std::cout << "Initial state A: " << stateA << std::endl;
     //std::cout << "Initial state B: " << stateB << std::endl;
@@ -204,6 +205,9 @@ DifferentialCPG::DifferentialCPG(
 
   // Initialize BO
   this->BO_init();
+
+  // Get initial weights. TODO: Also do this whenever we have a new sample. Make sure weights are updated at each new init sapmle
+  this->SetWeightMatrix();
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluationRate_));
@@ -561,6 +565,64 @@ void DifferentialCPG::Update(
   }
 }
 
+
+/*
+ * Make matrix of weights.
+ * Specifies weight from neuron i to neuron j.
+ */
+void DifferentialCPG::SetWeightMatrix(){
+  std::cout << "Update weight matrix\n";
+  // Initiate new matrix
+  std::vector<std::vector<double>> matrix;
+
+  // Fill with zeroes
+  for(int i =0; i <this->neurons_.size(); i++)
+  {
+    // Initialize row in matrix with zeros
+    std::vector< double > row;
+    for (int j = 0; j < this->neurons_.size(); j++)
+      row.push_back(0);
+    matrix.push_back(row);
+  }
+
+  // Todo: Look at A<->A connections
+
+
+  // Process A<->B connections
+  for(int i =0; i <this->neurons_.size(); i++)
+  {
+    // Get correct index
+    int c = 0;
+    if (i%2== 0){
+      c = i + 1;
+    }
+    else{
+      c = i - 1;
+    }
+
+    // Add a/b Neuron weight
+    int index = (int)(i/2);
+    auto w  = this->samples.back()(index) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+    matrix[i][c] = w;
+    matrix[c][i] = -w;
+  }
+
+  // Update matrix
+  this->weightMatrix = matrix;
+
+  // Debugging
+  std::cout << "\n";
+  for(int i = 0; i < this->neurons_.size(); i ++){
+    for(int j = 0; j < this->neurons_.size(); j ++)
+    {
+      // Initiate matrix here.
+      std::cout << this->weightMatrix[i][j] << ",";
+    }
+    std::cout << "\n";
+  }
+
+}
+
 /**
  * Step function
  *
@@ -741,6 +803,7 @@ void DifferentialCPG::Step(
     neuronCount++;
   }
 
+
   //////////////////////////////////////////////////////////////////////////////
   std::cout << "\nOld: ";
   // Copy values from nextstate
@@ -760,17 +823,13 @@ void DifferentialCPG::Step(
       [this](const state_type &x, state_type &dxdt, double t)
       {
         for(int i = 0; i < this->neurons_.size(); i++){
-          // Initiate temp vector of weights:
-          std::vector<double> tempWeights;
-          double weight = 0.5;
-          // If we are a z=-1 neuron (b), add connection
-          if(i%2 == 0){
-            weight*= -1;
-            dxdt[i] = weight * x[i+1];
+          dxdt[i] = 0;
+          for(int j = 0; j < this->neurons_.size(); j++)
+          {
+            //std::cout << "\n(i,j)=(" <<i <<","<<j <<")," << x[j] << "," << this ->weightMatrix[j][i] << ". " << x[i] << ", " << this->weightMatrix[i][j];
+            dxdt[i] += x[j]*this->weightMatrix[j][i];
           }
-          else{
-            dxdt[i] = weight * x[i-1];
-          }
+//          std::cout << "dxdt[i] is " <<dxdt[i] << "\n";
         }
       },
       x, // Note: needs to be of state_type. This will hold the new solution. Should hold the old state
