@@ -17,6 +17,7 @@ from .revolve_module import BoxSlot
 from .brain_nn import BrainNN
 
 from .render.render import Render
+from .render.brain_graph import BrainGraph
 from .measure import Measure
 
 import xml.etree.ElementTree
@@ -118,8 +119,7 @@ class RevolveBot:
                     brain_type = yaml_brain['type']
 
                 if brain_type == 'neural-network':
-                    self._brain = BrainNN()
-                    self._brain.FromYaml(yaml_brain)
+                    self._brain = BrainNN.FromYaml(yaml_brain)
 
             else:
                 self._brain = None
@@ -173,11 +173,21 @@ class RevolveBot:
             robot_file.write(robot)
 
     def update_substrate(self, raise_for_intersections=False):
+        """
+        Update all coordinates for body components
+
+        :param raise_for_intersections: enable raising an exception if a collision of coordinates is detected
+        :raises self.ItersectionCollisionException: If a collision of coordinates is detected (and check is enabled)
+        """
         substrate_coordinates_all = {(0, 0): self._body.id}
         self._body.substrate_coordinates = (0, 0)
         self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_all)
 
     class ItersectionCollisionException(Exception):
+        """
+        A collision has been detected when updating the robot coordinates.
+        Check self.substrate_coordinates_map to know more.
+        """
         def __init__(self, substrate_coordinates_map):
             super().__init__(self)
             self.substrate_coordinates_map = substrate_coordinates_map
@@ -186,9 +196,13 @@ class RevolveBot:
                           raise_for_intersections,
                           parent,
                           parent_direction,
-                          substrate_coordinates_all):
+                          substrate_coordinates_map):
         """
-        Update all coordinates for body components
+        Internal recursive function for self.update_substrate()
+        :param raise_for_intersections: same as in self.update_substrate
+        :param parent: updates the children of this parent
+        :param parent_direction: the "absolute" orientation of this parent
+        :param substrate_coordinates_map: map for all already explored coordinates(useful for coordinates conflict checks)
         """
         dic = {Orientation.NORTH: 0,
                Orientation.WEST:  1,
@@ -229,14 +243,29 @@ class RevolveBot:
             # For Karine: If you need to validate old robots, remember to add this condition to this if:
             # if raise_for_intersections and coordinates in substrate_coordinates_all and type(module) is not TouchSensorModule:
             if raise_for_intersections:
-                if coordinates in substrate_coordinates_all:
-                    raise self.ItersectionCollisionException(substrate_coordinates_all)
-                substrate_coordinates_all[coordinates] = module.id
+                if coordinates in substrate_coordinates_map:
+                    raise self.ItersectionCollisionException(substrate_coordinates_map)
+                substrate_coordinates_map[coordinates] = module.id
 
             self._update_substrate(raise_for_intersections,
                                    module,
                                    new_direction,
-                                   substrate_coordinates_all)
+                                   substrate_coordinates_map)
+
+    def render_brain(self, img_path):
+        """
+        Render image of brain
+        @param img_path: path to where to store image
+        """
+        if self._brain == None:
+            raise RuntimeError('Brain not initialized')
+        else:
+            try:
+                brain_graph = BrainGraph(self._brain, img_path)
+                brain_graph.brain_to_graph()
+                brain_graph.save_graph()
+            except:
+                print('Failed rendering brain')
 
     def render2d(self, img_path):
         """

@@ -53,9 +53,7 @@ class Render:
 		"""
 		if isinstance(module, ActiveHingeModule) or isinstance(module, BrickModule) or isinstance(module, TouchSensorModule) or isinstance(module, BrickSensorModule):
 			self.grid.move_by_slot(slot)
-			if include_sensors or (isinstance(module, ActiveHingeModule) or isinstance(module, BrickModule)):
-				self.grid.add_to_visited()
-
+			self.grid.add_to_visited(include_sensors, isinstance(module, TouchSensorModule))
 		if module.has_children():
 			# Traverse path of children of module
 			for core_slot, child_module in module.iter_children():

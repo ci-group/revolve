@@ -130,10 +130,11 @@ class Grid:
 		Grid.y_pos = last_movement[1]
 		Grid.orientation = last_movement[2]
 
-	def add_to_visited(self):
+	def add_to_visited(self, include_sensors=True, is_sensor=False):
 		"""Add current position to visited coordinates list"""
 		self.calculate_orientation()
-		self.visited_coordinates.append([Grid.x_pos, Grid.y_pos])
+		if (include_sensors and is_sensor) or not is_sensor:
+			self.visited_coordinates.append([Grid.x_pos, Grid.y_pos])
 		Grid.movement_stack.append([Grid.x_pos, Grid.y_pos, Grid.orientation])
 
 	def calculate_grid_dimensions(self):

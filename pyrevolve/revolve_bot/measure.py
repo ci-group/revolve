@@ -41,7 +41,8 @@ class Measure:
                 for core_slot, child_module in module.iter_children():
                     if child_module is None:
                         continue
-                    children_count += 1
+                    if not isinstance(child_module, TouchSensorModule) and not isinstance(child_module, BrickSensorModule):
+                        children_count += 1
                     self.count_branching_bricks(child_module)
                 if (isinstance(module, BrickModule) and children_count == 3) or (isinstance(module, CoreModule) and children_count == 4):
                     self.branching_modules_count += 1
@@ -70,25 +71,27 @@ class Measure:
     def calculate_extremities_extensiveness(self, module=None, extremities=False, extensiveness=False):
         """
         Calculate extremities or extensiveness in body
+        @param extremities: calculate extremities in body if true
+        @param extensiveness: calculate extensiveness in body if true
         """
         try:
             if module is None:
                 module = self.body
 
-            if module.has_children():
-                children_count = 0
-                for core_slot, child_module in module.iter_children():
-                    if child_module is None:
-                        continue
+            children_count = 0
+            for core_slot, child_module in module.iter_children():
+                if child_module is None:
+                    continue
+                if not isinstance(child_module, TouchSensorModule):
                     children_count += 1
-                    if extremities:
-                        self.calculate_extremities_extensiveness(child_module, True, False)
-                    if extensiveness:
-                        self.calculate_extremities_extensiveness(child_module, False, True)
-                if children_count == 1 and not isinstance(module, CoreModule) and extremities:
-                    self.extremities += 1
-                if children_count == 2 and not isinstance(module, CoreModule) and extensiveness:
-                    self.extensiveness += 1
+                if extremities:
+                    self.calculate_extremities_extensiveness(child_module, True, False)
+                if extensiveness:
+                    self.calculate_extremities_extensiveness(child_module, False, True)
+            if children_count == 0 and not (isinstance(module, CoreModule) or isinstance(module, TouchSensorModule)) and extremities:
+                self.extremities += 1
+            if children_count == 1 and not (isinstance(module, CoreModule) or isinstance(module, TouchSensorModule)) and extensiveness:
+                self.extensiveness += 1
         except Exception as e:
             print('Failed calculating extremities or extensiveness')
             print('Exception: {}'.format(e))
@@ -104,7 +107,7 @@ class Measure:
         if self.absolute_size < 6:
             practical_limit_limbs = self.absolute_size - 1
         else:
-            practical_limit_limbs = 2 * math.floor((self.absolute_size-6)/3) + (self.absolute_size - 6) % 3 + 4
+            practical_limit_limbs = 2 * math.floor((self.absolute_size - 6) / 3) + ((self.absolute_size - 6) % 3) + 4
         self.calculate_extremities_extensiveness(None, True, False)
         if self.extremities == 0:
             self.limbs = 0
@@ -181,7 +184,6 @@ class Measure:
         try:
             if module is None:
                 module = self.body
-
             if module.has_children():
                 if isinstance(module, ActiveHingeModule):
                     self.active_hinges_count += 1
@@ -204,7 +206,10 @@ class Measure:
             self.joints = 0
             return 0
         self.count_active_hinges()
-        practical_limit_active_hinges = math.floor((self.absolute_size-1)/2)
+        practical_limit_active_hinges = self.absolute_size - 2
+        if self.active_hinges_count == 0:
+            self.joints = 0
+            return 0
         self.joints = self.active_hinges_count / practical_limit_active_hinges
         return self.joints
 
@@ -227,8 +232,9 @@ class Measure:
         :return:
         """
         try:
-            self.calculate_count()
-            self.absolute_size = self.brick_count + self.hinge_count + 1
+            if self.absolute_size is None:
+                self.calculate_count()
+                self.absolute_size = self.brick_count + self.hinge_count + 1
             return self.absolute_size
         except Exception as e:
             print('Failed measuring absolute size')
@@ -298,9 +304,9 @@ class Measure:
         self.measure_coverage()
         self.measure_symmetry()
         self.measure_branching()
-        return self.get_all_measurements()
+        return self.measurement_to_dict()
 
-    def get_all_measurements(self):
+    def measurement_to_dict(self):
         """
         Return dict of all measurements
         :return:
@@ -309,7 +315,9 @@ class Measure:
             'branching': self.branching,
             'branching_modules_count': self.branching_modules_count,
             'limbs': self.limbs,
+            'extremeties': self.extremities,
             'length_of_limbs': self.length_of_limbs,
+            'extensiveness': self.extensiveness,
             'coverage': self.coverage,
             'joints': self.joints,
             'hinge_count': self.hinge_count,
