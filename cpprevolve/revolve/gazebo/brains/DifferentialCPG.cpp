@@ -752,13 +752,25 @@ void DifferentialCPG::Step(
 
   // Stepper. The result is saved in x. Begin time t, time step dt
   double dt = (_time - this->previousTime);
+  this->previousTime = _time;
+  std::cout << "\nTime: " << _time << " dt " << dt << "\n";
 
   // Perform one step
   stepper.do_step(
       [this](const state_type &x, state_type &dxdt, double t)
       {
         for(int i = 0; i < this->neurons_.size(); i++){
-            dxdt[i] = this->neuronChange[i];
+          // Initiate temp vector of weights:
+          std::vector<double> tempWeights;
+          double weight = 0.5;
+          // If we are a z=-1 neuron (b), add connection
+          if(i%2 == 0){
+            weight*= -1;
+            dxdt[i] = weight * x[i+1];
+          }
+          else{
+            dxdt[i] = weight * x[i-1];
+          }
         }
       },
       x, // Note: needs to be of state_type. This will hold the new solution. Should hold the old state
