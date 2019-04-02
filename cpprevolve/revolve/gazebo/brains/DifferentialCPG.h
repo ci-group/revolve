@@ -27,13 +27,12 @@
 #include <tuple>
 
 // External libraries
-#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
 
 // Project headers
 #include "Evaluator.h"
 #include "Brain.h"
-
 
 /// These numbers are quite arbitrary. It used to be in:13 out:8 for the
 /// Arduino, but I upped them both to 20 to accommodate other scenarios.

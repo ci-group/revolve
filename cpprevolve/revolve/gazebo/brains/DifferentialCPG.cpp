@@ -111,7 +111,6 @@ DifferentialCPG::DifferentialCPG(
     auto motorId = motor->GetAttribute("part_id")->GetAsString();
     auto coordX = std::atoi(motor->GetAttribute("x")->GetAsString().c_str());
     auto coordY = std::atoi(motor->GetAttribute("y")->GetAsString().c_str());
-
     std::cout << "coordX,coordY = " << coordX << "," << coordY << std::endl;
 
     this->positions_[motorId] = {coordX, coordY};
@@ -124,15 +123,15 @@ DifferentialCPG::DifferentialCPG(
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution< double > dist(0, 1);
-    double stateA = dist(mt) *2.0 - 1.f;//*(this->rangeUB - this->rangeLB) + this->rangeLB;
-    double stateB = dist(mt) *2.0 - 1.f;//*(this->rangeUB - this->rangeLB) + this->rangeLB;
+    double stateA = dist(mt) *(this->rangeUB - this->rangeLB) + this->rangeLB;
+    double stateB = dist(mt) *(this->rangeUB - this->rangeLB) + this->rangeLB;
 
     // Save neurons: bias/gain/state. Make sure initial states are of different sign.
     this->neurons_[{coordX, coordY, 1}] = {0.f, 0.f, stateA}; // Neuron A
     this->neurons_[{coordX, coordY, -1}] = {0.f, 0.f, stateB}; // Neuron B
 
     std::cout << "Initial state A: " << stateA << std::endl;
-    //std::cout << "Initial state B: " << stateB << std::endl;
+    std::cout << "Initial state B: " << stateB << std::endl;
 
     // TODO: Add check for duplicate coordinates
     motor = motor->GetNextElement("rv:motor");
@@ -240,7 +239,7 @@ struct DifferentialCPG::evaluationFunction{
 
 void DifferentialCPG::BO_init(){
   // Parameters
-  this->evaluationRate_ = 400.0;
+  this->evaluationRate_ = 20.0;
   this->currentIteration = 0;
   this->nInitialSamples = 14;
 
@@ -530,6 +529,7 @@ void DifferentialCPG::Update(
     // If we are still learning
     if(this->currentIteration < (this->nInitialSamples + this->maxLearningIterations)){
       this->BO_step();
+      this->SetWeightMatrix();
       std::cout << "I am learning \n";
     }
       // If we are finished learning but are cooling down
@@ -553,6 +553,7 @@ void DifferentialCPG::Update(
     this->evaluator->Reset();
   }
 
+
   this->Step(_time, this->output_);
 
   // Send new signals to the motors
@@ -566,12 +567,13 @@ void DifferentialCPG::Update(
 
 
 /*
- * Make matrix of weights.
+ * Make matrix of weights A as defined in dx/dt = Ax.
  * Element (i,j) specifies weight from neuron i to neuron j in the system of ODEs
  */
 void DifferentialCPG::SetWeightMatrix(){
-  std::cout << "Update weight matrix\n";
+  std::cout << this->currentIteration << "\n";
   // Initiate new matrix
+  std::cout << "Update weight matrix\n";
   std::vector<std::vector<double>> matrix;
 
   // Fill with zeroes
@@ -579,8 +581,7 @@ void DifferentialCPG::SetWeightMatrix(){
   {
     // Initialize row in matrix with zeros
     std::vector< double > row;
-    for (int j = 0; j < this->neurons_.size(); j++)
-      row.push_back(0);
+    for (int j = 0; j < this->neurons_.size(); j++) row.push_back(0);
     matrix.push_back(row);
   }
 
@@ -597,9 +598,9 @@ void DifferentialCPG::SetWeightMatrix(){
       c = i - 1;
     }
 
-    // Add a/b Neuron weight
+    // Add a/b connection weight
     index = (int)(i/2);
-    auto w  = this->samples.back()(index) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+    auto w  = this->samples.at(this->currentIteration)(index) * (this->rangeUB - this->rangeLB) + this->rangeLB;
     matrix[i][c] = w;
     matrix[c][i] = -w;
   }
@@ -629,8 +630,7 @@ void DifferentialCPG::SetWeightMatrix(){
     }
 
     // Get weight
-    double w  = this->samples.back()(index + int(k/2)) * (this->rangeUB - this->rangeLB) + this->rangeLB;
-    std::cout << "Weight matrix entry " << (index  + int(k/2))<< "is " << w << "\n";
+    auto w  = this->samples.at(this->currentIteration)(index + int(k/2)) * (this->rangeUB - this->rangeLB) + this->rangeLB;
 
     // Set connection in weight matrix
     matrix[l1][l2] = w;
@@ -651,7 +651,6 @@ void DifferentialCPG::SetWeightMatrix(){
     }
     std::cout << "\n";
   }
-
 
 }
 
@@ -695,10 +694,10 @@ void DifferentialCPG::Step(
           dxdt[i] = 0;
           for(int j = 0; j < this->neurons_.size(); j++)
           {
-//            std::cout << "\n(i,j)=(" <<i <<","<<j <<")," << x[j] << "," << this ->weightMatrix[j][i] << ". " << x[i] << ", " << this->weightMatrix[i][j];
-//            if(not weightMatrix[j][i] == 0){
-//              std::cout << "(i,j) = " << i << "," << j << ")\n";
-//            }
+            //            std::cout << "\n(i,j)=(" <<i <<","<<j <<")," << x[j] << "," << this ->weightMatrix[j][i] << ". " << x[i] << ", " << this->weightMatrix[i][j];
+            //            if(not weightMatrix[j][i] == 0){
+            //              std::cout << "(i,j) = " << i << "," << j << ")\n";
+            //            }
             dxdt[i] += x[j]*this->weightMatrix[j][i];
           }
         }
