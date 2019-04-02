@@ -123,10 +123,10 @@ namespace revolve
 
       /// \brief Used to determine the next state array
       private: double *nextState_;
-      private: double *neuronChange;
-      protected: state_type x;
 
+      /// \brief Used for ODE-int
       protected: std::vector<std::vector<double>> weightMatrix;
+      protected: state_type x;
 
       /// \brief One input state for each input neuron
       private: double *input_;
