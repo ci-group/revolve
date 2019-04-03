@@ -398,8 +398,8 @@ class TouchSensorModule(RevolveModule):
 
     def boxslot(self, orientation=None):
         orientation = Orientation.SOUTH if orientation is None else orientation
-        assert(orientation is Orientation.SOUTH)
-        return BoxSlot(self.possible_slots(), Orientation.WEST)
+        assert (orientation is Orientation.SOUTH)
+        return BoxSlotTouchSensor(self.possible_slots())
 
     def possible_slots(self):
         return (
@@ -497,5 +497,26 @@ class BoxSlotJoints(BoxSlot):
             return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.NORTH:
             return SDF.math.Vector3(0, 0, 1)
+        else:
+            raise RuntimeError("Invalid orientation")
+
+
+class BoxSlotTouchSensor(BoxSlot):
+    def __init__(self, boundaries):
+        super().__init__(boundaries, Orientation.SOUTH)
+
+    def _calculate_box_slot_pos(self, boundaries, slot: Orientation):
+        if slot == Orientation.SOUTH:
+            return SDF.math.Vector3(boundaries[0][0], 0, 0)
+        else:
+            raise RuntimeError('invalid module orientation: {}'.format(slot))
+
+    @staticmethod
+    def _calculate_box_slot_tangent(slot: Orientation):
+        """
+        Return slot tangent
+        """
+        if slot == Orientation.SOUTH:
+            return SDF.math.Vector3(0, 1, 0)
         else:
             raise RuntimeError("Invalid orientation")
