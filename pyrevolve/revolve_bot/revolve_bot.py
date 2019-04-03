@@ -17,7 +17,8 @@ from .brain_nn import BrainNN
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
-from .measure import Measure
+from .measure.measure_body import MeasureBody
+from .measure.measure_brain import MeasureBrain
 
 import xml.etree.ElementTree
 
@@ -63,7 +64,6 @@ class RevolveBot:
 
         return count
 
-
     def measure_behaviour(self):
         """
 
@@ -73,20 +73,26 @@ class RevolveBot:
 
     def measure_body(self):
         """
-        :return:
+        :return: dict of body measurements
         """
         try:
-            measure = Measure(self._body)
+            measure = MeasureBody(self._body)
             return measure.measure_all()
         except Exception as e:
             print('Exception: {}'.format(e))
 
     def measure_brain(self):
         """
-
-        :return:
+        :return: dict of brain measurements
         """
-        pass
+        if self._brain == None:
+            raise RuntimeError('Brain not initialized')
+        else:
+            try:
+                measure = MeasureBrain(self._brain, 10)
+                return measure.measure_all()
+            except:
+                print('Failed measuring brain')
 
     def load(self, text, conf_type):
         """

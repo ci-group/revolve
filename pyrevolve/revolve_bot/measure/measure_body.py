@@ -1,10 +1,10 @@
 import math
-from .render.render import Render
-from .render.grid import Grid
-from .revolve_module import ActiveHingeModule, BrickModule, TouchSensorModule, BrickSensorModule, CoreModule
+from ..render.render import Render
+from ..render.grid import Grid
+from ..revolve_module import ActiveHingeModule, BrickModule, TouchSensorModule, BrickSensorModule, CoreModule
 
 
-class Measure:
+class MeasureBody:
     def __init__(self, body):
         self.body = body
         self.branching_modules_count = 0
@@ -20,12 +20,14 @@ class Measure:
         self.height = None
         self.absolute_size = None
         self.size = None
+        self.sensors = None
         self.symmetry = None
         self.hinge_count = 0
         self.active_hinges_count = 0
         self.brick_count = 0
         self.brick_sensor_count = 0
         self.touch_sensor_count = 0
+        self.free_slots = 0
         self.max_permitted_modules = None
 
     def count_branching_bricks(self, module=None):
@@ -226,6 +228,32 @@ class Measure:
             self.proportion = self.height / self.width
             return self.proportion
 
+    def count_free_slots(self, module=None):
+        """
+        Count amount of free slots in body
+        """
+        if module is None:
+            module = self.body
+        children_count = 0
+        for core_slot, child_module in module.iter_children():
+            if child_module is None:
+                continue
+            if not isinstance(child_module, TouchSensorModule):
+                children_count += 1
+            self.count_free_slots(child_module)
+        if isinstance(module, CoreModule):
+            self.free_slots += (4-children_count)
+        if isinstance(module, BrickModule):
+            self.free_slots += (3-children_count)
+
+    def measure_sensors(self, module=None):
+        """
+        Measurement describes the proportion of free slots that contain sensors
+        """
+        self.count_free_slots()
+        self.sensors = self.touch_sensor_count / self.free_slots
+        return self.sensors
+
     def measure_absolute_size(self, module=None):
         """
         Count total amount of modules in body excluding sensors
@@ -304,6 +332,7 @@ class Measure:
         self.measure_coverage()
         self.measure_symmetry()
         self.measure_branching()
+        self.measure_sensors()
         return self.measurement_to_dict()
 
     def measurement_to_dict(self):
@@ -330,5 +359,6 @@ class Measure:
             'height': self.height,
             'absolute_size': self.absolute_size,
             'size': self.size,
+            'sensors': self.sensors,
             'symmetry': self.symmetry
         }
