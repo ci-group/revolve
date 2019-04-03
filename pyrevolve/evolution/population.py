@@ -1,7 +1,5 @@
 # [(G,P), (G,P), (G,P), (G,P), (G,P)]
 
-from individual import *
-
 def dummy_mutate(genotype):
 	return genotype
 

@@ -1,7 +1,8 @@
-from population import *
-from individual import *
-import lsystem.mutation.standard_mutation as standard_mutation
-from pyrevolve.genotype.plasticoding.initialization import random_initialisation
+from pyrevolve.evolution.population import PopulationConfig
+from pyrevolve.evolution.individual import *
+# from evolution.lsystem.mutation.standard_mutation import standard_mutation
+from pyrevolve.evolution.lsystem.mutation.standard_mutation import standard_mutation
+from pyrevolve.genotype.plasticoding.initialization import random_initialization
 
 genotype_conf = {}
 
