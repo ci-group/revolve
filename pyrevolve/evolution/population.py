@@ -1,5 +1,7 @@
 # [(G,P), (G,P), (G,P), (G,P), (G,P)]
 
+from pyrevolve.evolution.individual import Individual
+
 def dummy_mutate(genotype):
 	return genotype
 
@@ -41,7 +43,9 @@ class PopulationConfig:
 	def __init__(self, 
 		population_size: int, 
 		genotype_constructor, 
+		genotype_conf,
 		mutation_operator, 
+		mutation_conf,
 		crossover_operator, 
 		selection, 
 		parent_selection,
@@ -59,7 +63,9 @@ class PopulationConfig:
 		"""
 		self.population_size = population_size
 		self.genotype_constructor = genotype_constructor
+		self.genotype_conf = genotype_conf
 		self.mutation_operator = mutation_operator
+		self.mutation_conf = mutation_conf
 		self.crossover_operator = crossover_operator
 		self.parent_selection = parent_selection
 		self.selection = selection
@@ -104,7 +110,7 @@ class Population:
 			else:
 				child = self.conf.selection(self.individuals)
 			# Mutation operator
-			child_genotype = self.conf.mutation_operator(child_genotype)
+			child_genotype = self.conf.mutation_operator(child_genotype, self.conf.mutation_conf)
 			# Insert individual in new population
 			individual = Individual(child_genotype)
 			new_individuals.append(individual)
