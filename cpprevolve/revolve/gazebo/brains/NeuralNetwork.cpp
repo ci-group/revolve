@@ -86,18 +86,22 @@ NeuralNetwork::NeuralNetwork(
   // motors, creating the adequate neurons in place as we do so.
 
   // Map of ID to neuron element
+  // neuron.id ---> sdf_element
   std::map< std::string, sdf::ElementPtr > neuronMap;
+  std::map< std::string, std::vector<sdf::ElementPtr> > neuronPartIdMap;
 
-  // List of all hidden neurons for convenience
+  // List of all hidden neurons (ids) for convenience
   std::vector< std::string > hiddenNeurons;
 
-  // Set for tracking all collected input/output neurons
+  // Set for tracking all collected input/output neurons (ids)
   std::set< std::string > toProcess;
+
+  auto controller_settings = _settings->GetElement("rv:controller");
 
   // Fetch the first neuron; note the HasElement call is necessary to
   // prevent SDF from complaining if no neurons are present.
-  auto neuron = _settings->HasElement("rv:neuron")
-                ? _settings->GetElement("rv:neuron")
+  auto neuron = controller_settings->HasElement("rv:neuron")
+                ? controller_settings->GetElement("rv:neuron")
                 : sdf::ElementPtr();
   while (neuron)
   {
@@ -109,8 +113,9 @@ NeuralNetwork::NeuralNetwork(
     }
     auto layer = neuron->GetAttribute("layer")->GetAsString();
     auto neuronId = neuron->GetAttribute("id")->GetAsString();
+    auto neuronPartId = neuron->GetAttribute("part_id")->GetAsString();
 
-    if (this->layerMap_.count(neuronId))
+    if (this->layerMap_.count(neuronId) == 1)
     {
       std::cerr << "Duplicate neuron ID '" << neuronId << "'" << std::endl;
       throw std::runtime_error("Robot brain error");
@@ -119,6 +124,12 @@ NeuralNetwork::NeuralNetwork(
     this->layerMap_[neuronId] = layer;
     neuronMap[neuronId] = neuron;
 
+    if (neuronPartIdMap.find(neuronPartId) == neuronPartIdMap.end()) {
+        neuronPartIdMap[neuronPartId] = std::vector<sdf::ElementPtr>();
+    }
+    neuronPartIdMap[neuronPartId].push_back(neuron);
+
+    // INPUT LAYER
     if ("input" == layer)
     {
       if (this->nInputs_ >= MAX_INPUT_NEURONS)
@@ -132,6 +143,7 @@ NeuralNetwork::NeuralNetwork(
       toProcess.insert(neuronId);
       ++(this->nInputs_);
     }
+    // OUTPUT LAYER
     else if ("output" == layer)
     {
       if (this->nOutputs_ >= MAX_OUTPUT_NEURONS)
@@ -145,6 +157,7 @@ NeuralNetwork::NeuralNetwork(
       toProcess.insert(neuronId);
       ++(this->nOutputs_);
     }
+    // HIDDEN LAYER
     else if ("hidden" == layer)
     {
       if (hiddenNeurons.size() >= MAX_HIDDEN_NEURONS)
@@ -157,7 +170,7 @@ NeuralNetwork::NeuralNetwork(
       }
 
       hiddenNeurons.push_back(neuronId);
-     ++(this->nHidden_);
+      ++(this->nHidden_);
     }
     else
     {
@@ -171,70 +184,80 @@ NeuralNetwork::NeuralNetwork(
   // Create motor output neurons at the correct position
   // We iterate a part's motors and just assign every
   // neuron we find in order.
-  std::map< std::string, unsigned int > outputCountMap;
   unsigned int outputsIndex = 0;
   for (const auto &motor : _motors)
   {
-    auto partId = motor->PartId();
-    if (not outputCountMap.count(partId))
+    std::string partId = motor->PartId();
+    auto details = neuronPartIdMap.find(partId);
+    if (details == neuronPartIdMap.end())
     {
-      outputCountMap[partId] = 0;
+      std::cerr << "Required output neuron " << partId
+                << " for motor could not be located" << std::endl;
+      throw std::runtime_error("Robot brain error");
     }
+
+    const auto &neuron_list = details->second;
+    auto neuron_iter = neuron_list.cbegin();
 
     for (unsigned int i = 0, l = motor->Outputs(); i < l; ++i)
     {
-      std::stringstream neuronId;
-      neuronId << partId << "-out-" << outputCountMap[partId];
-      ++outputCountMap[partId];
-
-      auto details = neuronMap.find(neuronId.str());
-      if (details == neuronMap.end())
-      {
-        std::cerr << "Required output neuron " << neuronId.str()
-                  << " for motor could not be located" << std::endl;
-        throw std::runtime_error("Robot brain error");
-      }
+        while (not ((*neuron_iter)->GetAttribute("layer")->GetAsString() == "output"))
+        {
+            ++neuron_iter;
+            if (neuron_iter == neuron_list.cend())
+            {
+                std::cerr << "Required input neuron " << partId
+                          << " for sensor could not be located" << std::endl;
+                throw std::runtime_error("Robot brain error");
+            }
+        }
+      std::string neuronId = (*neuron_iter)->GetAttribute("id")->GetAsString();
 
       neuronHelper(&this->params_[outputsIndex * MAX_NEURON_PARAMS],
                    &this->types_[outputsIndex],
-                   details->second);
-      this->positionMap_[neuronId.str()] = outputsIndex;
-      toProcess.erase(neuronId.str());
+                   *neuron_iter);
+      this->positionMap_[neuronId] = outputsIndex;
+      toProcess.erase(neuronId);
       ++outputsIndex;
+      ++neuron_iter;
     }
   }
 
   // Create sensor input neurons
-  std::map< std::string, unsigned int > inputCountMap;
   unsigned int inputsIndex = 0;
   for (const auto &sensor : _sensors)
   {
     auto partId = sensor->PartId();
-
-    if (not inputCountMap.count(partId))
+    auto details = neuronPartIdMap.find(partId);
+    if (details == neuronPartIdMap.end())
     {
-      inputCountMap[partId] = 0;
+      std::cerr << "Required input neuron list " << partId
+                << " for sensor could not be located" << std::endl;
+      throw std::runtime_error("Robot brain error");
     }
+    const auto &neuron_list = details->second;
+    auto neuron_iter = neuron_list.cbegin();
 
     for (unsigned int i = 0, l = sensor->Inputs(); i < l; ++i)
     {
-      std::stringstream neuronId;
-      neuronId << partId << "-in-" << inputCountMap[partId];
-      ++inputCountMap[partId];
-
-      auto details = neuronMap.find(neuronId.str());
-      if (details == neuronMap.end())
+      while (not ((*neuron_iter)->GetAttribute("layer")->GetAsString() == "input"))
       {
-        std::cerr << "Required input neuron " << neuronId.str()
-                  << " for sensor could not be located" << std::endl;
-        throw std::runtime_error("Robot brain error");
+          ++neuron_iter;
+          if (neuron_iter == neuron_list.cend())
+          {
+              std::cerr << "Required input neuron " << partId
+                        << " for sensor could not be located" << std::endl;
+              throw std::runtime_error("Robot brain error");
+          }
       }
+      std::string neuronId = (*neuron_iter)->GetAttribute("id")->GetAsString();
 
       // Input neurons can currently not have a type, so
       // there is no need to process it.
-      this->positionMap_[neuronId.str()] = inputsIndex;
-      toProcess.erase(neuronId.str());
+      this->positionMap_[neuronId] = inputsIndex;
+      toProcess.erase(neuronId);
       ++inputsIndex;
+      ++neuron_iter;
     }
   }
 

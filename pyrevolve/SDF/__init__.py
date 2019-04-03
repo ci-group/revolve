@@ -5,7 +5,7 @@ from .link import Link
 from .geometry import Visual, Collision, MeshGeometry, BoxGeometry
 from .inertial import Inertial
 from .joint import Joint
-from .sensor import CameraSensor, TouchSensor
+from .sensor import CameraSensor, TouchSensor, IMUSensor
 from . import math
 from .revolve_bot_sdf_builder import revolve_bot_to_sdf
 

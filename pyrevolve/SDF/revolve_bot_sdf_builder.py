@@ -20,9 +20,13 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format):
     model.append(pose_elem)
 
     core_link = SDF.Link('Core')
+    core_visual, core_collision, imu_core_sensor = robot._body.to_sdf('', core_link)
+
     links = [core_link]
     joints = []
-    core_visual, core_collision = robot._body.to_sdf('')
+    actuators = []
+    sensors = [imu_core_sensor]
+
     core_link.append(core_visual)
     core_link.append(core_collision)
 
@@ -31,16 +35,23 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format):
             continue
         core_slot = robot._body.boxslot(Orientation(core_slot))
         slot_chain = core_slot.orientation.short_repr()
-        children_links, children_joints = _module_to_sdf(child_module,
-                                                         core_link,
-                                                         core_slot,
-                                                         core_collision,
-                                                         slot_chain)
+
+        children_links, \
+        children_joints, \
+        children_sensors = _module_to_sdf(child_module,
+                                          core_link,
+                                          core_slot,
+                                          core_collision,
+                                          slot_chain)
+
         links.extend(children_links)
         joints.extend(children_joints)
+        sensors.extend(children_sensors)
 
     for joint in joints:
         model.append(joint)
+        if joint.is_motorized():
+            actuators.append(joint)
 
     for link in links:
         link.align_center_of_mass()
@@ -48,9 +59,8 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format):
         model.append(link)
 
     # ADD BRAIN
-    if robot._brain is not None:
-        plugin_elem = _sdf_brain_plugin_conf(robot._brain)
-        model.append(plugin_elem)
+    plugin_elem = _sdf_brain_plugin_conf(robot._brain, sensors, actuators, robot_genome=None)
+    model.append(plugin_elem)
 
     # XML RENDER PHASE #
     def prettify(rough_string, indent='\t'):
@@ -64,6 +74,8 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format):
 
     if nice_format is not None:
         res = prettify(res, nice_format)
+    else:
+        res = res.decode()
 
     return res
 
@@ -119,10 +131,12 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
     """
     links = []
     joints = []
+    sensors = []
 
     my_link = parent_link
     my_collision = None
 
+    # ACTIVE HINGE
     if type(module) is ActiveHingeModule:
         child_link = SDF.Link('{}_Leg'.format(slot_chain))
 
@@ -176,8 +190,9 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
         my_link = child_link
         my_collision = collisions_servo[0]
 
+    # OTHERS
     else:
-        visual, collision = module.to_sdf(slot_chain, my_link)
+        visual, collision, sensor = module.to_sdf(slot_chain, my_link)
 
         module_slot = module.boxslot(Orientation.SOUTH)
         _sdf_attach_module(module_slot, module.orientation,
@@ -189,29 +204,38 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
 
         my_collision = collision
 
-    # recursions on children
+        if sensor is not None:
+            sensors.append(sensor)
+
+    # RECURSION ON CHILDREN
     for my_slot, child_module in module.iter_children():
         if child_module is None:
             continue
 
         my_slot = module.boxslot(Orientation(my_slot))
         slot_chain = '{}{}'.format(slot_chain, my_slot.orientation.short_repr())
-        children_links, children_joints = _module_to_sdf(child_module,
-                                                         my_link,
-                                                         my_slot,
-                                                         my_collision,
-                                                         slot_chain)
+
+        children_links, \
+        children_joints, \
+        children_sensors = _module_to_sdf(child_module,
+                                          my_link,
+                                          my_slot,
+                                          my_collision,
+                                          slot_chain)
         links.extend(children_links)
         joints.extend(children_joints)
+        sensors.extend(children_sensors)
 
-    return links, joints
+    return links, joints, sensors
 
 
 def _sdf_brain_plugin_conf(
         robot_brain,
-        battery_level=None,
+        sensors,
+        actuators,
+        robot_genome=None,
         update_rate: float = 8.0,
-        controller_plugin: str = 'libRobotControlPlugin.so'
+        controller_plugin: str = 'libRobotControlPlugin.so',
 ):
     """
     Creates the plugin node with the brain configuration inside
@@ -236,18 +260,38 @@ def _sdf_brain_plugin_conf(
     # update rate
     SDF.sub_element_text(config, 'rv:update_rate', update_rate)
 
-    # brain
-    if robot_brain is not None:
-        brain_config = robot_brain.to_sdf()
-        config.append(brain_config)
-
-    # TODO sensors
-
-    # TODO motors
-
     # battery
-    if battery_level is not None:
-        battery = xml.etree.ElementTree.SubElement(config, 'rv:battery')
-        SDF.sub_element_text(battery, 'rv:level', battery_level)
+    # if battery_level is not None:
+    #     battery = xml.etree.ElementTree.SubElement(config, 'rv:battery')
+    #     SDF.sub_element_text(battery, 'rv:level', battery_level)
+
+    # brain
+    robot_brain_sdf = xml.etree.ElementTree.SubElement(config, 'rv:brain')
+
+    robot_learner = robot_brain.learner_sdf()
+    if robot_learner is None:
+        xml.etree.ElementTree.SubElement(robot_brain_sdf, 'rv:learner', {'type': 'None'})
+    else:
+        robot_brain_sdf.append(robot_learner)
+
+    robot_controller = robot_brain.controller_sdf()
+    if robot_controller is None:
+        xml.etree.ElementTree.SubElement(robot_brain_sdf, 'rv:controller', {'type': 'None'})
+    else:
+        robot_brain_sdf.append(robot_controller)
+
+    # sensors
+    sensors_elem = xml.etree.ElementTree.SubElement(robot_brain_sdf, 'rv:sensors')
+    for sensor in sensors:
+        sensors_elem.append(sensor.to_robot_config_sdf())
+
+    # actuators
+    actuators_elem = xml.etree.ElementTree.SubElement(robot_brain_sdf, 'rv:actuators')
+    for actuator in actuators:
+        actuators_elem.append(actuator.to_robot_config_sdf())
+
+    # robot genome
+    if robot_genome is not None:
+        SDF.sub_element_text(config, 'rv:genome', str(robot_genome))
 
     return plugin

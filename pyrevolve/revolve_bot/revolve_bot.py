@@ -2,25 +2,17 @@
 Revolve body generator based on RoboGen framework
 """
 import yaml
-import math
 from collections import OrderedDict
 
 from pyrevolve import SDF
 
-from .revolve_module import CoreModule
-from .revolve_module import ActiveHingeModule
-from .revolve_module import BrickModule
-from .revolve_module import BrickSensorModule
-from .revolve_module import Orientation
-from .revolve_module import BoxSlot
-from .brain_nn import BrainNN
+from .revolve_module import CoreModule, Orientation
+from .brain import Brain, BrainNN, BrainRLPowerSplines
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
 from .measure.measure_body import MeasureBody
 from .measure.measure_brain import MeasureBrain
-
-import xml.etree.ElementTree
 
 
 class RevolveBot:
@@ -120,17 +112,12 @@ class RevolveBot:
                 yaml_brain = yaml_bot['brain']
                 if 'type' not in yaml_brain:
                     # raise IOError("brain type not defined, please fix it")
-                    brain_type = 'neural-network'
-                else:
-                    brain_type = yaml_brain['type']
-
-                if brain_type == 'neural-network':
-                    self._brain = BrainNN.FromYaml(yaml_brain)
-
+                    yaml_brain['type'] = 'neural-network'
+                self._brain = Brain.from_yaml(yaml_brain)
             else:
-                self._brain = None
+                self._brain = Brain()
         except:
-            self._brain = None
+            self._brain = Brain()
             print('Failed to load brain, setting to None')
 
     def load_file(self, path, conf_type='yaml'):
@@ -146,6 +133,8 @@ class RevolveBot:
         self.load(robot, conf_type)
 
     def to_sdf(self, pose=SDF.math.Vector3(0, 0, 0.25), nice_format=None):
+        if type(nice_format) is bool:
+            nice_format = '\t' if nice_format else None
         return SDF.revolve_bot_to_sdf(self, pose, nice_format)
 
     def to_yaml(self):
@@ -173,7 +162,7 @@ class RevolveBot:
         if 'yaml' == conf_type:
             robot = self.to_yaml()
         elif 'sdf' == conf_type:
-            robot = self.to_sdf()
+            robot = self.to_sdf(nice_format=True)
 
         with open(path, 'w') as robot_file:
             robot_file.write(robot)
@@ -278,7 +267,7 @@ class RevolveBot:
         Render 2d representation of robot and store as png
         :param img_path: path of storing png file
         """
-        if self._body == None:
+        if self._body is None:
             raise RuntimeError('Body not initialized')
         else:
             try:
