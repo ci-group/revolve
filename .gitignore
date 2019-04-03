@@ -67,6 +67,9 @@ target/
 
 # Virtual env
 .venv*/
+.python-version
+Pipfile
+Pipfile.lock
 
 # Revolve related
 *.sdf
