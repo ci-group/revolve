@@ -2,43 +2,6 @@
 
 from pyrevolve.evolution.individual import Individual
 
-def dummy_mutate(genotype):
-	return genotype
-
-
-def dummy_crossover(parents):
-	return parents[0]
-
-
-def dummy_selection(individuals):
-	return individuals[0]
-
-
-def crossover_selection(individuals, selector, howmany:int):
-	selected = []
-	for _i in range(howmany):
-		selected.append(
-			selector(individuals)
-		)
-	return selected
-
-
-def generational_population_management(old_individuals, new_individuals):
-	assert(len(old_individuals) == len(new_individuals))
-	return new_individuals
-
-
-def steady_state_population_management(old_individuals, new_individuals, selector):
-	pop_size = len(old_individuals)
-	selection_pool = old_individuals + new_individuals # check this
-	selected_individuals = []
-	for _i in range(pop_size):
-		selected = selector(selection_pool)
-		selected_individuals.append(selected)
-
-	return selected_individuals
-
-
 class PopulationConfig:
 	def __init__(self, 
 		population_size: int, 
@@ -49,7 +12,8 @@ class PopulationConfig:
 		crossover_operator, 
 		selection, 
 		parent_selection,
-		population_management):
+		population_management,
+		offspring_size):
 		"""
 		Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -70,6 +34,7 @@ class PopulationConfig:
 		self.parent_selection = parent_selection
 		self.selection = selection
 		self.population_management = population_management
+		self.offspring_size = offspring_size
 
 
 class Population:
@@ -110,7 +75,7 @@ class Population:
 			else:
 				child = self.conf.selection(self.individuals)
 			# Mutation operator
-			child_genotype = self.conf.mutation_operator(child_genotype, self.conf.mutation_conf)
+			child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
 			# Insert individual in new population
 			individual = Individual(child_genotype)
 			new_individuals.append(individual)
