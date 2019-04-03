@@ -48,13 +48,13 @@ namespace revolve
       /// required attributes already checked, usually you should override
       /// this when adding new motor types.
       public: virtual MotorPtr Motor(
-        const sdf::ElementPtr &_motorSdf,
+        sdf::ElementPtr _motorSdf,
         const std::string &_type,
         const std::string &_partId,
         const std::string &_motorId);
 
       /// \brief Creates a motor for the given model for the given SDF element.
-      public: virtual MotorPtr Create(const sdf::ElementPtr &_motorSdf);
+      public: virtual MotorPtr Create(sdf::ElementPtr _motorSdf);
 
       /// \brief Internal reference to the robot model
       protected: ::gazebo::physics::ModelPtr model_;

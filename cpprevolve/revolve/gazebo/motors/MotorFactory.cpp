@@ -37,7 +37,7 @@ MotorFactory::~MotorFactory() = default;
 
 /////////////////////////////////////////////////
 MotorPtr MotorFactory::Motor(
-    const sdf::ElementPtr &_motorSdf,
+    sdf::ElementPtr _motorSdf,
     const std::string &_type,
     const std::string &_partId,
     const std::string &_motorId)
@@ -56,7 +56,7 @@ MotorPtr MotorFactory::Motor(
 }
 
 /////////////////////////////////////////////////
-MotorPtr MotorFactory::Create(const sdf::ElementPtr &_motorSdf)
+MotorPtr MotorFactory::Create(sdf::ElementPtr _motorSdf)
 {
   auto typeParam = _motorSdf->GetAttribute("type");
   auto partIdParam = _motorSdf->GetAttribute("part_id");
