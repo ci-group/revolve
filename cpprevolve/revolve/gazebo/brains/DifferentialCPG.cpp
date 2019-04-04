@@ -239,9 +239,9 @@ struct DifferentialCPG::evaluationFunction{
 
 void DifferentialCPG::BO_init(){
   // Parameters
-  this->evaluationRate_ = 20.0;
+  this->evaluationRate_ = 10.0;
   this->currentIteration = 0;
-  this->nInitialSamples = 14;
+  this->nInitialSamples = 4;
 
   // Maximum iterations that learning is allowed
   this->maxLearningIterations = 300;
@@ -472,7 +472,7 @@ void DifferentialCPG::BO_step(){
   }
 
   // In case we are not done with initial random sampling yet
-  if (this->currentIteration < this->nInitialSamples){
+  if (this->currentIteration < this->nInitialSamples - 1){
     // Take one of the pre-sampled random samples, and update the weights later
     x = this->samples.at(this->currentIteration);
   }
@@ -608,6 +608,10 @@ void DifferentialCPG::SetWeightMatrix(){
   // A<->A connections
   index++;
   int k = 0;
+  std::vector<std::string> connectionsSeen;
+
+
+
   for (auto const &connection : this->connections_){
     // Get connection information
     int x1, y1, z1, x2, y2, z2;
@@ -629,8 +633,25 @@ void DifferentialCPG::SetWeightMatrix(){
       c++;
     }
 
+    // Add connection to seen connections
+    if(l1 > l2){
+      int l1_old = l1;
+      l1 = l2;
+      l2 = l1_old;
+    }
+    std::string connectionString = std::to_string(l1) + "-" + std::to_string(l2);
+
+    // if not in list, add to list
+    if(std::find(connectionsSeen.begin(), connectionsSeen.end(), connectionString) == connectionsSeen.end()) {
+      connectionsSeen.push_back(connectionString);
+    }
+      // else continue to next iteration
+    else{
+      continue;
+    }
+
     // Get weight
-    auto w  = this->samples.at(this->currentIteration)(index + int(k/2)) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+    auto w  = this->samples.at(this->currentIteration)(index + k) * (this->rangeUB - this->rangeLB) + this->rangeLB;
 
     // Set connection in weight matrix
     matrix[l1][l2] = w;
@@ -640,6 +661,20 @@ void DifferentialCPG::SetWeightMatrix(){
 
   // Update matrix
   this->weightMatrix = matrix;
+
+//  // TODO: Decide if we want to reset states
+//  int c = 0;
+//  for(auto const &neuron : this->neurons_){
+//    int x, y, z;
+//    std::tie(x, y, z) = neuron.first;
+//    if(z == -1){
+//      this->nextState_[c] = -0.707
+//    }
+//    else{
+//      this->nextState_[c] = 0.707;
+//    }
+//    c++;
+//  }
 
   // Debugging
   std::cout << "\n";
@@ -694,10 +729,6 @@ void DifferentialCPG::Step(
           dxdt[i] = 0;
           for(int j = 0; j < this->neurons_.size(); j++)
           {
-            //            std::cout << "\n(i,j)=(" <<i <<","<<j <<")," << x[j] << "," << this ->weightMatrix[j][i] << ". " << x[i] << ", " << this->weightMatrix[i][j];
-            //            if(not weightMatrix[j][i] == 0){
-            //              std::cout << "(i,j) = " << i << "," << j << ")\n";
-            //            }
             dxdt[i] += x[j]*this->weightMatrix[j][i];
           }
         }
