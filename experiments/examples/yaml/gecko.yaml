@@ -124,3 +124,5 @@ body:
                             green: 0.74
                             blue: 0.33
                           orientation : 0
+brain:
+  type: rlpower-splines
