@@ -106,6 +106,7 @@ class Plasticoding(Genotype):
         :type conf: PlasticodingConfig
         """
         self.conf = conf
+        self.id = None
         self.grammar = {}
         self.intermediate_phenotype = None
         self.phenotype = None
@@ -119,9 +120,10 @@ class Plasticoding(Genotype):
         self.inputs_stack = []
         self.outputs_stack = []
         self.edges = {}
+        self.substrate_coordinates_all = {(0, 0): 'module0'}
 
     def load_genotype(self, genotype_path):
-        with open(genotype_path) as f:
+        with open(genotype_path+str(self.id)+'.txt') as f:
             lines = f.readlines()
 
         for line in lines:
@@ -143,16 +145,19 @@ class Plasticoding(Genotype):
         if new_genotype == 'new':
             self.grammar = self.conf.initialization_genome(self.conf)
         else:
+            self.id = id_genotype
             self.load_genotype(genotype_path)
 
         self.early_development()
-        self.late_development(id_genotype)
+        self.late_development()
+        self.phenotype.render2d('experiments/karine_exps/'+str(self.id)+'.png')
+        self.phenotype.save_file('experiments/karine_exps/'+str(self.id)+'.yaml')
 
     def early_development(self):
 
         self.intermediate_phenotype = [[self.conf.axiom_w, []]]
 
-        for i in range(0,self.conf.i_iterations):
+        for i in range(0, self.conf.i_iterations):
 
             position = 0
             for aux_index in range(0, len(self.intermediate_phenotype)):
@@ -169,9 +174,10 @@ class Plasticoding(Genotype):
                 else:
                     position = position + 1
 
-    def late_development(self, id_genotype):
+    def late_development(self):
 
         self.phenotype = RevolveBot()
+        self.phenotype._id = self.id
         self.phenotype._brain = BrainNN()
         self.add_imu_nodes()
         block_body_growth = False
@@ -200,14 +206,10 @@ class Plasticoding(Genotype):
                     slot = Orientation.NORTH.value
 
                 if self.quantity_modules < self.conf.max_structural_modules-1:
-                    if not block_body_growth:
-                        try:
-                            self.new_module(slot,
-                                            symbol[self.index_symbol],
-                                            symbol)
-                        except RevolveBot.ItersectionCollisionException as e:
-                            self.mounting_reference_stack[-1].children[slot] = None
-                            block_body_growth = True
+
+                    self.new_module(slot,
+                                    symbol[self.index_symbol],
+                                    symbol)
 
             if [symbol[self.index_symbol], []] in Alphabet.morphology_moving_commands():
                 self.move_in_body(symbol)
@@ -218,8 +220,6 @@ class Plasticoding(Genotype):
             if [symbol[self.index_symbol], []] in Alphabet.controller_moving_commands():
                 self.decode_brain_moving(symbol)
 
-        self.phenotype.render2d('experiments/karine_exps/'+str(id_genotype)+'.png')
-        self.phenotype.save_file('experiments/karine_exps/'+str(id_genotype)+'.yaml')
 
     def move_in_body(self, symbol):
 
@@ -263,6 +263,8 @@ class Plasticoding(Genotype):
 
         if len(self.outputs_stack) > 0:
 
+        # change self.outputs_stack[0] to self.outputs_stack[-1] later
+
             if symbol[self.index_symbol] == Alphabet.MUTATE_PER:
                 self.outputs_stack[0].params.period += float(symbol[self.index_params][0])
                 if self.outputs_stack[0].params.period > self.conf.oscillator_param_max:
@@ -300,6 +302,7 @@ class Plasticoding(Genotype):
 
         if len(self.outputs_stack) > 0 and len(self.inputs_stack) > 0:
             if symbol[self.index_symbol] == Alphabet.LOOP:
+
                 if (self.outputs_stack[0].id, self.outputs_stack[0].id) not in self.edges.keys():
                     connection = Connection()
                     connection.src = self.outputs_stack[0].id
@@ -382,25 +385,91 @@ class Plasticoding(Genotype):
     def get_angle(self, new_module_type, parent):
         angle = 0
         if new_module_type == Alphabet.JOINT_VERTICAL:
-            if parent.TYPE == 'ActiveHinge' \
-                    and parent.orientation == 90:
+            if parent.info == Alphabet.JOINT_VERTICAL:
                 angle = 0
             else:
                 angle = 90
         else:
-            if parent.TYPE == 'ActiveHinge' \
-                    and parent.orientation == 90:
+            if parent.info == Alphabet.JOINT_VERTICAL:
                 angle = 270
         return angle
+
+    def check_intersections(self, parent,
+                            parent_direction=Orientation.NORTH,
+                            allow_intersections='no'):
+        """
+        Update all coordinates for body components
+        :return:
+        """
+        dic = {Orientation.NORTH.value: 0,
+               Orientation.WEST.value: 1,
+               Orientation.SOUTH.value: 2,
+               Orientation.EAST.value: 3}
+
+        inverse_dic = {0: Orientation.NORTH.value,
+                       1: Orientation.WEST.value,
+                       2: Orientation.SOUTH.value,
+                       3: Orientation.EAST.value}
+
+        if type(parent) == ActiveHingeModule:
+            slots = [Orientation.NORTH.value]
+        else:
+            slots = [Orientation.WEST.value,
+                     Orientation.NORTH.value,
+                     Orientation.EAST.value,
+                     Orientation.SOUTH.value]
+
+        for slot in slots:
+
+            module = parent.children[slot]
+
+            # in case it is a joint (dict)
+            if isinstance(module, int):
+                slot = 1
+                module = parent.children[module]
+
+            if module is not None:
+
+                if type(module) != TouchSensorModule:
+
+                    direction = dic[parent_direction.value] + dic[slot]
+                    if direction >= len(dic):
+                        direction = direction - len(dic)
+
+                    new_direction = Orientation(inverse_dic[direction])
+                    if module.substrate_coordinates is None:
+                        if new_direction == Orientation.WEST:
+                            coordinates = [parent.substrate_coordinates[0],
+                                           parent.substrate_coordinates[1] - 1]
+                        if new_direction == Orientation.EAST:
+                            coordinates = [parent.substrate_coordinates[0],
+                                           parent.substrate_coordinates[1] + 1]
+                        if new_direction == Orientation.NORTH:
+                            coordinates = [parent.substrate_coordinates[0] + 1,
+                                           parent.substrate_coordinates[1]]
+                        if new_direction == Orientation.SOUTH:
+                            coordinates = [parent.substrate_coordinates[0] - 1,
+                                           parent.substrate_coordinates[1]]
+
+                        module.substrate_coordinates = coordinates
+                        if allow_intersections == 'no' \
+                                and (coordinates[0], coordinates[1]) in self.substrate_coordinates_all:
+                            parent.children[slot] = None
+                            continue
+                        else:
+                            self.substrate_coordinates_all[coordinates[0],
+                                                           coordinates[1]] = module.id
+
+                    self.check_intersections(module, new_direction, allow_intersections)
 
     def new_module(self, slot, new_module_type, symbol):
         mount = 'no'
         if self.mounting_reference.children[slot] is None \
            and not (new_module_type == Alphabet.SENSOR
-                    and self.mounting_reference.TYPE == 'ActiveHinge'):
+                    and type(self.mounting_reference) == ActiveHingeModule):
             mount = 'yes'
 
-        if self.mounting_reference.TYPE == 'CoreComponent' \
+        if type(self.mounting_reference) == CoreModule \
                 and self.mounting_reference.children[1] is not None \
                 and self.mounting_reference.children[2] is not None \
                 and self.mounting_reference.children[3] is not None \
@@ -417,19 +486,23 @@ class Plasticoding(Genotype):
             if new_module_type == Alphabet.SENSOR:
                 module = TouchSensorModule()
 
+            module.info = new_module_type
             module.orientation = self.get_angle(new_module_type,
                                                 self.mounting_reference)
             module.rgb = self.get_color(new_module_type)
             self.mounting_reference.children[slot] = module
-            self.morph_mounting_container = None
+            #  uncomment this line later
+           # self.morph_mounting_container = None
 
             if new_module_type != Alphabet.SENSOR:
                 self.quantity_modules += 1
                 module.id = 'module' + str(self.quantity_modules)
                 self.mounting_reference_stack.append(self.mounting_reference)
                 self.mounting_reference = module
+                #  comment this line later
+                self.morph_mounting_container = None
 
-                self.phenotype.update_substrate(True)
+                self.check_intersections(self.phenotype._body)
             else:
                 module.id = self.mounting_reference.id+'sensor-'+str(slot)
 
@@ -474,10 +547,6 @@ class Plasticoding(Genotype):
                     self.phenotype._brain.connections.append(connection)
                 self.outputs_stack = [self.outputs_stack[-1]]
 
-            node2 = copy.copy(node)
-            node2.id = node.id + '-2'
-            self.phenotype._brain.nodes[node.id + '-2'] = node2
-
         if symbol[self.index_symbol] == Alphabet.JOINT_VERTICAL \
            or symbol[self.index_symbol] == Alphabet.JOINT_HORIZONTAL:
             node.layer = 'output'
@@ -514,23 +583,6 @@ class Plasticoding(Genotype):
                 self.inputs_stack = [self.inputs_stack[-1]]
 
         self.phenotype._brain.nodes[node.id] = node
-
-        # print('----')
-        # print('>inputs')
-        # for i in self.inputs_stack:
-        #     print(i.id)
-        #     for j in i.output_nodes:
-        #         print(' o '+str(j.id))
-        # print('>outputs')
-        # for i in self.outputs_stack:
-        #     print(i.id)
-        #     for j in i.input_nodes:
-        #         print(' i'+str(j.id))
-        # print('>edges')
-        # for e in self.edges:
-        #     print(e)
-        #     print(str(self.edges[e].weight))
-
 
     def add_imu_nodes(self):
         for p in range(1, 7):

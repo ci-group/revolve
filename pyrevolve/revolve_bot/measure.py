@@ -7,26 +7,42 @@ from .revolve_module import ActiveHingeModule, BrickModule, TouchSensorModule, B
 class Measure:
     def __init__(self, body):
         self.body = body
+
+        # Absolute branching
         self.branching_modules_count = 0
+        # Relative branching
         self.branching = None
+        # Absolute number of limbs
         self.extremities = 0
+        # Relative number of limbs
         self.limbs = None
+        # Absolute length of limbs
         self.extensiveness = 0
+        # Relative length of limbs
         self.length_of_limbs = None
+        # Coverage
         self.coverage = None
+        # Relative number of effective active joints
         self.joints = None
-        self.proportion = None
-        self.width = None
-        self.height = None
-        self.absolute_size = None
-        self.size = None
-        self.symmetry = None
-        self.hinge_count = 0
+        # Absolute number of effective active joints
         self.active_hinges_count = 0
+        # Proportion
+        self.proportion = None
+        # Absolute size
+        self.absolute_size = None
+        # Symmetry
+        self.symmetry = None
+        # Body width
+        self.width = None
+        # Body height
+        self.height = None
+        # Number of active joints
+        self.hinge_count = 0
+        self.size = None
         self.brick_count = 0
         self.brick_sensor_count = 0
         self.touch_sensor_count = 0
-        self.max_permitted_modules = None
+        self.max_permitted_modules = 100
 
     def count_branching_bricks(self, module=None):
         """
@@ -304,6 +320,7 @@ class Measure:
         self.measure_coverage()
         self.measure_symmetry()
         self.measure_branching()
+        self.measure_size()
         return self.measurement_to_dict()
 
     def measurement_to_dict(self):
@@ -315,7 +332,7 @@ class Measure:
             'branching': self.branching,
             'branching_modules_count': self.branching_modules_count,
             'limbs': self.limbs,
-            'extremeties': self.extremities,
+            'extremities': self.extremities,
             'length_of_limbs': self.length_of_limbs,
             'extensiveness': self.extensiveness,
             'coverage': self.coverage,

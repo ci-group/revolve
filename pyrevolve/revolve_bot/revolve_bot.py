@@ -36,7 +36,9 @@ class RevolveBot:
         self._id = id
         self._parents = None
         self._fitness = None
-        self._behavioural_measurement = None
+        self._morphological_measurements = None
+        self._brain_measurements = None
+        self._behavioural_measurements = None
         self._battery_level = None
 
     @property
@@ -71,15 +73,28 @@ class RevolveBot:
         """
         pass
 
+    def measure_phenotype(self, export='yes'):
+        self.measure_body()
+        #self.measure_brain()
+        if export == 'yes':
+            self.export_phenotype_measurements()
+
     def measure_body(self):
         """
         :return:
         """
         try:
             measure = Measure(self._body)
-            return measure.measure_all()
+            measures = measure.measure_all()
+            self._morphological_measurements = measures
         except Exception as e:
             print('Exception: {}'.format(e))
+
+    def export_phenotype_measurements(self):
+        # !!!!! we need to define the experiment path as a parameter somewhere...
+        file = open('experiments/karine_exps/phenotype_measurements_'+str(self.id)+'.txt', 'w+')
+        for m in self._morphological_measurements:
+            file.write(m + ' ' + str(self._morphological_measurements[m]) + '\n')
 
     def measure_brain(self):
         """
