@@ -7,8 +7,9 @@ from collections import OrderedDict
 
 from pyrevolve import SDF
 
-from .revolve_module import CoreModule, Orientation
-from .brain import Brain, BrainNN, BrainRLPowerSplines
+from .revolve_module import CoreModule, TouchSensorModule
+from .revolve_module import Orientation
+from .brain import Brain
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
@@ -181,23 +182,23 @@ class RevolveBot:
     class ItersectionCollisionException(Exception):
         """
         A collision has been detected when updating the robot coordinates.
-        Check self.substrate_coordinates_map to know more.
+        Check self.substrate_coordinates_all to know more.
         """
-        def __init__(self, substrate_coordinates_map):
+        def __init__(self, substrate_coordinates_all):
             super().__init__(self)
-            self.substrate_coordinates_map = substrate_coordinates_map
+            self.substrate_coordinates_all = substrate_coordinates_all
 
     def _update_substrate(self,
                           raise_for_intersections,
                           parent,
                           parent_direction,
-                          substrate_coordinates_map):
+                          substrate_coordinates_all):
         """
         Internal recursive function for self.update_substrate()
         :param raise_for_intersections: same as in self.update_substrate
         :param parent: updates the children of this parent
         :param parent_direction: the "absolute" orientation of this parent
-        :param substrate_coordinates_map: map for all already explored coordinates(useful for coordinates conflict checks)
+        :param substrate_coordinates_all: map for all already explored coordinates(useful for coordinates conflict checks)
         """
         dic = {Orientation.NORTH: 0,
                Orientation.WEST:  1,
@@ -238,14 +239,14 @@ class RevolveBot:
             # For Karine: If you need to validate old robots, remember to add this condition to this if:
             # if raise_for_intersections and coordinates in substrate_coordinates_all and type(module) is not TouchSensorModule:
             if raise_for_intersections:
-                if coordinates in substrate_coordinates_map:
-                    raise self.ItersectionCollisionException(substrate_coordinates_map)
-                substrate_coordinates_map[coordinates] = module.id
+                if coordinates in substrate_coordinates_all:
+                    raise self.ItersectionCollisionException(substrate_coordinates_all)
+                substrate_coordinates_all[coordinates] = module.id
 
             self._update_substrate(raise_for_intersections,
                                    module,
                                    new_direction,
-                                   substrate_coordinates_map)
+                                   substrate_coordinates_all)
 
     def render_brain(self, img_path):
         """
