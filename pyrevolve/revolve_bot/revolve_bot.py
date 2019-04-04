@@ -67,6 +67,8 @@ class RevolveBot:
         """
         :return: dict of body measurements
         """
+        if self._body is None:
+            raise RuntimeError('Brain not initialized')
         try:
             measure = MeasureBody(self._body)
             return measure.measure_all()
@@ -252,7 +254,7 @@ class RevolveBot:
         Render image of brain
         @param img_path: path to where to store image
         """
-        if self._brain == None:
+        if self._brain is None:
             raise RuntimeError('Brain not initialized')
         else:
             try:
