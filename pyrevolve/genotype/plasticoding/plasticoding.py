@@ -8,10 +8,10 @@ from pyrevolve.revolve_bot.revolve_module import CoreModule
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule
 from pyrevolve.revolve_bot.revolve_module import BrickModule
 from pyrevolve.revolve_bot.revolve_module import TouchSensorModule
-from pyrevolve.revolve_bot.brain_nn import BrainNN
-from pyrevolve.revolve_bot.brain_nn import Node
-from pyrevolve.revolve_bot.brain_nn import Connection
-from pyrevolve.revolve_bot.brain_nn import Params
+from pyrevolve.revolve_bot.brain.brain_nn import BrainNN
+from pyrevolve.revolve_bot.brain.brain_nn import Node
+from pyrevolve.revolve_bot.brain.brain_nn import Connection
+from pyrevolve.revolve_bot.brain.brain_nn import Params
 import random
 import math
 import copy
@@ -138,15 +138,10 @@ class Plasticoding(Genotype):
                     params = []
                 self.grammar[repleceable_symbol].append([symbol, params])
 
-    def develop(self, new_genotype, genotype_path='', id_genotype=None):
-
-        if new_genotype == 'new':
-            self.grammar = self.conf.initialization_genome(self.conf)
-        else:
-            self.load_genotype(genotype_path)
-
+    def develop(self, id_genotype=None):
         self.early_development()
         self.late_development(id_genotype)
+        return self.phenotype
 
     def early_development(self):
 
@@ -218,8 +213,8 @@ class Plasticoding(Genotype):
             if [symbol[self.index_symbol], []] in Alphabet.controller_moving_commands():
                 self.decode_brain_moving(symbol)
 
-        self.phenotype.render2d('experiments/karine_exps/'+str(id_genotype)+'.png')
-        self.phenotype.save_file('experiments/karine_exps/'+str(id_genotype)+'.yaml')
+        # self.phenotype.render2d('experiments/karine_exps/'+str(id_genotype)+'.png')
+        # self.phenotype.save_file('experiments/karine_exps/'+str(id_genotype)+'.yaml')
 
     def move_in_body(self, symbol):
 

@@ -54,7 +54,10 @@ def steady_state_population_management(old_individuals, new_individuals, selecto
 
 genotype_conf = PlasticodingConfig()
 
-mutation_conf = MutationConfig(mutation_prob=0.8)
+mutation_conf = MutationConfig(
+	mutation_prob=0.8,
+	genotype_conf=genotype_conf,
+)
 
 conf = PopulationConfig(
 	population_size=10,
