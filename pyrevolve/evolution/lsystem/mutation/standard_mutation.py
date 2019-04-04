@@ -2,7 +2,7 @@ import random
 
 def handle_deletion(genotype):
 	print("deletion")
-	if len(genotype.grammar) > 1:
+	# if len(genotype.grammar) > 1:
 		
 
 def handle_replacement(genotype):
@@ -12,8 +12,12 @@ def handle_addition(genotype):
 	print("addition")
 
 def standard_mutation(genotype, mutation_conf):
-	print(genotype.grammar)
-	print("\n\n")
+	# print(genotype.grammar)
+	print(len(genotype.grammar))
+	# print("\n\n")
+	for i in genotype.grammar:
+		print(i)
+	print("END OF ONE")
 	chance_of_mutation = random.uniform(0.0,1.0)
 	if chance_of_mutation <= mutation_conf.mutation_prob:
 		return genotype

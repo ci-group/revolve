@@ -13,17 +13,20 @@ class PopulationConfig:
 		selection, 
 		parent_selection,
 		population_management,
-		offspring_size):
+		offspring_size=None):
 		"""
 		Creates a PopulationConfig object that sets the particular configuration for the population
 
 		:param population_size: size of the population
 		:param genotype_constructor: class of the genotype used
+		:param genotype_conf: configuration for genotype constructor
 		:param mutation_operator: operator to be used in mutation
+		:param mutation_conf: configuration for mutation operator
 		:param crossover_operator: operator to be used in crossover
 		:param selection: selection type
 		:param parent_selection: selection type during parent selection
 		:param population_management: type of population management ie. steady state or generational
+		:param offspring_size (optional): size of offspring (for steady state)
 		"""
 		self.population_size = population_size
 		self.genotype_constructor = genotype_constructor
@@ -89,9 +92,17 @@ class Population:
 
 
 	def evaluate(self, new_individuals):
+		"""
+		Evaluates each individual in the new gen population
+		
+		"""
 		for individual in new_individuals:
 			individual.develop()
 			self.evalutate_single_robot(individual)
 
 	def evaluate_single_robot(self, individual):
+		"""
+		Evaluate an individual
+		
+		"""
 		raise RuntimeError("Not implemented yet")
