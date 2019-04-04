@@ -13,5 +13,9 @@ class Individual:
 		self.fitness = None
 
 	def develop(self):
+		"""
+		Develops genotype into a intermediate phenotype
+
+		"""
 		if self.phenotype is None:
 			self.phenotype = self.genotype.develop()

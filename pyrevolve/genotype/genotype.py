@@ -1,9 +1,13 @@
 
 class Genotype:
+	def develop(self):
+		"""
+		Develops the genome into a revolve_bot (proto-phenotype)
 
-    def __init__(self):
-        self.id = None
-        self.representation = None
+		:return: a RevolveBot instance
+		:rtype: RevolveBot
+		"""
+		raise NotImplementedError("Method must be implemented by genome")
 
 class GenotypeConfig:
 	def __init__(self,
