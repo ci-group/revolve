@@ -11,6 +11,8 @@ class Brain(object):
             return pyrevolve.revolve_bot.brain.BrainNN.from_yaml(yaml_brain)
         elif brain_type == 'rlpower-splines':
             return pyrevolve.revolve_bot.brain.BrainRLPowerSplines.from_yaml(yaml_brain)
+        elif brain_type == 'bo-cpg':
+            return pyrevolve.revolve_bot.brain.BrainCPGBO.from_yaml(yaml_brain)
         else:
             return Brain()
 
