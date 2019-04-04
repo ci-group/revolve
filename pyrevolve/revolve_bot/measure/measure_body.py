@@ -1,17 +1,17 @@
 import math
-from .render.render import Render
-from .render.grid import Grid
-from .revolve_module import ActiveHingeModule, BrickModule, TouchSensorModule, BrickSensorModule, CoreModule
+from ..render.render import Render
+from ..render.grid import Grid
+from ..revolve_module import ActiveHingeModule, BrickModule, TouchSensorModule, BrickSensorModule, CoreModule
 
 
-class Measure:
+class MeasureBody:
     def __init__(self, body):
         self.body = body
-        self.branching_modules_count = 0
+        self.branching_modules_count = None
         self.branching = None
-        self.extremities = 0
+        self.extremities = None
         self.limbs = None
-        self.extensiveness = 0
+        self.extensiveness = None
         self.length_of_limbs = None
         self.coverage = None
         self.joints = None
@@ -20,19 +20,23 @@ class Measure:
         self.height = None
         self.absolute_size = None
         self.size = None
+        self.sensors = None
         self.symmetry = None
-        self.hinge_count = 0
-        self.active_hinges_count = 0
-        self.brick_count = 0
-        self.brick_sensor_count = 0
-        self.touch_sensor_count = 0
+        self.hinge_count = None
+        self.active_hinges_count = None
+        self.brick_count = None
+        self.brick_sensor_count = None
+        self.touch_sensor_count = None
+        self.free_slots = None
         self.max_permitted_modules = None
 
-    def count_branching_bricks(self, module=None):
+    def count_branching_bricks(self, module=None, init=True):
         """
         Count amount of fully branching modules in body
         """
         try:
+            if init:
+                self.branching_modules_count = 0
             if module is None:
                 module = self.body
 
@@ -43,7 +47,7 @@ class Measure:
                         continue
                     if not isinstance(child_module, TouchSensorModule) and not isinstance(child_module, BrickSensorModule):
                         children_count += 1
-                    self.count_branching_bricks(child_module)
+                    self.count_branching_bricks(child_module, False)
                 if (isinstance(module, BrickModule) and children_count == 3) or (isinstance(module, CoreModule) and children_count == 4):
                     self.branching_modules_count += 1
         except Exception as e:
@@ -59,16 +63,16 @@ class Measure:
         if self.absolute_size < 5:
             self.branching = 0
             return self.branching
-        self.count_branching_bricks()
+        if self.branching_modules_count is None:
+            self.count_branching_bricks()
         if self.branching_modules_count == 0:
             self.branching = 0
             return 0
-
         practical_limit_branching_bricks = math.floor((self.absolute_size-2)/3)
         self.branching = self.branching_modules_count / practical_limit_branching_bricks
         return self.branching
 
-    def calculate_extremities_extensiveness(self, module=None, extremities=False, extensiveness=False):
+    def calculate_extremities_extensiveness(self, module=None, extremities=False, extensiveness=False, init=True):
         """
         Calculate extremities or extensiveness in body
         @param extremities: calculate extremities in body if true
@@ -77,6 +81,10 @@ class Measure:
         try:
             if module is None:
                 module = self.body
+            if init and extremities:
+                self.extremities = 0
+            if init and extensiveness:
+                self.extensiveness = 0
 
             children_count = 0
             for core_slot, child_module in module.iter_children():
@@ -84,10 +92,7 @@ class Measure:
                     continue
                 if not isinstance(child_module, TouchSensorModule):
                     children_count += 1
-                if extremities:
-                    self.calculate_extremities_extensiveness(child_module, True, False)
-                if extensiveness:
-                    self.calculate_extremities_extensiveness(child_module, False, True)
+                self.calculate_extremities_extensiveness(child_module, extremities, extensiveness, False)
             if children_count == 0 and not (isinstance(module, CoreModule) or isinstance(module, TouchSensorModule)) and extremities:
                 self.extremities += 1
             if children_count == 1 and not (isinstance(module, CoreModule) or isinstance(module, TouchSensorModule)) and extensiveness:
@@ -108,7 +113,9 @@ class Measure:
             practical_limit_limbs = self.absolute_size - 1
         else:
             practical_limit_limbs = 2 * math.floor((self.absolute_size - 6) / 3) + ((self.absolute_size - 6) % 3) + 4
-        self.calculate_extremities_extensiveness(None, True, False)
+        
+        if self.extremities is None:
+            self.calculate_extremities_extensiveness(None, True, False)
         if self.extremities == 0:
             self.limbs = 0
             return 0
@@ -125,7 +132,8 @@ class Measure:
         if self.absolute_size < 3:
             self.length_of_limbs = 0
             return 0
-        self.calculate_extremities_extensiveness(None, False, True)
+        if self.extensiveness is None:
+            self.calculate_extremities_extensiveness(None, False, True)
         practical_limit_extensiveness = self.absolute_size - 2
         self.length_of_limbs = self.extensiveness / practical_limit_extensiveness
         return self.length_of_limbs
@@ -177,20 +185,22 @@ class Measure:
         self.coverage = self.absolute_size / (self.width*self.height)
         return self.coverage
 
-    def count_active_hinges(self, module=None):
+    def count_active_hinges(self, module=None, init=True):
         """
         Count amount of active hinges
         """
         try:
             if module is None:
                 module = self.body
+            if init:
+                self.active_hinges_count = 0
             if module.has_children():
                 if isinstance(module, ActiveHingeModule):
                     self.active_hinges_count += 1
                 for core_slot, child_module in module.iter_children():
                     if child_module is None:
                         continue
-                    self.count_active_hinges(child_module)
+                    self.count_active_hinges(child_module, False)
         except Exception as e:
             print('Failed calculating count')
             print('Exception: {}'.format(e))
@@ -205,7 +215,8 @@ class Measure:
         if self.absolute_size < 3:
             self.joints = 0
             return 0
-        self.count_active_hinges()
+        if self.active_hinges_count is None:
+            self.count_active_hinges()
         practical_limit_active_hinges = self.absolute_size - 2
         if self.active_hinges_count == 0:
             self.joints = 0
@@ -226,6 +237,35 @@ class Measure:
             self.proportion = self.height / self.width
             return self.proportion
 
+    def count_free_slots(self, module=None, init=True):
+        """
+        Count amount of free slots in body
+        """
+        if module is None:
+            module = self.body
+        if init:
+            self.free_slots = 0
+        children_count = 0
+        for core_slot, child_module in module.iter_children():
+            if child_module is None:
+                continue
+            if not isinstance(child_module, TouchSensorModule):
+                children_count += 1
+            self.count_free_slots(child_module, False)
+        if isinstance(module, CoreModule):
+            self.free_slots += (4-children_count)
+        if isinstance(module, BrickModule):
+            self.free_slots += (3-children_count)
+
+    def measure_sensors(self, module=None):
+        """
+        Measurement describes the proportion of free slots that contain sensors
+        """
+        if self.free_slots is None:
+            self.count_free_slots()
+        self.sensors = self.touch_sensor_count / self.free_slots
+        return self.sensors
+
     def measure_absolute_size(self, module=None):
         """
         Count total amount of modules in body excluding sensors
@@ -240,11 +280,16 @@ class Measure:
             print('Failed measuring absolute size')
             print('Exception: {}'.format(e))
 
-    def calculate_count(self, module=None):
+    def calculate_count(self, module=None, init=True):
         """
         Count amount of modules for each distinct type
         """
         try:
+            if init:
+                self.hinge_count = 0
+                self.brick_count = 0
+                self.brick_sensor_count = 0
+                self.touch_sensor_count = 0            
             if module is None:
                 module = self.body
             elif isinstance(module, ActiveHingeModule):
@@ -260,7 +305,7 @@ class Measure:
                 for core_slot, child_module in module.iter_children():
                     if child_module is None:
                         continue
-                    self.calculate_count(child_module)
+                    self.calculate_count(child_module, False)
         except Exception as e:
             print('Failed calculating count')
             print('Exception: {}'.format(e))
@@ -304,6 +349,7 @@ class Measure:
         self.measure_coverage()
         self.measure_symmetry()
         self.measure_branching()
+        self.measure_sensors()
         return self.measurement_to_dict()
 
     def measurement_to_dict(self):
@@ -330,5 +376,6 @@ class Measure:
             'height': self.height,
             'absolute_size': self.absolute_size,
             'size': self.size,
+            'sensors': self.sensors,
             'symmetry': self.symmetry
         }
