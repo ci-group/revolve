@@ -58,7 +58,7 @@ mutation_conf = MutationConfig(mutation_prob=0.8)
 
 conf = PopulationConfig(
 	population_size=10,
-	genotype_constructor=random_initialization, # Q: move the method param to population.py?
+	genotype_constructor=random_initialization,
 	genotype_conf=genotype_conf,
 	mutation_operator=standard_mutation,
 	mutation_conf=mutation_conf,

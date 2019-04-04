@@ -11,6 +11,7 @@ class Individual:
 		self.genotype = genotype
 		self.phenotype = phenotype
 		self.fitness = None
+		self.parents = None
 
 	def develop(self):
 		"""
