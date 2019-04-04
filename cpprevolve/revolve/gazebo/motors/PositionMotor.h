@@ -42,17 +42,17 @@ namespace revolve
       /// \param The derivative gain of the motor's PID controller
       public: PositionMotor(
           ::gazebo::physics::ModelPtr _model,
-          std::string _partId,
-          std::string _motorId,
-          sdf::ElementPtr _motor);
+          const std::string &_partId,
+          const std::string &_motorId,
+          const sdf::ElementPtr _motor);
 
       /// \brief Destructor
-      public: virtual ~PositionMotor();
+      public: virtual ~PositionMotor() override;
 
       /// \brief
       public: virtual void Update(
           double *_outputs,
-          double _step);
+          double _step) override;
 
       /// \brief World update event function
 //      protected: void OnUpdate(const ::gazebo::common::UpdateInfo info);

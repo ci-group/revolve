@@ -5,15 +5,17 @@ from __future__ import print_function
 import math
 
 # Revolve imports
-from ....build.sdf import BodyPart, VelocityMotor, ComponentJoint as Joint
-from ....build.util import in_grams, in_mm
-from pyrevolve.sdfbuilder.joint import Limit
-from pyrevolve.sdfbuilder.math import Vector3
-from pyrevolve.sdfbuilder.structure import Box, Cylinder
-
-# Local imports
 from .util import ColorMixin
 from .. import constants
+from ....build.sdf import BodyPart
+from ....build.sdf import VelocityMotor
+from ....build.sdf import ComponentJoint as Joint
+from ....build.util import in_grams
+from ....build.util import in_mm
+from pyrevolve.sdfbuilder.joint import Limit
+from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.sdfbuilder.structure import Box
+from pyrevolve.sdfbuilder.structure import Cylinder
 
 MASS_SLOT = in_grams(4)
 MASS_SERVO = in_grams(9)
@@ -38,6 +40,7 @@ X_SERVO = 0.5 * SERVO_LENGTH - SLOT_THICKNESS + SEPARATION
 
 X_WHEG_BASE = X_SERVO + 0.5 * (SERVO_LENGTH + WHEG_THICKNESS)
 
+
 class ActiveWheg(BodyPart, ColorMixin):
     """
     Active wheel
@@ -49,23 +52,35 @@ class ActiveWheg(BodyPart, ColorMixin):
         # Because of the cylinder shapes, x axis is swapped with z axis
         # as compared to the Robogen code.
         # Initialize root
-        self.root = self.create_component(Box(SLOT_WIDTH, SLOT_WIDTH, SLOT_THICKNESS, MASS_SLOT), "root")
+        self.root = self.create_component(
+                geometry=Box(SLOT_WIDTH, SLOT_WIDTH, SLOT_THICKNESS, MASS_SLOT),
+                label="root")
 
         # Initialize servo
         z_servo = 0
-        servo = self.create_component(Box(SERVO_HEIGHT, SERVO_WIDTH, SERVO_LENGTH, MASS_SERVO), "servo")
+        servo = self.create_component(
+                geometry=Box(SERVO_HEIGHT, SERVO_WIDTH, SERVO_LENGTH, MASS_SERVO),
+                label="servo")
         servo.set_position(Vector3(z_servo, 0, X_SERVO))
 
         # Initialize the base
         spoke_mass = MASS_WHEG / 4.0
         wheg_base_radius = WHEG_BASE_RADIUS
-        wheg_base = self.create_component(Cylinder(wheg_base_radius, WHEG_THICKNESS, spoke_mass), "wheg_base")
+        wheg_base = self.create_component(
+                geometry=Cylinder(wheg_base_radius, WHEG_THICKNESS, spoke_mass),
+                label="wheg_base")
         wheg_base.set_position(Vector3(z_servo, 0, X_WHEG_BASE))
 
         # Initialize the spokes
-        spoke1 = self.create_component(Box(self.radius, WHEG_WIDTH, WHEG_THICKNESS, spoke_mass), "spoke1")
-        spoke2 = self.create_component(Box(self.radius, WHEG_WIDTH, WHEG_THICKNESS, spoke_mass), "spoke2")
-        spoke3 = self.create_component(Box(self.radius, WHEG_WIDTH, WHEG_THICKNESS, spoke_mass), "spoke3")
+        spoke1 = self.create_component(
+                geometry=Box(self.radius, WHEG_WIDTH, WHEG_THICKNESS, spoke_mass),
+                label="spoke1")
+        spoke2 = self.create_component(
+                geometry=Box(self.radius, WHEG_WIDTH, WHEG_THICKNESS, spoke_mass),
+                label="spoke2")
+        spoke3 = self.create_component(
+                geometry=Box(self.radius, WHEG_WIDTH, WHEG_THICKNESS, spoke_mass),
+                label="spoke3")
 
         # Rotate the spokes
         spokes = [spoke1, spoke2, spoke3]

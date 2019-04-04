@@ -26,9 +26,9 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 VirtualSensor::VirtualSensor(
     ::gazebo::physics::ModelPtr _model,
-    std::string _partId,
-    std::string _sensorId,
-    unsigned int _inputs)
+    const std::string _partId,
+    const std::string _sensorId,
+    const unsigned int _inputs)
     : model_(_model)
     , partId_(_partId)
     , sensorId_(_sensorId)

@@ -4,13 +4,9 @@ cmake_minimum_required (VERSION 2.8.12)
 # Project name
 project (Revolve)
 
-# _____________________________________________________________________________
-
-# Added for BO
-# Allow Eigen/core to be included via <Eigen/core>
-
 # Initial setups
 # _____________________________________________________________________________
+
 # CMake flag to help local projects find the build dir
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../build/lib")
@@ -81,8 +77,6 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 # Finding dependencies
 # _____________________________________________________________________________
 
-
-
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -126,13 +120,11 @@ include_directories(
     ${GAZEBO_PROTO_INCLUDE}
 )
 
-
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 
 # Directory where the .proto files reside within revolve
-set(SPEC_DIR "${CMAKE_SOURCE_DIR}/cpprevolve/revolve/msgs")
-message(${SPEC_DIR})
+set(SPEC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/revolve/msgs")
 
 # All protobuf files we need, including the Gazebo ones
 file(GLOB_RECURSE REVOLVE_PROTOS ${SPEC_DIR}/*.proto)
@@ -154,7 +146,6 @@ endif()
 
 # Include the directory where the protobuf files will be placed
 include_directories(${PROTO_OUTPUT_BASE})
-
 
 file(MAKE_DIRECTORY ${PROTO_OUTPUT_BASE}/revolve/msgs)
 foreach(RV_PROTO ${REVOLVE_PROTOS})
@@ -209,8 +200,6 @@ add_library(
     revolve-proto STATIC
     ${PROTO_SRCS}
 )
-
-
 set_target_properties(revolve-proto PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(
     revolve-proto

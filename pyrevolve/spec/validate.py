@@ -5,11 +5,6 @@ from pyrevolve.spec import NeuralNetImplementation
 from pyrevolve.spec import PartSpec
 from pyrevolve.spec import NeuronSpec
 
-from pyrevolve.spec.msgs import Robot
-from pyrevolve.spec.msgs import BodyPart
-from pyrevolve.spec.msgs import NeuralConnection
-from pyrevolve.spec.msgs import BodyConnection
-
 from pyrevolve.spec.exception import err
 
 
@@ -83,17 +78,17 @@ class BodyValidator(Validator):
         :type conn: BodyConnection
         :return:
         """
-        if conn.src < 0 or conn.src >= spec.arity:
+        if conn.src_slot < 0 or conn.src_slot >= spec.arity:
             err("Part '{}' of type '{}' does not have source slot {}"
-                .format(parent.id, parent.type, conn.src))
+                .format(parent.id, parent.type, conn.src_slot))
 
         slots = self.part_slots[parent.id]
-        if conn.src in slots:
+        if conn.src_slot in slots:
             err("Trying to attach to already occupied slot {} of part '{}'"
-                .format(conn.src, parent.id))
+                .format(conn.src_slot, parent.id))
 
-        slots.add(conn.src)
-        self._process_body_part(conn.part, conn.dst)
+        slots.add(conn.src_slot)
+        self._process_body_part(conn.part, conn.dst_slot)
 
     def validate(self):
         """

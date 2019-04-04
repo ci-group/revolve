@@ -41,12 +41,14 @@ if __name__ == "__main__":
         manager_cmd=settings.manager,
         manager_args=manager_settings,
         world_file=settings.world,
-        simulator_cmd="gazebo",
+        simulator_cmd=settings.simulator_cmd,
         simulator_args=["--verbose"],
         plugins_dir_path=os.path.join(rvpath, 'build', 'lib'),
         models_dir_path=os.path.join(rvpath, 'models')
     )
 
-    ret = supervisor.launch()
-    # ret = supervisor.launch_simulator()
+    if settings.manager is None:
+        ret = supervisor.launch_simulator()
+    else:
+        ret = supervisor.launch()
     sys.exit(ret)

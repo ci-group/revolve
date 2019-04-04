@@ -145,7 +145,7 @@ class Supervisor(object):
               )
 
     def launch_simulator(self):
-        print("WARNING! launching only simulator, no manager")
+        print("\nNOTE: launching only a simulator, not a manager script!\n")
         self._launch_simulator()
 
         # Wait for the end
@@ -195,7 +195,7 @@ class Supervisor(object):
 
             # We could do this a lot less often, but this way we get
             # output once every second.
-            time.sleep(1)
+            time.sleep(0.1)
 
     def _pass_through_stdout(self):
         """
@@ -293,7 +293,8 @@ class Supervisor(object):
         :return:
         """
         print("Launching experiment manager...")
-        args = ['python3', '-u'] + self.manager_cmd + self.manager_args
+        os.environ['PYTHONUNBUFFERED'] = 'True'
+        args = self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
         process = subprocess.Popen(
                 args,

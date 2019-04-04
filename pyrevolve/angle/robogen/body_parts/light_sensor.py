@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import sys
-
 # Revolve imports
 from ....build.sdf import Box
 from ....build.util import in_grams, in_mm

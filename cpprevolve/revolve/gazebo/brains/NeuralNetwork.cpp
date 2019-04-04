@@ -71,12 +71,12 @@ NeuralNetwork::NeuralNetwork(
       this);
 
   // Initialize weights, input and states to zero by default
-  std::memset(this->inputWeights_, 0, sizeof(inputWeights_));
-  std::memset(outputWeights_, 0, sizeof(outputWeights_));
-  std::memset(hiddenWeights_, 0, sizeof(hiddenWeights_));
-  std::memset(state1_, 0, sizeof(state1_));
-  std::memset(state2_, 0, sizeof(state2_));
-  std::memset(input_, 0, sizeof(input_));
+  std::memset(this->inputWeights_, 0, sizeof(this->inputWeights_));
+  std::memset(this->outputWeights_, 0, sizeof(this->outputWeights_));
+  std::memset(this->hiddenWeights_, 0, sizeof(this->hiddenWeights_));
+  std::memset(this->state1_, 0, sizeof(this->state1_));
+  std::memset(this->state2_, 0, sizeof(this->state2_));
+  std::memset(this->input_, 0, sizeof(this->input_));
 
   // We now setup the neural network and its parameters. The end result
   // of this operation should be that we can iterate/update all sensors in
@@ -86,18 +86,22 @@ NeuralNetwork::NeuralNetwork(
   // motors, creating the adequate neurons in place as we do so.
 
   // Map of ID to neuron element
+  // neuron.id ---> sdf_element
   std::map< std::string, sdf::ElementPtr > neuronMap;
+  std::map< std::string, std::vector<sdf::ElementPtr> > neuronPartIdMap;
 
-  // List of all hidden neurons for convenience
+  // List of all hidden neurons (ids) for convenience
   std::vector< std::string > hiddenNeurons;
 
-  // Set for tracking all collected input/output neurons
+  // Set for tracking all collected input/output neurons (ids)
   std::set< std::string > toProcess;
+
+  auto controller_settings = _settings->GetElement("rv:controller");
 
   // Fetch the first neuron; note the HasElement call is necessary to
   // prevent SDF from complaining if no neurons are present.
-  auto neuron = _settings->HasElement("rv:neuron")
-                ? _settings->GetElement("rv:neuron")
+  auto neuron = controller_settings->HasElement("rv:neuron")
+                ? controller_settings->GetElement("rv:neuron")
                 : sdf::ElementPtr();
   while (neuron)
   {
@@ -109,8 +113,9 @@ NeuralNetwork::NeuralNetwork(
     }
     auto layer = neuron->GetAttribute("layer")->GetAsString();
     auto neuronId = neuron->GetAttribute("id")->GetAsString();
+    auto neuronPartId = neuron->GetAttribute("part_id")->GetAsString();
 
-    if (this->layerMap_.count(neuronId))
+    if (this->layerMap_.count(neuronId) == 1)
     {
       std::cerr << "Duplicate neuron ID '" << neuronId << "'" << std::endl;
       throw std::runtime_error("Robot brain error");
@@ -119,6 +124,12 @@ NeuralNetwork::NeuralNetwork(
     this->layerMap_[neuronId] = layer;
     neuronMap[neuronId] = neuron;
 
+    if (neuronPartIdMap.find(neuronPartId) == neuronPartIdMap.end()) {
+        neuronPartIdMap[neuronPartId] = std::vector<sdf::ElementPtr>();
+    }
+    neuronPartIdMap[neuronPartId].push_back(neuron);
+
+    // INPUT LAYER
     if ("input" == layer)
     {
       if (this->nInputs_ >= MAX_INPUT_NEURONS)
@@ -132,6 +143,7 @@ NeuralNetwork::NeuralNetwork(
       toProcess.insert(neuronId);
       ++(this->nInputs_);
     }
+    // OUTPUT LAYER
     else if ("output" == layer)
     {
       if (this->nOutputs_ >= MAX_OUTPUT_NEURONS)
@@ -143,8 +155,9 @@ NeuralNetwork::NeuralNetwork(
       }
 
       toProcess.insert(neuronId);
-      ++nOutputs_;
+      ++(this->nOutputs_);
     }
+    // HIDDEN LAYER
     else if ("hidden" == layer)
     {
       if (hiddenNeurons.size() >= MAX_HIDDEN_NEURONS)
@@ -157,7 +170,7 @@ NeuralNetwork::NeuralNetwork(
       }
 
       hiddenNeurons.push_back(neuronId);
-     ++nHidden_;
+      ++(this->nHidden_);
     }
     else
     {
@@ -171,77 +184,87 @@ NeuralNetwork::NeuralNetwork(
   // Create motor output neurons at the correct position
   // We iterate a part's motors and just assign every
   // neuron we find in order.
-  std::map< std::string, unsigned int > outputCountMap;
   unsigned int outputsIndex = 0;
   for (const auto &motor : _motors)
   {
-    auto partId = motor->PartId();
-    if (not outputCountMap.count(partId))
+    std::string partId = motor->PartId();
+    auto details = neuronPartIdMap.find(partId);
+    if (details == neuronPartIdMap.end())
     {
-      outputCountMap[partId] = 0;
+      std::cerr << "Required output neuron " << partId
+                << " for motor could not be located" << std::endl;
+      throw std::runtime_error("Robot brain error");
     }
+
+    const auto &neuron_list = details->second;
+    auto neuron_iter = neuron_list.cbegin();
 
     for (unsigned int i = 0, l = motor->Outputs(); i < l; ++i)
     {
-      std::stringstream neuronId;
-      neuronId << partId << "-out-" << outputCountMap[partId];
-      ++outputCountMap[partId];
+        while (not ((*neuron_iter)->GetAttribute("layer")->GetAsString() == "output"))
+        {
+            ++neuron_iter;
+            if (neuron_iter == neuron_list.cend())
+            {
+                std::cerr << "Required input neuron " << partId
+                          << " for sensor could not be located" << std::endl;
+                throw std::runtime_error("Robot brain error");
+            }
+        }
+      std::string neuronId = (*neuron_iter)->GetAttribute("id")->GetAsString();
 
-      auto details = neuronMap.find(neuronId.str());
-      if (details == neuronMap.end())
-      {
-        std::cerr << "Required output neuron " << neuronId.str()
-                  << " for motor could not be located" << std::endl;
-        throw std::runtime_error("Robot brain error");
-      }
-
-      neuronHelper(&params_[outputsIndex * MAX_NEURON_PARAMS],
-                   &types_[outputsIndex],
-                   details->second);
-      positionMap_[neuronId.str()] = outputsIndex;
-      toProcess.erase(neuronId.str());
+      neuronHelper(&this->params_[outputsIndex * MAX_NEURON_PARAMS],
+                   &this->types_[outputsIndex],
+                   *neuron_iter);
+      this->positionMap_[neuronId] = outputsIndex;
+      toProcess.erase(neuronId);
       ++outputsIndex;
+      ++neuron_iter;
     }
   }
 
   // Create sensor input neurons
-  std::map< std::string, unsigned int > inputCountMap;
   unsigned int inputsIndex = 0;
   for (const auto &sensor : _sensors)
   {
     auto partId = sensor->PartId();
-
-    if (not inputCountMap.count(partId))
+    auto details = neuronPartIdMap.find(partId);
+    if (details == neuronPartIdMap.end())
     {
-      inputCountMap[partId] = 0;
+      std::cerr << "Required input neuron list " << partId
+                << " for sensor could not be located" << std::endl;
+      throw std::runtime_error("Robot brain error");
     }
+    const auto &neuron_list = details->second;
+    auto neuron_iter = neuron_list.cbegin();
 
     for (unsigned int i = 0, l = sensor->Inputs(); i < l; ++i)
     {
-      std::stringstream neuronId;
-      neuronId << partId << "-in-" << inputCountMap[partId];
-      ++inputCountMap[partId];
-
-      auto details = neuronMap.find(neuronId.str());
-      if (details == neuronMap.end())
+      while (not ((*neuron_iter)->GetAttribute("layer")->GetAsString() == "input"))
       {
-        std::cerr << "Required input neuron " << neuronId.str()
-                  << " for sensor could not be located" << std::endl;
-        throw std::runtime_error("Robot brain error");
+          ++neuron_iter;
+          if (neuron_iter == neuron_list.cend())
+          {
+              std::cerr << "Required input neuron " << partId
+                        << " for sensor could not be located" << std::endl;
+              throw std::runtime_error("Robot brain error");
+          }
       }
+      std::string neuronId = (*neuron_iter)->GetAttribute("id")->GetAsString();
 
       // Input neurons can currently not have a type, so
       // there is no need to process it.
-      positionMap_[neuronId.str()] = inputsIndex;
-      toProcess.erase(neuronId.str());
+      this->positionMap_[neuronId] = inputsIndex;
+      toProcess.erase(neuronId);
       ++inputsIndex;
+      ++neuron_iter;
     }
   }
 
   // Check if there are any input / output neurons which have not
   // yet been processed. This is an error - every input / output
   // neuron should be connected to at least a virtual motor / sensor.
-  if (toProcess.empty())
+  if (not toProcess.empty())
   {
     std::cerr << "The following input / output neurons were"
         " defined, but not attached to any sensor / motor:" << std::endl;
@@ -261,18 +284,18 @@ NeuralNetwork::NeuralNetwork(
   for (const auto &neuronId : hiddenNeurons)
   {
     // Position relative to hidden neurons
-    positionMap_[neuronId] = outputsIndex;
+    this->positionMap_[neuronId] = outputsIndex;
 
     // Offset with output neurons within params / types
-    auto pos = nOutputs_ + outputsIndex;
-    neuronHelper(&params_[pos * MAX_NEURON_PARAMS],
-                 &types_[pos],
+    auto pos = this->nOutputs_ + outputsIndex;
+    neuronHelper(&this->params_[pos * MAX_NEURON_PARAMS],
+                 &this->types_[pos],
                  neuronMap[neuronId]);
     ++outputsIndex;
   }
 
   // Decode connections
-  nNonInputs_ = nOutputs_ + nHidden_;
+  this->nNonInputs_ = this->nOutputs_ + this->nHidden_;
   auto connection = _settings->HasElement("rv:neural_connection")
                     ? _settings->GetElement("rv:neural_connection")
                     : sdf::ElementPtr();
@@ -359,19 +382,19 @@ void NeuralNetwork::Step(const double _time)
         /* params are bias, gain */
         curNeuronActivation -= this->params_[base];
         nextState[i] =
-            1.0 / (1.0 + exp(-params_[base + 1] * curNeuronActivation));
+            1.0 / (1.0 + exp(-(this->params_[base + 1]) * curNeuronActivation));
         break;
       case SIMPLE:
         /* linear, params are bias, gain */
-        curNeuronActivation -= params_[base];
-        nextState[i] = params_[base + 1] * curNeuronActivation;
+        curNeuronActivation -= this->params_[base];
+        nextState[i] = this->params_[base + 1] * curNeuronActivation;
         break;
       case OSCILLATOR:
       { // Use the block to prevent "crosses initialization" error
         /* params are period, phase offset, gain (amplitude) */
-        double period = params_[base];
-        double phaseOffset = params_[base + 1];
-        double gain = params_[base + 2];
+        double period = this->params_[base];
+        double phaseOffset = this->params_[base + 1];
+        double gain = this->params_[base + 2];
 
         /* Value in [0, 1] */
         nextState[i] = ((sin((2.0 * M_PI / period) *
@@ -405,7 +428,7 @@ void NeuralNetwork::Update(
   unsigned int p = 0;
   for (const auto &sensor : _sensors)
   {
-    sensor->Read(&input_[p]);
+    sensor->Read(&this->input_[p]);
     p += sensor->Inputs();
   }
 
@@ -413,7 +436,7 @@ void NeuralNetwork::Update(
 
   // Since the output neurons are the first in the state
   // array we can just use it to update the motors directly.
-  auto output = flipState_ ? &state2_[0] : &state1_[0];
+  auto output = this->flipState_ ? &this->state2_[0] : &this->state1_[0];
 
   // Send new signals to the motors
   p = 0;
@@ -427,20 +450,20 @@ void NeuralNetwork::Update(
 /////////////////////////////////////////////////
 void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
 {
-  boost::mutex::scoped_lock lock(networkMutex_);
+  boost::mutex::scoped_lock lock(this->networkMutex_);
 
   unsigned int i, j;
   for (i = 0; i < (unsigned int)_request->remove_hidden_size(); ++i)
   {
     // Find the neuron + position
     auto id = _request->remove_hidden(i);
-    if (not positionMap_.count(id))
+    if (not this->positionMap_.count(id))
     {
       std::cerr << "Unknown neuron ID `" << id << "`" << std::endl;
       throw std::runtime_error("Robot brain error");
     }
 
-    if ("hidden" not_eq layerMap_[id])
+    if ("hidden" not_eq this->layerMap_[id])
     {
       std::cerr
           << "Cannot remove neuron ID `"
@@ -450,48 +473,48 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
       throw std::runtime_error("Robot brain error");
     }
 
-    auto pos = positionMap_[id];
-    positionMap_.erase(id);
-    layerMap_.erase(id);
+    auto pos = this->positionMap_[id];
+    this->positionMap_.erase(id);
+    this->layerMap_.erase(id);
 
     // Shift types
-    auto s = sizeof(types_[0]);
+    auto s = sizeof(this->types_[0]);
     std::memmove(
         // Position shifted one type to the left
-        types_ + (pos + nOutputs_) * s,
+        this->types_ + (pos + this->nOutputs_) * s,
 
         // Position of next neuron type
-        types_ + (pos + nOutputs_ + 1) * s,
+        this->types_ + (pos + this->nOutputs_ + 1) * s,
 
         // # of hidden neurons beyond this one
-        s * (nHidden_ - pos - 1));
+        s * (this->nHidden_ - pos - 1));
 
     // Shift parameters
-    s = sizeof(params_[0]);
+    s = sizeof(this->params_[0]);
     std::memmove(
         // Position of item to remove
-        params_ + (pos + nOutputs_) * MAX_NEURON_PARAMS * s,
+        this->params_ + (pos + this->nOutputs_) * MAX_NEURON_PARAMS * s,
 
         // Position of next neuron type
-        params_ + (pos + nOutputs_ + 1) * MAX_NEURON_PARAMS * s,
+        this->params_ + (pos + this->nOutputs_ + 1) * MAX_NEURON_PARAMS * s,
 
         // # of hidden neurons beyond this one
-        (nHidden_ - pos - 1) * MAX_NEURON_PARAMS * s);
+        (this->nHidden_ - pos - 1) * MAX_NEURON_PARAMS * s);
 
     // Reposition items in weight arrays. We start with the weights of
     // connections pointing *to* the neuron to be removed. For each entry in
     // each of the three weights arrays we have to move all hidden connection
     // weights down, then zero out the last entry
-    s = sizeof(inputWeights_[0]);
+    s = sizeof(this->inputWeights_[0]);
     double *weightArrays[] = {
-        inputWeights_,
-        outputWeights_,
-        hiddenWeights_
+        this->inputWeights_,
+        this->outputWeights_,
+        this->hiddenWeights_
     };
     unsigned int sizes[] = {
-        nInputs_,
-        nOutputs_,
-        nHidden_
+        this->nInputs_,
+        this->nOutputs_,
+        this->nHidden_
     };
 
     for (size_t k = 0; k < 3; ++k)
@@ -503,17 +526,17 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
       {
         std::memmove(
             // Position of item to remove
-            weights + (nOutputs_ + pos) * s,
+            weights + (this->nOutputs_ + pos) * s,
 
             // Position of next item
-            weights + (nOutputs_ + pos + 1) * s,
+            weights + (this->nOutputs_ + pos + 1) * s,
 
             // # of possible hidden neurons beyond this one
             (MAX_HIDDEN_NEURONS - pos - 1) * s);
 
         // Zero out the last item in case a connection that corresponds to it
         // is ever added.
-        weights[nOutputs_ + pos] = 0;
+        weights[this->nOutputs_ + pos] = 0;
       }
     }
 
@@ -522,39 +545,39 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
     // removed by shifting down all items beyond it.
     std::memmove(
         // Position of the item to remove
-        hiddenWeights_ + pos * MAX_NON_INPUT_NEURONS * s,
+        this->hiddenWeights_ + pos * MAX_NON_INPUT_NEURONS * s,
 
         // Position of the next item
-        hiddenWeights_ + (pos + 1) * MAX_NON_INPUT_NEURONS * s,
+        this->hiddenWeights_ + (pos + 1) * MAX_NON_INPUT_NEURONS * s,
 
         // Remaining number of memory items
         (MAX_HIDDEN_NEURONS - pos - 1) * MAX_NON_INPUT_NEURONS * s);
 
     // Zero the remaining entries at the end
-    std::memset(hiddenWeights_ + (MAX_HIDDEN_NEURONS - 1) * s,
+    std::memset(this->hiddenWeights_ + (MAX_HIDDEN_NEURONS - 1) * s,
            0,
            MAX_NON_INPUT_NEURONS * s);
 
     // Decrement the entry in the `positionMap` for all hidden neurons above
     // this one.
-    for (auto iter = positionMap_.begin();
-         iter not_eq positionMap_.end(); ++iter)
+    for (auto iter = this->positionMap_.begin();
+         iter not_eq this->positionMap_.end(); ++iter)
     {
-      auto layer = layerMap_[iter->first];
-      if ("hidden" == layer and positionMap_[iter->first] > pos)
+      auto layer = this->layerMap_[iter->first];
+      if ("hidden" == layer and this->positionMap_[iter->first] > pos)
       {
-        --positionMap_[iter->first];
+        --(this->positionMap_[iter->first]);
       }
     }
 
-    --nHidden_;
-    --nNonInputs_;
+    --(this->nHidden_);
+    --(this->nNonInputs_);
   }
 
   // Add new requested hidden neurons
   for (i = 0; i < (unsigned int)_request->add_hidden_size(); ++i)
   {
-    if (nHidden_ >= MAX_HIDDEN_NEURONS)
+    if (this->nHidden_ >= MAX_HIDDEN_NEURONS)
     {
       std::cerr
           << "Cannot add hidden neuron; the max ("
@@ -566,19 +589,23 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
 
     auto neuron = _request->add_hidden(i);
     const auto id = neuron.id();
-    if (layerMap_.count(id))
+    if (this->layerMap_.count(id))
     {
       std::cerr << "Adding duplicate neuron ID `" << id << "`" << std::endl;
       throw std::runtime_error("Robot brain error");
     }
 
-    positionMap_[id] = nHidden_;
-    layerMap_[id] = "hidden";
+    this->positionMap_[id] = this->nHidden_;
+    this->layerMap_[id] = "hidden";
 
-    unsigned int pos = nOutputs_ + nHidden_;
-    neuronHelper(&params_[pos * MAX_NEURON_PARAMS], &types_[pos], neuron);
-    ++nHidden_;
-    ++nNonInputs_;
+    unsigned int pos = this->nOutputs_ + this->nHidden_;
+    neuronHelper(
+        &this->params_[pos * MAX_NEURON_PARAMS],
+        &this->types_[pos],
+        neuron);
+
+    ++(this->nHidden_);
+    ++(this->nNonInputs_);
   }
 
   // Update parameters of existing neurons
@@ -586,14 +613,14 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
   {
     auto neuron = _request->set_parameters(i);
     const auto id = neuron.id();
-    if (not positionMap_.count(id))
+    if (not this->positionMap_.count(id))
     {
       std::cerr << "Unknown neuron ID `" << id << "`" << std::endl;
       throw std::runtime_error("Robot brain error");
     }
 
-    auto pos = positionMap_[id];
-    auto layer = layerMap_[id];
+    auto pos = this->positionMap_[id];
+    auto layer = this->layerMap_[id];
 
     if ("input" == layer)
     {
@@ -601,7 +628,10 @@ void NeuralNetwork::Modify(ConstModifyNeuralNetworkPtr &_request)
       throw std::runtime_error("Robot brain error");
     }
 
-    neuronHelper(&params_[pos * MAX_NEURON_PARAMS], &types_[pos], neuron);
+    neuronHelper(
+        &this->params_[pos * MAX_NEURON_PARAMS],
+        &this->types_[pos],
+        neuron);
   }
 
   // Set weights of new or existing connections
@@ -620,23 +650,23 @@ void NeuralNetwork::ConnectionHelper(
     const std::string &_dst,
     const double _weight)
 {
-  if (not layerMap_.count(_src))
+  if (not this->layerMap_.count(_src))
   {
     std::cerr << "Source neuron '" << _src << "' is unknown." << std::endl;
     throw std::runtime_error("Robot brain error");
   }
 
-  if (not layerMap_.count(_dst))
+  if (not this->layerMap_.count(_dst))
   {
     std::cerr << "Destination neuron '" << _dst << "' is unknown." << std::endl;
     throw std::runtime_error("Robot brain error");
   }
 
-  auto srcLayer = layerMap_[_src];
-  auto dstLayer = layerMap_[_dst];
+  auto srcLayer = this->layerMap_[_src];
+  auto dstLayer = this->layerMap_[_dst];
 
-  unsigned int srcNeuronPos = positionMap_[_src],
-      dstNeuronPos = positionMap_[_dst];
+  unsigned int srcNeuronPos = this->positionMap_[_src],
+      dstNeuronPos = this->positionMap_[_dst];
 
   if ("input" == dstLayer)
   {
@@ -650,22 +680,22 @@ void NeuralNetwork::ConnectionHelper(
   else if ("hidden" == dstLayer)
   {
     // Offset with output neurons for hidden neuron position
-    dstNeuronPos += nOutputs_;
+    dstNeuronPos += this->nOutputs_;
   }
 
   // Determine the index of the weight.
   unsigned int idx = (srcNeuronPos * MAX_NON_INPUT_NEURONS) + dstNeuronPos;
   if ("input" == srcLayer)
   {
-    inputWeights_[idx] = _weight;
+    this->inputWeights_[idx] = _weight;
   }
   else if ("output" == srcLayer)
   {
-    outputWeights_[idx] = _weight;
+    this->outputWeights_[idx] = _weight;
   }
   else
   {
-    hiddenWeights_[idx] = _weight;
+    this->hiddenWeights_[idx] = _weight;
   }
 }
 

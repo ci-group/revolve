@@ -12,9 +12,9 @@ from __future__ import print_function
 import sys
 import random
 
-from sdfbuilder.math import Vector3
+from pyrevolve.sdfbuilder.math import Vector3
 from .generated_sdf import generate_robot, builder, robot_to_sdf
-from ..gazebo import connect, get_analysis_robot, BodyAnalyzer
+from ..gazebo import get_analysis_robot, BodyAnalyzer
 
 import asyncio
 
@@ -32,7 +32,7 @@ async def analysis_func():
     analyzer = await (BodyAnalyzer.create(address=("127.0.0.1", 11346)))
 
     # Try a maximum of 100 times
-    for i in range(100):
+    for _ in range(100):
         # Generate a new robot
         robot = generate_robot()
 

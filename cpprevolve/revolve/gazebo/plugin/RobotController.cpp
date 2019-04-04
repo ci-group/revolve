@@ -78,28 +78,28 @@ void RobotController::Load(
     return;
   }
 
-  auto settings = _sdf->GetElement("rv:robot_config");
+  auto robotConfiguration = _sdf->GetElement("rv:robot_config");
 
-  if (settings->HasElement("rv:update_rate"))
+  if (robotConfiguration->HasElement("rv:update_rate"))
   {
-    auto updateRate = settings->GetElement("rv:update_rate")->Get< double >();
+    auto updateRate = robotConfiguration->GetElement("rv:update_rate")->Get< double >();
     this->actuationTime_ = 1.0 / updateRate;
   }
 
   // Load motors
   this->motorFactory_ = this->MotorFactory(_parent);
-  this->LoadMotors(settings);
+  this->LoadActuators(robotConfiguration);
 
   // Load sensors
   this->sensorFactory_ = this->SensorFactory(_parent);
-  this->LoadSensors(settings);
+  this->LoadSensors(robotConfiguration);
 
   // Load brain, this needs to be done after the motors and sensors so they
   // can potentially be reordered.
-  this->LoadBrain(settings);
+  this->LoadBrain(robotConfiguration);
 
   // Call the battery loader
-  this->LoadBattery(settings);
+  this->LoadBattery(robotConfiguration);
 
   // Call startup function which decides on actuation
   this->Startup(_parent, _sdf);
@@ -134,31 +134,40 @@ void RobotController::UpdateBattery(ConstRequestPtr &_request)
 }
 
 /////////////////////////////////////////////////
-void RobotController::LoadMotors(const sdf::ElementPtr _sdf)
+void RobotController::LoadActuators(const sdf::ElementPtr _sdf)
 {
-  if (not _sdf->HasElement("rv:motor"))
+  if (not _sdf->HasElement("rv:brain")
+      or not _sdf->GetElement("rv:brain")->HasElement("rv:actuators"))
   {
     return;
   }
+  auto actuators = _sdf->GetElement("rv:brain")->GetElement("rv:actuators");
 
-  auto motor = _sdf->GetElement("rv:motor");
-  while (motor)
+  // Load actuators of type servomotor
+  if (actuators->HasElement("rv:servomotor"))
   {
-    auto motorObj = this->motorFactory_->Create(motor);
-    motors_.push_back(motorObj);
-    motor = motor->GetNextElement("rv:motor");
+    auto servomotor = actuators->GetElement("rv:servomotor");
+    while (servomotor)
+    {
+      auto servomotorObj = this->motorFactory_->Create(servomotor);
+      motors_.push_back(servomotorObj);
+      servomotor = servomotor->GetNextElement("rv:servomotor");
+    }
   }
 }
 
 /////////////////////////////////////////////////
 void RobotController::LoadSensors(const sdf::ElementPtr _sdf)
 {
-  if (not _sdf->HasElement("rv:sensor"))
+  if (not _sdf->HasElement("rv:brain")
+      or not _sdf->GetElement("rv:brain")->HasElement("rv:sensors"))
   {
     return;
   }
+  auto sensors = _sdf->GetElement("rv:brain")->GetElement("rv:sensors");
 
-  auto sensor = _sdf->GetElement("rv:sensor");
+  // Load sensors
+  auto sensor = sensors->GetElement("rv:sensor");
   while (sensor)
   {
     auto sensorObj = this->sensorFactory_->Create(sensor);
@@ -192,12 +201,13 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
 
   auto brain = _sdf->GetElement("rv:brain");
-  auto learner = brain->GetAttribute("learner")->GetAsString();
-  if ("ann" == learner)
+  auto controller = brain->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
+  auto learner = brain->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
+  if ("offline" == learner and "ann" == controller)
   {
     brain_.reset(new NeuralNetwork(this->model_, brain, motors_, sensors_));
   }
-  else if ("rlpower" == learner)
+  else if ("rlpower" == learner and "spline" == controller)
   {
     brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
   }

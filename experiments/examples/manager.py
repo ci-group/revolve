@@ -10,11 +10,9 @@ sys.path.append(newpath)
 
 from pygazebo.pygazebo import DisconnectError
 
+from pyrevolve import revolve_bot
 from pyrevolve import parser
-from pyrevolve.angle import Tree
-from pyrevolve.convert.yaml import yaml_to_proto
-from pyrevolve.sdfbuilder import Pose
-from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import World
 
 
@@ -24,34 +22,20 @@ async def run():
     """
     # Parse command line / file input arguments
     settings = parser.parse_args()
-    with open("experiments/examples/yaml/spider.yaml", 'r') as yaml_file:
-        bot_yaml = yaml_file.read()
-    settings.genome = "\n".join(bot_yaml.splitlines()).replace("\'", "\"")
 
+    # Load a robot from yaml
+    robot = revolve_bot.RevolveBot()
+    robot.load_file("experiments/examples/yaml/spider.yaml")
+
+    # Connect to the simulator and pause
     world = await World.create(settings)
+    await world.pause(True)
 
-    # These are useful when working with YAML
-    body_spec = world.builder.body_builder.spec
-    brain_spec = world.builder.brain_builder.spec
+    # Insert the robot in the simulator
+    insert_future = await world.insert_robot(robot, Vector3(0, 0, 0.05))
+    robot_manager = await insert_future
 
-    # Create a robot from YAML
-    proto_bot = yaml_to_proto(
-            body_spec=body_spec,
-            nn_spec=brain_spec,
-            yaml=bot_yaml)
-
-    robot_tree = Tree.from_body_brain(
-            body=proto_bot.body,
-            brain=proto_bot.brain,
-            body_spec=body_spec)
-    pose = Pose(position=Vector3(0, 0, 0.05))
-    future = await (world.insert_robot(
-            py_bot=robot_tree,
-            pose=pose,
-            # name="robot_26"
-    ))
-    robot_manager = await future
-
+    # Resume simulation
     await world.pause(False)
 
     # Start a run loop to do some stuff
@@ -59,7 +43,7 @@ async def run():
         # Print robot fitness every second
         print("Robot fitness is {fitness}".format(
                 fitness=robot_manager.fitness()))
-        await asyncio.sleep(50.0)
+        await asyncio.sleep(1.0)
 
 
 def main():

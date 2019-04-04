@@ -39,7 +39,7 @@ class BirthClinic(Model):
         self.height = max(arg1=min(height, scaled_height),
                           arg2=(SLICE_FRACTION * scaled_height))
 
-        mesh = Mesh("model://tol_robot/meshes/BirthClinic.dae", scale=scale)
+        mesh = Mesh("model://tol_arena/meshes/BirthClinic.dae", scale=scale)
 
         col = Collision("bc_col", mesh)
         surf = Element(tag_name="surface")

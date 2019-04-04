@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from pyrevolve.sdfbuilder import Model, Posable, Link
-from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.SDF.math import Vector3
 
 
 class Wall(Model):
@@ -21,8 +21,9 @@ class Wall(Model):
         :return:
         """
         super(Wall, self).__init__(name, static=True, **kwargs)
-        assert start.z == end.z, \
-            "Walls with different start / end z are undefined."
+        if start.z != end.z:
+            raise AssertionError(
+                    "Walls with different start / end z-axis are undefined.")
 
         center = 0.5 * (end + start)
         diff = end - start

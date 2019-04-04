@@ -24,6 +24,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include <gsl/gsl_spline.h>
 
@@ -38,9 +39,9 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 RLPower::RLPower(
     const ::gazebo::physics::ModelPtr &_model,
-    const sdf::ElementPtr &/* _node */,
+    const sdf::ElementPtr &_node,
     const std::vector< MotorPtr > &_motors,
-    const std::vector< SensorPtr > &/* _sensors */)
+    const std::vector< SensorPtr > &_sensors)
     : generationCounter_(0)
     , cycleStartTime_(-1)
     , startTime_(-1)
@@ -64,7 +65,10 @@ RLPower::RLPower(
   this->tau_ = 0.2;
   this->sourceYSize_ = 3;
 
-  this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
+  this->stepRate_ = std::max(
+          static_cast<size_t>(1),
+          this->numInterpolationPoints_ / this->sourceYSize_);
+
 
   // Generate first random policy
   auto numMotors = _motors.size();
@@ -404,7 +408,9 @@ void RLPower::IncreaseSplinePoints(const size_t _numSplines)
   this->sourceYSize_++;
 
   // LOG code
-  this->stepRate_ = this->numInterpolationPoints_ / this->sourceYSize_;
+  this->stepRate_ = std::max(
+          static_cast<size_t>(1),
+          this->numInterpolationPoints_ / this->sourceYSize_);
 
   // Copy current policy for resizing
   Policy policy_copy(this->currentPolicy_->size());

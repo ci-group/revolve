@@ -1,14 +1,12 @@
 from __future__ import absolute_import
 
-import asyncio
 from asyncio import Future
 
 import pygazebo
 from pygazebo.msg import request_pb2, response_pb2
 
-# Default connection address to keep things DRY. This is an array
-# rather than a tuple, so it is writeable as long as you change
-# the separate elements.
+# Default connection address to keep things DRY. This is an array rather than
+#  a tuple, so it is writeable as long as you change the separate elements.
 default_address = ["127.0.0.1", 11345]
 
 

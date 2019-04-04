@@ -2,12 +2,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import random
 import math
+import random
 
 from .representation import Tree, Node
-from ..generate import BodyGenerator, NeuralNetworkGenerator
+
 from ..spec.msgs import BodyPart, Neuron, Robot
+
 from ..util import decide
 
 
@@ -232,10 +233,10 @@ class Mutator(object):
         root = tree.root if in_place else tree.root.copy()
 
         # First, we delete a random subtree (this might create some space)
-        deleted, avg_del_len = self.delete_random_subtree(root)
+        _, avg_del_len = self.delete_random_subtree(root)
 
         # Next, we duplicate a random subtree
-        duplicated, avg_dup_len = self.duplicate_random_subtree(root)
+        _, avg_dup_len = self.duplicate_random_subtree(root)
 
         # We then swap two random subtrees
         self.swap_random_subtrees(root)
@@ -275,7 +276,7 @@ class Mutator(object):
             int(min(round(hidden_before * self.p_delete_hidden_neuron),
                     self.brain_gen.max_hidden - hidden_after))
         nodes = _node_list(root, root=True)
-        for i in range(n_new_hidden):
+        for _ in range(n_new_hidden):
             target = random.choice(nodes)
             nw = Neuron()
             nw.layer = "hidden"
@@ -396,7 +397,6 @@ class Mutator(object):
 
         # Pick a random node to duplicate
         dup = random.choice(nodes)
-        """ :type : Node """
 
         # We need a current protobuf body to call `choose_attachment`,
         # generate it here

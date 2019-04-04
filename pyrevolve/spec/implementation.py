@@ -5,8 +5,6 @@ import random
 
 from .exception import err
 
-from .msgs import BodyPart
-
 try:
     basestring
 except NameError:
@@ -394,7 +392,8 @@ class Parameterizable(object):
         :return: Dictionary of unserialized params
         :rtype: dict
         """
-        assert len(params) == len(self.parameters), "Invalid parameter length."
+        if len(params) != len(self.parameters):
+            raise AssertionError("Invalid parameter length.")
         return {
             param: params[
                 self.parameters[param][0]
@@ -448,8 +447,10 @@ class Parameterizable(object):
         nw_params = {}
         for name, (_, spec) in list(self.parameters.items()):
             epsilon = spec.epsilon
-            nw_params[name] = (1.0 - epsilon) * params[name] + \
-                              epsilon * spec.get_random_value()
+            nw_params[name] = \
+                (1.0 - epsilon) * \
+                params[name] + epsilon * \
+                spec.get_random_value()
 
         return self.serialize_params(nw_params) if serialize else nw_params
 

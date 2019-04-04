@@ -1,13 +1,16 @@
 from __future__ import absolute_import
 
 # Revolve imports
-from ....build.sdf import Box, Sensor
-from ....build.util import in_grams, in_mm
+from ....build.util import in_grams
+from ....build.util import in_mm
 
 # SDF builder imports
+from ....build.sdf import Box
 from pyrevolve.sdfbuilder.math import Vector3
 from pyrevolve.sdfbuilder.sensor import Sensor as SdfSensor
-from pyrevolve.sdfbuilder.structure import Box as BoxGeom, Mesh, Visual
+from pyrevolve.sdfbuilder.structure import Box as BoxGeom
+from pyrevolve.sdfbuilder.structure import Mesh
+from pyrevolve.sdfbuilder.structure import Visual
 
 # Local imports
 from .util import ColorMixin

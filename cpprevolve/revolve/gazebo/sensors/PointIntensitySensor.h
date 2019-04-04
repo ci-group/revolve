@@ -50,8 +50,8 @@ namespace revolve
       public: PointIntensitySensor(
           sdf::ElementPtr _sensor,
           ::gazebo::physics::ModelPtr _model,
-          std::string _partId,
-          std::string _sensorId);
+          const std::string &_partId,
+          const std::string &_sensorId);
 
       /// \brief Reads the battery value
       /// \brief[in,out] _input Input value to write on

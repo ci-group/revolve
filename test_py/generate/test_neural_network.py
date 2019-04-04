@@ -39,7 +39,9 @@ class TestNeuralNetGenerator(unittest.TestCase):
         inputs = ['input-1', 'input-2']
         outputs = ['output-1', 'output-2', 'output-3']
         brain = gen.generate(inputs=inputs, outputs=outputs)
-        self.assertTrue(brain.IsInitialized(), "Incomplete brain (seed %d)." % seed)
+        self.assertTrue(
+                brain.IsInitialized(),
+                "Incomplete brain (seed {seed}).".format(seed=seed))
 
         def get_neuron(neuron_id):
             return [neuron for neuron in brain.neuron if neuron.id == neuron_id]
@@ -47,15 +49,32 @@ class TestNeuralNetGenerator(unittest.TestCase):
         # All inputs should be present
         for neuron_id in inputs:
             neurons = get_neuron(neuron_id)
-            self.assertTrue(len(neurons) == 1, "Neuron %s not present." % neuron_id)
-            self.assertEquals("input", neurons[0].layer, "Neuron %s should have 'input' layer (seed %d)."
-                              % (neuron_id, seed))
+            self.assertTrue(
+                    len(neurons) == 1,
+                    "Neuron {n_id} not present.".format(n_id=neuron_id))
+            self.assertEqual(
+                    "input", neurons[0].layer,
+                    "Neuron {n_id} should have 'input' (seed {seed}).".format(
+                            n_id=neuron_id,
+                            seed=seed
+                    ))
 
         # All outputs should be present and have type oscillator
         for neuron_id in outputs:
             neurons = get_neuron(neuron_id)
-            self.assertTrue(len(neurons) == 1, "Neuron %s not present." % neuron_id)
-            self.assertEquals("output", neurons[0].layer, "Neuron %s should have 'output' layer (seed %d)."
-                              % (neuron_id, seed))
-            self.assertEquals("Oscillator", neurons[0].type, "Output neuron %s should all be "
-                                                             "oscillators (seed %d)." % (neuron_id, seed))
+            self.assertTrue(
+                    len(neurons) == 1,
+                    "Neuron {n_id} not present.".format(n_id=neuron_id))
+            self.assertEqual(
+                    "output", neurons[0].layer,
+                    "Neuron {n_id} should have 'output' (seed {seed}).".format(
+                            n_id=neuron_id,
+                            seed=seed
+                    ))
+            self.assertEqual(
+                    "Oscillator", neurons[0].type,
+                    "Output neuron {n_id} should all be oscillators (seed "
+                    "{seed}).".format(
+                            n_id=neuron_id,
+                            seed=seed
+                    ))
