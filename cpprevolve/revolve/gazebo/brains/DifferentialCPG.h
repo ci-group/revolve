@@ -174,13 +174,13 @@ namespace revolve
       private:
       Eigen::VectorXd bestSample;
 
-      /// \brief
+      /// \brief Starting time
       private:
       double startTime_;
 
       /// \brief BO attributes
       private:
-      size_t currentIteration;
+      size_t currentIteration = 0;
 
       /// \brief Max number of iterations learning is allowed
       private:
@@ -230,12 +230,18 @@ namespace revolve
       public:
       void getAnalytics();
 
-      public: size_t getNWeights();
-
+      /// \brief absolute bound on motor signal value
       public: double fMax;
+
+      /// \brief Holds the number of motors in the robot
       private: size_t nMotors;
 
+      /// \brief Helper for numerical integrator
       private: double previousTime = 0;
+
+      /// \brief Initial neuron state
+      private: double initState = M_SQRT2/2.f
+      ;
     };
   }
 }

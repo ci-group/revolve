@@ -115,33 +115,17 @@ DifferentialCPG::DifferentialCPG(
 
     this->positions_[motorId] = {coordX, coordY};
 
-    // Optimization and init boundaries
+    // TODO: Determine optimization boundaries
     this->rangeLB = 0.f;
     this->rangeUB = 1;
 
-    // Set random neuron state
-    std::random_device rd;
-    std::mt19937 mt(rd());
-    std::uniform_real_distribution< double > dist(0, 1);
-    double stateA = dist(mt) *(this->rangeUB - this->rangeLB) + this->rangeLB;
-    double stateB = dist(mt) *(this->rangeUB - this->rangeLB) + this->rangeLB;
-
     // Save neurons: bias/gain/state. Make sure initial states are of different sign.
-    this->neurons_[{coordX, coordY, 1}] = {0.f, 0.f, stateA}; // Neuron A
-    this->neurons_[{coordX, coordY, -1}] = {0.f, 0.f, stateB}; // Neuron B
-
-    std::cout << "Initial state A: " << stateA << std::endl;
-    std::cout << "Initial state B: " << stateB << std::endl;
+    this->neurons_[{coordX, coordY, 1}] = {0.f, 0.f, -this->initState}; // Neuron A
+    this->neurons_[{coordX, coordY, -1}] = {0.f, 0.f, this->initState}; // Neuron B
 
     // TODO: Add check for duplicate coordinates
     motor = motor->GetNextElement("rv:motor");
   }
-
-  // Random initialization of neuron connections
-  std::random_device rd;
-  std::mt19937 mt(rd());
-  std::uniform_real_distribution< double > dist(0, 1);
-  std::cout << dist(mt) << std::endl;
 
   // Add connections between neighbouring neurons
   int i = 0;
@@ -153,12 +137,12 @@ DifferentialCPG::DifferentialCPG(
 
     // Continue to next iteration in case there is already a connection between the 1 and -1 neuron.
     // These checks feel a bit redundant.
-    // if A->B connecitone exists.
+    // if A->B connection exists.
     if (this->connections_.count({x, y, 1, x, y, -1}))
     {
       continue;
     }
-    // if B->A connecitone exists:
+    // if B->A connection exists:
     if (this->connections_.count({x, y, -1, x, y, 1}))
     {
       continue;
@@ -176,7 +160,7 @@ DifferentialCPG::DifferentialCPG(
       int distX = std::abs(x - nearX);
       int distY = std::abs(y - nearY);
 
-      // For spider this works
+      // TODO: Verify for non-spiders
       if (((distX <=2 and distY == 0) or
            (distY <=2 and distX == 0) or
            (distX == 1 and distY == 1))
@@ -204,7 +188,7 @@ DifferentialCPG::DifferentialCPG(
   // Initialize BO
   this->BO_init();
 
-  // Get initial weights. TODO: Also do this whenever we have a new sample. Make sure weights are updated at each new init sapmle
+  // Get initial weights
   this->SetWeightMatrix();
 
   // Initiate the cpp Evaluator
@@ -239,13 +223,12 @@ struct DifferentialCPG::evaluationFunction{
 
 void DifferentialCPG::BO_init(){
   // Parameters
-  this->evaluationRate_ = 10.0;
-  this->currentIteration = 0;
-  this->nInitialSamples = 4;
+  this->evaluationRate_ = 200.0;
+  this->nInitialSamples = 20;
 
   // Maximum iterations that learning is allowed
   this->maxLearningIterations = 300;
-  this->noLearningIterations = 20; // Number of iterations to walk with best
+  this->noLearningIterations = 20; // Number of iterations to walk with best controller
 
   // Controller in the end
   this->rangeLB = -1.f;
@@ -272,7 +255,7 @@ void DifferentialCPG::BO_init(){
   */
 
   // Information purposes
-  std::cout << "Sample method: " << this->initializationMethod << std::endl;
+  std::cout << "Sample method: " << this->initializationMethod << ". Initial samples are: \n";
 
   // Random sampling
   if(this->initializationMethod == "RS") {
@@ -348,7 +331,6 @@ void DifferentialCPG::BO_init(){
       std::cout << "\n";
     }
   }
-
   else if(this->initializationMethod == "ORT"){
     // Set the number of blocks per dimension
     int nBlocks = (int)(log(this->nInitialSamples)/log(4));
@@ -356,11 +338,9 @@ void DifferentialCPG::BO_init(){
     // Working variables
     double myRange = 1.f/this->nInitialSamples;
 
-
     //if(((log(this->nInitialSamples)/log(4)) % 1.0) != 0){
     //  std::cout << "Warning: Initial number of samples is no power of 4 \n";
     //}
-
 
     // Initiate for each  dimension a vector holding a permutation of 1,...,nInitialSamples
     std::vector<std::vector<int>> allDimensions;
@@ -413,7 +393,7 @@ void DifferentialCPG::BO_init(){
         // Draw the sample
         double sample = myRange*availableRows.at(0) + ((double) rand() /
                                                        (RAND_MAX))*myRange;
-        initialSample(j) = sample; // This is wrong
+        initialSample(j) = sample;
 
         // Remove element from the list with available row numbers
         std::vector<int>::iterator position = std::find(availableRows.begin(),
@@ -571,23 +551,22 @@ void DifferentialCPG::Update(
  * Element (i,j) specifies weight from neuron i to neuron j in the system of ODEs
  */
 void DifferentialCPG::SetWeightMatrix(){
-  std::cout << this->currentIteration << "\n";
   // Initiate new matrix
-  std::cout << "Update weight matrix\n";
+  std::cout << "Iteration " << this->currentIteration << ", update weight matrix\n";
   std::vector<std::vector<double>> matrix;
 
   // Fill with zeroes
-  for(int i =0; i <this->neurons_.size(); i++)
+  for(size_t i =0; i <this->neurons_.size(); i++)
   {
     // Initialize row in matrix with zeros
     std::vector< double > row;
-    for (int j = 0; j < this->neurons_.size(); j++) row.push_back(0);
+    for (size_t j = 0; j < this->neurons_.size(); j++) row.push_back(0);
     matrix.push_back(row);
   }
 
   // Process A<->B connections
   int index = 0;
-  for(int i =0; i <this->neurons_.size(); i++)
+  for(size_t i =0; i <this->neurons_.size(); i++)
   {
     // Get correct index
     int c = 0;
@@ -609,7 +588,6 @@ void DifferentialCPG::SetWeightMatrix(){
   index++;
   int k = 0;
   std::vector<std::string> connectionsSeen;
-
 
 
   for (auto const &connection : this->connections_){
@@ -662,29 +640,18 @@ void DifferentialCPG::SetWeightMatrix(){
   // Update matrix
   this->weightMatrix = matrix;
 
-//  // TODO: Decide if we want to reset states
-//  int c = 0;
-//  for(auto const &neuron : this->neurons_){
-//    int x, y, z;
-//    std::tie(x, y, z) = neuron.first;
-//    if(z == -1){
-//      this->nextState_[c] = -0.707
-//    }
-//    else{
-//      this->nextState_[c] = 0.707;
-//    }
-//    c++;
-//  }
-
-  // Debugging
-  std::cout << "\n";
-  for(int i = 0; i < this->neurons_.size(); i ++){
-    for(int j = 0; j < this->neurons_.size(); j ++)
-    {
-      // Initiate matrix here.
-      std::cout << this->weightMatrix[i][j] << ",";
+  // Set states back to original value that is close to unit circle
+  int c = 0;
+  for(auto const &neuron : this->neurons_){
+    int x, y, z;
+    std::tie(x, y, z) = neuron.first;
+    if(z == -1){
+      this->nextState_[c] = this->initState;
     }
-    std::cout << "\n";
+    else{
+      this->nextState_[c] = -this->initState;
+    }
+    c++;
   }
 
 }
@@ -713,7 +680,7 @@ void DifferentialCPG::Step(
 
   // Copy values from nextstate into x for ODEINT
   state_type x(this->neurons_.size());
-  for (int i = 0; i < this->neurons_.size(); i++){
+  for (size_t i = 0; i < this->neurons_.size(); i++){
     x[i] = this->nextState_[i];
   }
 
@@ -725,9 +692,9 @@ void DifferentialCPG::Step(
   stepper.do_step(
       [this](const state_type &x, state_type &dxdt, double t)
       {
-        for(int i = 0; i < this->neurons_.size(); i++){
+        for(size_t i = 0; i < this->neurons_.size(); i++){
           dxdt[i] = 0;
-          for(int j = 0; j < this->neurons_.size(); j++)
+          for(size_t j = 0; j < this->neurons_.size(); j++)
           {
             dxdt[i] += x[j]*this->weightMatrix[j][i];
           }
@@ -738,7 +705,7 @@ void DifferentialCPG::Step(
       dt);
 
   // Copy values into nextstate
-  for (int i = 0; i < this->neurons_.size(); i++){
+  for (size_t i = 0; i < this->neurons_.size(); i++){
     this->nextState_[i] = x[i];
   }
 
@@ -775,11 +742,11 @@ void DifferentialCPG::Step(
   std::ofstream outputFile;
   outputFile.open(this->directoryName + "outputs.txt", std::ios::app);
 
-  for(int i = 0; i < this->neurons_.size(); i++){
+  for(size_t i = 0; i < this->neurons_.size(); i++){
     stateFile << this->nextState_[i] << ",";
   }
 
-  for(int i = 0; i < this->nMotors; i++){
+  for(size_t i = 0; i < this->nMotors; i++){
     outputFile << this->output_[i] << ",";
   }
 
@@ -895,7 +862,7 @@ void DifferentialCPG::getAnalytics(){
   std::ofstream mySamplesFile;
   mySamplesFile.open(directoryName + "samples.txt");
 
-  // Print to files: TODO: GET LAST FITNESS AS WELL S.T. WE CAN GET RID OF -1
+  // Print to files
   for(size_t i = 0; i < (this->observations.size()); i++){
     auto mySample = this->samples.at(i);
 
