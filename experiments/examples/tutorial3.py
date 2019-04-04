@@ -26,17 +26,13 @@ async def run():
     # Load a robot from yaml
     robot = revolve_bot.RevolveBot()
     robot.load_file("experiments/examples/yaml/spider.yaml")
-    robot.update_substrate()
 
     # Connect to the simulator and pause
     world = await World.create(settings)
     await world.pause(True)
 
-    await (await world.delete_model(robot.id))
-    await asyncio.sleep(2.5)
-
     # Insert the robot in the simulator
-    insert_future = await world.insert_robot(robot, Vector3(0, 0, 0.25))
+    insert_future = await world.insert_robot(robot, Vector3(0, 0, 0.05))
     robot_manager = await insert_future
 
     # Resume simulation
@@ -46,7 +42,7 @@ async def run():
     while True:
         # Print robot fitness every second
         print("Robot fitness is {fitness}".format(
-                fitness=robot_manager.fitness()))
+            fitness=robot_manager.fitness()))
         await asyncio.sleep(1.0)
 
 
