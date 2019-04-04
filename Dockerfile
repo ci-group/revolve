@@ -15,7 +15,8 @@ RUN apt-get install -y build-essential      \
                        python               \
                        python3-pip          \
                        libyaml-cpp-dev      \
-                       xsltproc
+                       xsltproc             \
+                       libcairo2-dev
 RUN apt-get install -y libgazebo9-dev gazebo9
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 

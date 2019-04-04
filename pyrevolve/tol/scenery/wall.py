@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from pyrevolve.sdfbuilder import Model, Posable, Link
-from pyrevolve.sdfbuilder.math import Vector3
+from pyrevolve.SDF.math import Vector3
 
 
 class Wall(Model):

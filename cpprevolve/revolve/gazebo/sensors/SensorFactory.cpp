@@ -51,7 +51,7 @@ SensorPtr SensorFactory::Sensor(
   {
     sensor.reset(new LightSensor(this->model_, _sensorSdf, _partId, _sensorId));
   }
-  else if ("touch" == _type)
+  else if ("contact" == _type) // touch sensor
   {
     sensor.reset(new TouchSensor(this->model_, _sensorSdf, _partId, _sensorId));
   }
@@ -66,6 +66,10 @@ SensorPtr SensorFactory::Sensor(
         this->model_,
         _partId,
         _sensorId));
+  }
+  else
+  {
+      std::clog << "Sensor type \"" << _type << "\" not recognized. Ignoring sensor" << std::endl;
   }
 
   return sensor;

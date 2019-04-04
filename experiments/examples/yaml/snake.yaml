@@ -1,4 +1,5 @@
 ---
+id: example_snake
 body:
   id          : Core
   type        : Core
@@ -75,3 +76,5 @@ body:
                     green: 0.98
                     blue: 0.05
                   orientation : 0
+brain:
+  type: rlpower-splines
