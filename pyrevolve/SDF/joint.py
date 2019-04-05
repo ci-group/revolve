@@ -1,21 +1,71 @@
+import uuid
 import xml.etree.ElementTree
 from pyrevolve import SDF
 import pyrevolve.SDF.math
 
 
 class Joint(SDF.Posable):
-    def __init__(self, name: str, parent_link: SDF.Link, child_link: SDF.Link, axis: SDF.math.Vector3, position=None,
-                 rotation=None):
+    def __init__(self,
+                 _id: str,
+                 name: str,
+                 parent_link: SDF.Link,
+                 child_link: SDF.Link,
+                 axis: SDF.math.Vector3,
+                 coordinates=None,
+                 motorized=False,
+                 position=None,
+                 rotation=None
+                 ):
         super().__init__(
             'joint',
-            {'name': name, 'type': 'revolute'},
+            {
+                'id': _id,
+                'name': name,
+                'type': 'revolute'
+            },
             position=position,
             rotation=rotation,
         )
+        self._id = _id
+        self._name = name
+        self._motorized = motorized
+        self._coordinates = coordinates
+
         SDF.sub_element_text(self, 'parent', parent_link.name)
         SDF.sub_element_text(self, 'child', child_link.name)
         self.axis = JointAxis(axis)
         self.append(self.axis)
+
+    def is_motorized(self):
+        return self._motorized
+
+    def to_robot_config_sdf(self):
+        assert (self.is_motorized())
+
+        servomotor = xml.etree.ElementTree.Element('rv:servomotor', {
+            'type': 'position',
+            'id': "{}__rotate".format(self._id),
+            'part_id': self._id,
+            'part_name': self._name,
+            # 'x': self.x,
+            # 'y': self.y,
+            'joint': self._name,
+            # noise: 0.1,
+        })
+
+        if self._coordinates is not None:
+            servomotor.attrib['coordinates'] = ';'.join(str(i) for i in self._coordinates)
+
+        pid = xml.etree.ElementTree.SubElement(servomotor, 'rv:pid')
+        SDF.sub_element_text(pid, 'rv:p', 0.9)
+        SDF.sub_element_text(pid, 'rv:i', 0.0)
+        SDF.sub_element_text(pid, 'rv:d', 0.0)
+        SDF.sub_element_text(pid, 'rv:i_max', 0.0)
+        SDF.sub_element_text(pid, 'rv:i_min', 0.0)
+        # SDF.sub_element_text(pid, 'rv:cmd_max', 0.0)
+        # SDF.sub_element_text(pid, 'rv:cmd_min', 0.0)
+
+        return servomotor
 
 
 class JointAxis(xml.etree.ElementTree.Element):

@@ -2,25 +2,18 @@
 Revolve body generator based on RoboGen framework
 """
 import yaml
-import math
+import traceback
 from collections import OrderedDict
 
 from pyrevolve import SDF
 
-from .revolve_module import CoreModule
-from .revolve_module import ActiveHingeModule
-from .revolve_module import BrickModule
-from .revolve_module import BrickSensorModule
-from .revolve_module import TouchSensorModule
-from .revolve_module import Orientation
-from .revolve_module import BoxSlot
-from .brain_nn import BrainNN
+from .revolve_module import CoreModule, Orientation
+from .brain import Brain, BrainNN, BrainRLPowerSplines
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
-from .measure import Measure
-
-import xml.etree.ElementTree
+from .measure.measure_body import MeasureBody
+from .measure.measure_brain import MeasureBrain
 
 
 class RevolveBot:
@@ -30,16 +23,14 @@ class RevolveBot:
     a robot's sdf mode
     """
 
-    def __init__(self, id=None):
+    def __init__(self, _id=None):
+        self._id = _id
         self._body = None
         self._brain = None
-        self._id = id
-        self._parents = None
-        self._fitness = None
         self._morphological_measurements = None
         self._brain_measurements = None
         self._behavioural_measurements = None
-        self._battery_level = None
+        # self._battery_level = None
 
     @property
     def id(self):
@@ -73,20 +64,23 @@ class RevolveBot:
         """
         pass
 
-    def measure_phenotype(self, export='yes'):
+    def measure_phenotype(self, export: bool = False):
         self.measure_body()
         #self.measure_brain()
-        if export == 'yes':
+        if export:
             self.export_phenotype_measurements()
 
     def measure_body(self):
         """
-        :return:
+        :return: dict of body measurements
         """
+        if self._body is None:
+            raise RuntimeError('Brain not initialized')
         try:
-            measure = Measure(self._body)
-            measures = measure.measure_all()
-            self._morphological_measurements = measures
+            measure = MeasureBody(self._body)
+            measure.measure_all()
+            self._morphological_measurements = measure
+            return measure
         except Exception as e:
             print('Exception: {}'.format(e))
 
@@ -98,10 +92,16 @@ class RevolveBot:
 
     def measure_brain(self):
         """
-
-        :return:
+        :return: dict of brain measurements
         """
-        pass
+        if self._brain == None:
+            raise RuntimeError('Brain not initialized')
+        else:
+            try:
+                measure = MeasureBrain(self._brain, 10)
+                return measure.measure_all()
+            except:
+                print('Failed measuring brain')
 
     def load(self, text, conf_type):
         """
@@ -129,17 +129,12 @@ class RevolveBot:
                 yaml_brain = yaml_bot['brain']
                 if 'type' not in yaml_brain:
                     # raise IOError("brain type not defined, please fix it")
-                    brain_type = 'neural-network'
-                else:
-                    brain_type = yaml_brain['type']
-
-                if brain_type == 'neural-network':
-                    self._brain = BrainNN.FromYaml(yaml_brain)
-
+                    yaml_brain['type'] = 'neural-network'
+                self._brain = Brain.from_yaml(yaml_brain)
             else:
-                self._brain = None
+                self._brain = Brain()
         except:
-            self._brain = None
+            self._brain = Brain()
             print('Failed to load brain, setting to None')
 
     def load_file(self, path, conf_type='yaml'):
@@ -155,6 +150,8 @@ class RevolveBot:
         self.load(robot, conf_type)
 
     def to_sdf(self, pose=SDF.math.Vector3(0, 0, 0.25), nice_format=None):
+        if type(nice_format) is bool:
+            nice_format = '\t' if nice_format else None
         return SDF.revolve_bot_to_sdf(self, pose, nice_format)
 
     def to_yaml(self):
@@ -182,7 +179,7 @@ class RevolveBot:
         if 'yaml' == conf_type:
             robot = self.to_yaml()
         elif 'sdf' == conf_type:
-            robot = self.to_sdf()
+            robot = self.to_sdf(nice_format=True)
 
         with open(path, 'w') as robot_file:
             robot_file.write(robot)
@@ -272,26 +269,30 @@ class RevolveBot:
         Render image of brain
         @param img_path: path to where to store image
         """
-        if self._brain == None:
+        if self._brain is None:
             raise RuntimeError('Brain not initialized')
         else:
             try:
                 brain_graph = BrainGraph(self._brain, img_path)
                 brain_graph.brain_to_graph()
                 brain_graph.save_graph()
-            except:
-                print('Failed rendering brain')
+            except Exception as e:
+                print('Failed rendering brain. Exception:')
+                print(e)
+                print(traceback.format_exc())
 
     def render2d(self, img_path):
         """
         Render 2d representation of robot and store as png
         :param img_path: path of storing png file
         """
-        if self._body == None:
+        if self._body is None:
             raise RuntimeError('Body not initialized')
         else:
             try:
                 render = Render()
                 render.render_robot(self._body, img_path)
-            except:
-                print('Failed rendering 2d robot')
+            except Exception as e:
+                print('Failed rendering 2d robot. Exception:')
+                print(e)
+                print(traceback.format_exc())

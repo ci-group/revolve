@@ -152,6 +152,19 @@ class RevolveModule:
         raise RuntimeError("Robot tree validation not yet implemented")
 
     def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        """
+        Transform the module in sdf elements.
+
+        IMPORTANT: It does not append VISUAL and COLLISION elements to the parent link
+        automatically. It does append automatically the SENSOR element.
+        TODO: make the append automatic for VISUAL AND COLLISION AS WELL.
+
+        :param tree_depth: current tree depth as string (for naming)
+        :param parent_link: link of the parent (may be needed for certain modules)
+        :param child_link: link of the child (may be needed for certain modules, like hinges)
+        :return: visual SDF element, collision SDF element, sensor SDF element.
+        Sensor SDF element may be None.
+        """
         name = 'component_{}_{}__box'.format(tree_depth, self.TYPE)
         visual = SDF.Visual(name, self.rgb)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH)
@@ -161,7 +174,7 @@ class RevolveModule:
         geometry = SDF.BoxGeometry(self.COLLISION_BOX)
         collision.append(geometry)
 
-        return visual, collision
+        return visual, collision, None
 
     def boxslot(self, orientation=None):
         orientation = Orientation.SOUTH if orientation is None else orientation
@@ -211,6 +224,12 @@ class CoreModule(RevolveModule):
             (-self.SLOT_COORDINATES, self.SLOT_COORDINATES),  # Y
             (-self.SLOT_COORDINATES, self.SLOT_COORDINATES),  # Z
         )
+
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        imu_sensor = SDF.IMUSensor('core-imu_sensor', parent_link, self)
+        visual, collision, _ = super().to_sdf(tree_depth, parent_link, child_link)
+        parent_link.append(imu_sensor)
+        return visual, collision, imu_sensor
 
 
 class ActiveHingeModule(RevolveModule):
@@ -274,9 +293,13 @@ class ActiveHingeModule(RevolveModule):
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO_2)
         collision_servo_2.append(geometry)
 
-        joint = SDF.Joint(name_joint,
-                          parent_link, child_link,
-                          SDF.math.Vector3(0, 1, 0))
+        joint = SDF.Joint(self.id,
+                          name_joint,
+                          parent_link,
+                          child_link,
+                          axis=SDF.math.Vector3(0, 1, 0),
+                          coordinates=self.substrate_coordinates,
+                          motorized=True)
 
         joint.set_position(SDF.math.Vector3(-0.0085, 0, 0))
 
@@ -377,8 +400,8 @@ class TouchSensorModule(RevolveModule):
 
     def boxslot(self, orientation=None):
         orientation = Orientation.SOUTH if orientation is None else orientation
-        assert(orientation is Orientation.SOUTH)
-        return BoxSlot(self.possible_slots(), Orientation.WEST)
+        assert (orientation is Orientation.SOUTH)
+        return BoxSlotTouchSensor(self.possible_slots())
 
     def possible_slots(self):
         return (
@@ -401,10 +424,10 @@ class TouchSensorModule(RevolveModule):
         # collision.translate(SDF.math.Vector3(0.01175, 0.001, 0))
         collision.append(geometry)
 
-        sensor = SDF.TouchSensor(name_sensor, collision)
+        sensor = SDF.TouchSensor(name_sensor, collision, parent_link, self)
         parent_link.append(sensor)
 
-        return visual, collision
+        return visual, collision, sensor
 
 
 class BoxSlot:
@@ -476,5 +499,26 @@ class BoxSlotJoints(BoxSlot):
             return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.NORTH:
             return SDF.math.Vector3(0, 0, 1)
+        else:
+            raise RuntimeError("Invalid orientation")
+
+
+class BoxSlotTouchSensor(BoxSlot):
+    def __init__(self, boundaries):
+        super().__init__(boundaries, Orientation.SOUTH)
+
+    def _calculate_box_slot_pos(self, boundaries, slot: Orientation):
+        if slot == Orientation.SOUTH:
+            return SDF.math.Vector3(boundaries[0][0], 0, 0)
+        else:
+            raise RuntimeError('invalid module orientation: {}'.format(slot))
+
+    @staticmethod
+    def _calculate_box_slot_tangent(slot: Orientation):
+        """
+        Return slot tangent
+        """
+        if slot == Orientation.SOUTH:
+            return SDF.math.Vector3(0, 1, 0)
         else:
             raise RuntimeError("Invalid orientation")
