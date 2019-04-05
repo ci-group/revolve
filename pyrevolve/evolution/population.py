@@ -1,6 +1,7 @@
 # [(G,P), (G,P), (G,P), (G,P), (G,P)]
 
 from pyrevolve.evolution.individual import Individual
+from pyrevolve.genotype.plasticoding.plasticoding import Alphabet
 
 class PopulationConfig:
 	def __init__(self, 

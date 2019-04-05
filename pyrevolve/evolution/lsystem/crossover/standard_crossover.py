@@ -11,7 +11,7 @@ def generate_child_genotype(parents):
 
 	genotype = Plasticoding(PlasticodingConfig)
 	genotype.grammar = grammar
-	return genotype
+	return genotype.clone()
 
 def standard_crossover(parents): # Parents = list of individual
 	genotype = generate_child_genotype(parents)

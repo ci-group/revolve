@@ -120,6 +120,9 @@ class Plasticoding(Genotype):
         self.outputs_stack = []
         self.edges = {}
 
+    def clone(self):
+        return copy.deepcopy(self)
+
     def load_genotype(self, genotype_path):
         with open(genotype_path) as f:
             lines = f.readlines()
