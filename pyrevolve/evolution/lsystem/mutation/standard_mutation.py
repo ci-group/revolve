@@ -2,17 +2,28 @@ import random
 from pyrevolve.genotype.plasticoding.plasticoding import Alphabet, Plasticoding
 
 def handle_deletion(genotype):
+	# print('-------delete----------')
 	target_production_rule = random.choice(list(genotype.grammar))
+	# print('target production rule: \n')
+	# print(target_production_rule)
+	# print('\n')
 	if (len(genotype.grammar[target_production_rule])) > 1:
+		# print('Length of production rule was larger than 1!\n')
 		symbol_to_delete = random.choice(genotype.grammar[target_production_rule])
+		# print('Symbol to delete: \n')
+		# print(symbol_to_delete)
+		# print('\n')
 		if symbol_to_delete[0] != Alphabet.CORE_COMPONENT:
+			# print('Symbol to delete was not a core component!\n')
 			genotype.grammar[target_production_rule].remove(symbol_to_delete)
-
+	# print('\n\n')
 	return genotype
 
 def handle_swap(genotype):
+	# print('-------swap----------')
 	target_production_rule = random.choice(list(genotype.grammar))
 	if (len(genotype.grammar[target_production_rule])) > 1:
+		# print('')
 		symbols_to_swap = random.choices(population=genotype.grammar[target_production_rule], k=2)
 		for symbol in symbols_to_swap:
 			if symbol[0] == Alphabet.CORE_COMPONENT:
@@ -52,6 +63,7 @@ def generate_symbol(genotype_conf):
 
 
 def handle_addition(genotype, genotype_conf):
+	print('addition')
 	target_production_rule = random.choice(list(genotype.grammar))
 	if target_production_rule == Alphabet.CORE_COMPONENT:
 		addition_index = random.randint(1,len(genotype.grammar[target_production_rule])-1)
@@ -63,17 +75,21 @@ def handle_addition(genotype, genotype_conf):
 	return genotype
 
 def standard_mutation(genotype, mutation_conf):
+	new_genotype = genotype.clone()
 	chance_of_mutation = random.uniform(0.0,1.0)
 	if chance_of_mutation <= mutation_conf.mutation_prob:
-		return genotype
+		return new_genotype
 	else:
 		mutation_type = random.randint(1,3) # NTS: better way?
 		if mutation_type == 1:
-			modified_genotype = handle_deletion(genotype)
+			modified_genotype = handle_deletion(new_genotype)
 		elif mutation_type == 2:
-			modified_genotype = handle_swap(genotype)
+			modified_genotype = handle_swap(new_genotype)
 		elif mutation_type == 3:
-			modified_genotype = handle_addition(genotype, mutation_conf.genotype_conf)
+			modified_genotype = handle_addition(new_genotype, mutation_conf.genotype_conf)
 		else:
 			raise Exception('mutation_type value was not in the expected range (1,3). The value was: {}'.format(mutation_type))
+		# print('Modified genotype: \n')
+		# print(modified_genotype.grammar)
+		# print('\n\n')
 		return modified_genotype
