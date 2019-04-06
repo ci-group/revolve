@@ -38,7 +38,7 @@ class MeasureBody:
         self.size = None
         # Proportion of sensor vs empty slots
         self.sensors = None
-        # Body simmetry
+        # Body symmetry
         self.symmetry = None
         # Number of active joints
         self.hinge_count = None
@@ -403,3 +403,6 @@ class MeasureBody:
             'sensors': self.sensors,
             'symmetry': self.symmetry
         }
+
+    def __repr__(self):
+        return self.measurement_to_dict().__repr__()

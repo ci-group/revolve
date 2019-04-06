@@ -66,7 +66,7 @@ class RevolveBot:
 
     def measure_phenotype(self, export: bool = False):
         self.measure_body()
-        #self.measure_brain()
+        self.measure_brain()
         if export:
             self.export_phenotype_measurements()
 
@@ -75,7 +75,7 @@ class RevolveBot:
         :return: dict of body measurements
         """
         if self._body is None:
-            raise RuntimeError('Brain not initialized')
+            raise RuntimeError('Body not initialized')
         try:
             measure = MeasureBody(self._body)
             measure.measure_all()
@@ -86,20 +86,25 @@ class RevolveBot:
 
     def export_phenotype_measurements(self):
         # !!!!! we need to define the experiment path as a parameter somewhere...
-        file = open('experiments/karine_exps/phenotype_measurements_'+str(self.id)+'.txt', 'w+')
-        for m in self._morphological_measurements:
-            file.write(m + ' ' + str(self._morphological_measurements[m]) + '\n')
+        path = 'karine_exps'
+        file = open('experiments/'+path+'/phenotype_measurements_'+str(self.id)+'.txt', 'w+')
+        for key, value in self._morphological_measurements.measurement_to_dict().items():
+            file.write('{} {}\n'.format(key, value))
+        for key, value in self._brain_measurements.measurement_to_dict().items():
+            file.write('{} {}\n'.format(key, value))
 
     def measure_brain(self):
         """
         :return: dict of brain measurements
         """
-        if self._brain == None:
+        if self._brain is None:
             raise RuntimeError('Brain not initialized')
         else:
             try:
                 measure = MeasureBrain(self._brain, 10)
-                return measure.measure_all()
+                measure.measure_all()
+                self._brain_measurements = measure
+                return measure
             except:
                 print('Failed measuring brain')
 

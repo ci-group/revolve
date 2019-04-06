@@ -12,16 +12,27 @@ class MeasureBrain:
         self.periods = None
         self.phase_offsets = None
         self.amplitudes = None
+        # Average Period
         self.avg_period = None
+        # Deviation of Period
         self.dev_period = None
+        # Average Phase Offset
         self.avg_phase_offset = None
+        # Deviation of Phase Offset
         self.dev_phase_offset = None
+        # Average Amplitude
         self.avg_amplitude = None
+        # Deviation of Amplitude
         self.dev_amplitude = None
+        # Average Intra-Deviation of Parameters
         self.avg_intra_dev_params = None
+        # Average Inter-Deviation of Parameters
         self.avg_inter_dev_params = None
+        # Sensors Reach
         self.sensors_reach = None
+        # Recurrence
         self.recurrence = None
+        # Synaptic Reception
         self.synaptic_reception = None
 
     def sigmoid(self, value):
@@ -203,7 +214,7 @@ class MeasureBrain:
 
     def measure_all(self):
         """
-        Perform all brain measuerments
+        Perform all brain measurements
         """
         self.collect_sets_of_params()
         self.calc_count_oscillators()
@@ -218,9 +229,9 @@ class MeasureBrain:
         self.measure_sensors_reach()
         self.measure_recurrence()
         self.measure_synaptic_reception()
-        return self.measurements_to_dict()
+        return self.measurement_to_dict()
 
-    def measurements_to_dict(self):
+    def measurement_to_dict(self):
         """
         Return measurements as dictionary
         """
@@ -237,3 +248,6 @@ class MeasureBrain:
             'recurrence': self.recurrence,
             'synaptic_reception': self.synaptic_reception
         }
+
+    def __repr__(self):
+        return self.measurement_to_dict().__repr__()

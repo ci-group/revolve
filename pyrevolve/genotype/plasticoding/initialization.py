@@ -4,7 +4,7 @@ import random
 
 def random_initialization(conf):
     """
-    Initializing the ...
+    Initializing a new genotype,
     :param conf: e_max_groups, maximum number of groups of symbols
     :return: a random new Genome
     :rtype: Plasticoding
