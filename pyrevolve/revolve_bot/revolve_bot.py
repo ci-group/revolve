@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from pyrevolve import SDF
 
-from .revolve_module import CoreModule, Orientation
+from .revolve_module import CoreModule, Orientation, TouchSensorModule
 from .brain import Brain, BrainNN, BrainRLPowerSplines
 
 from .render.render import Render
@@ -77,14 +77,12 @@ class RevolveBot:
         """
         :return: dict of brain measurements
         """
-        if self._brain == None:
-            raise RuntimeError('Brain not initialized')
-        else:
-            try:
-                measure = MeasureBrain(self._brain, 10)
-                return measure.measure_all()
-            except:
-                print('Failed measuring brain')
+        try:
+            measure = MeasureBrain(self._brain, 10)
+            return measure.measure_all()
+        except Exception as e:
+            print(e)
+            print('Failed measuring brain')
 
     def load(self, text, conf_type):
         """

@@ -2,12 +2,13 @@ import numpy as np
 import math
 # belong to TODO
 import fnmatch
-
+from ..brain.brain_nn import BrainNN
 
 class MeasureBrain:
     def __init__(self, brain, max_param):
         self.brain = brain
         self.max_param = max_param
+        self.params = None
         self.count_oscillators = None
         self.periods = None
         self.phase_offsets = None
@@ -23,6 +24,7 @@ class MeasureBrain:
         self.sensors_reach = None
         self.recurrence = None
         self.synaptic_reception = None
+        self.collect_sets_of_params()
 
     def sigmoid(self, value):
         """
@@ -34,18 +36,23 @@ class MeasureBrain:
         """
         Create lists of parameter values
         """
-        params = self.brain.params
-        if self.periods is None:
-            self.periods = [params[param].period for param in params]
-        if self.phase_offsets is None:
-            self.phase_offsets = [params[param].phase_offset for param in params]
-        if self.amplitudes is None:
-            self.amplitudes = [params[param].amplitude for param in params]
+        if not isinstance(self.brain, BrainNN):
+            return
+        self.params = self.brain.params
+        if self.params is not None:
+            if self.periods is None:
+                self.periods = [self.params[param].period for param in self.params]
+            if self.phase_offsets is None:
+                self.phase_offsets = [self.params[param].phase_offset for param in self.params]
+            if self.amplitudes is None:
+                self.amplitudes = [self.params[param].amplitude for param in self.params]
 
     def calc_count_oscillators(self):
         """
         Calculate amount of oscillators in brain
         """
+        if not isinstance(self.brain, BrainNN):
+            return
         oscillators = 0
         nodes = self.brain.nodes
         for node in nodes:
@@ -57,16 +64,25 @@ class MeasureBrain:
         """
         Measure average (median) Period among the oscillators of the controller
         """
+        if self.params is None:
+            self.avg_period = 0
+            return 0
         if self.periods is None:
             self.collect_sets_of_params()
         median = np.median(self.periods)
-        self.avg_period = median / self.max_param
+        if median is 0 or self.max_param is 0:
+            self.avg_period = 0
+        else:
+            self.avg_period = median / self.max_param
         return self.avg_period
 
     def measure_dev_period(self):
         """
         Measure standard deviation of Period among the oscillators of the controller
         """
+        if self.params is None:
+            self.dev_period = 0
+            return 0        
         if self.periods is None:
             self.collect_sets_of_params()
         self.dev_period = self.sigmoid(np.std(self.periods))
@@ -76,16 +92,25 @@ class MeasureBrain:
         """
         Measure average (median) Phase Offset among the oscillators of the controller
         """
+        if self.params is None:
+            self.avg_phase_offset = 0
+            return 0        
         if self.phase_offsets is None:
             self.collect_sets_of_params()
         median = np.median(self.phase_offsets)
-        self.avg_phase_offset = median / self.max_param
+        if median is 0 or self.max_param is 0:
+            self.avg_phase_offset = 0
+        else:
+            self.avg_phase_offset = median / self.max_param
         return self.avg_phase_offset
 
     def measure_dev_phase_offset(self):
         """
         Measure standard deviation of Phase Offset among the oscillators of the controller
         """
+        if self.params is None:
+            self.dev_phase_offset = 0
+            return 0            
         if self.phase_offsets is None:
             self.collect_sets_of_params()
         self.dev_phase_offset = self.sigmoid(np.std(self.phase_offsets))
@@ -95,16 +120,25 @@ class MeasureBrain:
         """
         Measure average (median) Amplitude among the oscillators of the controller
         """
+        if self.params is None:
+            self.avg_amplitude = 0
+            return 0
         if self.amplitudes is None:
             self.collect_sets_of_params()
         median = np.median(self.amplitudes)
-        self.avg_amplitude = median / self.max_param
+        if median is 0 or self.max_param is 0:
+            self.avg_amplitude = 0
+        else:
+            self.avg_amplitude = median / self.max_param
         return self.avg_amplitude
 
     def measure_dev_amplitude(self):
         """
         Measure standard deviation of Amplitude among the oscillators of the controller
         """
+        if self.params is None:
+            self.dev_amplitude = 0
+            return 0
         if self.amplitudes is None:
             self.collect_sets_of_params()
         self.dev_amplitude = self.sigmoid(np.std(self.amplitudes))
@@ -114,7 +148,10 @@ class MeasureBrain:
         """
         Describes the average (median) among the oscillators, regarding the standard deviation of Period, Phase Offset, and Amplitude,
         """
-        params = self.brain.params
+        if self.params is None:
+            self.avg_intra_dev_params = 0
+            return 0
+        params = self.params
         dt = [np.std([params[param].period, params[param].phase_offset, params[param].amplitude]) for param in params]
         self.avg_intra_dev_params = self.sigmoid(np.median(dt))
         return self.avg_intra_dev_params
@@ -123,6 +160,9 @@ class MeasureBrain:
         """
         Measure average (mean) of the parameters Period, Phase Offset, and Amplitude, regarding their deviations among the oscillator
         """
+        if self.params is None:
+            self.avg_inter_dev_params = 0
+            return 0
         if self.periods is None or self.phase_offsets is None or self.amplitudes is None:
             self.collect_sets_of_params()
         self.avg_inter_dev_params = self.sigmoid((np.std(self.periods) + np.std(self.phase_offsets) + np.std(self.amplitudes)) / 3)
@@ -132,6 +172,9 @@ class MeasureBrain:
         """
         Describes how connected the sensors are to the oscillators
         """
+        if self.params is None:
+            self.sensors_reach = 0
+            return 0
         if self.count_oscillators is None:
             self.calc_count_oscillators()
 
@@ -145,7 +188,10 @@ class MeasureBrain:
                 for connection in self.brain.connections:
                     if connection.src == nodes[node].id:
                         connections_of_node += 1
-                connections.append(connections_of_node/self.count_oscillators)
+                if connections_of_node is 0 or self.count_oscillators is 0:
+                    connections.append(0)
+                else:
+                    connections.append(connections_of_node/self.count_oscillators)
         if not connections:
             self.sensors_reach = 0
             return 0
@@ -156,6 +202,9 @@ class MeasureBrain:
         """
         Describes the proportion of oscillators that have a recurrent connection
         """
+        if self.params is None:
+            self.recurrence = 0
+            return 0
         connections = self.brain.connections
         recurrent = 0
         for connection in connections:
@@ -165,7 +214,7 @@ class MeasureBrain:
         if self.count_oscillators is None:
             self.calc_count_oscillators()
 
-        if recurrent is 0:
+        if recurrent is 0 or self.count_oscillators is 0:
             self.recurrence = 0
             return 0
         else:
@@ -177,6 +226,9 @@ class MeasureBrain:
         """
         Describes the average (median) balance between inhibitory and excitatory connections from the sensors to the oscillators in the controller
         """
+        if self.params is None:
+            self.synaptic_reception = 0
+            return 0
         balance_set = []
         nodes = self.brain.nodes
         connections = self.brain.connections
@@ -205,7 +257,6 @@ class MeasureBrain:
         """
         Perform all brain measuerments
         """
-        self.collect_sets_of_params()
         self.calc_count_oscillators()
         self.measure_avg_period()
         self.measure_dev_period()
