@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from pyrevolve import SDF
 
-from .revolve_module import CoreModule, Orientation, TouchSensorModule
+from .revolve_module import CoreModule, Orientation
 from .brain import Brain, BrainNN, BrainRLPowerSplines
 
 from .render.render import Render
@@ -252,15 +252,17 @@ class RevolveBot:
         """
         if self._brain is None:
             raise RuntimeError('Brain not initialized')
-        else:
+        elif isinstance(self._brain, BrainNN):
             try:
                 brain_graph = BrainGraph(self._brain, img_path)
-                brain_graph.brain_to_graph()
+                brain_graph.brain_to_graph(True)
                 brain_graph.save_graph()
             except Exception as e:
                 print('Failed rendering brain. Exception:')
                 print(e)
                 print(traceback.format_exc())
+        else:
+            print('Brain not initialized')
 
     def render2d(self, img_path):
         """

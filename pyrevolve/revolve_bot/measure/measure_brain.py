@@ -66,11 +66,11 @@ class MeasureBrain:
         """
         if self.params is None:
             self.avg_period = 0
-            return 0
+            return self.avg_period
         if self.periods is None:
             self.collect_sets_of_params()
         median = np.median(self.periods)
-        if median is 0 or self.max_param is 0:
+        if median == 0 or self.max_param == 0:
             self.avg_period = 0
         else:
             self.avg_period = median / self.max_param
@@ -82,7 +82,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.dev_period = 0
-            return 0        
+            return self.dev_period        
         if self.periods is None:
             self.collect_sets_of_params()
         self.dev_period = self.sigmoid(np.std(self.periods))
@@ -94,11 +94,11 @@ class MeasureBrain:
         """
         if self.params is None:
             self.avg_phase_offset = 0
-            return 0        
+            return self.avg_phase_offset      
         if self.phase_offsets is None:
             self.collect_sets_of_params()
         median = np.median(self.phase_offsets)
-        if median is 0 or self.max_param is 0:
+        if median == 0 or self.max_param == 0:
             self.avg_phase_offset = 0
         else:
             self.avg_phase_offset = median / self.max_param
@@ -110,7 +110,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.dev_phase_offset = 0
-            return 0            
+            return self.dev_phase_offset          
         if self.phase_offsets is None:
             self.collect_sets_of_params()
         self.dev_phase_offset = self.sigmoid(np.std(self.phase_offsets))
@@ -122,11 +122,11 @@ class MeasureBrain:
         """
         if self.params is None:
             self.avg_amplitude = 0
-            return 0
+            return self.avg_amplitude
         if self.amplitudes is None:
             self.collect_sets_of_params()
         median = np.median(self.amplitudes)
-        if median is 0 or self.max_param is 0:
+        if median == 0 or self.max_param == 0:
             self.avg_amplitude = 0
         else:
             self.avg_amplitude = median / self.max_param
@@ -138,7 +138,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.dev_amplitude = 0
-            return 0
+            return self.dev_amplitude
         if self.amplitudes is None:
             self.collect_sets_of_params()
         self.dev_amplitude = self.sigmoid(np.std(self.amplitudes))
@@ -150,7 +150,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.avg_intra_dev_params = 0
-            return 0
+            return self.avg_intra_dev_params
         params = self.params
         dt = [np.std([params[param].period, params[param].phase_offset, params[param].amplitude]) for param in params]
         self.avg_intra_dev_params = self.sigmoid(np.median(dt))
@@ -162,7 +162,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.avg_inter_dev_params = 0
-            return 0
+            return self.avg_inter_dev_params
         if self.periods is None or self.phase_offsets is None or self.amplitudes is None:
             self.collect_sets_of_params()
         self.avg_inter_dev_params = self.sigmoid((np.std(self.periods) + np.std(self.phase_offsets) + np.std(self.amplitudes)) / 3)
@@ -174,7 +174,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.sensors_reach = 0
-            return 0
+            return self.sensors_reach
         if self.count_oscillators is None:
             self.calc_count_oscillators()
 
@@ -188,13 +188,13 @@ class MeasureBrain:
                 for connection in self.brain.connections:
                     if connection.src == nodes[node].id:
                         connections_of_node += 1
-                if connections_of_node is 0 or self.count_oscillators is 0:
+                if connections_of_node == 0 or self.count_oscillators == 0:
                     connections.append(0)
                 else:
                     connections.append(connections_of_node/self.count_oscillators)
         if not connections:
             self.sensors_reach = 0
-            return 0
+            return self.sensors_reach
         self.sensors_reach = np.median(connections)
         return self.sensors_reach
 
@@ -204,7 +204,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.recurrence = 0
-            return 0
+            return self.recurrence
         connections = self.brain.connections
         recurrent = 0
         for connection in connections:
@@ -214,9 +214,9 @@ class MeasureBrain:
         if self.count_oscillators is None:
             self.calc_count_oscillators()
 
-        if recurrent is 0 or self.count_oscillators is 0:
+        if recurrent == 0 or self.count_oscillators == 0:
             self.recurrence = 0
-            return 0
+            return self.recurrence
         else:
             self.recurrence = recurrent/self.count_oscillators
 
@@ -228,7 +228,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.synaptic_reception = 0
-            return 0
+            return self.synaptic_reception
         balance_set = []
         nodes = self.brain.nodes
         connections = self.brain.connections
