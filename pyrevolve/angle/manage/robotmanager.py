@@ -4,8 +4,9 @@ from __future__ import division
 import numpy as np
 from collections import deque
 
-from pyrevolve.SDF.math import Vector3
+from pyrevolve.SDF.math import Vector3, Quaternion
 from pyrevolve.util import Time
+import math
 
 
 class RobotManager(object):
@@ -47,15 +48,22 @@ class RobotManager(object):
         self._ds = deque(maxlen=speed_window)
         self._dt = deque(maxlen=speed_window)
         self._positions = deque(maxlen=speed_window)
+        self._orientations = deque(maxlen=speed_window)
+        self._seconds.append(maxlen=speed_window)
         self._times = deque(maxlen=speed_window)
-
-        self._positions.append(position)
-        self._times.append(time)
 
         self._dist = 0
         self._time = 0
         self._idx = 0
         self._count = 0
+        self.second = 1
+        self.count_group = 1
+        self.avg_roll = 0
+        self.avg_pitch = 0
+        self.avg_yaw = 0
+        self.avg_x = 0
+        self.avg_y = 0
+        self.avg_z = 0
 
     @property
     def name(self):
@@ -76,6 +84,13 @@ class RobotManager(object):
         """
         pos = state.pose.position
         position = Vector3(pos.x, pos.y, pos.z)
+
+        rot = state.pose.orientation
+        qua = Quaternion(rot.w, rot.x, rot.y, rot.z)
+        euler = qua.get_rpy()
+        euler = np.array([euler[0], euler[1], euler[2]]) # roll / pitch / yaw
+
+        age = world.age()
 
         if self.starting_time is None:
             self.starting_time = time
@@ -121,6 +136,31 @@ class RobotManager(object):
         self._times.append(time)
         self._ds.append(ds)
         self._dt.append(dt)
+        self._orientations.append(euler)
+        self._seconds.append(age.sec)
+
+    def age(self):
+        """
+        Returns this robot's age as a Time object.
+        Depends on the last and first update times.
+        :return:
+        :rtype: Time
+        """
+        return Time() \
+            if self.last_update is None \
+            else self.last_update - self.starting_time
+
+    def get_battery_level(self):
+        """
+        Method to return the robot battery level. How the battery level
+        is managed is probably implementation specific, so you'll likely
+        have to modify this method for your specific use.
+        :return:
+        """
+        return self.battery_level
+
+    ## init behavioral measures
+    # we should move it to a file only with behavioral measures !!!! maybe revolve bot???
 
     def velocity(self):
         """
@@ -160,22 +200,94 @@ class RobotManager(object):
 
         return np.sqrt(dist.x**2 + dist.y**2) / float(time)
 
-    def age(self):
-        """
-        Returns this robot's age as a Time object.
-        Depends on the last and first update times.
-        :return:
-        :rtype: Time
-        """
-        return Time() \
-            if self.last_update is None \
-            else self.last_update - self.starting_time
+    def displacement_velocity_hill(self):
 
-    def get_battery_level(self):
+        dist, time = self.displacement()
+        if time.is_zero():
+            return 0.0
+
+        return dist.y / float(time)
+
+    def head_balance(self):
         """
-        Method to return the robot battery level. How the battery level
-        is managed is probably implementation specific, so you'll likely
-        have to modify this method for your specific use.
+        Returns the average rotation of teh head in the roll and pitch dimensions.
         :return:
         """
-        return self.battery_level
+        roll = 0
+        pitch = 0
+
+        instants = len(self._orientations)
+
+        for o in self._orientations:
+
+            roll = roll + abs(o[0]) * 180 / math.pi
+            pitch = pitch + abs(o[1]) * 180 / math.pi
+
+        #  accumulated angles for each type of rotation
+        #  divided by iterations * maximum angle * each type of rotation
+        balance = (roll + pitch) / (instants * 180 * 2)
+
+        # turns imbalance to balance
+        balance = 1 - balance
+
+        return balance
+
+    def logs_position_orientation(self, o, evaluation_time, robotid, generation, experiment_name):
+        # define a path properly somewhere!!!!!!
+        f = open('../../../l-system/experiments/'+ experiment_name+'/offspringpop'+generation+'/positions_'+robotid+'.txt', "a+")
+
+        if self.second <= evaluation_time:
+
+            self.avg_roll += self._orientations[o][0]
+            self.avg_pitch += self._orientations[o][1]
+            self.avg_yaw += self._orientations[o][2]
+            self.avg_x += self._positions[o].x
+            self.avg_y += self._positions[o].y
+            self.avg_z += self._positions[o].z
+
+            self.avg_roll = self.avg_roll/self.count_group
+            self.avg_pitch = self.avg_pitch/self.count_group
+            self.avg_yaw = self.avg_yaw/self.count_group
+            self.avg_x = self.avg_x/self.count_group
+            self.avg_y = self.avg_y/self.count_group
+            self.avg_z = self.avg_z/self.count_group
+
+            self.avg_roll = self.avg_roll * 180 / math.pi
+
+            self.avg_pitch = self.avg_pitch * 180 / math.pi
+
+            self.avg_yaw = self.avg_yaw * 180 / math.pi
+
+            f.write(str(self.second) + ' ' + str(self.avg_roll) + ' ' + str(self.avg_pitch) + ' ' + str(self.avg_yaw)
+                    + ' ' + str(self.avg_x) + ' ' + str(self.avg_y) + ' ' + str(self.avg_z) + '\n')
+
+            self.second += 1
+            self.avg_roll = 0
+            self.avg_pitch = 0
+            self.avg_yaw = 0
+            self.avg_x = 0
+            self.avg_y = 0
+            self.avg_z = 0
+            self.count_group = 1
+
+    ## end behavioral measures !!!! move !!!!
+
+
+    ## init fitness functions
+    # we should move it to a file only with behavioral measures !!!!
+
+    def fitness_displacement_velocity(self):
+        return self.displacement_velocity()
+
+    def fitness_displacement_velocity_hill(self):
+        displacement_velocity_hill = self.displacement_velocity_hill()
+        if displacement_velocity_hill < 0:
+            displacement_velocity_hill /= 10
+        elif displacement_velocity_hill == 0:
+            displacement_velocity_hill = -0.1
+        #elif displacement_velocity_hill > 0:
+        #displacement_velocity_hill *= displacement_velocity_hill
+        return displacement_velocity_hill
+
+
+    ## end fitness functions !!!! move !!!!

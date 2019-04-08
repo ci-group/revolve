@@ -65,8 +65,9 @@ class RevolveBot:
         pass
 
     def measure_phenotype(self, export: bool = False):
-        self.measure_body()
-        self.measure_brain()
+        self._morphological_measurements = self.measure_body()
+        self._brain_measurements = self.measure_brain()
+        print('Robot ' + str(self.id) + ' was measured.')
         if export:
             self.export_phenotype_measurements()
 
@@ -79,7 +80,6 @@ class RevolveBot:
         try:
             measure = MeasureBody(self._body)
             measure.measure_all()
-            self._morphological_measurements = measure
             return measure
         except Exception as e:
             print('Exception: {}'.format(e))
@@ -103,7 +103,6 @@ class RevolveBot:
             try:
                 measure = MeasureBrain(self._brain, 10)
                 measure.measure_all()
-                self._brain_measurements = measure
                 return measure
             except:
                 print('Failed measuring brain')

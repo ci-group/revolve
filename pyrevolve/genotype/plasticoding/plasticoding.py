@@ -119,6 +119,7 @@ class Plasticoding(Genotype):
         self.outputs_stack = []
         self.edges = {}
         self.substrate_coordinates_all = {(0, 0): 'module0'}
+        self.valid = False
 
     def load_genotype(self, genotype_path):
         with open(genotype_path+str(self.id)+'.txt') as f:
@@ -138,20 +139,45 @@ class Plasticoding(Genotype):
                     params = []
                 self.grammar[repleceable_symbol].append([symbol, params])
 
+    def export_genotype(self):
+        # change path later as parameter!!!!
+        path = 'karine_exps'
+        file = open('experiments/' + path + '/genotype_' + str(self.id) + '.txt', 'w+')
+        for key, rule in self.grammar.items():
+            line = key.value + ' '
+            for item_rule in range(0, len(rule)):
+                symbol = rule[item_rule][self.index_symbol].value
+                if len(rule[item_rule][self.index_params]) > 0:
+                    params = '_'
+                    for param in range(0, len(rule[item_rule][self.index_params])):
+                        params += str(rule[item_rule][self.index_params][param])
+                        if param < len(rule[item_rule][self.index_params])-1:
+                            params += '|'
+                    symbol += params
+                line += symbol + ' '
+            file.write(line+'\n')
+
     def load_and_develop(self, new_genotype, genotype_path='', id_genotype=None):
 
+        self.id = id_genotype
         if new_genotype == 'new':
             self.grammar = self.conf.initialization_genome(self.conf)
+            print('Robot ' + str(self.id) + ' was initialized.')
         else:
-            self.id = id_genotype
             self.load_genotype(genotype_path)
+            print('Robot ' + str(self.id) + ' was loaded.')
 
         self.phenotype = self.develop()
         self.export_phenotype_files()
 
+    def check_validity(self):
+        if self.phenotype._morphological_measurements.measurement_to_dict()['hinge_count'] > 0:
+            self.valid = True
+
     def export_phenotype_files(self):
         # change path later as parameter!!!!
         path = 'karine_exps'
+        self.export_genotype()
         self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
         self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
         self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
@@ -181,6 +207,7 @@ class Plasticoding(Genotype):
                     position = position+ii+1
                 else:
                     position = position + 1
+        print('Robot ' + str(self.id) + ' was early-developed.')
 
     def late_development(self):
 
@@ -205,8 +232,8 @@ class Plasticoding(Genotype):
                 self.morph_mounting_container = symbol[self.index_symbol]
 
             if [symbol[self.index_symbol], []] in Alphabet.modules() \
-                and symbol[self.index_symbol] != Alphabet.CORE_COMPONENT \
-                and self.morph_mounting_container is not None:
+               and symbol[self.index_symbol] != Alphabet.CORE_COMPONENT \
+               and self.morph_mounting_container is not None:
 
                 if type(self.mounting_reference) == CoreModule \
                    or type(self.mounting_reference) == BrickModule:
@@ -228,6 +255,7 @@ class Plasticoding(Genotype):
             if [symbol[self.index_symbol], []] in Alphabet.controller_moving_commands():
                 self.decode_brain_moving(symbol)
 
+        print('Robot ' + str(self.id) + ' was late-developed.')
         return self.phenotype
 
     def move_in_body(self, symbol):
@@ -494,7 +522,7 @@ class Plasticoding(Genotype):
             else:
                 self.mounting_reference.children[slot] = module
                 self.morph_mounting_container = None
-                module.id = self.mounting_reference.id+'-sensor'+str(slot)
+                module.id = self.mounting_reference.id+'s'+str(slot)
                 self.decode_brain_node(symbol, module.id)
 
     def decode_brain_node(self, symbol, part_id):
