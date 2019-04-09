@@ -7,9 +7,8 @@ from collections import OrderedDict
 
 from pyrevolve import SDF
 
-from .revolve_module import CoreModule, TouchSensorModule
-from .revolve_module import Orientation
-from .brain import Brain
+from .revolve_module import CoreModule, Orientation
+from .brain import Brain, BrainNN, BrainRLPowerSplines
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
@@ -28,6 +27,9 @@ class RevolveBot:
         self._id = _id
         self._body = None
         self._brain = None
+        self._morphological_measurements = None
+        self._brain_measurements = None
+        self._behavioural_measurements = None
         # self._battery_level = None
 
     @property
@@ -62,28 +64,47 @@ class RevolveBot:
         """
         pass
 
+    def measure_phenotype(self, export: bool = False):
+        self.measure_body()
+        self.measure_brain()
+        if export:
+            self.export_phenotype_measurements()
+
     def measure_body(self):
         """
         :return: dict of body measurements
         """
         if self._body is None:
-            raise RuntimeError('Brain not initialized')
+            raise RuntimeError('Body not initialized')
         try:
             measure = MeasureBody(self._body)
-            return measure.measure_all()
+            measure.measure_all()
+            self._morphological_measurements = measure
+            return measure
         except Exception as e:
             print('Exception: {}'.format(e))
+
+    def export_phenotype_measurements(self):
+        # !!!!! we need to define the experiment path as a parameter somewhere...
+        path = 'karine_exps'
+        file = open('experiments/'+path+'/phenotype_measurements_'+str(self.id)+'.txt', 'w+')
+        for key, value in self._morphological_measurements.measurement_to_dict().items():
+            file.write('{} {}\n'.format(key, value))
+        for key, value in self._brain_measurements.measurement_to_dict().items():
+            file.write('{} {}\n'.format(key, value))
 
     def measure_brain(self):
         """
         :return: dict of brain measurements
         """
-        if self._brain == None:
+        if self._brain is None:
             raise RuntimeError('Brain not initialized')
         else:
             try:
                 measure = MeasureBrain(self._brain, 10)
-                return measure.measure_all()
+                measure.measure_all()
+                self._brain_measurements = measure
+                return measure
             except:
                 print('Failed measuring brain')
 
@@ -239,14 +260,14 @@ class RevolveBot:
             # For Karine: If you need to validate old robots, remember to add this condition to this if:
             # if raise_for_intersections and coordinates in substrate_coordinates_all and type(module) is not TouchSensorModule:
             if raise_for_intersections:
-                if coordinates in substrate_coordinates_all:
-                    raise self.ItersectionCollisionException(substrate_coordinates_all)
-                substrate_coordinates_all[coordinates] = module.id
+                if coordinates in substrate_coordinates_map:
+                    raise self.ItersectionCollisionException(substrate_coordinates_map)
+                substrate_coordinates_map[coordinates] = module.id
 
             self._update_substrate(raise_for_intersections,
                                    module,
                                    new_direction,
-                                   substrate_coordinates_all)
+                                   substrate_coordinates_map)
 
     def render_brain(self, img_path):
         """

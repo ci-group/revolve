@@ -3,6 +3,12 @@ from pyrevolve.genotype.plasticoding.plasticoding import Alphabet
 import random
 
 def generate_grammar(conf):
+    """
+    Initializing a new genotype,
+    :param conf: e_max_groups, maximum number of groups of symbols
+    :return: a random new Genome
+    :rtype: Plasticoding
+    """
     s_segments = random.randint(1, conf.e_max_groups)
     grammar = {}
 

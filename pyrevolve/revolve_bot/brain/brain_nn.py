@@ -11,6 +11,7 @@ class BrainNN(Brain):
     """
     Base class allowing for constructing neural network controller components in an overviewable manner
     """
+    TYPE = 'neural-network'
 
     def __init__(self):
         self.nodes = {}
@@ -51,6 +52,7 @@ class BrainNN(Brain):
 
     def to_yaml(self):
         yaml_dict_brain = OrderedDict()
+        yaml_dict_brain['type'] = self.TYPE
 
         yaml_dict_neurons = OrderedDict()
         for node in self.nodes:
