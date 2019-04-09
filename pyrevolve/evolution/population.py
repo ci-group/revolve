@@ -1,108 +1,138 @@
 # [(G,P), (G,P), (G,P), (G,P), (G,P)]
 
 from pyrevolve.evolution.individual import Individual
+from random import randint
 
 class PopulationConfig:
-	def __init__(self, 
-		population_size: int, 
-		genotype_constructor, 
-		genotype_conf,
-		mutation_operator, 
-		mutation_conf,
-		crossover_operator, 
-		selection, 
-		parent_selection,
-		population_management,
-		offspring_size=None):
-		"""
-		Creates a PopulationConfig object that sets the particular configuration for the population
+    def __init__(self,
+        population_size: int,
+        genotype_constructor,
+        genotype_conf,
+        mutation_operator,
+        mutation_conf,
+        crossover_operator,
+        selection,
+        parent_selection,
+        population_management,
+        offspring_size=None):
+        """
+        Creates a PopulationConfig object that sets the particular configuration for the population
 
-		:param population_size: size of the population
-		:param genotype_constructor: class of the genotype used
-		:param genotype_conf: configuration for genotype constructor
-		:param mutation_operator: operator to be used in mutation
-		:param mutation_conf: configuration for mutation operator
-		:param crossover_operator: operator to be used in crossover
-		:param selection: selection type
-		:param parent_selection: selection type during parent selection
-		:param population_management: type of population management ie. steady state or generational
-		:param offspring_size (optional): size of offspring (for steady state)
-		"""
-		self.population_size = population_size
-		self.genotype_constructor = genotype_constructor
-		self.genotype_conf = genotype_conf
-		self.mutation_operator = mutation_operator
-		self.mutation_conf = mutation_conf
-		self.crossover_operator = crossover_operator
-		self.parent_selection = parent_selection
-		self.selection = selection
-		self.population_management = population_management
-		self.offspring_size = offspring_size
+        :param population_size: size of the population
+        :param genotype_constructor: class of the genotype used
+        :param genotype_conf: configuration for genotype constructor
+        :param mutation_operator: operator to be used in mutation
+        :param mutation_conf: configuration for mutation operator
+        :param crossover_operator: operator to be used in crossover
+        :param selection: selection type
+        :param parent_selection: selection type during parent selection
+        :param population_management: type of population management ie. steady state or generational
+        :param offspring_size (optional): size of offspring (for steady state)
+        """
+        self.population_size = population_size
+        self.genotype_constructor = genotype_constructor
+        self.genotype_conf = genotype_conf
+        self.mutation_operator = mutation_operator
+        self.mutation_conf = mutation_conf
+        self.crossover_operator = crossover_operator
+        self.parent_selection = parent_selection
+        self.selection = selection
+        self.population_management = population_management
+        self.offspring_size = offspring_size
 
 
 class Population:
-	def __init__(self, conf):
-		"""
-		Creates a Population object that initialises the 
-		individuals in the population with an empty list 
-		and stores the configuration of the system to the 
-		conf variable.
+    def __init__(self, conf):
+        """
+        Creates a Population object that initialises the
+        individuals in the population with an empty list
+        and stores the configuration of the system to the
+        conf variable.
 
-		:param conf: configuration of the system
-		"""
-		self.conf = conf
-		self.individuals = []
+        :param conf: configuration of the system
+        """
+        self.conf = conf
+        self.individuals = []
 
-	def init_pop(self):
-		"""
-		Populates the population (individuals list) with Individual objects that contains their respective genotype. 
-		"""
-		for i in range(self.conf.population_size):
-			individual = Individual(self.conf.genotype_constructor(self.conf.genotype_conf))
-			self.individuals.append(individual)
+    def init_pop(self):
+        """
+        Populates the population (individuals list) with Individual objects that contains their respective genotype.
+        """
+        for i in range(self.conf.population_size):
+            individual = Individual(self.conf.genotype_constructor(self.conf.genotype_conf))
+            self.individuals.append(individual)
 
-	def next_gen(self):
-		"""
-		Creates next generation of the population through selection, mutation, crossover
-		
-		:return: new population
-		"""
-		new_individuals = []
+    def next_gen(self):
+        """
+        Creates next generation of the population through selection, mutation, crossover
 
-		for _i in range(self.conf.offspring_size):
-			# Selection operator (based on fitness)
-			# Crossover
-			if self.conf.crossover_operator is not None:
-				parents = self.conf.parent_selection(self.individuals)
-				child = self.conf.crossover_operator(parents)
-			else:
-				child = self.conf.selection(self.individuals)
-			# Mutation operator
-			child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
-			# Insert individual in new population
-			individual = Individual(child_genotype)
-			new_individuals.append(individual)
+        :return: new population
+        """
+        new_individuals = []
 
-		# evaluate new individuals
-		self.evaluate(new_individuals)
+        for _i in range(self.conf.offspring_size):
+            # Selection operator (based on fitness)
+            # Crossover
+            if self.conf.crossover_operator is not None:
+                parents = self.conf.parent_selection(self.individuals)
+                child = self.conf.crossover_operator(parents)
+            else:
+                child = self.conf.selection(self.individuals)
+            # Mutation operator
+            child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
+            # Insert individual in new population
+            individual = Individual(child_genotype)
+            new_individuals.append(individual)
 
-		# create next population
-		new_individuals = self.conf.population_management(self.indidivuals, new_individuals)
-		return self.__class__(self.conf, new_individuals)
+        # evaluate new individuals
+        self.evaluate(new_individuals)
+
+        # create next population
+        new_individuals = self.conf.population_management(self.indidivuals, new_individuals)
+        return self.__class__(self.conf, new_individuals)
 
 
-	def evaluate(self, new_individuals):
-		"""
-		Evaluates each individual in the new gen population
-		
-		"""
-		for individual in new_individuals:
-			individual.develop()
-			self.evalutate_single_robot(individual)
+    def evaluate(self, new_individuals):
+        """
+        Evaluates each individual in the new gen population
 
-	def evaluate_single_robot(self, individual):
-		"""
-		Evaluate an individual
-		
-		"""
-		raise RuntimeError("Not implemented yet")
+        """
+        for individual in new_individuals:
+            individual.develop()
+            self.evalutate_single_robot(individual)
+
+    def evaluate_single_robot(self, individual):
+        """
+        Evaluate an individual
+
+        """
+        raise RuntimeError("Not implemented yet")
+
+    def tournament_selection(self, population, k=2):
+        """
+        Perform tournament selection and return best individual
+        @param k: amount of individuals to participate in tournament
+        """
+        best_individual = None
+        for i in range(k):
+            individual = population[randint(0, len(population)-1)]
+            if (best_individual == None) or individual.fitness > best_individual.fitness:
+                best_individual = individual
+        return best_individual
+
+    def selection(self, population, survival_size, tournament_k=2):
+        """
+        Perform selection on population of distinct group, can be used in the form parent selection or survival selection
+        @param population: parent selection in population
+        @survival_size: amount of indivuals to select
+        @tournament_k: amount of participants in the tournament selection
+        """
+        selected_individuals = []
+        for _ in range(survival_size):
+            new_individual = False
+            while new_individual is False:
+                selected_individual = self.tournament_selection(population, tournament_k)
+                if selected_individual not in selected_individuals:
+                    selected_individuals.append(selected_individual)
+                    new_individual = True
+        return selected_individuals
