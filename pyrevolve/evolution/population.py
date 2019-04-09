@@ -2,6 +2,11 @@
 
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.genotype.plasticoding.plasticoding import Alphabet
+from pyrevolve import parser
+from pyrevolve.tol.manage import World
+from pyrevolve.SDF.math import Vector3
+import time
+import asyncio
 
 class PopulationConfig:
 	def __init__(self, 
@@ -62,7 +67,7 @@ class Population:
 			individual = Individual(self.conf.genotype_constructor(self.conf.genotype_conf))
 			self.individuals.append(individual)
 
-	def next_gen(self):
+	async def next_gen(self):
 		"""
 		Creates next generation of the population through selection, mutation, crossover
 		
@@ -85,25 +90,50 @@ class Population:
 			new_individuals.append(individual)
 
 		# evaluate new individuals
-		self.evaluate(new_individuals)
+		await self.evaluate(new_individuals)
 
 		# create next population
 		new_individuals = self.conf.population_management(self.indidivuals, new_individuals)
 		return self.__class__(self.conf, new_individuals)
 
 
-	def evaluate(self, new_individuals):
+	async def evaluate(self, new_individuals):
 		"""
 		Evaluates each individual in the new gen population
 		
 		"""
 		for individual in new_individuals:
 			individual.develop()
-			self.evalutate_single_robot(individual)
+			await self.evaluate_single_robot(individual)
 
-	def evaluate_single_robot(self, individual):
+	async def evaluate_single_robot(self, individual):
 		"""
 		Evaluate an individual
 		
 		"""
-		raise RuntimeError("Not implemented yet")
+		# Parse command line / file input arguments
+		settings = parser.parse_args()
+
+		# Connect to the simulator and pause
+		world = await World.create(settings)
+		await world.pause(True)
+
+		await (await world.delete_model(individual.phenotype.id))
+		await asyncio.sleep(2.5)
+
+		# Insert the robot in the simulator
+		insert_future = await world.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
+		robot_manager = await insert_future
+
+		# Resume simulation
+		await world.pause(False)
+
+		# Start a run loop to do some stuff
+		duration = time.time() + 30
+		while time.time() < duration: # NTS: better way to set time
+			# Print robot fitness every second
+			fitness = robot_manager.fitness()
+			print(f'Robot fitness is {fitness}\n')
+			await asyncio.sleep(1.0)
+
+		individual.fitness = fitness
