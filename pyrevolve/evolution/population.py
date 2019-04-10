@@ -116,23 +116,20 @@ class Population:
 		:param gen_num: generation number
 		"""
 		# Parse command line / file input arguments
-		# settings = parser.parse_args()
-		# # Connect to the simulator and pause
-		# world = await World.create(settings)
-		# await world.pause(True)
-		# await world.reset(rall=True, time_only=False, model_only=False)
-		# await asyncio.sleep(2.5)
+		settings = parser.parse_args()
+		# Connect to the simulator and pause
+		world = await World.create(settings)
+		await world.pause(True)	
+		await world.reset(rall=True, time_only=False, model_only=False)
+		await asyncio.sleep(2.5)
 
-		i = 0
 		for individual in new_individuals:
-			print(f'Evaluating individual {individual.genotype.id} ... \n')
+			print(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ... \n')
 			individual.develop()
-			# await self.evaluate_single_robot(individual, world)
-			await self.evaluate_single_robot(individual)
+			await self.evaluate_single_robot(individual, world)
 			print(f'Evaluation complete! \n Individual {individual.genotype.id} has a fitness of {individual.fitness}. \n')
-			i += 1
 
-	async def evaluate_single_robot(self, individual):
+	async def evaluate_single_robot(self, individual, world):
 		"""
 		Evaluate an individual
 
@@ -140,22 +137,21 @@ class Population:
 		:param world: world object for simulator
 		"""
 		# Insert the robot in the simulator
-		# insert_future = await world.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
-		# robot_manager = await insert_future
+		insert_future = await world.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
+		robot_manager = await insert_future
 
-		# # Resume simulation
-		# await world.pause(False)
+		# Resume simulation
+		await world.pause(False)
 
-		# # Start a run loop to do some stuff
-		# duration = time.time() + 30 # TODO: Make it simulation time rather than real time
-		# while time.time() < duration: # NTS: better way to set time
-		# 	individual.fitness = robot_manager.fitness()
-		# 	await asyncio.sleep(1.0)
+		# Start a run loop to do some stuff
+		duration = time.time() + 30 # TODO: Make it simulation time rather than real time
+		while time.time() < duration: # NTS: better way to set time
+			individual.fitness = robot_manager.fitness()
+			await asyncio.sleep(1.0)
 
-		# await world.pause(True)
-		# await world.delete_model(individual.phenotype.id)
-		# await asyncio.sleep(2.5)
-		# await world.reset(rall=True, time_only=False, model_only=False)
-		# await asyncio.sleep(2.5)
-		individual.fitness = 0
+		await world.pause(True)
+		await world.delete_model(individual.phenotype.id)
+		await asyncio.sleep(2.5)
+		await world.reset(rall=True, time_only=False, model_only=False)
+		await asyncio.sleep(2.5)
 

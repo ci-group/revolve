@@ -107,7 +107,7 @@ class Plasticoding(Genotype):
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = next(self.id_iter)
+        self.id = 'genome' + str(next(self.id_iter))
         self.grammar = {}
         self.intermediate_phenotype = None
         self.phenotype = None
@@ -196,7 +196,7 @@ class Plasticoding(Genotype):
     def late_development(self):
 
         self.phenotype = RevolveBot()
-        self.phenotype._id = self.id
+        self.phenotype._id = self.id.replace('genome', 'pheno')
         self.phenotype._brain = BrainNN()
         self.add_imu_nodes()
 
