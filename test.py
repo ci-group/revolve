@@ -3,9 +3,12 @@ from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.lsystem.mutation.mutation import MutationConfig
 from pyrevolve.evolution.lsystem.mutation.standard_mutation import standard_mutation
 from pyrevolve.evolution.lsystem.crossover.standard_crossover import standard_crossover
+from pyrevolve.evolution.lsystem.pop_management.steady_state import steady_state_population_management
 from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.genotype import GenotypeConfig
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+
+import asyncio
 
 def dummy_mutate(genotype):
 	return genotype
@@ -71,9 +74,32 @@ conf = PopulationConfig(
 	selection=dummy_selection,
 	parent_selection=lambda individuals: crossover_selection(individuals, dummy_selection, 2),
 	population_management=lambda old, new: steady_state_population_management(old, new, dummy_selection),
+	population_management_selector=dummy_selection,
 	offspring_size=5,
 )
 
-population = Population(conf)
-population.init_pop()
-population.next_gen()
+async def start():
+	population = Population(conf)
+	population.init_pop()
+	await population.next_gen(0)
+
+def main():
+	def handler(loop, context):
+		exc = context['exception']
+		if isinstance(exc, DisconnectError) \
+				or isinstance(exc, ConnectionResetError):
+			print("Got disconnect / connection reset - shutting down.")
+			sys.exit(0)
+		raise context['exception']
+        
+	try:
+		loop = asyncio.get_event_loop()
+		loop.set_exception_handler(handler)
+		loop.run_until_complete(start())
+	except KeyboardInterrupt:
+		print("Got CtrlC, shutting down.")
+
+if __name__ == '__main__':
+	print("STARTING")
+	main()
+	print("FINISHED")

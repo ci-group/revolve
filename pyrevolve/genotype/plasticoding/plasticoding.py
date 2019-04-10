@@ -14,6 +14,8 @@ from pyrevolve.revolve_bot.brain.brain_nn import Connection
 from pyrevolve.revolve_bot.brain.brain_nn import Params
 import random
 import math
+import copy
+import itertools
 
 class Alphabet(Enum):
 
@@ -97,6 +99,7 @@ class Plasticoding(Genotype):
     """
     L-system genotypic representation, enhanced with epigenetic capabilities for phenotypic plasticity, through Genetic Programming.
     """
+    id_iter = itertools.count()
 
     def __init__(self, conf):
         """
@@ -104,7 +107,7 @@ class Plasticoding(Genotype):
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = None
+        self.id = next(self.id_iter)
         self.grammar = {}
         self.intermediate_phenotype = None
         self.phenotype = None
@@ -141,23 +144,28 @@ class Plasticoding(Genotype):
                     params = []
                 self.grammar[repleceable_symbol].append([symbol, params])
 
-    def load_and_develop(self, new_genotype, genotype_path='', id_genotype=None):
+    # def load_and_develop(self, new_genotype, genotype_path='', id_genotype=None):
 
-        if new_genotype == 'new':
-            self.grammar = self.conf.initialization_genome(self.conf)
-        else:
-            self.id = id_genotype
-            self.load_genotype(genotype_path)
+    #     if new_genotype == 'new':
+    #         self.grammar = self.conf.initialization_genome(self.conf)
+    #     else:
+    #         self.id = id_genotype
+    #         self.load_genotype(genotype_path)
 
-        self.phenotype = self.develop()
-        self.export_phenotype_files()
+    #     self.phenotype = self.develop()
+    #     self.export_phenotype_files()
 
-    def export_phenotype_files(self):
-        # change path later as parameter!!!!
-        path = 'karine_exps'
-        self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
-        self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
-        self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
+    # def export_phenotype_files(self):
+    #     # change path later as parameter!!!!
+    #     path = 'karine_exps'
+    #     self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
+    #     self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
+    #     self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
+
+    # def develop(self):
+    #     self.early_development()
+    #     phenotype = self.late_development()
+    #     return phenotype
 
     def develop(self):
         self.early_development()

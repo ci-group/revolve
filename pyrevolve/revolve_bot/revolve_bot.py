@@ -260,14 +260,14 @@ class RevolveBot:
             # For Karine: If you need to validate old robots, remember to add this condition to this if:
             # if raise_for_intersections and coordinates in substrate_coordinates_all and type(module) is not TouchSensorModule:
             if raise_for_intersections:
-                if coordinates in substrate_coordinates_map:
-                    raise self.ItersectionCollisionException(substrate_coordinates_map)
-                substrate_coordinates_map[coordinates] = module.id
+                if coordinates in substrate_coordinates_all:
+                    raise self.ItersectionCollisionException(substrate_coordinates_all)
+                substrate_coordinates_all[coordinates] = module.id
 
             self._update_substrate(raise_for_intersections,
                                    module,
                                    new_direction,
-                                   substrate_coordinates_map)
+                                   substrate_coordinates_all)
 
     def render_brain(self, img_path):
         """

@@ -19,6 +19,7 @@ class PopulationConfig:
 		selection, 
 		parent_selection,
 		population_management,
+		population_management_selector,
 		offspring_size=None):
 		"""
 		Creates a PopulationConfig object that sets the particular configuration for the population
@@ -43,6 +44,7 @@ class PopulationConfig:
 		self.parent_selection = parent_selection
 		self.selection = selection
 		self.population_management = population_management
+		self.population_management_selector = population_management_selector
 		self.offspring_size = offspring_size
 
 
@@ -67,12 +69,15 @@ class Population:
 			individual = Individual(self.conf.genotype_constructor(self.conf.genotype_conf))
 			self.individuals.append(individual)
 
-	async def next_gen(self):
+	async def next_gen(self, gen_num):
 		"""
 		Creates next generation of the population through selection, mutation, crossover
 		
+		:param gen_num: generation number
+
 		:return: new population
 		"""
+
 		new_individuals = []
 
 		for _i in range(self.conf.offspring_size):
@@ -90,50 +95,67 @@ class Population:
 			new_individuals.append(individual)
 
 		# evaluate new individuals
-		await self.evaluate(new_individuals)
+		await self.evaluate(new_individuals, gen_num)
 
 		# create next population
-		new_individuals = self.conf.population_management(self.indidivuals, new_individuals)
-		return self.__class__(self.conf, new_individuals)
+		if self.conf.population_management_selector is not None:
+			new_individuals = self.conf.population_management(self.individuals, new_individuals, self.conf.population_management_selector)
+		else:
+			new_individuals = self.conf.population_management(self.individuals, new_individuals)
+		# return self.__class__(self.conf, new_individuals)
+		new_population = Population(self.conf)
+		new_population.individuals = new_individuals
+		return new_population
 
 
-	async def evaluate(self, new_individuals):
+	async def evaluate(self, new_individuals, gen_num):
 		"""
 		Evaluates each individual in the new gen population
-		
+
+		:param new_individuals: newly created population after an evolution itertation
+		:param gen_num: generation number
 		"""
+		# Parse command line / file input arguments
+		# settings = parser.parse_args()
+		# # Connect to the simulator and pause
+		# world = await World.create(settings)
+		# await world.pause(True)
+		# await world.reset(rall=True, time_only=False, model_only=False)
+		# await asyncio.sleep(2.5)
+
+		i = 0
 		for individual in new_individuals:
+			print(f'Evaluating individual {individual.genotype.id} ... \n')
 			individual.develop()
+			# await self.evaluate_single_robot(individual, world)
 			await self.evaluate_single_robot(individual)
+			print(f'Evaluation complete! \n Individual {individual.genotype.id} has a fitness of {individual.fitness}. \n')
+			i += 1
 
 	async def evaluate_single_robot(self, individual):
 		"""
 		Evaluate an individual
-		
+
+		:param individual: an individual from the new population
+		:param world: world object for simulator
 		"""
-		# Parse command line / file input arguments
-		settings = parser.parse_args()
-
-		# Connect to the simulator and pause
-		world = await World.create(settings)
-		await world.pause(True)
-
-		await (await world.delete_model(individual.phenotype.id))
-		await asyncio.sleep(2.5)
-
 		# Insert the robot in the simulator
-		insert_future = await world.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
-		robot_manager = await insert_future
+		# insert_future = await world.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
+		# robot_manager = await insert_future
 
-		# Resume simulation
-		await world.pause(False)
+		# # Resume simulation
+		# await world.pause(False)
 
-		# Start a run loop to do some stuff
-		duration = time.time() + 30
-		while time.time() < duration: # NTS: better way to set time
-			# Print robot fitness every second
-			fitness = robot_manager.fitness()
-			print(f'Robot fitness is {fitness}\n')
-			await asyncio.sleep(1.0)
+		# # Start a run loop to do some stuff
+		# duration = time.time() + 30 # TODO: Make it simulation time rather than real time
+		# while time.time() < duration: # NTS: better way to set time
+		# 	individual.fitness = robot_manager.fitness()
+		# 	await asyncio.sleep(1.0)
 
-		individual.fitness = fitness
+		# await world.pause(True)
+		# await world.delete_model(individual.phenotype.id)
+		# await asyncio.sleep(2.5)
+		# await world.reset(rall=True, time_only=False, model_only=False)
+		# await asyncio.sleep(2.5)
+		individual.fitness = 0
+

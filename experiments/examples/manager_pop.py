@@ -20,6 +20,7 @@ from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.lsystem.mutation.mutation import MutationConfig
 from pyrevolve.evolution.lsystem.mutation.standard_mutation import standard_mutation
 from pyrevolve.evolution.lsystem.crossover.standard_crossover import standard_crossover
+from pyrevolve.evolution.lsystem.pop_management.steady_state import steady_state_population_management
 from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.genotype import GenotypeConfig
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
@@ -37,16 +38,6 @@ def crossover_selection(individuals, selector, howmany:int):
         )
     return selected
 
-def steady_state_population_management(old_individuals, new_individuals, selector):
-    pop_size = len(old_individuals)
-    selection_pool = old_individuals + new_individuals # check this
-    selected_individuals = []
-    for _i in range(pop_size):
-        selected = selector(selection_pool)
-        selected_individuals.append(selected)
-
-    return selected_individuals
-
 async def run():
     """
     The main coroutine, which is started below.
@@ -54,13 +45,13 @@ async def run():
     # Parse command line / file input arguments
     settings = parser.parse_args()
 
-    num_generations = 5
+    num_generations = 2
 
     genotype_conf = PlasticodingConfig()
 
     mutation_conf = MutationConfig(
-    mutation_prob=0.8,
-    genotype_conf=genotype_conf,
+        mutation_prob=0.8,
+        genotype_conf=genotype_conf,
     )
 
     population_conf = PopulationConfig(
@@ -72,18 +63,21 @@ async def run():
         crossover_operator=standard_crossover,
         selection=dummy_selection,
         parent_selection=lambda individuals: crossover_selection(individuals, dummy_selection, 2),
-        population_management=lambda old, new: steady_state_population_management(old, new, dummy_selection),
+        population_management=steady_state_population_management,
+        population_management_selector=dummy_selection,
         offspring_size=5,
     )
 
     population = Population(population_conf)
     population.init_pop()
-    await population.evaluate(population.individuals) # What to do after initialising because phenotypes and fitness will be NULL
+    await population.evaluate(population.individuals, 0) # What to do after initialising because phenotypes and fitness will be NULL
 
     i = 0
     while i < num_generations:
-        population.next_gen()
+        await population.next_gen(i+1)
         i += 1
+
+    # output result after completing all generations...
 
 def main():
     def handler(loop, context):
