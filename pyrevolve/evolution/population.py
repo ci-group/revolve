@@ -150,7 +150,7 @@ class Population:
 			await asyncio.sleep(1.0)
 
 		await world.pause(True)
-		await world.delete_model(individual.phenotype.id)
+		await world.delete_robot(robot_manager)
 		await asyncio.sleep(2.5)
 		await world.reset(rall=True, time_only=False, model_only=False)
 		await asyncio.sleep(2.5)
