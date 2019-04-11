@@ -15,7 +15,8 @@ class PopulationConfig:
 		genotype_conf,
 		mutation_operator, 
 		mutation_conf,
-		crossover_operator, 
+		crossover_operator,
+		crossover_conf, 
 		selection, 
 		parent_selection,
 		population_management,
@@ -41,6 +42,7 @@ class PopulationConfig:
 		self.mutation_operator = mutation_operator
 		self.mutation_conf = mutation_conf
 		self.crossover_operator = crossover_operator
+		self.crossover_conf = crossover_conf
 		self.parent_selection = parent_selection
 		self.selection = selection
 		self.population_management = population_management
@@ -85,7 +87,7 @@ class Population:
 			# Crossover
 			if self.conf.crossover_operator is not None:
 				parents = self.conf.parent_selection(self.individuals)
-				child = self.conf.crossover_operator(parents)
+				child = self.conf.crossover_operator(parents, self.conf.crossover_conf)
 			else:
 				child = self.conf.selection(self.individuals)
 			# Mutation operator
@@ -150,7 +152,7 @@ class Population:
 			await asyncio.sleep(1.0)
 
 		await world.pause(True)
-		await world.delete_robot(robot_manager)
+		delete_future = await world.delete_robot(robot_manager)
 		await asyncio.sleep(2.5)
 		await world.reset(rall=True, time_only=False, model_only=False)
 		await asyncio.sleep(2.5)
