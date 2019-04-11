@@ -125,8 +125,8 @@ class Plasticoding(Genotype):
         self.substrate_coordinates_all = {(0, 0): 'module0'}
         self.valid = False
 
-    def load_genotype(self, genotype_path):
-        with open(genotype_path+str(self.id)+'.txt') as f:
+    def load_genotype(self, genotype_file):
+        with open(genotype_file) as f:
             lines = f.readlines()
 
         for line in lines:
@@ -143,10 +143,8 @@ class Plasticoding(Genotype):
                     params = []
                 self.grammar[repleceable_symbol].append([symbol, params])
 
-    def export_genotype(self):
-        # change path later as parameter!!!!
-        path = 'karine_exps'
-        file = open('experiments/' + path + '/genotype_' + str(self.id) + '.txt', 'w+')
+    def export_genotype(self, filepath):
+        file = open(filepath, 'w+')
         for key, rule in self.grammar.items():
             line = key.value + ' '
             for item_rule in range(0, len(rule)):
@@ -166,10 +164,10 @@ class Plasticoding(Genotype):
         self.id = id_genotype
         if new_genotype == 'new':
             self.grammar = self.conf.initialization_genome(self.conf)
-            print('Robot ' + str(self.id) + ' was initialized.')
+            print('Robot {} was initialized.'.format(self.id))
         else:
-            self.load_genotype(genotype_path)
-            print('Robot ' + str(self.id) + ' was loaded.')
+            self.load_genotype('{}{}.txt'.format(genotype_path, self.id))
+            print('Robot {} was loaded.'.format(self.id))
 
         self.phenotype = self.develop()
         self.export_phenotype_files()
@@ -181,7 +179,7 @@ class Plasticoding(Genotype):
     def export_phenotype_files(self):
         # change path later as parameter!!!!
         path = 'karine_exps'
-        self.export_genotype()
+        self.export_genotype('experiments/' + path + '/genotype_' + str(self.id) + '.txt')
         self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
         self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
         self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')

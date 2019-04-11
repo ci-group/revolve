@@ -4,6 +4,7 @@ import os
 import pyrevolve.revolve_bot
 import pyrevolve.genotype.plasticoding.plasticoding
 
+LOCAL_FOLDER = os.path.dirname(__file__)
 
 class TestPlastiCoding(unittest.TestCase):
     def setUp(self):
@@ -25,10 +26,26 @@ class TestPlastiCoding(unittest.TestCase):
         robot = self.genotype.develop()
         robot.measure_brain()
 
+    def test_read_write_file(self):
+        file1 = '/tmp/test_genotype.txt'
+        file2 = '/tmp/test_genotype2.txt'
+
+        self.genotype.export_genotype(file1)
+
+        genotype2 = pyrevolve.genotype.plasticoding.plasticoding.initialization.random_initialization(self.conf)
+        genotype2.id = self.genotype.id
+        genotype2.load_genotype(file1)
+        genotype2.export_genotype(file2)
+
+        file1_txt = open(file1).readlines()
+        file2_txt = open(file2).readlines()
+
+        self.assertListEqual(file1_txt, file2_txt)
+
     def test_collision(self):
         genotype_180 = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf)
         genotype_180.id = 180
-        genotype_180.load_genotype(os.path.join(os.path.dirname(__file__), 'genotype_'))
+        genotype_180.load_genotype(os.path.join(LOCAL_FOLDER, 'genotype_180.txt'))
         robot = genotype_180.develop()
         robot.update_substrate(raise_for_intersections=True)
 
@@ -39,7 +56,7 @@ class Test180(unittest.TestCase):
 
         self.genotype = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf)
         self.genotype.id = 176
-        self.genotype.load_genotype(os.path.join(os.path.dirname(__file__), 'genotype_'))
+        self.genotype.load_genotype(os.path.join(LOCAL_FOLDER, 'genotype_176.txt'))
 
         self.robot = self.genotype.develop()
 
