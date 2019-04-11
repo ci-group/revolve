@@ -106,13 +106,18 @@ class Plasticoding(Genotype):
         :type conf: PlasticodingConfig
         """
         self.conf = conf
+        self.id = None
         self.grammar = {}
+
+        # Auxiliary variables
+        self.substrate_coordinates_all = {(0, 0): '1'}
+        self.valid = False
         self.intermediate_phenotype = None
         self.phenotype = None
         self.morph_mounting_container = None
         self.mounting_reference = None
         self.mounting_reference_stack = []
-        self.quantity_modules = 0
+        self.quantity_modules = 1
         self.quantity_nodes = 0
         self.index_symbol = 0
         self.index_params = 1
@@ -120,8 +125,8 @@ class Plasticoding(Genotype):
         self.outputs_stack = []
         self.edges = {}
 
-    def load_genotype(self, genotype_path):
-        with open(genotype_path) as f:
+    def load_genotype(self, genotype_file):
+        with open(genotype_file) as f:
             lines = f.readlines()
 
         for line in lines:
@@ -138,16 +143,58 @@ class Plasticoding(Genotype):
                     params = []
                 self.grammar[repleceable_symbol].append([symbol, params])
 
-    def develop(self, id_genotype=None):
+    def export_genotype(self, filepath):
+        file = open(filepath, 'w+')
+        for key, rule in self.grammar.items():
+            line = key.value + ' '
+            for item_rule in range(0, len(rule)):
+                symbol = rule[item_rule][self.index_symbol].value
+                if len(rule[item_rule][self.index_params]) > 0:
+                    params = '_'
+                    for param in range(0, len(rule[item_rule][self.index_params])):
+                        params += str(rule[item_rule][self.index_params][param])
+                        if param < len(rule[item_rule][self.index_params])-1:
+                            params += '|'
+                    symbol += params
+                line += symbol + ' '
+            file.write(line+'\n')
+        file.close()
+
+    def load_and_develop(self, load, genotype_path='', id_genotype=None):
+
+        self.id = id_genotype
+        if not load:
+            self.grammar = self.conf.initialization_genome(self.conf).grammar
+            print('Robot {} was initialized.'.format(self.id))
+        else:
+            self.load_genotype('{}{}.txt'.format(genotype_path, self.id))
+            print('Robot {} was loaded.'.format(self.id))
+
+        self.phenotype = self.develop()
+
+    def check_validity(self):
+        if self.phenotype._morphological_measurements.measurement_to_dict()['hinge_count'] > 0:
+            self.valid = True
+
+    def export_phenotype_files(self, path):
+        self.export_genotype('experiments/'+path+'/genotype_'+str(self.id)+'.txt')
+        self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
+        self.render(path)
+
+    def render(self, path):
+        self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
+        self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
+
+    def develop(self):
         self.early_development()
-        self.late_development(id_genotype)
-        return self.phenotype
+        phenotype = self.late_development()
+        return phenotype
 
     def early_development(self):
 
         self.intermediate_phenotype = [[self.conf.axiom_w, []]]
 
-        for i in range(0,self.conf.i_iterations):
+        for i in range(0, self.conf.i_iterations):
 
             position = 0
             for aux_index in range(0, len(self.intermediate_phenotype)):
@@ -163,20 +210,23 @@ class Plasticoding(Genotype):
                     position = position+ii+1
                 else:
                     position = position + 1
+        print('Robot ' + str(self.id) + ' was early-developed.')
 
-    def late_development(self, id_genotype):
+    def late_development(self):
 
         self.phenotype = RevolveBot()
+        self.phenotype._id = self.id
         self.phenotype._brain = BrainNN()
         self.add_imu_nodes()
-        block_body_growth = False
 
         for symbol in self.intermediate_phenotype:
 
             if symbol[self.index_symbol] == Alphabet.CORE_COMPONENT:
                 module = CoreModule()
                 self.phenotype._body = module
-                module.id = 'module'+str(self.quantity_modules)
+                module.id = str(self.quantity_modules)
+                module.info = {'orientation': Orientation.NORTH,
+                               'new_module_type': Alphabet.CORE_COMPONENT}
                 module.orientation = 0
                 module.rgb = [1, 1, 0]
                 self.mounting_reference = module
@@ -185,24 +235,19 @@ class Plasticoding(Genotype):
                 self.morph_mounting_container = symbol[self.index_symbol]
 
             if [symbol[self.index_symbol], []] in Alphabet.modules() \
-                and symbol[self.index_symbol] != Alphabet.CORE_COMPONENT \
-                and self.morph_mounting_container is not None:
+               and symbol[self.index_symbol] != Alphabet.CORE_COMPONENT \
+               and self.morph_mounting_container is not None:
 
-                if self.mounting_reference.TYPE == 'CoreComponent' \
-                   or self.mounting_reference.TYPE == 'FixedBrick':
+                if type(self.mounting_reference) == CoreModule \
+                   or type(self.mounting_reference) == BrickModule:
                     slot = self.get_slot(self.morph_mounting_container).value
-                if self.mounting_reference.TYPE == 'ActiveHinge':
+                if type(self.mounting_reference) == ActiveHingeModule:
                     slot = Orientation.NORTH.value
 
-                if self.quantity_modules < self.conf.max_structural_modules-1:
-                    if not block_body_growth:
-                        try:
-                            self.new_module(slot,
-                                            symbol[self.index_symbol],
-                                            symbol)
-                        except RevolveBot.ItersectionCollisionException as e:
-                            self.mounting_reference_stack[-1].children[slot] = None
-                            block_body_growth = True
+                if self.quantity_modules < self.conf.max_structural_modules:
+                    self.new_module(slot,
+                                    symbol[self.index_symbol],
+                                    symbol)
 
             if [symbol[self.index_symbol], []] in Alphabet.morphology_moving_commands():
                 self.move_in_body(symbol)
@@ -213,8 +258,8 @@ class Plasticoding(Genotype):
             if [symbol[self.index_symbol], []] in Alphabet.controller_moving_commands():
                 self.decode_brain_moving(symbol)
 
-        # self.phenotype.render2d('experiments/karine_exps/'+str(id_genotype)+'.png')
-        # self.phenotype.save_file('experiments/karine_exps/'+str(id_genotype)+'.yaml')
+        print('Robot ' + str(self.id) + ' was late-developed.')
+        return self.phenotype
 
     def move_in_body(self, symbol):
 
@@ -225,30 +270,30 @@ class Plasticoding(Genotype):
 
         elif symbol[self.index_symbol] == Alphabet.MOVE_FRONT \
                 and self.mounting_reference.children[Orientation.NORTH.value] is not None:
-            if self.mounting_reference.children[Orientation.NORTH.value].TYPE != 'TouchSensor':
+            if type(self.mounting_reference.children[Orientation.NORTH.value]) is not TouchSensorModule:
                 self.mounting_reference_stack.append(self.mounting_reference)
                 self.mounting_reference = \
                     self.mounting_reference.children[Orientation.NORTH.value]
 
         elif symbol[self.index_symbol] == Alphabet.MOVE_LEFT \
-                and self.mounting_reference.TYPE != 'ActiveHinge':
+                and type(self.mounting_reference) is not ActiveHingeModule:
             if self.mounting_reference.children[Orientation.WEST.value] is not None:
-                if self.mounting_reference.children[Orientation.WEST.value].TYPE != 'TouchSensor':
+                if type(self.mounting_reference.children[Orientation.WEST.value]) is not TouchSensorModule:
                     self.mounting_reference_stack.append(self.mounting_reference)
                     self.mounting_reference = \
                         self.mounting_reference.children[Orientation.WEST.value]
 
         elif symbol[self.index_symbol] == Alphabet.MOVE_RIGHT \
-                and self.mounting_reference.TYPE != 'ActiveHinge':
+                and type(self.mounting_reference) is not ActiveHingeModule:
             if self.mounting_reference.children[Orientation.EAST.value] is not None:
-                if self.mounting_reference.children[Orientation.EAST.value].TYPE != 'TouchSensor':
+                if type(self.mounting_reference.children[Orientation.EAST.value]) is not TouchSensorModule:
                     self.mounting_reference_stack.append(self.mounting_reference)
                     self.mounting_reference = \
                         self.mounting_reference.children[Orientation.EAST.value]
 
         elif (symbol[self.index_symbol] == Alphabet.MOVE_RIGHT \
               or symbol[self.index_symbol] == Alphabet.MOVE_LEFT) \
-                and self.mounting_reference.TYPE == 'ActiveHinge' \
+                and type(self.mounting_reference) is ActiveHingeModule \
                 and self.mounting_reference.children[Orientation.NORTH.value] is not None:
             self.mounting_reference_stack.append(self.mounting_reference)
             self.mounting_reference = \
@@ -256,66 +301,70 @@ class Plasticoding(Genotype):
 
     def decode_brain_changing(self, symbol):
 
+        # if there is at least both one oscillator
         if len(self.outputs_stack) > 0:
 
             if symbol[self.index_symbol] == Alphabet.MUTATE_PER:
-                self.outputs_stack[0].params.period += float(symbol[self.index_params][0])
-                if self.outputs_stack[0].params.period > self.conf.oscillator_param_max:
-                    self.outputs_stack[0].params.period = self.conf.oscillator_param_max
-                if self.outputs_stack[0].params.period < self.conf.oscillator_param_min:
-                    self.outputs_stack[0].params.period = self.conf.oscillator_param_min
+                self.outputs_stack[-1].params.period += float(symbol[self.index_params][0])
+                if self.outputs_stack[-1].params.period > self.conf.oscillator_param_max:
+                    self.outputs_stack[-1].params.period = self.conf.oscillator_param_max
+                if self.outputs_stack[-1].params.period < self.conf.oscillator_param_min:
+                    self.outputs_stack[-1].params.period = self.conf.oscillator_param_min
 
             if symbol[self.index_symbol] == Alphabet.MUTATE_AMP:
-                self.outputs_stack[0].params.amplitude += float(symbol[self.index_params][0])
-                if self.outputs_stack[0].params.amplitude > self.conf.oscillator_param_max:
-                    self.outputs_stack[0].params.amplitude = self.conf.oscillator_param_max
-                if self.outputs_stack[0].params.amplitude < self.conf.oscillator_param_min:
-                    self.outputs_stack[0].params.amplitude = self.conf.oscillator_param_min
+                self.outputs_stack[-1].params.amplitude += float(symbol[self.index_params][0])
+                if self.outputs_stack[-1].params.amplitude > self.conf.oscillator_param_max:
+                    self.outputs_stack[-1].params.amplitude = self.conf.oscillator_param_max
+                if self.outputs_stack[-1].params.amplitude < self.conf.oscillator_param_min:
+                    self.outputs_stack[-1].params.amplitude = self.conf.oscillator_param_min
 
             if symbol[self.index_symbol] == Alphabet.MUTATE_OFF:
-                self.outputs_stack[0].params.phase_offset += float(symbol[self.index_params][0])
-                if self.outputs_stack[0].params.phase_offset > self.conf.oscillator_param_max:
-                    self.outputs_stack[0].params.phase_offset = self.conf.oscillator_param_max
-                if self.outputs_stack[0].params.phase_offset < self.conf.oscillator_param_min:
-                    self.outputs_stack[0].params.phase_offset = self.conf.oscillator_param_min
+                self.outputs_stack[-1].params.phase_offset += float(symbol[self.index_params][0])
+                if self.outputs_stack[-1].params.phase_offset > self.conf.oscillator_param_max:
+                    self.outputs_stack[-1].params.phase_offset = self.conf.oscillator_param_max
+                if self.outputs_stack[-1].params.phase_offset < self.conf.oscillator_param_min:
+                    self.outputs_stack[-1].params.phase_offset = self.conf.oscillator_param_min
 
         if symbol[self.index_symbol] == Alphabet.MUTATE_EDGE:
             if len(self.edges) > 0:
-                if (self.inputs_stack[0].id, self.outputs_stack[0].id) in self.edges.keys():
-                    self.edges[self.inputs_stack[0].id, self.outputs_stack[0].id].weight \
+                if (self.inputs_stack[-1].id, self.outputs_stack[-1].id) in self.edges.keys():
+                    self.edges[self.inputs_stack[-1].id, self.outputs_stack[-1].id].weight \
                         += float(symbol[self.index_params][0])
-                    if self.edges[self.inputs_stack[0].id, self.outputs_stack[0].id].weight \
+                    if self.edges[self.inputs_stack[-1].id, self.outputs_stack[-1].id].weight \
                             > self.conf.weight_param_max:
-                        self.edges[self.inputs_stack[0].id, self.outputs_stack[0].id].weight \
+                        self.edges[self.inputs_stack[-1].id, self.outputs_stack[-1].id].weight \
                             = self.conf.weight_param_max
-                    if self.edges[self.inputs_stack[0].id, self.outputs_stack[0].id].weight \
+                    if self.edges[self.inputs_stack[-1].id, self.outputs_stack[-1].id].weight \
                             < self.conf.weight_param_min:
-                        self.edges[self.inputs_stack[0].id, self.outputs_stack[0].id].weight \
+                        self.edges[self.inputs_stack[-1].id, self.outputs_stack[-1].id].weight \
                             = self.conf.weight_param_min
 
+        # if there is at least both one sensor and one oscillator
         if len(self.outputs_stack) > 0 and len(self.inputs_stack) > 0:
             if symbol[self.index_symbol] == Alphabet.LOOP:
-                if (self.outputs_stack[0].id, self.outputs_stack[0].id) not in self.edges.keys():
+
+                if (self.outputs_stack[-1].id, self.outputs_stack[-1].id) not in self.edges.keys():
                     connection = Connection()
-                    connection.src = self.outputs_stack[0].id
+                    connection.src = self.outputs_stack[-1].id
                     connection.dst = connection.src
                     connection.weight = float(symbol[self.index_params][0])
                     self.edges[connection.src, connection.src] = connection
                     self.phenotype._brain.connections.append(connection)
 
             if symbol[self.index_symbol] == Alphabet.ADD_EDGE:
-                if (self.inputs_stack[0].id, self.outputs_stack[0].id) not in self.edges.keys():
+                if (self.inputs_stack[-1].id, self.outputs_stack[-1].id) not in self.edges.keys():
                     connection = Connection()
-                    connection.src = self.inputs_stack[0].id
-                    connection.dst = self.outputs_stack[0].id
+                    connection.src = self.inputs_stack[-1].id
+                    connection.dst = self.outputs_stack[-1].id
                     connection.weight = float(symbol[self.index_params][0])
                     self.edges[connection.src, connection.dst] = connection
                     self.phenotype._brain.connections.append(connection)
-                    self.inputs_stack[0].output_nodes.append( self.outputs_stack[0])
-                    self.outputs_stack[0].input_nodes.append(self.inputs_stack[0])
+                    self.inputs_stack[-1].output_nodes.append(self.outputs_stack[-1])
+                    self.outputs_stack[-1].input_nodes.append(self.inputs_stack[-1])
 
     def decode_brain_moving(self, symbol):
 
+        # if there is at least both one sensor and one oscillator
         if len(self.outputs_stack) > 0 and len(self.inputs_stack) > 0:
 
             intermediate = int(float(symbol[self.index_params][0]))
@@ -323,37 +372,35 @@ class Plasticoding(Genotype):
 
             if symbol[self.index_symbol] == Alphabet.MOVE_REF_S:
 
-                if len(self.inputs_stack[0].output_nodes) < intermediate:
-                    intermediate = len(self.inputs_stack[0].output_nodes) - 1
+                if len(self.inputs_stack[-1].output_nodes) < intermediate:
+                    intermediate = len(self.inputs_stack[-1].output_nodes) - 1
                 else:
                     intermediate = intermediate - 1
 
-                if len(self.inputs_stack[0].output_nodes[intermediate].input_nodes) < sibling:
-                    sibling = len(self.inputs_stack[0].output_nodes[intermediate].input_nodes) - 1
+                if len(self.inputs_stack[-1].output_nodes[intermediate].input_nodes) < sibling:
+                    sibling = len(self.inputs_stack[-1].output_nodes[intermediate].input_nodes) - 1
                 else:
                     sibling = sibling - 1
 
-                self.inputs_stack[0] = self.inputs_stack[0].output_nodes[intermediate].input_nodes[sibling]
-
+                self.inputs_stack[-1] = self.inputs_stack[-1].output_nodes[intermediate].input_nodes[sibling]
 
             if symbol[self.index_symbol] == Alphabet.MOVE_REF_O:
 
-                if len(self.outputs_stack[0].input_nodes) < intermediate:
-                    intermediate = len(self.outputs_stack[0].input_nodes) - 1
+                if len(self.outputs_stack[-1].input_nodes) < intermediate:
+                    intermediate = len(self.outputs_stack[-1].input_nodes) - 1
                 else:
                     intermediate = intermediate - 1
 
-                if len(self.outputs_stack[0].input_nodes[intermediate].output_nodes) < sibling:
-                    sibling = len(self.outputs_stack[0].input_nodes[intermediate].output_nodes) - 1
+                if len(self.outputs_stack[-1].input_nodes[intermediate].output_nodes) < sibling:
+                    sibling = len(self.outputs_stack[-1].input_nodes[intermediate].output_nodes) - 1
                 else:
                     sibling = sibling - 1
 
-                self.outputs_stack[0] = self.outputs_stack[0].input_nodes[intermediate].output_nodes[sibling]
+                self.outputs_stack[-1] = self.outputs_stack[-1].input_nodes[intermediate].output_nodes[sibling]
 
     def get_color(self, new_module_type):
 
         rgb = []
-
         if new_module_type == Alphabet.BLOCK:
             rgb = [0, 0, 1]
         if new_module_type == Alphabet.JOINT_HORIZONTAL:
@@ -365,6 +412,7 @@ class Plasticoding(Genotype):
         return rgb
 
     def get_slot(self, morph_mounting_container):
+
         slot = None
         if morph_mounting_container == Alphabet.ADD_FRONT:
             slot = Orientation.NORTH
@@ -377,33 +425,74 @@ class Plasticoding(Genotype):
     def get_angle(self, new_module_type, parent):
         angle = 0
         if new_module_type == Alphabet.JOINT_VERTICAL:
-            if parent.TYPE == 'ActiveHinge' \
-                    and parent.orientation == 90:
+            if parent.info['new_module_type'] is Alphabet.JOINT_VERTICAL:
                 angle = 0
             else:
                 angle = 90
         else:
-            if parent.TYPE == 'ActiveHinge' \
-                    and parent.orientation == 90:
+            if parent.info['new_module_type'] is Alphabet.JOINT_VERTICAL:
                 angle = 270
         return angle
 
+    def check_intersection(self, parent, slot, module):
+        """
+        Update coordinates of module
+        :return:
+        """
+        dic = {Orientation.NORTH.value: 0,
+               Orientation.WEST.value: 1,
+               Orientation.SOUTH.value: 2,
+               Orientation.EAST.value: 3}
+
+        inverse_dic = {0: Orientation.NORTH.value,
+                       1: Orientation.WEST.value,
+                       2: Orientation.SOUTH.value,
+                       3: Orientation.EAST.value}
+
+        direction = dic[parent.info['orientation'].value] + dic[slot]
+        if direction >= len(dic):
+            direction = direction - len(dic)
+
+        new_direction = Orientation(inverse_dic[direction])
+        if new_direction == Orientation.WEST:
+            coordinates = [parent.substrate_coordinates[0],
+                           parent.substrate_coordinates[1] - 1]
+        if new_direction == Orientation.EAST:
+            coordinates = [parent.substrate_coordinates[0],
+                           parent.substrate_coordinates[1] + 1]
+        if new_direction == Orientation.NORTH:
+            coordinates = [parent.substrate_coordinates[0] + 1,
+                           parent.substrate_coordinates[1]]
+        if new_direction == Orientation.SOUTH:
+            coordinates = [parent.substrate_coordinates[0] - 1,
+                           parent.substrate_coordinates[1]]
+
+        module.substrate_coordinates = coordinates
+        module.info['orientation'] = new_direction
+        if (coordinates[0], coordinates[1]) in self.substrate_coordinates_all:
+            return True
+        else:
+            self.substrate_coordinates_all[coordinates[0],
+                                           coordinates[1]] = module.id
+            return False
+
     def new_module(self, slot, new_module_type, symbol):
-        mount = 'no'
+
+        mount = False
         if self.mounting_reference.children[slot] is None \
            and not (new_module_type == Alphabet.SENSOR
-                    and self.mounting_reference.TYPE == 'ActiveHinge'):
-            mount = 'yes'
+                    and type(self.mounting_reference) is ActiveHingeModule):
+            mount = True
 
-        if self.mounting_reference.TYPE == 'CoreComponent' \
+        if type(self.mounting_reference) is CoreModule \
                 and self.mounting_reference.children[1] is not None \
                 and self.mounting_reference.children[2] is not None \
                 and self.mounting_reference.children[3] is not None \
                 and self.mounting_reference.children[0] is None:
             slot = 0
-            mount = 'yes'
+            mount = True
 
-        if mount == 'yes':
+        if mount:
             if new_module_type == Alphabet.BLOCK:
                 module = BrickModule()
             if new_module_type == Alphabet.JOINT_VERTICAL \
@@ -412,25 +501,31 @@ class Plasticoding(Genotype):
             if new_module_type == Alphabet.SENSOR:
                 module = TouchSensorModule()
 
+            module.info = {}
+            module.info['new_module_type'] = new_module_type
             module.orientation = self.get_angle(new_module_type,
                                                 self.mounting_reference)
             module.rgb = self.get_color(new_module_type)
-            self.mounting_reference.children[slot] = module
-            self.morph_mounting_container = None
 
             if new_module_type != Alphabet.SENSOR:
                 self.quantity_modules += 1
-                module.id = 'module' + str(self.quantity_modules)
-                self.mounting_reference_stack.append(self.mounting_reference)
-                self.mounting_reference = module
+                module.id = str(self.quantity_modules)
+                intersection = self.check_intersection(self.mounting_reference, slot, module)
 
-                self.phenotype.update_substrate(True)
+                if not intersection:
+                    self.mounting_reference.children[slot] = module
+                    self.morph_mounting_container = None
+                    self.mounting_reference_stack.append(self.mounting_reference)
+                    self.mounting_reference = module
+                    if new_module_type == Alphabet.JOINT_HORIZONTAL \
+                       or new_module_type == Alphabet.JOINT_VERTICAL:
+                        self.decode_brain_node(symbol, module.id)
+                else:
+                    self.quantity_modules -= 1
             else:
-                module.id = self.mounting_reference.id+'sensor-'+str(slot)
-
-            if new_module_type == Alphabet.SENSOR \
-               or new_module_type == Alphabet.JOINT_HORIZONTAL \
-               or new_module_type == Alphabet.JOINT_VERTICAL:
+                self.mounting_reference.children[slot] = module
+                self.morph_mounting_container = None
+                module.id = self.mounting_reference.id+'s'+str(slot)
                 self.decode_brain_node(symbol, module.id)
 
     def decode_brain_node(self, symbol, part_id):
@@ -442,17 +537,21 @@ class Plasticoding(Genotype):
         node.part_id = part_id
 
         if symbol[self.index_symbol] == Alphabet.SENSOR:
+
             node.layer = 'input'
             node.type = 'Input'
 
+            # stacks sensor if there are no oscillators yet
             if len(self.outputs_stack) == 0:
                 self.inputs_stack.append(node)
             else:
+                # if it is the first senor ever
                 if len(self.inputs_stack) > 0:
                     self.inputs_stack = [node]
                 else:
                     self.inputs_stack.append(node)
 
+                # connects sensor to all oscillators in the stack
                 for output_node in range(0, len(self.outputs_stack)):
                     self.outputs_stack[output_node].input_nodes.append(node)
                     node.output_nodes.append(self.outputs_stack[output_node])
@@ -469,12 +568,9 @@ class Plasticoding(Genotype):
                     self.phenotype._brain.connections.append(connection)
                 self.outputs_stack = [self.outputs_stack[-1]]
 
-            node2 = copy.copy(node)
-            node2.id = node.id + '-2'
-            self.phenotype._brain.nodes[node.id + '-2'] = node2
-
         if symbol[self.index_symbol] == Alphabet.JOINT_VERTICAL \
            or symbol[self.index_symbol] == Alphabet.JOINT_HORIZONTAL:
+
             node.layer = 'output'
             node.type = 'Oscillator'
 
@@ -485,14 +581,17 @@ class Plasticoding(Genotype):
             node.params = params
             self.phenotype._brain.params[node.id] = params
 
+            # stacks oscillator if there are no sensors yet
             if len(self.inputs_stack) == 0:
                 self.outputs_stack.append(node)
             else:
+                # if it is the first oscillator ever
                 if len(self.outputs_stack) > 0:
                     self.outputs_stack = [node]
                 else:
                     self.outputs_stack.append(node)
 
+                # connects oscillator to all sensors in the stack
                 for input_node in range(0, len(self.inputs_stack)):
                     self.inputs_stack[input_node].output_nodes.append(node)
                     node.input_nodes.append(self.inputs_stack[input_node])
@@ -510,26 +609,9 @@ class Plasticoding(Genotype):
 
         self.phenotype._brain.nodes[node.id] = node
 
-        # print('----')
-        # print('>inputs')
-        # for i in self.inputs_stack:
-        #     print(i.id)
-        #     for j in i.output_nodes:
-        #         print(' o '+str(j.id))
-        # print('>outputs')
-        # for i in self.outputs_stack:
-        #     print(i.id)
-        #     for j in i.input_nodes:
-        #         print(' i'+str(j.id))
-        # print('>edges')
-        # for e in self.edges:
-        #     print(e)
-        #     print(str(self.edges[e].weight))
-
-
     def add_imu_nodes(self):
         for p in range(1, 7):
-            id = 'node-code'+str(p)
+            id = 'node-core'+str(p)
             node = Node()
             node.layer = 'input'
             node.type = 'Input'
@@ -537,15 +619,18 @@ class Plasticoding(Genotype):
             node.id = id
             self.phenotype._brain.nodes[id] = node
 
-    # adds params for symbols that need it
     @staticmethod
     def build_symbol(symbol, conf):
-
+        """
+        Adds params for alphabet symbols (when it applies).
+        :return:
+        """
         index_symbol = 0
         index_params = 1
 
-        if symbol[index_symbol] == Alphabet.JOINT_HORIZONTAL \
-                or symbol[index_symbol] == Alphabet.JOINT_VERTICAL:
+        if symbol[index_symbol] is Alphabet.JOINT_HORIZONTAL \
+           or symbol[index_symbol] is Alphabet.JOINT_VERTICAL:
+
             symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max),
                                     random.uniform(conf.oscillator_param_min,
                                                    conf.oscillator_param_max),
@@ -554,19 +639,22 @@ class Plasticoding(Genotype):
                                     random.uniform(conf.oscillator_param_min,
                                                    conf.oscillator_param_max)]
 
-        if symbol[index_symbol] == Alphabet.SENSOR  \
-                or symbol[index_symbol] == Alphabet.ADD_EDGE \
-                or symbol[index_symbol] == Alphabet.LOOP:
+        if symbol[index_symbol] is Alphabet.SENSOR  \
+           or symbol[index_symbol] is Alphabet.ADD_EDGE \
+           or symbol[index_symbol] is Alphabet.LOOP:
+
             symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max)]
 
-        if symbol[index_symbol] == Alphabet.MUTATE_EDGE \
-            or symbol[index_symbol] == Alphabet.MUTATE_AMP \
-            or symbol[index_symbol] == Alphabet.MUTATE_PER \
-            or symbol[index_symbol] == Alphabet.MUTATE_OFF:
+        if symbol[index_symbol] is Alphabet.MUTATE_EDGE \
+           or symbol[index_symbol] is Alphabet.MUTATE_AMP \
+           or symbol[index_symbol] is Alphabet.MUTATE_PER \
+           or symbol[index_symbol] is Alphabet.MUTATE_OFF:
+
                 symbol[index_params] = [random.normalvariate(0, 1)]
 
-        if symbol[index_symbol] == Alphabet.MOVE_REF_S \
-                or symbol[index_symbol] == Alphabet.MOVE_REF_O:
+        if symbol[index_symbol] is Alphabet.MOVE_REF_S \
+           or symbol[index_symbol] is Alphabet.MOVE_REF_O:
+
             intermediate_temp = random.normalvariate(0, 1)
             final_temp = random.normalvariate(0, 1)
             symbol[index_params] = [math.ceil(math.sqrt(math.pow(intermediate_temp, 2))),
