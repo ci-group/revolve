@@ -7,8 +7,8 @@ from collections import OrderedDict
 
 from pyrevolve import SDF
 
-from .revolve_module import CoreModule, Orientation
-from .brain import Brain, BrainNN, BrainRLPowerSplines
+from .revolve_module import CoreModule, TouchSensorModule, Orientation
+from .brain import Brain
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
@@ -195,9 +195,9 @@ class RevolveBot:
         :param raise_for_intersections: enable raising an exception if a collision of coordinates is detected
         :raises self.ItersectionCollisionException: If a collision of coordinates is detected (and check is enabled)
         """
-        substrate_coordinates_all = {(0, 0): self._body.id}
+        substrate_coordinates_map = {(0, 0): self._body.id}
         self._body.substrate_coordinates = (0, 0)
-        self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_all)
+        self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_map)
 
     class ItersectionCollisionException(Exception):
         """
@@ -257,7 +257,7 @@ class RevolveBot:
             module.substrate_coordinates = coordinates
 
             # For Karine: If you need to validate old robots, remember to add this condition to this if:
-            # if raise_for_intersections and coordinates in substrate_coordinates_all and type(module) is not TouchSensorModule:
+            # if raise_for_intersections and coordinates in substrate_coordinates_map and type(module) is not TouchSensorModule:
             if raise_for_intersections:
                 if coordinates in substrate_coordinates_map:
                     raise self.ItersectionCollisionException(substrate_coordinates_map)

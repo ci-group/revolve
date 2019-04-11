@@ -2,13 +2,7 @@ from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding
 from pyrevolve.genotype.plasticoding.plasticoding import Alphabet
 import random
 
-def random_initialization(conf):
-    """
-    Initializing a new genotype,
-    :param conf: e_max_groups, maximum number of groups of symbols
-    :return: a random new Genome
-    :rtype: Plasticoding
-    """
+def generate_grammar(conf):
     s_segments = random.randint(1, conf.e_max_groups)
     grammar = {}
 
@@ -46,3 +40,14 @@ def random_initialization(conf):
                                   ])
     return grammar
 
+def random_initialization(conf):
+    """
+    Initializing a new genotype.
+    :param conf: e_max_groups, maximum number of groups of symbols
+    :type conf: PlasticodingConfig
+    :return: a random new Genome
+    :rtype: Plasticoding
+    """
+    genotype = Plasticoding(conf)
+    genotype.grammar = generate_grammar(conf)
+    return genotype

@@ -8,12 +8,14 @@ from pyrevolve.revolve_bot.revolve_module import CoreModule
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule
 from pyrevolve.revolve_bot.revolve_module import BrickModule
 from pyrevolve.revolve_bot.revolve_module import TouchSensorModule
-from pyrevolve.revolve_bot.brain import BrainNN
+from pyrevolve.revolve_bot.brain.brain_nn import BrainNN
 from pyrevolve.revolve_bot.brain.brain_nn import Node
 from pyrevolve.revolve_bot.brain.brain_nn import Connection
 from pyrevolve.revolve_bot.brain.brain_nn import Params
 import random
 import math
+import copy
+
 
 class Alphabet(Enum):
 
@@ -118,6 +120,8 @@ class Plasticoding(Genotype):
         self.inputs_stack = []
         self.outputs_stack = []
         self.edges = {}
+
+        #TODO remove them from the object, as they are construction artifacts
         self.substrate_coordinates_all = {(0, 0): 'module0'}
         self.valid = False
 
@@ -267,30 +271,30 @@ class Plasticoding(Genotype):
 
         elif symbol[self.index_symbol] == Alphabet.MOVE_FRONT \
                 and self.mounting_reference.children[Orientation.NORTH.value] is not None:
-            if type(self.mounting_reference.children[Orientation.NORTH.value]) != TouchSensorModule:
+            if type(self.mounting_reference.children[Orientation.NORTH.value]) is not TouchSensorModule:
                 self.mounting_reference_stack.append(self.mounting_reference)
                 self.mounting_reference = \
                     self.mounting_reference.children[Orientation.NORTH.value]
 
         elif symbol[self.index_symbol] == Alphabet.MOVE_LEFT \
-                and type(self.mounting_reference)!= ActiveHingeModule:
+                and type(self.mounting_reference) is not ActiveHingeModule:
             if self.mounting_reference.children[Orientation.WEST.value] is not None:
-                if type(self.mounting_reference.children[Orientation.WEST.value]) != TouchSensorModule:
+                if type(self.mounting_reference.children[Orientation.WEST.value]) is not TouchSensorModule:
                     self.mounting_reference_stack.append(self.mounting_reference)
                     self.mounting_reference = \
                         self.mounting_reference.children[Orientation.WEST.value]
 
         elif symbol[self.index_symbol] == Alphabet.MOVE_RIGHT \
-                and type(self.mounting_reference) != ActiveHingeModule:
+                and type(self.mounting_reference) is not ActiveHingeModule:
             if self.mounting_reference.children[Orientation.EAST.value] is not None:
-                if type(self.mounting_reference.children[Orientation.EAST.value]) != TouchSensorModule:
+                if type(self.mounting_reference.children[Orientation.EAST.value]) is not TouchSensorModule:
                     self.mounting_reference_stack.append(self.mounting_reference)
                     self.mounting_reference = \
                         self.mounting_reference.children[Orientation.EAST.value]
 
         elif (symbol[self.index_symbol] == Alphabet.MOVE_RIGHT \
               or symbol[self.index_symbol] == Alphabet.MOVE_LEFT) \
-                and type(self.mounting_reference) == ActiveHingeModule \
+                and type(self.mounting_reference) is ActiveHingeModule \
                 and self.mounting_reference.children[Orientation.NORTH.value] is not None:
             self.mounting_reference_stack.append(self.mounting_reference)
             self.mounting_reference = \
@@ -422,12 +426,12 @@ class Plasticoding(Genotype):
     def get_angle(self, new_module_type, parent):
         angle = 0
         if new_module_type == Alphabet.JOINT_VERTICAL:
-            if parent.info['new_module_type'] == Alphabet.JOINT_VERTICAL:
+            if parent.info['new_module_type'] is Alphabet.JOINT_VERTICAL:
                 angle = 0
             else:
                 angle = 90
         else:
-            if parent.info['new_module_type'] == Alphabet.JOINT_VERTICAL:
+            if parent.info['new_module_type'] is Alphabet.JOINT_VERTICAL:
                 angle = 270
         return angle
 
@@ -478,10 +482,10 @@ class Plasticoding(Genotype):
         mount = False
         if self.mounting_reference.children[slot] is None \
            and not (new_module_type == Alphabet.SENSOR
-                    and type(self.mounting_reference) == ActiveHingeModule):
+                    and type(self.mounting_reference) is ActiveHingeModule):
             mount = True
 
-        if type(self.mounting_reference) == CoreModule \
+        if type(self.mounting_reference) is CoreModule \
                 and self.mounting_reference.children[1] is not None \
                 and self.mounting_reference.children[2] is not None \
                 and self.mounting_reference.children[3] is not None \
@@ -625,8 +629,8 @@ class Plasticoding(Genotype):
         index_symbol = 0
         index_params = 1
 
-        if symbol[index_symbol] == Alphabet.JOINT_HORIZONTAL \
-           or symbol[index_symbol] == Alphabet.JOINT_VERTICAL:
+        if symbol[index_symbol] is Alphabet.JOINT_HORIZONTAL \
+           or symbol[index_symbol] is Alphabet.JOINT_VERTICAL:
 
             symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max),
                                     random.uniform(conf.oscillator_param_min,
@@ -636,21 +640,21 @@ class Plasticoding(Genotype):
                                     random.uniform(conf.oscillator_param_min,
                                                    conf.oscillator_param_max)]
 
-        if symbol[index_symbol] == Alphabet.SENSOR  \
-           or symbol[index_symbol] == Alphabet.ADD_EDGE \
-           or symbol[index_symbol] == Alphabet.LOOP:
+        if symbol[index_symbol] is Alphabet.SENSOR  \
+           or symbol[index_symbol] is Alphabet.ADD_EDGE \
+           or symbol[index_symbol] is Alphabet.LOOP:
 
             symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max)]
 
-        if symbol[index_symbol] == Alphabet.MUTATE_EDGE \
-           or symbol[index_symbol] == Alphabet.MUTATE_AMP \
-           or symbol[index_symbol] == Alphabet.MUTATE_PER \
-           or symbol[index_symbol] == Alphabet.MUTATE_OFF:
+        if symbol[index_symbol] is Alphabet.MUTATE_EDGE \
+           or symbol[index_symbol] is Alphabet.MUTATE_AMP \
+           or symbol[index_symbol] is Alphabet.MUTATE_PER \
+           or symbol[index_symbol] is Alphabet.MUTATE_OFF:
 
                 symbol[index_params] = [random.normalvariate(0, 1)]
 
-        if symbol[index_symbol] == Alphabet.MOVE_REF_S \
-           or symbol[index_symbol] == Alphabet.MOVE_REF_O:
+        if symbol[index_symbol] is Alphabet.MOVE_REF_S \
+           or symbol[index_symbol] is Alphabet.MOVE_REF_O:
 
             intermediate_temp = random.normalvariate(0, 1)
             final_temp = random.normalvariate(0, 1)
