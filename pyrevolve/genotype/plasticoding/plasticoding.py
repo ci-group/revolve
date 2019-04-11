@@ -108,22 +108,22 @@ class Plasticoding(Genotype):
         self.conf = conf
         self.id = None
         self.grammar = {}
+
+        # Auxiliary variables
+        self.substrate_coordinates_all = {(0, 0): '1'}
+        self.valid = False
         self.intermediate_phenotype = None
         self.phenotype = None
         self.morph_mounting_container = None
         self.mounting_reference = None
         self.mounting_reference_stack = []
-        self.quantity_modules = 0
+        self.quantity_modules = 1
         self.quantity_nodes = 0
         self.index_symbol = 0
         self.index_params = 1
         self.inputs_stack = []
         self.outputs_stack = []
         self.edges = {}
-
-        #TODO remove them from the object, as they are construction artifacts
-        self.substrate_coordinates_all = {(0, 0): 'module0'}
-        self.valid = False
 
     def load_genotype(self, genotype_file):
         with open(genotype_file) as f:
@@ -160,10 +160,10 @@ class Plasticoding(Genotype):
             file.write(line+'\n')
         file.close()
 
-    def load_and_develop(self, new_genotype, genotype_path='', id_genotype=None):
+    def load_and_develop(self, load, genotype_path='', id_genotype=None):
 
         self.id = id_genotype
-        if new_genotype == 'new':
+        if not load:
             self.grammar = self.conf.initialization_genome(self.conf)
             print('Robot {} was initialized.'.format(self.id))
         else:
@@ -171,19 +171,19 @@ class Plasticoding(Genotype):
             print('Robot {} was loaded.'.format(self.id))
 
         self.phenotype = self.develop()
-        self.export_phenotype_files()
 
     def check_validity(self):
         if self.phenotype._morphological_measurements.measurement_to_dict()['hinge_count'] > 0:
             self.valid = True
 
-    def export_phenotype_files(self):
-        # change path later as parameter!!!!
-        path = 'karine_exps'
-        self.export_genotype('experiments/' + path + '/genotype_' + str(self.id) + '.txt')
+    def export_phenotype_files(self, path):
+        self.export_genotype('experiments/'+path+'/genotype_'+str(self.id)+'.txt')
+        self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
+        self.render(path)
+
+    def render(self, path):
         self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
         self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
-        self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
 
     def develop(self):
         self.early_development()
@@ -224,7 +224,7 @@ class Plasticoding(Genotype):
             if symbol[self.index_symbol] == Alphabet.CORE_COMPONENT:
                 module = CoreModule()
                 self.phenotype._body = module
-                module.id = 'module'+str(self.quantity_modules)
+                module.id = str(self.quantity_modules)
                 module.info = {'orientation': Orientation.NORTH,
                                'new_module_type': Alphabet.CORE_COMPONENT}
                 module.orientation = 0
@@ -244,7 +244,7 @@ class Plasticoding(Genotype):
                 if type(self.mounting_reference) == ActiveHingeModule:
                     slot = Orientation.NORTH.value
 
-                if self.quantity_modules < self.conf.max_structural_modules-1:
+                if self.quantity_modules < self.conf.max_structural_modules:
                     self.new_module(slot,
                                     symbol[self.index_symbol],
                                     symbol)
@@ -509,7 +509,7 @@ class Plasticoding(Genotype):
 
             if new_module_type != Alphabet.SENSOR:
                 self.quantity_modules += 1
-                module.id = 'module' + str(self.quantity_modules)
+                module.id = str(self.quantity_modules)
                 intersection = self.check_intersection(self.mounting_reference, slot, module)
 
                 if not intersection:
