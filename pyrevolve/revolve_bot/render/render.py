@@ -17,7 +17,7 @@ class Render:
 		@param slot: parent slot of module
 		"""
 		if isinstance(module, CoreModule):
-			canvas.draw_controller()
+			canvas.draw_controller(module.id)
 		elif isinstance(module, ActiveHingeModule):
 			canvas.move_by_slot(slot)
 			Canvas.rotating_orientation += module.orientation
