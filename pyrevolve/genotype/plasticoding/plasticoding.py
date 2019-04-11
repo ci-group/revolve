@@ -164,7 +164,7 @@ class Plasticoding(Genotype):
 
         self.id = id_genotype
         if not load:
-            self.grammar = self.conf.initialization_genome(self.conf)
+            self.grammar = self.conf.initialization_genome(self.conf).grammar
             print('Robot {} was initialized.'.format(self.id))
         else:
             self.load_genotype('{}{}.txt'.format(genotype_path, self.id))
