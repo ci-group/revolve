@@ -10,25 +10,21 @@ sys.path.append(newpath)
 
 from pygazebo.pygazebo import DisconnectError
 
-from pyrevolve import revolve_bot
 from pyrevolve import parser
-from pyrevolve.SDF.math import Vector3
-from pyrevolve.tol.manage import World
 
 from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.evolution.individual import Individual
-from pyrevolve.evolution.lsystem.mutation.mutation import MutationConfig
-from pyrevolve.evolution.lsystem.crossover.crossover import CrossoverConfig
-from pyrevolve.evolution.lsystem.mutation.standard_mutation import standard_mutation
-from pyrevolve.evolution.lsystem.crossover.standard_crossover import standard_crossover
-from pyrevolve.evolution.lsystem.pop_management.steady_state import steady_state_population_management
+from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
+from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
+from pyrevolve.evolution.pop_management import steady_state as steady_state_population_management
 from pyrevolve.genotype.plasticoding.initialization import random_initialization
-from pyrevolve.genotype.genotype import GenotypeConfig
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 
 
 def dummy_selection(individuals):
     return individuals[0]
+
 
 def crossover_selection(individuals, selector, howmany:int):
     selected = []
@@ -37,6 +33,7 @@ def crossover_selection(individuals, selector, howmany:int):
             selector(individuals)
         )
     return selected
+
 
 async def run():
     """
