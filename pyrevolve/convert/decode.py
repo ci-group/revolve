@@ -32,7 +32,13 @@ class BodyDecoder(object):
         body.root.CopyFrom(self._process_body_part(obj['body']))
         return body
 
-    def _process_body_part(self, part, dst_slot=None, x=0, y=0):
+    def _process_body_part(
+            self,
+            part,
+            dst_slot=None,
+            x=0,
+            y=0,
+            orientation=0):
         """
         :param part:
         :return:
@@ -81,92 +87,149 @@ class BodyDecoder(object):
             if child_id == dst_slot:
                 err("Part '{}': Attempt to use slot {} for child which is "
                     "already attached to parent.".format(part_id, child_id))
-            childs_orientation = self._rotation(
-                    arity=proto_template.arity,
-                    parents_slot=child_id,
-                    rotation=proto_part.orientation)
             childs_x, childs_y = self._coordinates(
-                    rotation=childs_orientation,
+                    orientation=orientation,
+                    child_slot=child_id,
                     init_x=proto_part.x,
-                    init_y=proto_part.y
-            )
+                    init_y=proto_part.y)
             self._process_body_connection(
-                    proto_part,
-                    child_id,
-                    children[child_id],
-                    childs_x,
-                    childs_y)
+                    parent_part=proto_part,
+                    parent_slot=child_id,
+                    child_part=children[child_id],
+                    x=childs_x,
+                    y=childs_y,
+                    orientation=orientation)
 
         return proto_part
 
     def _process_body_connection(
             self,
             parent_part,
-            src_slot,
+            parent_slot,
             child_part,
             x,
-            y):
+            y,
+            orientation
+    ):
         """
         :param parent_part:
         :type parent_part: BodyPart
-        :param src_slot: Slot on parent
-        :type src_slot: int
+        :param parent_slot: Slot on parent
+        :type parent_slot: int
         :param child_part:
         :return:
         :rtype: BodyConnection
         """
         conn = parent_part.child.add()
-        conn.src_slot = src_slot
+        conn.src_slot = parent_slot
         conn.dst_slot = child_part['slot'] if 'slot' in child_part else 0
+        childs_orientation = self._orientation(
+                parents_slot=parent_slot,
+                parents_orientation=orientation)
         conn.part.CopyFrom(self._process_body_part(
                 part=child_part,
                 dst_slot=conn.dst_slot,
                 x=x,
-                y=y))
+                y=y,
+                orientation=childs_orientation))
 
     @staticmethod
-    def _rotation(arity, parents_slot, rotation):
+    def _orientation(parents_slot, parents_orientation):
         """
         Method that determines the rotation of a module
         :param arity:
         :param parents_slot:
-        :param rotation:
+        :param parents_orientation:
         :return:
         :rtype: int
         """
-        if arity is 2:
-            return (rotation + 180.0) % 360.0 if parents_slot is 0 else rotation
-        elif arity is 4:
-            if parents_slot is 0:
-                return (rotation + 180.0) % 360.0
-            elif parents_slot is 1:
-                return (rotation + 0.0) % 360.0
-            elif parents_slot is 2:
-                return (rotation + 270) % 360.0
-            elif parents_slot is 3:
-                return (rotation + 90.0) % 360.0
+        orientation = int(parents_orientation)
+        if orientation == 0:
+            if parents_slot == 0:
+                return 2
+            elif parents_slot == 1:
+                return 0
+            elif parents_slot == 2:
+                return 3
+            elif parents_slot == 3:
+                return 1
+        elif orientation == 1:
+            if parents_slot == 0:
+                return 3
+            elif parents_slot == 1:
+                return 1
+            elif parents_slot == 2:
+                return 0
+            elif parents_slot == 3:
+                return 2
+        elif orientation == 2:
+            if parents_slot == 0:
+                return 0
+            elif parents_slot == 1:
+                return 2
+            elif parents_slot == 2:
+                return 1
+            elif parents_slot == 3:
+                return 3
+        elif orientation == 3:
+            if parents_slot == 0:
+                return 1
+            elif parents_slot == 1:
+                return 3
+            elif parents_slot == 2:
+                return 2
+            elif parents_slot == 3:
+                return 0
         else:
-            err("Unsupported parents slot provided.")
+            err("Unsupported parents rotation angle provided.")
 
     @staticmethod
-    def _coordinates(rotation, init_x, init_y):
+    def _coordinates(orientation, child_slot, init_x, init_y):
         """
         Method that determines the coordinates of a module
-        :param rotation:
+        :param orientation:
         :param init_x:
         :param init_y:
         :return:
         :rtype: tuple
         """
-        rotation = int(rotation)
-        if rotation == 0:
-            return (init_x + 1), init_y
-        elif rotation == 90:
-            return init_x, (init_y + 1)
-        elif rotation == 180:
-            return (init_x - 1), init_y
-        elif rotation == 270:
-            return init_x, (init_y - 1)
+        orientation = int(orientation)
+        if orientation == 0:
+            if child_slot == 0:
+                return init_x, (init_y - 1)
+            elif child_slot == 1:
+                return init_x, (init_y + 1)
+            elif child_slot == 2:
+                return (init_x + 1), init_y
+            elif child_slot == 3:
+                return (init_x - 1), init_y
+        elif orientation == 1:
+            if child_slot == 0:
+                return (init_x + 1), init_y
+            elif child_slot == 1:
+                return (init_x - 1), init_y
+            elif child_slot == 2:
+                return init_x, (init_y + 1)
+            elif child_slot == 3:
+                return init_x, (init_y - 1)
+        elif orientation == 2:
+            if child_slot == 0:
+                return init_x, (init_y + 1)
+            elif child_slot == 1:
+                return init_x, (init_y - 1)
+            elif child_slot == 2:
+                return (init_x - 1), init_y
+            elif child_slot == 3:
+                return (init_x + 1), init_y
+        elif orientation == 3:
+            if child_slot == 0:
+                return (init_x - 1), init_y
+            elif child_slot == 1:
+                return (init_x + 1), init_y
+            elif child_slot == 2:
+                return init_x, (init_y - 1)
+            elif child_slot == 3:
+                return init_x, (init_y + 1)
         else:
             err("Unsupported parents rotation angle provided.")
 
