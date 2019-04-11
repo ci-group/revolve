@@ -158,6 +158,7 @@ class Plasticoding(Genotype):
                     symbol += params
                 line += symbol + ' '
             file.write(line+'\n')
+        file.close()
 
     def load_and_develop(self, new_genotype, genotype_path='', id_genotype=None):
 

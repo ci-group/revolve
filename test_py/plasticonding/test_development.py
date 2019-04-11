@@ -37,10 +37,13 @@ class TestPlastiCoding(unittest.TestCase):
         genotype2.load_genotype(file1)
         genotype2.export_genotype(file2)
 
-        file1_txt = open(file1).readlines()
-        file2_txt = open(file2).readlines()
+        file1_txt = open(file1)
+        file2_txt = open(file2)
 
-        self.assertListEqual(file1_txt, file2_txt)
+        self.assertListEqual(file1_txt.readlines(), file2_txt.readlines())
+
+        file1_txt.close()
+        file2_txt.close()
 
     def test_collision(self):
         genotype_180 = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf)
