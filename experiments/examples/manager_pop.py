@@ -34,8 +34,7 @@ def crossover_selection(individuals, selector, howmany:int):
     selected = []
     for i in range(howmany):
         selected.append(
-            # selector(individuals)
-            individuals[i]
+            selector(individuals)
         )
     return selected
 
@@ -75,7 +74,7 @@ async def run():
     )
 
     population = Population(population_conf)
-    population.init_pop()
+    await population.init_pop()
 
     gen_num = 0
     while gen_num < num_generations:

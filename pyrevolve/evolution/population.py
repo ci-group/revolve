@@ -64,7 +64,7 @@ class Population:
 		self.conf = conf
 		self.individuals = []
 
-	def init_pop(self):
+	async def init_pop(self):
 		"""
 		Populates the population (individuals list) with Individual objects that contains their respective genotype. 
 		"""
@@ -72,7 +72,7 @@ class Population:
 			individual = Individual(self.conf.genotype_constructor(self.conf.genotype_conf))
 			self.individuals.append(individual)
 
-		await self.evaluate(population.individuals, 0)
+		await self.evaluate(self.individuals, 0)
 
 	async def next_gen(self, gen_num):
 		"""
