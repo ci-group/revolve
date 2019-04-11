@@ -107,7 +107,7 @@ class Plasticoding(Genotype):
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = 'genome' + str(next(self.id_iter))
+        self.id = 'genotype' + str(next(self.id_iter))
         self.grammar = {}
         self.intermediate_phenotype = None
         self.phenotype = None
@@ -667,7 +667,7 @@ class PlasticodingConfig:
                  weight_max=1,
                  axiom_w=Alphabet.CORE_COMPONENT,
                  i_iterations=3,
-                 max_structural_modules=100
+                 max_structural_modules=10
                  ):
         self.initialization_genome = initialization_genome
         self.e_max_groups = e_max_groups
