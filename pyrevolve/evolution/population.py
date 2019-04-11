@@ -21,6 +21,7 @@ class PopulationConfig:
                  parent_selection,
                  population_management,
                  population_management_selector,
+                 evaluation_time,
                  offspring_size=None):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
@@ -47,11 +48,12 @@ class PopulationConfig:
         self.selection = selection
         self.population_management = population_management
         self.population_management_selector = population_management_selector
+        self.evaluation_time = evaluation_time
         self.offspring_size = offspring_size
 
 
 class Population:
-    def __init__(self, conf):
+    def __init__(self, conf: PopulationConfig):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -149,10 +151,10 @@ class Population:
         await world.pause(False)
 
         # Start a run loop to do some stuff
-        duration = time.time() + 30  # TODO: Make it simulation time rather than real time
-        while time.time() < duration:  # NTS: better way to set time
+        max_age = self.conf.evaluation_time # + self.conf.warmup_time
+        while robot_manager.age() < max_age:
             individual.fitness = robot_manager.fitness()
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(1.0 / 5) # 5= state_update_frequency
 
         await world.pause(True)
         delete_future = await world.delete_robot(robot_manager)
