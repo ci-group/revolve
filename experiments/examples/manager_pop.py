@@ -76,11 +76,10 @@ async def run():
 
     population = Population(population_conf)
     population.init_pop()
-    await population.evaluate(population.individuals, 0) # What to do after initialising because phenotypes and fitness will be NULL
 
     gen_num = 0
     while gen_num < num_generations:
-        await population.next_gen(gen_num+1)
+        population = await population.next_gen(gen_num+1)
         gen_num += 1
 
     # output result after completing all generations...

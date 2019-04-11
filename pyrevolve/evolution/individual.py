@@ -12,7 +12,6 @@ class Individual:
 		self.phenotype = phenotype
 		self.fitness = None
 		self.parents = None
-		self.robot = None
 
 	def develop(self):
 		"""

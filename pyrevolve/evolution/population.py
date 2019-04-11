@@ -72,6 +72,8 @@ class Population:
 			individual = Individual(self.conf.genotype_constructor(self.conf.genotype_conf))
 			self.individuals.append(individual)
 
+		await self.evaluate(population.individuals, 0)
+
 	async def next_gen(self, gen_num):
 		"""
 		Creates next generation of the population through selection, mutation, crossover

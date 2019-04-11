@@ -25,7 +25,7 @@ async def run():
 
     # Load a robot from yaml
     robot = revolve_bot.RevolveBot()
-    robot.load_file("yaml/spider.yaml")
+    robot.load_file("experiments/examples/yaml/spider.yaml")
     robot.update_substrate()
 
     # Connect to the simulator and pause

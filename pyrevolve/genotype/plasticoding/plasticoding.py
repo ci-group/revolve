@@ -144,28 +144,23 @@ class Plasticoding(Genotype):
                     params = []
                 self.grammar[repleceable_symbol].append([symbol, params])
 
-    # def load_and_develop(self, new_genotype, genotype_path='', id_genotype=None):
+    def load_and_develop(self, new_genotype, genotype_path='', id_genotype=None):
 
-    #     if new_genotype == 'new':
-    #         self.grammar = self.conf.initialization_genome(self.conf)
-    #     else:
-    #         self.id = id_genotype
-    #         self.load_genotype(genotype_path)
+        if new_genotype == 'new':
+            self.grammar = self.conf.initialization_genome(self.conf)
+        else:
+            self.id = id_genotype
+            self.load_genotype(genotype_path)
 
-    #     self.phenotype = self.develop()
-    #     self.export_phenotype_files()
+        self.phenotype = self.develop()
+        self.export_phenotype_files()
 
-    # def export_phenotype_files(self):
-    #     # change path later as parameter!!!!
-    #     path = 'karine_exps'
-    #     self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
-    #     self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
-    #     self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
-
-    # def develop(self):
-    #     self.early_development()
-    #     phenotype = self.late_development()
-    #     return phenotype
+    def export_phenotype_files(self):
+        # change path later as parameter!!!!
+        path = 'karine_exps'
+        self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
+        self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
+        self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
 
     def develop(self):
         self.early_development()

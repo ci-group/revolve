@@ -6,4 +6,4 @@ class CrossoverConfig:
 
 		:param crossover_prob: crossover probability
 		"""
-		self.crossover_prob = crossover_prob
+        self.crossover_prob = crossover_prob

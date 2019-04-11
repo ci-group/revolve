@@ -106,7 +106,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--max-parts',
-    default=100, type=int,
+    default=30, type=int,
     help="Maximum number of parts in a robot."
 )
 
@@ -124,13 +124,13 @@ parser.add_argument(
 
 parser.add_argument(
     '--max-inputs',
-    default=100, type=int,
+    default=10, type=int,
     help="Maximum number of inputs (i.e. sensors) in a robot."
 )
 
 parser.add_argument(
     '--max-outputs',
-    default=100, type=int,
+    default=10, type=int,
     help="Maximum number of outputs (i.e. motors) in a robot."
 )
 
