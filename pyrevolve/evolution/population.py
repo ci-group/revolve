@@ -1,7 +1,6 @@
 # [(G,P), (G,P), (G,P), (G,P), (G,P)]
 
 from pyrevolve.evolution.individual import Individual
-from random import randint
 
 class PopulationConfig:
     def __init__(self,
@@ -107,32 +106,3 @@ class Population:
 
         """
         raise RuntimeError("Not implemented yet")
-
-    def tournament_selection(self, population, k=2):
-        """
-        Perform tournament selection and return best individual
-        @param k: amount of individuals to participate in tournament
-        """
-        best_individual = None
-        for i in range(k):
-            individual = population[randint(0, len(population)-1)]
-            if (best_individual == None) or individual.fitness > best_individual.fitness:
-                best_individual = individual
-        return best_individual
-
-    def selection(self, population, survival_size, tournament_k=2):
-        """
-        Perform selection on population of distinct group, can be used in the form parent selection or survival selection
-        @param population: parent selection in population
-        @survival_size: amount of indivuals to select
-        @tournament_k: amount of participants in the tournament selection
-        """
-        selected_individuals = []
-        for _ in range(survival_size):
-            new_individual = False
-            while new_individual is False:
-                selected_individual = self.tournament_selection(population, tournament_k)
-                if selected_individual not in selected_individuals:
-                    selected_individuals.append(selected_individual)
-                    new_individual = True
-        return selected_individuals
