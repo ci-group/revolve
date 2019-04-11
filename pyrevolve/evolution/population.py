@@ -50,6 +50,7 @@ class PopulationConfig:
 		self.offspring_size = offspring_size
 
 
+
 class Population:
 	def __init__(self, conf):
 		"""
@@ -153,7 +154,5 @@ class Population:
 
 		await world.pause(True)
 		delete_future = await world.delete_robot(robot_manager)
-		await asyncio.sleep(2.5)
 		await world.reset(rall=True, time_only=False, model_only=False)
-		await asyncio.sleep(2.5)
 

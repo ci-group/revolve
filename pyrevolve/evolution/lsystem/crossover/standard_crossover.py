@@ -25,7 +25,7 @@ def generate_child_genotype(parents, crossover_conf):
 	grammar = {}
 	chance_of_crossover = random.uniform(0.0,1.0)
 	if chance_of_crossover <= crossover_conf.crossover_prob:
-		grammar = parent[0].genotype.grammar
+		grammar = parents[0].genotype.grammar
 	else:
 		for letter in Alphabet.modules():
 			parent = random.randint(0,1)

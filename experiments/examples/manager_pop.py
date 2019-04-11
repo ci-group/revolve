@@ -46,7 +46,7 @@ async def run():
     # Parse command line / file input arguments
     settings = parser.parse_args()
 
-    num_generations = 2
+    num_generations = 5
 
     genotype_conf = PlasticodingConfig()
 
@@ -60,7 +60,7 @@ async def run():
     )
 
     population_conf = PopulationConfig(
-        population_size=2,
+        population_size=10,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         mutation_operator=standard_mutation,
@@ -71,7 +71,7 @@ async def run():
         parent_selection=lambda individuals: crossover_selection(individuals, dummy_selection, 2),
         population_management=steady_state_population_management,
         population_management_selector=dummy_selection,
-        offspring_size=1,
+        offspring_size=5,
     )
 
     population = Population(population_conf)
