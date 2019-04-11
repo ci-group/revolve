@@ -97,21 +97,30 @@ DifferentialCPG::DifferentialCPG(
   }
 
   std::cout << _settings->GetDescription() << std::endl;
-  auto motor = _settings->HasElement("rv:motor")
-               ? _settings->GetElement("rv:motor")
+  // TODO: Make this more neat
+  auto motor = _settings->GetElement("rv:brain")->GetElement("rv:actuators")->HasElement("rv:servomotor")
+               ? _settings->GetElement("rv:brain")->GetElement("rv:actuators")->GetElement("rv:servomotor")
                : sdf::ElementPtr();
+  std::cout << "Entering motor init\n";
   while(motor)
   {
-    if (not motor->HasAttribute("x") or not motor->HasAttribute("y"))
+    std::cout << "Motor \n";
+    if (not motor->HasAttribute("coordinates"))
     {
-      std::cerr << "Missing required motor attributes (x- and/or y- coordinate)"
-                << std::endl;
+      std::cerr << "Missing required motor coordinates" << std::endl;
       throw std::runtime_error("Robot brain error");
     }
-    auto motorId = motor->GetAttribute("part_id")->GetAsString();
-    auto coordX = std::atoi(motor->GetAttribute("x")->GetAsString().c_str());
-    auto coordY = std::atoi(motor->GetAttribute("y")->GetAsString().c_str());
+
+    // Split string and get coordinates
+    auto coordinateString = motor->GetAttribute("coordinates")->GetAsString();
+    std::vector<std::string> coordinates;
+    boost::split(coordinates, coordinateString, boost::is_any_of(";"));
+
+    // Pass coordinates
+    auto coordX = std::stoi(coordinates[0]);
+    auto coordY = std::stoi(coordinates[1]);
     std::cout << "coordX,coordY = " << coordX << "," << coordY << std::endl;
+    auto motorId = motor->GetAttribute("part_id")->GetAsString();
 
     this->positions_[motorId] = {coordX, coordY};
 
@@ -124,7 +133,7 @@ DifferentialCPG::DifferentialCPG(
     this->neurons_[{coordX, coordY, -1}] = {0.f, 0.f, this->initState}; // Neuron B
 
     // TODO: Add check for duplicate coordinates
-    motor = motor->GetNextElement("rv:motor");
+    motor = motor->GetNextElement("rv:servomotor");
   }
 
   // Add connections between neighbouring neurons
