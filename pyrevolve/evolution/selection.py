@@ -1,5 +1,6 @@
 from random import randint
 
+
 def tournament_selection(population, k=2):
     """
     Perform tournament selection and return best individual
@@ -7,10 +8,11 @@ def tournament_selection(population, k=2):
     """
     best_individual = None
     for _ in range(k):
-        individual = population[randint(0, len(population)-1)]
+        individual = population[randint(0, len(population) - 1)]
         if (best_individual is None) or (individual.fitness > best_individual.fitness):
             best_individual = individual
     return best_individual
+
 
 def multiple_selection(population, selection_size, selection_function):
     """
@@ -19,7 +21,7 @@ def multiple_selection(population, selection_size, selection_function):
     :param selection_size: amount of indivuals to select
     :param selection_function:
     """
-    assert(len(population) >= selection_size)
+    assert (len(population) >= selection_size)
     selected_individuals = []
     for _ in range(selection_size):
         new_individual = False
