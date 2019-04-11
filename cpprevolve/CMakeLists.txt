@@ -1,5 +1,5 @@
 # CMake Required Version
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required (VERSION 3.14.1)
 
 # Project name
 project (Revolve)
@@ -53,9 +53,14 @@ endif ()
 
 
 # NLopt (for limbo)
-set(NLOPT_INCLUDE_DIR "/home/maarten/Documents/nlopt/build/")
-find_package(NLOpt REQUIRED)
-include_directories(${NLOPT_INCLUDE_DIR})
+#set(NLOPT_INCLUDE_DIR "/home/maarten/Documents/nlopt/build/")
+#find_package(NLOpt REQUIRED)
+#include_directories(${NLOPT_INCLUDE_DIR})
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
+include_directories(${NLOpt_INCLUDE_DIRS})
+link_directories(${NLOpt_LIBRARY_DIRS})
+
 
 # Limbo
 # set(LIMBO_DIR /usr/include/limbo/)
@@ -69,7 +74,7 @@ include_directories(${NLOPT_INCLUDE_DIR})
 #include_directories(/usr/include/limbo)
 
 #include_directories(/home/maarten/projects/revolve-simulator/revolve/limbo)
-
+include_directories(limbo)
 find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
@@ -203,6 +208,7 @@ add_library(
 set_target_properties(revolve-proto PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(
     revolve-proto
+    ${NLOpt_LIBRARIES}
     ${PROTOBUF_LIBRARIES}
     nlopt
 )
