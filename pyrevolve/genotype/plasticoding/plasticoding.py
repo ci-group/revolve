@@ -222,7 +222,6 @@ class Plasticoding(Genotype):
         self.phenotype = RevolveBot()
         self.phenotype._id = self.id.replace('genome', 'pheno')
         self.phenotype._brain = BrainNN()
-        self.add_imu_nodes()
 
         for symbol in self.intermediate_phenotype:
 
@@ -263,6 +262,7 @@ class Plasticoding(Genotype):
             if [symbol[self.index_symbol], []] in Alphabet.controller_moving_commands():
                 self.decode_brain_moving(symbol)
 
+        self.add_imu_nodes()
         print('Robot ' + str(self.id) + ' was late-developed.')
         return self.phenotype
 
@@ -620,7 +620,7 @@ class Plasticoding(Genotype):
             node = Node()
             node.layer = 'input'
             node.type = 'Input'
-            node.part_id = 'module0'
+            node.part_id = self.phenotype._body.id
             node.id = id
             self.phenotype._brain.nodes[id] = node
 

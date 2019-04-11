@@ -49,7 +49,7 @@ class RobotManager(object):
         self._dt = deque(maxlen=speed_window)
         self._positions = deque(maxlen=speed_window)
         self._orientations = deque(maxlen=speed_window)
-        self._seconds.append(maxlen=speed_window)
+        self._seconds = deque(maxlen=speed_window)
         self._times = deque(maxlen=speed_window)
 
         self._dist = 0
