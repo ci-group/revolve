@@ -6,6 +6,7 @@ import pyrevolve.genotype.plasticoding.plasticoding
 
 LOCAL_FOLDER = os.path.dirname(__file__)
 
+
 class TestPlastiCoding(unittest.TestCase):
     def setUp(self):
         self.conf = pyrevolve.genotype.plasticoding.plasticoding.PlasticodingConfig()
