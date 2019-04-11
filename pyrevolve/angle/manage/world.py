@@ -94,7 +94,7 @@ class WorldManager(manage.WorldManager):
             self.output_directory = os.path.join(output_directory, restore)
 
             if not os.path.exists(self.output_directory):
-                os.mkdir(self.output_directory)
+                os.makedirs(self.output_directory)
 
             self.snapshot_filename = \
                 os.path.join(self.output_directory, 'snapshot.pickle')

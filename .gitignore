@@ -45,6 +45,8 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
+experiments/examples/output/
+test.py
 
 # Translations
 *.mo
