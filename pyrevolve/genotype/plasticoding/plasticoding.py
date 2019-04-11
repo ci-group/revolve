@@ -15,6 +15,7 @@ from pyrevolve.revolve_bot.brain.brain_nn import Params
 import random
 import math
 import copy
+import itertools
 
 
 class Alphabet(Enum):
@@ -99,6 +100,7 @@ class Plasticoding(Genotype):
     """
     L-system genotypic representation, enhanced with epigenetic capabilities for phenotypic plasticity, through Genetic Programming.
     """
+    id_iter = itertools.count()
 
     def __init__(self, conf):
         """
@@ -106,7 +108,7 @@ class Plasticoding(Genotype):
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = None
+        self.id = 'genotype' + str(next(self.id_iter))
         self.grammar = {}
 
         # Auxiliary variables
@@ -124,6 +126,9 @@ class Plasticoding(Genotype):
         self.inputs_stack = []
         self.outputs_stack = []
         self.edges = {}
+
+    def clone(self):
+        return copy.deepcopy(self)
 
     def load_genotype(self, genotype_file):
         with open(genotype_file) as f:
@@ -215,7 +220,7 @@ class Plasticoding(Genotype):
     def late_development(self):
 
         self.phenotype = RevolveBot()
-        self.phenotype._id = self.id
+        self.phenotype._id = self.id.replace('genome', 'pheno')
         self.phenotype._brain = BrainNN()
         self.add_imu_nodes()
 
@@ -235,7 +240,7 @@ class Plasticoding(Genotype):
                 self.morph_mounting_container = symbol[self.index_symbol]
 
             if [symbol[self.index_symbol], []] in Alphabet.modules() \
-               and symbol[self.index_symbol] != Alphabet.CORE_COMPONENT \
+               and symbol[self.index_symbol] is not Alphabet.CORE_COMPONENT \
                and self.morph_mounting_container is not None:
 
                 if type(self.mounting_reference) == CoreModule \

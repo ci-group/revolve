@@ -1,5 +1,12 @@
 
 class Genotype:
+	def clone(self):
+		"""
+		Create an returns deep copy of the genotype
+		"""
+		raise NotImplementedError("Method must be implemented by genome")
+
+
 	def develop(self):
 		"""
 		Develops the genome into a revolve_bot (proto-phenotype)
