@@ -104,7 +104,6 @@ DifferentialCPG::DifferentialCPG(
   std::cout << "Entering motor init\n";
   while(motor)
   {
-    std::cout << "Motor \n";
     if (not motor->HasAttribute("coordinates"))
     {
       std::cerr << "Missing required motor coordinates" << std::endl;
@@ -232,8 +231,8 @@ struct DifferentialCPG::evaluationFunction{
 
 void DifferentialCPG::BO_init(){
   // Parameters
-  this->evaluationRate_ = 200.0;
-  this->nInitialSamples = 20;
+  this->evaluationRate_ = 50.0;
+  this->nInitialSamples = 5;
 
   // Maximum iterations that learning is allowed
   this->maxLearningIterations = 300;
@@ -461,12 +460,18 @@ void DifferentialCPG::BO_step(){
   }
 
   // In case we are not done with initial random sampling yet
-  if (this->currentIteration < this->nInitialSamples - 1){
+  if (this->currentIteration < this->nInitialSamples){
     // Take one of the pre-sampled random samples, and update the weights later
+    std::cout << "current iteration is " << this->currentIteration << "\n";
     x = this->samples.at(this->currentIteration);
   }
     // In case we are done with the initial random sampling
   else{
+    std::cout << "Number of observations: " << this->observations.size() <<
+                                                                         "\n";
+    std::cout << "Number of samples: " << this->samples.size() <<
+              "\n";
+
     // Specify bayesian optimizer
     limbo::bayes_opt::BOptimizer<Params, limbo::initfun<Init_t>, limbo::modelfun<GP_t>, limbo::acquifun<Acqui_t>> boptimizer;
 
@@ -519,7 +524,12 @@ void DifferentialCPG::Update(
     if(this->currentIteration < (this->nInitialSamples + this->maxLearningIterations)){
       this->BO_step();
       this->SetWeightMatrix();
-      std::cout << "I am learning \n";
+      if (this->currentIteration < this->nInitialSamples){
+        std::cout << "Evaluating initial random sample\n";
+      }
+      else{
+        std::cout << "I am learning\n";
+      }
     }
       // If we are finished learning but are cooling down
     else if((this->currentIteration >= (this->nInitialSamples + this->maxLearningIterations))

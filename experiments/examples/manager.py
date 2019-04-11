@@ -47,8 +47,8 @@ async def run():
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
-        print("Robot fitness is {fitness}".format(
-                fitness=robot_manager.fitness()))
+        #print("Robot fitness is {fitness}".format(
+        #        fitness=robot_manager.fitness()))
         await asyncio.sleep(1.0)
 
 
