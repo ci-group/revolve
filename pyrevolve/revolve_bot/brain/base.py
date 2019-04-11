@@ -7,9 +7,9 @@ class Brain(object):
     def from_yaml(yaml_brain):
         brain_type = yaml_brain['type']
 
-        if brain_type == 'neural-network':
+        if brain_type == pyrevolve.revolve_bot.brain.BrainNN.TYPE:
             return pyrevolve.revolve_bot.brain.BrainNN.from_yaml(yaml_brain)
-        elif brain_type == 'rlpower-splines':
+        elif brain_type == pyrevolve.revolve_bot.brain.BrainRLPowerSplines.TYPE:
             return pyrevolve.revolve_bot.brain.BrainRLPowerSplines.from_yaml(yaml_brain)
         elif brain_type == 'bo-cpg':
             return pyrevolve.revolve_bot.brain.BrainCPGBO.from_yaml(yaml_brain)

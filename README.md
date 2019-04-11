@@ -7,7 +7,7 @@ Revolve was originally developed and is maintained by researchers and engineers 
 
 ## Installation
 
-The current system is supported  for Linux and Mac OS X platforms.
+The current system is supported for Linux and Mac OS X platforms.
 If all [pre-requirements](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Gazebo) are satisfied, to install the current release run:
 
 ```bash
@@ -79,7 +79,7 @@ The Revolve project strives to abide by generally accepted best practices in ope
 
 We would like to thank all contributors of Revolve project!
 
-Special thanks to [Elte Hupkes](https://github.com/ElteHupkes/) who designed the codebase and professor [Gusz Eiben](https://www.cs.vu.nl/~gusz/) whose energy is pusshing the project forward.
+Special thanks to [Elte Hupkes](https://github.com/ElteHupkes/) who designed the codebase and professor [Gusz Eiben](https://www.cs.vu.nl/~gusz/) whose energy is pushing the project forward.
 Many thanks to [Milan Jelisavcic](https://github.com/milanjelisavcic/) and [Matteo De Carlo](https://github.com/portaloffreedom/) for redesigning and simplifying the codebase.
 For the complete list of contributors see [AUTHORS](AUTHORS).
 
