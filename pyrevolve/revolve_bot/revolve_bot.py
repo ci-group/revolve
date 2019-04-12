@@ -8,7 +8,8 @@ from collections import OrderedDict
 from pyrevolve import SDF
 
 from .revolve_module import CoreModule, TouchSensorModule, Orientation
-from .brain import Brain
+from .revolve_module import Orientation
+from .brain import Brain, BrainNN
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
@@ -73,7 +74,7 @@ class RevolveBot:
 
     def measure_body(self):
         """
-        :return: dict of body measurements
+        :return: instance of MeasureBody after performing all measurements
         """
         if self._body is None:
             raise RuntimeError('Body not initialized')
@@ -82,7 +83,9 @@ class RevolveBot:
             measure.measure_all()
             return measure
         except Exception as e:
-            print('Exception: {}'.format(e))
+            print('Failed measuring body')
+            print(e)
+            print(traceback.format_exc())
 
     def export_phenotype_measurements(self):
         # !!!!! we need to define the experiment path as a parameter somewhere...
@@ -95,17 +98,16 @@ class RevolveBot:
 
     def measure_brain(self):
         """
-        :return: dict of brain measurements
+        :return: instance of MeasureBrain after performing all measurements
         """
-        if self._brain is None:
-            raise RuntimeError('Brain not initialized')
-        else:
-            try:
-                measure = MeasureBrain(self._brain, 10)
-                measure.measure_all()
-                return measure
-            except:
-                print('Failed measuring brain')
+        try:
+            measure = MeasureBrain(self._brain, 10)
+            measure.measure_all()
+            return measure
+        except Exception as e:
+            print('Failed measuring brain')
+            print(e)
+            print(traceback.format_exc())
 
     def load(self, text, conf_type):
         """
@@ -275,17 +277,19 @@ class RevolveBot:
         """
         if self._brain is None:
             raise RuntimeError('Brain not initialized')
-        else:
+        elif isinstance(self._brain, BrainNN):
             try:
                 brain_graph = BrainGraph(self._brain, img_path)
-                brain_graph.brain_to_graph()
+                brain_graph.brain_to_graph(True)
                 brain_graph.save_graph()
             except Exception as e:
                 print('Failed rendering brain. Exception:')
                 print(e)
                 print(traceback.format_exc())
+        else:
+            raise RuntimeError('Brain {} image rendering not supported'.format(type(self._brain)))
 
-    def render2d(self, img_path):
+    def render_body(self, img_path):
         """
         Render 2d representation of robot and store as png
         :param img_path: path of storing png file
@@ -297,6 +301,6 @@ class RevolveBot:
                 render = Render()
                 render.render_robot(self._body, img_path)
             except Exception as e:
-                print('Failed rendering 2d robot. Exception:')
+                print('Failed rendering 2d robot')
                 print(e)
                 print(traceback.format_exc())
