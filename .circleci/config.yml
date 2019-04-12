@@ -10,10 +10,10 @@ jobs:
           docker_layer_caching: true
 
       - restore_cache:
-        keys:
-          - v1-{{ .Branch }}
-        paths:
-          - /caches/app.tar
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - /caches/app.tar
       - run:
           name: Load Docker image layer cache
           command: |
@@ -41,10 +41,10 @@ jobs:
 
 
       - restore_cache:
-        keys:
-          - v1-{{ .Branch }}
-        paths:
-          - /caches/app.tar
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - /caches/app.tar
       - run:
           name: Load Docker image layer cache
           command: |
@@ -77,10 +77,10 @@ jobs:
           docker_layer_caching: true
 
       - restore_cache:
-        keys:
-          - v1-{{ .Branch }}
-        paths:
-          - /caches/app.tar
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - /caches/app.tar
 
       - run:
           name: Load Docker image layer cache
