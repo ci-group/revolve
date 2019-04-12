@@ -7,14 +7,9 @@ from collections import OrderedDict
 
 from pyrevolve import SDF
 
-<<<<<<< HEAD
-from .revolve_module import CoreModule, TouchSensorModule
+from .revolve_module import CoreModule, TouchSensorModule, Orientation
 from .revolve_module import Orientation
 from .brain import Brain, BrainNN
-=======
-from .revolve_module import CoreModule, TouchSensorModule, Orientation
-from .brain import Brain
->>>>>>> upstream/development
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
@@ -105,7 +100,6 @@ class RevolveBot:
         """
         :return: instance of MeasureBrain after performing all measurements
         """
-<<<<<<< HEAD
         try:
             measure = MeasureBrain(self._brain, 10)
             measure.measure_all()
@@ -114,17 +108,6 @@ class RevolveBot:
             print('Failed measuring brain')
             print(e)
             print(traceback.format_exc())
-=======
-        if self._brain is None:
-            raise RuntimeError('Brain not initialized')
-        else:
-            try:
-                measure = MeasureBrain(self._brain, 10)
-                measure.measure_all()
-                return measure
-            except:
-                print('Failed measuring brain')
->>>>>>> upstream/development
 
     def load(self, text, conf_type):
         """
