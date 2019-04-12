@@ -194,8 +194,8 @@ DifferentialCPG::DifferentialCPG(
   // Initialize BO
   this->BO_init();
 
-  // Get initial weights: Probably this was the cause of malfunction
-  // this->SetWeightMatrix();
+  // Get initial weights. This will yield the first sample
+  this->SetWeightMatrix();
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluationRate_));
@@ -451,16 +451,15 @@ void DifferentialCPG::BO_step(){
   // Holder for sample
   Eigen::VectorXd x;
 
-  // Get Fitness if we already did an evaluation
-  if (this->currentIteration > 0){
-    // Get fitness
-    this->saveFitness();
-  }
-
+  // Get and save fitness
+  this->saveFitness();
+  std::cout << "Current iteration in bo_step is: " << this->currentIteration
+            << "\n";
   // In case we are not done with initial random sampling yet
   if (this->currentIteration < this->nInitialSamples){
     // Take one of the pre-sampled random samples, and update the weights later
-    std::cout << "current iteration is " << this->currentIteration << "\n";
+    std::cout << "Initial RS: current iteration is " << this->currentIteration
+              << "\n";
     x = this->samples.at(this->currentIteration);
   }
     // In case we are done with the initial random sampling
@@ -471,11 +470,15 @@ void DifferentialCPG::BO_step(){
               "\n";
 
     // Specify bayesian optimizer
-    limbo::bayes_opt::BOptimizer<Params, limbo::initfun<Init_t>, limbo::modelfun<GP_t>, limbo::acquifun<Acqui_t>> boptimizer;
+    limbo::bayes_opt::BOptimizer<Params,
+                                 limbo::initfun<Init_t>,
+                                 limbo::modelfun<GP_t>,
+                                 limbo::acquifun<Acqui_t>> boptimizer;
 
     // Optimize. Pass dummy evaluation function and observations .
     boptimizer.optimize(DifferentialCPG::evaluationFunction(),
-                        this->samples, this->observations);
+                        this->samples,
+                        this->observations);
 
     // Get new sample
     x = boptimizer.last_sample();
@@ -521,9 +524,13 @@ void DifferentialCPG::Update(
     this->evaluator->Update(this->robot_->WorldPose());
 
     // If we are still learning
-    if(this->currentIteration < (this->nInitialSamples + this->maxLearningIterations)){
+    if(this->currentIteration < this->nInitialSamples + this->maxLearningIterations){
+      // Get new weights
       this->BO_step();
+
+      // Set new weights
       this->SetWeightMatrix();
+
       if (this->currentIteration < this->nInitialSamples){
         std::cout << "Evaluating initial random sample\n";
       }
@@ -571,7 +578,6 @@ void DifferentialCPG::Update(
  */
 void DifferentialCPG::SetWeightMatrix(){
   // Initiate new matrix
-  std::cout << "Iteration " << this->currentIteration << ", update weight matrix\n";
   std::vector<std::vector<double>> matrix;
 
   // Fill with zeroes
@@ -596,9 +602,12 @@ void DifferentialCPG::SetWeightMatrix(){
       c = i - 1;
     }
 
-    // Add a/b connection weight
+    // Add a/b connection weight: TODO: current->iteration 5 doesn't exist.
+    // Over here it should've already contain a BO_step sample
+    // here yet.
     index = (int)(i/2);
-    auto w  = this->samples.at(this->currentIteration )(index) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+    auto w  = this->samples.at(this->currentIteration - 1)(index) *
+                                                                (this->rangeUB - this->rangeLB) + this->rangeLB;
     matrix[i][c] = w;
     matrix[c][i] = -w;
   }
@@ -648,7 +657,8 @@ void DifferentialCPG::SetWeightMatrix(){
     }
 
     // Get weight
-    auto w  = this->samples.at(this->currentIteration)(index + k) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+    auto w  = this->samples.at(this->currentIteration - 1)(index + k) *
+                                                                   (this->rangeUB - this->rangeLB) + this->rangeLB;
 
     // Set connection in weight matrix
     matrix[l1][l2] = w;
