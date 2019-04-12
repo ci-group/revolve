@@ -289,7 +289,7 @@ class RevolveBot:
         else:
             raise RuntimeError('Brain {} image rendering not supported'.format(type(self._brain)))
 
-    def render2d(self, img_path):
+    def render_body(self, img_path):
         """
         Render 2d representation of robot and store as png
         :param img_path: path of storing png file
