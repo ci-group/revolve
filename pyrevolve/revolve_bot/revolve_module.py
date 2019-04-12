@@ -55,6 +55,7 @@ class RevolveModule:
         self.rgb = None  # RevolveModule.DEFAULT_COLOR
         self.substrate_coordinates = None
         self.children = [None, None, None, None]
+        self.info = None
 
     def color(self):
         return self.rgb if self.rgb is not None else self.DEFAULT_COLOR

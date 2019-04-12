@@ -7,9 +7,14 @@ from collections import OrderedDict
 
 from pyrevolve import SDF
 
+<<<<<<< HEAD
 from .revolve_module import CoreModule, TouchSensorModule
 from .revolve_module import Orientation
 from .brain import Brain, BrainNN
+=======
+from .revolve_module import CoreModule, TouchSensorModule, Orientation
+from .brain import Brain
+>>>>>>> upstream/development
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
@@ -28,6 +33,9 @@ class RevolveBot:
         self._id = _id
         self._body = None
         self._brain = None
+        self._morphological_measurements = None
+        self._brain_measurements = None
+        self._behavioural_measurements = None
         # self._battery_level = None
 
     @property
@@ -62,6 +70,13 @@ class RevolveBot:
         """
         pass
 
+    def measure_phenotype(self, export: bool = False):
+        self._morphological_measurements = self.measure_body()
+        self._brain_measurements = self.measure_brain()
+        print('Robot ' + str(self.id) + ' was measured.')
+        if export:
+            self.export_phenotype_measurements()
+
     def measure_body(self):
         """
         :return: instance of MeasureBody after performing all measurements
@@ -77,10 +92,20 @@ class RevolveBot:
             print(e)
             print(traceback.format_exc())
 
+    def export_phenotype_measurements(self):
+        # !!!!! we need to define the experiment path as a parameter somewhere...
+        path = 'karine_exps'
+        file = open('experiments/'+path+'/phenotype_measurements_'+str(self.id)+'.txt', 'w+')
+        for key, value in self._morphological_measurements.measurement_to_dict().items():
+            file.write('{} {}\n'.format(key, value))
+        for key, value in self._brain_measurements.measurement_to_dict().items():
+            file.write('{} {}\n'.format(key, value))
+
     def measure_brain(self):
         """
         :return: instance of MeasureBrain after performing all measurements
         """
+<<<<<<< HEAD
         try:
             measure = MeasureBrain(self._brain, 10)
             measure.measure_all()
@@ -89,6 +114,17 @@ class RevolveBot:
             print('Failed measuring brain')
             print(e)
             print(traceback.format_exc())
+=======
+        if self._brain is None:
+            raise RuntimeError('Brain not initialized')
+        else:
+            try:
+                measure = MeasureBrain(self._brain, 10)
+                measure.measure_all()
+                return measure
+            except:
+                print('Failed measuring brain')
+>>>>>>> upstream/development
 
     def load(self, text, conf_type):
         """
@@ -178,30 +214,30 @@ class RevolveBot:
         :param raise_for_intersections: enable raising an exception if a collision of coordinates is detected
         :raises self.ItersectionCollisionException: If a collision of coordinates is detected (and check is enabled)
         """
-        substrate_coordinates_all = {(0, 0): self._body.id}
+        substrate_coordinates_map = {(0, 0): self._body.id}
         self._body.substrate_coordinates = (0, 0)
-        self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_all)
+        self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_map)
 
     class ItersectionCollisionException(Exception):
         """
         A collision has been detected when updating the robot coordinates.
-        Check self.substrate_coordinates_all to know more.
+        Check self.substrate_coordinates_map to know more.
         """
-        def __init__(self, substrate_coordinates_all):
+        def __init__(self, substrate_coordinates_map):
             super().__init__(self)
-            self.substrate_coordinates_all = substrate_coordinates_all
+            self.substrate_coordinates_map = substrate_coordinates_map
 
     def _update_substrate(self,
                           raise_for_intersections,
                           parent,
                           parent_direction,
-                          substrate_coordinates_all):
+                          substrate_coordinates_map):
         """
         Internal recursive function for self.update_substrate()
         :param raise_for_intersections: same as in self.update_substrate
         :param parent: updates the children of this parent
         :param parent_direction: the "absolute" orientation of this parent
-        :param substrate_coordinates_all: map for all already explored coordinates(useful for coordinates conflict checks)
+        :param substrate_coordinates_map: map for all already explored coordinates(useful for coordinates conflict checks)
         """
         dic = {Orientation.NORTH: 0,
                Orientation.WEST:  1,
@@ -240,16 +276,16 @@ class RevolveBot:
             module.substrate_coordinates = coordinates
 
             # For Karine: If you need to validate old robots, remember to add this condition to this if:
-            # if raise_for_intersections and coordinates in substrate_coordinates_all and type(module) is not TouchSensorModule:
+            # if raise_for_intersections and coordinates in substrate_coordinates_map and type(module) is not TouchSensorModule:
             if raise_for_intersections:
-                if coordinates in substrate_coordinates_all:
-                    raise self.ItersectionCollisionException(substrate_coordinates_all)
-                substrate_coordinates_all[coordinates] = module.id
+                if coordinates in substrate_coordinates_map:
+                    raise self.ItersectionCollisionException(substrate_coordinates_map)
+                substrate_coordinates_map[coordinates] = module.id
 
             self._update_substrate(raise_for_intersections,
                                    module,
                                    new_direction,
-                                   substrate_coordinates_all)
+                                   substrate_coordinates_map)
 
     def render_brain(self, img_path):
         """

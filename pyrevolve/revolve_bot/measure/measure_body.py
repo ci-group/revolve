@@ -7,27 +7,50 @@ from ..revolve_module import ActiveHingeModule, BrickModule, TouchSensorModule, 
 class MeasureBody:
     def __init__(self, body):
         self.body = body
+
+        # Absolute branching
         self.branching_modules_count = None
+        # Relative branching
         self.branching = None
+        # Absolute number of limbs
         self.extremities = None
+        # Relative number of limbs
         self.limbs = None
+        # Absolute length of limbs
         self.extensiveness = None
+        # Relative length of limbs
         self.length_of_limbs = None
+        # Coverage
         self.coverage = None
+        # Relative number of effective active joints
         self.joints = None
-        self.proportion = None
-        self.width = None
-        self.height = None
-        self.absolute_size = None
-        self.size = None
-        self.sensors = None
-        self.symmetry = None
-        self.hinge_count = None
+        # Absolute number of effective active joints
         self.active_hinges_count = None
+        # Proportion
+        self.proportion = None
+        # Width
+        self.width = None
+        # Height
+        self.height = None
+        # Absolute size
+        self.absolute_size = None
+        # Relative size in respect of the max body size `self.max_permitted_modules`
+        self.size = None
+        # Proportion of sensor vs empty slots
+        self.sensors = None
+        # Body symmetry
+        self.symmetry = None
+        # Number of active joints
+        self.hinge_count = None
+        # Number of bricks
         self.brick_count = None
+        # Number of brick sensors
         self.brick_sensor_count = None
+        # Number of touch sensors
         self.touch_sensor_count = None
+        # Number of free slots
         self.free_slots = None
+        # Maximum number of modules allowed (sensors excluded)
         self.max_permitted_modules = None
 
     def count_branching_bricks(self, module=None, init=True):
@@ -113,7 +136,7 @@ class MeasureBody:
             practical_limit_limbs = self.absolute_size - 1
         else:
             practical_limit_limbs = 2 * math.floor((self.absolute_size - 6) / 3) + ((self.absolute_size - 6) % 3) + 4
-        
+
         if self.extremities is None:
             self.calculate_extremities_extensiveness(None, True, False)
         if self.extremities == 0:
@@ -289,7 +312,7 @@ class MeasureBody:
                 self.hinge_count = 0
                 self.brick_count = 0
                 self.brick_sensor_count = 0
-                self.touch_sensor_count = 0            
+                self.touch_sensor_count = 0
             if module is None:
                 module = self.body
             elif isinstance(module, ActiveHingeModule):
@@ -350,6 +373,7 @@ class MeasureBody:
         self.measure_symmetry()
         self.measure_branching()
         self.measure_sensors()
+        self.measure_size()
         return self.measurement_to_dict()
 
     def measurement_to_dict(self):
@@ -361,7 +385,7 @@ class MeasureBody:
             'branching': self.branching,
             'branching_modules_count': self.branching_modules_count,
             'limbs': self.limbs,
-            'extremeties': self.extremities,
+            'extremities': self.extremities,
             'length_of_limbs': self.length_of_limbs,
             'extensiveness': self.extensiveness,
             'coverage': self.coverage,
@@ -379,3 +403,6 @@ class MeasureBody:
             'sensors': self.sensors,
             'symmetry': self.symmetry
         }
+
+    def __repr__(self):
+        return self.measurement_to_dict().__repr__()

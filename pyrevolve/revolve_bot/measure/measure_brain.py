@@ -6,6 +6,9 @@ from ..brain.brain_nn import BrainNN
 
 class MeasureBrain:
     def __init__(self, brain, max_param):
+        """
+        Initializing function, for calculating measurements use measure_all
+        """
         self.brain = brain
         self.max_param = max_param
         self.params = None
@@ -13,16 +16,27 @@ class MeasureBrain:
         self.periods = None
         self.phase_offsets = None
         self.amplitudes = None
+        # Average Period
         self.avg_period = None
+        # Deviation of Period
         self.dev_period = None
+        # Average Phase Offset
         self.avg_phase_offset = None
+        # Deviation of Phase Offset
         self.dev_phase_offset = None
+        # Average Amplitude
         self.avg_amplitude = None
+        # Deviation of Amplitude
         self.dev_amplitude = None
+        # Average Intra-Deviation of Parameters
         self.avg_intra_dev_params = None
+        # Average Inter-Deviation of Parameters
         self.avg_inter_dev_params = None
+        # Sensors Reach
         self.sensors_reach = None
+        # Recurrence
         self.recurrence = None
+        # Synaptic Reception
         self.synaptic_reception = None
         self.collect_sets_of_params()
 
@@ -272,10 +286,10 @@ class MeasureBrain:
 
     def measure_all(self):
         """
-        Perform all brain measuerments
+        Perform all brain measurements
         """
         if not isinstance(self.brain, BrainNN):
-            self.set_measurements_to_zero
+            self.set_measurements_to_zero()
             raise RuntimeError('Brain not supported')
         self.calc_count_oscillators()
         self.measure_avg_period()
