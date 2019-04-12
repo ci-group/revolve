@@ -261,7 +261,8 @@ void DifferentialCPG::BO_init(){
   */
 
   // Information purposes
-  std::cout << "Sample method: " << this->initializationMethod << ". Initial samples are: \n";
+  std::cout << "\nSample method: " << this->initializationMethod << ". Initial "
+      "samples are: \n";
 
   // Random sampling
   if(this->initializationMethod == "RS") {
@@ -344,9 +345,9 @@ void DifferentialCPG::BO_init(){
     // Working variables
     double myRange = 1.f/this->nInitialSamples;
 
-    //if(((log(this->nInitialSamples)/log(4)) % 1.0) != 0){
-    //  std::cout << "Warning: Initial number of samples is no power of 4 \n";
-    //}
+//    if(((log(this->nInitialSamples)/log(4)) % 1.0) != 0){
+//      std::cout << "Warning: Initial number of samples is no power of 4 \n";
+//    }
 
     // Initiate for each  dimension a vector holding a permutation of 1,...,nInitialSamples
     std::vector<std::vector<int>> allDimensions;
@@ -453,22 +454,10 @@ void DifferentialCPG::BO_step(){
 
   // Get and save fitness
   this->saveFitness();
-  std::cout << "Current iteration in bo_step is: " << this->currentIteration
-            << "\n";
-  // In case we are not done with initial random sampling yet
-  if (this->currentIteration < this->nInitialSamples){
-    // Take one of the pre-sampled random samples, and update the weights later
-    std::cout << "Initial RS: current iteration is " << this->currentIteration
-              << "\n";
-    x = this->samples.at(this->currentIteration);
-  }
-    // In case we are done with the initial random sampling
-  else{
-    std::cout << "Number of observations: " << this->observations.size() <<
-                                                                         "\n";
-    std::cout << "Number of samples: " << this->samples.size() <<
-              "\n";
 
+  // In case we are done with the initial random sampling. Correct for
+  // initial sample taken by. Statement equivalent to !(i < n_samples -1)
+  if (this->currentIteration > this->nInitialSamples - 2){
     // Specify bayesian optimizer
     limbo::bayes_opt::BOptimizer<Params,
                                  limbo::initfun<Init_t>,
@@ -486,9 +475,6 @@ void DifferentialCPG::BO_step(){
     // Save this x_hat_star
     this->samples.push_back(x);
   }
-
-  // Update counter
-  this->currentIteration +=1;
 }
 
 /**
@@ -518,8 +504,6 @@ void DifferentialCPG::Update(
 
   // Evaluate policy on certain time limit
   if ((_time - this->startTime_) > this->evaluationRate_) {
-    std::cout <<  "current iteration: " << this->currentIteration << "\n";
-
     // Update position
     this->evaluator->Update(this->robot_->WorldPose());
 
@@ -532,10 +516,10 @@ void DifferentialCPG::Update(
       this->SetWeightMatrix();
 
       if (this->currentIteration < this->nInitialSamples){
-        std::cout << "Evaluating initial random sample\n";
+        std::cout << "\nEvaluating initial random sample\n";
       }
       else{
-        std::cout << "I am learning\n";
+        std::cout << "\nI am learning\n";
       }
     }
       // If we are finished learning but are cooling down
@@ -544,8 +528,7 @@ void DifferentialCPG::Update(
       // Only get fitness for updating
       this->saveFitness();
       this->samples.push_back(this->bestSample);
-      this->currentIteration += 1;
-      std::cout << "I am cooling down \n";
+      std::cout << "\nI am cooling down \n";
     }
       // Else we don't want to update anything, but save data from this run once.
     else if(this->runAnalytics) {
@@ -557,6 +540,7 @@ void DifferentialCPG::Update(
     // Evaluation policy here
     this->startTime_ = _time;
     this->evaluator->Reset();
+    this->currentIteration += 1;
   }
 
 
@@ -606,7 +590,7 @@ void DifferentialCPG::SetWeightMatrix(){
     // Over here it should've already contain a BO_step sample
     // here yet.
     index = (int)(i/2);
-    auto w  = this->samples.at(this->currentIteration - 1)(index) *
+    auto w  = this->samples.at(this->currentIteration)(index) *
                                                                 (this->rangeUB - this->rangeLB) + this->rangeLB;
     matrix[i][c] = w;
     matrix[c][i] = -w;
@@ -657,7 +641,7 @@ void DifferentialCPG::SetWeightMatrix(){
     }
 
     // Get weight
-    auto w  = this->samples.at(this->currentIteration - 1)(index + k) *
+    auto w  = this->samples.at(this->currentIteration)(index + k) *
                                                                    (this->rangeUB - this->rangeLB) + this->rangeLB;
 
     // Set connection in weight matrix

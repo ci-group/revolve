@@ -180,7 +180,7 @@ namespace revolve
 
       /// \brief BO attributes
       private:
-      size_t currentIteration = 1;
+      size_t currentIteration = 0;
 
       /// \brief Max number of iterations learning is allowed
       private:
