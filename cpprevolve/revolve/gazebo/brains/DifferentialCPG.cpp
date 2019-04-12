@@ -101,7 +101,6 @@ DifferentialCPG::DifferentialCPG(
   auto motor = _settings->GetElement("rv:brain")->GetElement("rv:actuators")->HasElement("rv:servomotor")
                ? _settings->GetElement("rv:brain")->GetElement("rv:actuators")->GetElement("rv:servomotor")
                : sdf::ElementPtr();
-  std::cout << "Entering motor init\n";
   while(motor)
   {
     if (not motor->HasAttribute("coordinates"))
@@ -120,7 +119,6 @@ DifferentialCPG::DifferentialCPG(
     auto coordY = std::stoi(coordinates[1]);
     std::cout << "coordX,coordY = " << coordX << "," << coordY << std::endl;
     auto motorId = motor->GetAttribute("part_id")->GetAsString();
-
     this->positions_[motorId] = {coordX, coordY};
 
     // TODO: Determine optimization boundaries
@@ -196,8 +194,8 @@ DifferentialCPG::DifferentialCPG(
   // Initialize BO
   this->BO_init();
 
-  // Get initial weights
-  this->SetWeightMatrix();
+  // Get initial weights: Probably this was the cause of malfunction
+  // this->SetWeightMatrix();
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluationRate_));
@@ -231,7 +229,7 @@ struct DifferentialCPG::evaluationFunction{
 
 void DifferentialCPG::BO_init(){
   // Parameters
-  this->evaluationRate_ = 50.0;
+  this->evaluationRate_ = 20.0;
   this->nInitialSamples = 5;
 
   // Maximum iterations that learning is allowed
@@ -428,7 +426,7 @@ void DifferentialCPG::BO_init(){
 
 }
 
-void DifferentialCPG::getFitness(){
+void DifferentialCPG::saveFitness(){
   // Get fitness
   double fitness = this->evaluator->Fitness();
 
@@ -456,7 +454,7 @@ void DifferentialCPG::BO_step(){
   // Get Fitness if we already did an evaluation
   if (this->currentIteration > 0){
     // Get fitness
-    this->getFitness();
+    this->saveFitness();
   }
 
   // In case we are not done with initial random sampling yet
@@ -517,6 +515,8 @@ void DifferentialCPG::Update(
 
   // Evaluate policy on certain time limit
   if ((_time - this->startTime_) > this->evaluationRate_) {
+    std::cout <<  "current iteration: " << this->currentIteration << "\n";
+
     // Update position
     this->evaluator->Update(this->robot_->WorldPose());
 
@@ -535,7 +535,7 @@ void DifferentialCPG::Update(
     else if((this->currentIteration >= (this->nInitialSamples + this->maxLearningIterations))
             and (this->currentIteration < (this->nInitialSamples + this->maxLearningIterations + this->noLearningIterations))){
       // Only get fitness for updating
-      this->getFitness();
+      this->saveFitness();
       this->samples.push_back(this->bestSample);
       this->currentIteration += 1;
       std::cout << "I am cooling down \n";
@@ -598,7 +598,7 @@ void DifferentialCPG::SetWeightMatrix(){
 
     // Add a/b connection weight
     index = (int)(i/2);
-    auto w  = this->samples.at(this->currentIteration)(index) * (this->rangeUB - this->rangeLB) + this->rangeLB;
+    auto w  = this->samples.at(this->currentIteration )(index) * (this->rangeUB - this->rangeLB) + this->rangeLB;
     matrix[i][c] = w;
     matrix[c][i] = -w;
   }

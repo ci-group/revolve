@@ -156,7 +156,7 @@ namespace revolve
 
       /// \brief Get fitness
       private:
-      void getFitness();
+      void saveFitness();
 
       /// \brief Pointer to the fitness evaluator
       protected:
