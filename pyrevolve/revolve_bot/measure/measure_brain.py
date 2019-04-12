@@ -5,10 +5,10 @@ import fnmatch
 from ..brain.brain_nn import BrainNN
 
 class MeasureBrain:
-    def __init__(self, brain, max_param: int):
+    def __init__(self, brain: BrainNN, max_param: int):
         """
         Initializing function, for calculating measurements use measure_all
-        :param brain: brain to measure
+        :param brain: brain to measure, only BrainNN supported
         :param max_param: Range of oscillator parameter
         """
         self.brain = brain
