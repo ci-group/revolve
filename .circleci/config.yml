@@ -9,10 +9,28 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
 
+      - restore_cache:
+        keys:
+          - v1-{{ .Branch }}
+        paths:
+          - /caches/app.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/app.tar | true
       - run:
           name: "Build Docker image"
-          command: docker build -t cigroup/revolve:${CIRCLE_BRANCH//\//_} .
-
+          command: docker build --cache-from=app -t cigroup/revolve:${CIRCLE_BRANCH//\//_} .
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/app.tar app
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /caches/app.tar
   test:
     docker:
       - image: circleci/python:3-stretch-node
@@ -21,11 +39,34 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
 
+
+      - restore_cache:
+        keys:
+          - v1-{{ .Branch }}
+        paths:
+          - /caches/app.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/app.tar | true
+      - run:
+          name: "Build Docker image"
+          command: docker build --cache-from=app -t cigroup/revolve:${CIRCLE_BRANCH//\//_} .
       - run:
           name: "Run Python tests"
           command: |
             PY_TESTS=/revolve/docker/test_python.sh
             docker run -it cigroup/revolve:${CIRCLE_BRANCH//\//_} ${PY_TESTS}
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/app.tar app
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /caches/app.tar
 
   deploy:
     docker:
@@ -35,6 +76,22 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
 
+      - restore_cache:
+        keys:
+          - v1-{{ .Branch }}
+        paths:
+          - /caches/app.tar
+
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i /caches/app.tar | true
+
+      - run:
+          name: "Build Docker image"
+          command: docker build --cache-from=app -t cigroup/revolve:${CIRCLE_BRANCH//\//_} .
+
       - run:
           name: "Save Docker image"
           command: |
@@ -42,11 +99,23 @@ jobs:
             TAG=0.1.$CIRCLE_BUILD_NUM
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push cigroup/revolve:${CIRCLE_BRANCH//\//_}
+
 #      - run:
 #          name: "Build documentation"
 #          command: |
 #            DOXY_BUILD=/revolve/docker/make_dosc.sh
 #            docker run -it cigroup/revolve:$CIRCLE_BRANCH ${DOXY_BUILD}
+
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p /caches
+            docker save -o /caches/app.tar app
+
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - /caches/app.tar
 
 workflows:
   version: 2
