@@ -32,11 +32,28 @@ class MeasureBrain:
         """
         return 1 / (1 + math.exp(-value))
 
+    def set_measurements_to_zero(self):
+        """
+        Set all measurements to zero
+        """
+        self.avg_period = 0
+        self.dev_period = 0
+        self.avg_phase_offset = 0
+        self.dev_phase_offset = 0
+        self.avg_amplitude = 0
+        self.dev_amplitude = 0
+        self.avg_intra_dev_params = 0
+        self.avg_inter_dev_params = 0
+        self.sensors_reach = 0
+        self.recurrence = 0
+        self.synaptic_reception = 0
+
     def collect_sets_of_params(self):
         """
         Create lists of parameter values
         """
         if not isinstance(self.brain, BrainNN):
+            print('Brain not supported')
             return
         self.params = self.brain.params
         if self.params is not None:
@@ -82,7 +99,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.dev_period = 0
-            return self.dev_period        
+            return self.dev_period
         if self.periods is None:
             self.collect_sets_of_params()
         self.dev_period = self.sigmoid(np.std(self.periods))
@@ -94,7 +111,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.avg_phase_offset = 0
-            return self.avg_phase_offset      
+            return self.avg_phase_offset
         if self.phase_offsets is None:
             self.collect_sets_of_params()
         median = np.median(self.phase_offsets)
@@ -110,7 +127,7 @@ class MeasureBrain:
         """
         if self.params is None:
             self.dev_phase_offset = 0
-            return self.dev_phase_offset          
+            return self.dev_phase_offset
         if self.phase_offsets is None:
             self.collect_sets_of_params()
         self.dev_phase_offset = self.sigmoid(np.std(self.phase_offsets))
@@ -235,7 +252,7 @@ class MeasureBrain:
         for node in nodes:
             if nodes[node].type == 'Oscillator':
                 inhibitory = []
-                excitatory = []                
+                excitatory = []
                 for connection in connections:
                     if connection.dst == nodes[node].id and connection.src != nodes[node].id:
                         if connection.weight < 0:
@@ -257,6 +274,9 @@ class MeasureBrain:
         """
         Perform all brain measuerments
         """
+        if not isinstance(self.brain, BrainNN):
+            self.set_measurements_to_zero
+            raise RuntimeError('Brain not supported')
         self.calc_count_oscillators()
         self.measure_avg_period()
         self.measure_dev_period()
@@ -269,7 +289,6 @@ class MeasureBrain:
         self.measure_sensors_reach()
         self.measure_recurrence()
         self.measure_synaptic_reception()
-        return self.measurements_to_dict()
 
     def measurements_to_dict(self):
         """
@@ -288,3 +307,6 @@ class MeasureBrain:
             'recurrence': self.recurrence,
             'synaptic_reception': self.synaptic_reception
         }
+
+    def __repr__(self):
+        return self.measurements_to_dict().__repr__()

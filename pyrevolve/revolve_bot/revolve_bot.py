@@ -9,7 +9,7 @@ from pyrevolve import SDF
 
 from .revolve_module import CoreModule, TouchSensorModule
 from .revolve_module import Orientation
-from .brain import Brain
+from .brain import Brain, BrainNN
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
@@ -64,26 +64,31 @@ class RevolveBot:
 
     def measure_body(self):
         """
-        :return: dict of body measurements
+        :return: instance of MeasureBody after performing all measurements
         """
         if self._body is None:
-            raise RuntimeError('Brain not initialized')
+            raise RuntimeError('Body not initialized')
         try:
             measure = MeasureBody(self._body)
-            return measure.measure_all()
+            measure.measure_all()
+            return measure
         except Exception as e:
-            print('Exception: {}'.format(e))
+            print('Failed measuring body')
+            print(e)
+            print(traceback.format_exc())
 
     def measure_brain(self):
         """
-        :return: dict of brain measurements
+        :return: instance of MeasureBrain after performing all measurements
         """
         try:
             measure = MeasureBrain(self._brain, 10)
-            return measure.measure_all()
+            measure.measure_all()
+            return measure
         except Exception as e:
-            print(e)
             print('Failed measuring brain')
+            print(e)
+            print(traceback.format_exc())
 
     def load(self, text, conf_type):
         """
@@ -263,7 +268,7 @@ class RevolveBot:
                 print(e)
                 print(traceback.format_exc())
         else:
-            print('Brain not initialized')
+            raise RuntimeError('Brain {} image rendering not supported'.format(type(self._brain)))
 
     def render2d(self, img_path):
         """
@@ -277,6 +282,6 @@ class RevolveBot:
                 render = Render()
                 render.render_robot(self._body, img_path)
             except Exception as e:
-                print('Failed rendering 2d robot. Exception:')
+                print('Failed rendering 2d robot')
                 print(e)
                 print(traceback.format_exc())
