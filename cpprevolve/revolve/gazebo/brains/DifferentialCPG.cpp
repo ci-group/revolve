@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * Description: TODO: <Add brief description about file purpose>
- * Author: Milan Jelisavcic
+ * Author: Milan Jelisavcic & Maarten van Hooft
  * Date: December 29, 2018
  *
  */
@@ -82,8 +82,8 @@ DifferentialCPG::DifferentialCPG(
 {
   // Maximum iterations for init sampling/learning/no learning
   this->n_init_samples = 5;
-  this->max_learning_iterations = 5;
-  this->no_learning_iterations = 5;
+  this->n_learning_iterations = 5;
+  this->n_cooldown_iterations = 5;
 
   // Automatically construct plots
   this->run_analytics = true;
@@ -91,8 +91,8 @@ DifferentialCPG::DifferentialCPG(
   // Bound for output signal
   this->abs_output_bound = 1.0;
 
-  // If load brain is an empty string, we train a new brain
-  //this->load_brain = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/1555248306/best_brain.txt";
+  // If load brain is an empty string (which is by default) we train a new brain. Ex:
+  // this->load_brain = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/1555264854/best_brain.txt";
 
   // Parameters
   this->evaluation_rate = 20.0;
@@ -188,7 +188,8 @@ DifferentialCPG::DifferentialCPG(
       if (dist_x + dist_y == 2)
       {
         if(std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
-           std::get<0>(this->connections[{near_x, near_y, 1, x, y, 1}]) != 1){
+           std::get<0>(this->connections[{near_x, near_y, 1, x, y, 1}]) != 1)
+        {
           std::cout << "New connection at index " << i << ": " << x << ", " << y << ", " << near_x << ", " << near_y << "\n";
           this->connections[{x, y, 1, near_x, near_y, 1}] = std::make_tuple(1, i);
           this->connections[{near_x, near_y, 1, x, y, 1}] = std::make_tuple(1, i);
@@ -206,7 +207,6 @@ DifferentialCPG::DifferentialCPG(
   // Initialise array of neuron states for Update() method
   this->next_state = new double[this->neurons.size()];
   this->n_weights = (int)(this->connections.size()/2) + this->n_motors;
-  std::cout <<" CP1\n";
 
   // Check if we want to load a pre-trained brain
   if(!this->load_brain.empty())
@@ -219,29 +219,43 @@ DifferentialCPG::DifferentialCPG(
 
     // Get weights in line
     std::vector<std::string> weights;
-    boost::split(weights, line, boost::is_any_of(";"));
+    boost::split(weights, line, boost::is_any_of(","));
 
     // Save weights for brain
     Eigen::VectorXd loaded_brain(this->n_weights);
-    for(size_t j = 0; j < weights.size(); j++){
+    for(size_t j = 0; j < this->n_weights; j++){
       loaded_brain(j) = std::stod(weights.at(j));
       std::cout << loaded_brain(j)  << ",";
+
     }
     std::cout << "\n";
+
+    // Close brain
+    in.close();
+
+    // Save these weights
     this->samples.push_back(loaded_brain);
 
+    // Set ODE matrix at initialization
+    this->set_ODE_matrix();
+
+    // Go directly into cooldown phase: Note we do require that best_sample is filled. Check this
+    this->current_iteration = this->n_init_samples + this->n_learning_iterations;
+
     // Verbose
-    std::cout << "Brain has been loaded";
+    std::cout << "Brain has been loaded. Skipped " << this->current_iteration << " iterations to enter cooldown mode\n";
+
   }
   else{
     std::cout << "Don't load existing brain\n";
 
     // Initialize BO
     this->BO_init();
+
+    // Set ODE matrix at initialization
+    this->set_ODE_matrix();
   }
 
-  // Set ODE matrix at initialization
-  this->set_ODE_matrix();
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
@@ -318,13 +332,13 @@ void DifferentialCPG::BO_init(){
         std::cout << init_sample(k) << ", ";
       }
       std::cout << "\n";
-
     }
   }
     // Latin Hypercube Sampling
   else if(this->init_method == "LHS"){
     // Check
-    if(this->n_init_samples % this->n_weights != 0){
+    if(this->n_init_samples % this->n_weights != 0)
+    {
       std::cout << "Warning: Ideally the number of initial samples is a multiple of n_weights for LHS sampling \n";
     }
 
@@ -454,10 +468,8 @@ void DifferentialCPG::BO_init(){
         std::cout << init_sample(h) << ", ";
       }
       std::cout << std::endl;
-
     }
   }
-
 }
 
 void DifferentialCPG::save_fitness(){
@@ -538,11 +550,11 @@ void DifferentialCPG::Update(
     this->evaluator->Update(this->robot->WorldPose());
 
     // If we are still learning
-    if(this->current_iteration < this->n_init_samples + this->max_learning_iterations){
+    if(this->current_iteration < this->n_init_samples + this->n_learning_iterations){
       // Get and save fitness
       this->save_fitness();
 
-      // Get new weights
+      // Get new sample (weights) and add sample
       this->BO_step();
 
       // Set new weights
@@ -556,8 +568,8 @@ void DifferentialCPG::Update(
       }
     }
       // If we are finished learning but are cooling down
-    else if((this->current_iteration >= (this->n_init_samples + this->max_learning_iterations))
-            and (this->current_iteration < (this->n_init_samples + this->max_learning_iterations + this->no_learning_iterations))){
+    else if((this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
+            and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1))){
       // Save fitness
       this->save_fitness();
 
@@ -568,10 +580,15 @@ void DifferentialCPG::Update(
       std::cout << "\nI am cooling down \n";
     }
       // Else we don't want to update anything, but save data from this run once.
-    else if(this->run_analytics) {
-      // Construct plots
-      this->get_analytics();
+    else {
+      // Save fitness of last iteration
+      this->save_fitness();
 
+      // Create plots
+      if(this->run_analytics) {
+        // Construct plots
+        this->get_analytics();
+      }
       // Exit
       std::cout << "I am finished \n";
       std::exit(0);
@@ -707,7 +724,6 @@ void DifferentialCPG::set_ODE_matrix(){
     }
     c++;
   }
-
 }
 
 /**
@@ -791,23 +807,21 @@ void DifferentialCPG::Step(
 
   // Write state to file
   std::ofstream state_file;
-  state_file.open(this->directory_name + "nextStates.txt", std::ios::app);
-
+  state_file.open(this->directory_name + "states.txt", std::ios::app);
   for(size_t i = 0; i < this->neurons.size(); i++){
     state_file << this->next_state[i] << ",";
   }
-
-  // Write signal to file
-  std::ofstream output_file;
-  output_file.open(this->directory_name + "outputs.txt", std::ios::app);
-  for(size_t i = 0; i < this->n_motors; i++){
-    output_file << this->output[i] << ",";
-  }
-
   state_file << "\n";
   state_file.close();
-  output_file << "\n";
-  output_file.close();
+
+  // Write signal to file
+  std::ofstream signal_file;
+  signal_file.open(this->directory_name + "signal.txt", std::ios::app);
+  for(size_t i = 0; i < this->n_motors; i++){
+    signal_file << this->output[i] << ",";
+  }
+  signal_file << "\n";
+  signal_file.close();
 }
 
 /**
@@ -915,22 +929,22 @@ void DifferentialCPG::get_analytics(){
   std::ofstream samples_file;
   samples_file.open(directory_name + "samples.txt");
 
-  // Print to files
-  for(size_t i = 0; i < (this->observations.size()); i++){
+  // Print to files. Do separate for debugging purposes
+  for(size_t i = 0; i < (this->samples.size()); i++){
     auto sample = this->samples.at(i);
-
     for(int j = 0; j < this->n_weights; j++){
       samples_file << sample(j) << ", ";
     }
     samples_file << "\n";
+  }
+  samples_file.close();
 
+  // Print to files. Do separate for debugging purposes
+  for(size_t i = 0; i < (this->observations.size()); i++){
     // When the samples are commented out, it works.
     observations_file << this->observations.at(i) << "\n";
   }
-
-  // Close files
   observations_file.close();
-  samples_file.close();
 
   // Call python file to construct plots
   std::string python_plot_command = "python3 experiments/RunAnalysisBO.py "
@@ -938,7 +952,6 @@ void DifferentialCPG::get_analytics(){
                                     + " "
                                     + std::to_string((int)this->n_init_samples)
                                     + " "
-                                    + std::to_string((int)this->no_learning_iterations);
+                                    + std::to_string((int)this->n_cooldown_iterations);
   std::system(python_plot_command.c_str());
-
 }

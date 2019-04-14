@@ -170,13 +170,13 @@ namespace revolve
       private: size_t current_iteration = 0;
 
       /// \brief Max number of iterations learning is allowed
-      private: size_t max_learning_iterations;
+      private: size_t n_learning_iterations;
 
       /// \brief Number of initial samples
       private: size_t n_init_samples;
 
       /// \brief Cool down period
-      private: size_t no_learning_iterations;
+      private: size_t n_cooldown_iterations;
 
       /// \brief Limbo optimizes in [0,1]
       private: double range_lb;
