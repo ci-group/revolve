@@ -75,21 +75,13 @@ namespace limbo {
             // defaults
             struct defaults {
                 using acquiopt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
-//#ifdef USE_NLOPT
-//                using acquiopt_t = opt::NLOptNoGrad<Params, nlopt::GN_DIRECT_L_RAND>;
-//#elif defined(USE_LIBCMAES)
-//                using acquiopt_t = opt::Cmaes<Params>;
-//#else
-//#warning NO NLOpt, and NO Libcmaes: the acquisition function will be optimized by a grid search algorithm (which is usually bad). Please install at least NLOpt or libcmaes to use limbo!.
-//                using acquiopt_t = opt::GridSearch<Params>;
-//#endif
             };
-            // By Maarten
 
             /// link to the corresponding BoBase (useful for typedefs)
             using base_t = BoBase<Params, A1, A2, A3, A4, A5, A6>;
             using model_t = typename base_t::model_t;
             using acquisition_function_t = typename base_t::acquisition_function_t;
+
             // extract the types
             using args = typename boptimizer_signature::bind<A1, A2, A3, A4, A5, A6>::type;
             using acqui_optimizer_t = typename boost::parameter::binding<args, tag::acquiopt, typename defaults::acquiopt_t>::type;
@@ -203,9 +195,5 @@ namespace limbo {
         using BOptimizerHPOpt = BOptimizer<Params, modelfun<_default_hp::model_t<Params>>, acquifun<_default_hp::acqui_t<Params>>, A1, A2, A3, A4>;
     }
 }
-
-
-
-
 
 #endif //REVOLVE_BOPTIMIZER_CPG_H

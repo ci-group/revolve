@@ -80,6 +80,23 @@ DifferentialCPG::DifferentialCPG(
     , input(new double[_sensors.size()])
     , output(new double[_motors.size()])
 {
+  // Maximum iterations for init sampling/learning/no learning
+  this->n_init_samples = 5;
+  this->max_learning_iterations = 5;
+  this->no_learning_iterations = 5;
+
+  // Automatically construct plots
+  this->run_analytics = true;
+
+  // Bound for output signal
+  this->abs_output_bound = 1.0;
+
+  // If load brain is an empty string, we train a new brain
+  //this->load_brain = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/1555248306/best_brain.txt";
+
+  // Parameters
+  this->evaluation_rate = 20.0;
+
   // Create transport node
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
@@ -87,6 +104,7 @@ DifferentialCPG::DifferentialCPG(
   // Get Robot
   this->robot = _model;
   this->n_motors = _motors.size();
+
   auto name = _model->GetName();
 
   if (not _settings->HasElement("rv:brain"))
@@ -187,16 +205,46 @@ DifferentialCPG::DifferentialCPG(
 
   // Initialise array of neuron states for Update() method
   this->next_state = new double[this->neurons.size()];
+  this->n_weights = (int)(this->connections.size()/2) + this->n_motors;
+  std::cout <<" CP1\n";
 
-  // Initialize BO
-  this->BO_init();
+  // Check if we want to load a pre-trained brain
+  if(!this->load_brain.empty())
+  {
+    // Get line
+    std::cout << "I will load the following brain:\n";
+    std::ifstream in(this->load_brain);
+    std::string line;
+    std::getline(in, line);
 
-  // Get initial weights. This will yield the first sample
+    // Get weights in line
+    std::vector<std::string> weights;
+    boost::split(weights, line, boost::is_any_of(";"));
+
+    // Save weights for brain
+    Eigen::VectorXd loaded_brain(this->n_weights);
+    for(size_t j = 0; j < weights.size(); j++){
+      loaded_brain(j) = std::stod(weights.at(j));
+      std::cout << loaded_brain(j)  << ",";
+    }
+    std::cout << "\n";
+    this->samples.push_back(loaded_brain);
+
+    // Verbose
+    std::cout << "Brain has been loaded";
+  }
+  else{
+    std::cout << "Don't load existing brain\n";
+
+    // Initialize BO
+    this->BO_init();
+  }
+
+  // Set ODE matrix at initialization
   this->set_ODE_matrix();
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
-
 }
 
 /**
@@ -225,23 +273,12 @@ struct DifferentialCPG::evaluationFunction{
 };
 
 void DifferentialCPG::BO_init(){
-  // Parameters
-  this->evaluation_rate = 20.0;
-  this->n_init_samples = 5;
-
-  // Maximum iterations that learning is allowed
-  this->max_learning_iterations = 5;
-  this->no_learning_iterations = 5; // Number of iterations to walk with best controller
-
   // BO parameters
   this->range_lb = -1.f;
   this->range_ub = 1.f;
   this->init_method = "RS"; // {RS, LHS, ORT}
-  this->run_analytics = true; // Automatically construct plots
-  this->abs_output_bound = 1.0;
 
   // We only want to optimize the weights for now.
-  this->n_weights = (int)(this->connections.size()/2) + this->n_motors;
   std::cout << "Number of weights = connections/2 + n_motors are "
             << this->connections.size()/2
             << " + "
@@ -448,9 +485,6 @@ void DifferentialCPG::BO_step(){
   // Holder for sample
   Eigen::VectorXd x;
 
-  // Get and save fitness
-  this->save_fitness();
-
   // In case we are done with the initial random sampling. Correct for
   // initial sample taken by. Statement equivalent to !(i < n_samples -1)
   if (this->current_iteration > this->n_init_samples - 2){
@@ -505,6 +539,9 @@ void DifferentialCPG::Update(
 
     // If we are still learning
     if(this->current_iteration < this->n_init_samples + this->max_learning_iterations){
+      // Get and save fitness
+      this->save_fitness();
+
       // Get new weights
       this->BO_step();
 
@@ -521,17 +558,23 @@ void DifferentialCPG::Update(
       // If we are finished learning but are cooling down
     else if((this->current_iteration >= (this->n_init_samples + this->max_learning_iterations))
             and (this->current_iteration < (this->n_init_samples + this->max_learning_iterations + this->no_learning_iterations))){
-      // Only get fitness for updating
+      // Save fitness
       this->save_fitness();
+
+      // Use best sample in next iteration
       this->samples.push_back(this->best_sample);
+
+      // Verbose
       std::cout << "\nI am cooling down \n";
     }
       // Else we don't want to update anything, but save data from this run once.
     else if(this->run_analytics) {
+      // Construct plots
       this->get_analytics();
-      this->run_analytics = false;
-      std::exit(0);
+
+      // Exit
       std::cout << "I am finished \n";
+      std::exit(0);
     }
 
     // Evaluation policy here
@@ -539,7 +582,6 @@ void DifferentialCPG::Update(
     this->evaluator->Reset();
     this->current_iteration += 1;
   }
-
 
   this->Step(_time, this->output);
 
@@ -597,7 +639,6 @@ void DifferentialCPG::set_ODE_matrix(){
   index++;
   int k = 0;
   std::vector<std::string> connections_seen;
-
 
   for (auto const &connection : this->connections){
     // Get connection information
@@ -893,11 +934,11 @@ void DifferentialCPG::get_analytics(){
 
   // Call python file to construct plots
   std::string python_plot_command = "python3 experiments/RunAnalysisBO.py "
-                                  + directory_name
-                                  + " "
-                                  + std::to_string((int)this->n_init_samples)
-                                  + " "
-                                  + std::to_string((int)this->no_learning_iterations);
+                                    + directory_name
+                                    + " "
+                                    + std::to_string((int)this->n_init_samples)
+                                    + " "
+                                    + std::to_string((int)this->no_learning_iterations);
   std::system(python_plot_command.c_str());
 
 }

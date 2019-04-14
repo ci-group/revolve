@@ -1,8 +1,11 @@
 import matplotlib
-matplotlib.use("TkAgg") # For Mac OS X
 import matplotlib.pyplot as plt
+import numpy as np
 import sys
+
+# Set matplotlib font
 font = {'size'   : 20}
+#matplotlib.use("TkAgg") # For Mac OS X
 matplotlib.rc('font', **font)
 
 # Obtain arguments
@@ -23,7 +26,6 @@ def fitness_per_iteration_plot(my_directory, my_data, x1, x2):
     plt.plot(my_data)
 
     # Save plots
-    plt.savefig(my_directory + "/fitness.pdf")
     plt.savefig(my_directory + "/fitness.png")
 
 
@@ -42,7 +44,6 @@ def max_fitness_plot(my_directory, my_data, x1, x2):
     plt.plot(my_data)
 
     # Save plots
-    plt.savefig(my_directory + "/fitness_monotonic.pdf")
     plt.savefig(my_directory + "/fitness_monotonic.png")
 
 
@@ -55,15 +56,27 @@ def get_data(my_directory, filename):
     return my_data
 
 
-# Main
+def save_best_brain(path):
+    my_fitness = [float(line.rstrip('\n')) for line in open(path + "fitnesses.txt")]
+    my_samples = [line.rstrip('\n') for line in open(path + "samples.txt")]
+    ix_best = np.argmax(my_fitness)
+    # Exclude last comma while saving brain
+    np.savetxt(path + "/best_brain.txt", [my_samples[ix_best][:-2]], delimiter=",", fmt="%s")
+
+
+# Get and process data
 fitness_data = get_data(root_directory, "fitnesses.txt")
+
 fitness_per_iteration_plot(root_directory,
                            fitness_data,
                            n_initial_samples,
                            n_no_learning_iterations)
+
 max_fitness_plot(root_directory,
                  fitness_data,
                  n_initial_samples,
                  n_no_learning_iterations)
+
+save_best_brain(root_directory)
 
 print("Plots are constructed \n")
