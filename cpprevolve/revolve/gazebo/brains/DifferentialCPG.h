@@ -140,7 +140,7 @@ namespace revolve
       private: ::gazebo::physics::ModelPtr robot;
 
       /// \brief Init BO loop
-      public: void bo_init();
+      public: void bo_init_sampling();
 
       /// \brief Main BO loop
       public: void bo_step();

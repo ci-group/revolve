@@ -54,7 +54,7 @@
 namespace gz = gazebo;
 using namespace revolve::gazebo;
 
-// Probably not so nice
+// Copied from the limbo tutorial the BO implementation is based on
 using Mean_t = limbo::mean::Data<DifferentialCPG::Params>;
 using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
@@ -96,6 +96,11 @@ DifferentialCPG::DifferentialCPG(
 
   // Parameters
   this->evaluation_rate = 20.0;
+
+  // BO parameters. Remainder of BO parameters is at the end.
+  this->range_lb = -1.f;
+  this->range_ub = 1.f;
+  this->init_method = "RS"; // {RS, LHS, ORT}
 
   // Create transport node
   this->node_.reset(new gz::transport::Node());
@@ -213,9 +218,9 @@ DifferentialCPG::DifferentialCPG(
   {
     // Get line
     std::cout << "I will load the following brain:\n";
-    std::ifstream in(this->load_brain);
+    std::ifstream brain_file(this->load_brain);
     std::string line;
-    std::getline(in, line);
+    std::getline(brain_file, line);
 
     // Get weights in line
     std::vector<std::string> weights;
@@ -226,12 +231,11 @@ DifferentialCPG::DifferentialCPG(
     for(size_t j = 0; j < this->n_weights; j++){
       loaded_brain(j) = std::stod(weights.at(j));
       std::cout << loaded_brain(j)  << ",";
-
     }
     std::cout << "\n";
 
     // Close brain
-    in.close();
+    brain_file.close();
 
     // Save these weights
     this->samples.push_back(loaded_brain);
@@ -243,19 +247,18 @@ DifferentialCPG::DifferentialCPG(
     this->current_iteration = this->n_init_samples + this->n_learning_iterations;
 
     // Verbose
-    std::cout << "Brain has been loaded. Skipped " << this->current_iteration << " iterations to enter cooldown mode\n";
+    std::cout << "\nBrain has been loaded. Skipped " << this->current_iteration << " iterations to directly enter cooldown mode\n";
 
   }
   else{
     std::cout << "Don't load existing brain\n";
 
     // Initialize BO
-    this->bo_init();
+    this->bo_init_sampling();
 
     // Set ODE matrix at initialization
     this->set_ode_matrix();
   }
-
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
@@ -271,11 +274,12 @@ DifferentialCPG::~DifferentialCPG()
   delete[] this->output;
 }
 
-/*
+/**
  * Dummy function for limbo
  */
 struct DifferentialCPG::evaluation_function{
-  // number of input dimension (samples.size())
+  // TODO: Make this neat. I don't know how though.
+  // Number of input dimension (samples.size())
   BO_PARAM(size_t, dim_in, 18);
 
   // number of dimensions of the fitness
@@ -286,12 +290,10 @@ struct DifferentialCPG::evaluation_function{
   };
 };
 
-void DifferentialCPG::bo_init(){
-  // BO parameters
-  this->range_lb = -1.f;
-  this->range_ub = 1.f;
-  this->init_method = "RS"; // {RS, LHS, ORT}
-
+/**
+ * Performs the initial random sampling for BO
+ */
+void DifferentialCPG::bo_init_sampling(){
   // We only want to optimize the weights for now.
   std::cout << "Number of weights = connections/2 + n_motors are "
             << this->connections.size()/2
@@ -472,6 +474,9 @@ void DifferentialCPG::bo_init(){
   }
 }
 
+/**
+ * Function that obtains the current fitness by calling the evaluator and stores it
+ */
 void DifferentialCPG::save_fitness(){
   // Get fitness
   double fitness = this->evaluator->Fitness();
@@ -493,6 +498,10 @@ void DifferentialCPG::save_fitness(){
   this->observations.push_back(observation);
 }
 
+/**
+ * Wrapper function that makes calls to limbo to solve the current BO
+ * iteration and returns the best sample
+ */
 void DifferentialCPG::bo_step(){
   // Holder for sample
   Eigen::VectorXd x;
@@ -611,8 +620,7 @@ void DifferentialCPG::Update(
   }
 }
 
-
-/*
+/**
  * Make matrix of weights A as defined in dx/dt = Ax.
  * Element (i,j) specifies weight from neuron i to neuron j in the system of ODEs
  */
@@ -642,9 +650,7 @@ void DifferentialCPG::set_ode_matrix(){
       c = i - 1;
     }
 
-    // Add a/b connection weight: TODO: current->iteration 5 doesn't exist.
-    // Over here it should've already contain a bo_step sample
-    // here yet.
+    // Add a/b connection weight
     index = (int)(i/2);
     auto w  = this->samples.at(this->current_iteration)(index) *
               (this->range_ub - this->range_lb) + this->range_lb;
@@ -727,7 +733,7 @@ void DifferentialCPG::set_ode_matrix(){
 }
 
 /**
- * Step function
+ * Step function that is called from within Update()
  *
  * @param _time
  * @param _output
@@ -748,7 +754,7 @@ void DifferentialCPG::step(
     neuron_count++;
   }
 
-  // Copy values from nextstate into x for ODEINT
+  // Copy values from next_state into x for ODEINT
   state_type x(this->neurons.size());
   for (size_t i = 0; i < this->neurons.size(); i++){
     x[i] = this->next_state[i];
@@ -825,7 +831,8 @@ void DifferentialCPG::step(
 }
 
 /**
- * Struct that holds the parameters on which BO is called
+ * Struct that holds the parameters on which BO is called. This is required
+ * by limbo.
  */
 struct DifferentialCPG::Params{
   struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
@@ -896,17 +903,19 @@ struct DifferentialCPG::Params{
   };
 };
 
-
+/**
+ * Function that automatically creates plots of the fitness, saves the best brain,
+ * and saves all brains. Calls the Python file RunAnalysiBO.py
+ *
+ * @param _time
+ * @param _output
+ */
 void DifferentialCPG::get_analytics(){
-  // Generate directory name
-  std::string directory_name = "output/cpg_bo/";
-  directory_name += std::to_string(time(0)) + "/";
-  std::system(("mkdir -p " + directory_name).c_str());
-
   // Write parameters to file
   std::ofstream parameters_file;
-  parameters_file.open(directory_name + "parameters.txt");
+  parameters_file.open(this->directory_name + "parameters.txt");
   parameters_file << "Dimensions: " << this->n_weights << "\n";
+
   // TODO
   //parameters_file << "Kernel used: " << kernel_used << "\n";
   //parameters_file << "Acqui. function used: " << acqui_used << "\n";
@@ -925,9 +934,9 @@ void DifferentialCPG::get_analytics(){
 
   // Save data from run
   std::ofstream observations_file;
-  observations_file.open(directory_name + "fitnesses.txt");
+  observations_file.open(this->directory_name  + "fitnesses.txt");
   std::ofstream samples_file;
-  samples_file.open(directory_name + "samples.txt");
+  samples_file.open(this->directory_name  + "samples.txt");
 
   // Print to files. Do separate for debugging purposes
   for(size_t i = 0; i < (this->samples.size()); i++){
@@ -948,7 +957,7 @@ void DifferentialCPG::get_analytics(){
 
   // Call python file to construct plots
   std::string python_plot_command = "python3 experiments/RunAnalysisBO.py "
-                                    + directory_name
+                                    + this->directory_name
                                     + " "
                                     + std::to_string((int)this->n_init_samples)
                                     + " "
