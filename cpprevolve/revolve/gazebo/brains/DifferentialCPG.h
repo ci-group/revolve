@@ -74,7 +74,7 @@ namespace revolve
           const std::vector< SensorPtr > &_sensors);
 
       public:
-      void SetWeightMatrix();
+      void set_ODE_matrix();
 
       /// \brief Destructor
       public:
@@ -99,7 +99,7 @@ namespace revolve
 
       /// \brief Register of motor IDs and their x,y-coordinates
       protected:
-      std::map< std::string, std::tuple< int, int > > positions_;
+      std::map< std::string, std::tuple< int, int > > positions;
 
       /// \brief Register of individual neurons in x,y,z-coordinates
       /// \details x,y-coordinates define position of a robot's module and
@@ -107,7 +107,7 @@ namespace revolve
       // values are a bias, gain, state of each neuron.
       protected:
       std::map< std::tuple< int, int, int >, std::tuple< double, double, double > >
-          neurons_;
+          neurons;
 
       /// \brief Register of connections between neighnouring neurons
       /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
@@ -115,132 +115,107 @@ namespace revolve
       // 2: the weight index corresponding to this connection.
       protected:
       std::map< std::tuple< int, int, int, int, int, int >, std::tuple<int, int > >
-          connections_;
+          connections;
 
       /// \brief Runge-Kutta 45 stepper
       protected: boost::numeric::odeint::runge_kutta4< state_type > stepper;
 
       /// \brief Used to determine the next state array
-      private: double *nextState_;
+      private: double *next_state;
 
       /// \brief Used for ODE-int
-      protected: std::vector<std::vector<double>> weightMatrix;
+      protected: std::vector<std::vector<double>> ode_matrix;
       protected: state_type x;
 
       /// \brief One input state for each input neuron
-      private: double *input_;
+      private: double *input;
 
       /// \brief Used to determine the output to the motors array
-      private: double *output_;
+      private: double *output;
 
-      private: std::string directoryName;
+      /// \brief Location where to save output
+      private: std::string directory_name;
+
       /// \brief Name of the robot
-      private:
-      ::gazebo::physics::ModelPtr robot_;
+      private: ::gazebo::physics::ModelPtr robot;
 
       /// \brief Init BO loop
-      public:
-      void BO_init();
+      public: void BO_init();
 
       /// \brief Main BO loop
-      public:
-      void BO_step();
+      public: void BO_step();
 
       /// \brief evaluation rate
-      private:
-      double evaluationRate_;
-
-      /// \brief Maximal number of evaluations
-      private:
-      size_t maxEvaluations_;
+      private: double evaluation_rate;
 
       /// \brief Get fitness
-      private:
-      void saveFitness();
+      private: void save_fitness();
 
       /// \brief Pointer to the fitness evaluator
-      protected:
-      EvaluatorPtr evaluator;
+      protected: EvaluatorPtr evaluator;
 
       /// \brief Holder for BO parameters
-      public:
-      struct Params;
+      public: struct Params;
 
       /// \brief Best fitness seen so far
-      private:
-      double bestFitness;
+      private: double best_fitness;
 
       /// \brief Sample corresponding to best fitness
-      private:
-      Eigen::VectorXd bestSample;
+      private: Eigen::VectorXd best_sample;
 
       /// \brief Starting time
-      private:
-      double startTime_;
+      private: double start_time;
 
       /// \brief BO attributes
-      private:
-      size_t currentIteration = 0;
+      private: size_t current_iteration = 0;
 
       /// \brief Max number of iterations learning is allowed
-      private:
-      size_t maxLearningIterations;
+      private: size_t max_learning_iterations;
 
       /// \brief Number of initial samples
-      private:
-      size_t nInitialSamples;
+      private: size_t n_init_samples;
 
       /// \brief Cool down period
-      private:
-      size_t noLearningIterations;
+      private: size_t no_learning_iterations;
 
       /// \brief Limbo optimizes in [0,1]
-      private:
-      double rangeLB;
+      private: double range_lb;
 
       /// \brief Limbo optimizes in [0,1]
-      private:
-      double rangeUB;
+      private: double range_ub;
 
       /// \brief How to take initial random samples
-      private:
-      std::string initializationMethod;
+      private: std::string init_method;
 
       /// \brief All fitnesses seen so far. Called observations in limbo context
-      private:
-      std::vector< Eigen::VectorXd > observations;
+      private: std::vector< Eigen::VectorXd > observations;
 
       /// \brief All samples seen so far.
-      private:
-      std::vector< Eigen::VectorXd > samples;
+      private: std::vector< Eigen::VectorXd > samples;
 
       /// \brief The number of weights to optimize
-      private:
-      int nWeights;
+      private: int n_weights;
 
       /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
-      public:
-      struct evaluationFunction;
+      public: struct evaluationFunction;
 
       /// \brief Boolean to enable/disable constructing plots
-      private:
-      bool runAnalytics;
+      private: bool run_analytics;
 
       /// \brief Automatically generate plots
-      public:
-      void getAnalytics();
+      public: void get_analytics();
 
       /// \brief absolute bound on motor signal value
-      public: double fMax;
+      public: double abs_output_bound;
 
       /// \brief Holds the number of motors in the robot
-      private: size_t nMotors;
+      private: size_t n_motors;
 
       /// \brief Helper for numerical integrator
-      private: double previousTime = 0;
+      private: double previous_time = 0;
 
       /// \brief Initial neuron state
-      private: double initState = M_SQRT2/2.f
+      private: double init_state = M_SQRT2/2.f
       ;
     };
   }
