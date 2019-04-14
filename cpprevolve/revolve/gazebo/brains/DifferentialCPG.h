@@ -74,7 +74,7 @@ namespace revolve
           const std::vector< SensorPtr > &_sensors);
 
       public:
-      void set_ODE_matrix();
+      void set_ode_matrix();
 
       /// \brief Destructor
       public:
@@ -93,7 +93,7 @@ namespace revolve
           const double _step);
 
       protected:
-      void Step(
+      void step(
           const double _time,
           double *_output);
 
@@ -140,10 +140,10 @@ namespace revolve
       private: ::gazebo::physics::ModelPtr robot;
 
       /// \brief Init BO loop
-      public: void BO_init();
+      public: void bo_init();
 
       /// \brief Main BO loop
-      public: void BO_step();
+      public: void bo_step();
 
       /// \brief evaluation rate
       private: double evaluation_rate;
@@ -197,7 +197,7 @@ namespace revolve
       private: int n_weights;
 
       /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
-      public: struct evaluationFunction;
+      public: struct evaluation_function;
 
       /// \brief Boolean to enable/disable constructing plots
       private: bool run_analytics;

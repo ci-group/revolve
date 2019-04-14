@@ -237,7 +237,7 @@ DifferentialCPG::DifferentialCPG(
     this->samples.push_back(loaded_brain);
 
     // Set ODE matrix at initialization
-    this->set_ODE_matrix();
+    this->set_ode_matrix();
 
     // Go directly into cooldown phase: Note we do require that best_sample is filled. Check this
     this->current_iteration = this->n_init_samples + this->n_learning_iterations;
@@ -250,10 +250,10 @@ DifferentialCPG::DifferentialCPG(
     std::cout << "Don't load existing brain\n";
 
     // Initialize BO
-    this->BO_init();
+    this->bo_init();
 
     // Set ODE matrix at initialization
-    this->set_ODE_matrix();
+    this->set_ode_matrix();
   }
 
 
@@ -274,7 +274,7 @@ DifferentialCPG::~DifferentialCPG()
 /*
  * Dummy function for limbo
  */
-struct DifferentialCPG::evaluationFunction{
+struct DifferentialCPG::evaluation_function{
   // number of input dimension (samples.size())
   BO_PARAM(size_t, dim_in, 18);
 
@@ -286,7 +286,7 @@ struct DifferentialCPG::evaluationFunction{
   };
 };
 
-void DifferentialCPG::BO_init(){
+void DifferentialCPG::bo_init(){
   // BO parameters
   this->range_lb = -1.f;
   this->range_ub = 1.f;
@@ -493,7 +493,7 @@ void DifferentialCPG::save_fitness(){
   this->observations.push_back(observation);
 }
 
-void DifferentialCPG::BO_step(){
+void DifferentialCPG::bo_step(){
   // Holder for sample
   Eigen::VectorXd x;
 
@@ -507,7 +507,7 @@ void DifferentialCPG::BO_step(){
                                  limbo::acquifun<Acqui_t>> boptimizer;
 
     // Optimize. Pass dummy evaluation function and observations .
-    boptimizer.optimize(DifferentialCPG::evaluationFunction(),
+    boptimizer.optimize(DifferentialCPG::evaluation_function(),
                         this->samples,
                         this->observations);
 
@@ -555,10 +555,10 @@ void DifferentialCPG::Update(
       this->save_fitness();
 
       // Get new sample (weights) and add sample
-      this->BO_step();
+      this->bo_step();
 
       // Set new weights
-      this->set_ODE_matrix();
+      this->set_ode_matrix();
 
       if (this->current_iteration < this->n_init_samples){
         std::cout << "\nEvaluating initial random sample\n";
@@ -600,7 +600,7 @@ void DifferentialCPG::Update(
     this->current_iteration += 1;
   }
 
-  this->Step(_time, this->output);
+  this->step(_time, this->output);
 
   // Send new signals to the motors
   p = 0;
@@ -616,7 +616,7 @@ void DifferentialCPG::Update(
  * Make matrix of weights A as defined in dx/dt = Ax.
  * Element (i,j) specifies weight from neuron i to neuron j in the system of ODEs
  */
-void DifferentialCPG::set_ODE_matrix(){
+void DifferentialCPG::set_ode_matrix(){
   // Initiate new matrix
   std::vector<std::vector<double>> matrix;
 
@@ -643,7 +643,7 @@ void DifferentialCPG::set_ODE_matrix(){
     }
 
     // Add a/b connection weight: TODO: current->iteration 5 doesn't exist.
-    // Over here it should've already contain a BO_step sample
+    // Over here it should've already contain a bo_step sample
     // here yet.
     index = (int)(i/2);
     auto w  = this->samples.at(this->current_iteration)(index) *
@@ -732,7 +732,7 @@ void DifferentialCPG::set_ODE_matrix(){
  * @param _time
  * @param _output
  */
-void DifferentialCPG::Step(
+void DifferentialCPG::step(
     const double _time,
     double *_output)
 {
