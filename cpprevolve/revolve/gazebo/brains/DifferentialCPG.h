@@ -194,7 +194,7 @@ namespace revolve
       private: std::vector< Eigen::VectorXd > samples;
 
       /// \brief The number of weights to optimize
-      private: int n_weights;
+      private: size_t n_weights;
 
       /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
       public: struct evaluation_function;

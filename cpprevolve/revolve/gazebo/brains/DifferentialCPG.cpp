@@ -82,8 +82,8 @@ DifferentialCPG::DifferentialCPG(
 {
   // Maximum iterations for init sampling/learning/no learning
   this->n_init_samples = 5;
-  this->n_learning_iterations = 5;
-  this->n_cooldown_iterations = 5;
+  this->n_learning_iterations = 20;
+  this->n_cooldown_iterations = 10;
 
   // Automatically construct plots
   this->run_analytics = true;
@@ -91,11 +91,12 @@ DifferentialCPG::DifferentialCPG(
   // Bound for output signal
   this->abs_output_bound = 1.0;
 
-  // If load brain is an empty string (which is by default) we train a new brain. Ex:
+  // If load brain is an empty string (which is by default) we train a new brain.
+  // To load a brain, give the path to the file containing the weights
   // this->load_brain = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/1555264854/best_brain.txt";
 
   // Parameters
-  this->evaluation_rate = 20.0;
+  this->evaluation_rate = 50.0;
 
   // BO parameters. Remainder of BO parameters is at the end.
   this->range_lb = -1.f;
@@ -319,7 +320,7 @@ void DifferentialCPG::bo_init_sampling(){
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all weights
-      for (int j = 0; j < this->n_weights; j++) {
+      for (size_t j = 0; j < this->n_weights; j++) {
         // Generate a random number in [0, 1]. Transform later
         double f = ((double) rand() / (RAND_MAX));
 
@@ -333,7 +334,7 @@ void DifferentialCPG::bo_init_sampling(){
       for(int k = 0; k < init_sample.size(); k ++){
         std::cout << init_sample(k) << ", ";
       }
-      std::cout << "\n";
+      std::cout << " \n";
     }
   }
     // Latin Hypercube Sampling
@@ -351,7 +352,7 @@ void DifferentialCPG::bo_init_sampling(){
     std::vector<std::vector<int>> all_dimensions;
 
     // Fill vectors
-    for (int i=0; i < this->n_weights; i++){
+    for (size_t i=0; i < this->n_weights; i++){
       std::vector<int> one_dimension;
 
       // Prepare for vector permutation
@@ -372,7 +373,7 @@ void DifferentialCPG::bo_init_sampling(){
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all dimensions
-      for (int j = 0; j < this->n_weights; j++){
+      for (size_t j = 0; j < this->n_weights; j++){
         // Take a LHS
         init_sample(j) = all_dimensions.at(j).at(i)*my_range + ((double) rand() / (RAND_MAX))*my_range;
       }
@@ -380,7 +381,7 @@ void DifferentialCPG::bo_init_sampling(){
       // Append sample to samples
       this->samples.push_back(init_sample);
 
-      for(int k = 0; k < init_sample.size(); k ++){
+      for(size_t k = 0; k < init_sample.size(); k ++){
         std::cout << init_sample(k) << ", ";
       }
       std::cout << "\n";
@@ -400,7 +401,7 @@ void DifferentialCPG::bo_init_sampling(){
 
     // Initiate for each  dimension a vector holding a permutation of 1,...,n_init_samples
     std::vector<std::vector<int>> all_dimensions;
-    for (int i = 0; i < this->n_weights; i++) {
+    for (size_t i = 0; i < this->n_weights; i++) {
       // Holder for one dimension
       std::vector<int> one_dimension;
       for (size_t j = 0; j < this->n_init_samples; j++) {
@@ -569,6 +570,9 @@ void DifferentialCPG::Update(
       // Set new weights
       this->set_ode_matrix();
 
+      // Reset robot position
+      this->robot->Reset();
+
       if (this->current_iteration < this->n_init_samples){
         std::cout << "\nEvaluating initial random sample\n";
       }
@@ -576,7 +580,7 @@ void DifferentialCPG::Update(
         std::cout << "\nI am learning\n";
       }
     }
-      // If we are finished learning but are cooling down
+      // If we are finished learning but are cooling down - reset once
     else if((this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
             and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1))){
       // Save fitness
@@ -941,7 +945,7 @@ void DifferentialCPG::get_analytics(){
   // Print to files. Do separate for debugging purposes
   for(size_t i = 0; i < (this->samples.size()); i++){
     auto sample = this->samples.at(i);
-    for(int j = 0; j < this->n_weights; j++){
+    for(size_t j = 0; j < this->n_weights; j++){
       samples_file << sample(j) << ", ";
     }
     samples_file << "\n";
