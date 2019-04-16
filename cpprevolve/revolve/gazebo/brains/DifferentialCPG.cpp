@@ -81,7 +81,7 @@ DifferentialCPG::DifferentialCPG(
     , output(new double[_motors.size()])
 {
   // Maximum iterations for init sampling/learning/no learning
-  this->n_init_samples = 5;
+  this->n_init_samples = 10;
   this->n_learning_iterations = 20;
   this->n_cooldown_iterations = 10;
 
@@ -96,7 +96,7 @@ DifferentialCPG::DifferentialCPG(
   // this->load_brain = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/1555264854/best_brain.txt";
 
   // Parameters
-  this->evaluation_rate = 50.0;
+  this->evaluation_rate = 200.0;
 
   // BO parameters. Remainder of BO parameters is at the end.
   this->range_lb = -1.f;
@@ -145,12 +145,8 @@ DifferentialCPG::DifferentialCPG(
     auto motor_id = motor->GetAttribute("part_id")->GetAsString();
     this->positions[motor_id] = {coord_x, coord_y};
 
-    // TODO: Determine optimization boundaries
-    this->range_lb = 0.f;
-    this->range_ub = 1;
-
     // Save neurons: bias/gain/state. Make sure initial states are of different sign.
-    this->neurons[{coord_x, coord_y, 1}] = {0.f, 0.f, -this->init_state}; // Neuron A
+    this->neurons[{coord_x, coord_y, 1}] = {0.f, 0.f, -this->init_state}; //Neuron A
     this->neurons[{coord_x, coord_y, -1}] = {0.f, 0.f, this->init_state}; // Neuron B
 
     // TODO: Add check for duplicate coordinates
@@ -572,6 +568,7 @@ void DifferentialCPG::Update(
 
       // Reset robot position
       this->robot->Reset();
+      this->evaluator->Update(this->robot->WorldPose());
 
       if (this->current_iteration < this->n_init_samples){
         std::cout << "\nEvaluating initial random sample\n";
@@ -586,8 +583,21 @@ void DifferentialCPG::Update(
       // Save fitness
       this->save_fitness();
 
+      // Reset position once to get into phase of movement
+      if(this->current_iteration == this->n_init_samples +
+                                                         this->n_learning_iterations)
+      {
+        std::cout << "Reset robot position once for cooling down period\n";
+        this->robot->Reset();
+      }
+      // Update robot position
+      this->evaluator->Update(this->robot->WorldPose());
+
       // Use best sample in next iteration
       this->samples.push_back(this->best_sample);
+
+      // Set ODE matrix
+      this->set_ode_matrix();
 
       // Verbose
       std::cout << "\nI am cooling down \n";
@@ -613,9 +623,8 @@ void DifferentialCPG::Update(
     this->current_iteration += 1;
   }
 
-  this->step(_time, this->output);
-
   // Send new signals to the motors
+  this->step(_time, this->output);
   p = 0;
   for (const auto &motor: _motors)
   {
@@ -726,11 +735,11 @@ void DifferentialCPG::set_ode_matrix(){
     std::tie(x, y, z) = neuron.first;
     if(z == -1)
     {
-      this->next_state[c] = this->init_state;
+      this->next_state[c] = -this->init_state;
     }
     else
     {
-      this->next_state[c] = -this->init_state;
+      this->next_state[c] = this->init_state;
     }
     c++;
   }
@@ -809,7 +818,7 @@ void DifferentialCPG::step(
 
       // Apply saturation formula
       auto x = this->next_state[i];
-      this->output[j] = this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+      this->output[j] = 2.5*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       j++;
     }
     ++i;

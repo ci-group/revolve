@@ -1,11 +1,14 @@
 import matplotlib
+from sys import platform
+# Enable different backend for OSX
+if platform =="darwin":
+    matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
 # Set matplotlib font
 font = {'size'   : 20}
-#matplotlib.use("TkAgg") # For Mac OS X
 matplotlib.rc('font', **font)
 
 # Obtain arguments
