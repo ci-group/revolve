@@ -203,7 +203,7 @@ namespace revolve
       private: bool reset_robot_position;
 
       /// \brief Reset neuron state at each iteration during validation
-      private: void reset_neuron_state_valid;
+      private: bool reset_neuron_state_valid;
 
       /// \brief Factor to multiply output signal with
       private: double signal_factor;
@@ -219,7 +219,7 @@ namespace revolve
       public: void get_analytics();
 
       /// \brief absolute bound on motor signal value
-      public: double abs_output_bouned;
+      public: double abs_output_bound;
 
       /// \brief Holds the number of motors in the robot
       private: size_t n_motors;
