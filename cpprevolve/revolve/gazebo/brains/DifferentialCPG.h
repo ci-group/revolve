@@ -199,6 +199,19 @@ namespace revolve
       /// \brief Dummy evaluation funtion to reduce changes to be made on the limbo package
       public: struct evaluation_function;
 
+      /// \brief Reset the robot to starting position each iteration.
+      private: bool reset_robot_position;
+
+      /// \brief Reset neuron state at each iteration during validation
+      private: void reset_neuron_state_valid;
+
+      /// \brief Factor to multiply output signal with
+      private: double signal_factor;
+
+      /// \brief Function that resets neuron state
+      private: void reset_neuron_state();
+
+
       /// \brief Boolean to enable/disable constructing plots
       private: bool run_analytics;
 
@@ -206,7 +219,7 @@ namespace revolve
       public: void get_analytics();
 
       /// \brief absolute bound on motor signal value
-      public: double abs_output_bound;
+      public: double abs_output_bouned;
 
       /// \brief Holds the number of motors in the robot
       private: size_t n_motors;

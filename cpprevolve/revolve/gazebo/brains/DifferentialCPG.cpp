@@ -90,6 +90,9 @@ DifferentialCPG::DifferentialCPG(
 
   // Bound for output signal
   this->abs_output_bound = 1.0;
+  this->reset_robot_position = false;
+  this->reset_neuron_state_valid = true;
+  this->signal_factor = 2.5;
 
   // If load brain is an empty string (which is by default) we train a new brain.
   // To load a brain, give the path to the file containing the weights
@@ -146,8 +149,8 @@ DifferentialCPG::DifferentialCPG(
     this->positions[motor_id] = {coord_x, coord_y};
 
     // Save neurons: bias/gain/state. Make sure initial states are of different sign.
-    this->neurons[{coord_x, coord_y, 1}] = {0.f, 0.f, -this->init_state}; //Neuron A
-    this->neurons[{coord_x, coord_y, -1}] = {0.f, 0.f, this->init_state}; // Neuron B
+    this->neurons[{coord_x, coord_y, 1}] = {0.f, 0.f, this->init_state}; //Neuron A
+    this->neurons[{coord_x, coord_y, -1}] = {0.f, 0.f, -this->init_state}; // Neuron B
 
     // TODO: Add check for duplicate coordinates
     motor = motor->GetNextElement("rv:servomotor");
@@ -555,10 +558,18 @@ void DifferentialCPG::Update(
     // Update position
     this->evaluator->Update(this->robot->WorldPose());
 
+    // Get and save fitness
+    this->save_fitness();
+
     // If we are still learning
     if(this->current_iteration < this->n_init_samples + this->n_learning_iterations){
-      // Get and save fitness
-      this->save_fitness();
+      // Verbose
+      if (this->current_iteration < this->n_init_samples){
+        std::cout << "\nEvaluating initial random sample\n";
+      }
+      else{
+        std::cout << "\nI am learning\n";
+      }
 
       // Get new sample (weights) and add sample
       this->bo_step();
@@ -569,27 +580,27 @@ void DifferentialCPG::Update(
       // Reset robot position
       this->robot->Reset();
       this->evaluator->Update(this->robot->WorldPose());
-
-      if (this->current_iteration < this->n_init_samples){
-        std::cout << "\nEvaluating initial random sample\n";
-      }
-      else{
-        std::cout << "\nI am learning\n";
-      }
     }
       // If we are finished learning but are cooling down - reset once
     else if((this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
             and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1))){
-      // Save fitness
-      this->save_fitness();
+      // Verbose
+      std::cout << "\nI am cooling down \n";
 
       // Reset position once to get into phase of movement
       if(this->current_iteration == this->n_init_samples +
-                                                         this->n_learning_iterations)
+                                    this->n_learning_iterations)
       {
+        // Reset state back to unit cycle once
         std::cout << "Reset robot position once for cooling down period\n";
         this->robot->Reset();
       }
+
+      // Reset neuron state if opted to do
+      if(this->reset_neuron_state_valid){
+        this->reset_neuron_state();
+      }
+
       // Update robot position
       this->evaluator->Update(this->robot->WorldPose());
 
@@ -598,20 +609,16 @@ void DifferentialCPG::Update(
 
       // Set ODE matrix
       this->set_ode_matrix();
-
-      // Verbose
-      std::cout << "\nI am cooling down \n";
     }
       // Else we don't want to update anything, but save data from this run once.
     else {
-      // Save fitness of last iteration
-      this->save_fitness();
 
       // Create plots
       if(this->run_analytics) {
         // Construct plots
         this->get_analytics();
       }
+
       // Exit
       std::cout << "I am finished \n";
       std::exit(0);
@@ -728,7 +735,15 @@ void DifferentialCPG::set_ode_matrix(){
   // Update matrix
   this->ode_matrix = matrix;
 
-  // Set states back to original value that is close to unit circle
+  // Reset neuron state
+  this->reset_neuron_state();
+}
+
+
+/**
+ *  Set states back to original value (that is on the unit circle)
+ */
+void DifferentialCPG::reset_neuron_state(){
   int c = 0;
   for(auto const &neuron : this->neurons){
     int x, y, z;
@@ -818,7 +833,7 @@ void DifferentialCPG::step(
 
       // Apply saturation formula
       auto x = this->next_state[i];
-      this->output[j] = 2.5*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+      this->output[j] = this->signal_factor*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       j++;
     }
     ++i;
