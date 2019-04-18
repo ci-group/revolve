@@ -34,27 +34,34 @@ namespace revolve
       public: Evaluator(const double _evaluationRate);
 
       /// \brief Destructor
-      public: ~Evaluator();
+      public: virtual ~Evaluator();
 
       /// \brief Initialisation method
-      public: void Reset();
+      public: virtual void Reset(double time);
 
       /// \brief Retrieve the fitness
       /// \return A fitness value according to a given formula
-      public: double Fitness();
+      public: virtual double Fitness();
 
       /// \brief Update the position
       /// \param[in] _pose Current position of a robot
-      public: void Update(const ignition::math::Pose3d &_pose);
+      public: virtual void Update(const ignition::math::Pose3d &_pose,
+                                  const double time,
+                                  const double step);
 
       /// \brief Previous position of a robot
-      private: ignition::math::Pose3d previousPosition_;
+      protected: ignition::math::Pose3d startPosition_;
+
+      /// \brief Previous position of a robot
+      protected: ignition::math::Pose3d previousPosition_;
 
       /// \brief Current position of a robot
-      private: ignition::math::Pose3d currentPosition_;
+      protected: ignition::math::Pose3d currentPosition_;
 
       /// \brief
-      private: double evaluationRate_;
+      protected: double evaluationRate_;
+
+      protected: double pathLength;
     };
   }
 }

@@ -25,6 +25,16 @@
 
 using namespace revolve::gazebo;
 
+double measureDistance(
+    const ignition::math::Pose3d &_pose1,
+    const ignition::math::Pose3d &_pose2)
+{
+  std::cout << "_pose: " << _pose1.Pos().X() << " " << _pose1.Pos().Y() << " "
+            << _pose2.Pos().X() << " " << _pose2.Pos().Y() << std::endl;
+  return std::sqrt(std::pow(_pose1.Pos().X() - _pose2.Pos().X(), 2) +
+                   std::pow(_pose1.Pos().Y() - _pose2.Pos().Y(), 2));
+}
+
 /////////////////////////////////////////////////
 Evaluator::Evaluator(const double _evaluationRate)
 {
@@ -33,34 +43,39 @@ Evaluator::Evaluator(const double _evaluationRate)
 
   this->currentPosition_.Reset();
   this->previousPosition_.Reset();
+  this->startPosition_.Reset();
+  this->pathLength = 0;
 }
 
 /////////////////////////////////////////////////
 Evaluator::~Evaluator() = default;
 
 /////////////////////////////////////////////////
-void Evaluator::Reset()
+void Evaluator::Reset(double time)
 {
-  this->previousPosition_ = this->currentPosition_;
+  this->pathLength = 0;
+  this->startPosition_ = this->currentPosition_;
 }
 
 /////////////////////////////////////////////////
 double Evaluator::Fitness()
 {
   /*
-    auto dS = this->currentPosition_.Pos().X() - this->previousPosition_.Pos().X();
+    auto dS = this->currentPosition_.Pos().X() - this->startPosition_.Pos().X();
     */
-  auto dS = std::sqrt(std::pow(this->previousPosition_.Pos().X() -
-                               this->currentPosition_.Pos().X(), 2) +
-                      std::pow(this->previousPosition_.Pos().Y() -
-                               this->currentPosition_.Pos().Y(), 2));
 
-  this->previousPosition_ = this->currentPosition_;
+  double dS = measureDistance(this->startPosition_, this->currentPosition_);
+
   return dS / this->evaluationRate_;
+
 }
 
 /////////////////////////////////////////////////
-void Evaluator::Update(const ignition::math::Pose3d &_pose)
+void Evaluator::Update(const ignition::math::Pose3d &_pose,
+                       const double time,
+                       const double step)
 {
+  this->pathLength += measureDistance(currentPosition_, _pose);
+  this->previousPosition_ = currentPosition_;
   this->currentPosition_ = _pose;
 }

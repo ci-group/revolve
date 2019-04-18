@@ -49,6 +49,7 @@
 #include "DifferentialCPG.h"
 
 #include "DifferentialCPG_BO.h"
+#include "EvaluatorDirectedLocomotion.h"
 
 // Define namespaces
 namespace gz = gazebo;
@@ -56,7 +57,8 @@ using namespace revolve::gazebo;
 
 // Copied from the limbo tutorial the BO implementation is based on
 using Mean_t = limbo::mean::Data<DifferentialCPG::Params>;
-using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
+//using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
+using Kernel_t = limbo::kernel::MaternFiveHalves<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
@@ -81,8 +83,8 @@ DifferentialCPG::DifferentialCPG(
     , output(new double[_motors.size()])
 {
   // Maximum iterations for init sampling/learning/no learning
-  this->n_init_samples = 10;
-  this->n_learning_iterations = 20;
+  this->n_init_samples = 20; //36
+  this->n_learning_iterations = 500;
   this->n_cooldown_iterations = 10;
 
   // Automatically construct plots
@@ -96,12 +98,12 @@ DifferentialCPG::DifferentialCPG(
   // this->load_brain = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/1555264854/best_brain.txt";
 
   // Parameters
-  this->evaluation_rate = 200.0;
+  this->evaluation_rate = 120.0; //200.0
 
   // BO parameters. Remainder of BO parameters is at the end.
   this->range_lb = -1.f;
   this->range_ub = 1.f;
-  this->init_method = "RS"; // {RS, LHS, ORT}
+  this->init_method = "LHS"; // {RS, LHS, ORT}
 
   // Create transport node
   this->node_.reset(new gz::transport::Node());
@@ -258,7 +260,7 @@ DifferentialCPG::DifferentialCPG(
   }
 
   // Initiate the cpp Evaluator
-  this->evaluator.reset(new Evaluator(this->evaluation_rate));
+  this->evaluator.reset(new EvaluatorDirectedLocomotion(this->evaluation_rate));
 }
 
 /**
@@ -277,7 +279,7 @@ DifferentialCPG::~DifferentialCPG()
 struct DifferentialCPG::evaluation_function{
   // TODO: Make this neat. I don't know how though.
   // Number of input dimension (samples.size())
-  BO_PARAM(size_t, dim_in, 18);
+  BO_PARAM(size_t, dim_in, 18); // the size of CPG
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -550,10 +552,11 @@ void DifferentialCPG::Update(
     p += sensor->Inputs();
   }
 
+  // Update position
+  this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+
   // Evaluate policy on certain time limit
   if ((_time - this->start_time) > this->evaluation_rate) {
-    // Update position
-    this->evaluator->Update(this->robot->WorldPose());
 
     // If we are still learning
     if(this->current_iteration < this->n_init_samples + this->n_learning_iterations){
@@ -567,8 +570,10 @@ void DifferentialCPG::Update(
       this->set_ode_matrix();
 
       // Reset robot position
+      //TODO ASK MAARTEN ABOUT THIS, this is not online learning any more
       this->robot->Reset();
-      this->evaluator->Update(this->robot->WorldPose());
+
+      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
 
       if (this->current_iteration < this->n_init_samples){
         std::cout << "\nEvaluating initial random sample\n";
@@ -591,7 +596,7 @@ void DifferentialCPG::Update(
         this->robot->Reset();
       }
       // Update robot position
-      this->evaluator->Update(this->robot->WorldPose());
+      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
 
       // Use best sample in next iteration
       this->samples.push_back(this->best_sample);
@@ -619,7 +624,7 @@ void DifferentialCPG::Update(
 
     // Evaluation policy here
     this->start_time = _time;
-    this->evaluator->Reset();
+    this->evaluator->Reset(_time);
     this->current_iteration += 1;
   }
 
@@ -880,7 +885,7 @@ struct DifferentialCPG::Params{
 
   struct kernel_exp : public limbo::defaults::kernel_exp {
     /// @ingroup kernel_defaults
-    BO_PARAM(double, sigma_sq, 0.001);
+    BO_PARAM(double, sigma_sq, 0.9);
     BO_PARAM(double, l, 0.2); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
   };
 
@@ -888,13 +893,13 @@ struct DifferentialCPG::Params{
     /// @ingroup kernel_defaults
     BO_PARAM(int, k, 4); // k number of columns used to compute M
     /// @ingroup kernel_defaults
-    BO_PARAM(double, sigma_sq, 0.001); //brochu2010tutorial p.9 without sigma_sq
+    BO_PARAM(double, sigma_sq, 0.2); //brochu2010tutorial p.9 without sigma_sq
   };
 
   struct kernel_maternfivehalves : public limbo::defaults::kernel_maternfivehalves
   {
     BO_PARAM(double, sigma_sq, 0.001); //brochu2010tutorial p.9 without sigma_sq
-    BO_PARAM(double, l, 0.2); //characteristic length scale
+    BO_PARAM(double, l, 0.1); //characteristic length scale
   };
 
   struct acqui_gpucb : public limbo::defaults::acqui_gpucb {

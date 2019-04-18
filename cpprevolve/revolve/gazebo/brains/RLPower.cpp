@@ -103,7 +103,7 @@ void RLPower::Update(
   {
     this->UpdatePolicy(numMotors);
     this->startTime_ = _time;
-    this->evaluator_->Reset();
+    this->evaluator_->Reset(_time);
   }
 
   // generate outputs
@@ -119,7 +119,7 @@ void RLPower::Update(
   }
 
   auto currPosition = this->robot_->WorldPose();
-  this->evaluator_->Update(currPosition);
+  this->evaluator_->Update(currPosition, _time, _step);
   delete[] output;
 }
 
