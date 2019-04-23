@@ -73,12 +73,10 @@ namespace revolve
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors);
 
-      public:
-      void set_ode_matrix();
+      public: void set_ode_matrix();
 
       /// \brief Destructor
-      public:
-      virtual ~DifferentialCPG();
+      public: virtual ~DifferentialCPG();
 
       /// \brief The default update method for the controller
       /// \param[in] _motors Motor list
@@ -98,8 +96,7 @@ namespace revolve
           double *_output);
 
       /// \brief Register of motor IDs and their x,y-coordinates
-      protected:
-      std::map< std::string, std::tuple< int, int > > positions;
+      protected: std::map< std::string, std::tuple< int, int > > positions;
 
       /// \brief Register of individual neurons in x,y,z-coordinates
       /// \details x,y-coordinates define position of a robot's module and

@@ -205,7 +205,7 @@ DifferentialCPG::DifferentialCPG(
         if(std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
            std::get<0>(this->connections[{near_x, near_y, 1, x, y, 1}]) != 1)
         {
-          std::cout << "New connection at index " << i << ": " << x << ", " << y << ", " << near_x << ", " << near_y << "\n";
+          std::cout << "New connection at index " << i << ": " << x << ", " << y << ", " << near_x << ", " << near_y << std::endl;
           this->connections[{x, y, 1, near_x, near_y, 1}] = std::make_tuple(1, i);
           this->connections[{near_x, near_y, 1, x, y, 1}] = std::make_tuple(1, i);
           i++;
@@ -227,7 +227,7 @@ DifferentialCPG::DifferentialCPG(
   if(!this->load_brain.empty())
   {
     // Get line
-    std::cout << "I will load the following brain:\n";
+    std::cout << "I will load the following brain:" << std::endl;
     std::ifstream brain_file(this->load_brain);
     std::string line;
     std::getline(brain_file, line);
@@ -243,7 +243,7 @@ DifferentialCPG::DifferentialCPG(
       loaded_brain(j) = std::stod(weights.at(j));
       std::cout << loaded_brain(j)  << ",";
     }
-    std::cout << "\n";
+    std::cout << std::endl;
 
     // Close brain
     brain_file.close();
@@ -258,12 +258,12 @@ DifferentialCPG::DifferentialCPG(
     this->current_iteration = this->n_init_samples + this->n_learning_iterations;
 
     // Verbose
-    std::cout << "\nBrain has been loaded. Skipped " << this->current_iteration << " iterations to directly enter cooldown mode\n";
+    std::cout << std::endl << "Brain has been loaded. Skipped " << this->current_iteration << " iterations to directly enter cooldown mode" << std::endl;
 
   }
   else
   {
-    std::cout << "Don't load existing brain\n";
+    std::cout << "Don't load existing brain" << std::endl;
 
     // Initialize BO
     this->bo_init_sampling();
@@ -317,8 +317,8 @@ void DifferentialCPG::bo_init_sampling(){
             << std::endl;
 
   // Information purposes
-  std::cout << "\nSample method: " << this->init_method << ". Initial "
-                                                           "samples are: \n";
+  std::cout << std::endl << "Sample method: " << this->init_method << ". Initial "
+                                                                      "samples are: " << std::endl;
 
   // Random sampling
   if(this->init_method == "RS")
@@ -345,7 +345,7 @@ void DifferentialCPG::bo_init_sampling(){
       {
         std::cout << init_sample(k) << ", ";
       }
-      std::cout << " \n";
+      std::cout << std::endl;
     }
   }
     // Latin Hypercube Sampling
@@ -354,7 +354,7 @@ void DifferentialCPG::bo_init_sampling(){
     // Check
     if(this->n_init_samples % this->n_weights != 0)
     {
-      std::cout << "Warning: Ideally the number of initial samples is a multiple of n_weights for LHS sampling \n";
+      std::cout << "Warning: Ideally the number of initial samples is a multiple of n_weights for LHS sampling " << std::endl;
     }
 
     // Working variable
@@ -397,11 +397,11 @@ void DifferentialCPG::bo_init_sampling(){
       // Append sample to samples
       this->samples.push_back(init_sample);
 
-      for(size_t k = 0; k < init_sample.size(); k ++)
+      for(size_t k = 0; k < init_sample.size(); k++)
       {
         std::cout << init_sample(k) << ", ";
       }
-      std::cout << "\n";
+      std::cout << std::endl;
     }
   }
   else if(this->init_method == "ORT")
@@ -514,7 +514,7 @@ void DifferentialCPG::save_fitness(){
 
   // Verbose
   std::cout << "Iteration number " << this->current_iteration << " has fitness " <<
-            fitness << ". Best fitness: " << this->best_fitness <<"\n";
+            fitness << ". Best fitness: " << this->best_fitness << std::endl;
 
   // Limbo requires fitness value to be of type Eigen::VectorXd
   Eigen::VectorXd observation = Eigen::VectorXd(1);
@@ -526,7 +526,7 @@ void DifferentialCPG::save_fitness(){
   // Write fitness to file
   std::ofstream fitness_file;
   fitness_file.open(this->directory_name + "fitnesses.txt", std::ios::app);
-  fitness_file << fitness << "\n";
+  fitness_file << fitness << std::endl;
   fitness_file.close();
 }
 
@@ -601,11 +601,11 @@ void DifferentialCPG::Update(
       // Verbose
       if (this->current_iteration < this->n_init_samples)
       {
-        std::cout << "\nEvaluating initial random sample\n";
+        std::cout << std::endl << "Evaluating initial random sample" << std::endl;
       }
       else
-        {
-        std::cout << "\nI am learning\n";
+      {
+        std::cout << std::endl << "I am learning " << std::endl;
       }
 
       // Reset robot position
@@ -628,14 +628,14 @@ void DifferentialCPG::Update(
             and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1)))
     {
       // Verbose
-      std::cout << "\nI am cooling down \n";
+      std::cout << std::endl << "I am cooling down " << std::endl;
 
       // Reset position once to get into phase of movement
       if(this->current_iteration == this->n_init_samples +
                                     this->n_learning_iterations)
       {
         // Reset state back to unit cycle once
-        std::cout << "Reset robot position once for cooling down period\n";
+        std::cout << "Reset robot position once for cooling down period" << std::endl;
         if(this->reset_robot_position)
         {
           this->robot->Reset();
@@ -668,7 +668,7 @@ void DifferentialCPG::Update(
       }
 
       // Exit
-      std::cout << "I am finished \n";
+      std::cout << "I am finished " << std::endl;
       std::exit(0);
     }
 
@@ -802,7 +802,7 @@ void DifferentialCPG::set_ode_matrix(){
   {
     samples_file << sample(j) << ", ";
   }
-  samples_file << "\n";
+  samples_file << std::endl;
   samples_file.close();
 }
 
@@ -907,7 +907,7 @@ void DifferentialCPG::step(
       this->output[j] = this->signal_factor*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       j++;
     }
-    ++i;
+    i++;
   }
 
   // Write state to file
@@ -917,7 +917,7 @@ void DifferentialCPG::step(
   {
     state_file << this->next_state[i] << ",";
   }
-  state_file << "\n";
+  state_file << std::endl;
   state_file.close();
 
   // Write signal to file
@@ -927,7 +927,7 @@ void DifferentialCPG::step(
   {
     signal_file << this->output[i] << ",";
   }
-  signal_file << "\n";
+  signal_file << std::endl;
   signal_file.close();
 }
 
@@ -1019,36 +1019,36 @@ void DifferentialCPG::save_parameters(){
   parameters_file.open(this->directory_name + "parameters.txt");
 
   // Various paramters
-  parameters_file << "Dimensions: " << this->n_weights << "\n";
-  parameters_file << "n_init_samples: " << this->n_init_samples << "\n";
-  parameters_file << "n_learning_iterations: " << this->n_learning_iterations << "\n";
-  parameters_file << "n_cooldown_iterations: " << this->n_cooldown_iterations << "\n";
-  parameters_file << "evaluation_rate: " << this->evaluation_rate << "\n";
-  parameters_file << "abs_output_bound: " << this->abs_output_bound << "\n";
-  parameters_file << "signal_factor: " << this->n_cooldown_iterations << "\n";
-  parameters_file << "range_lb: " << this->range_lb << "\n";
-  parameters_file << "range_ub: " << this->range_ub << "\n";
-  parameters_file << "run_analytics: " << this->run_analytics << "\n";
-  parameters_file << "load_brain: " << this->load_brain << "\n";
-  parameters_file << "reset_robot_position: " << this->reset_robot_position << "\n";
-  parameters_file << "reset_neuron_state_valid: " << this->reset_neuron_state_valid << "\n";
+  parameters_file << "Dimensions: " << this->n_weights << std::endl;
+  parameters_file << "n_init_samples: " << this->n_init_samples << std::endl;
+  parameters_file << "n_learning_iterations: " << this->n_learning_iterations << std::endl;
+  parameters_file << "n_cooldown_iterations: " << this->n_cooldown_iterations << std::endl;
+  parameters_file << "evaluation_rate: " << this->evaluation_rate << std::endl;
+  parameters_file << "abs_output_bound: " << this->abs_output_bound << std::endl;
+  parameters_file << "signal_factor: " << this->n_cooldown_iterations << std::endl;
+  parameters_file << "range_lb: " << this->range_lb << std::endl;
+  parameters_file << "range_ub: " << this->range_ub << std::endl;
+  parameters_file << "run_analytics: " << this->run_analytics << std::endl;
+  parameters_file << "load_brain: " << this->load_brain << std::endl;
+  parameters_file << "reset_robot_position: " << this->reset_robot_position << std::endl;
+  parameters_file << "reset_neuron_state_valid: " << this->reset_neuron_state_valid << std::endl;
 
   // TODO: Write these parameters to files as well
-  // parameters_file << "Kernel used: " << kernel_used << "\n";
-  // parameters_file << "Acqui. function used: " << acqui_used << "\n";
+  // parameters_file << "Kernel used: " << kernel_used << std::endl;
+  // parameters_file << "Acqui. function used: " << acqui_used << std::endl;
 
   // BO hyper-parameters
-  parameters_file << "\nInitialization method used: " << this->init_method << "\n";
-  parameters_file << "UCB alpha: " << Params::acqui_ucb::alpha() << "\n";
-  parameters_file << "GP-UCB delta: " << Params::acqui_gpucb::delta() << "\n";
-  parameters_file << "Kernel noise: " << Params::kernel::noise() << "\n";
-  parameters_file << "No. of iterations: " << Params::stop_maxiterations::iterations() << "\n";
-  parameters_file << "EXP Kernel l: " << Params::kernel_exp::l() << "\n";
-  parameters_file << "EXP Kernel sigma_sq: " << Params::kernel_exp::sigma_sq() << "\n";
-  parameters_file << "EXP-ARD Kernel k: "<< Params::kernel_squared_exp_ard::k() << "\n";
-  parameters_file << "EXP-ARD Kernel sigma_sq: "<< Params::kernel_squared_exp_ard::sigma_sq() << "\n";
-  parameters_file << "MFH Kernel sigma_sq: "<< Params::kernel_maternfivehalves::sigma_sq() << "\n";
-  parameters_file << "MFH Kernel l: "<< Params::kernel_maternfivehalves::l() << "\n\n";
+  parameters_file << std::endl << "Initialization method used: " << this->init_method << std::endl;
+  parameters_file << "UCB alpha: " << Params::acqui_ucb::alpha() << std::endl;
+  parameters_file << "GP-UCB delta: " << Params::acqui_gpucb::delta() << std::endl;
+  parameters_file << "Kernel noise: " << Params::kernel::noise() << std::endl;
+  parameters_file << "No. of iterations: " << Params::stop_maxiterations::iterations() << std::endl;
+  parameters_file << "EXP Kernel l: " << Params::kernel_exp::l() << std::endl;
+  parameters_file << "EXP Kernel sigma_sq: " << Params::kernel_exp::sigma_sq()<< std::endl;
+  parameters_file << "EXP-ARD Kernel k: "<< Params::kernel_squared_exp_ard::k() << std::endl;
+  parameters_file << "EXP-ARD Kernel sigma_sq: "<< Params::kernel_squared_exp_ard::sigma_sq() << std::endl;
+  parameters_file << "MFH Kernel sigma_sq: "<< Params::kernel_maternfivehalves::sigma_sq() << std::endl;
+  parameters_file << "MFH Kernel l: "<< Params::kernel_maternfivehalves::l() << std::endl << std::endl;
   parameters_file.close();
 }
 
