@@ -238,7 +238,8 @@ DifferentialCPG::DifferentialCPG(
 
     // Save weights for brain
     Eigen::VectorXd loaded_brain(this->n_weights);
-    for(size_t j = 0; j < this->n_weights; j++){
+    for(size_t j = 0; j < this->n_weights; j++)
+    {
       loaded_brain(j) = std::stod(weights.at(j));
       std::cout << loaded_brain(j)  << ",";
     }
@@ -260,7 +261,8 @@ DifferentialCPG::DifferentialCPG(
     std::cout << "\nBrain has been loaded. Skipped " << this->current_iteration << " iterations to directly enter cooldown mode\n";
 
   }
-  else{
+  else
+  {
     std::cout << "Don't load existing brain\n";
 
     // Initialize BO
@@ -319,13 +321,16 @@ void DifferentialCPG::bo_init_sampling(){
                                                            "samples are: \n";
 
   // Random sampling
-  if(this->init_method == "RS") {
-    for (size_t i = 0; i < this->n_init_samples; i++) {
+  if(this->init_method == "RS")
+  {
+    for (size_t i = 0; i < this->n_init_samples; i++)
+    {
       // Working variable to hold a random number for each weight to be optimized
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all weights
-      for (size_t j = 0; j < this->n_weights; j++) {
+      for (size_t j = 0; j < this->n_weights; j++)
+      {
         // Generate a random number in [0, 1]. Transform later
         double f = ((double) rand() / (RAND_MAX));
 
@@ -336,14 +341,16 @@ void DifferentialCPG::bo_init_sampling(){
       // Save vector in samples.
       this->samples.push_back(init_sample);
 
-      for(int k = 0; k < init_sample.size(); k ++){
+      for(int k = 0; k < init_sample.size(); k ++)
+      {
         std::cout << init_sample(k) << ", ";
       }
       std::cout << " \n";
     }
   }
     // Latin Hypercube Sampling
-  else if(this->init_method == "LHS"){
+  else if(this->init_method == "LHS")
+  {
     // Check
     if(this->n_init_samples % this->n_weights != 0)
     {
@@ -357,11 +364,13 @@ void DifferentialCPG::bo_init_sampling(){
     std::vector<std::vector<int>> all_dimensions;
 
     // Fill vectors
-    for (size_t i=0; i < this->n_weights; i++){
+    for (size_t i=0; i < this->n_weights; i++)
+    {
       std::vector<int> one_dimension;
 
       // Prepare for vector permutation
-      for (size_t j = 0; j < this->n_init_samples; j++){
+      for (size_t j = 0; j < this->n_init_samples; j++)
+      {
         one_dimension.push_back(j);
       }
 
@@ -373,12 +382,14 @@ void DifferentialCPG::bo_init_sampling(){
     }
 
     // For all samples
-    for (size_t i = 0; i < this->n_init_samples; i++){
+    for (size_t i = 0; i < this->n_init_samples; i++)
+    {
       // Initialize Eigen::VectorXd here.
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all dimensions
-      for (size_t j = 0; j < this->n_weights; j++){
+      for (size_t j = 0; j < this->n_weights; j++)
+      {
         // Take a LHS
         init_sample(j) = all_dimensions.at(j).at(i)*my_range + ((double) rand() / (RAND_MAX))*my_range;
       }
@@ -386,13 +397,15 @@ void DifferentialCPG::bo_init_sampling(){
       // Append sample to samples
       this->samples.push_back(init_sample);
 
-      for(size_t k = 0; k < init_sample.size(); k ++){
+      for(size_t k = 0; k < init_sample.size(); k ++)
+      {
         std::cout << init_sample(k) << ", ";
       }
       std::cout << "\n";
     }
   }
-  else if(this->init_method == "ORT"){
+  else if(this->init_method == "ORT")
+  {
     // Set the number of blocks per dimension
     int n_blocks = (int)(log(this->n_init_samples)/log(4));
 
@@ -406,10 +419,12 @@ void DifferentialCPG::bo_init_sampling(){
 
     // Initiate for each  dimension a vector holding a permutation of 1,...,n_init_samples
     std::vector<std::vector<int>> all_dimensions;
-    for (size_t i = 0; i < this->n_weights; i++) {
+    for (size_t i = 0; i < this->n_weights; i++)
+    {
       // Holder for one dimension
       std::vector<int> one_dimension;
-      for (size_t j = 0; j < this->n_init_samples; j++) {
+      for (size_t j = 0; j < this->n_init_samples; j++)
+      {
         one_dimension.push_back(j);
       }
 
@@ -421,7 +436,8 @@ void DifferentialCPG::bo_init_sampling(){
     }
 
     // Draw n_init_samples
-    for (size_t i = 0; i < this->n_init_samples; i++) {
+    for (size_t i = 0; i < this->n_init_samples; i++)
+    {
       // Initiate new sample
       Eigen::VectorXd init_sample(this->n_weights);
 
@@ -430,7 +446,8 @@ void DifferentialCPG::bo_init_sampling(){
       int end = (int)(std::pow(2, n_blocks));
 
       // Loop over all the blocks: we don't have to pick a block randomly
-      for (int j =0; j < n_blocks; j++) {
+      for (int j =0; j < n_blocks; j++)
+      {
         // Generate row numbers in this block: THIS IS WRONG
         for(int k = j*end; k < (j+1)*end; k++)
         {
@@ -472,7 +489,8 @@ void DifferentialCPG::bo_init_sampling(){
       this->samples.push_back(init_sample);
 
       // Print sample
-      for (int h = 0; h < init_sample.size(); h++){
+      for (int h = 0; h < init_sample.size(); h++)
+      {
         std::cout << init_sample(h) << ", ";
       }
       std::cout << std::endl;
@@ -488,7 +506,8 @@ void DifferentialCPG::save_fitness(){
   double fitness = this->evaluator->Fitness();
 
   // Save sample if it is the best seen so far
-  if(fitness >this->best_fitness){
+  if(fitness >this->best_fitness)
+  {
     this->best_fitness = fitness;
     this->best_sample = this->samples.back();
   }
@@ -521,7 +540,8 @@ void DifferentialCPG::bo_step(){
 
   // In case we are done with the initial random sampling. Correct for
   // initial sample taken by. Statement equivalent to !(i < n_samples -1)
-  if (this->current_iteration > this->n_init_samples - 2){
+  if (this->current_iteration > this->n_init_samples - 2)
+  {
     // Specify bayesian optimizer
     limbo::bayes_opt::BOptimizer<Params,
                                  limbo::initfun<Init_t>,
@@ -567,7 +587,8 @@ void DifferentialCPG::Update(
   }
 
   // Evaluate policy on certain time limit
-  if ((_time - this->start_time) > this->evaluation_rate) {
+  if ((_time - this->start_time) > this->evaluation_rate)
+  {
     // Update position
     this->evaluator->Update(this->robot->WorldPose());
 
@@ -575,17 +596,21 @@ void DifferentialCPG::Update(
     this->save_fitness();
 
     // If we are still learning
-    if(this->current_iteration < this->n_init_samples + this->n_learning_iterations){
+    if(this->current_iteration < this->n_init_samples + this->n_learning_iterations)
+    {
       // Verbose
-      if (this->current_iteration < this->n_init_samples){
+      if (this->current_iteration < this->n_init_samples)
+      {
         std::cout << "\nEvaluating initial random sample\n";
       }
-      else{
+      else
+        {
         std::cout << "\nI am learning\n";
       }
 
       // Reset robot position
-      if(this->reset_robot_position){
+      if(this->reset_robot_position)
+      {
         this->robot->Reset();
       }
 
@@ -600,7 +625,8 @@ void DifferentialCPG::Update(
     }
       // If we are finished learning but are cooling down - reset once
     else if((this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
-            and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1))){
+            and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1)))
+    {
       // Verbose
       std::cout << "\nI am cooling down \n";
 
@@ -610,13 +636,15 @@ void DifferentialCPG::Update(
       {
         // Reset state back to unit cycle once
         std::cout << "Reset robot position once for cooling down period\n";
-        if(this->reset_robot_position){
+        if(this->reset_robot_position)
+        {
           this->robot->Reset();
         }
       }
 
       // Reset neuron state if opted to do
-      if(this->reset_neuron_state_valid){
+      if(this->reset_neuron_state_valid)
+      {
         this->reset_neuron_state();
       }
 
@@ -633,7 +661,8 @@ void DifferentialCPG::Update(
     else {
 
       // Create plots
-      if(this->run_analytics) {
+      if(this->run_analytics)
+      {
         // Construct plots
         this->get_analytics();
       }
@@ -672,7 +701,10 @@ void DifferentialCPG::set_ode_matrix(){
   {
     // Initialize row in matrix with zeros
     std::vector< double > row;
-    for (size_t j = 0; j < this->neurons.size(); j++) row.push_back(0);
+    for (size_t j = 0; j < this->neurons.size(); j++)
+    {
+      row.push_back(0);
+    }
     matrix.push_back(row);
   }
 
@@ -682,7 +714,7 @@ void DifferentialCPG::set_ode_matrix(){
   {
     // Get correct index
     int c = 0;
-    if (i%2== 0){
+    if (i%2 == 0){
       c = i + 1;
     }
     else{
@@ -702,7 +734,8 @@ void DifferentialCPG::set_ode_matrix(){
   int k = 0;
   std::vector<std::string> connections_seen;
 
-  for (auto const &connection : this->connections){
+  for (auto const &connection : this->connections)
+  {
     // Get connection information
     int x1, y1, z1, x2, y2, z2;
     std::tie(x1, y1, z1, x2, y2, z2) = connection.first;
@@ -710,13 +743,16 @@ void DifferentialCPG::set_ode_matrix(){
     // Find location of the two neurons in this->neurons list
     int l1, l2;
     int c = 0;
-    for(auto const &neuron : this->neurons){
+    for(auto const &neuron : this->neurons)
+    {
       int x, y, z;
       std::tie(x, y, z) = neuron.first;
-      if (x == x1 and y == y1 and z == z1){
+      if (x == x1 and y == y1 and z == z1)
+      {
         l1 = c;
       }
-      else if (x == x2 and y == y2 and z == z2){
+      else if (x == x2 and y == y2 and z == z2)
+      {
         l2 = c;
       }
       // Update counter
@@ -724,7 +760,8 @@ void DifferentialCPG::set_ode_matrix(){
     }
 
     // Add connection to seen connections
-    if(l1 > l2){
+    if(l1 > l2)
+    {
       int l1_old = l1;
       l1 = l2;
       l2 = l1_old;
@@ -761,7 +798,8 @@ void DifferentialCPG::set_ode_matrix(){
   std::ofstream samples_file;
   samples_file.open(this->directory_name  + "samples.txt", std::ios::app);
   auto sample = this->samples.at(this->current_iteration);
-  for(size_t j = 0; j < this->n_weights; j++){
+  for(size_t j = 0; j < this->n_weights; j++)
+  {
     samples_file << sample(j) << ", ";
   }
   samples_file << "\n";
@@ -774,7 +812,8 @@ void DifferentialCPG::set_ode_matrix(){
  */
 void DifferentialCPG::reset_neuron_state(){
   int c = 0;
-  for(auto const &neuron : this->neurons){
+  for(auto const &neuron : this->neurons)
+  {
     int x, y, z;
     std::tie(x, y, z) = neuron.first;
     if(z == -1)
@@ -813,7 +852,8 @@ void DifferentialCPG::step(
 
   // Copy values from next_state into x for ODEINT
   state_type x(this->neurons.size());
-  for (size_t i = 0; i < this->neurons.size(); i++){
+  for (size_t i = 0; i < this->neurons.size(); i++)
+  {
     x[i] = this->next_state[i];
   }
 
@@ -825,7 +865,8 @@ void DifferentialCPG::step(
   stepper.do_step(
       [this](const state_type &x, state_type &dxdt, double t)
       {
-        for(size_t i = 0; i < this->neurons.size(); i++){
+        for(size_t i = 0; i < this->neurons.size(); i++)
+        {
           dxdt[i] = 0;
           for(size_t j = 0; j < this->neurons.size(); j++)
           {
@@ -838,7 +879,8 @@ void DifferentialCPG::step(
       dt);
 
   // Copy values into nextstate
-  for (size_t i = 0; i < this->neurons.size(); i++){
+  for (size_t i = 0; i < this->neurons.size(); i++)
+  {
     this->next_state[i] = x[i];
   }
 
@@ -871,7 +913,8 @@ void DifferentialCPG::step(
   // Write state to file
   std::ofstream state_file;
   state_file.open(this->directory_name + "states.txt", std::ios::app);
-  for(size_t i = 0; i < this->neurons.size(); i++){
+  for(size_t i = 0; i < this->neurons.size(); i++)
+  {
     state_file << this->next_state[i] << ",";
   }
   state_file << "\n";
@@ -880,7 +923,8 @@ void DifferentialCPG::step(
   // Write signal to file
   std::ofstream signal_file;
   signal_file.open(this->directory_name + "signal.txt", std::ios::app);
-  for(size_t i = 0; i < this->n_motors; i++){
+  for(size_t i = 0; i < this->n_motors; i++)
+  {
     signal_file << this->output[i] << ",";
   }
   signal_file << "\n";
