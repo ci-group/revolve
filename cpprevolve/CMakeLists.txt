@@ -52,44 +52,35 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif ()
 
 
-# NLopt (for limbo)
-#set(NLOPT_INCLUDE_DIR "/home/maarten/Documents/nlopt/build/")
-#find_package(NLOpt REQUIRED)
-#include_directories(${NLOPT_INCLUDE_DIR})
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
-include_directories(${NLOpt_INCLUDE_DIRS})
-link_directories(${NLOpt_LIBRARY_DIRS})
-
-
-# Limbo
-# set(LIMBO_DIR /usr/include/limbo/)
-#file(GLOB headers /usr/include/limbo/src/limbo/*.hpp)
-#message("Headers are" )
-#foreach(variable_name ${headers})
-#    message(${variable_name})
-#endforeach()
-
-#find_package(LIMBO REQUIRED PATHS /usr/include/limbo/build)
-#include_directories(/usr/include/limbo)
-
-#include_directories(/home/maarten/projects/revolve-simulator/revolve/limbo)
-include_directories(limbo)
-find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
-
-
 # Finding dependencies
 # _____________________________________________________________________________
+
+
+# PKG-CONFIG
+find_package(PkgConfig REQUIRED)
 
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Find Eigen3 - A lightweight C++ template library for vector and matrix math
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+# Find NLOpt - Non Linear Optimization
+pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
+include_directories(${NLOpt_INCLUDE_DIRS})
+link_directories(${NLOpt_LIBRARY_DIRS})
+
+# Find Limbo - LIbrary for Model-Based Optimization
+set(LIMBO_DIR ../thirdparty/limbo)
+include_directories(${LIMBO_DIR}/src)
+
 # Find GSL - GNU Scientific Library
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 
+# Find Yaml-cpp
 find_package(yaml-cpp REQUIRED)
 include_directories(${YAML_CPP_INCLUDE_DIR})
 
@@ -208,9 +199,7 @@ add_library(
 set_target_properties(revolve-proto PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(
     revolve-proto
-    ${NLOpt_LIBRARIES}
     ${PROTOBUF_LIBRARIES}
-    nlopt
 )
 
 # Create Revolve bundle plugin
@@ -250,6 +239,7 @@ target_link_libraries(
     revolve-gazebo
     revolve-proto
     ${GAZEBO_LIBRARIES}
+    ${NLOpt_LIBRARIES}
 )
 
 # Install
