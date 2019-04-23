@@ -29,6 +29,8 @@
 #include <random>
 #include <tuple>
 #include <time.h>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 // Other libraries
 #include <limbo/acqui/ucb.hpp>
@@ -60,10 +62,6 @@ using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
-
-#ifndef USE_NLOPT
-#define USE_NLOPT //installed NLOPT
-#endif
 
 /**
  * Constructor for DifferentialCPG class.
@@ -150,6 +148,25 @@ DifferentialCPG::DifferentialCPG(
     auto coordinate_string = motor->GetAttribute("coordinates")->GetAsString();
     std::vector<std::string> coordinates;
     boost::split(coordinates, coordinate_string, boost::is_any_of(";"));
+
+    // Check if we have exactly 2 coordinates
+    if (not coordinates.size() == 2)
+    {
+      throw std::runtime_error("Coordinates are not exactly of length two");
+    }
+
+    // Check if the coordinates are integers
+    try
+    {
+      for(auto coord : coordinates)
+      {
+        std::stoi(coord);
+      }
+    }
+    catch(std::invalid_argument e1)
+    {
+      std::cout << "Invalid argument: Cannot cast coordinates to integers " << std::endl;
+    };
 
     // Pass coordinates
     auto coord_x = std::stoi(coordinates[0]);
@@ -623,8 +640,11 @@ void DifferentialCPG::Update(
       this->evaluator->Update(this->robot->WorldPose());
     }
       // If we are finished learning but are cooling down - reset once
-    else if((this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
-            and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1)))
+    else if((this->current_iteration >= (this->n_init_samples +
+                                         this->n_learning_iterations))
+            and (this->current_iteration < (this->n_init_samples +
+                                            this->n_learning_iterations +
+                                            this->n_cooldown_iterations - 1)))
     {
       // Verbose
       std::cout << std::endl << "I am cooling down " << std::endl;
@@ -768,7 +788,8 @@ void DifferentialCPG::set_ode_matrix(){
     std::string connection_string = std::to_string(l1) + "-" + std::to_string(l2);
 
     // if not in list, add to list
-    if(std::find(connections_seen.begin(), connections_seen.end(), connection_string) == connections_seen.end())
+    auto connections_list = std::find(connections_seen.begin(), connections_seen.end(), connection_string);
+    if(connections_list == connections_seen.end())
     {
       connections_seen.push_back(connection_string);
     }
@@ -952,7 +973,7 @@ struct DifferentialCPG::Params{
   struct opt_cmaes : public lm::defaults::opt_cmaes {
     };
 #else
-      throw std::runtime_error("CMAES not defined");
+  throw std::runtime_error("CMAES not defined");
 #endif
 
   struct kernel : public limbo::defaults::kernel {
@@ -1019,7 +1040,7 @@ void DifferentialCPG::save_parameters(){
   std::ofstream parameters_file;
   parameters_file.open(this->directory_name + "parameters.txt");
 
-  // Various paramters
+  // Various parameters
   parameters_file << "Dimensions: " << this->n_weights << std::endl;
   parameters_file << "n_init_samples: " << this->n_init_samples << std::endl;
   parameters_file << "n_learning_iterations: " << this->n_learning_iterations << std::endl;
@@ -1062,11 +1083,14 @@ void DifferentialCPG::save_parameters(){
  */
 void DifferentialCPG::get_analytics(){
   // Call python file to construct plots
-  std::string python_plot_command = "python3 experiments/bo_learner/RunAnalysisBO.py "
-                                    + this->directory_name
-                                    + " "
-                                    + std::to_string((int)this->n_init_samples)
-                                    + " "
-                                    + std::to_string((int)this->n_cooldown_iterations);
-  std::system(python_plot_command.c_str());
+  std::string plot_command = "experiments/bo_learner/RunAnalysisBO.py "
+                             + this->directory_name
+                             + " "
+                             + std::to_string((int)this->n_init_samples)
+                             + " "
+                             + std::to_string((int)this->n_cooldown_iterations);
+
+  // Execute python command
+  std::system(std::string("python3 " + plot_command).c_str());
 }
+

@@ -145,4 +145,4 @@ body:
                     blue: 0.72
                   orientation : 0
 brain:
-  type: bo-cpg
+  type: rlpower-splines

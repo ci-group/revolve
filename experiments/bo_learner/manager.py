@@ -25,7 +25,9 @@ async def run():
 
     # Load a robot from yaml
     robot = revolve_bot.RevolveBot()
-    robot.load_file("experiments/examples/yaml/spider.yaml")
+    robot.load_file("experiments/bo_learner/yaml/spider.yaml")
+    robot.update_substrate()
+    robot.save_file("experiments/bo_learner/yaml/spider.sdf.xml", conf_type='sdf')
     robot.update_substrate()
 
     # Connect to the simulator and pause
@@ -45,8 +47,8 @@ async def run():
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
-        print("Robot fitness is {fitness}".format(
-                fitness=robot_manager.fitness()))
+        #print("Robot fitness is {fitness}".format(
+        #        fitness=robot_manager.fitness()))
         await asyncio.sleep(1.0)
 
 
