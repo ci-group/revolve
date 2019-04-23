@@ -69,7 +69,7 @@ namespace revolve
       public:
       DifferentialCPG(
           const ::gazebo::physics::ModelPtr &_model,
-          const sdf::ElementPtr _settings,
+          const sdf::ElementPtr robot_config,
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors);
 
@@ -157,8 +157,11 @@ namespace revolve
       /// \brief Holder for BO parameters
       public: struct Params;
 
+      /// \brief Save parameters
+      private: void save_parameters();
+
       /// \brief Best fitness seen so far
-      private: double best_fitness;
+      private: double best_fitness = 0;
 
       /// \brief Sample corresponding to best fitness
       private: Eigen::VectorXd best_sample;
