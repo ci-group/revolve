@@ -69,16 +69,14 @@ namespace revolve
       public:
       DifferentialCPG(
           const ::gazebo::physics::ModelPtr &_model,
-          const sdf::ElementPtr _settings,
+          const sdf::ElementPtr robot_config,
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors);
 
-      public:
-      void set_ode_matrix();
+      public: void set_ode_matrix();
 
       /// \brief Destructor
-      public:
-      virtual ~DifferentialCPG();
+      public: virtual ~DifferentialCPG();
 
       /// \brief The default update method for the controller
       /// \param[in] _motors Motor list
@@ -98,8 +96,7 @@ namespace revolve
           double *_output);
 
       /// \brief Register of motor IDs and their x,y-coordinates
-      protected:
-      std::map< std::string, std::tuple< int, int > > positions;
+      protected: std::map< std::string, std::tuple< int, int > > positions;
 
       /// \brief Register of individual neurons in x,y,z-coordinates
       /// \details x,y-coordinates define position of a robot's module and
@@ -157,8 +154,11 @@ namespace revolve
       /// \brief Holder for BO parameters
       public: struct Params;
 
+      /// \brief Save parameters
+      private: void save_parameters();
+
       /// \brief Best fitness seen so far
-      private: double best_fitness;
+      private: double best_fitness = 0;
 
       /// \brief Sample corresponding to best fitness
       private: Eigen::VectorXd best_sample;

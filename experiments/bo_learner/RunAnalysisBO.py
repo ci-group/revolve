@@ -1,14 +1,27 @@
-import matplotlib
-from sys import platform
-# Enable different backend for OSX
-if platform =="darwin":
-    matplotlib.use("TkAgg")
-import matplotlib.pyplot as plt
+#!usr/bin/env python3
+"""
+This script can be called to create plots of the fitness function. I use it after a run of BO.
+It creates both a monotonic (increasing) fitness plot, as well as a fitness plot with all the
+separate fitness points over time. It's written to the directory given.
+
+Params:
+arg1: The directory name that contains the fitness data fitnesses.txt
+arg2: The number of initial samples drawn for BO
+arg3: The number of iterations to test the best controller in the end
+"""
+
 import numpy as np
 import sys
+import matplotlib
+from sys import platform
+
+# Enable different backend for OSX
+if platform == "darwin":
+    matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
 
 # Set matplotlib font
-font = {'size'   : 20}
+font = {'size' : 20}
 matplotlib.rc('font', **font)
 
 # Obtain arguments
@@ -33,6 +46,7 @@ def fitness_per_iteration_plot(my_directory, my_data, x1, x2):
 
 
 def max_fitness_plot(my_directory, my_data, x1, x2):
+    # TODO: Exclude validation procedure here
     # Create monotonic sequence
     my_data = [e if e >= max(my_data[:ix+1]) else max(my_data[:ix+1]) for ix, e in enumerate(my_data)]
 

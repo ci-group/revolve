@@ -62,42 +62,61 @@ using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
  * Constructor for DifferentialCPG class.
  *
  * @param _model
- * @param _settings
+ * @param robot_config
  */
 DifferentialCPG::DifferentialCPG(
     const ::gazebo::physics::ModelPtr &_model,
-    const sdf::ElementPtr _settings,
+    const sdf::ElementPtr robot_config,
     const std::vector< revolve::gazebo::MotorPtr > &_motors,
     const std::vector< revolve::gazebo::SensorPtr > &_sensors)
     : next_state(nullptr)
     , input(new double[_sensors.size()])
     , output(new double[_motors.size()])
 {
-  // Maximum iterations for init sampling/learning/no learning
-  this->n_init_samples = 10;
-  this->n_learning_iterations = 20;
-  this->n_cooldown_iterations = 10;
+  // Check for brain
+  if (not robot_config->HasElement("rv:brain"))
+  {
+    throw std::runtime_error("DifferentialCPG brain did not receive brain");
+  }
+  auto brain = robot_config->GetElement("rv:brain");
 
-  // Automatically construct plots
-  this->run_analytics = true;
+  // Check for learner
+  if (not brain->HasElement("rv:learner"))
+  {
+    throw std::runtime_error("DifferentialCPG brain did not receive learner");
+  }
+  auto learner = brain->GetElement("rv:learner");
 
-  // Bound for output signal
-  this->abs_output_bound = 1.0;
-  this->reset_robot_position = false;
-  this->reset_neuron_state_valid = true;
-  this->signal_factor = 2.5;
+  // Check for controller
+  if (not brain->HasElement("rv:controller"))
+  {
+    throw std::runtime_error("DifferentialCPG brain did not receive controller");
+  }
+  auto controller = brain->GetElement("rv:controller");
 
-  // If load brain is an empty string (which is by default) we train a new brain.
-  // To load a brain, give the path to the file containing the weights
-  // this->load_brain = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/1555264854/best_brain.txt";
+  // Check for actuators
+  if (not brain->HasElement("rv:actuators"))
+  {
+    throw std::runtime_error("DifferentialCPG brain did not receive actuators");
+  }
+  auto actuators = brain->GetElement("rv:actuators");
 
-  // Parameters
-  this->evaluation_rate = 200.0;
+  // Controller parameters
+  this->reset_robot_position = std::stoi(controller->GetAttribute("reset_robot_position")->GetAsString());
+  this->reset_neuron_state_valid = std::stoi(controller->GetAttribute("reset_neuron_state_valid")->GetAsString());
+  this->run_analytics = std::stoi(controller->GetAttribute("run_analytics")->GetAsString());
+  this->load_brain = controller->GetAttribute("load_brain")->GetAsString();
 
-  // BO parameters. Remainder of BO parameters is at the end.
-  this->range_lb = -1.f;
-  this->range_ub = 1.f;
-  this->init_method = "RS"; // {RS, LHS, ORT}
+  // Learner parameters
+  this->evaluation_rate = std::stoi(learner->GetAttribute("evaluation_rate")->GetAsString());
+  this->range_lb = std::stoi(learner->GetAttribute("range_lb")->GetAsString());
+  this->range_ub = std::stoi(learner->GetAttribute("range_ub")->GetAsString());
+  this->abs_output_bound = std::stoi(learner->GetAttribute("abs_output_bound")->GetAsString());
+  this->signal_factor = std::stoi(learner->GetAttribute("signal_factor")->GetAsString());
+  this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
+  this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
+  this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
+  this->init_method = learner->GetAttribute("init_method")->GetAsString();
 
   // Create transport node
   this->node_.reset(new gz::transport::Node());
@@ -106,20 +125,11 @@ DifferentialCPG::DifferentialCPG(
   // Get Robot
   this->robot = _model;
   this->n_motors = _motors.size();
-
   auto name = _model->GetName();
 
-  if (not _settings->HasElement("rv:brain"))
-  {
-    std::cerr << "No robot brain detected, this is probably an error."
-              << std::endl;
-    throw std::runtime_error("DifferentialCPG brain did not receive settings");
-  }
-
-  std::cout << _settings->GetDescription() << std::endl;
-  // TODO: Make this more neat
-  auto motor = _settings->GetElement("rv:brain")->GetElement("rv:actuators")->HasElement("rv:servomotor")
-               ? _settings->GetElement("rv:brain")->GetElement("rv:actuators")->GetElement("rv:servomotor")
+  std::cout << robot_config->GetDescription() << std::endl;
+  auto motor = actuators->HasElement("rv:servomotor")
+               ? actuators->GetElement("rv:servomotor")
                : sdf::ElementPtr();
   while(motor)
   {
@@ -188,7 +198,7 @@ DifferentialCPG::DifferentialCPG(
         if(std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
            std::get<0>(this->connections[{near_x, near_y, 1, x, y, 1}]) != 1)
         {
-          std::cout << "New connection at index " << i << ": " << x << ", " << y << ", " << near_x << ", " << near_y << "\n";
+          std::cout << "New connection at index " << i << ": " << x << ", " << y << ", " << near_x << ", " << near_y << std::endl;
           this->connections[{x, y, 1, near_x, near_y, 1}] = std::make_tuple(1, i);
           this->connections[{near_x, near_y, 1, x, y, 1}] = std::make_tuple(1, i);
           i++;
@@ -197,7 +207,7 @@ DifferentialCPG::DifferentialCPG(
     }
   }
 
-  // Create directory for output
+  // Create directory for output. TODO: name should be a parameter
   this->directory_name = "output/cpg_bo/";
   this->directory_name += std::to_string(time(0)) + "/";
   std::system(("mkdir -p " + this->directory_name).c_str());
@@ -210,7 +220,7 @@ DifferentialCPG::DifferentialCPG(
   if(!this->load_brain.empty())
   {
     // Get line
-    std::cout << "I will load the following brain:\n";
+    std::cout << "I will load the following brain:" << std::endl;
     std::ifstream brain_file(this->load_brain);
     std::string line;
     std::getline(brain_file, line);
@@ -221,11 +231,12 @@ DifferentialCPG::DifferentialCPG(
 
     // Save weights for brain
     Eigen::VectorXd loaded_brain(this->n_weights);
-    for(size_t j = 0; j < this->n_weights; j++){
+    for(size_t j = 0; j < this->n_weights; j++)
+    {
       loaded_brain(j) = std::stod(weights.at(j));
       std::cout << loaded_brain(j)  << ",";
     }
-    std::cout << "\n";
+    std::cout << std::endl;
 
     // Close brain
     brain_file.close();
@@ -240,11 +251,11 @@ DifferentialCPG::DifferentialCPG(
     this->current_iteration = this->n_init_samples + this->n_learning_iterations;
 
     // Verbose
-    std::cout << "\nBrain has been loaded. Skipped " << this->current_iteration << " iterations to directly enter cooldown mode\n";
-
+    std::cout << std::endl << "Brain has been loaded. Skipped " << this->current_iteration << " iterations to directly enter cooldown mode" << std::endl;
   }
-  else{
-    std::cout << "Don't load existing brain\n";
+  else
+  {
+    std::cout << "Don't load existing brain" << std::endl;
 
     // Initialize BO
     this->bo_init_sampling();
@@ -252,6 +263,9 @@ DifferentialCPG::DifferentialCPG(
     // Set ODE matrix at initialization
     this->set_ode_matrix();
   }
+
+  // Save parameters
+  this->save_parameters();
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
@@ -294,25 +308,21 @@ void DifferentialCPG::bo_init_sampling(){
             << this->n_motors
             << std::endl;
 
-  //  // Limbo BO Parameters
-  //  this->alpha = 0.5; // Acqui_UCB. Default 0.5
-  //  this->delta = 0.3; // Acqui GP-UCB. Default 0.1. Convergence guaranteed in (0,1)
-  //  this->l = 0.2; // Kernel width. Assumes equally sized ranges over dimensions
-  //  this->sigma_sq = 0.001; // Kernel variance. 0.001 recommended
-  //  this->k = 4; // EXP-ARD kernel. Number of columns used to compute M.
-
   // Information purposes
-  std::cout << "\nSample method: " << this->init_method << ". Initial "
-                                                           "samples are: \n";
+  std::cout << std::endl << "Sample method: " << this->init_method << ". Initial "
+                                                                      "samples are: " << std::endl;
 
   // Random sampling
-  if(this->init_method == "RS") {
-    for (size_t i = 0; i < this->n_init_samples; i++) {
+  if(this->init_method == "RS")
+  {
+    for (size_t i = 0; i < this->n_init_samples; i++)
+    {
       // Working variable to hold a random number for each weight to be optimized
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all weights
-      for (size_t j = 0; j < this->n_weights; j++) {
+      for (size_t j = 0; j < this->n_weights; j++)
+      {
         // Generate a random number in [0, 1]. Transform later
         double f = ((double) rand() / (RAND_MAX));
 
@@ -323,18 +333,20 @@ void DifferentialCPG::bo_init_sampling(){
       // Save vector in samples.
       this->samples.push_back(init_sample);
 
-      for(int k = 0; k < init_sample.size(); k ++){
+      for(int k = 0; k < init_sample.size(); k ++)
+      {
         std::cout << init_sample(k) << ", ";
       }
-      std::cout << " \n";
+      std::cout << std::endl;
     }
   }
     // Latin Hypercube Sampling
-  else if(this->init_method == "LHS"){
+  else if(this->init_method == "LHS")
+  {
     // Check
     if(this->n_init_samples % this->n_weights != 0)
     {
-      std::cout << "Warning: Ideally the number of initial samples is a multiple of n_weights for LHS sampling \n";
+      std::cout << "Warning: Ideally the number of initial samples is a multiple of n_weights for LHS sampling " << std::endl;
     }
 
     // Working variable
@@ -344,11 +356,13 @@ void DifferentialCPG::bo_init_sampling(){
     std::vector<std::vector<int>> all_dimensions;
 
     // Fill vectors
-    for (size_t i=0; i < this->n_weights; i++){
+    for (size_t i=0; i < this->n_weights; i++)
+    {
       std::vector<int> one_dimension;
 
       // Prepare for vector permutation
-      for (size_t j = 0; j < this->n_init_samples; j++){
+      for (size_t j = 0; j < this->n_init_samples; j++)
+      {
         one_dimension.push_back(j);
       }
 
@@ -360,12 +374,14 @@ void DifferentialCPG::bo_init_sampling(){
     }
 
     // For all samples
-    for (size_t i = 0; i < this->n_init_samples; i++){
+    for (size_t i = 0; i < this->n_init_samples; i++)
+    {
       // Initialize Eigen::VectorXd here.
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all dimensions
-      for (size_t j = 0; j < this->n_weights; j++){
+      for (size_t j = 0; j < this->n_weights; j++)
+      {
         // Take a LHS
         init_sample(j) = all_dimensions.at(j).at(i)*my_range + ((double) rand() / (RAND_MAX))*my_range;
       }
@@ -373,13 +389,15 @@ void DifferentialCPG::bo_init_sampling(){
       // Append sample to samples
       this->samples.push_back(init_sample);
 
-      for(size_t k = 0; k < init_sample.size(); k ++){
+      for(size_t k = 0; k < init_sample.size(); k++)
+      {
         std::cout << init_sample(k) << ", ";
       }
-      std::cout << "\n";
+      std::cout << std::endl;
     }
   }
-  else if(this->init_method == "ORT"){
+  else if(this->init_method == "ORT")
+  {
     // Set the number of blocks per dimension
     int n_blocks = (int)(log(this->n_init_samples)/log(4));
 
@@ -393,10 +411,12 @@ void DifferentialCPG::bo_init_sampling(){
 
     // Initiate for each  dimension a vector holding a permutation of 1,...,n_init_samples
     std::vector<std::vector<int>> all_dimensions;
-    for (size_t i = 0; i < this->n_weights; i++) {
+    for (size_t i = 0; i < this->n_weights; i++)
+    {
       // Holder for one dimension
       std::vector<int> one_dimension;
-      for (size_t j = 0; j < this->n_init_samples; j++) {
+      for (size_t j = 0; j < this->n_init_samples; j++)
+      {
         one_dimension.push_back(j);
       }
 
@@ -408,7 +428,8 @@ void DifferentialCPG::bo_init_sampling(){
     }
 
     // Draw n_init_samples
-    for (size_t i = 0; i < this->n_init_samples; i++) {
+    for (size_t i = 0; i < this->n_init_samples; i++)
+    {
       // Initiate new sample
       Eigen::VectorXd init_sample(this->n_weights);
 
@@ -417,7 +438,8 @@ void DifferentialCPG::bo_init_sampling(){
       int end = (int)(std::pow(2, n_blocks));
 
       // Loop over all the blocks: we don't have to pick a block randomly
-      for (int j =0; j < n_blocks; j++) {
+      for (int j =0; j < n_blocks; j++)
+      {
         // Generate row numbers in this block: THIS IS WRONG
         for(int k = j*end; k < (j+1)*end; k++)
         {
@@ -459,7 +481,8 @@ void DifferentialCPG::bo_init_sampling(){
       this->samples.push_back(init_sample);
 
       // Print sample
-      for (int h = 0; h < init_sample.size(); h++){
+      for (int h = 0; h < init_sample.size(); h++)
+      {
         std::cout << init_sample(h) << ", ";
       }
       std::cout << std::endl;
@@ -475,13 +498,15 @@ void DifferentialCPG::save_fitness(){
   double fitness = this->evaluator->Fitness();
 
   // Save sample if it is the best seen so far
-  if(fitness >this->best_fitness){
+  if(fitness >this->best_fitness)
+  {
     this->best_fitness = fitness;
     this->best_sample = this->samples.back();
   }
 
   // Verbose
-  std::cout << "Iteration number " << this->current_iteration << " has fitness " << fitness << std::endl;
+  std::cout << "Iteration number " << this->current_iteration << " has fitness " <<
+            fitness << ". Best fitness: " << this->best_fitness << std::endl;
 
   // Limbo requires fitness value to be of type Eigen::VectorXd
   Eigen::VectorXd observation = Eigen::VectorXd(1);
@@ -489,6 +514,12 @@ void DifferentialCPG::save_fitness(){
 
   // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
   this->observations.push_back(observation);
+
+  // Write fitness to file
+  std::ofstream fitness_file;
+  fitness_file.open(this->directory_name + "fitnesses.txt", std::ios::app);
+  fitness_file << fitness << std::endl;
+  fitness_file.close();
 }
 
 /**
@@ -501,7 +532,8 @@ void DifferentialCPG::bo_step(){
 
   // In case we are done with the initial random sampling. Correct for
   // initial sample taken by. Statement equivalent to !(i < n_samples -1)
-  if (this->current_iteration > this->n_init_samples - 2){
+  if (this->current_iteration > this->n_init_samples - 2)
+  {
     // Specify bayesian optimizer
     limbo::bayes_opt::BOptimizer<Params,
                                  limbo::initfun<Init_t>,
@@ -547,7 +579,8 @@ void DifferentialCPG::Update(
   }
 
   // Evaluate policy on certain time limit
-  if ((_time - this->start_time) > this->evaluation_rate) {
+  if ((_time - this->start_time) > this->evaluation_rate)
+  {
     // Update position
     this->evaluator->Update(this->robot->WorldPose());
 
@@ -555,13 +588,22 @@ void DifferentialCPG::Update(
     this->save_fitness();
 
     // If we are still learning
-    if(this->current_iteration < this->n_init_samples + this->n_learning_iterations){
+    if(this->current_iteration < this->n_init_samples + this->n_learning_iterations)
+    {
       // Verbose
-      if (this->current_iteration < this->n_init_samples){
-        std::cout << "\nEvaluating initial random sample\n";
+      if (this->current_iteration < this->n_init_samples)
+      {
+        std::cout << std::endl << "Evaluating initial random sample" << std::endl;
       }
-      else{
-        std::cout << "\nI am learning\n";
+      else
+      {
+        std::cout << std::endl << "I am learning " << std::endl;
+      }
+
+      // Reset robot position
+      if(this->reset_robot_position)
+      {
+        this->robot->Reset();
       }
 
       // Get new sample (weights) and add sample
@@ -570,27 +612,31 @@ void DifferentialCPG::Update(
       // Set new weights
       this->set_ode_matrix();
 
-      // Reset robot position
-      this->robot->Reset();
+      // Update position
       this->evaluator->Update(this->robot->WorldPose());
     }
       // If we are finished learning but are cooling down - reset once
     else if((this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
-            and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1))){
+            and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1)))
+    {
       // Verbose
-      std::cout << "\nI am cooling down \n";
+      std::cout << std::endl << "I am cooling down " << std::endl;
 
       // Reset position once to get into phase of movement
       if(this->current_iteration == this->n_init_samples +
                                     this->n_learning_iterations)
       {
         // Reset state back to unit cycle once
-        std::cout << "Reset robot position once for cooling down period\n";
-        this->robot->Reset();
+        std::cout << "Reset robot position once for cooling down period" << std::endl;
+        if(this->reset_robot_position)
+        {
+          this->robot->Reset();
+        }
       }
 
       // Reset neuron state if opted to do
-      if(this->reset_neuron_state_valid){
+      if(this->reset_neuron_state_valid)
+      {
         this->reset_neuron_state();
       }
 
@@ -607,13 +653,14 @@ void DifferentialCPG::Update(
     else {
 
       // Create plots
-      if(this->run_analytics) {
+      if(this->run_analytics)
+      {
         // Construct plots
         this->get_analytics();
       }
 
       // Exit
-      std::cout << "I am finished \n";
+      std::cout << "I am finished " << std::endl;
       std::exit(0);
     }
 
@@ -646,7 +693,10 @@ void DifferentialCPG::set_ode_matrix(){
   {
     // Initialize row in matrix with zeros
     std::vector< double > row;
-    for (size_t j = 0; j < this->neurons.size(); j++) row.push_back(0);
+    for (size_t j = 0; j < this->neurons.size(); j++)
+    {
+      row.push_back(0);
+    }
     matrix.push_back(row);
   }
 
@@ -656,7 +706,7 @@ void DifferentialCPG::set_ode_matrix(){
   {
     // Get correct index
     int c = 0;
-    if (i%2== 0){
+    if (i%2 == 0){
       c = i + 1;
     }
     else{
@@ -676,7 +726,8 @@ void DifferentialCPG::set_ode_matrix(){
   int k = 0;
   std::vector<std::string> connections_seen;
 
-  for (auto const &connection : this->connections){
+  for (auto const &connection : this->connections)
+  {
     // Get connection information
     int x1, y1, z1, x2, y2, z2;
     std::tie(x1, y1, z1, x2, y2, z2) = connection.first;
@@ -684,13 +735,16 @@ void DifferentialCPG::set_ode_matrix(){
     // Find location of the two neurons in this->neurons list
     int l1, l2;
     int c = 0;
-    for(auto const &neuron : this->neurons){
+    for(auto const &neuron : this->neurons)
+    {
       int x, y, z;
       std::tie(x, y, z) = neuron.first;
-      if (x == x1 and y == y1 and z == z1){
+      if (x == x1 and y == y1 and z == z1)
+      {
         l1 = c;
       }
-      else if (x == x2 and y == y2 and z == z2){
+      else if (x == x2 and y == y2 and z == z2)
+      {
         l2 = c;
       }
       // Update counter
@@ -698,7 +752,8 @@ void DifferentialCPG::set_ode_matrix(){
     }
 
     // Add connection to seen connections
-    if(l1 > l2){
+    if(l1 > l2)
+    {
       int l1_old = l1;
       l1 = l2;
       l2 = l1_old;
@@ -730,6 +785,17 @@ void DifferentialCPG::set_ode_matrix(){
 
   // Reset neuron state
   this->reset_neuron_state();
+
+  // Save this sample to file
+  std::ofstream samples_file;
+  samples_file.open(this->directory_name  + "samples.txt", std::ios::app);
+  auto sample = this->samples.at(this->current_iteration);
+  for(size_t j = 0; j < this->n_weights; j++)
+  {
+    samples_file << sample(j) << ", ";
+  }
+  samples_file << std::endl;
+  samples_file.close();
 }
 
 
@@ -738,7 +804,8 @@ void DifferentialCPG::set_ode_matrix(){
  */
 void DifferentialCPG::reset_neuron_state(){
   int c = 0;
-  for(auto const &neuron : this->neurons){
+  for(auto const &neuron : this->neurons)
+  {
     int x, y, z;
     std::tie(x, y, z) = neuron.first;
     if(z == -1)
@@ -777,7 +844,8 @@ void DifferentialCPG::step(
 
   // Copy values from next_state into x for ODEINT
   state_type x(this->neurons.size());
-  for (size_t i = 0; i < this->neurons.size(); i++){
+  for (size_t i = 0; i < this->neurons.size(); i++)
+  {
     x[i] = this->next_state[i];
   }
 
@@ -789,7 +857,8 @@ void DifferentialCPG::step(
   stepper.do_step(
       [this](const state_type &x, state_type &dxdt, double t)
       {
-        for(size_t i = 0; i < this->neurons.size(); i++){
+        for(size_t i = 0; i < this->neurons.size(); i++)
+        {
           dxdt[i] = 0;
           for(size_t j = 0; j < this->neurons.size(); j++)
           {
@@ -802,7 +871,8 @@ void DifferentialCPG::step(
       dt);
 
   // Copy values into nextstate
-  for (size_t i = 0; i < this->neurons.size(); i++){
+  for (size_t i = 0; i < this->neurons.size(); i++)
+  {
     this->next_state[i] = x[i];
   }
 
@@ -829,25 +899,27 @@ void DifferentialCPG::step(
       this->output[j] = this->signal_factor*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       j++;
     }
-    ++i;
+    i++;
   }
 
   // Write state to file
   std::ofstream state_file;
   state_file.open(this->directory_name + "states.txt", std::ios::app);
-  for(size_t i = 0; i < this->neurons.size(); i++){
+  for(size_t i = 0; i < this->neurons.size(); i++)
+  {
     state_file << this->next_state[i] << ",";
   }
-  state_file << "\n";
+  state_file << std::endl;
   state_file.close();
 
   // Write signal to file
   std::ofstream signal_file;
   signal_file.open(this->directory_name + "signal.txt", std::ios::app);
-  for(size_t i = 0; i < this->n_motors; i++){
+  for(size_t i = 0; i < this->n_motors; i++)
+  {
     signal_file << this->output[i] << ",";
   }
-  signal_file << "\n";
+  signal_file << std::endl;
   signal_file.close();
 }
 
@@ -858,6 +930,12 @@ void DifferentialCPG::step(
 struct DifferentialCPG::Params{
   struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
   };
+  //  // Limbo BO Parameters
+  //  this->alpha = 0.5; // Acqui_UCB. Default 0.5
+  //  this->delta = 0.3; // Acqui GP-UCB. Default 0.1. Convergence guaranteed in (0,1)
+  //  this->l = 0.2; // Kernel width. Assumes equally sized ranges over dimensions
+  //  this->sigma_sq = 0.001; // Kernel variance. 0.001 recommended
+  //  this->k = 4; // EXP-ARD kernel. Number of columns used to compute M.
 
   // depending on which internal optimizer we use, we need to import different parameters
 #ifdef USE_NLOPT
@@ -927,6 +1005,48 @@ struct DifferentialCPG::Params{
 };
 
 /**
+ * Save the parameters used in this run to a file.
+ */
+void DifferentialCPG::save_parameters(){
+  // Write parameters to file
+  std::ofstream parameters_file;
+  parameters_file.open(this->directory_name + "parameters.txt");
+
+  // Various paramters
+  parameters_file << "Dimensions: " << this->n_weights << std::endl;
+  parameters_file << "n_init_samples: " << this->n_init_samples << std::endl;
+  parameters_file << "n_learning_iterations: " << this->n_learning_iterations << std::endl;
+  parameters_file << "n_cooldown_iterations: " << this->n_cooldown_iterations << std::endl;
+  parameters_file << "evaluation_rate: " << this->evaluation_rate << std::endl;
+  parameters_file << "abs_output_bound: " << this->abs_output_bound << std::endl;
+  parameters_file << "signal_factor: " << this->n_cooldown_iterations << std::endl;
+  parameters_file << "range_lb: " << this->range_lb << std::endl;
+  parameters_file << "range_ub: " << this->range_ub << std::endl;
+  parameters_file << "run_analytics: " << this->run_analytics << std::endl;
+  parameters_file << "load_brain: " << this->load_brain << std::endl;
+  parameters_file << "reset_robot_position: " << this->reset_robot_position << std::endl;
+  parameters_file << "reset_neuron_state_valid: " << this->reset_neuron_state_valid << std::endl;
+
+  // TODO: Write these parameters to files as well
+  // parameters_file << "Kernel used: " << kernel_used << std::endl;
+  // parameters_file << "Acqui. function used: " << acqui_used << std::endl;
+
+  // BO hyper-parameters
+  parameters_file << std::endl << "Initialization method used: " << this->init_method << std::endl;
+  parameters_file << "UCB alpha: " << Params::acqui_ucb::alpha() << std::endl;
+  parameters_file << "GP-UCB delta: " << Params::acqui_gpucb::delta() << std::endl;
+  parameters_file << "Kernel noise: " << Params::kernel::noise() << std::endl;
+  parameters_file << "No. of iterations: " << Params::stop_maxiterations::iterations() << std::endl;
+  parameters_file << "EXP Kernel l: " << Params::kernel_exp::l() << std::endl;
+  parameters_file << "EXP Kernel sigma_sq: " << Params::kernel_exp::sigma_sq()<< std::endl;
+  parameters_file << "EXP-ARD Kernel k: "<< Params::kernel_squared_exp_ard::k() << std::endl;
+  parameters_file << "EXP-ARD Kernel sigma_sq: "<< Params::kernel_squared_exp_ard::sigma_sq() << std::endl;
+  parameters_file << "MFH Kernel sigma_sq: "<< Params::kernel_maternfivehalves::sigma_sq() << std::endl;
+  parameters_file << "MFH Kernel l: "<< Params::kernel_maternfivehalves::l() << std::endl << std::endl;
+  parameters_file.close();
+}
+
+/**
  * Function that automatically creates plots of the fitness, saves the best brain,
  * and saves all brains. Calls the Python file RunAnalysiBO.py
  *
@@ -934,52 +1054,8 @@ struct DifferentialCPG::Params{
  * @param _output
  */
 void DifferentialCPG::get_analytics(){
-  // Write parameters to file
-  std::ofstream parameters_file;
-  parameters_file.open(this->directory_name + "parameters.txt");
-  parameters_file << "Dimensions: " << this->n_weights << "\n";
-
-  // TODO
-  //parameters_file << "Kernel used: " << kernel_used << "\n";
-  //parameters_file << "Acqui. function used: " << acqui_used << "\n";
-  //parameters_file << "Initialization method used: " << initialization_used << "\n";
-  parameters_file << "UCB alpha: " << Params::acqui_ucb::alpha() << "\n";
-  parameters_file << "GP-UCB delta: " << Params::acqui_gpucb::delta() << "\n";
-  parameters_file << "Kernel noise: " << Params::kernel::noise() << "\n";
-  parameters_file << "No. of iterations: " << Params::stop_maxiterations::iterations() << "\n";
-  parameters_file << "EXP Kernel l: " << Params::kernel_exp::l() << "\n";
-  parameters_file << "EXP Kernel sigma_sq: " << Params::kernel_exp::sigma_sq() << "\n";
-  parameters_file << "EXP-ARD Kernel k: "<< Params::kernel_squared_exp_ard::k() << "\n";
-  parameters_file << "EXP-ARD Kernel sigma_sq: "<< Params::kernel_squared_exp_ard::sigma_sq() << "\n";
-  parameters_file << "MFH Kernel sigma_sq: "<< Params::kernel_maternfivehalves::sigma_sq() << "\n";
-  parameters_file << "MFH Kernel l: "<< Params::kernel_maternfivehalves::l() << "\n\n";
-  parameters_file.close();
-
-  // Save data from run
-  std::ofstream observations_file;
-  observations_file.open(this->directory_name  + "fitnesses.txt");
-  std::ofstream samples_file;
-  samples_file.open(this->directory_name  + "samples.txt");
-
-  // Print to files. Do separate for debugging purposes
-  for(size_t i = 0; i < (this->samples.size()); i++){
-    auto sample = this->samples.at(i);
-    for(size_t j = 0; j < this->n_weights; j++){
-      samples_file << sample(j) << ", ";
-    }
-    samples_file << "\n";
-  }
-  samples_file.close();
-
-  // Print to files. Do separate for debugging purposes
-  for(size_t i = 0; i < (this->observations.size()); i++){
-    // When the samples are commented out, it works.
-    observations_file << this->observations.at(i) << "\n";
-  }
-  observations_file.close();
-
   // Call python file to construct plots
-  std::string python_plot_command = "python3 experiments/RunAnalysisBO.py "
+  std::string python_plot_command = "python3 experiments/bo_learner/RunAnalysisBO.py "
                                     + this->directory_name
                                     + " "
                                     + std::to_string((int)this->n_init_samples)

@@ -172,7 +172,7 @@ class RevolveBot:
         Update all coordinates for body components
 
         :param raise_for_intersections: enable raising an exception if a collision of coordinates is detected
-        :raises self.ItersectionCollisionException: Ifte a collision of coordinates is detected (and check is enabled)
+        :raises self.ItersectionCollisionException: If a collision of coordinates is detected (and check is enabled)
         """
         substrate_coordinates_all = {(0, 0): self._body.id}
         self._body.substrate_coordinates = (0, 0)
