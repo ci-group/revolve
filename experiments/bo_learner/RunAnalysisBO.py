@@ -46,7 +46,6 @@ def fitness_per_iteration_plot(my_directory, my_data, x1, x2):
 
 
 def max_fitness_plot(my_directory, my_data, x1, x2):
-    # TODO: Exclude validation procedure here
     # Create monotonic sequence
     my_data = [e if e >= max(my_data[:ix+1]) else max(my_data[:ix+1]) for ix, e in enumerate(my_data)]
 
@@ -56,9 +55,8 @@ def max_fitness_plot(my_directory, my_data, x1, x2):
     plt.ylabel("Fitness")
     plt.title("CPG + BO")
     plt.axvline(x=x1, color="green", linestyle="dashed")
-    plt.axvline(x=len(my_data) - x2, color="red", linestyle="dashed")
     plt.grid()
-    plt.plot(my_data)
+    plt.plot(my_data[:-x2])
 
     # Save plots
     plt.savefig(my_directory + "/fitness_monotonic.png")

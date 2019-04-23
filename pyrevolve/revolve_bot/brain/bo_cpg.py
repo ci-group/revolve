@@ -8,10 +8,10 @@ class BrainCPGBO(Brain):
 
     def __init__(self):
         # Hard-code parameters here for now
-        self.n_init_samples = 3
-        self.n_learning_iterations = 3
-        self.n_cooldown_iterations = 3
-        self.evaluation_rate = 20.0
+        self.n_init_samples = 20
+        self.n_learning_iterations = 5
+        self.n_cooldown_iterations = 10
+        self.evaluation_rate = 30.0
 
         # Bound for output signal
         self.abs_output_bound = 1.0
@@ -22,7 +22,7 @@ class BrainCPGBO(Brain):
         self.range_ub = 1
 
         # BO hyper-parameters
-        self.init_method = "RS"  # {RS, LHS, ORT}
+        self.init_method = "LHS"  # {RS, LHS, ORT}
 
         # Automatically construct plots
         self.run_analytics = "true"
