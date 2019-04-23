@@ -18,9 +18,6 @@
  * Date: December 29, 2018
  *
  */
-#ifndef USE_NLOPT
-#define USE_NLOPT
-#endif
 
 // STL macros
 #include <cstdlib>
@@ -60,10 +57,6 @@ using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
-
-#ifndef USE_NLOPT
-#define USE_NLOPT //installed NLOPT
-#endif
 
 /**
  * Constructor for DifferentialCPG class.
@@ -873,6 +866,8 @@ struct DifferentialCPG::Params{
 #elif defined(USE_LIBCMAES)
   struct opt_cmaes : public lm::defaults::opt_cmaes {
     };
+#else
+#error(NO SOLVER IS DEFINED)
 #endif
 
   struct kernel : public limbo::defaults::kernel {

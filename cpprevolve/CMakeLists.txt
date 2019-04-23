@@ -73,6 +73,7 @@ link_directories(${NLOpt_LIBRARY_DIRS})
 
 # Find Limbo - LIbrary for Model-Based Optimization
 set(LIMBO_DIR ../thirdparty/limbo)
+set(LIMBO_DEFINES USE_NLOPT)
 include_directories(${LIMBO_DIR}/src)
 
 # Find GSL - GNU Scientific Library
@@ -213,6 +214,12 @@ target_link_libraries(
     ${Boost_LIBRARIES}
     ${GSL_LIBRARIES}
     ${YAML_CPP_LIBRARIES}
+    ${NLOpt_LIBRARIES}
+)
+
+target_compile_definitions(
+    revolve-gazebo
+    PUBLIC ${LIMBO_DEFINES}
 )
 
 # Create World plugin
@@ -237,7 +244,6 @@ target_link_libraries(
     revolve-gazebo
     revolve-proto
     ${GAZEBO_LIBRARIES}
-    ${NLOpt_LIBRARIES}
 )
 
 # Install

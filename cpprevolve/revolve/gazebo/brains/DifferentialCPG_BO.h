@@ -5,10 +5,6 @@
 #ifndef REVOLVE_BOPTIMIZER_CPG_H
 #define REVOLVE_BOPTIMIZER_CPG_H
 
-#ifndef USE_NLOPT
-#define USE_NLOPT
-#endif
-
 // Standard libraries
 #include <algorithm>
 #include <iostream>
