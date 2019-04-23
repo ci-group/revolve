@@ -214,7 +214,7 @@ DifferentialCPG::DifferentialCPG(
     }
   }
 
-  // Create directory for output
+  // Create directory for output. TODO: name should be a parameter
   this->directory_name = "output/cpg_bo/";
   this->directory_name += std::to_string(time(0)) + "/";
   std::system(("mkdir -p " + this->directory_name).c_str());
@@ -259,7 +259,6 @@ DifferentialCPG::DifferentialCPG(
 
     // Verbose
     std::cout << std::endl << "Brain has been loaded. Skipped " << this->current_iteration << " iterations to directly enter cooldown mode" << std::endl;
-
   }
   else
   {
@@ -952,6 +951,8 @@ struct DifferentialCPG::Params{
 #elif defined(USE_LIBCMAES)
   struct opt_cmaes : public lm::defaults::opt_cmaes {
     };
+#else
+      throw std::runtime_error("CMAES not defined");
 #endif
 
   struct kernel : public limbo::defaults::kernel {
