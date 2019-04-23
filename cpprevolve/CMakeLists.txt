@@ -32,8 +32,7 @@ add_definitions(-pedantic -Wno-long-long -Wall -Wextra -Wformat=2
                 -Wswitch-enum -Wuninitialized 
                 -Wswitch-default -Winit-self -Wfloat-equal -fPIC )
 
-# Use C++11 (removed - the Gazebo flags below do this)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set (CMAKE_CXX_STANDARD 11)
 
 # Debug Flags 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
@@ -45,10 +44,10 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # adaptable according to individual needs
   set(CMAKE_MACOSX_RPATH ON)
-  #    set(CMAKE_SKIP_BUILD_RPATH FALSE)
-  #    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-  #    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-  #    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  #set(CMAKE_SKIP_BUILD_RPATH FALSE)
+  #set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+  #set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  #set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif ()
 
 
@@ -206,8 +205,7 @@ target_link_libraries(
 add_library(
     revolve-gazebo
     ${REVOLVE_GZ_SRC}
-        revolve/gazebo/brains/DifferentialCPG_BO.h)
-
+)
 
 target_link_libraries(
     revolve-gazebo
