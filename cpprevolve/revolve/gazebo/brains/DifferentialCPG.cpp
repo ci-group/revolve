@@ -63,6 +63,8 @@ using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
 
+// TODO: Fix that the first sample is evaluated twice
+
 /**
  * Constructor for DifferentialCPG class.
  *
@@ -78,6 +80,9 @@ DifferentialCPG::DifferentialCPG(
     , input(new double[_sensors.size()])
     , output(new double[_motors.size()])
 {
+
+  this->learner = robot_config->GetElement("rv:brain")->GetElement("rv:learner");
+
   // Check for brain
   if (not robot_config->HasElement("rv:brain"))
   {
@@ -108,9 +113,10 @@ DifferentialCPG::DifferentialCPG(
 
   // Controller parameters
   this->reset_robot_position = std::stoi(controller->GetAttribute("reset_robot_position")->GetAsString());
-  this->reset_neuron_state_valid = std::stoi(controller->GetAttribute("reset_neuron_state_valid")->GetAsString());
+  this->reset_neuron_state_bool = std::stoi(controller->GetAttribute("reset_neuron_state_bool")->GetAsString());
   this->run_analytics = std::stoi(controller->GetAttribute("run_analytics")->GetAsString());
   this->load_brain = controller->GetAttribute("load_brain")->GetAsString();
+  this->reset_neuron_random = std::stoi(controller->GetAttribute("reset_neuron_random")->GetAsString());
 
   // Learner parameters
   this->evaluation_rate = std::stoi(learner->GetAttribute("evaluation_rate")->GetAsString());
@@ -611,6 +617,18 @@ void DifferentialCPG::Update(
     // Get and save fitness
     this->save_fitness();
 
+    // Reset robot if opted to do
+    if(this->reset_robot_position)
+    {
+      this->robot->Reset();
+    }
+
+    // Reset neuron state if opted to do
+    if(this->reset_neuron_state_bool)
+    {
+      this->reset_neuron_state();
+    }
+
     // If we are still learning
     if(this->current_iteration < this->n_init_samples + this->n_learning_iterations)
     {
@@ -649,24 +667,6 @@ void DifferentialCPG::Update(
       // Verbose
       std::cout << std::endl << "I am cooling down " << std::endl;
 
-      // Reset position once to get into phase of movement
-      if(this->current_iteration == this->n_init_samples +
-                                    this->n_learning_iterations)
-      {
-        // Reset state back to unit cycle once
-        std::cout << "Reset robot position once for cooling down period" << std::endl;
-        if(this->reset_robot_position)
-        {
-          this->robot->Reset();
-        }
-      }
-
-      // Reset neuron state if opted to do
-      if(this->reset_neuron_state_valid)
-      {
-        this->reset_neuron_state();
-      }
-
       // Update robot position
       this->evaluator->Update(this->robot->WorldPose());
 
@@ -676,9 +676,8 @@ void DifferentialCPG::Update(
       // Set ODE matrix
       this->set_ode_matrix();
     }
-      // Else we don't want to update anything, but save data from this run once.
+      // Else we don't want to update anything, but construct plots from this run once.
     else {
-
       // Create plots
       if(this->run_analytics)
       {
@@ -836,13 +835,29 @@ void DifferentialCPG::reset_neuron_state(){
   {
     int x, y, z;
     std::tie(x, y, z) = neuron.first;
-    if(z == -1)
+    if (z == -1)
     {
-      this->next_state[c] = -this->init_state;
+      // Neuron B
+      if (this->reset_neuron_random)
+      {
+        this->neurons[{x, y, z}] = {0.f, 0.f, ((double)rand() / (RAND_MAX)) * 2.f - 1.f};
+      }
+      else
+      {
+        this->neurons[{x, y, z}] = {0.f, 0.f, -this->init_state};
+      }
     }
     else
     {
-      this->next_state[c] = this->init_state;
+      // Neuron A
+      if (this->reset_neuron_random)
+      {
+        this->neurons[{x, y, z}] = {0.f, 0.f,((double) rand() / (RAND_MAX))*2.f - 1.f} ;
+      }
+      else
+      {
+        this->neurons[{x, y, z}] = {0.f, 0.f, +this->init_state};
+      }
     }
     c++;
   }
@@ -1002,7 +1017,7 @@ struct DifferentialCPG::Params{
 
   struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
     /// @ingroup kernel_defaults
-    BO_PARAM(int, k, 4); // k number of columns used to compute M
+    BO_PARAM(int, k, 4);// this->GetAttribute("n_learning_iterations")->GetAsString())); // k number of columns used to compute M
     /// @ingroup kernel_defaults
     BO_PARAM(double, sigma_sq, 0.001); //brochu2010tutorial p.9 without sigma_sq
   };
@@ -1053,7 +1068,9 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "run_analytics: " << this->run_analytics << std::endl;
   parameters_file << "load_brain: " << this->load_brain << std::endl;
   parameters_file << "reset_robot_position: " << this->reset_robot_position << std::endl;
-  parameters_file << "reset_neuron_state_valid: " << this->reset_neuron_state_valid << std::endl;
+  parameters_file << "reset_neuron_state_bool: " << this->reset_neuron_state_bool << std::endl;
+  parameters_file << "reset_neuron_random: " << this->reset_neuron_random << std::endl;
+  parameters_file << "initial state value: " << this->init_state << std::endl;
 
   // TODO: Write these parameters to files as well
   // parameters_file << "Kernel used: " << kernel_used << std::endl;

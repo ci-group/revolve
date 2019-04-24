@@ -117,6 +117,9 @@ namespace revolve
       /// \brief Runge-Kutta 45 stepper
       protected: boost::numeric::odeint::runge_kutta4< state_type > stepper;
 
+      /// \brief Pointer to access parameters
+      private: sdf::ElementPtr learner;
+
       /// \brief Used to determine the next state array
       private: double *next_state;
 
@@ -202,8 +205,8 @@ namespace revolve
       /// \brief Reset the robot to starting position each iteration.
       private: bool reset_robot_position;
 
-      /// \brief Reset neuron state at each iteration during validation
-      private: bool reset_neuron_state_valid;
+      /// \brief Reset neuron state at each iteration (also during validation)
+      private: bool reset_neuron_state_bool;
 
       /// \brief Factor to multiply output signal with
       private: double signal_factor;
@@ -211,6 +214,8 @@ namespace revolve
       /// \brief Function that resets neuron state
       private: void reset_neuron_state();
 
+      /// \brief When reset a neuron state,do it randomly:
+      private: bool reset_neuron_random;
 
       /// \brief Boolean to enable/disable constructing plots
       private: bool run_analytics;
@@ -228,7 +233,7 @@ namespace revolve
       private: double previous_time = 0;
 
       /// \brief Initial neuron state
-      private: double init_state = M_SQRT2/2.f;
+      private: double init_state = M_SQRT2/3.f;
 
       /// \brief Holder for loading a brain
       private: std::string load_brain = "";

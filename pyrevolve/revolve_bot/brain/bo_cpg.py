@@ -9,20 +9,20 @@ class BrainCPGBO(Brain):
     def __init__(self):
         # Hard-code parameters here for now
         self.n_init_samples = 20
-        self.n_learning_iterations = 5
-        self.n_cooldown_iterations = 10
-        self.evaluation_rate = 30.0
+        self.n_learning_iterations = 40
+        self.n_cooldown_iterations = 5
+        self.evaluation_rate = 100.0
 
         # Bound for output signal
         self.abs_output_bound = 1.0
         self.signal_factor = 2.5
 
         # Weight ranges
-        self.range_lb = -1
-        self.range_ub = 1
+        self.range_lb = -1.0
+        self.range_ub = 1.0
 
         # BO hyper-parameters
-        self.init_method = "LHS"  # {RS, LHS, ORT}
+        self.init_method = "LHS"  # {RS, LHS}
 
         # Automatically construct plots
         self.run_analytics = "true"
@@ -32,7 +32,8 @@ class BrainCPGBO(Brain):
 
         # Various
         self.reset_robot_position = "true"
-        self.reset_neuron_state_valid = "true"
+        self.reset_neuron_state_bool = "true"
+        self.reset_neuron_random = "false"
 
     @staticmethod
     def from_yaml(yaml_object):
@@ -61,7 +62,8 @@ class BrainCPGBO(Brain):
         return xml.etree.ElementTree.Element('rv:controller', {
             'type': 'cpg',
             'reset_robot_position': self.reset_robot_position,
-            'reset_neuron_state_valid': str(self.reset_neuron_state_valid),
+            'reset_neuron_state_bool': str(self.reset_neuron_state_bool),
+            'reset_neuron_random': str(self.reset_neuron_random),
             'load_brain': self.load_brain,
             'run_analytics': str(self.run_analytics),
         })
