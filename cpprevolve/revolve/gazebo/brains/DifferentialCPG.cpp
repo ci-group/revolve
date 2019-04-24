@@ -18,9 +18,6 @@
  * Date: December 29, 2018
  *
  */
-#ifndef USE_NLOPT
-#define USE_NLOPT
-#endif
 
 // STL macros
 #include <cstdlib>
@@ -62,8 +59,6 @@ using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
-
-// TODO: Fix that the first sample is evaluated twice
 
 /**
  * Constructor for DifferentialCPG class.
@@ -677,7 +672,8 @@ void DifferentialCPG::Update(
       this->set_ode_matrix();
     }
       // Else we don't want to update anything, but construct plots from this run once.
-    else {
+    else
+      {
       // Create plots
       if(this->run_analytics)
       {
@@ -988,7 +984,7 @@ struct DifferentialCPG::Params{
   struct opt_cmaes : public lm::defaults::opt_cmaes {
     };
 #else
-  throw std::runtime_error("CMAES not defined");
+#error(NO SOLVER IS DEFINED)
 #endif
 
   struct kernel : public limbo::defaults::kernel {
@@ -1017,7 +1013,7 @@ struct DifferentialCPG::Params{
 
   struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
     /// @ingroup kernel_defaults
-    BO_PARAM(int, k, 4);// this->GetAttribute("n_learning_iterations")->GetAsString())); // k number of columns used to compute M
+    BO_PARAM(int, k, 4); // k number of columns used to compute M
     /// @ingroup kernel_defaults
     BO_PARAM(double, sigma_sq, 0.001); //brochu2010tutorial p.9 without sigma_sq
   };
@@ -1110,4 +1106,3 @@ void DifferentialCPG::get_analytics(){
   // Execute python command
   std::system(std::string("python3 " + plot_command).c_str());
 }
-
