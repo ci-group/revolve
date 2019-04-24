@@ -49,6 +49,9 @@
 
 #include "DifferentialCPG_BO.h"
 
+// TODO: Resolve odd behaviour at the end of the validation procedure
+// This behaviour is not present if you directly load a trained controller
+
 // Define namespaces
 namespace gz = gazebo;
 using namespace revolve::gazebo;
@@ -112,6 +115,7 @@ DifferentialCPG::DifferentialCPG(
   this->run_analytics = std::stoi(controller->GetAttribute("run_analytics")->GetAsString());
   this->load_brain = controller->GetAttribute("load_brain")->GetAsString();
   this->reset_neuron_random = std::stoi(controller->GetAttribute("reset_neuron_random")->GetAsString());
+  this->init_neuron_state = std::stod(controller->GetAttribute("init_neuron_state")->GetAsString());
 
   // Learner parameters
   this->evaluation_rate = std::stoi(learner->GetAttribute("evaluation_rate")->GetAsString());
@@ -177,8 +181,8 @@ DifferentialCPG::DifferentialCPG(
     this->positions[motor_id] = {coord_x, coord_y};
 
     // Save neurons: bias/gain/state. Make sure initial states are of different sign.
-    this->neurons[{coord_x, coord_y, 1}] = {0.f, 0.f, this->init_state}; //Neuron A
-    this->neurons[{coord_x, coord_y, -1}] = {0.f, 0.f, -this->init_state}; // Neuron B
+    this->neurons[{coord_x, coord_y, 1}] = {0.f, 0.f, this->init_neuron_state}; //Neuron A
+    this->neurons[{coord_x, coord_y, -1}] = {0.f, 0.f, -this->init_neuron_state}; // Neuron B
 
     // TODO: Add check for duplicate coordinates
     motor = motor->GetNextElement("rv:servomotor");
@@ -276,7 +280,7 @@ DifferentialCPG::DifferentialCPG(
     this->current_iteration = this->n_init_samples + this->n_learning_iterations;
 
     // Verbose
-    std::cout << std::endl << "Brain has been loaded. Skipped " << this->current_iteration << " iterations to directly enter cooldown mode" << std::endl;
+    std::cout << std::endl << "Brain has been loaded." << std::endl;
   }
   else
   {
@@ -615,7 +619,12 @@ void DifferentialCPG::Update(
     // Reset robot if opted to do
     if(this->reset_robot_position)
     {
-      this->robot->Reset();
+      //this->robot->Reset();
+      this->robot->ResetPhysicsStates();
+      auto start_pose = ::ignition::math::Pose3d();
+      start_pose.Set(0.0, 0.0, 0.25, 0.0, 0.0, 0.0);
+      this->robot->SetWorldPose(start_pose);
+      this->robot->Update();
     }
 
     // Reset neuron state if opted to do
@@ -635,12 +644,6 @@ void DifferentialCPG::Update(
       else
       {
         std::cout << std::endl << "I am learning " << std::endl;
-      }
-
-      // Reset robot position
-      if(this->reset_robot_position)
-      {
-        this->robot->Reset();
       }
 
       // Get new sample (weights) and add sample
@@ -836,11 +839,11 @@ void DifferentialCPG::reset_neuron_state(){
       // Neuron B
       if (this->reset_neuron_random)
       {
-        this->neurons[{x, y, z}] = {0.f, 0.f, ((double)rand() / (RAND_MAX)) * 2.f - 1.f};
+        this->neurons[{x, y, z}] = {0.f, 0.f,((double) rand() / (RAND_MAX))*2*this->init_neuron_state - this->init_neuron_state} ;
       }
       else
       {
-        this->neurons[{x, y, z}] = {0.f, 0.f, -this->init_state};
+        this->neurons[{x, y, z}] = {0.f, 0.f, -this->init_neuron_state};
       }
     }
     else
@@ -848,11 +851,11 @@ void DifferentialCPG::reset_neuron_state(){
       // Neuron A
       if (this->reset_neuron_random)
       {
-        this->neurons[{x, y, z}] = {0.f, 0.f,((double) rand() / (RAND_MAX))*2.f - 1.f} ;
+        this->neurons[{x, y, z}] = {0.f, 0.f,((double) rand() / (RAND_MAX))*2*this->init_neuron_state - this->init_neuron_state} ;
       }
       else
       {
-        this->neurons[{x, y, z}] = {0.f, 0.f, +this->init_state};
+        this->neurons[{x, y, z}] = {0.f, 0.f, +this->init_neuron_state};
       }
     }
     c++;
@@ -1066,7 +1069,7 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "reset_robot_position: " << this->reset_robot_position << std::endl;
   parameters_file << "reset_neuron_state_bool: " << this->reset_neuron_state_bool << std::endl;
   parameters_file << "reset_neuron_random: " << this->reset_neuron_random << std::endl;
-  parameters_file << "initial state value: " << this->init_state << std::endl;
+  parameters_file << "initial state value: " << this->init_neuron_state << std::endl;
 
   // TODO: Write these parameters to files as well
   // parameters_file << "Kernel used: " << kernel_used << std::endl;

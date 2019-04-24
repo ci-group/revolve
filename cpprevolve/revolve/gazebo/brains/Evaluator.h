@@ -43,6 +43,9 @@ namespace revolve
       /// \return A fitness value according to a given formula
       public: double Fitness();
 
+      /// brief Specifies locomotion type
+      public: std::string locomotion_type;
+
       /// \brief Update the position
       /// \param[in] _pose Current position of a robot
       public: void Update(const ignition::math::Pose3d &_pose);

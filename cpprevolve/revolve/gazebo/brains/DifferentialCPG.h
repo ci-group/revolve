@@ -233,7 +233,7 @@ namespace revolve
       private: double previous_time = 0;
 
       /// \brief Initial neuron state
-      private: double init_state = M_SQRT2/3.f;
+      private: double init_neuron_state;
 
       /// \brief Holder for loading a brain
       private: std::string load_brain = "";

@@ -33,6 +33,7 @@ Evaluator::Evaluator(const double _evaluationRate)
 
   this->currentPosition_.Reset();
   this->previousPosition_.Reset();
+  this->locomotion_type = "directed"; // Directed or gait
 }
 
 /////////////////////////////////////////////////
@@ -47,11 +48,21 @@ void Evaluator::Reset()
 /////////////////////////////////////////////////
 double Evaluator::Fitness()
 {
-  auto dS = std::sqrt(std::pow(this->previousPosition_.Pos().X() -
+  double dS;
+
+  if(this->locomotion_type == "gait")
+  {
+  dS = std::sqrt(std::pow(this->previousPosition_.Pos().X() -
                                this->currentPosition_.Pos().X(), 2) +
                       std::pow(this->previousPosition_.Pos().Y() -
                                this->currentPosition_.Pos().Y(), 2));
 
+  }
+  else if (this->locomotion_type == "directed")
+  {
+    // TODO: Implement Gongjin's fitness function
+    dS = this->previousPosition_.Pos().X() - this->currentPosition_.Pos().X();
+  }
   this->previousPosition_ = this->currentPosition_;
   return dS / this->evaluationRate_;
 }

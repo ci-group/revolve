@@ -1,25 +1,24 @@
 import xml.etree.ElementTree
 from pyrevolve import SDF
 from .base import Brain
-
+import numpy as np
 
 class BrainCPGBO(Brain):
     TYPE = 'bo-cpg'
 
     def __init__(self):
-        # Hard-code parameters here for now
-        self.n_init_samples = 20
-        self.n_learning_iterations = 40
-        self.n_cooldown_iterations = 5
-        self.evaluation_rate = 100.0
+        # If you load a brain, set the top two to zero.
+        self.n_init_samples = 0
+        self.n_learning_iterations = 0
+        self.n_cooldown_iterations = 20
+        self.evaluation_rate = 60.0
 
-        # Bound for output signal
+        # CPG Hyperparameters to tune
         self.abs_output_bound = 1.0
         self.signal_factor = 2.5
-
-        # Weight ranges
-        self.range_lb = -1.0
-        self.range_ub = 1.0
+        self.range_lb = -1.5
+        self.range_ub = 1.5
+        self.init_neuron_state = np.sqrt(2)/2
 
         # BO hyper-parameters
         self.init_method = "LHS"  # {RS, LHS}
@@ -28,10 +27,9 @@ class BrainCPGBO(Brain):
         self.run_analytics = "true"
 
         # Supply existing brain to be validated. Empty string means train a new brain
-        self.load_brain = ""
-
+        self.load_brain = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/1556112072/best_brain.txt"
         # Various
-        self.reset_robot_position = "true"
+        self.reset_robot_position = "false"
         self.reset_neuron_state_bool = "true"
         self.reset_neuron_random = "false"
 
@@ -66,4 +64,5 @@ class BrainCPGBO(Brain):
             'reset_neuron_random': str(self.reset_neuron_random),
             'load_brain': self.load_brain,
             'run_analytics': str(self.run_analytics),
+            'init_neuron_state': str(self.init_neuron_state),
         })
