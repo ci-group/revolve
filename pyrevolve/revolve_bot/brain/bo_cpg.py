@@ -10,15 +10,15 @@ class BrainCPGBO(Brain):
         # If you load a brain, set the top two to zero.
         self.n_init_samples = 0
         self.n_learning_iterations = 0
-        self.n_cooldown_iterations = 20
-        self.evaluation_rate = 60.0
+        self.n_cooldown_iterations = 5
+        self.evaluation_rate = 10
 
         # CPG Hyperparameters to tune
         self.abs_output_bound = 1.0
         self.signal_factor = 2.5
-        self.range_lb = -1.5
+        self.range_lb = 0.5
         self.range_ub = 1.5
-        self.init_neuron_state = np.sqrt(2)/2
+        self.init_neuron_state = 0.5
 
         # BO hyper-parameters
         self.init_method = "LHS"  # {RS, LHS}
