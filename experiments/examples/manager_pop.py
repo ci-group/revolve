@@ -11,15 +11,15 @@ sys.path.append(newpath)
 from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
-
 from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
+from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
 from pyrevolve.genotype.plasticoding.initialization import random_initialization
+from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+from pyrevolve.tol.manage import World
 
 
 def dummy_selection(individuals):
@@ -40,11 +40,11 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    settings = parser.parse_args()
+    num_generations = 50
 
-    num_generations = 5
-
-    genotype_conf = PlasticodingConfig()
+    genotype_conf = PlasticodingConfig(
+        max_structural_modules=20,
+    )
 
     mutation_conf = MutationConfig(
         mutation_prob=0.8,
@@ -71,7 +71,10 @@ async def run():
         offspring_size=5,
     )
 
-    population = Population(population_conf)
+    settings = parser.parse_args()
+    simulator_connection = await World.create(settings)
+
+    population = Population(population_conf, simulator_connection)
     await population.init_pop()
 
     gen_num = 0
@@ -80,6 +83,7 @@ async def run():
         gen_num += 1
 
     # output result after completing all generations...
+
 
 def main():
     def handler(loop, context):

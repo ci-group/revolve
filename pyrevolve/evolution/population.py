@@ -1,8 +1,6 @@
 # [(G,P), (G,P), (G,P), (G,P), (G,P)]
 
 from pyrevolve.evolution.individual import Individual
-from pyrevolve import parser
-from pyrevolve.tol.manage import World
 from pyrevolve.SDF.math import Vector3
 import time
 import asyncio
@@ -53,7 +51,7 @@ class PopulationConfig:
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig):
+    def __init__(self, conf: PopulationConfig, simulator):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -61,9 +59,11 @@ class Population:
         conf variable.
 
         :param conf: configuration of the system
+        :param simulator: connection to the simulator
         """
         self.conf = conf
         self.individuals = []
+        self.simulator = simulator
 
     async def init_pop(self):
         """
@@ -110,7 +110,7 @@ class Population:
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
         # return self.__class__(self.conf, new_individuals)
-        new_population = Population(self.conf)
+        new_population = Population(self.conf, self.simulator)
         new_population.individuals = new_individuals
         return new_population
 
@@ -122,33 +122,28 @@ class Population:
         :param gen_num: generation number
         """
         # Parse command line / file input arguments
-        settings = parser.parse_args()
-        # Connect to the simulator and pause
-        world = await World.create(settings)
-        await world.pause(True)
-        await world.reset(rall=True, time_only=False, model_only=False)
-        await asyncio.sleep(2.5)
+        await self.simulator.pause(True)
+        # await self.simulator.reset(rall=True, time_only=False, model_only=False)
+        # await asyncio.sleep(2.5)
 
         for individual in new_individuals:
-            print(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ... \n')
+            print(f'---\nEvaluating individual (gen {gen_num}) {individual.genotype.id} ...')
             individual.develop()
-            await self.evaluate_single_robot(individual, world)
-            print(
-                f'Evaluation complete! \n Individual {individual.genotype.id} has a fitness of {individual.fitness}. \n')
+            await self.evaluate_single_robot(individual)
+            print(f'Evaluation complete! Individual {individual.genotype.id} has a fitness of {individual.fitness}.')
 
-    async def evaluate_single_robot(self, individual, world):
+    async def evaluate_single_robot(self, individual):
         """
         Evaluate an individual
 
         :param individual: an individual from the new population
-        :param world: world object for simulator
         """
         # Insert the robot in the simulator
-        insert_future = await world.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
+        insert_future = await self.simulator.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
         robot_manager = await insert_future
 
         # Resume simulation
-        await world.pause(False)
+        await self.simulator.pause(False)
 
         # Start a run loop to do some stuff
         max_age = self.conf.evaluation_time # + self.conf.warmup_time
@@ -156,6 +151,7 @@ class Population:
             individual.fitness = robot_manager.fitness()
             await asyncio.sleep(1.0 / 5) # 5= state_update_frequency
 
-        await world.pause(True)
-        delete_future = await world.delete_robot(robot_manager)
-        await world.reset(rall=True, time_only=False, model_only=False)
+        await self.simulator.pause(True)
+        delete_future = await self.simulator.delete_robot(robot_manager)
+        await delete_future
+        # await self.simulator.reset(rall=True, time_only=False, model_only=False)
