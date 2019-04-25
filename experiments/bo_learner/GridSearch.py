@@ -10,14 +10,16 @@ from joblib import Parallel, delayed
 n_runs = 4
 n_jobs = 3
 search_space = {
-    'self.signal_factor': [1.5, 2.0, 2.5],
-    'self.init_neuron_state': [0.5, 0.7],
+    'signal_factor': [1.5, 2.0, 2.5],
+    'init_neuron_state': [0.5, 0.7],
 }
 
 # Name of the file
 my_filename = "pyrevolve/revolve_bot/brain/bo_cpg.py"
+my_yaml_path = "experiments/bo_learner/yaml/"
+my_sub_directory = "yaml_grid/"
 output_path = "output/cpg_bo/"
-
+base_model = "spider.yaml"
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
@@ -41,120 +43,159 @@ def write_file(filename, contents):
         file.close()
 
 
+def create_yamls(yaml_path, model, sub_directory, experiments):
+    # Read original yaml file
+    yaml_file = [(line.rstrip('\n')) for line in open(yaml_path + model)]
+
+    # Change yaml file
+    for my_dict in experiments:
+        # Loop over the entries in this dict
+        for key, value in my_dict.items():
+            if not key == "id":
+                # Check on what line this parameter is
+                index = [ix for ix, x in enumerate(yaml_file) if key in x][0]
+
+                yaml_file[index] = "    " + key + ": " + str(value)
+
+        # Write yaml file to desired location
+        write_file(yaml_path + sub_directory + "/spider-" + str(my_dict["id"]) + ".yaml", yaml_file)
+
+
+def run(k, sub_directory, model, experiment):
+    # Select relevant yaml file
+    id = experiment["id"]
+    yaml_model = my_yaml_path + sub_directory + model.split(".yaml")[0] + "-" + str(id) + ".yaml"
+    print(yaml_model)
+    # Change port: We need to do this via the manager
+    world_address = "127.0.0.1:" + str(11350 + k)
+    os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11350 + k)
+    os.environ["GAZEBO_PORT"] = str(11350 + k)
+
+    # Call the experiment
+    py_command = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6" \
+                 " ./revolve.py" \
+                 " --manager experiments/bo_learner/manager.py" \
+                 " --world-address " + world_address + \
+                 " --robot-yaml " + yaml_model
+    print(py_command)
+    os.system(py_command)
+
+
 if __name__ == "__main__":
     # Read file
     py_file = [(line.rstrip('\n')) for line in open(my_filename)]
 
     # Get permutations
     keys, values = zip(*search_space.items())
-    experiments = n_runs*[dict(zip(keys, v)) for v in itertools.product(*values)]
+    experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
 
-    # Save directory names
-    all_directories = []
-    main_dir = "main-" + str(round(time.time()))
+    # Get id's on the permutations
+    for ix, my_dict in enumerate(experiments):
+        my_dict["id"] = ix
 
-    # Create dirs
-    os.mkdir(output_path + main_dir)
-    os.mkdir(output_path + main_dir + "/plots")
+    # Save to yaml files
+    create_yamls(yaml_path=my_yaml_path,
+                 model=base_model,
+                 sub_directory=my_sub_directory,
+                 experiments=experiments
+                 )
 
-    # Run experiments
-    avg_fitness_dict = {}
+    # Create a list with parameters to iterate over
+    experiments *= n_runs
 
-    # run function
-    def run(k, params):
-        # TODO: Change yaml file here
-
-        # TODO: Save yaml file here
-
-        # Change port: We need to do this via the manager
-        world_address = "127.0.0.1:" + str(11350 + k)
-        os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11350 + k)
-        os.environ["GAZEBO_PORT"] = str(11350 + k)
-
-        # Call the experiment. TODO: Pass new yaml file here & read in manager
-        py_command = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6" \
-                     " ./revolve.py " \
-                     "--manager experiments/bo_learner/manager.py " \
-                     "--world-address " + world_address
-
-        # TODO: Return some identifier, e.g. t0 + port
-
-        # List of directories for this experiment.
-        experiment_directories = []
-
-        Parallel(n_jobs=n_jobs)(delayed(run)(i, params) for i, params in enumerate(experiments))
+    run(1, my_sub_directory,base_model, experiments[0])
 
 
-        # TODO: Re-do the analysis, as you need to select on parameter settings.
-        # Save the newest directory
-        directories = glob(output_path + "*/")
-        directories = [x[:-1] for x in directories]
-        directories = [int(dir.split("/")[-1].split("-")[-1]) for dir in directories]
-        newest_directory = max(directories)
-        experiment_directories += [newest_directory]
+    # # Save directory names
+    # all_directories = []
+    # main_dir = "main-" + str(round(time.time()))
+    #
+    # # Create dirs
+    # os.mkdir(output_path + main_dir)
+    # os.mkdir(output_path + main_dir + "/plots")
+    #
+    # # Run experiments
+    # avg_fitness_dict = {}
+    #
+    # # run function
 
-        # Save list of directories
-        all_directories += [experiment_directories]
-
-    # Create a fitness dictionary with key = directory, val = avg_fitness
-    avg_fitness_dict = {}
-
-    # Allow some time for Clion re-indexing
-    time.sleep(5)
-
-    # Run experiments
-    for experiments in all_directories:
-        # Create empty matrix
-        n_rows = len([(line.rstrip('\n')) for line in open(output_path + str(experiments[-1]) + "/fitnesses.txt")])
-        fitnesses = np.empty((n_rows, n_runs))
-        fitnesses_mon = np.empty((n_rows, n_runs))
-
-        # Plot details
-        plt.figure()
-        plt.title("Monotonic - all runs")
-        plt.xlabel("Iteration")
-        plt.ylabel("Fitness")
-        plt.grid()
-
-        # Load all the fitness values,and average them
-        for ix, experiment in enumerate(experiments):
-            # Load fitness
-            fitness = [float((line.rstrip('\n'))) for line in open(output_path + str(experiment) + "/fitnesses.txt")]
-
-            # Transfer fitness to monotonic sequence and save
-            fitness_mon = [e if e >= max(fitness[:ix+1]) else max(fitness[:ix+1]) for ix, e in enumerate(fitness)]
-
-            # Save fitness
-            fitnesses_mon[:, ix] = np.array(fitness_mon)
-            fitnesses[:, ix] = np.array(fitness)
-
-            # Plot the avg fitness
-            plt.plot(fitnesses_mon[:, ix], linewidth = 1.5)
-
-        # Take average value over the n_runs
-        avg_fitness = np.mean(fitnesses, axis=1)
-        avg_fitness_mon = np.mean(fitnesses_mon, axis=1)
-
-        # Save plot
-        plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
-        plt.tight_layout()
-        plt.savefig(output_path + main_dir + "/plots/" + str(round(avg_fitness_mon[-1], 5)) + ".png")
-
-        # Save avg fitness
-        experiments = [str(e) for e in experiments]
-        avg_fitness_dict[','.join(experiments)] = avg_fitness_mon[-1]
-
-    # Write results of the run to output_path + main
-    avg_fitness_dict = dict(sorted([(value, key) for (key, value) in avg_fitness_dict.items()], reverse=True))
-
-    # Store sorted fitness
-    print("Fitness - directories")
-    for key, value in avg_fitness_dict.items():
-        # Write to console
-        print("{} - {}".format(key, value))
-
-        # Write to file in main directory
-        with open(output_path + main_dir + '/fitnesses.txt', 'a') as avg_fitness_file:
-            avg_fitness_file.write(str(key) + "-" + str(value) + "\n")
-
-    print("Contents written to ", output_path + main_dir)
+    #
+    #     # List of directories for this experiment.
+    #     experiment_directories = []
+    #
+    #     Parallel(n_jobs=n_jobs)(delayed(run)(i, params) for i, params in enumerate(experiments))
+    #
+    #
+    #     # TODO: Re-do the analysis, as you need to select on parameter settings.
+    #     # Save the newest directory
+    #     directories = glob(output_path + "*/")
+    #     directories = [x[:-1] for x in directories]
+    #     directories = [int(dir.split("/")[-1].split("-")[-1]) for dir in directories]
+    #     newest_directory = max(directories)
+    #     experiment_directories += [newest_directory]
+    #
+    #     # Save list of directories
+    #     all_directories += [experiment_directories]
+    #
+    # # Create a fitness dictionary with key = directory, val = avg_fitness
+    # avg_fitness_dict = {}
+    #
+    # # Allow some time for Clion re-indexing
+    # time.sleep(5)
+    #
+    # # Run experiments
+    # for experiments in all_directories:
+    #     # Create empty matrix
+    #     n_rows = len([(line.rstrip('\n')) for line in open(output_path + str(experiments[-1]) + "/fitnesses.txt")])
+    #     fitnesses = np.empty((n_rows, n_runs))
+    #     fitnesses_mon = np.empty((n_rows, n_runs))
+    #
+    #     # Plot details
+    #     plt.figure()
+    #     plt.title("Monotonic - all runs")
+    #     plt.xlabel("Iteration")
+    #     plt.ylabel("Fitness")
+    #     plt.grid()
+    #
+    #     # Load all the fitness values,and average them
+    #     for ix, experiment in enumerate(experiments):
+    #         # Load fitness
+    #         fitness = [float((line.rstrip('\n'))) for line in open(output_path + str(experiment) + "/fitnesses.txt")]
+    #
+    #         # Transfer fitness to monotonic sequence and save
+    #         fitness_mon = [e if e >= max(fitness[:ix+1]) else max(fitness[:ix+1]) for ix, e in enumerate(fitness)]
+    #
+    #         # Save fitness
+    #         fitnesses_mon[:, ix] = np.array(fitness_mon)
+    #         fitnesses[:, ix] = np.array(fitness)
+    #
+    #         # Plot the avg fitness
+    #         plt.plot(fitnesses_mon[:, ix], linewidth = 1.5)
+    #
+    #     # Take average value over the n_runs
+    #     avg_fitness = np.mean(fitnesses, axis=1)
+    #     avg_fitness_mon = np.mean(fitnesses_mon, axis=1)
+    #
+    #     # Save plot
+    #     plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
+    #     plt.tight_layout()
+    #     plt.savefig(output_path + main_dir + "/plots/" + str(round(avg_fitness_mon[-1], 5)) + ".png")
+    #
+    #     # Save avg fitness
+    #     experiments = [str(e) for e in experiments]
+    #     avg_fitness_dict[','.join(experiments)] = avg_fitness_mon[-1]
+    #
+    # # Write results of the run to output_path + main
+    # avg_fitness_dict = dict(sorted([(value, key) for (key, value) in avg_fitness_dict.items()], reverse=True))
+    #
+    # # Store sorted fitness
+    # print("Fitness - directories")
+    # for key, value in avg_fitness_dict.items():
+    #     # Write to console
+    #     print("{} - {}".format(key, value))
+    #
+    #     # Write to file in main directory
+    #     with open(output_path + main_dir + '/fitnesses.txt', 'a') as avg_fitness_file:
+    #         avg_fitness_file.write(str(key) + "-" + str(value) + "\n")
+    #
+    # print("Contents written to ", output_path + main_dir)

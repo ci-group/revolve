@@ -30,6 +30,7 @@ class BrainCPGBO(Brain):
         self.load_brain = ""
 
         # Various
+        self.id = None
         self.reset_robot_position = "true"
         self.reset_neuron_state_bool = "true"
         self.reset_neuron_random = "false"
