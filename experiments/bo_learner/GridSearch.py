@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 from glob import glob
 
 # Parameters
-n_runs = 2
+n_runs = 5
 search_space = {
-    'self.evaluation_rate': [10],
-    'self.init_neuron_state': [0.5],
+    'self.signal_factor': [1.5, 2.0, 2.5],
+    'self.init_neuron_state': [0.5, 0.7],
 }
 # Name of the file
-my_filename = "/home/maarten/projects/revolve-simulator/revolve/pyrevolve/revolve_bot/brain/bo_cpg.py"
-output_path = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/"
+my_filename = "pyrevolve/revolve_bot/brain/bo_cpg.py"
+output_path = "output/cpg_bo/"
 
 
 def change_parameters(original_file, parameters):
@@ -89,12 +89,22 @@ if __name__ == "__main__":
     # Create a fitness dictionary with key = directory, val = avg_fitness
     avg_fitness_dict = {}
 
+    # Allow some time for Clion re-indexing
+    time.sleep(5)
+
     # Run experiments
     for experiments in all_directories:
         # Create empty matrix
         n_rows = len([(line.rstrip('\n')) for line in open(output_path + str(experiments[-1]) + "/fitnesses.txt")])
-        fitnesses = np.empty((n_rows,n_runs))
-        fitnesses_mon = np.empty((n_rows,n_runs))
+        fitnesses = np.empty((n_rows, n_runs))
+        fitnesses_mon = np.empty((n_rows, n_runs))
+
+        # Plot details
+        plt.figure()
+        plt.title("Monotonic - all runs")
+        plt.xlabel("Iteration")
+        plt.ylabel("Fitness")
+        plt.grid()
 
         # Load all the fitness values,and average them
         for ix, experiment in enumerate(experiments):
@@ -105,28 +115,19 @@ if __name__ == "__main__":
             fitness_mon = [e if e >= max(fitness[:ix+1]) else max(fitness[:ix+1]) for ix, e in enumerate(fitness)]
 
             # Save fitness
-            fitnesses_mon[:,ix] = np.array(fitness_mon)
-            fitnesses[:,ix] = np.array(fitness)
+            fitnesses_mon[:, ix] = np.array(fitness_mon)
+            fitnesses[:, ix] = np.array(fitness)
+
+            # Plot the avg fitness
+            plt.plot(fitnesses_mon[:, ix], linewidth = 1.5)
 
         # Take average value over the n_runs
         avg_fitness = np.mean(fitnesses, axis=1)
         avg_fitness_mon = np.mean(fitnesses_mon, axis=1)
 
-        # Plot the avg fitness
-        plt.title("Non-monotonic: " + str(avg_fitness_mon[-1]))
-        plt.xlabel("Time")
-        plt.ylabel("Fitness")
-        plt.grid()
-        plt.plot(avg_fitness)
-        plt.savefig(output_path + main_dir + "/plots/" + str(avg_fitness_mon[-1]) + "-mon.png")
-
-        # Plot the avg monotonic fitness
-        plt.title("Monotonic: " + str(avg_fitness_mon[-1]))
-        plt.xlabel("Time")
-        plt.ylabel("Fitness")
-        plt.grid()
-        plt.plot(avg_fitness_mon)
-        plt.savefig(output_path + main_dir + "/plots/" + str(avg_fitness_mon[-1]) + ".png")
+        # Save plot
+        plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
+        plt.savefig(output_path + main_dir + "/plots/" + str(round(avg_fitness_mon[-1], 5)) + ".png")
 
         # Save avg fitness
         experiments = [str(e) for e in experiments]

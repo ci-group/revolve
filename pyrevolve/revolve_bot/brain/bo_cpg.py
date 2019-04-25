@@ -8,16 +8,16 @@ class BrainCPGBO(Brain):
 
     def __init__(self):
         # If you load a brain, set the top two to zero.
-        self.n_init_samples = 0
-        self.n_learning_iterations = 0
-        self.n_cooldown_iterations = 5
-        self.evaluation_rate = 10
+        self.n_init_samples = 25
+        self.n_learning_iterations = 60
+        self.n_cooldown_iterations = 0
+        self.evaluation_rate = 50
 
         # CPG Hyperparameters to tune
         self.abs_output_bound = 1.0
-        self.signal_factor = 2.5
-        self.range_lb = 0.5
-        self.range_ub = 1.5
+        self.signal_factor = 1.5
+        self.range_lb = -1.0
+        self.range_ub = 1.0
         self.init_neuron_state = 0.5
 
         # BO hyper-parameters
@@ -27,7 +27,7 @@ class BrainCPGBO(Brain):
         self.run_analytics = "true"
 
         # Supply existing brain to be validated. Empty string means train a new brain
-        self.load_brain = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/1556112072/best_brain.txt"
+        self.load_brain = ""
         # Various
         self.reset_robot_position = "false"
         self.reset_neuron_state_bool = "true"
