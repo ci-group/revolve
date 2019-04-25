@@ -13,6 +13,7 @@ search_space = {
     'self.signal_factor': [1.5, 2.0, 2.5],
     'self.init_neuron_state': [0.5, 0.7],
 }
+
 # Name of the file
 my_filename = "pyrevolve/revolve_bot/brain/bo_cpg.py"
 output_path = "output/cpg_bo/"
@@ -46,7 +47,7 @@ if __name__ == "__main__":
 
     # Get permutations
     keys, values = zip(*search_space.items())
-    experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
+    experiments = n_runs*[dict(zip(keys, v)) for v in itertools.product(*values)]
 
     # Save directory names
     all_directories = []
@@ -58,50 +59,39 @@ if __name__ == "__main__":
 
     # Run experiments
     avg_fitness_dict = {}
-    for experiment_params in experiments:
-        print(experiment_params)
+
+    # run function
+    def run(k, params):
+        # TODO: Change yaml file here
+
+        # TODO: Save yaml file here
+
+        # Change port: We need to do this via the manager
+        world_address = "127.0.0.1:" + str(11350 + k)
+        os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11350 + k)
+        os.environ["GAZEBO_PORT"] = str(11350 + k)
+
+        # Call the experiment. TODO: Pass new yaml file here & read in manager
+        py_command = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6" \
+                     " ./revolve.py " \
+                     "--manager experiments/bo_learner/manager.py " \
+                     "--world-address " + world_address
+
+        # TODO: Return some identifier, e.g. t0 + port
 
         # List of directories for this experiment.
         experiment_directories = []
 
-        def run(k):
-            # Change port: We need to do this via the manager
-            world_address = "127.0.0.1:" + str(11350 + k)
-            os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11350+k)
-            os.environ["GAZEBO_PORT"] = str(11350+k)
-            print(world_address)
-
-            # Call the experiment
-            py_command = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6" \
-                         " ./revolve.py " \
-                         "--manager experiments/bo_learner/manager.py " \
-                         "--world-address " + world_address
-
-            os.system(py_command)
-
-        Parallel(n_jobs=n_jobs)(delayed(run)(i) for i in range(n_runs))
+        Parallel(n_jobs=n_jobs)(delayed(run)(i, params) for i, params in enumerate(experiments))
 
 
-        # Repeat n_runs times
-        for i in range(n_runs):
-            # Change the file
-            py_file = change_parameters(py_file, experiment_params)
-
-            # Write to file
-            write_file(my_filename, py_file)
-
-            # Call the experiment
-            py_command = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6" \
-                         " ./revolve.py " \
-                         "--manager experiments/bo_learner/manager.py"
-            os.system(py_command)
-
-            # Save the newest directory
-            directories = glob(output_path + "*/")
-            directories = [x[:-1] for x in directories]
-            directories = [int(dir.split("/")[-1].split("-")[-1]) for dir in directories]
-            newest_directory = max(directories)
-            experiment_directories += [newest_directory]
+        # TODO: Re-do the analysis, as you need to select on parameter settings.
+        # Save the newest directory
+        directories = glob(output_path + "*/")
+        directories = [x[:-1] for x in directories]
+        directories = [int(dir.split("/")[-1].split("-")[-1]) for dir in directories]
+        newest_directory = max(directories)
+        experiment_directories += [newest_directory]
 
         # Save list of directories
         all_directories += [experiment_directories]

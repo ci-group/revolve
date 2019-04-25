@@ -9,7 +9,7 @@ class BrainCPGBO(Brain):
     def __init__(self):
         # If you load a brain, set the top two to zero.
         self.n_init_samples = 25
-        self.n_learning_iterations = 60
+        self.n_learning_iterations = 10
         self.n_cooldown_iterations = 0
         self.evaluation_rate = 50
 
@@ -28,6 +28,7 @@ class BrainCPGBO(Brain):
 
         # Supply existing brain to be validated. Empty string means train a new brain
         self.load_brain = ""
+
         # Various
         self.reset_robot_position = "true"
         self.reset_neuron_state_bool = "true"
@@ -35,7 +36,20 @@ class BrainCPGBO(Brain):
 
     @staticmethod
     def from_yaml(yaml_object):
-        return BrainCPGBO()
+        BCPGBO = BrainCPGBO()
+
+        for my_type in ["controller", "learner", "meta"]:
+            try:
+                my_object = yaml_object[my_type]
+                for key, value in my_object.items():
+                    try:
+                        setattr(BCPGBO, key, value)
+                    except:
+                        print("Couldn't set {}, {}", format(key, value))
+            except:
+                print("Didn't load {} parameters".format(my_type))
+
+        return BCPGBO
 
     def to_yaml(self):
         return {
