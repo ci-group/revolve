@@ -29,7 +29,7 @@ class BrainCPGBO(Brain):
         # Supply existing brain to be validated. Empty string means train a new brain
         self.load_brain = ""
         # Various
-        self.reset_robot_position = "false"
+        self.reset_robot_position = "true"
         self.reset_neuron_state_bool = "true"
         self.reset_neuron_random = "false"
 

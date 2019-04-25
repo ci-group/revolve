@@ -4,9 +4,11 @@ import os
 import time
 import matplotlib.pyplot as plt
 from glob import glob
+from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 5
+n_runs = 4
+n_jobs = 3
 search_space = {
     'self.signal_factor': [1.5, 2.0, 2.5],
     'self.init_neuron_state': [0.5, 0.7],
@@ -61,6 +63,24 @@ if __name__ == "__main__":
 
         # List of directories for this experiment.
         experiment_directories = []
+
+        def run(k):
+            # Change port: We need to do this via the manager
+            world_address = "127.0.0.1:" + str(11350 + k)
+            os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11350+k)
+            os.environ["GAZEBO_PORT"] = str(11350+k)
+            print(world_address)
+
+            # Call the experiment
+            py_command = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6" \
+                         " ./revolve.py " \
+                         "--manager experiments/bo_learner/manager.py " \
+                         "--world-address " + world_address
+
+            os.system(py_command)
+
+        Parallel(n_jobs=n_jobs)(delayed(run)(i) for i in range(n_runs))
+
 
         # Repeat n_runs times
         for i in range(n_runs):
@@ -127,6 +147,7 @@ if __name__ == "__main__":
 
         # Save plot
         plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
+        plt.tight_layout()
         plt.savefig(output_path + main_dir + "/plots/" + str(round(avg_fitness_mon[-1], 5)) + ".png")
 
         # Save avg fitness
