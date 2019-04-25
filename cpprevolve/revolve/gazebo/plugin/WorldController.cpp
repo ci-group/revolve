@@ -27,9 +27,31 @@ using namespace revolve::gazebo;
 
 /////////////////////////////////////////////////
 WorldController::WorldController()
-    : robotStatesPubFreq_(0)
+    : robotStatesPubFreq_(5)
     , lastRobotStatesUpdateTime_(0)
 {
+}
+
+void unsubscribe(gz::transport::SubscriberPtr &subscription)
+{
+    if (subscription)
+        subscription->Unsubscribe();
+}
+
+void fini(gz::transport::PublisherPtr &publisher)
+{
+    if (publisher)
+        publisher->Fini();
+}
+
+WorldController::~WorldController()
+{
+    unsubscribe(this->requestSub_);
+    unsubscribe(this->responseSub_);
+    unsubscribe(this->modelSub_);
+    fini(this->requestPub_);
+    fini(this->responsePub_);
+    fini(this->robotStatesPub_);
 }
 
 /////////////////////////////////////////////////
@@ -80,6 +102,11 @@ void WorldController::Load(
   // Robot pose publisher
   this->robotStatesPub_ = this->node_->Advertise< revolve::msgs::RobotStates >(
       "~/revolve/robot_states", 50);
+}
+
+void WorldController::Reset()
+{
+    this->lastRobotStatesUpdateTime_ = 0; //this->world_->SimTime().Double();
 }
 
 /////////////////////////////////////////////////

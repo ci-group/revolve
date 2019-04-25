@@ -46,7 +46,6 @@ class RevolveBot:
 
     def size(self):
         robot_size = 1 + self._recursive_size_measurement(self._body)
-        print("calculating robot size: {}".format(robot_size))
         return robot_size
 
     def _recursive_size_measurement(self, module):

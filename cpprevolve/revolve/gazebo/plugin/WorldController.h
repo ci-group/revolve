@@ -46,10 +46,13 @@ namespace revolve
     {
       public:
       WorldController();
+      virtual ~WorldController();
 
       virtual void Load(
               ::gazebo::physics::WorldPtr _parent,
-              sdf::ElementPtr _sdf);
+              sdf::ElementPtr _sdf) override;
+
+      virtual void Reset() override;
 
       protected:
       // Listener for analysis requests

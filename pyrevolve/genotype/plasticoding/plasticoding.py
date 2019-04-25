@@ -215,7 +215,7 @@ class Plasticoding(Genotype):
                     position = position+ii+1
                 else:
                     position = position + 1
-        print('Robot ' + str(self.id) + ' was early-developed.')
+        # print('Robot ' + str(self.id) + ' was early-developed.')
 
     def late_development(self):
 
@@ -263,7 +263,7 @@ class Plasticoding(Genotype):
                 self.decode_brain_moving(symbol)
 
         self.add_imu_nodes()
-        print('Robot ' + str(self.id) + ' was late-developed.')
+        # print('Robot ' + str(self.id) + ' was late-developed.')
         return self.phenotype
 
     def move_in_body(self, symbol):
