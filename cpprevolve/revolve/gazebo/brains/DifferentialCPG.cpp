@@ -63,6 +63,7 @@ using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
 
+
 /**
  * Constructor for DifferentialCPG class.
  *
@@ -110,23 +111,32 @@ DifferentialCPG::DifferentialCPG(
   auto actuators = brain->GetElement("rv:actuators");
 
   // Controller parameters
-  this->reset_robot_position = std::stoi(controller->GetAttribute("reset_robot_position")->GetAsString());
   this->reset_neuron_state_bool = std::stoi(controller->GetAttribute("reset_neuron_state_bool")->GetAsString());
-  this->run_analytics = std::stoi(controller->GetAttribute("run_analytics")->GetAsString());
-  this->load_brain = controller->GetAttribute("load_brain")->GetAsString();
   this->reset_neuron_random = std::stoi(controller->GetAttribute("reset_neuron_random")->GetAsString());
   this->init_neuron_state = std::stod(controller->GetAttribute("init_neuron_state")->GetAsString());
+  this->range_lb = std::stoi(controller->GetAttribute("range_lb")->GetAsString());
+  this->range_ub = std::stoi(controller->GetAttribute("range_ub")->GetAsString());
+  this->signal_factor = std::stoi(controller->GetAttribute("signal_factor")->GetAsString());
 
-  // Learner parameters
-  this->evaluation_rate = std::stoi(learner->GetAttribute("evaluation_rate")->GetAsString());
-  this->range_lb = std::stoi(learner->GetAttribute("range_lb")->GetAsString());
-  this->range_ub = std::stoi(learner->GetAttribute("range_ub")->GetAsString());
-  this->abs_output_bound = std::stoi(learner->GetAttribute("abs_output_bound")->GetAsString());
-  this->signal_factor = std::stoi(learner->GetAttribute("signal_factor")->GetAsString());
+  // (Global)Learner parameters
+  double kernel_noise = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
+  bool kernel_optimize_noise = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
+  double kernel_sigma_sq = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
+  double kernel_l = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
+  int kernel_squared_exp_ard_k = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
+  double acqui_gpucb_delta = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
+  double acqui_ucb_alpha = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
   this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
   this->init_method = learner->GetAttribute("init_method")->GetAsString();
+
+  // Meta parameters
+  this->reset_robot_position = std::stoi(controller->GetAttribute("reset_robot_position")->GetAsString());
+  this->run_analytics = std::stoi(controller->GetAttribute("run_analytics")->GetAsString());
+  this->load_brain = controller->GetAttribute("load_brain")->GetAsString();
+  this->evaluation_rate = std::stoi(learner->GetAttribute("evaluation_rate")->GetAsString());
+  this->abs_output_bound = std::stoi(learner->GetAttribute("abs_output_bound")->GetAsString());
 
   // Create transport node
   this->node_.reset(new gz::transport::Node());
@@ -969,14 +979,9 @@ void DifferentialCPG::step(
  * by limbo.
  */
 struct DifferentialCPG::Params{
+
   struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
   };
-  //  // Limbo BO Parameters
-  //  this->alpha = 0.5; // Acqui_UCB. Default 0.5
-  //  this->delta = 0.3; // Acqui GP-UCB. Default 0.1. Convergence guaranteed in (0,1)
-  //  this->l = 0.2; // Kernel width. Assumes equally sized ranges over dimensions
-  //  this->sigma_sq = 0.001; // Kernel variance. 0.001 recommended
-  //  this->k = 4; // EXP-ARD kernel. Number of columns used to compute M.
 
   // depending on which internal optimizer we use, we need to import different parameters
 #ifdef USE_NLOPT
@@ -988,11 +993,10 @@ struct DifferentialCPG::Params{
 #else
 #error(NO SOLVER IS DEFINED)
 #endif
-
   struct kernel : public limbo::defaults::kernel {
-    BO_PARAM(double, noise, 0.00000001);
+    BO_PARAM(double, noise, kernel_noise);
 
-    BO_PARAM(bool, optimize_noise, false);
+    BO_PARAM(bool, optimize_noise, kernel_optimize_noise);
   };
 
   struct bayes_opt_bobase : public limbo::defaults::bayes_opt_bobase {
@@ -1002,33 +1006,33 @@ struct DifferentialCPG::Params{
     BO_PARAM(bool, bounded, true);
   };
 
-  // 1 Iteration as we will perform limbo step by step
+  // 1 Iteration as we will perform limbo step by steop
   struct stop_maxiterations : public limbo::defaults::stop_maxiterations {
     BO_PARAM(int, iterations, 1);
   };
 
   struct kernel_exp : public limbo::defaults::kernel_exp {
     /// @ingroup kernel_defaults
-    BO_PARAM(double, sigma_sq, 0.001);
-    BO_PARAM(double, l, 0.2); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
+    BO_PARAM(double, sigma_sq, kernel_sigma_sq);
+    BO_PARAM(double, l, kernel_l); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
   };
 
   struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
     /// @ingroup kernel_defaults
-    BO_PARAM(int, k, 4); // k number of columns used to compute M
+    BO_PARAM(int, k, kernel_squared_exp_ard_k); // k number of columns used to compute M
     /// @ingroup kernel_defaults
-    BO_PARAM(double, sigma_sq, 0.001); //brochu2010tutorial p.9 without sigma_sq
+    BO_PARAM(double, sigma_sq, kernel_sigma_sq); //brochu2010tutorial p.9 without sigma_sq
   };
 
   struct kernel_maternfivehalves : public limbo::defaults::kernel_maternfivehalves
   {
-    BO_PARAM(double, sigma_sq, 0.001); //brochu2010tutorial p.9 without sigma_sq
-    BO_PARAM(double, l, 0.2); //characteristic length scale
+    BO_PARAM(double, sigma_sq, kernel_sigma_sq); //brochu2010tutorial p.9 without sigma_sq
+    BO_PARAM(double, l, kernel_l); //characteristic length scale
   };
 
   struct acqui_gpucb : public limbo::defaults::acqui_gpucb {
     //UCB(x) = \mu(x) + \kappa \sigma(x).
-    BO_PARAM(double, delta, 0.1); // default delta = 0.1, delta in (0,1) convergence guaranteed
+    BO_PARAM(double, delta, acqui_gpucb_delta); // default delta = 0.1, delta in (0,1) convergence guaranteed
   };
 
   // We do Random Sampling manually to allow for incorporation in our loop
@@ -1041,7 +1045,7 @@ struct DifferentialCPG::Params{
     //iterations is high, alpha can be low for high accuracy in enough iterations.
     // In contrast, the lsow iterations should have high alpha for high
     // searching in limited iterations, which guarantee to optimal.
-    BO_PARAM(double, alpha, 0.5); // default alpha = 0.5
+    BO_PARAM(double, alpha, acqui_ucb_alpha); // default alpha = 0.5
   };
 };
 
@@ -1070,9 +1074,9 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "reset_neuron_random: " << this->reset_neuron_random << std::endl;
   parameters_file << "initial state value: " << this->init_neuron_state << std::endl;
 
-  // TODO: Write these parameters to files as well
-  // parameters_file << "Kernel used: " << kernel_used << std::endl;
-  // parameters_file << "Acqui. function used: " << acqui_used << std::endl;
+//   //TODO: Write these parameters to files as well
+//   parameters_file << "Kernel used: " << kernel_used << std::endl;
+//   parameters_file << "Acqui. function used: " << acqui_used << std::endl;
 
   // BO hyper-parameters
   parameters_file << std::endl << "Initialization method used: " << this->init_method << std::endl;

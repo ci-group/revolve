@@ -36,6 +36,16 @@ class BrainCPGBO(Brain):
         self.reset_neuron_state_bool = "true"
         self.reset_neuron_random = "false"
 
+        # Learner parameters
+        self.kernel_noise = ""
+        self.kernel_optimize_noise = ""
+        self.kernel_sigma_sq = ""
+        self.kernel_l = ""
+        self.kernel_squared_exp_ard_k = ""
+        self.acqui_gpucb_delta = ""
+        self.acqui_ucb_alpha = ""
+
+
     @staticmethod
     def from_yaml(yaml_object):
         BCPGBO = BrainCPGBO()
@@ -66,10 +76,14 @@ class BrainCPGBO(Brain):
             'n_cooldown_iterations': str(self.n_cooldown_iterations),
             'evaluation_rate': str(self.evaluation_rate),
             'abs_output_bound': str(self.abs_output_bound),
-            'signal_factor': str(self.signal_factor),
-            'range_lb': str(self.range_lb),
-            'range_ub': str(self.range_ub),
             'init_method': self.init_method,
+            'kernel_noise': str(self.kernel_noise),
+            'kernel_optimize_noise': str(self.kernel_optimize_noise),
+            'kernel_sigma_sq': str(self.kernel_sigma_sq),
+            'kernel_l': str(self.kernel_l),
+            'kernel_squared_exp_ard_k': str(self.kernel_squared_exp_ard_k),
+            'acqui_gpucb_delta': str(self.acqui_gpucb_delta),
+            'acqui_ucb_alpha': str(self.acqui_ucb_alpha),
         })
 
     def controller_sdf(self):
@@ -82,4 +96,7 @@ class BrainCPGBO(Brain):
             'run_analytics': str(self.run_analytics),
             'init_neuron_state': str(self.init_neuron_state),
             'output_directory': str(self.output_directory),
+            'range_lb': str(self.range_lb),
+            'range_ub': str(self.range_ub),
+            'signal_factor': str(self.signal_factor),
         })

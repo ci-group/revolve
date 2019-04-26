@@ -50,7 +50,14 @@
 /// (bias, tau, gain) or (phase offset, period, gain)
 #define MAX_NEURON_PARAMS 3
 
-
+// Set global variables for the param structure of BO with default values
+extern constexpr double kernel_noise = 0.00000001;
+extern constexpr bool kernel_optimize_noise = false;
+extern constexpr double kernel_sigma_sq = 0.001;
+extern constexpr double kernel_l = 0.2;
+extern constexpr int kernel_squared_exp_ard_k = 4;
+extern constexpr double acqui_gpucb_delta = 0.1;
+extern constexpr double acqui_ucb_alpha = 0.5;
 
 
 typedef std::vector< double > state_type;
