@@ -233,6 +233,12 @@ namespace revolve
       /// \brief Show output (1) or not (0)
       public: int verbose = 1;
 
+      /// \brief Time to skip for fitness evaluation during training
+      public: int startup_time;
+
+      /// \brief Helper for startup time
+      private: bool start_fitness_recording = true;
+
       /// \brief absolute bound on motor signal value
       public: double abs_output_bound;
 

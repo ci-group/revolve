@@ -147,12 +147,15 @@ body:
 brain:
   type: bo-cpg
   controller:
+    reset_neuron_state_bool: "true"
+    reset_neuron_random: "false"
     abs_output_bound: 1.0
     signal_factor: 1.5
     range_lb: -1.0
     range_ub: 1.0
     init_neuron_state: 0.5
   learner:
+    n_init_samples: 5
     init_method: "LHS"
     kernel_noise: 0.00000001
     kernel_optimize_noise: "false"
@@ -162,12 +165,10 @@ brain:
     acqui_gpucb_delta: 0.1
     acqui_ucb_alpha: 0.5
   meta:
-    n_init_samples: 5
     n_learning_iters: 4
     n_cooldown_iters: 0
     reset_robot_position: "true"
-    reset_neuron_state_bool: "true"
-    reset_neuron_random: "false"
     evaluation_rate: 20
     output_directory: ""
-    verbose: 0
+    verbose: 1
+    startup_time: 4

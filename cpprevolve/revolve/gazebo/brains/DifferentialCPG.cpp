@@ -59,11 +59,9 @@ using namespace revolve::gazebo;
 // Copied from the limbo tutorial the BO implementation is based on
 using Mean_t = limbo::mean::Data<DifferentialCPG::Params>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
-
 using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
-
 
 /**
  * Constructor for DifferentialCPG class.
@@ -133,6 +131,7 @@ DifferentialCPG::DifferentialCPG(
   this->init_method = learner->GetAttribute("init_method")->GetAsString();
 
   // Meta parameters
+  this->startup_time = std::stoi(controller->GetAttribute("startup_time")->GetAsString());
   this->reset_robot_position = std::stoi(controller->GetAttribute("reset_robot_position")->GetAsString());
   this->run_analytics = std::stoi(controller->GetAttribute("run_analytics")->GetAsString());
   this->load_brain = controller->GetAttribute("load_brain")->GetAsString();
@@ -259,6 +258,12 @@ DifferentialCPG::DifferentialCPG(
 
   // Create directory for output.
   this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
+  if(this->directory_name.empty())
+  {
+    this->directory_name = "output/cpg_bo/";
+    this->directory_name += std::to_string(time(0)) + "/";
+  }
+
   std::system(("mkdir -p " + this->directory_name).c_str());
 
   // Initialise array of neuron states for Update() method
@@ -640,11 +645,22 @@ void DifferentialCPG::Update(
     p += sensor->Inputs();
   }
 
-  // Evaluate policy on certain time limit
-  if ((_time - this->start_time) > this->evaluation_rate)
+  // Only start recording the fitness after the startup time each iteration
+  double elapsed_evaluation_time = _time - this->start_time;
+  if((std::fmod(elapsed_evaluation_time, (int)this->evaluation_rate) >= this->startup_time) &
+     this->start_fitness_recording)
   {
     // Update position
     this->evaluator->Update(this->robot->WorldPose());
+    this->start_fitness_recording = false;
+  }
+
+  // Evaluate policy on certain time limit
+  if (elapsed_evaluation_time > this->evaluation_rate)
+  {
+    // Update position
+    this->evaluator->Update(this->robot->WorldPose());
+    this->start_fitness_recording = true;
 
     // Get and save fitness
     this->save_fitness();

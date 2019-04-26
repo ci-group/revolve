@@ -1,20 +1,13 @@
 import xml.etree.ElementTree
-from pyrevolve import SDF
 from .base import Brain
-import numpy as np
+import time
 
 
 class BrainCPGBO(Brain):
     TYPE = 'bo-cpg'
 
     def __init__(self):
-        # If you load a brain, set the top two to zero.
-        self.n_init_samples = 25
-        self.n_learning_iterations = 10
-        self.n_cooldown_iterations = 0
-        self.evaluation_rate = 50
-
-        # CPG Hyperparameters to tune
+        # CPG hyper-parameters
         self.abs_output_bound = 1.0
         self.signal_factor = 1.5
         self.range_lb = -1.0
@@ -23,21 +16,6 @@ class BrainCPGBO(Brain):
 
         # BO hyper-parameters
         self.init_method = "LHS"  # {RS, LHS}
-
-        # Automatically construct plots
-        self.run_analytics = "true"
-
-        # Supply existing brain to be validated. Empty string means train a new brain
-        self.load_brain = ""
-
-        # Various
-        self.output_directory = ""
-        self.reset_robot_position = "true"
-        self.reset_neuron_state_bool = "true"
-        self.reset_neuron_random = "false"
-        self.verbose = 1
-
-        # Learner parameters
         self.kernel_noise = ""
         self.kernel_optimize_noise = ""
         self.kernel_sigma_sq = ""
@@ -45,7 +23,20 @@ class BrainCPGBO(Brain):
         self.kernel_squared_exp_ard_k = ""
         self.acqui_gpucb_delta = ""
         self.acqui_ucb_alpha = ""
+        self.n_init_samples = 25
 
+        # Various
+        self.n_learning_iterations = 10
+        self.n_cooldown_iterations = 0
+        self.load_brain = ""
+        self.output_directory = ""
+        self.run_analytics = "true"
+        self.reset_robot_position = "true"
+        self.reset_neuron_state_bool = "true"
+        self.reset_neuron_random = "false"
+        self.verbose = 1
+        self.startup_time = 0
+        self.evaluation_rate = 50
 
     @staticmethod
     def from_yaml(yaml_object):
@@ -101,4 +92,5 @@ class BrainCPGBO(Brain):
             'range_lb': str(self.range_lb),
             'range_ub': str(self.range_ub),
             'signal_factor': str(self.signal_factor),
+            'startup_time': str(self.startup_time),
         })

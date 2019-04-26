@@ -10,8 +10,11 @@ from joblib import Parallel, delayed
 n_runs = 3
 n_jobs = 3
 search_space = {
-    'kernel_sigma_sq': [0.01, 0.1, 0.5],
-    'kernel_l' :[0.1, 0.2],
+    'kernel_sigma_sq': [0.01],
+    'kernel_l': [0.1, 0.2],
+    'evaluation_rate': [5],
+    'init_method': ["ORT", "LHS"],
+    'verbose': [1],
 }
 
 # Name of the file
@@ -134,7 +137,7 @@ if __name__ == "__main__":
         # Get runs for this experiment
         path = output_path + str(i) + "/*/"
         path_list  = glob(path)
-        n_rows = len([(line.rstrip('\n')) for line in open(path_list[0] + "/fitnesses.txt")])
+        n_rows = len([(line.rstrip('\n')) for line in open(path_list[0] + "fitnesses.txt")])
 
         # Working variables
         fitnesses = np.empty((n_rows,n_runs))

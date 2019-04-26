@@ -25,10 +25,12 @@ font = {'size' : 20}
 matplotlib.rc('font', **font)
 
 # Obtain arguments
-root_directory = str(sys.argv[1])
-n_initial_samples = int(sys.argv[2])
-n_no_learning_iterations = int(sys.argv[3])
-
+try:
+    root_directory = str(sys.argv[1])
+    n_initial_samples = int(sys.argv[2])
+    n_no_learning_iterations = int(sys.argv[3])
+except IndexError:
+    print("Please check the arguments of the directory/n_initial_samples/n_no_learning_iterations")
 
 def fitness_per_iteration_plot(my_directory, my_data, n_initial_samples, n_no_learning_iterations):
     # Set up plot
