@@ -3,6 +3,7 @@ from pyrevolve import SDF
 from .base import Brain
 import numpy as np
 
+
 class BrainCPGBO(Brain):
     TYPE = 'bo-cpg'
 
@@ -30,7 +31,7 @@ class BrainCPGBO(Brain):
         self.load_brain = ""
 
         # Various
-        self.id = None
+        self.output_directory = ""
         self.reset_robot_position = "true"
         self.reset_neuron_state_bool = "true"
         self.reset_neuron_random = "false"
@@ -80,4 +81,5 @@ class BrainCPGBO(Brain):
             'load_brain': self.load_brain,
             'run_analytics': str(self.run_analytics),
             'init_neuron_state': str(self.init_neuron_state),
+            'output_directory': str(self.output_directory),
         })

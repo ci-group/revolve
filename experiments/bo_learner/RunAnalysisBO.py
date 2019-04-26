@@ -94,4 +94,4 @@ max_fitness_plot(root_directory,
 
 save_best_brain(root_directory)
 
-print("Plots are constructed \n")
+print("Plots are constructed  at \n", root_directory)

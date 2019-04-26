@@ -236,9 +236,8 @@ DifferentialCPG::DifferentialCPG(
     }
   }
 
-  // Create directory for output. TODO: name should be a parameter
-  this->directory_name = "output/cpg_bo/";
-  this->directory_name += std::to_string(time(0)) + "/";
+  // Create directory for output.
+  this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
   std::system(("mkdir -p " + this->directory_name).c_str());
 
   // Initialise array of neuron states for Update() method
