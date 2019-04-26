@@ -138,6 +138,7 @@ DifferentialCPG::DifferentialCPG(
   this->load_brain = controller->GetAttribute("load_brain")->GetAsString();
   this->evaluation_rate = std::stoi(learner->GetAttribute("evaluation_rate")->GetAsString());
   this->abs_output_bound = std::stoi(learner->GetAttribute("abs_output_bound")->GetAsString());
+  this->verbose = std::stoi(controller->GetAttribute("verbose")->GetAsString());
 
   // Create transport node
   this->node_.reset(new gz::transport::Node());
@@ -148,7 +149,10 @@ DifferentialCPG::DifferentialCPG(
   this->n_motors = _motors.size();
   auto name = _model->GetName();
 
-  std::cout << robot_config->GetDescription() << std::endl;
+  if(this->verbose)
+  {
+    std::cout << robot_config->GetDescription() << std::endl;
+  }
   auto motor = actuators->HasElement("rv:servomotor")
                ? actuators->GetElement("rv:servomotor")
                : sdf::ElementPtr();
@@ -187,7 +191,10 @@ DifferentialCPG::DifferentialCPG(
     // Pass coordinates
     auto coord_x = std::stoi(coordinates[0]);
     auto coord_y = std::stoi(coordinates[1]);
-    std::cout << "coord_x,coord_y = " << coord_x << "," << coord_y << std::endl;
+    if (this->verbose)
+    {
+      std::cout << "coord_x,coord_y = " << coord_x << "," << coord_y << std::endl;
+    }
     auto motor_id = motor->GetAttribute("part_id")->GetAsString();
     this->positions[motor_id] = {coord_x, coord_y};
 
@@ -238,7 +245,10 @@ DifferentialCPG::DifferentialCPG(
         if(std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
            std::get<0>(this->connections[{near_x, near_y, 1, x, y, 1}]) != 1)
         {
-          std::cout << "New connection at index " << i << ": " << x << ", " << y << ", " << near_x << ", " << near_y << std::endl;
+          if(this->verbose)
+          {
+            std::cout << "New connection at index " << i << ": " << x << ", " << y << ", " << near_x << ", " << near_y << std::endl;
+          }
           this->connections[{x, y, 1, near_x, near_y, 1}] = std::make_tuple(1, i);
           this->connections[{near_x, near_y, 1, x, y, 1}] = std::make_tuple(1, i);
           i++;
@@ -259,7 +269,10 @@ DifferentialCPG::DifferentialCPG(
   if(!this->load_brain.empty())
   {
     // Get line
-    std::cout << "I will load the following brain:" << std::endl;
+    if(this->verbose)
+    {
+      std::cout << "I will load the following brain:" << std::endl;
+    }
     std::ifstream brain_file(this->load_brain);
     std::string line;
     std::getline(brain_file, line);
@@ -273,9 +286,15 @@ DifferentialCPG::DifferentialCPG(
     for(size_t j = 0; j < this->n_weights; j++)
     {
       loaded_brain(j) = std::stod(weights.at(j));
-      std::cout << loaded_brain(j)  << ",";
+      if(this->verbose)
+      {
+        std::cout << loaded_brain(j)  << ",";
+      }
     }
-    std::cout << std::endl;
+    if(this->verbose)
+    {
+      std::cout << std::endl;
+    }
 
     // Close brain
     brain_file.close();
@@ -289,12 +308,17 @@ DifferentialCPG::DifferentialCPG(
     // Go directly into cooldown phase: Note we do require that best_sample is filled. Check this
     this->current_iteration = this->n_init_samples + this->n_learning_iterations;
 
-    // Verbose
-    std::cout << std::endl << "Brain has been loaded." << std::endl;
+    if(this->verbose)
+    {
+      std::cout << std::endl << "Brain has been loaded." << std::endl;
+    }
   }
   else
   {
-    std::cout << "Don't load existing brain" << std::endl;
+    if (this->verbose)
+    {
+      std::cout << "Don't load existing brain" << std::endl;
+    }
 
     // Initialize BO
     this->bo_init_sampling();
@@ -340,16 +364,19 @@ struct DifferentialCPG::evaluation_function{
  * Performs the initial random sampling for BO
  */
 void DifferentialCPG::bo_init_sampling(){
-  // We only want to optimize the weights for now.
-  std::cout << "Number of weights = connections/2 + n_motors are "
-            << this->connections.size()/2
-            << " + "
-            << this->n_motors
-            << std::endl;
+  if(this->verbose)
+  {
+    // We only want to optimize the weights for now.
+    std::cout << "Number of weights = connections/2 + n_motors are "
+              << this->connections.size()/2
+              << " + "
+              << this->n_motors
+              << std::endl;
 
-  // Information purposes
-  std::cout << std::endl << "Sample method: " << this->init_method << ". Initial "
-                                                                      "samples are: " << std::endl;
+    // Information purposes
+    std::cout << std::endl << "Sample method: " << this->init_method << ". Initial "
+                                                                        "samples are: " << std::endl;
+  }
 
   // Random sampling
   if(this->init_method == "RS")
@@ -371,12 +398,6 @@ void DifferentialCPG::bo_init_sampling(){
 
       // Save vector in samples.
       this->samples.push_back(init_sample);
-
-      for(int k = 0; k < init_sample.size(); k ++)
-      {
-        std::cout << init_sample(k) << ", ";
-      }
-      std::cout << std::endl;
     }
   }
     // Latin Hypercube Sampling
@@ -427,12 +448,6 @@ void DifferentialCPG::bo_init_sampling(){
 
       // Append sample to samples
       this->samples.push_back(init_sample);
-
-      for(size_t k = 0; k < init_sample.size(); k++)
-      {
-        std::cout << init_sample(k) << ", ";
-      }
-      std::cout << std::endl;
     }
   }
   else if(this->init_method == "ORT")
@@ -448,7 +463,7 @@ void DifferentialCPG::bo_init_sampling(){
     //      std::cout << "Warning: Initial number of samples is no power of 4 \n";
     //    }
 
-    // Initiate for each  dimension a vector holding a permutation of 1,...,n_init_samples
+    // Initiate for each dimension a vector holding a permutation of 1,...,n_init_samples
     std::vector<std::vector<int>> all_dimensions;
     for (size_t i = 0; i < this->n_weights; i++)
     {
@@ -518,8 +533,14 @@ void DifferentialCPG::bo_init_sampling(){
 
       // Append sample to samples
       this->samples.push_back(init_sample);
+    }
+  }
 
-      // Print sample
+  // Print samples
+  if(this->verbose)
+  {
+    for(auto init_sample :this->samples)
+    {
       for (int h = 0; h < init_sample.size(); h++)
       {
         std::cout << init_sample(h) << ", ";
@@ -543,9 +564,11 @@ void DifferentialCPG::save_fitness(){
     this->best_sample = this->samples.back();
   }
 
-  // Verbose
-  std::cout << "Iteration number " << this->current_iteration << " has fitness " <<
-            fitness << ". Best fitness: " << this->best_fitness << std::endl;
+  if (this->verbose)
+  {
+    std::cout << "Iteration number " << this->current_iteration << " has fitness " <<
+              fitness << ". Best fitness: " << this->best_fitness << std::endl;
+  }
 
   // Limbo requires fitness value to be of type Eigen::VectorXd
   Eigen::VectorXd observation = Eigen::VectorXd(1);
@@ -646,14 +669,16 @@ void DifferentialCPG::Update(
     // If we are still learning
     if(this->current_iteration < this->n_init_samples + this->n_learning_iterations)
     {
-      // Verbose
-      if (this->current_iteration < this->n_init_samples)
+      if(this->verbose)
       {
-        std::cout << std::endl << "Evaluating initial random sample" << std::endl;
-      }
-      else
-      {
-        std::cout << std::endl << "I am learning " << std::endl;
+        if (this->current_iteration < this->n_init_samples)
+        {
+          std::cout << std::endl << "Evaluating initial random sample" << std::endl;
+        }
+        else
+        {
+          std::cout << std::endl << "I am learning " << std::endl;
+        }
       }
 
       // Get new sample (weights) and add sample
@@ -672,8 +697,10 @@ void DifferentialCPG::Update(
                                             this->n_learning_iterations +
                                             this->n_cooldown_iterations - 1)))
     {
-      // Verbose
-      std::cout << std::endl << "I am cooling down " << std::endl;
+      if(this->verbose)
+      {
+        std::cout << std::endl << "I am cooling down " << std::endl;
+      }
 
       // Update robot position
       this->evaluator->Update(this->robot->WorldPose());

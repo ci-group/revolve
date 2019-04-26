@@ -35,6 +35,7 @@ class BrainCPGBO(Brain):
         self.reset_robot_position = "true"
         self.reset_neuron_state_bool = "true"
         self.reset_neuron_random = "false"
+        self.verbose = 1
 
         # Learner parameters
         self.kernel_noise = ""
@@ -96,6 +97,7 @@ class BrainCPGBO(Brain):
             'run_analytics': str(self.run_analytics),
             'init_neuron_state': str(self.init_neuron_state),
             'output_directory': str(self.output_directory),
+            'verbose': str(self.verbose),
             'range_lb': str(self.range_lb),
             'range_ub': str(self.range_ub),
             'signal_factor': str(self.signal_factor),

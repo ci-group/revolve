@@ -1,4 +1,3 @@
-print("I am here")
 import numpy as np
 import itertools
 import os
@@ -11,9 +10,8 @@ from joblib import Parallel, delayed
 n_runs = 3
 n_jobs = 3
 search_space = {
-    'signal_factor': [2.5],
-    'init_neuron_state': [0.5, 0.7],
-    'evaluation_rate': [10]
+    'kernel_sigma_sq': [0.01, 0.1, 0.5],
+    'kernel_l' :[0.1, 0.2],
 }
 
 # Name of the file
@@ -152,7 +150,7 @@ if __name__ == "__main__":
         # Get sub-runs for this setup
         for ix,e in enumerate(path_list):
             # Read fitness
-            fitness = [float((line.rstrip('\n'))) for line in open(e + "/fitnesses.txt")]
+            fitness = [float((line.rstrip('\n'))) for line in open(e + "fitnesses.txt")]
 
             # Transfer fitness to monotonic sequence and save
             fitness_mon = [e if e >= max(fitness[:ix+1]) else max(fitness[:ix+1]) for ix, e in enumerate(fitness)]

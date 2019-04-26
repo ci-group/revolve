@@ -170,3 +170,4 @@ brain:
     reset_neuron_random: "false"
     evaluation_rate: 20
     output_directory: ""
+    verbose: 0

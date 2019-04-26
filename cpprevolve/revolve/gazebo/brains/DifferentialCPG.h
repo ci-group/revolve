@@ -230,6 +230,9 @@ namespace revolve
       /// \brief Automatically generate plots
       public: void get_analytics();
 
+      /// \brief Show output (1) or not (0)
+      public: int verbose = 1;
+
       /// \brief absolute bound on motor signal value
       public: double abs_output_bound;
 
