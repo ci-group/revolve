@@ -1,3 +1,4 @@
+print("I am here")
 import numpy as np
 import itertools
 import os
@@ -7,10 +8,10 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 4
+n_runs = 3
 n_jobs = 3
 search_space = {
-    'signal_factor': [1.5, 2.0, 2.5],
+    'signal_factor': [2.5],
     'init_neuron_state': [0.5, 0.7],
     'evaluation_rate': [10]
 }
@@ -82,9 +83,9 @@ def run(i, sub_directory, model, params):
     yaml_model = my_yaml_path + sub_directory + model.split(".yaml")[0] + "-" + str(k) + "-" + str(i) + ".yaml"
 
     # Change port: We need to do this via the manager
-    world_address = "127.0.0.1:" + str(11350 + k)
-    os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11350 + k)
-    os.environ["GAZEBO_PORT"] = str(11350 + k)
+    world_address = "127.0.0.1:" + str(11350 + i)
+    os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11350 + i)
+    os.environ["GAZEBO_PORT"] = str(11350 + i)
 
     # Call the experiment
     py_command = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6" \
@@ -170,10 +171,10 @@ if __name__ == "__main__":
         # Save plot
         plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
         plt.tight_layout()
-        plt.savefig(output_path + str(i) + "/" + str(round(avg_fitness_mon[-1], 5)) + ".png")
+        plt.savefig(output_path + str(i) + "/" + str(round(avg_fitness_mon[-1], 7)) + ".png")
 
         # Save fitness
-        fitness_list += [[round(avg_fitness_mon[-1],5), i]]
+        fitness_list += [[round(avg_fitness_mon[-1], 5), i]]
 
     # Get fitness stats
     fitness_list.sort(key=lambda x: x[0])

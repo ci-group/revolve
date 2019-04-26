@@ -58,9 +58,10 @@ using namespace revolve::gazebo;
 
 // Copied from the limbo tutorial the BO implementation is based on
 using Mean_t = limbo::mean::Data<DifferentialCPG::Params>;
+using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
+
 using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
-using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
 
 

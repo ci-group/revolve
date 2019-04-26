@@ -30,22 +30,22 @@ n_initial_samples = int(sys.argv[2])
 n_no_learning_iterations = int(sys.argv[3])
 
 
-def fitness_per_iteration_plot(my_directory, my_data, x1, x2):
+def fitness_per_iteration_plot(my_directory, my_data, n_initial_samples, n_no_learning_iterations):
     # Set up plot
     plt.figure(figsize=(14, 14))
     plt.xlabel("#Evaluations")
     plt.ylabel("Fitness")
     plt.title("CPG + BO")
-    plt.axvline(x=x1, color="green", linestyle="dashed")
-    plt.axvline(x=len(my_data) - x2, color="red", linestyle="dashed")
+    plt.axvline(x=n_initial_samples, color="green", linestyle="dashed")
+    plt.axvline(x=len(my_data) - n_no_learning_iterations, color="red", linestyle="dashed")
     plt.grid()
-    plt.plot(my_data)
+    plt.plot(my_data[:-(n_no_learning_iterations + 1)])
 
     # Save plots
     plt.savefig(my_directory + "/fitness.png")
 
 
-def max_fitness_plot(my_directory, my_data, x1, x2):
+def max_fitness_plot(my_directory, my_data, n_initial_samples, n_no_learning_iterations):
     # Create monotonic sequence
     my_data = [e if e >= max(my_data[:ix+1]) else max(my_data[:ix+1]) for ix, e in enumerate(my_data)]
 
@@ -54,9 +54,9 @@ def max_fitness_plot(my_directory, my_data, x1, x2):
     plt.xlabel("#Evaluations")
     plt.ylabel("Fitness")
     plt.title("CPG + BO")
-    plt.axvline(x=x1, color="green", linestyle="dashed")
+    plt.axvline(x=n_initial_samples, color="green", linestyle="dashed")
     plt.grid()
-    plt.plot(my_data[:-x2])
+    plt.plot(my_data[:-(n_no_learning_iterations + 1)])
 
     # Save plots
     plt.savefig(my_directory + "/fitness_monotonic.png")
