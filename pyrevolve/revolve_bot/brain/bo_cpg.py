@@ -23,6 +23,7 @@ class BrainCPGBO(Brain):
         self.kernel_squared_exp_ard_k = ""
         self.acqui_gpucb_delta = ""
         self.acqui_ucb_alpha = ""
+        self.acqui_ei_jitter = ""
         self.n_init_samples = 25
 
         # Various
@@ -76,6 +77,7 @@ class BrainCPGBO(Brain):
             'kernel_squared_exp_ard_k': str(self.kernel_squared_exp_ard_k),
             'acqui_gpucb_delta': str(self.acqui_gpucb_delta),
             'acqui_ucb_alpha': str(self.acqui_ucb_alpha),
+            'acqui_ei_jitter': str(self.acqui_ei_jitter),
         })
 
     def controller_sdf(self):

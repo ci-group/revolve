@@ -32,6 +32,7 @@
 // Other libraries
 #include <limbo/acqui/ucb.hpp>
 #include <limbo/acqui/gp_ucb.hpp>
+#include <limbo/acqui/ei.hpp>
 #include <limbo/bayes_opt/bo_base.hpp>
 #include <limbo/init/lhs.hpp>
 #include <limbo/kernel/exp.hpp>
@@ -61,7 +62,6 @@ using Mean_t = limbo::mean::Data<DifferentialCPG::Params>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
-using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
 
 /**
  * Constructor for DifferentialCPG class.
@@ -125,6 +125,7 @@ DifferentialCPG::DifferentialCPG(
   int kernel_squared_exp_ard_k_ = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
   double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
   double acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
+  double acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
   this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
@@ -589,31 +590,75 @@ void DifferentialCPG::save_fitness(){
   fitness_file.close();
 }
 
+
+
 /**
  * Wrapper function that makes calls to limbo to solve the current BO
  * iteration and returns the best sample
  */
 void DifferentialCPG::bo_step(){
-  // Holder for sample
-  Eigen::VectorXd x;
-
   // In case we are done with the initial random sampling. Correct for
   // initial sample taken by. Statement equivalent to !(i < n_samples -1)
   if (this->current_iteration > this->n_init_samples - 2)
   {
-    // Specify bayesian optimizer
-    limbo::bayes_opt::BOptimizer<Params,
-                                 limbo::initfun<Init_t>,
-                                 limbo::modelfun<GP_t>,
-                                 limbo::acquifun<Acqui_t>> boptimizer;
+    // Holder for sample
+    Eigen::VectorXd x;
 
-    // Optimize. Pass dummy evaluation function and observations .
-    boptimizer.optimize(DifferentialCPG::evaluation_function(),
-                        this->samples,
-                        this->observations);
+    if(this->acquisition_function == "UCB")
+    {
+      // Choose from acquisition functions
+      using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
 
-    // Get new sample
-    x = boptimizer.last_sample();
+      // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+      limbo::bayes_opt::BOptimizer<Params,
+                                   limbo::initfun<Init_t>,
+                                   limbo::modelfun<GP_t>,
+                                   limbo::acquifun<Acqui_t>> boptimizer;
+
+      // Optimize. Pass dummy evaluation function and observations .
+      boptimizer.optimize(DifferentialCPG::evaluation_function(),
+                          this->samples,
+                          this->observations);
+      x = boptimizer.last_sample();
+    }
+    else if(this->acquisition_function == "GP_UCB")
+    {
+      // Choose from acquisition functions
+      using Acqui_t = limbo::acqui::GP_UCB<DifferentialCPG::Params, GP_t>;
+
+      // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+      limbo::bayes_opt::BOptimizer<Params,
+                                   limbo::initfun<Init_t>,
+                                   limbo::modelfun<GP_t>,
+                                   limbo::acquifun<Acqui_t>> boptimizer;
+
+      // Optimize. Pass dummy evaluation function and observations .
+      boptimizer.optimize(DifferentialCPG::evaluation_function(),
+                          this->samples,
+                          this->observations);
+      x = boptimizer.last_sample();
+    }
+    else if(this->acquisition_function == "EI")
+    {
+      // Choose from acquisition functions
+      using Acqui_t = limbo::acqui::EI<DifferentialCPG::Params, GP_t>;
+
+      // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+      limbo::bayes_opt::BOptimizer<Params,
+                                   limbo::initfun<Init_t>,
+                                   limbo::modelfun<GP_t>,
+                                   limbo::acquifun<Acqui_t>> boptimizer;
+
+      // Optimize. Pass dummy evaluation function and observations .
+      boptimizer.optimize(DifferentialCPG::evaluation_function(),
+                          this->samples,
+                          this->observations);
+      x = boptimizer.last_sample();
+    }
+    else
+    {
+      std::cout << "Specify correct acquisition function: {EI, UCB, GP_UCB}" << std::endl;
+    }
 
     // Save this x_hat_star
     this->samples.push_back(x);
@@ -1079,6 +1124,10 @@ struct DifferentialCPG::Params{
     BO_PARAM(double, delta, acqui_gpucb_delta_); // default delta = 0.1, delta in (0,1) convergence guaranteed
   };
 
+  struct acqui_ei : public limbo::defaults::acqui_ei{
+    BO_PARAM(double, jitter, acqui_ei_jitter_);
+  };
+
   // This is just a placeholder to be able to use limbo with revolve
   struct init_lhs : public limbo::defaults::init_lhs{
     BO_PARAM(int, samples, 0);
@@ -1118,12 +1167,10 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "reset_neuron_random: " << this->reset_neuron_random << std::endl;
   parameters_file << "initial state value: " << this->init_neuron_state << std::endl;
 
-//   //TODO: Write these parameters to files as well
-//   parameters_file << "Kernel used: " << kernel_used << std::endl;
-//   parameters_file << "Acqui. function used: " << acqui_used << std::endl;
-
   // BO hyper-parameters
   parameters_file << std::endl << "Initialization method used: " << this->init_method << std::endl;
+  parameters_file << "Acqui. function used: " << this->acquisition_function << std::endl;
+  parameters_file << "EI jitter: " <<Params::acqui_ei::jitter() << std::endl;
   parameters_file << "UCB alpha: " << Params::acqui_ucb::alpha() << std::endl;
   parameters_file << "GP-UCB delta: " << Params::acqui_gpucb::delta() << std::endl;
   parameters_file << "Kernel noise: " << Params::kernel::noise() << std::endl;

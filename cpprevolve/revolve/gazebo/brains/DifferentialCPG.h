@@ -58,6 +58,7 @@ extern constexpr double kernel_l_ = 0.2;
 extern constexpr int kernel_squared_exp_ard_k_ = 4;
 extern constexpr double acqui_gpucb_delta_ = 0.1;
 extern constexpr double acqui_ucb_alpha_ = 0.5;
+extern constexpr double acqui_ei_jitter_= 0.f;
 
 
 typedef std::vector< double > state_type;
@@ -253,6 +254,9 @@ namespace revolve
 
       /// \brief Holder for loading a brain
       private: std::string load_brain = "";
+
+      /// \brief Specifies the acquisition function used
+      private: std::string acquisition_function= "EI";
     };
   }
 }

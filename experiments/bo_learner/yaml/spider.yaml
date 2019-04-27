@@ -164,6 +164,7 @@ brain:
     kernel_squared_exp_ard_k: 4
     acqui_gpucb_delta: 0.1
     acqui_ucb_alpha: 0.5
+    acqui_ei_jitter: 0
   meta:
     n_learning_iters: 4
     n_cooldown_iters: 0
