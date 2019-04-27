@@ -118,13 +118,13 @@ DifferentialCPG::DifferentialCPG(
   this->signal_factor = std::stoi(controller->GetAttribute("signal_factor")->GetAsString());
 
   // (Global)Learner parameters
-  double kernel_noise = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
-  bool kernel_optimize_noise = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
-  double kernel_sigma_sq = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
-  double kernel_l = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
-  int kernel_squared_exp_ard_k = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
-  double acqui_gpucb_delta = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
-  double acqui_ucb_alpha = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
+  double kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
+  bool kernel_optimize_noise_ = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
+  double kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
+  double kernel_l_ = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
+  int kernel_squared_exp_ard_k_ = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
+  double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
+  double acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
   this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
@@ -1038,9 +1038,9 @@ struct DifferentialCPG::Params{
 #error(NO SOLVER IS DEFINED)
 #endif
   struct kernel : public limbo::defaults::kernel {
-    BO_PARAM(double, noise, kernel_noise);
+    BO_PARAM(double, noise, kernel_noise_);
 
-    BO_PARAM(bool, optimize_noise, kernel_optimize_noise);
+    BO_PARAM(bool, optimize_noise, kernel_optimize_noise_);
   };
 
   struct bayes_opt_bobase : public limbo::defaults::bayes_opt_bobase {
@@ -1057,29 +1057,29 @@ struct DifferentialCPG::Params{
 
   struct kernel_exp : public limbo::defaults::kernel_exp {
     /// @ingroup kernel_defaults
-    BO_PARAM(double, sigma_sq, kernel_sigma_sq);
-    BO_PARAM(double, l, kernel_l); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
+    BO_PARAM(double, sigma_sq, kernel_sigma_sq_);
+    BO_PARAM(double, l, kernel_l_); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
   };
 
   struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
     /// @ingroup kernel_defaults
-    BO_PARAM(int, k, kernel_squared_exp_ard_k); // k number of columns used to compute M
+    BO_PARAM(int, k, kernel_squared_exp_ard_k_); // k number of columns used to compute M
     /// @ingroup kernel_defaults
-    BO_PARAM(double, sigma_sq, kernel_sigma_sq); //brochu2010tutorial p.9 without sigma_sq
+    BO_PARAM(double, sigma_sq, kernel_sigma_sq_); //brochu2010tutorial p.9 without sigma_sq
   };
 
   struct kernel_maternfivehalves : public limbo::defaults::kernel_maternfivehalves
   {
-    BO_PARAM(double, sigma_sq, kernel_sigma_sq); //brochu2010tutorial p.9 without sigma_sq
-    BO_PARAM(double, l, kernel_l); //characteristic length scale
+    BO_PARAM(double, sigma_sq, kernel_sigma_sq_); //brochu2010tutorial p.9 without sigma_sq
+    BO_PARAM(double, l, kernel_l_); //characteristic length scale
   };
 
   struct acqui_gpucb : public limbo::defaults::acqui_gpucb {
     //UCB(x) = \mu(x) + \kappa \sigma(x).
-    BO_PARAM(double, delta, acqui_gpucb_delta); // default delta = 0.1, delta in (0,1) convergence guaranteed
+    BO_PARAM(double, delta, acqui_gpucb_delta_); // default delta = 0.1, delta in (0,1) convergence guaranteed
   };
 
-  // We do Random Sampling manually to allow for incorporation in our loop
+  // This is just a placeholder to be able to use limbo with revolve
   struct init_lhs : public limbo::defaults::init_lhs{
     BO_PARAM(int, samples, 0);
   };
@@ -1089,7 +1089,7 @@ struct DifferentialCPG::Params{
     //iterations is high, alpha can be low for high accuracy in enough iterations.
     // In contrast, the lsow iterations should have high alpha for high
     // searching in limited iterations, which guarantee to optimal.
-    BO_PARAM(double, alpha, acqui_ucb_alpha); // default alpha = 0.5
+    BO_PARAM(double, alpha, acqui_ucb_alpha_); // default alpha = 0.5
   };
 };
 
