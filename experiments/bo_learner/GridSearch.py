@@ -7,14 +7,14 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 3
-n_jobs = 3
+n_runs = 5
+n_jobs = 4
 search_space = {
     'kernel_sigma_sq': [0.01],
     'kernel_l': [0.1, 0.2],
     'evaluation_rate': [5],
-    'init_method': ["ORT", "LHS"],
-    'verbose': [1],
+    'init_method': ["RS", "LHS"],
+    'verbose': [0],
 }
 
 # Name of the file
@@ -43,7 +43,7 @@ def write_file(filename, contents):
     with open(filename, 'w') as file:
         # Write updated contents
         for line in contents:
-            file.write(line + "\n")
+            file.write((line + "\n"))
         file.close()
 
 
@@ -84,9 +84,9 @@ def run(i, sub_directory, model, params):
     yaml_model = my_yaml_path + sub_directory + model.split(".yaml")[0] + "-" + str(k) + "-" + str(i) + ".yaml"
 
     # Change port: We need to do this via the manager
-    world_address = "127.0.0.1:" + str(11350 + i)
-    os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11350 + i)
-    os.environ["GAZEBO_PORT"] = str(11350 + i)
+    world_address = "127.0.0.1:" + str(11360 + i)
+    os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11360 + i)
+    os.environ["LIBGL_ALWAYS_INDIRECT"] = "0"
 
     # Call the experiment
     py_command = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6" \
@@ -134,14 +134,15 @@ if __name__ == "__main__":
     # Do analysis
     fitness_list = []
     for i in range(n_unique_experiments):
-        # Get runs for this experiment
         path = output_path + str(i) + "/*/"
         path_list  = glob(path)
+        path_list = [my_path for my_path in path_list if os.path.exists(my_path + "fitnesses.txt")]
+        n_subruns = len(path_list)
         n_rows = len([(line.rstrip('\n')) for line in open(path_list[0] + "fitnesses.txt")])
 
         # Working variables
-        fitnesses = np.empty((n_rows,n_runs))
-        fitnesses_mon = np.empty((n_rows,n_runs))
+        fitnesses = np.empty((n_rows,n_subruns))
+        fitnesses_mon = np.empty((n_rows,n_subruns))
 
         # Create plot
         plt.figure()
@@ -151,7 +152,7 @@ if __name__ == "__main__":
         plt.grid()
 
         # Get sub-runs for this setup
-        for ix,e in enumerate(path_list):
+        for ix, e in enumerate(path_list):
             # Read fitness
             fitness = [float((line.rstrip('\n'))) for line in open(e + "fitnesses.txt")]
 
@@ -197,3 +198,9 @@ if __name__ == "__main__":
     yaml_files = glob(yaml_temp + "*")
     for f in yaml_files:
         os.remove(f)
+
+    # Write the parameters
+    params_string =[]
+    for key, value in iter(search_space.items()):
+        params_string += [str(key) + ": " + str(value)]
+    write_file(output_path + "params.txt", params_string)

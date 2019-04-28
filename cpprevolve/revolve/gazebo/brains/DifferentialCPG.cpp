@@ -409,12 +409,6 @@ void DifferentialCPG::bo_init_sampling(){
     // Latin Hypercube Sampling
   else if(this->init_method == "LHS")
   {
-    // Check
-    if(this->n_init_samples % this->n_weights != 0)
-    {
-      std::cout << "Warning: Ideally the number of initial samples is a multiple of n_weights for LHS sampling " << std::endl;
-    }
-
     // Working variable
     double my_range = 1.f/this->n_init_samples;
 
@@ -606,14 +600,11 @@ void DifferentialCPG::bo_step(){
 
     if(this->acquisition_function == "UCB")
     {
-      // Choose from acquisition functions
-      using Acqui_t = limbo::acqui::UCB<DifferentialCPG::Params, GP_t>;
-
       // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
       limbo::bayes_opt::BOptimizer<Params,
                                    limbo::initfun<Init_t>,
                                    limbo::modelfun<GP_t>,
-                                   limbo::acquifun<Acqui_t>> boptimizer;
+                                   limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
       // Optimize. Pass dummy evaluation function and observations .
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
@@ -623,14 +614,11 @@ void DifferentialCPG::bo_step(){
     }
     else if(this->acquisition_function == "GP_UCB")
     {
-      // Choose from acquisition functions
-      using Acqui_t = limbo::acqui::GP_UCB<DifferentialCPG::Params, GP_t>;
-
       // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
       limbo::bayes_opt::BOptimizer<Params,
                                    limbo::initfun<Init_t>,
                                    limbo::modelfun<GP_t>,
-                                   limbo::acquifun<Acqui_t>> boptimizer;
+                                   limbo::acquifun<limbo::acqui::GP_UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
       // Optimize. Pass dummy evaluation function and observations .
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
@@ -640,14 +628,11 @@ void DifferentialCPG::bo_step(){
     }
     else if(this->acquisition_function == "EI")
     {
-      // Choose from acquisition functions
-      using Acqui_t = limbo::acqui::EI<DifferentialCPG::Params, GP_t>;
-
       // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
       limbo::bayes_opt::BOptimizer<Params,
                                    limbo::initfun<Init_t>,
                                    limbo::modelfun<GP_t>,
-                                   limbo::acquifun<Acqui_t>> boptimizer;
+                                   limbo::acquifun<limbo::acqui::EI<DifferentialCPG::Params, GP_t>>> boptimizer;
 
       // Optimize. Pass dummy evaluation function and observations .
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
@@ -783,7 +768,10 @@ void DifferentialCPG::Update(
       }
 
       // Exit
-      std::cout << "I am finished " << std::endl;
+      if(this->verbose)
+      {
+        std::cout << "\nI am finished " << std::endl;
+      }
       std::exit(0);
     }
 
