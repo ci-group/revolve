@@ -256,7 +256,7 @@ namespace revolve
       private: std::string load_brain = "";
 
       /// \brief Specifies the acquisition function used
-      private: std::string acquisition_function= "EI";
+      private: std::string acquisition_function= "UCB";
     };
   }
 }

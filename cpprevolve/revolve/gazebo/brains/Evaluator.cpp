@@ -33,7 +33,7 @@ Evaluator::Evaluator(const double _evaluationRate)
 
   this->currentPosition_.Reset();
   this->previousPosition_.Reset();
-  this->locomotion_type = "directed"; // Directed or gait
+  this->locomotion_type = "gait"; // Directed or gait
 }
 
 /////////////////////////////////////////////////

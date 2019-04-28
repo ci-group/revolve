@@ -155,7 +155,7 @@ brain:
     range_ub: 1.0
     init_neuron_state: 0.5
   learner:
-    n_init_samples: 5
+    n_init_samples: 20
     init_method: "LHS"
     kernel_noise: 0.00000001
     kernel_optimize_noise: "false"
@@ -166,10 +166,10 @@ brain:
     acqui_ucb_alpha: 0.5
     acqui_ei_jitter: 0
   meta:
-    n_learning_iters: 4
-    n_cooldown_iters: 0
+    n_learning_iterations: 80
+    n_cooldown_iterations: 0
     reset_robot_position: "true"
     evaluation_rate: 20
     output_directory: ""
     verbose: 1
-    startup_time: 4
+    startup_time: 0

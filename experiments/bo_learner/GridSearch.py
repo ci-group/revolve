@@ -7,12 +7,10 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 5
+n_runs = 20
 n_jobs = 4
 search_space = {
-    'kernel_sigma_sq': [0.01],
-    'kernel_l': [0.1, 0.2],
-    'evaluation_rate': [5],
+    'evaluation_rate': [70],
     'init_method': ["RS", "LHS"],
     'verbose': [0],
 }
