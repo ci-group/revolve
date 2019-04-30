@@ -232,7 +232,7 @@ namespace revolve
       public: void get_analytics();
 
       /// \brief Show output (1) or not (0)
-      public: int verbose = 1;
+      public: int verbose;
 
       /// \brief Time to skip for fitness evaluation during training
       public: int startup_time;
@@ -256,7 +256,7 @@ namespace revolve
       private: std::string load_brain = "";
 
       /// \brief Specifies the acquisition function used
-      private: std::string acquisition_function= "UCB";
+      public: std::string acquisition_function;
     };
   }
 }

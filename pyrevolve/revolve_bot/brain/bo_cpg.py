@@ -15,7 +15,8 @@ class BrainCPGBO(Brain):
         self.init_neuron_state = 0.5
 
         # BO hyper-parameters
-        self.init_method = "LHS"  # {RS, LHS}
+        self.init_method = ""  # {RS, LHS}
+        self.acquisition_function = ""
         self.kernel_noise = ""
         self.kernel_optimize_noise = ""
         self.kernel_sigma_sq = ""
@@ -24,7 +25,7 @@ class BrainCPGBO(Brain):
         self.acqui_gpucb_delta = ""
         self.acqui_ucb_alpha = ""
         self.acqui_ei_jitter = ""
-        self.n_init_samples = 25
+        self.n_init_samples = ""
 
         # Various
         self.n_learning_iterations = 10
@@ -75,6 +76,7 @@ class BrainCPGBO(Brain):
             'kernel_sigma_sq': str(self.kernel_sigma_sq),
             'kernel_l': str(self.kernel_l),
             'kernel_squared_exp_ard_k': str(self.kernel_squared_exp_ard_k),
+            'acquisition_function': str(self.acquisition_function),
             'acqui_gpucb_delta': str(self.acqui_gpucb_delta),
             'acqui_ucb_alpha': str(self.acqui_ucb_alpha),
             'acqui_ei_jitter': str(self.acqui_ei_jitter),

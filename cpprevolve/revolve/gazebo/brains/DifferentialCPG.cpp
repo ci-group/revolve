@@ -126,6 +126,7 @@ DifferentialCPG::DifferentialCPG(
   double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
   double acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
   double acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
+  this->acquisition_function = learner->GetAttribute("acquisition_function")->GetAsString();
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
   this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
@@ -205,7 +206,7 @@ DifferentialCPG::DifferentialCPG(
     {
       frame_of_reference = -1;
     }
-    // We are a right neuron
+      // We are a right neuron
     else if (coord_x > 0)
     {
       frame_of_reference = 1;
@@ -341,9 +342,6 @@ DifferentialCPG::DifferentialCPG(
 
     // Initialize BO
     this->bo_init_sampling();
-
-    // Set ODE matrix at initialization
-    this->set_ode_matrix();
   }
 
   // Save parameters
@@ -523,55 +521,57 @@ void DifferentialCPG::save_fitness(){
  * iteration and returns the best sample
  */
 void DifferentialCPG::bo_step(){
-  // In case we are done with the initial random sampling. Correct for
-  // initial sample taken by. Statement equivalent to !(i < n_samples -1)
-  if (this->current_iteration > this->n_init_samples - 2)
+  // In case we are done with the initial random sampling.
+  if (this->current_iteration >= this->n_init_samples)
   {
     // Holder for sample
     Eigen::VectorXd x;
-
-    if(this->acquisition_function == "UCB")
+    // TODO: THIS RESULTS IN A BUG:
+    // std::cout << "Acquisition function:  " << this->acquisition_function << std::endl;
+    if(true)
     {
+
       // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
       limbo::bayes_opt::BOptimizer<Params,
-                                   limbo::initfun<Init_t>,
-                                   limbo::modelfun<GP_t>,
-                                   limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
+          limbo::initfun<Init_t>,
+          limbo::modelfun<GP_t>,
+          limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
       // Optimize. Pass dummy evaluation function and observations .
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
                           this->samples,
                           this->observations);
-      x = boptimizer.last_sample();
-    }
-    else if(this->acquisition_function == "GP_UCB")
-    {
-      // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
-      limbo::bayes_opt::BOptimizer<Params,
-                                   limbo::initfun<Init_t>,
-                                   limbo::modelfun<GP_t>,
-                                   limbo::acquifun<limbo::acqui::GP_UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
-      // Optimize. Pass dummy evaluation function and observations .
-      boptimizer.optimize(DifferentialCPG::evaluation_function(),
-                          this->samples,
-                          this->observations);
       x = boptimizer.last_sample();
     }
-    else if(this->acquisition_function == "EI")
-    {
-      // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
-      limbo::bayes_opt::BOptimizer<Params,
-                                   limbo::initfun<Init_t>,
-                                   limbo::modelfun<GP_t>,
-                                   limbo::acquifun<limbo::acqui::EI<DifferentialCPG::Params, GP_t>>> boptimizer;
-
-      // Optimize. Pass dummy evaluation function and observations .
-      boptimizer.optimize(DifferentialCPG::evaluation_function(),
-                          this->samples,
-                          this->observations);
-      x = boptimizer.last_sample();
-    }
+      //        else if(this->acquisition_function == "GP_UCB")
+      //        {
+      //            // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+      //            limbo::bayes_opt::BOptimizer<Params,
+      //                    limbo::initfun<Init_t>,
+      //                    limbo::modelfun<GP_t>,
+      //                    limbo::acquifun<limbo::acqui::GP_UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
+      //
+      //            // Optimize. Pass dummy evaluation function and observations .
+      //            boptimizer.optimize(DifferentialCPG::evaluation_function(),
+      //                                this->samples,
+      //                                this->observations);
+      //            x = boptimizer.last_sample();
+      //        }
+      //        else if(this->acquisition_function == "EI")
+      //        {
+      //            // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+      //            limbo::bayes_opt::BOptimizer<Params,
+      //                    limbo::initfun<Init_t>,
+      //                    limbo::modelfun<GP_t>,
+      //                    limbo::acquifun<limbo::acqui::EI<DifferentialCPG::Params, GP_t>>> boptimizer;
+      //
+      //            // Optimize. Pass dummy evaluation function and observations .
+      //            boptimizer.optimize(DifferentialCPG::evaluation_function(),
+      //                                this->samples,
+      //                                this->observations);
+      //            x = boptimizer.last_sample();
+      //        }
     else
     {
       std::cout << "Specify correct acquisition function: {EI, UCB, GP_UCB}" << std::endl;
@@ -616,16 +616,18 @@ void DifferentialCPG::Update(
     this->evaluator->Update(this->robot->WorldPose());
     this->start_fitness_recording = false;
   }
-
-  // Evaluate policy on certain time limit
-  if (elapsed_evaluation_time > this->evaluation_rate)
+  // Evaluate policy on certain time limit, or if we just started
+  if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
     // Update position
     this->evaluator->Update(this->robot->WorldPose());
     this->start_fitness_recording = true;
 
-    // Get and save fitness
-    this->save_fitness();
+    // Get and save fitness (but not at start)
+    if(not (_time - _step < 0.001 ))
+    {
+      this->save_fitness();
+    }
 
     // Reset robot if opted to do
     if(this->reset_robot_position)
@@ -658,7 +660,6 @@ void DifferentialCPG::Update(
           std::cout << std::endl << "I am learning " << std::endl;
         }
       }
-
       // Get new sample (weights) and add sample
       this->bo_step();
 
@@ -691,7 +692,7 @@ void DifferentialCPG::Update(
     }
       // Else we don't want to update anything, but construct plots from this run once.
     else
-      {
+    {
       // Create plots
       if(this->run_analytics)
       {
@@ -702,7 +703,7 @@ void DifferentialCPG::Update(
       // Exit
       if(this->verbose)
       {
-        std::cout << "\nI am finished " << std::endl;
+        std::cout << std::endl << "I am finished " << std::endl;
       }
       std::exit(0);
     }
@@ -958,7 +959,6 @@ void DifferentialCPG::step(
     std::tie(bias, gain, state, frame_of_reference) = neuron.second;
     double x, y, z;
     std::tie(x, y, z) = neuron.first;
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    neuron.second = {bias, gain, this->next_state[i], frame_of_reference};
 
     // Should be one, as output should be based on +1 neurons, which are the A neurons
     if (i % 2 == 1)
