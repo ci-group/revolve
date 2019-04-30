@@ -11,8 +11,9 @@ n_runs = 10
 n_jobs = 4
 search_space = {
     'evaluation_rate': [70],
-    'init_method': ["RS", "LHS"],
+#    'init_method': ["RS", "LHS"],
     'verbose': [0],
+    'signal_factor': [1.5,1.7, 1.9, 2.1, 2.3, 2.5, 2.7, 2.9],
 }
 
 # Name of the file

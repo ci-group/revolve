@@ -198,9 +198,22 @@ DifferentialCPG::DifferentialCPG(
     auto motor_id = motor->GetAttribute("part_id")->GetAsString();
     this->positions[motor_id] = {coord_x, coord_y};
 
+    // Set frame of reference
+    int frame_of_reference = 0;
+    // We are a left neuron
+    if (coord_x < 0)
+    {
+      frame_of_reference = -1;
+    }
+    // We are a right neuron
+    else if (coord_x > 0)
+    {
+      frame_of_reference = 1;
+    }
+
     // Save neurons: bias/gain/state. Make sure initial states are of different sign.
-    this->neurons[{coord_x, coord_y, 1}] = {0.f, 0.f, this->init_neuron_state}; //Neuron A
-    this->neurons[{coord_x, coord_y, -1}] = {0.f, 0.f, -this->init_neuron_state}; // Neuron B
+    this->neurons[{coord_x, coord_y, 1}] = {0.f, 0.f, this->init_neuron_state, frame_of_reference}; //Neuron A
+    this->neurons[{coord_x, coord_y, -1}] = {0.f, 0.f, -this->init_neuron_state, frame_of_reference}; // Neuron B
 
     // TODO: Add check for duplicate coordinates
     motor = motor->GetNextElement("rv:servomotor");
@@ -837,18 +850,25 @@ void DifferentialCPG::reset_neuron_state(){
   int c = 0;
   for(auto const &neuron : this->neurons)
   {
-    int x, y, z;
+    // Get neuron properties
+    int x, y, z, frame_of_reference;
+    double bias ,gain ,state;
     std::tie(x, y, z) = neuron.first;
+    std::tie(bias, gain, state, frame_of_reference) = neuron.second;
+
     if (z == -1)
     {
       // Neuron B
       if (this->reset_neuron_random)
       {
-        this->neurons[{x, y, z}] = {0.f, 0.f,((double) rand() / (RAND_MAX))*2*this->init_neuron_state - this->init_neuron_state} ;
+        this->neurons[{x, y, z}] = {0.f,
+                                    0.f,
+                                    ((double) rand() / (RAND_MAX))*2*this->init_neuron_state - this->init_neuron_state,
+                                    frame_of_reference};
       }
       else
       {
-        this->neurons[{x, y, z}] = {0.f, 0.f, -this->init_neuron_state};
+        this->neurons[{x, y, z}] = {0.f, 0.f, -this->init_neuron_state, frame_of_reference};
       }
     }
     else
@@ -856,11 +876,14 @@ void DifferentialCPG::reset_neuron_state(){
       // Neuron A
       if (this->reset_neuron_random)
       {
-        this->neurons[{x, y, z}] = {0.f, 0.f,((double) rand() / (RAND_MAX))*2*this->init_neuron_state - this->init_neuron_state} ;
+        this->neurons[{x, y, z}] = {0.f,
+                                    0.f,
+                                    ((double) rand() / (RAND_MAX))*2*this->init_neuron_state - this->init_neuron_state,
+                                    frame_of_reference};
       }
       else
       {
-        this->neurons[{x, y, z}] = {0.f, 0.f, +this->init_neuron_state};
+        this->neurons[{x, y, z}] = {0.f, 0.f, +this->init_neuron_state, frame_of_reference};
       }
     }
     c++;
@@ -882,7 +905,8 @@ void DifferentialCPG::step(
   {
     // Neuron.second accesses the second 3-tuple of a neuron, containing the bias/gain/state.
     double recipient_bias, recipient_gain, recipient_state;
-    std::tie(recipient_bias, recipient_gain, recipient_state) = neuron.second;
+    int frame_of_reference;
+    std::tie(recipient_bias, recipient_gain, recipient_state, frame_of_reference) = neuron.second;
 
     // Save for ODE
     this->next_state[neuron_count] = recipient_state;
@@ -930,10 +954,11 @@ void DifferentialCPG::step(
     // Get bias gain and state for this neuron. Note that we don't take the coordinates.
     // However, they are implicit as their order did not change.
     double bias, gain, state;
-    std::tie(bias, gain, state) = neuron.second;
+    int frame_of_reference;
+    std::tie(bias, gain, state, frame_of_reference) = neuron.second;
     double x, y, z;
     std::tie(x, y, z) = neuron.first;
-    neuron.second = {bias, gain, this->next_state[i]};
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////    neuron.second = {bias, gain, this->next_state[i], frame_of_reference};
 
     // Should be one, as output should be based on +1 neurons, which are the A neurons
     if (i % 2 == 1)
