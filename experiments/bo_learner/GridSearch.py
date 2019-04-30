@@ -7,21 +7,22 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 10
+n_runs = 2
 n_jobs = 4
+my_yaml_path = "experiments/bo_learner/yaml/"
+base_model = "spider.yaml"
+manager = "experiments/bo_learner/manager.py"
+python_interpreter = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6"
 search_space = {
-    'evaluation_rate': [70],
+    'evaluation_rate': [5],
 #    'init_method': ["RS", "LHS"],
-    'verbose': [0],
-    'signal_factor': [1.5,1.7, 1.9, 2.1, 2.3, 2.5, 2.7, 2.9],
+    'verbose': [1],
+    'signal_factor': [1.5,1.7],
 }
 
-# Name of the file
-my_filename = "pyrevolve/revolve_bot/brain/bo_cpg.py"
-my_yaml_path = "experiments/bo_learner/yaml/"
+# You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
-base_model = "spider.yaml"
 
 
 def change_parameters(original_file, parameters):
@@ -88,18 +89,15 @@ def run(i, sub_directory, model, params):
     os.environ["LIBGL_ALWAYS_INDIRECT"] = "0"
 
     # Call the experiment
-    py_command = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6" \
+    py_command = python_interpreter + \
                  " ./revolve.py" \
-                 " --manager experiments/bo_learner/manager.py" \
+                 " --manager " + manager + \
                  " --world-address " + world_address + \
                  " --robot-yaml " + yaml_model
     os.system(py_command)
 
 
 if __name__ == "__main__":
-    # Read file
-    py_file = [(line.rstrip('\n')) for line in open(my_filename)]
-
     # Get permutations
     keys, values = zip(*search_space.items())
     experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
@@ -153,14 +151,14 @@ if __name__ == "__main__":
         # Get sub-runs for this setup
         for ix, e in enumerate(path_list):
             # Read fitness
-            fitness = [float((line.rstrip('\n'))) for line in open(e + "fitnesses.txt")]
+            my_fitness = [float((line.rstrip('\n'))) for line in open(e + "fitnesses.txt")]
 
             # Transfer fitness to monotonic sequence and save
-            fitness_mon = [e if e >= max(fitness[:ix+1]) else max(fitness[:ix+1]) for ix, e in enumerate(fitness)]
+            my_fitness_mon = [e if e >= max(my_fitness[:ix+1]) else max(my_fitness[:ix+1]) for ix, e in enumerate(my_fitness)]
 
             # Save fitness
-            fitnesses_mon[:,ix] = np.array(fitness_mon)
-            fitnesses[:,ix] = np.array(fitness)
+            fitnesses_mon[:,ix] = np.array(my_fitness_mon)
+            fitnesses[:,ix] = np.array(my_fitness)
 
             # Plot the avg fitness
             plt.plot(fitnesses_mon[:, ix], linewidth = 1, color = "blue")
