@@ -94,6 +94,5 @@ max_fitness_plot(root_directory,
                  n_initial_samples,
                  n_no_learning_iterations)
 
-#save_best_brain(root_directory)
-
-#print("Plots are constructed  at ", root_directory)
+save_best_brain(root_directory)
+print("Plots are constructed  at ", root_directory)

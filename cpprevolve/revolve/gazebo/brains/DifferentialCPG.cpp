@@ -126,6 +126,7 @@ DifferentialCPG::DifferentialCPG(
     double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
     double acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
     double acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
+    this->acquisition_function = learner->GetAttribute("acquisition_function")->GetAsString();
     this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
     this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
     this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
@@ -266,6 +267,7 @@ DifferentialCPG::DifferentialCPG(
     }
 
     std::system(("mkdir -p " + this->directory_name).c_str());
+    std::cout << "Output dir " << this->directory_name;
 
     // Initialise array of neuron states for Update() method
     this->next_state = new double[this->neurons.size()];
@@ -492,7 +494,6 @@ void DifferentialCPG::save_fitness(){
 
     // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
     this->observations.push_back(observation);
-    std::cout << "CP1\n";
     // Write fitness to file
     std::ofstream fitness_file;
     fitness_file.open(this->directory_name + "fitnesses.txt", std::ios::app);
@@ -507,71 +508,61 @@ void DifferentialCPG::save_fitness(){
  * iteration and returns the best sample
  */
 void DifferentialCPG::bo_step(){
-    // In case we are done with the initial random sampling. Correct for
-    // initial sample taken by. Statement equivalent to !(i < n_samples -1)
-    std::cout << "Current iteration:" << this->current_iteration << "\n";
-    std::cout << "N_init samples: " << this->n_init_samples << "\n";
-    std::cout << "samples.size()" << this->samples.size() << "\n";
-
+    // In case we are done with the initial random sampling.
     if (this->current_iteration >= this->n_init_samples)
     {
-        std::cout << "Entering bo_step inner  \n";
         // Holder for sample
         Eigen::VectorXd x;
-
-        if(this->acquisition_function == "UCB")
+        // TODO: THIS RESULTS IN A BUG:
+        // std::cout << "Acquisition function:  " << this->acquisition_function << std::endl;
+        if(true)
         {
-            std::cout << "CP8\n";
+
             // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
             limbo::bayes_opt::BOptimizer<Params,
                     limbo::initfun<Init_t>,
                     limbo::modelfun<GP_t>,
                     limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
-            std::cout << "CP9\n";
 
             // Optimize. Pass dummy evaluation function and observations .
             boptimizer.optimize(DifferentialCPG::evaluation_function(),
                                 this->samples,
                                 this->observations);
-            std::cout << "CP10\n";
 
             x = boptimizer.last_sample();
-            std::cout << "CP11\n";
-
         }
-        else if(this->acquisition_function == "GP_UCB")
-        {
-            // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
-            limbo::bayes_opt::BOptimizer<Params,
-                    limbo::initfun<Init_t>,
-                    limbo::modelfun<GP_t>,
-                    limbo::acquifun<limbo::acqui::GP_UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
-
-            // Optimize. Pass dummy evaluation function and observations .
-            boptimizer.optimize(DifferentialCPG::evaluation_function(),
-                                this->samples,
-                                this->observations);
-            x = boptimizer.last_sample();
-        }
-        else if(this->acquisition_function == "EI")
-        {
-            // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
-            limbo::bayes_opt::BOptimizer<Params,
-                    limbo::initfun<Init_t>,
-                    limbo::modelfun<GP_t>,
-                    limbo::acquifun<limbo::acqui::EI<DifferentialCPG::Params, GP_t>>> boptimizer;
-
-            // Optimize. Pass dummy evaluation function and observations .
-            boptimizer.optimize(DifferentialCPG::evaluation_function(),
-                                this->samples,
-                                this->observations);
-            x = boptimizer.last_sample();
-        }
+//        else if(this->acquisition_function == "GP_UCB")
+//        {
+//            // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+//            limbo::bayes_opt::BOptimizer<Params,
+//                    limbo::initfun<Init_t>,
+//                    limbo::modelfun<GP_t>,
+//                    limbo::acquifun<limbo::acqui::GP_UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
+//
+//            // Optimize. Pass dummy evaluation function and observations .
+//            boptimizer.optimize(DifferentialCPG::evaluation_function(),
+//                                this->samples,
+//                                this->observations);
+//            x = boptimizer.last_sample();
+//        }
+//        else if(this->acquisition_function == "EI")
+//        {
+//            // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+//            limbo::bayes_opt::BOptimizer<Params,
+//                    limbo::initfun<Init_t>,
+//                    limbo::modelfun<GP_t>,
+//                    limbo::acquifun<limbo::acqui::EI<DifferentialCPG::Params, GP_t>>> boptimizer;
+//
+//            // Optimize. Pass dummy evaluation function and observations .
+//            boptimizer.optimize(DifferentialCPG::evaluation_function(),
+//                                this->samples,
+//                                this->observations);
+//            x = boptimizer.last_sample();
+//        }
         else
         {
             std::cout << "Specify correct acquisition function: {EI, UCB, GP_UCB}" << std::endl;
         }
-        std::cout << "CP12\n";
 
         // Save this x_hat_star
         this->samples.push_back(x);
@@ -622,14 +613,8 @@ void DifferentialCPG::Update(
         // Get and save fitness (but not at start)
         if(not (_time - _step < 0.001 ))
         {
-            std::cout << "Save fitness iter\n";
             this->save_fitness();
         }
-        else
-        {
-            std::cout << "Skip fitness saving \n";
-        }
-        std::cout << "CP6\n";
 
         // Reset robot if opted to do
         if(this->reset_robot_position)
@@ -641,17 +626,12 @@ void DifferentialCPG::Update(
             this->robot->SetWorldPose(start_pose);
             this->robot->Update();
         }
-        std::cout << "CP7\n";
-
 
         // Reset neuron state if opted to do
         if(this->reset_neuron_state_bool)
         {
             this->reset_neuron_state();
         }
-        std::cout << "CP8\n";
-        std::cout << "Number of init samples: " << this->n_init_samples << "\n";
-        std::cout << "Number of n_learning_iterations samples: " << this->n_learning_iterations << "\n";
 
         // If we are still learning
         if(this->current_iteration < this->n_init_samples + this->n_learning_iterations)
@@ -667,16 +647,11 @@ void DifferentialCPG::Update(
                     std::cout << std::endl << "I am learning " << std::endl;
                 }
             }
-            std::cout << "CP2\n";
-
             // Get new sample (weights) and add sample
             this->bo_step();
-            std::cout << "CP3\n";
 
             // Set new weights
             this->set_ode_matrix();
-
-            std::cout << "CP4\n";
 
             // Update position
             this->evaluator->Update(this->robot->WorldPose());
@@ -715,7 +690,7 @@ void DifferentialCPG::Update(
             // Exit
             if(this->verbose)
             {
-                std::cout << "\nI am finished " << std::endl;
+                std::cout << std::endl << "I am finished " << std::endl;
             }
             std::exit(0);
         }
@@ -724,8 +699,6 @@ void DifferentialCPG::Update(
         this->start_time = _time;
         this->evaluator->Reset();
         this->current_iteration += 1;
-        std::cout << "CP5\n";
-
     }
 
     // Send new signals to the motors
