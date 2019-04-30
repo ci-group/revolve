@@ -51,14 +51,14 @@
 #define MAX_NEURON_PARAMS 3
 
 // Set global variables for the param structure of BO with default values
-extern constexpr double kernel_noise_ = 0.0000001;
-extern constexpr bool kernel_optimize_noise_ = false;
-extern constexpr double kernel_sigma_sq_ = 0.001;
-extern constexpr double kernel_l_ = 0.2;
-extern constexpr int kernel_squared_exp_ard_k_ = 4;
-extern constexpr double acqui_gpucb_delta_ = 0.1;
-extern constexpr double acqui_ucb_alpha_ = 0.5;
-extern constexpr double acqui_ei_jitter_= 0.f;
+inline constexpr double kernel_noise_ = 0.0000001;
+inline constexpr bool kernel_optimize_noise_ = false;
+inline constexpr double kernel_sigma_sq_ = 0.001;
+inline constexpr double kernel_l_ = 0.2;
+inline constexpr int kernel_squared_exp_ard_k_ = 4;
+inline constexpr double acqui_gpucb_delta_ = 0.1;
+inline constexpr double acqui_ucb_alpha_ = 0.5;
+inline constexpr double acqui_ei_jitter_= 0.f;
 
 
 typedef std::vector< double > state_type;

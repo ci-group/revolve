@@ -150,7 +150,7 @@ brain:
     reset_neuron_state_bool: "true"
     reset_neuron_random: "false"
     abs_output_bound: 1.0
-    signal_factor: 1.5
+    signal_factor: 2.5
     range_lb: -1.0
     range_ub: 1.0
     init_neuron_state: 0.5

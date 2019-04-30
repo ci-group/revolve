@@ -7,7 +7,7 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 20
+n_runs = 10
 n_jobs = 4
 search_space = {
     'evaluation_rate': [70],
@@ -133,10 +133,10 @@ if __name__ == "__main__":
     fitness_list = []
     for i in range(n_unique_experiments):
         path = output_path + str(i) + "/*/"
-        path_list  = glob(path)
+        path_list = glob(path)
         path_list = [my_path for my_path in path_list if os.path.exists(my_path + "fitnesses.txt")]
-        n_subruns = len(path_list)
         n_rows = len([(line.rstrip('\n')) for line in open(path_list[0] + "fitnesses.txt")])
+        n_subruns = len(path_list)
 
         # Working variables
         fitnesses = np.empty((n_rows,n_subruns))
@@ -201,4 +201,4 @@ if __name__ == "__main__":
     params_string =[]
     for key, value in iter(search_space.items()):
         params_string += [str(key) + ": " + str(value)]
-    write_file(output_path + "params.txt", params_string)
+    write_file(output_path + "search_space.txt", params_string)

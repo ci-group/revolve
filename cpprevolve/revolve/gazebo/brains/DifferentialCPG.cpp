@@ -450,90 +450,9 @@ void DifferentialCPG::bo_init_sampling(){
       this->samples.push_back(init_sample);
     }
   }
-  else if(this->init_method == "ORT")
+  else
   {
-    // Set the number of blocks per dimension
-    int n_blocks = (int)(log(this->n_init_samples)/log(4));
-
-    // Working variables
-    double my_range = 1.f/this->n_init_samples;
-
-    // Todo: Implement this check
-    //    if(((log(this->n_init_samples)/log(4)) % 1.0) != 0){
-    //      std::cout << "Warning: Initial number of samples is no power of 4 \n";
-    //    }
-
-    // Initiate for each dimension a vector holding a permutation of 1,...,n_init_samples
-    std::vector<std::vector<int>> all_dimensions;
-    for (size_t i = 0; i < this->n_weights; i++)
-    {
-      // Holder for one dimension
-      std::vector<int> one_dimension;
-      for (size_t j = 0; j < this->n_init_samples; j++)
-      {
-        one_dimension.push_back(j);
-      }
-
-      // Do permutation
-      std::random_shuffle(one_dimension.begin(), one_dimension.end());
-
-      // Save to list
-      all_dimensions.push_back(one_dimension);
-    }
-
-    // Draw n_init_samples
-    for (size_t i = 0; i < this->n_init_samples; i++)
-    {
-      // Initiate new sample
-      Eigen::VectorXd init_sample(this->n_weights);
-
-      // Each dimensions will have 2^n_blocks rows it can choose from
-      std::vector<int> rows_in_block;
-      int end = (int)(std::pow(2, n_blocks));
-
-      // Loop over all the blocks: we don't have to pick a block randomly
-      for (int j =0; j < n_blocks; j++)
-      {
-        // Generate row numbers in this block: THIS IS WRONG
-        for(int k = j*end; k < (j+1)*end; k++)
-        {
-          rows_in_block.push_back(k);
-        }
-        // Take the vector that is pointing to the actual vector
-        std::vector<int> *row_numbers = &all_dimensions.at(j);
-
-        // Get set intersection
-        std::vector<int> available_rows;
-        std::set_intersection(
-            rows_in_block.begin(),
-            rows_in_block.end(),
-            row_numbers->begin(),
-            row_numbers->end(),
-            std::back_inserter(available_rows));
-
-        // Shuffle available_rows
-        auto rng = std::default_random_engine {};
-        std::shuffle(std::begin(available_rows), std::end(available_rows), rng);
-
-        // Draw the sample
-        double sample = my_range*available_rows.at(0) + ((double) rand() /
-                                                         (RAND_MAX))*my_range;
-        init_sample(j) = sample;
-
-        // Remove element from the list with available row numbers
-        std::vector<int>::iterator position = std::find(available_rows.begin(),
-                                                        available_rows.end(),
-                                                        available_rows.at(0));
-
-        if (position != available_rows.end())
-        {
-          available_rows.erase(position);
-        }
-      }
-
-      // Append sample to samples
-      this->samples.push_back(init_sample);
-    }
+    std::cout << "Please provide a choice of init_method in {LHS, RS}" << std::endl;
   }
 
   // Print samples
