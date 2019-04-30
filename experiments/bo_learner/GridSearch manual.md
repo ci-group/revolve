@@ -1,9 +1,9 @@
 
 # Documentation
 
-This GridSearch.py-file can be used to perform a grid search over some set of parameters. One can just call the file without arguments, e.g.:
+This GridSearch.py-file can be used to perform a grid search over some set of parameters. One can just call the file without arguments, i.e. from the revolve directory::
 
-`/home/maarten/projects/revolve-simulator/revolve/experiments/bo_learner/GridSearch.py`
+`python3 experiments/bo_learner/GridSearch.py`
 
 # Parameters
 After the imports, one can select parameters, e.g.:
@@ -21,7 +21,7 @@ search_space = {
 }
 ```
   
-What happens is that all the parameters in the yaml-file (my_yaml_path + base_model) are used as default for the manager, unless changed here. So, at `search_space` we declare that we want to iterate over the 'init_method' and 'signal_factor' parameters corresponding to the yaml-file. Note that this yaml-file will also contain what brain to use (from which it inherits the parameters). 
+What happens is that all the parameters in the yaml-file (my_yaml_path + base_model) are used as default for the manager, unless changed here. So, at `search_space` we declare that we want to iterate over the `init_method` and `signal_factor` parameters corresponding to the yaml-file. Note that this yaml-file will also contain what brain to use (from which it inherits the parameters).
 
 Search space parameters always need to be entered in a list (as we iterate over elements). From the search_space provided, we take every combination, and perform experiments for it. In this exapmle, we therefore have len(init_method)*len(signal_fator) = 10 experiments. Each experiment is repeated n_runs = 10 number of times, resulting in 200 runs (and with that 200 gzserver instances) to be performed.
 
@@ -32,4 +32,4 @@ The output is written to `output/cpg_bo/main_<timestamp/`. In this directory, we
 
 Some other advice:
  - Set verbose to [0] while running experiments to surpress output. Printing is expensive.
- - Make sure the variable python_interpreter points to the python interpreter you'd like to use, e.g.: python_interpreter = "~/projects/revolve/.venv/bin/python3.6". This python interpreter calls the ./revolve.py with themanager specified.
+ - Make sure the variable python_interpreter points to the python interpreter you'd like to use, e.g.: `python_interpreter = "~/projects/revolve/.venv/bin/python3.6"`. This python interpreter calls the `./revolve.py` with the manager specified.
