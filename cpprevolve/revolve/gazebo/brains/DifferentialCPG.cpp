@@ -113,9 +113,12 @@ DifferentialCPG::DifferentialCPG(
   this->reset_neuron_state_bool = std::stoi(controller->GetAttribute("reset_neuron_state_bool")->GetAsString());
   this->reset_neuron_random = std::stoi(controller->GetAttribute("reset_neuron_random")->GetAsString());
   this->init_neuron_state = std::stod(controller->GetAttribute("init_neuron_state")->GetAsString());
-  this->range_lb = std::stoi(controller->GetAttribute("range_lb")->GetAsString());
-  this->range_ub = std::stoi(controller->GetAttribute("range_ub")->GetAsString());
-  this->signal_factor = std::stoi(controller->GetAttribute("signal_factor")->GetAsString());
+  this->range_lb = std::stod(controller->GetAttribute("range_lb")->GetAsString());
+  this->range_ub = std::stod(controller->GetAttribute("range_ub")->GetAsString());
+  this->use_frame_of_reference = std::stoi(controller->GetAttribute("use_frame_of_reference")->GetAsString());
+  this->signal_factor_all = std::stod(controller->GetAttribute("signal_factor_all")->GetAsString());
+  this->signal_factor_mid = std::stod(controller->GetAttribute("signal_factor_mid")->GetAsString());
+  this->signal_factor_left_right = std::stod(controller->GetAttribute("signal_factor_left_right")->GetAsString());
 
   // (Global)Learner parameters
   double kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
@@ -968,7 +971,28 @@ void DifferentialCPG::step(
 
       // Apply saturation formula
       auto x = this->next_state[i];
-      this->output[j] = this->signal_factor*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+
+      // Use frame of reference
+      if(use_frame_of_reference)
+      {
+        if (std::abs(frame_of_reference) == 1)
+        {
+          this->output[j] = this->signal_factor_left_right*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+        }
+        else if (frame_of_reference == 0)
+        {
+          this->output[j] = this->signal_factor_mid*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+        }
+        else
+        {
+          std::cout << "WARNING: frame_of_reference not in {-1,0,1}." << std::endl;
+        }
+
+      }
+      // Don't use frame of reference
+      else{
+        this->output[j] = this->signal_factor_all*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+      }
       j++;
     }
     i++;
@@ -1089,7 +1113,7 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "n_cooldown_iterations: " << this->n_cooldown_iterations << std::endl;
   parameters_file << "evaluation_rate: " << this->evaluation_rate << std::endl;
   parameters_file << "abs_output_bound: " << this->abs_output_bound << std::endl;
-  parameters_file << "signal_factor: " << this->n_cooldown_iterations << std::endl;
+  parameters_file << "signal_factor_all: " << this->signal_factor_all << std::endl;
   parameters_file << "range_lb: " << this->range_lb << std::endl;
   parameters_file << "range_ub: " << this->range_ub << std::endl;
   parameters_file << "run_analytics: " << this->run_analytics << std::endl;

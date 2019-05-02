@@ -217,7 +217,13 @@ namespace revolve
       private: bool reset_neuron_state_bool;
 
       /// \brief Factor to multiply output signal with
-      private: double signal_factor;
+      private: double signal_factor_all;
+
+      /// \brief Factor to multiply output signal with
+      private: double signal_factor_mid;
+
+      /// \brief Factor to multiply output signal with
+      private: double signal_factor_left_right;
 
       /// \brief Function that resets neuron state
       private: void reset_neuron_state();
@@ -257,6 +263,9 @@ namespace revolve
 
       /// \brief Specifies the acquisition function used
       public: std::string acquisition_function;
+
+      /// \brief Use frame of reference {-1,0,1} version or not
+      private: bool use_frame_of_reference;
     };
   }
 }

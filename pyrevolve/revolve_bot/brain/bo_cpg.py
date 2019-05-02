@@ -1,3 +1,9 @@
+"""
+Note: Parameters are not set in this file. They are imported from the robot yaml-file, containing the
+physical properties of the robot, as well as the brain (learner and controller) and the corresponding
+parameters.
+"""
+
 import xml.etree.ElementTree
 from .base import Brain
 import time
@@ -8,37 +14,40 @@ class BrainCPGBO(Brain):
 
     def __init__(self):
         # CPG hyper-parameters
-        self.abs_output_bound = 1.0
-        self.signal_factor = 1.5
-        self.range_lb = -1.0
-        self.range_ub = 1.0
-        self.init_neuron_state = 0.5
+        self.abs_output_bound = None
+        self.use_frame_of_reference = None
+        self.signal_factor_all = 1.5
+        self.signal_factor_mid = None
+        self.signal_factor_left_right = None
+        self.range_lb = None
+        self.range_ub = None
+        self.init_neuron_state = None
 
         # BO hyper-parameters
-        self.init_method = ""  # {RS, LHS}
-        self.acquisition_function = ""
-        self.kernel_noise = ""
-        self.kernel_optimize_noise = ""
-        self.kernel_sigma_sq = ""
-        self.kernel_l = ""
-        self.kernel_squared_exp_ard_k = ""
-        self.acqui_gpucb_delta = ""
-        self.acqui_ucb_alpha = ""
-        self.acqui_ei_jitter = ""
-        self.n_init_samples = ""
+        self.init_method = None  # {RS, LHS}
+        self.acquisition_function = None
+        self.kernel_noise = None
+        self.kernel_optimize_noise = None
+        self.kernel_sigma_sq = None
+        self.kernel_l = None
+        self.kernel_squared_exp_ard_k = None
+        self.acqui_gpucb_delta = None
+        self.acqui_ucb_alpha = None
+        self.acqui_ei_jitter = None
+        self.n_init_samples = None
 
         # Various
-        self.n_learning_iterations = 10
-        self.n_cooldown_iterations = 0
-        self.load_brain = ""
-        self.output_directory = ""
-        self.run_analytics = "true"
-        self.reset_robot_position = "true"
-        self.reset_neuron_state_bool = "true"
-        self.reset_neuron_random = "false"
-        self.verbose = 1
-        self.startup_time = 0
-        self.evaluation_rate = 50
+        self.n_learning_iterations = None
+        self.n_cooldown_iterations = None
+        self.load_brain = None
+        self.output_directory = None
+        self.run_analytics = None
+        self.reset_robot_position = None
+        self.reset_neuron_state_bool = None
+        self.reset_neuron_random = None
+        self.verbose = None
+        self.startup_time = None
+        self.evaluation_rate = None
 
     @staticmethod
     def from_yaml(yaml_object):
@@ -89,12 +98,15 @@ class BrainCPGBO(Brain):
             'reset_neuron_state_bool': str(self.reset_neuron_state_bool),
             'reset_neuron_random': str(self.reset_neuron_random),
             'load_brain': self.load_brain,
+            'use_frame_of_reference': str(self.use_frame_of_reference),
             'run_analytics': str(self.run_analytics),
             'init_neuron_state': str(self.init_neuron_state),
             'output_directory': str(self.output_directory),
             'verbose': str(self.verbose),
             'range_lb': str(self.range_lb),
             'range_ub': str(self.range_ub),
-            'signal_factor': str(self.signal_factor),
+            'signal_factor_all': str(self.signal_factor_all),
+            'signal_factor_mid': str(self.signal_factor_mid),
+            'signal_factor_left_right': str(self.signal_factor_left_right),
             'startup_time': str(self.startup_time),
         })

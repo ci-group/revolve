@@ -147,10 +147,14 @@ body:
 brain:
   type: bo-cpg
   controller:
+    use_frame_of_reference: "false"
+    load_brain: ""
     reset_neuron_state_bool: "true"
     reset_neuron_random: "false"
     abs_output_bound: 1.0
-    signal_factor: 2.5
+    signal_factor_all: 2.5
+    signal_factor_mid: 2.5
+    signal_factor_left_right: 2.5
     range_lb: -1.0
     range_ub: 1.0
     init_neuron_state: 0.5
@@ -167,6 +171,7 @@ brain:
     acqui_ei_jitter: 0
     acquisition_function: "UCB"
   meta:
+    run_analytics: "true"
     n_learning_iterations: 5
     n_cooldown_iterations: 0
     reset_robot_position: "true"

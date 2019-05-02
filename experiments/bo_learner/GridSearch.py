@@ -15,9 +15,9 @@ manager = "experiments/bo_learner/manager.py"
 python_interpreter = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6"
 search_space = {
     'evaluation_rate': [5],
-#    'init_method': ["RS", "LHS"],
-    'verbose': [1],
-    'signal_factor': [1.5,1.7],
+    'use_frame_of_reference:' "false"
+    'verbose': [0],
+    'signal_factor_left_right': [1.5,1.7],
 }
 
 # You don't have to change this
