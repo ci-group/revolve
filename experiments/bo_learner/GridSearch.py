@@ -32,6 +32,7 @@ my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
 start_port = 11345
 
+
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
     for key, value in iter(parameters.items()):
@@ -69,7 +70,7 @@ def create_yamls(yaml_path, model, sub_directory, experiments):
                 yaml_file[index] = "    " + key + ": " + str(value)
 
         # Write yaml file to desired location
-        write_file(yaml_path + sub_directory + "/spider-" + str(my_dict["id"]) + ".yaml", yaml_file)
+        write_file(yaml_path + sub_directory + "/" + yaml_model.split(".")[0] + "-" + str(my_dict["id"]) + ".yaml", yaml_file)
 
 
 def run(i, sub_directory, model, params):
