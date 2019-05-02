@@ -26,12 +26,10 @@ class OnlineEvolutionSupervisor(Supervisor):
         """
         if 'ODE Message 3' in data:
             self.ode_errors += 1
-        elif data.strip():
-            sys.stderr.write(data)
 
-        if self.ode_errors >= 100:
+        if self.ode_errors >= 1000:
             self.ode_errors = 0
-            sys.stderr.write('ODE Message 3 (100)\n')
+            sys.stderr.write('ODE Message 3 (1000)\n')
 
 
 if __name__ == "__main__":

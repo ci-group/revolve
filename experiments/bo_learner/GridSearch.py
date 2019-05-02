@@ -7,24 +7,26 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 2
-n_jobs = 4
+n_runs = 15
+n_jobs = 50
 my_yaml_path = "experiments/bo_learner/yaml/"
 yaml_model = "spider.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6"
+python_interpreter = "~/CLionProjects/revolve/venv/bin/python"
 search_space = {
-    'evaluation_rate': [5],
+    'n_learning_iterations': [1],
+    'n_init_samples': [50],
+    'evaluation_rate': [80],
     'use_frame_of_reference:': [0],
     'verbose': [0],
-    'signal_factor_all': [2.0],
+    'signal_factor_all': [2.0, 2.5, 3.0],
 }
 
 print(search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
-
+start_port = 11345
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
@@ -67,6 +69,12 @@ def create_yamls(yaml_path, model, sub_directory, experiments):
 
 
 def run(i, sub_directory, model, params):
+    # Sleepy time when starting up to save gazebo from misery
+    if i < n_jobs:
+        time.sleep(i)
+    else:
+        print("Todo: Make sure you are ")
+
     # Get yaml file id
     k = params["id"]
 
@@ -85,8 +93,8 @@ def run(i, sub_directory, model, params):
     yaml_model = my_yaml_path + sub_directory + model.split(".yaml")[0] + "-" + str(k) + "-" + str(i) + ".yaml"
 
     # Change port: We need to do this via the manager
-    world_address = "127.0.0.1:" + str(11360 + i)
-    os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(11360 + i)
+    world_address = "127.0.0.1:" + str(start_port + i)
+    os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(start_port + i)
     os.environ["LIBGL_ALWAYS_INDIRECT"] = "0"
 
     # Call the experiment
@@ -99,6 +107,7 @@ def run(i, sub_directory, model, params):
     return_code = os.system(py_command)
     if return_code == 32512:
         print("Specify a valid python interpreter in the parameters")
+
 
 if __name__ == "__main__":
     # Get permutations

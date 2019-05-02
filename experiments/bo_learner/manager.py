@@ -30,8 +30,6 @@ async def run():
     else:
         robot.load_file(settings.robot_yaml)
     robot.update_substrate()
-    robot.save_file("experiments/bo_learner/yaml/spider.sdf.xml", conf_type='sdf')
-    robot.update_substrate()
 
     # Connect to the simulator and pause
     world = await World.create(settings)
@@ -41,7 +39,7 @@ async def run():
     await asyncio.sleep(2.5)
 
     # Insert the robot in the simulator
-    insert_future = await world.insert_robot(robot, Vector3(0, 0, 0.25))
+    insert_future = await world.insert_robot(robot, Vector3(0, 0, 0.025))
     robot_manager = await insert_future
 
     # Resume simulation
@@ -49,10 +47,7 @@ async def run():
 
     # Start a run loop to do some stuff
     while True:
-        # Print robot fitness every second
-        #print("Robot fitness is {fitness}".format(
-        #        fitness=robot_manager.fitness()))
-        await asyncio.sleep(2.0)
+        await asyncio.sleep(1.0)
 
 
 def main():

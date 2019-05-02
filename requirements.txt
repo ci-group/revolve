@@ -8,5 +8,6 @@ psutil==3.4.2
 matplotlib
 pycairo>=1.18.0
 graphviz>=0.10.1
+joblib
 
 -e git+https://github.com/ci-group/pygazebo.git@py2to3#egg=pygazebo
