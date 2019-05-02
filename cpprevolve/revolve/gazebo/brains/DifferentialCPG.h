@@ -217,7 +217,7 @@ namespace revolve
       private: bool reset_neuron_state_bool;
 
       /// \brief Factor to multiply output signal with
-      private: double signal_factor_all;
+      private: double signal_factor_all_;
 
       /// \brief Factor to multiply output signal with
       private: double signal_factor_mid;

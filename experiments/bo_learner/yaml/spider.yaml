@@ -147,12 +147,12 @@ body:
 brain:
   type: bo-cpg
   controller:
-    use_frame_of_reference: "false"
+    use_frame_of_reference: 0
     load_brain: ""
     reset_neuron_state_bool: "true"
     reset_neuron_random: "false"
     abs_output_bound: 1.0
-    signal_factor_all: 2.5
+    signal_factor_all: 1.5
     signal_factor_mid: 2.5
     signal_factor_left_right: 2.5
     range_lb: -1.0

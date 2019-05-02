@@ -10,16 +10,17 @@ from joblib import Parallel, delayed
 n_runs = 2
 n_jobs = 4
 my_yaml_path = "experiments/bo_learner/yaml/"
-base_model = "spider.yaml"
+yaml_model = "spider.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "~/projects/revolve-simulator/revolve/.venv36/bin/python3.6"
 search_space = {
     'evaluation_rate': [5],
-    'use_frame_of_reference:' "false"
+    'use_frame_of_reference:': [0],
     'verbose': [0],
-    'signal_factor_left_right': [1.5,1.7],
+    'signal_factor_all': [2.0],
 }
 
+print(search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
@@ -94,8 +95,10 @@ def run(i, sub_directory, model, params):
                  " --manager " + manager + \
                  " --world-address " + world_address + \
                  " --robot-yaml " + yaml_model
-    os.system(py_command)
 
+    return_code = os.system(py_command)
+    if return_code == 32512:
+        print("Specify a valid python interpreter in the parameters")
 
 if __name__ == "__main__":
     # Get permutations
@@ -112,7 +115,7 @@ if __name__ == "__main__":
 
     # Save to yaml files
     create_yamls(yaml_path=my_yaml_path,
-                 model=base_model,
+                 model=yaml_model,
                  sub_directory=my_sub_directory,
                  experiments=experiments
                  )
@@ -125,7 +128,7 @@ if __name__ == "__main__":
     # Run experiments in parallel
     Parallel(n_jobs=n_jobs)(delayed(run)(i,
                                          my_sub_directory,
-                                         base_model,
+                                         yaml_model,
                                          experiment) for i, experiment in enumerate(experiments))
 
     # Do analysis

@@ -15,8 +15,8 @@ class BrainCPGBO(Brain):
     def __init__(self):
         # CPG hyper-parameters
         self.abs_output_bound = None
-        self.use_frame_of_reference = None
-        self.signal_factor_all = 1.5
+        self.use_frame_of_reference = "false"
+        self.signal_factor_all = ""
         self.signal_factor_mid = None
         self.signal_factor_left_right = None
         self.range_lb = None

@@ -116,7 +116,7 @@ DifferentialCPG::DifferentialCPG(
   this->range_lb = std::stod(controller->GetAttribute("range_lb")->GetAsString());
   this->range_ub = std::stod(controller->GetAttribute("range_ub")->GetAsString());
   this->use_frame_of_reference = std::stoi(controller->GetAttribute("use_frame_of_reference")->GetAsString());
-  this->signal_factor_all = std::stod(controller->GetAttribute("signal_factor_all")->GetAsString());
+  this->signal_factor_all_ = std::stod(controller->GetAttribute("signal_factor_all")->GetAsString());
   this->signal_factor_mid = std::stod(controller->GetAttribute("signal_factor_mid")->GetAsString());
   this->signal_factor_left_right = std::stod(controller->GetAttribute("signal_factor_left_right")->GetAsString());
 
@@ -991,7 +991,7 @@ void DifferentialCPG::step(
       }
       // Don't use frame of reference
       else{
-        this->output[j] = this->signal_factor_all*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+        this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       }
       j++;
     }
@@ -1113,7 +1113,7 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "n_cooldown_iterations: " << this->n_cooldown_iterations << std::endl;
   parameters_file << "evaluation_rate: " << this->evaluation_rate << std::endl;
   parameters_file << "abs_output_bound: " << this->abs_output_bound << std::endl;
-  parameters_file << "signal_factor_all: " << this->signal_factor_all << std::endl;
+  parameters_file << "signal_factor_all: " << this->signal_factor_all_ << std::endl;
   parameters_file << "range_lb: " << this->range_lb << std::endl;
   parameters_file << "range_ub: " << this->range_ub << std::endl;
   parameters_file << "run_analytics: " << this->run_analytics << std::endl;
