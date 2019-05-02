@@ -1,3 +1,7 @@
+from sys import platform
+import matplotlib
+if platform == "darwin":
+    matplotlib.use("TkAgg")
 import numpy as np
 import itertools
 import os
@@ -7,19 +11,19 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 15
-n_jobs = 50
+n_runs = 2
+n_jobs = 2
 my_yaml_path = "experiments/bo_learner/yaml/"
 yaml_model = "spider.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = "~/CLionProjects/revolve/venv/bin/python"
+python_interpreter = "~/projects/revolve/.venv/bin/python3"
 search_space = {
     'n_learning_iterations': [1],
     'n_init_samples': [50],
-    'evaluation_rate': [80],
+    'evaluation_rate': [50],
     'use_frame_of_reference:': [0],
-    'verbose': [0],
-    'signal_factor_all': [2.0, 2.5, 3.0],
+    'verbose': [1],
+    'signal_factor_all': [1.0],
 }
 
 print(search_space)
@@ -73,7 +77,8 @@ def run(i, sub_directory, model, params):
     if i < n_jobs:
         time.sleep(i)
     else:
-        print("Todo: Make sure you are ")
+        print("Todo: Make sure you are leaving 2 seconds in between firing "
+              "gazebos")
 
     # Get yaml file id
     k = params["id"]
