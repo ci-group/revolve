@@ -962,8 +962,9 @@ void DifferentialCPG::step(
     std::tie(bias, gain, state, frame_of_reference) = neuron.second;
     double x, y, z;
     std::tie(x, y, z) = neuron.first;
+    neuron.second = {bias, gain, this->next_state[i], frame_of_reference};
 
-    // Should be one, as output should be based on +1 neurons, which are the A neurons
+      // Should be one, as output should be based on +1 neurons, which are the A neurons
     if (i % 2 == 1)
     {
       // TODO: Add Milan's function here as soon as things are working a bit
