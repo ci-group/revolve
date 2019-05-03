@@ -11,19 +11,19 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 2
-n_jobs = 2
+n_runs = 15
+n_jobs = 45
 my_yaml_path = "experiments/bo_learner/yaml/"
 yaml_model = "spider.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = "~/projects/revolve/.venv/bin/python3"
+python_interpreter = "~/projects/revolve2/.venv/bin/python3"
 search_space = {
     'n_learning_iterations': [1],
-    'n_init_samples': [50],
+    'n_init_samples': [12],
     'evaluation_rate': [50],
     'use_frame_of_reference:': [0],
-    'verbose': [1],
-    'signal_factor_all': [1.0],
+    'verbose': [0],
+    'signal_factor_all': [1.0, 1.5, 4.0],
 }
 
 print(search_space)
@@ -136,8 +136,13 @@ if __name__ == "__main__":
                  )
 
     # Create dirs
+    if not os.path.isdir("output"):
+        os.mkdir("output")
+    if not os.path.isdir("output/cpg_bo"):
+        os.mkdir("output/cpg_bo")
     os.mkdir(output_path)
-    for l in range(n_unique_experiments):
+    for l in range(n_unique_experiments):   # Create dirs
+
         os.mkdir(output_path + str(l) + "/")
 
     # Run experiments in parallel
