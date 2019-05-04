@@ -8,14 +8,18 @@ import pandas as pd
 from mpl_toolkits import mplot3d
 import numpy as np
 import os
-
+import plotly.offline as py
+import plotly.graph_objs as go
 
 # Parameters
-path = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1556883301/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1556919226/"
 var1 = "range_ub"
 var2 = "signal_factor"
 parameter_file = "parameters.txt"
 
+# Set matplotlib font
+font = {'size' : 13}
+matplotlib.rc('font', **font)
 
 # Get all sub-directories
 path_list = glob(path + "*")
@@ -32,6 +36,9 @@ for ix, path_ in enumerate(path_list):
     except:
         continue
 
+    # Cope with unsorted issue
+    path_ =  "/".join(path_.split("/")[:-1]) + "/" + str(ix)
+
     # Get parameters for this file.
     subfolder_list = glob(path_ + "/*/")
     parameters = [(line.rstrip('\n')) for line in open(path_ + "/" + subfolder_list[0].split("/")[-2] +"/" + parameter_file)]
@@ -43,7 +50,8 @@ for ix, path_ in enumerate(path_list):
 
     # Get Fitness. This is an average file in path_
     fitness = ".".join(glob(path_ + "/*.png")[0].split("/")[-1].split(".")[:-1])
-    results[ix, 2] = fitness
+    #fitness = ".".join(glob(path_ + "/*d.png")[0].split("/")[-1].split(".")[:-1])
+    results[ix, 2] = fitness[:-1]
 
 # Combine results
 df = pd.DataFrame(results)
@@ -55,12 +63,41 @@ X =results[:,0].reshape((my_size,  my_size))
 Y =results[:,1].reshape((my_size,  my_size))
 Z =results[:,2].reshape((my_size,  my_size))
 
+# Verbose
+for i in range(my_size):
+    for j in range(my_size):
+        print(X[i,j], Y[i,j], Z[i,j])
+
 # Construct 3D plot
 fig = plt.figure(figsize=(10,10))
 ax = plt.axes(projection='3d')
-ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
-                cmap='viridis', edgecolor='none')
+ax.plot_wireframe(X, Y, Z, rstride=1, cstride=1,
+               cmap='viridis', edgecolor='none')
 ax.set_xlabel(var1)
 ax.set_ylabel(var2)
 ax.set_zlabel("fitness")
 plt.savefig(path + "3Dplot.png")
+
+# Get data for plotly
+data = [
+    go.Surface(
+        x = X,
+        y = Y,
+        z = Z
+    )
+]
+
+# # Layout
+# layout = go.Layout(
+#     title = path,
+#     scene = dict(
+#         xaxis=dict(title=var1),
+#         yaxis=dict(title=var2),
+#         zaxis=dict(title="fitness"),
+#     ),
+# )
+
+# Construct ploty
+fig = go.Figure(data=data)
+py.plot(fig, filename=path + "interactive_3d")
+print(len(X), len(Y), len(Z))

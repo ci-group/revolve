@@ -60,7 +60,7 @@ using namespace revolve::gazebo;
 // Copied from the limbo tutorial the BO implementation is based on
 using Mean_t = limbo::mean::Data<DifferentialCPG::Params>;
 using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
-using Kernel_t = limbo::kernel::Exp<DifferentialCPG::Params>;
+using Kernel_t = limbo::kernel::MaternFiveHalves<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 
 /**
@@ -113,14 +113,14 @@ DifferentialCPG::DifferentialCPG(
   this->reset_neuron_state_bool = std::stoi(controller->GetAttribute("reset_neuron_state_bool")->GetAsString());
   this->reset_neuron_random = std::stoi(controller->GetAttribute("reset_neuron_random")->GetAsString());
   this->init_neuron_state = std::stod(controller->GetAttribute("init_neuron_state")->GetAsString());
-  this->range_lb = std::stod(controller->GetAttribute("range_lb")->GetAsString());
+  this->range_lb = -std::stod(controller->GetAttribute("range_ub")->GetAsString());
   this->range_ub = std::stod(controller->GetAttribute("range_ub")->GetAsString());
   this->use_frame_of_reference = std::stoi(controller->GetAttribute("use_frame_of_reference")->GetAsString());
   this->signal_factor_all_ = std::stod(controller->GetAttribute("signal_factor_all")->GetAsString());
   this->signal_factor_mid = std::stod(controller->GetAttribute("signal_factor_mid")->GetAsString());
   this->signal_factor_left_right = std::stod(controller->GetAttribute("signal_factor_left_right")->GetAsString());
 
-  // (Global)Learner parameters
+  // (Global)Learner paramete
   double kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
   bool kernel_optimize_noise_ = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
   double kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
@@ -951,7 +951,7 @@ void DifferentialCPG::step(
     this->next_state[i] = x[i];
   }
 
-  // Loop over all neurons to actually update their states. Note that this is a new outer for loop
+    // Loop over all neurons to actually update their states. Note that this is a new outer for loop
   auto i = 0; auto j = 0;
   for (auto &neuron : this->neurons)
   {
@@ -976,6 +976,7 @@ void DifferentialCPG::step(
       // Use frame of reference
       if(use_frame_of_reference)
       {
+
         if (std::abs(frame_of_reference) == 1)
         {
           this->output[j] = this->signal_factor_left_right*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);

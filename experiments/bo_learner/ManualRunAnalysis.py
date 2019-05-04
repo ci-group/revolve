@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 # Parameters
-path = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1556883301/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1556919226/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/maarten/projects/revolve-simulator/revolve/experiments/bo_learner/yaml/yaml_temp/"
 
@@ -29,15 +29,19 @@ for i, path_ in enumerate(path_list):
     except:
         continue
 
+    # Cope with unsorted issue
+    path_ =  "/".join(path_.split("/")[:-1]) + "/" + str(i)
+
     # Do fitness analysis
     subfolder_list = glob(path_ + "/*/")
     subfolder_list = [d for d in subfolder_list if os.path.isfile(d + fitness_file)]
     n_subruns = len(subfolder_list)
     n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
+    n_rows_max = 50
 
     # Working variables
-    fitnesses = np.empty((n_rows,n_subruns))
-    fitnesses_mon = np.empty((n_rows,n_subruns))
+    fitnesses = np.empty((n_rows_max,n_subruns))
+    fitnesses_mon = np.empty((n_rows_max,n_subruns))
 
     # Create plot
     plt.figure()
@@ -50,6 +54,14 @@ for i, path_ in enumerate(path_list):
     for j, subfolder in enumerate(subfolder_list):
         # Get fitness file
         my_fitness = [(line.rstrip('\n')) for line in open(subfolder + "/" + fitness_file)]
+
+        # Take maximum n_rows_max
+        my_fitness = my_fitness[:n_rows_max]
+
+        # Take minimum n_rows_max
+        while(len(my_fitness) < n_rows_max):
+            my_fitness += [my_fitness[-1]]
+            print("Added a fitness")
 
         # Transfer fitness to monotonic sequence and save
         my_fitness_mon = [e if e >= max(my_fitness[:ix+1]) else max(my_fitness[:ix+1]) for ix, e in enumerate(my_fitness)]
@@ -68,16 +80,18 @@ for i, path_ in enumerate(path_list):
     # Save plot
     plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
     plt.tight_layout()
-    plt.savefig(path_ + "/" + str(round(avg_fitness_mon[-1], 7)) + "d.png")
+    plt.savefig(path_ + "/" + str(round(avg_fitness_mon[-1], 7)) + ".png")
 
     # Save fitness
     fitness_list += [[round(avg_fitness_mon[-1], 5), i]]
 
-    # Get fitness stats
-    fitness_list.sort(key=lambda x: x[0])
-    fitness_list.reverse()
-    fitness_list
+# Get fitness stats
+fitness_list.sort(key=lambda x: x[0])
+fitness_list.reverse()
+fitness_list
 
+
+# TODO: Results.txt has wrong order (3D plot not affected by this).
 print("Fitnesses are:")
 for e in fitness_list:
     print(e)

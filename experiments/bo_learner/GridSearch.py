@@ -1,3 +1,11 @@
+"""
+    experiments = [
+        {'range_ub': 1.0, 'signal_factor_all': 1.0},
+        {'range_ub': 1.0, 'signal_factor_all': 3.0},
+        {'range_ub': 4.5, 'signal_factor_all': 3.0}
+    ]
+"""
+
 from sys import platform
 import matplotlib
 if platform == "darwin":
@@ -11,19 +19,15 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 15
-n_jobs = 45
+n_runs = 100
+n_jobs = 60
 my_yaml_path = "experiments/bo_learner/yaml/"
 yaml_model = "spider.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = "~/projects/revolve2/.venv/bin/python3"
+python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
 search_space = {
-    'n_learning_iterations': [1],
-    'n_init_samples': [12],
-    'evaluation_rate': [50],
-    'use_frame_of_reference:': [0],
-    'verbose': [0],
-    'signal_factor_all': [1.0, 1.5, 4.0],
+    'range_ub': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5],
+    'signal_factor_all': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5],
 }
 
 print(search_space)
@@ -119,6 +123,7 @@ if __name__ == "__main__":
     # Get permutations
     keys, values = zip(*search_space.items())
     experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
+
     n_unique_experiments = len(experiments)
 
     # Get id's on the permutations
