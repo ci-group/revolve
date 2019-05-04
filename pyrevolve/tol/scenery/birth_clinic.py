@@ -7,6 +7,7 @@ from pyrevolve.sdfbuilder.physics import Friction
 from pyrevolve.sdfbuilder.structure import Mesh, Visual, Collision
 from pyrevolve.sdfbuilder.math import Vector3
 from pyrevolve.sdfbuilder.util import number_format as nf
+from ...custom_logging.logger import logger
 
 from .. import constants
 
@@ -73,4 +74,4 @@ class BirthClinic(Model):
 
 if __name__ == '__main__':
     sdf = SDF(elements=[BirthClinic()])
-    print(sdf)
+    logger.info(sdf)

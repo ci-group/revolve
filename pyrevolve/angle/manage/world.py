@@ -19,9 +19,9 @@ from pyrevolve.spec.msgs import RobotStates
 from .robotmanager import RobotManager
 from ...gazebo import manage
 from ...gazebo import RequestHandler
-from ...logging import logger
 from ...util import multi_future
 from ...util import Time
+from ...custom_logging.logger import logger
 
 
 class WorldManager(manage.WorldManager):
@@ -54,8 +54,8 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         super(WorldManager, self).__init__(
-                _private=_private,
-                world_address=world_address,
+            _private=_private,
+            world_address=world_address,
         )
 
         self.battery_handler = None
@@ -88,7 +88,7 @@ class WorldManager(manage.WorldManager):
 
         if output_directory:
             if not restore:
-                restore = datetime.now()\
+                restore = datetime.now() \
                     .strftime(datetime.now().strftime('%Y%m%d%H%M%S'))
 
             self.output_directory = os.path.join(output_directory, restore)
@@ -104,9 +104,7 @@ class WorldManager(manage.WorldManager):
                     try:
                         self.do_restore = pickle.load(snapshot_file)
                     except Exception as e:
-                        traceback.print_exc()
-                        print("Cannot restore snapshot, shutting down. "
-                              "Exception: {}.".format(str(e)))
+                        logger.exception("Cannot restore snapshot, shutting down.")
                         sys.exit(23)
 
             self.world_snapshot_filename = \
@@ -174,9 +172,9 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         self = cls(
-                _private=cls._PRIVATE,
-                world_address=world_address,
-                state_update_frequency=pose_update_frequency
+            _private=cls._PRIVATE,
+            world_address=world_address,
+            state_update_frequency=pose_update_frequency
         )
         await self._init(builder=None, generator=None)
         return self
@@ -208,16 +206,16 @@ class WorldManager(manage.WorldManager):
         )
 
         await (self.set_state_update_frequency(
-                freq=self.state_update_frequency
+            freq=self.state_update_frequency
         ))
 
         self.battery_handler = await (RequestHandler.create(
-                manager=self.manager,
-                advertise='/gazebo/default/battery_level/request',
-                subscribe='/gazebo/default/battery_level/response',
-                # There will not be robots yet, so don't wait for this
-                wait_for_publisher=False,
-                wait_for_subscriber=False
+            manager=self.manager,
+            advertise='/gazebo/default/battery_level/request',
+            subscribe='/gazebo/default/battery_level/response',
+            # There will not be robots yet, so don't wait for this
+            wait_for_publisher=False,
+            wait_for_subscriber=False
         ))
 
         # Wait for connections
@@ -242,7 +240,7 @@ class WorldManager(manage.WorldManager):
         # Obtain a copy of the current world SDF from Gazebo and write it to
         # file
         response = await (self.request_handler.do_gazebo_request(
-                request="world_sdf"
+            request="world_sdf"
         ))
         if response.response == "error":
             logger.warning("WARNING: requesting world state resulted in "
@@ -304,8 +302,8 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         future = await (self.request_handler.do_gazebo_request(
-                request="set_robot_state_update_frequency",
-                data=str(freq)
+            request="set_robot_state_update_frequency",
+            data=str(freq)
         ))
         self.state_update_frequency = freq
         return future
@@ -407,8 +405,8 @@ class WorldManager(manage.WorldManager):
 
         if self.output_directory:
             robot_file_path = os.path.join(
-                    self.output_directory,
-                    'robot_{}.sdf'.format(revolve_bot.id)
+                self.output_directory,
+                'robot_{}.sdf'.format(revolve_bot.id)
             )
             with open(robot_file_path, 'w') as f:
                 f.write(sdf_bot)
@@ -417,9 +415,9 @@ class WorldManager(manage.WorldManager):
         insert_future = await self.insert_model(sdf_bot)
         # TODO: Unhandled error in exception handler. Fix this.
         insert_future.add_done_callback(lambda fut: self._robot_inserted(
-                robot=revolve_bot,
-                msg=fut.result(),
-                return_future=future
+            robot=revolve_bot,
+            msg=fut.result(),
+            return_future=future
         ))
         return future
 
@@ -439,7 +437,7 @@ class WorldManager(manage.WorldManager):
         :rtype: SDF
         """
         raise NotImplementedError(
-                "Implement in subclass if you want to use this method.")
+            "Implement in subclass if you want to use this method.")
 
     async def delete_robot(self, robot):
         """
@@ -491,9 +489,9 @@ class WorldManager(manage.WorldManager):
         position = Vector3(p.x, p.y, p.z)
 
         robot_manager = self.create_robot_manager(
-                robot,
-                position,
-                time
+            robot,
+            position,
+            time
         )
         self.register_robot(robot_manager)
         return_future.set_result(robot_manager)
@@ -512,9 +510,9 @@ class WorldManager(manage.WorldManager):
         :rtype: RobotManager
         """
         return RobotManager(
-                robot=robot,
-                position=position,
-                time=time,
+            robot=robot,
+            position=position,
+            time=time,
         )
 
     def register_robot(self, robot_manager):
@@ -524,7 +522,7 @@ class WorldManager(manage.WorldManager):
         :type robot_manager: RobotManager
         :return:
         """
-        logger.debug("Registering robot {}.".format(robot_manager.name))
+        logger.info("Registering robot {}.".format(robot_manager.name))
 
         if robot_manager.name in self.robot_managers:
             raise ValueError("Duplicate robot: {}".format(robot_manager.name))
@@ -539,7 +537,7 @@ class WorldManager(manage.WorldManager):
         :type robot_manager: RobotManager
         :return:
         """
-        logger.debug("Unregistering robot {}.".format(robot_manager.name))
+        logger.info("Unregistering robot {}.".format(robot_manager.name))
         del self.robot_managers[robot_manager.name]
 
     async def reset(self, **kwargs):
@@ -560,9 +558,9 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         future = await (self.battery_handler.do_gazebo_request(
-                request="set_battery_level",
-                data=robot.name,
-                dbl_data=robot.get_battery_level()
+            request="set_battery_level",
+            data=robot.name,
+            dbl_data=robot.get_battery_level()
         ))
         return future
 

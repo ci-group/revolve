@@ -1,16 +1,8 @@
 import random
 from pyrevolve.genotype.plasticoding.plasticoding import Alphabet, Plasticoding
-import logging
+from ....custom_logging.logger import genotype_logger
 
-mutation_logger = logging.getLogger('__name__')
-mutation_logger.setLevel(logging.INFO)
 
-fh = logging.FileHandler('mut-cross.log', mode='w')
-fh.setLevel(logging.INFO)
-
-formatter = logging.Formatter('%(message)s')
-fh.setFormatter(formatter)
-mutation_logger.addHandler(fh)
 
 
 def handle_deletion(genotype):
@@ -26,7 +18,7 @@ def handle_deletion(genotype):
         symbol_to_delete = random.choice(genotype.grammar[target_production_rule])
         if symbol_to_delete[0] != Alphabet.CORE_COMPONENT:
             genotype.grammar[target_production_rule].remove(symbol_to_delete)
-            mutation_logger.info(
+            genotype_logger.info(
                 f'mutation: remove in {genotype.id} for {target_production_rule} at {symbol_to_delete[0]}.')
     return genotype
 
@@ -48,8 +40,8 @@ def handle_swap(genotype):
         item_index_1 = genotype.grammar[target_production_rule].index(symbols_to_swap[0])
         item_index_2 = genotype.grammar[target_production_rule].index(symbols_to_swap[1])
         genotype.grammar[target_production_rule][item_index_2], genotype.grammar[target_production_rule][item_index_1] = \
-        genotype.grammar[target_production_rule][item_index_1], genotype.grammar[target_production_rule][item_index_2]
-        mutation_logger.info(
+            genotype.grammar[target_production_rule][item_index_1], genotype.grammar[target_production_rule][item_index_2]
+        genotype_logger.info(
             f'mutation: swap in {genotype.id} for {target_production_rule} between {symbols_to_swap[0]} and {symbols_to_swap[1]}.')
     return genotype
 
@@ -106,7 +98,7 @@ def handle_addition(genotype, genotype_conf):
         addition_index = random.randint(0, len(genotype.grammar[target_production_rule]) - 1)
     symbol_to_add = generate_symbol(genotype_conf)
     genotype.grammar[target_production_rule].insert(addition_index, symbol_to_add)
-    mutation_logger.info(
+    genotype_logger.info(
         f'mutation: add {symbol_to_add} in {genotype.id} for {target_production_rule} at {addition_index}.')
     return genotype
 

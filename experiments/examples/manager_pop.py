@@ -21,7 +21,6 @@ from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.tol.manage import World
 
-
 def dummy_selection(individuals):
     return individuals[0]
 
@@ -40,7 +39,7 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    num_generations = 50
+    num_generations = 10
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=20,

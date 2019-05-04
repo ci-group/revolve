@@ -16,6 +16,8 @@ from .render.brain_graph import BrainGraph
 from .measure.measure_body import MeasureBody
 from .measure.measure_brain import MeasureBrain
 
+from ..custom_logging.logger import logger
+
 
 class RevolveBot:
     """
@@ -67,7 +69,7 @@ class RevolveBot:
     def measure_phenotype(self, export: bool = False):
         self._morphological_measurements = self.measure_body()
         self._brain_measurements = self.measure_brain()
-        print('Robot ' + str(self.id) + ' was measured.')
+        logger.info('Robot ' + str(self.id) + ' was measured.')
         if export:
             self.export_phenotype_measurements()
 
@@ -82,9 +84,7 @@ class RevolveBot:
             measure.measure_all()
             return measure
         except Exception as e:
-            print('Failed measuring body')
-            print(e)
-            print(traceback.format_exc())
+            logger.exception('Failed measuring body')
 
     def export_phenotype_measurements(self):
         # !!!!! we need to define the experiment path as a parameter somewhere...
@@ -104,9 +104,8 @@ class RevolveBot:
             measure.measure_all()
             return measure
         except Exception as e:
-            print('Failed measuring brain')
-            print(e)
-            print(traceback.format_exc())
+            logger.exception('Failed measuring brain')
+
 
     def load(self, text, conf_type):
         """
@@ -140,7 +139,7 @@ class RevolveBot:
                 self._brain = Brain()
         except:
             self._brain = Brain()
-            print('Failed to load brain, setting to None')
+            logger.exception('Failed to load brain, setting to None')
 
     def load_file(self, path, conf_type='yaml'):
         """
@@ -282,9 +281,7 @@ class RevolveBot:
                 brain_graph.brain_to_graph(True)
                 brain_graph.save_graph()
             except Exception as e:
-                print('Failed rendering brain. Exception:')
-                print(e)
-                print(traceback.format_exc())
+                logger.exception('Failed rendering brain. Exception:')
         else:
             raise RuntimeError('Brain {} image rendering not supported'.format(type(self._brain)))
 
@@ -300,6 +297,5 @@ class RevolveBot:
                 render = Render()
                 render.render_robot(self._body, img_path)
             except Exception as e:
-                print('Failed rendering 2d robot')
-                print(e)
-                print(traceback.format_exc())
+                logger.exception('Failed rendering 2d robot')
+

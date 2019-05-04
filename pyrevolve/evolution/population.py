@@ -2,9 +2,9 @@
 
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
+from ..custom_logging.logger import logger
 import time
 import asyncio
-
 
 class PopulationConfig:
     def __init__(self,
@@ -127,10 +127,10 @@ class Population:
         # await asyncio.sleep(2.5)
 
         for individual in new_individuals:
-            print(f'---\nEvaluating individual (gen {gen_num}) {individual.genotype.id} ...')
+            logger.info(f'---\nEvaluating individual (gen {gen_num}) {individual.genotype.id} ...')
             individual.develop()
             await self.evaluate_single_robot(individual)
-            print(f'Evaluation complete! Individual {individual.genotype.id} has a fitness of {individual.fitness}.')
+            logger.info(f'Evaluation complete! Individual {individual.genotype.id} has a fitness of {individual.fitness}.')
 
     async def evaluate_single_robot(self, individual):
         """
@@ -140,18 +140,23 @@ class Population:
         """
         # Insert the robot in the simulator
         insert_future = await self.simulator.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
+        # await self.simulator.pause(False)
         robot_manager = await insert_future
 
         # Resume simulation
         await self.simulator.pause(False)
-
+        # start = time.time()
         # Start a run loop to do some stuff
         max_age = self.conf.evaluation_time # + self.conf.warmup_time
         while robot_manager.age() < max_age:
             individual.fitness = robot_manager.fitness()
             await asyncio.sleep(1.0 / 5) # 5= state_update_frequency
+        # end = time.time()
+        # logger.info(f'Time taken: {end-start}')
 
-        await self.simulator.pause(True)
-        delete_future = await self.simulator.delete_robot(robot_manager)
+        # await self.simulator.pause(True)
+        delete_future = await self.simulator.delete_all_robots()  # robot_manager
+        # await self.simulator.pause(True)
         await delete_future
+        await self.simulator.pause(True)
         # await self.simulator.reset(rall=True, time_only=False, model_only=False)

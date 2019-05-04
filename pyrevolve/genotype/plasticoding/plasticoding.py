@@ -12,6 +12,7 @@ from pyrevolve.revolve_bot.brain.brain_nn import BrainNN
 from pyrevolve.revolve_bot.brain.brain_nn import Node
 from pyrevolve.revolve_bot.brain.brain_nn import Connection
 from pyrevolve.revolve_bot.brain.brain_nn import Params
+from ...custom_logging.logger import logger
 import random
 import math
 import copy
@@ -170,10 +171,10 @@ class Plasticoding(Genotype):
         self.id = id_genotype
         if not load:
             self.grammar = self.conf.initialization_genome(self.conf).grammar
-            print('Robot {} was initialized.'.format(self.id))
+            logger.info('Robot {} was initialized.'.format(self.id))
         else:
             self.load_genotype('{}{}.txt'.format(genotype_path, self.id))
-            print('Robot {} was loaded.'.format(self.id))
+            logger.info('Robot {} was loaded.'.format(self.id))
 
         self.phenotype = self.develop()
 
@@ -215,7 +216,7 @@ class Plasticoding(Genotype):
                     position = position+ii+1
                 else:
                     position = position + 1
-        # print('Robot ' + str(self.id) + ' was early-developed.')
+        # logger.info('Robot ' + str(self.id) + ' was early-developed.')
 
     def late_development(self):
 
@@ -239,11 +240,11 @@ class Plasticoding(Genotype):
                 self.morph_mounting_container = symbol[self.index_symbol]
 
             if [symbol[self.index_symbol], []] in Alphabet.modules() \
-               and symbol[self.index_symbol] is not Alphabet.CORE_COMPONENT \
-               and self.morph_mounting_container is not None:
+                    and symbol[self.index_symbol] is not Alphabet.CORE_COMPONENT \
+                    and self.morph_mounting_container is not None:
 
                 if type(self.mounting_reference) == CoreModule \
-                   or type(self.mounting_reference) == BrickModule:
+                        or type(self.mounting_reference) == BrickModule:
                     slot = self.get_slot(self.morph_mounting_container).value
                 if type(self.mounting_reference) == ActiveHingeModule:
                     slot = Orientation.NORTH.value
@@ -263,7 +264,7 @@ class Plasticoding(Genotype):
                 self.decode_brain_moving(symbol)
 
         self.add_imu_nodes()
-        # print('Robot ' + str(self.id) + ' was late-developed.')
+        # logger.info('Robot ' + str(self.id) + ' was late-developed.')
         return self.phenotype
 
     def move_in_body(self, symbol):
@@ -485,8 +486,8 @@ class Plasticoding(Genotype):
 
         mount = False
         if self.mounting_reference.children[slot] is None \
-           and not (new_module_type == Alphabet.SENSOR
-                    and type(self.mounting_reference) is ActiveHingeModule):
+                and not (new_module_type == Alphabet.SENSOR
+                         and type(self.mounting_reference) is ActiveHingeModule):
             mount = True
 
         if type(self.mounting_reference) is CoreModule \
@@ -523,7 +524,7 @@ class Plasticoding(Genotype):
                     self.mounting_reference_stack.append(self.mounting_reference)
                     self.mounting_reference = module
                     if new_module_type == Alphabet.JOINT_HORIZONTAL \
-                       or new_module_type == Alphabet.JOINT_VERTICAL:
+                            or new_module_type == Alphabet.JOINT_VERTICAL:
                         self.decode_brain_node(symbol, module.id)
                 else:
                     self.quantity_modules -= 1
@@ -574,7 +575,7 @@ class Plasticoding(Genotype):
                 self.outputs_stack = [self.outputs_stack[-1]]
 
         if symbol[self.index_symbol] == Alphabet.JOINT_VERTICAL \
-           or symbol[self.index_symbol] == Alphabet.JOINT_HORIZONTAL:
+                or symbol[self.index_symbol] == Alphabet.JOINT_HORIZONTAL:
 
             node.layer = 'output'
             node.type = 'Oscillator'
@@ -634,7 +635,7 @@ class Plasticoding(Genotype):
         index_params = 1
 
         if symbol[index_symbol] is Alphabet.JOINT_HORIZONTAL \
-           or symbol[index_symbol] is Alphabet.JOINT_VERTICAL:
+                or symbol[index_symbol] is Alphabet.JOINT_VERTICAL:
 
             symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max),
                                     random.uniform(conf.oscillator_param_min,
@@ -644,21 +645,21 @@ class Plasticoding(Genotype):
                                     random.uniform(conf.oscillator_param_min,
                                                    conf.oscillator_param_max)]
 
-        if symbol[index_symbol] is Alphabet.SENSOR  \
-           or symbol[index_symbol] is Alphabet.ADD_EDGE \
-           or symbol[index_symbol] is Alphabet.LOOP:
+        if symbol[index_symbol] is Alphabet.SENSOR \
+                or symbol[index_symbol] is Alphabet.ADD_EDGE \
+                or symbol[index_symbol] is Alphabet.LOOP:
 
             symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max)]
 
         if symbol[index_symbol] is Alphabet.MUTATE_EDGE \
-           or symbol[index_symbol] is Alphabet.MUTATE_AMP \
-           or symbol[index_symbol] is Alphabet.MUTATE_PER \
-           or symbol[index_symbol] is Alphabet.MUTATE_OFF:
+                or symbol[index_symbol] is Alphabet.MUTATE_AMP \
+                or symbol[index_symbol] is Alphabet.MUTATE_PER \
+                or symbol[index_symbol] is Alphabet.MUTATE_OFF:
 
-                symbol[index_params] = [random.normalvariate(0, 1)]
+            symbol[index_params] = [random.normalvariate(0, 1)]
 
         if symbol[index_symbol] is Alphabet.MOVE_REF_S \
-           or symbol[index_symbol] is Alphabet.MOVE_REF_O:
+                or symbol[index_symbol] is Alphabet.MOVE_REF_O:
 
             intermediate_temp = random.normalvariate(0, 1)
             final_temp = random.normalvariate(0, 1)
