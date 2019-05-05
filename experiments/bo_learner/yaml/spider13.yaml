@@ -1,5 +1,5 @@
 ---
-id: example_spider
+id: example_spider13
 body:
   id          : Core
   type        : Core
@@ -33,6 +33,7 @@ body:
                 red: 0.98
                 green: 0.98
                 blue: 0.98
+              orientation : 0
               children    :
                 1:
                   id          : Leg01
@@ -42,6 +43,24 @@ body:
                     green: 0.26
                     blue: 0.72
                   orientation : 0
+                  children    :
+                    1:
+                      id          : Leg02Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg02
+                          type        : FixedBrick
+                          params:
+                            red: 0.04
+                            green: 0.26
+                            blue: 0.72
+                          orientation : -90
     1:
       id          : Leg10Joint
       type        : ActiveHinge
@@ -67,6 +86,7 @@ body:
                 red: 0.98
                 green: 0.98
                 blue: 0.98
+              orientation : 0
               children    :
                 1:
                   id          : Leg11
@@ -76,6 +96,24 @@ body:
                     green: 0.26
                     blue: 0.72
                   orientation : 0
+                  children    :
+                    1:
+                      id          : Leg12Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg12
+                          type        : FixedBrick
+                          params:
+                            red: 0.04
+                            green: 0.26
+                            blue: 0.72
+                          orientation : -90
     2:
       id          : Leg20Joint
       type        : ActiveHinge
@@ -101,6 +139,7 @@ body:
                 red: 0.98
                 green: 0.98
                 blue: 0.98
+              orientation : 0
               children    :
                 1:
                   id          : Leg21
@@ -110,6 +149,24 @@ body:
                     green: 0.26
                     blue: 0.72
                   orientation : 0
+                  children    :
+                    1:
+                      id          : Leg22Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg22
+                          type        : FixedBrick
+                          params:
+                            red: 0.04
+                            green: 0.26
+                            blue: 0.72
+                          orientation : -90
     3:
       id          : Leg30Joint
       type        : ActiveHinge
@@ -135,6 +192,7 @@ body:
                 red: 0.98
                 green: 0.98
                 blue: 0.98
+              orientation : 0
               children    :
                 1:
                   id          : Leg31
@@ -144,6 +202,24 @@ body:
                     green: 0.26
                     blue: 0.72
                   orientation : 0
+                  children    :
+                    1:
+                      id          : Leg32Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg32
+                          type        : FixedBrick
+                          params:
+                            red: 0.04
+                            green: 0.26
+                            blue: 0.72
+                          orientation : -90
 brain:
   type: bo-cpg
   controller:

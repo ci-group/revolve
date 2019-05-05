@@ -1,0 +1,329 @@
+---
+id: example_spider17
+body:
+  id          : Core
+  type        : Core
+  params:
+    red: 0.04
+    green: 0.26
+    blue: 0.72
+  children    :
+    0:
+      id          : Leg00Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg00
+          type        : FixedBrick
+          params:
+            red: 0.04
+            green: 0.26
+            blue: 0.72
+          orientation : -90
+          children    :
+            1:
+              id          : Leg01Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              orientation : 0
+              children    :
+                1:
+                  id          : Leg01
+                  type        : FixedBrick
+                  params:
+                    red: 0.04
+                    green: 0.26
+                    blue: 0.72
+                  orientation : 0
+                  children    :
+                    1:
+                      id          : Leg02Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg02
+                          type        : FixedBrick
+                          params:
+                            red: 0.04
+                            green: 0.26
+                            blue: 0.72
+                          orientation : -90
+                          children    :
+                           1:
+                             id          : Leg03Joint
+                             type        : ActiveHinge
+                             params:
+                               red: 0.98
+                               green: 0.98
+                               blue: 0.98
+                             orientation : 0
+                             children    :
+                               1:
+                                 id          : Leg03
+                                 type        : FixedBrick
+                                 params:
+                                   red: 0.04
+                                   green: 0.26
+                                   blue: 0.72
+                                 orientation : 0
+    1:
+      id          : Leg10Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg10
+          type        : FixedBrick
+          params:
+            red: 0.04
+            green: 0.26
+            blue: 0.72
+          orientation : -90
+          children    :
+            1:
+              id          : Leg11Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              orientation : 0
+              children    :
+                1:
+                  id          : Leg11
+                  type        : FixedBrick
+                  params:
+                    red: 0.04
+                    green: 0.26
+                    blue: 0.72
+                  orientation : 0
+                  children    :
+                    1:
+                      id          : Leg12Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg12
+                          type        : FixedBrick
+                          params:
+                            red: 0.04
+                            green: 0.26
+                            blue: 0.72
+                          orientation : -90
+                          children    :
+                           1:
+                             id          : Leg13Joint
+                             type        : ActiveHinge
+                             params:
+                               red: 0.98
+                               green: 0.98
+                               blue: 0.98
+                             orientation : 0
+                             children    :
+                               1:
+                                 id          : Leg13
+                                 type        : FixedBrick
+                                 params:
+                                   red: 0.04
+                                   green: 0.26
+                                   blue: 0.72
+                                 orientation : 0
+    2:
+      id          : Leg20Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg20
+          type        : FixedBrick
+          params:
+            red: 0.04
+            green: 0.26
+            blue: 0.72
+          orientation : -90
+          children    :
+            1:
+              id          : Leg21Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              orientation : 0
+              children    :
+                1:
+                  id          : Leg21
+                  type        : FixedBrick
+                  params:
+                    red: 0.04
+                    green: 0.26
+                    blue: 0.72
+                  orientation : 0
+                  children    :
+                    1:
+                      id          : Leg22Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg22
+                          type        : FixedBrick
+                          params:
+                            red: 0.04
+                            green: 0.26
+                            blue: 0.72
+                          orientation : -90
+                          children    :
+                           1:
+                             id          : Leg23Joint
+                             type        : ActiveHinge
+                             params:
+                               red: 0.98
+                               green: 0.98
+                               blue: 0.98
+                             orientation : 0
+                             children    :
+                               1:
+                                 id          : Leg23
+                                 type        : FixedBrick
+                                 params:
+                                   red: 0.04
+                                   green: 0.26
+                                   blue: 0.72
+                                 orientation : 0
+    3:
+      id          : Leg30Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg30
+          type        : FixedBrick
+          params:
+            red: 0.04
+            green: 0.26
+            blue: 0.72
+          orientation : -90
+          children    :
+            1:
+              id          : Leg31Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              orientation : 0
+              children    :
+                1:
+                  id          : Leg31
+                  type        : FixedBrick
+                  params:
+                    red: 0.04
+                    green: 0.26
+                    blue: 0.72
+                  orientation : 0
+                  children    :
+                    1:
+                      id          : Leg32Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg32
+                          type        : FixedBrick
+                          params:
+                            red: 0.04
+                            green: 0.26
+                            blue: 0.72
+                          orientation : -90
+                          children    :
+                           1:
+                             id          : Leg33Joint
+                             type        : ActiveHinge
+                             params:
+                               red: 0.98
+                               green: 0.98
+                               blue: 0.98
+                             orientation : 0
+                             children    :
+                               1:
+                                 id          : Leg33
+                                 type        : FixedBrick
+                                 params:
+                                   red: 0.04
+                                   green: 0.26
+                                   blue: 0.72
+                                 orientation : 0
+brain:
+  type: bo-cpg
+  controller:
+    use_frame_of_reference: 0
+    load_brain: ""
+    reset_neuron_state_bool: "true"
+    reset_neuron_random: "false"
+    abs_output_bound: 1.0
+    signal_factor_all: 1.5
+    signal_factor_mid: 2.5
+    signal_factor_left_right: 2.5
+    range_lb: -1.0
+    range_ub: 1.0
+    init_neuron_state: 0.5
+  learner:
+    n_init_samples: 10
+    init_method: "LHS"
+    kernel_noise: 0.00000001
+    kernel_optimize_noise: "false"
+    kernel_sigma_sq: 0.001
+    kernel_l: 0.2
+    kernel_squared_exp_ard_k: 4
+    acqui_gpucb_delta: 0.1
+    acqui_ucb_alpha: 0.5
+    acqui_ei_jitter: 0
+    acquisition_function: "UCB"
+  meta:
+    run_analytics: "true"
+    n_learning_iterations: 5
+    n_cooldown_iterations: 0
+    reset_robot_position: "true"
+    evaluation_rate: 20
+    output_directory: ""
+    verbose: 1
+    startup_time: 0
