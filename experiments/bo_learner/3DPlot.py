@@ -12,7 +12,7 @@ import plotly.offline as py
 import plotly.graph_objs as go
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1556919226/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557008086/"
 var1 = "range_ub"
 var2 = "signal_factor"
 parameter_file = "parameters.txt"
@@ -37,11 +37,19 @@ for ix, path_ in enumerate(path_list):
         continue
 
     # Cope with unsorted issue
-    path_ =  "/".join(path_.split("/")[:-1]) + "/" + str(ix)
+    path_ = "/".join(path_.split("/")[:-1]) + "/" + str(ix)
+    print(path_, ix) # All fine till here
 
-    # Get parameters for this file.
+    # Get parameters for this file
     subfolder_list = glob(path_ + "/*/")
-    parameters = [(line.rstrip('\n')) for line in open(path_ + "/" + subfolder_list[0].split("/")[-2] +"/" + parameter_file)]
+    parameters = []
+
+    # Get some parameter file (so no empty list anymore)
+    c = 0
+    while parameters == []:
+        parameters = [(line.rstrip('\n')) for line in open(path_ + "/" + subfolder_list[c].split("/")[-2] + "/" + parameter_file)]
+        c += 1
+
     for param in parameters:
         if(var1 in param):
             results[ix, 0] = float(param.split(":")[-1])
@@ -58,20 +66,21 @@ df = pd.DataFrame(results)
 results = df.sort_values(by = [0,1]).to_numpy()
 
 # Prepare for 3D plot
-my_size = int(np.sqrt(n_dirs))
-X =results[:,0].reshape((my_size,  my_size))
-Y =results[:,1].reshape((my_size,  my_size))
-Z =results[:,2].reshape((my_size,  my_size))
+my_size_x = 11
+my_size_y = 10
+X =results[:,0].reshape((my_size_x,  my_size_y))
+Y =results[:,1].reshape((my_size_x,  my_size_y))
+Z =results[:,2].reshape((my_size_x,  my_size_y))
 
 # Verbose
-for i in range(my_size):
-    for j in range(my_size):
+for i in range(my_size_x):
+    for j in range(my_size_y):
         print(X[i,j], Y[i,j], Z[i,j])
 
 # Construct 3D plot
 fig = plt.figure(figsize=(10,10))
 ax = plt.axes(projection='3d')
-ax.plot_wireframe(X, Y, Z, rstride=1, cstride=1,
+ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
                cmap='viridis', edgecolor='none')
 ax.set_xlabel(var1)
 ax.set_ylabel(var2)
@@ -87,17 +96,16 @@ data = [
     )
 ]
 
-# # Layout
-# layout = go.Layout(
-#     title = path,
-#     scene = dict(
-#         xaxis=dict(title=var1),
-#         yaxis=dict(title=var2),
-#         zaxis=dict(title="fitness"),
-#     ),
-# )
+# Layout
+layout = go.Layout(
+    title = path,
+    scene = dict(
+        xaxis=dict(title=var1),
+        yaxis=dict(title=var2),
+        zaxis=dict(title="fitness"),
+    ),
+)
 
 # Construct ploty
-fig = go.Figure(data=data)
+fig = go.Figure(data=data, layout = layout)
 py.plot(fig, filename=path + "interactive_3d")
-print(len(X), len(Y), len(Z))

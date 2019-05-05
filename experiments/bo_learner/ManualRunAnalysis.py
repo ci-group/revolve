@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1556919226/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557008086/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/maarten/projects/revolve-simulator/revolve/experiments/bo_learner/yaml/yaml_temp/"
 

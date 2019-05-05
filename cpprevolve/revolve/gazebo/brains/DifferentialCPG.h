@@ -59,7 +59,7 @@ inline constexpr int kernel_squared_exp_ard_k_ = 4;
 inline constexpr double acqui_gpucb_delta_ = 0.1;
 inline constexpr double acqui_ucb_alpha_ = 0.5;
 inline constexpr double acqui_ei_jitter_= 0.f;
-
+inline constexpr int robot_size = 0;
 
 typedef std::vector< double > state_type;
 

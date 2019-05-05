@@ -19,15 +19,15 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 100
+n_runs = 60
 n_jobs = 60
 my_yaml_path = "experiments/bo_learner/yaml/"
 yaml_model = "spider.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
 search_space = {
-    'range_ub': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5],
-    'signal_factor_all': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5],
+    'range_ub': [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0],
+    'signal_factor_all': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
 }
 
 print(search_space)
@@ -123,7 +123,10 @@ if __name__ == "__main__":
     # Get permutations
     keys, values = zip(*search_space.items())
     experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
-
+    # experiments = [
+    #     {'range_ub': 1.0, 'signal_factor_all': 1.0},
+    #     {'range_ub': 1.0, 'signal_factor_all': 4.0}
+    # ]
     n_unique_experiments = len(experiments)
 
     # Get id's on the permutations

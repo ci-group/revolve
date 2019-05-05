@@ -129,6 +129,7 @@ DifferentialCPG::DifferentialCPG(
   double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
   double acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
   double acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
+  int robot_size = std::stoi(learner->GetAttribute("robot_size")->GetAsString());
   this->acquisition_function = learner->GetAttribute("acquisition_function")->GetAsString();
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
@@ -370,7 +371,7 @@ DifferentialCPG::~DifferentialCPG()
 struct DifferentialCPG::evaluation_function{
   // TODO: Make this neat. I don't know how though.
   // Number of input dimension (samples.size())
-  BO_PARAM(size_t, dim_in, 18);
+  BO_PARAM(size_t, dim_in, robot_size);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -1000,25 +1001,26 @@ void DifferentialCPG::step(
     i++;
   }
 
-  // Write state to file
-  std::ofstream state_file;
-  state_file.open(this->directory_name + "states.txt", std::ios::app);
-  for(size_t i = 0; i < this->neurons.size(); i++)
-  {
-    state_file << this->next_state[i] << ",";
-  }
-  state_file << std::endl;
-  state_file.close();
-
-  // Write signal to file
-  std::ofstream signal_file;
-  signal_file.open(this->directory_name + "signal.txt", std::ios::app);
-  for(size_t i = 0; i < this->n_motors; i++)
-  {
-    signal_file << this->output[i] << ",";
-  }
-  signal_file << std::endl;
-  signal_file.close();
+  // Comment to save disk space
+//  // Write state to file
+//  std::ofstream state_file;
+//  state_file.open(this->directory_name + "states.txt", std::ios::app);
+//  for(size_t i = 0; i < this->neurons.size(); i++)
+//  {
+//    state_file << this->next_state[i] << ",";
+//  }
+//  state_file << std::endl;
+//  state_file.close();
+//
+//  // Write signal to file
+//  std::ofstream signal_file;
+//  signal_file.open(this->directory_name + "signal.txt", std::ios::app);
+//  for(size_t i = 0; i < this->n_motors; i++)
+//  {
+//    signal_file << this->output[i] << ",";
+//  }
+//  signal_file << std::endl;
+//  signal_file.close();
 }
 
 /**

@@ -37,6 +37,7 @@ class BrainCPGBO(Brain):
         self.n_init_samples = None
 
         # Various
+        self.robot_size = None
         self.n_learning_iterations = None
         self.n_cooldown_iterations = None
         self.load_brain = None
@@ -74,6 +75,7 @@ class BrainCPGBO(Brain):
     def learner_sdf(self):
         return xml.etree.ElementTree.Element('rv:learner', {
             'type': 'bo',
+            'robot_size': str(self.robot_size),
             'n_init_samples': str(self.n_init_samples),
             'n_learning_iterations': str(self.n_learning_iterations),
             'n_cooldown_iterations': str(self.n_cooldown_iterations),
