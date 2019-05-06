@@ -369,7 +369,6 @@ DifferentialCPG::~DifferentialCPG()
  * Dummy function for limbo
  */
 struct DifferentialCPG::evaluation_function{
-  // TODO: Make this neat. I don't know how though.
   // Number of input dimension (samples.size())
   BO_PARAM(size_t, dim_in, robot_size);
 

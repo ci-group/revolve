@@ -325,6 +325,7 @@ brain:
     acqui_ei_jitter: 0
     acquisition_function: "GP_UCB"
   meta:
+    robot_size: 32
     run_analytics: "true"
     n_learning_iterations: 500
     n_cooldown_iterations: 0

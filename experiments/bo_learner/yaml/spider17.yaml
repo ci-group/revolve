@@ -319,6 +319,7 @@ brain:
     acqui_ei_jitter: 0
     acquisition_function: "UCB"
   meta:
+    robot_size: 34
     run_analytics: "true"
     n_learning_iterations: 5
     n_cooldown_iterations: 0
