@@ -51,7 +51,7 @@ class PopulationConfig:
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig, simulator):
+    def __init__(self, conf: PopulationConfig, world):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -59,11 +59,11 @@ class Population:
         conf variable.
 
         :param conf: configuration of the system
-        :param simulator: connection to the simulator
+        :param world: connection to the world
         """
         self.conf = conf
         self.individuals = []
-        self.simulator = simulator
+        self.world = world
 
     async def init_pop(self):
         """
@@ -109,8 +109,7 @@ class Population:
                                                               self.conf.population_management_selector)
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
-        # return self.__class__(self.conf, new_individuals)
-        new_population = Population(self.conf, self.simulator)
+        new_population = Population(self.conf, self.world)
         new_population.individuals = new_individuals
         return new_population
 
@@ -122,10 +121,7 @@ class Population:
         :param gen_num: generation number
         """
         # Parse command line / file input arguments
-        await self.simulator.pause(True)
-        # await self.simulator.reset(rall=True, time_only=False, model_only=False)
-        # await asyncio.sleep(2.5)
-
+        await self.world.pause(True)
         for individual in new_individuals:
             logger.info(f'---\nEvaluating individual (gen {gen_num}) {individual.genotype.id} ...')
             individual.develop()
@@ -139,24 +135,21 @@ class Population:
         :param individual: an individual from the new population
         """
         # Insert the robot in the simulator
-        insert_future = await self.simulator.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
-        # await self.simulator.pause(False)
+        insert_future = await self.world.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
         robot_manager = await insert_future
 
         # Resume simulation
-        await self.simulator.pause(False)
-        # start = time.time()
+        await self.world.pause(False)
+        start = time.time()
         # Start a run loop to do some stuff
-        max_age = self.conf.evaluation_time # + self.conf.warmup_time
+        max_age = self.conf.evaluation_time
         while robot_manager.age() < max_age:
             individual.fitness = robot_manager.fitness()
-            await asyncio.sleep(1.0 / 5) # 5= state_update_frequency
-        # end = time.time()
-        # logger.info(f'Time taken: {end-start}')
+            await asyncio.sleep(1.0 / 5)  # 5= state_update_frequency
+        end = time.time()
+        elapsed = end-start
+        logger.info(f'Time taken: {elapsed}')
 
-        # await self.simulator.pause(True)
-        delete_future = await self.simulator.delete_all_robots()  # robot_manager
-        # await self.simulator.pause(True)
+        delete_future = await self.world.delete_all_robots()  # robot_manager
         await delete_future
-        await self.simulator.pause(True)
-        # await self.simulator.reset(rall=True, time_only=False, model_only=False)
+        await self.world.pause(True)

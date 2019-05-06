@@ -236,7 +236,7 @@ class World(WorldManager):
         self.mutator.mutate(child, in_place=True)
 
         # if self.conf.enforce_planarity:
-        # make_planar(child.root)
+            # make_planar(child.root)
 
         _, outputs, _ = child.root.io_count(recursive=True)
         if not outputs:
