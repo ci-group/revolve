@@ -697,12 +697,12 @@ void DifferentialCPG::Update(
       // Else we don't want to update anything, but construct plots from this run once.
     else
     {
-      // Create plots
-      if(this->run_analytics)
-      {
-        // Construct plots
-        this->get_analytics();
-      }
+//      // Create plots
+//      if(this->run_analytics)
+//      {
+//        // Construct plots
+//        this->get_analytics();
+//      }
 
       // Exit
       if(this->verbose)
