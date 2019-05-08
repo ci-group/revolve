@@ -147,7 +147,7 @@ body:
 brain:
   type: bo-cpg
   controller:
-    use_frame_of_reference: 0
+    use_frame_of_reference: 1
     load_brain: ""
     reset_neuron_state_bool: "true"
     reset_neuron_random: "false"
@@ -159,7 +159,7 @@ brain:
     range_ub: 1.0
     init_neuron_state: 0.707
   learner:
-    n_init_samples: 50
+    n_init_samples: 5
     init_method: "LHS"
     kernel_noise: 0.00000001
     kernel_optimize_noise: "false"
@@ -173,7 +173,7 @@ brain:
   meta:
     run_analytics: "true"
     n_learning_iterations: 1
-    n_cooldown_iterations: 0
+    n_cooldown_iterations: 20
     reset_robot_position: "true"
     evaluation_rate: 60
     output_directory: ""

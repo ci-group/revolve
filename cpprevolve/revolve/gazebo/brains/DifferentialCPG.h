@@ -275,7 +275,7 @@ namespace revolve
       private: double get_vector_angle(double p1_x, double p1_y, double p2_x, double p2_y, double d1_x, double d1_y);
 
       /// \brief Angle that the robot acually moves in.
-      private: double face;
+      private: double face = 0;
 
       /// \brief Whether to use "frequency" or "amplitude" for FOR
       private: std::string for_signal_modification_type = "amplitude";

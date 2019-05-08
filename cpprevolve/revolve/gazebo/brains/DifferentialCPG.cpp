@@ -555,7 +555,7 @@ void DifferentialCPG::save_fitness(){
   double fitness = this->evaluator->Fitness();
 
   // Save sample if it is the best seen so far
-  if(fitness >this->best_fitness or true)
+  if(fitness >this->best_fitness)
   {
     // Update fitness and sample
     this->best_fitness = fitness;
@@ -718,7 +718,7 @@ void DifferentialCPG::Update(
     }
 
     // Reset robot if opted to do
-    if(this->reset_robot_position)
+    if(this->reset_robot_position and this->current_iteration < (this->n_init_samples + this->n_learning_iterations))
     {
       //this->robot->Reset();
       this->robot->ResetPhysicsStates();
@@ -1094,14 +1094,11 @@ void DifferentialCPG::step(
       // Should be one, as output should be based on +1 neurons, which are the A neurons
     if (i % 2 == 1)
     {
-      // TODO: Add Milan's function here as soon as things are working a bit
-      // f(a) = (w_ao*a - bias)*gain
-
       // Apply saturation formula
       auto x = this->next_state[i];
 
       // Use frame of reference
-      if(use_frame_of_reference)
+      if(use_frame_of_reference and this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
       {
         if(this->for_speeding_approach == "slower" and this->for_signal_modification_type == "amplitude")
         {
@@ -1112,24 +1109,22 @@ void DifferentialCPG::step(
           my_factor = std::abs(180.0 - angle_difference)/180.0;
 
           // Don't do anything if we are on the middle line
-          if (std::abs(frame_of_reference) == 0)
+          if (frame_of_reference == 0)
           {
             this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
           }
           // Else we are either left or right
-          else if (std::abs(frame_of_reference == -1))
+          else if (std::abs(frame_of_reference) == 1)
           {
             // TODO: Verify the logical correctness of this
             // If we are a right block, and we need to go right, decrease speed:
             if(frame_of_reference == 1 and angle_difference >=0)
             {
               this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
-              std::cout << "Change right\n";
             }
             else if(frame_of_reference == -1 and angle_difference <0)
             {
               this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
-              std::cout << "Change left\n";
             }
             // Else behave as normal
             else
