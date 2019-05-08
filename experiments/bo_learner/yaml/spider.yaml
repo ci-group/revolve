@@ -177,5 +177,5 @@ brain:
     reset_robot_position: "true"
     evaluation_rate: 60
     output_directory: ""
-    verbose: 0
+    verbose: 1
     startup_time: 0

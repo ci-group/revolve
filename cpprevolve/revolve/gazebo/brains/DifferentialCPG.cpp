@@ -542,6 +542,9 @@ void DifferentialCPG::set_random_goal_box(){
   auto new_pose = ::ignition::math::Pose3d();
   new_pose.Set(goal_x, goal_y, 0.05, 0.0, 0.0, 0.0);
   this->goal_box->SetWorldPose(new_pose);
+
+  // Set new goal angle
+
 }
 
 /**
@@ -552,13 +555,13 @@ void DifferentialCPG::save_fitness(){
   double fitness = this->evaluator->Fitness();
 
   // Save sample if it is the best seen so far
-  if(fitness >this->best_fitness)
+  if(fitness >this->best_fitness or true)
   {
     // Update fitness and sample
     this->best_fitness = fitness;
     this->best_sample = this->samples.back();
 
-    // Set new face: TODO: Verify, although it should be correct. Note that the face implemetnation copes with starting position.
+    // Set new face. I verified the correctness
     double robot_move_angle = this->get_vector_angle(this->evaluator->previous_position_.Pos().X(),
                                                  this->evaluator->previous_position_.Pos().Y(),
                                                  this->evaluator->current_position_.Pos().X(),
@@ -573,6 +576,10 @@ void DifferentialCPG::save_fitness(){
     }
     else if (this->face < -180){
       this->face +=360;
+    }
+    if(this->verbose)
+    {
+      std::cout << "New face: " << this->face << std::endl;
     }
   }
 
@@ -595,8 +602,6 @@ void DifferentialCPG::save_fitness(){
   fitness_file << fitness << std::endl;
   fitness_file.close();
 }
-
-
 
 /**
  * Wrapper function that makes calls to limbo to solve the current BO
@@ -698,6 +703,7 @@ void DifferentialCPG::Update(
     this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     this->start_fitness_recording = false;
   }
+
   // Evaluate policy on certain time limit, or if we just started
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
@@ -717,7 +723,7 @@ void DifferentialCPG::Update(
       //this->robot->Reset();
       this->robot->ResetPhysicsStates();
       auto start_pose = ::ignition::math::Pose3d();
-      start_pose.Set(0.0, 0.0, 0.25, 0.0, 0.0, 0.0);
+      start_pose.Set(0.0, 0.0, 0.025, 0.0, 0.0, 0.0);
       this->robot->SetWorldPose(start_pose);
       this->robot->Update();
     }
@@ -751,7 +757,8 @@ void DifferentialCPG::Update(
       // Update position
       this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     }
-      // If we are finished learning but are cooling down - reset once
+    // If we are finished learning, deploy this model.
+    // TODO: Investigate if the validation bug is still present. For now always work with load_brain
     else if((this->current_iteration >= (this->n_init_samples +
                                          this->n_learning_iterations))
             and (this->current_iteration < (this->n_init_samples +
@@ -762,24 +769,6 @@ void DifferentialCPG::Update(
       {
         std::cout << std::endl << "I am cooling down " << std::endl;
       }
-
-      // Get angle we will move in under gait sub-brain
-      double robot_angle = this->robot->WorldPose().Rot().Yaw()*180.0/M_PI;
-      double move_angle = this->face + robot_angle; // TODO: Set robot face
-
-      if(move_angle >=180.0){
-        move_angle -= 360;
-      }
-      else if (move_angle <= -180){
-        move_angle += 360;
-      }
-
-      // Get angle difference in [-180, +180]
-      double angle_difference = this->goal_angle - move_angle; // TODO: Set this->goal_angle
-      if(angle_difference >180) angle_difference -= 360;
-      else if (angle_difference < -180) angle_difference +=360;
-
-      // TODO: Give angle_difference into a function
 
       // Update robot position
       this->evaluator->Update(this->robot->WorldPose(), _time, _step);
@@ -814,8 +803,13 @@ void DifferentialCPG::Update(
     this->current_iteration += 1;
   }
 
-  // Send new signals to the motors
+  // TODO: Give angle_difference into a function
+
+
+  // Do the stepping
   this->step(_time, this->output);
+
+  // Send new signals to the motors
   p = 0;
   for (const auto &motor: _motors)
   {
@@ -1001,6 +995,42 @@ void DifferentialCPG::step(
     const double _time,
     double *_output)
 {
+  // Init
+  double robot_angle, move_angle, angle_difference;
+
+  // Get angles when we need them
+  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations or true) // TODO: CHange when finished debugging
+  {
+    // Get angle of goal
+    this->angle_to_goal = this->get_vector_angle(this->evaluator->current_position_.Pos().X(), this->evaluator->current_position_.Pos().Y(), this->goal_x, this->goal_y, 0.f, -1.f);
+
+    // Get angle against (1,0)-vector we will move towards
+    robot_angle = this->robot->WorldPose().Rot().Yaw() * 180.0 / M_PI;
+    move_angle = this->face + robot_angle;
+
+    if (move_angle >= 180.0)
+    {
+      move_angle -= 360;
+    }
+    else if (move_angle <= -180)
+    {
+      move_angle += 360;
+    }
+
+    // Get angle difference in [-180, +180]
+    angle_difference = this->angle_to_goal - move_angle;
+    if (angle_difference > 180)
+      angle_difference -= 360;
+    else if (angle_difference < -180)
+      angle_difference += 360;
+
+  //    std::cout << "Face: " << this->face << ". Angledifference: " << angle_difference << std::endl;
+  // Face and angle difference are working now
+  }
+  // TODO: First step at each iteration AD is nan. Perhaps due to robot resetting
+  //std::cout << "AD: "<< angle_difference;
+
+
   int neuron_count = 0;
   for (const auto &neuron : this->neurons)
   {
@@ -1073,23 +1103,53 @@ void DifferentialCPG::step(
       // Use frame of reference
       if(use_frame_of_reference)
       {
+        if(this->for_speeding_approach == "slower" and this->for_signal_modification_type == "amplitude")
+        {
+          // Determine factor based on corner to alpha
+          double my_factor = 1.0;
 
-        if (std::abs(frame_of_reference) == 1)
-        {
-          this->output[j] = this->signal_factor_left_right*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
-        }
-        else if (frame_of_reference == 0)
-        {
-          this->output[j] = this->signal_factor_mid*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+          // Calculate factor
+          my_factor = std::abs(180.0 - angle_difference)/180.0;
+
+          // Don't do anything if we are on the middle line
+          if (std::abs(frame_of_reference) == 0)
+          {
+            this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+          }
+          // Else we are either left or right
+          else if (std::abs(frame_of_reference == -1))
+          {
+            // TODO: Verify the logical correctness of this
+            // If we are a right block, and we need to go right, decrease speed:
+            if(frame_of_reference == 1 and angle_difference >=0)
+            {
+              this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+              std::cout << "Change right\n";
+            }
+            else if(frame_of_reference == -1 and angle_difference <0)
+            {
+              this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+              std::cout << "Change left\n";
+            }
+            // Else behave as normal
+            else
+            {
+              this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+            }
+          }
+          else
+          {
+            std::cout << "Something went wrong\n";
+          }
         }
         else
         {
-          std::cout << "WARNING: frame_of_reference not in {-1,0,1}." << std::endl;
+          std::cout << "Not implemented yet \n";
         }
-
       }
       // Don't use frame of reference
-      else{
+      else
+      {
         this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       }
       j++;

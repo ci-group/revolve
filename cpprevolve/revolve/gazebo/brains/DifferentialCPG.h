@@ -277,15 +277,18 @@ namespace revolve
       /// \brief Angle that the robot acually moves in.
       private: double face;
 
-      /// \brief Whether to use FOR using "frequency" or "amplitude"
-      private: std::string frame_of_reference_mode;
+      /// \brief Whether to use "frequency" or "amplitude" for FOR
+      private: std::string for_signal_modification_type = "amplitude";
+
+      /// \brief Whether to use "faster" or "slower" for FOR. TODO: access via .yaml
+      private: std::string for_speeding_approach = "slower";
 
       /// \brief Coordinates of the goal box
       private: double goal_x;
       private: double goal_y;
 
-      // \brief Angle the goal box is at against the (1,0)-vector.
-      private: double goal_angle;
+      // \brief Angle the goal box is at against our face
+      private: double angle_to_goal;
 
       // \brief Set the goalbox at some arbitrary position
       private: void set_random_goal_box();
