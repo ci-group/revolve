@@ -215,7 +215,7 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
   else if ("bo" == learner and "cpg" == controller)
   {
-    brain_.reset(new DifferentialCPG(this->model_, _sdf, motors_, sensors_));
+    brain_.reset(new DifferentialCPG(this->model_, this->world_->ModelByName("box"), _sdf, motors_, sensors_));
   }
   else
   {

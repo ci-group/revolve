@@ -77,6 +77,7 @@ namespace revolve
       public:
       DifferentialCPG(
           const ::gazebo::physics::ModelPtr &_model,
+          const ::gazebo::physics::ModelPtr &_box,
           const sdf::ElementPtr robot_config,
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors);
@@ -146,6 +147,9 @@ namespace revolve
 
       /// \brief Name of the robot
       private: ::gazebo::physics::ModelPtr robot;
+
+      /// \brief Name of the goal box
+      private: ::gazebo::physics::ModelPtr goal_box;
 
       /// \brief Init BO loop
       public: void bo_init_sampling();

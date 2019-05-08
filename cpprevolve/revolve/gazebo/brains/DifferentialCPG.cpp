@@ -71,6 +71,7 @@ using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
  */
 DifferentialCPG::DifferentialCPG(
     const ::gazebo::physics::ModelPtr &_model,
+    const ::gazebo::physics::ModelPtr &_box,
     const sdf::ElementPtr robot_config,
     const std::vector< revolve::gazebo::MotorPtr > &_motors,
     const std::vector< revolve::gazebo::SensorPtr > &_sensors)
@@ -148,8 +149,9 @@ DifferentialCPG::DifferentialCPG(
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
 
-  // Get Robot
+  // Get models
   this->robot = _model;
+  this->goal_box = _box;
   this->n_motors = _motors.size();
   auto name = _model->GetName();
 

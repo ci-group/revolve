@@ -40,7 +40,9 @@
         <include>
             <uri>model://tol_ground</uri>
         </include>
-
+        <include>
+            <uri>model://box</uri>
+        </include>
         <plugin name="revolve-world" filename="libWorldControlPlugin.so" />
     </world>
 </sdf>
