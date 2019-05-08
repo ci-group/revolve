@@ -17,6 +17,7 @@ from ...custom_logging.logger import logger
 _a = time.time()
 MSG_BASE = int(_a - 14e8 + (_a - int(_a)) * 1e5)
 
+
 class WorldManager(object):
     """
     Class for basic world management such as inserting / deleting
@@ -63,6 +64,10 @@ class WorldManager(object):
         )
         await self._init()
         return self
+
+    def disconnect(self):
+        self.manager.stop()
+        self.request_handler.stop()
 
     async def _init(self):
         """

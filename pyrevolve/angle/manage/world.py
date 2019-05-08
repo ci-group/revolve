@@ -225,8 +225,9 @@ class WorldManager(manage.WorldManager):
             await (self.restore_snapshot(self.do_restore))
 
     def disconnect(self):
+        super().disconnect()
         self.pose_subscriber.remove()
-        #TODO check for other connections to remove
+        self.battery_handler.stop()
 
     async def create_snapshot(self):
         """

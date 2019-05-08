@@ -154,7 +154,7 @@ class Supervisor(object):
 
                     return ret
 
-    async def relaunch(self):
+    def relaunch(self):
         self._terminate_all()
         self._launch_simulator()
 
@@ -263,7 +263,7 @@ class Supervisor(object):
         self.streams[name] = (NBSR(self.procs[name].stdout, name),
                               NBSR(self.procs[name].stderr, name))
 
-    def _launch_simulator(self, ready_str="World plugin loaded", output_tag="simulator"):
+    def _launch_simulator(self, ready_str="World plugin loaded", output_tag="simulator", address='localhost', port=11345):
         """
         Launches the simulator
         :return:
@@ -276,14 +276,21 @@ class Supervisor(object):
         world = snapshot_world \
             if os.path.exists(snapshot_world) else self.world_file
         gz_args.append(world)
+
+        env = {}
+        for key, value in os.environ.items():
+            env[key] = value
+        env['GAZEBO_MASTER_URI'] = 'http://{}:{}'.format(address, port)
+
         self.procs[output_tag] = self._launch_with_ready_str(
             cmd=gz_args,
             ready_str=ready_str,
+            env=env,
             output_tag=output_tag)
         self._add_output_stream(output_tag)
 
     @staticmethod
-    def _launch_with_ready_str(cmd, ready_str, output_tag="simulator"):
+    def _launch_with_ready_str(cmd, ready_str, env, output_tag="simulator"):
         """
         :param cmd:
         :param ready_str:
@@ -292,6 +299,7 @@ class Supervisor(object):
         process = subprocess.Popen(
             cmd,
             bufsize=1,
+            env=env,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE)
 

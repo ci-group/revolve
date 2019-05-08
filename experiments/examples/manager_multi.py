@@ -24,24 +24,13 @@ from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import Supervisor
 from multiprocessing import Process
-
-def dummy_selection(individuals):
-    return individuals[0]
-
-
-def crossover_selection(individuals, selector, howmany:int):
-    selected = []
-    for i in range(howmany):
-        selected.append(
-            selector(individuals)
-        )
-    return selected
+from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 
 
 class ExperimentConfig:
     def __init__(self):
 
-        self.num_generations = 10
+        self.num_generations = 100
 
         self.genotype_conf = PlasticodingConfig(
             max_structural_modules=20,
@@ -56,19 +45,19 @@ class ExperimentConfig:
         )
 
         self.population_conf = PopulationConfig(
-            population_size=6,
+            population_size=100,
             genotype_constructor=random_initialization,
             genotype_conf=self.genotype_conf,
             mutation_operator=standard_mutation,
             mutation_conf=self.mutation_conf,
             crossover_operator=standard_crossover,
             crossover_conf=self.crossover_conf,
-            selection=dummy_selection,
-            parent_selection=lambda individuals: crossover_selection(individuals, dummy_selection, 2),
+            selection=lambda individuals: tournament_selection(individuals, 2),
+            parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
             population_management=steady_state_population_management,
-            population_management_selector=dummy_selection,
+            population_management_selector=tournament_selection,
             evaluation_time=30,
-            offspring_size=3,
+            offspring_size=50,
         )
 
 
@@ -86,22 +75,25 @@ async def run():
         plugins_dir_path=os.path.join(newpath, 'build', 'lib'),
         models_dir_path=os.path.join(newpath, 'models')
     )
-    simulator_supervisor._launch_simulator()
-    simulator_connection = await World.create(settings)
+    simulator_supervisor._launch_simulator(port=11345)
 
-    population = Population(experiment_conf.population_conf, simulator_connection)
-    # await population.init_pop()
+    population = Population(experiment_conf.population_conf,
+                            await World.create(settings, world_address=("127.0.0.1", 11345)))
+    await population.init_pop()
     population.simulator_connection.disconnect()
-    await asyncio.wait_for(simulator_supervisor.relaunch(), None)
-    aaa = World.create(settings)
-    population.simulator_connection = await aaa
+
+    simulator_supervisor._terminate_all()
+    simulator_supervisor._launch_simulator(port=11345)
+
+    population.simulator_connection = await World.create(settings, world_address=("127.0.0.1", 11345))
 
     gen_num = 0
     while gen_num < experiment_conf.num_generations:
         population = await population.next_gen(gen_num+1)
-        await asyncio.wait_for(simulator_supervisor.relaunch(), None)
-        aaa = World.create(settings)
-        population.simulator_connection = await aaa
+        population.simulator_connection.disconnect()
+        simulator_supervisor._terminate_all()
+        simulator_supervisor._launch_simulator(port=11345)
+        population.simulator_connection = await World.create(settings)
         gen_num += 1
 
     # output result after completing all generations...
@@ -109,14 +101,20 @@ async def run():
 
 def main():
     def handler(loop, context):
-        exc = context['exception']
-        import traceback
-        traceback.print_exc()
+        try:
+            exc = context['exception']
+        except KeyError:
+            print(context['message'])
+            return
+
         if isinstance(exc, DisconnectError) \
                 or isinstance(exc, ConnectionResetError):
             print("Got disconnect / connection reset - shutting down.")
             sys.exit(0)
-        raise context['exception']
+
+        import traceback
+        traceback.print_exc(exc)
+        raise exc
 
     try:
         loop = asyncio.get_event_loop()
