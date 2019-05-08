@@ -224,6 +224,10 @@ class WorldManager(manage.WorldManager):
         if self.do_restore:
             await (self.restore_snapshot(self.do_restore))
 
+    def disconnect(self):
+        self.pose_subscriber.remove()
+        #TODO check for other connections to remove
+
     async def create_snapshot(self):
         """
         Creates a snapshot of the world in the output directory.
