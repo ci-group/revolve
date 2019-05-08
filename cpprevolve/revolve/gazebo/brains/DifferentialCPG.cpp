@@ -354,6 +354,36 @@ DifferentialCPG::DifferentialCPG(
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
 }
 
+
+/**
+ * \brief Function that determines the angle between the resulting vector and the normal [d1_x,d1_y]-vector. Input: V1, V2
+ * \param p1_x x-coordinate of first point
+ * \param p1_y y-coordinateof firstpoint
+ * \param p2_x x-coordinate of second point
+ * \param p2_y y-coordinate of second point
+ * \param d1_x Normalized x-slope of second vector
+ * \param d1_y Normalized y-slope of second vector
+ * \return Angle between the two vectors in [-180, +180]
+ */
+double DifferentialCPG::get_vector_angle(double p1_x, double p1_y, double p2_x, double p2_y, double d1_x, double d1_y){
+  // Get direction vector of input
+  double x2 = p2_x - p1_x;
+  double y2 = p2_y - p1_y;
+
+  // Normalize
+  const double d_norm = std::pow(std::pow(x2,2) + std::pow(y2,2), 0.5);
+  x2 = x2/d_norm;
+  y2 = y2/d_norm;
+
+  // Get arctan2 input
+  double dot = d1_x*x2 + d1_y*y2;
+  double det = d1_x*y2 - d1_y*x2;
+
+  // Return angle
+  return(std::atan2(det,dot)*180.0/M_PI);
+}
+
+
 /**
  * Destructor
  */
@@ -483,6 +513,35 @@ void DifferentialCPG::bo_init_sampling(){
   }
 }
 
+
+void DifferentialCPG::set_random_goal_box(){
+  // Goal caught
+  this->goal_count += 1;
+
+  // Generate end-point for targeted locomotion that is at least 1 unit of distance away
+  std::cout << "SetrandomGoalBox \n";
+
+  // Set new position that is sufficiently far away
+  while(this->dist_to_goal <= 1.0){
+    // Generate new goal points in the neighbourhood of the robot
+    this->goal_x = ((double) rand() / (RAND_MAX))*3.f - 1.5 + this->evaluator->current_position_.Pos().X();
+    this->goal_y = ((double) rand() / (RAND_MAX))*3.f - 1.5 + this->evaluator->current_position_.Pos().Y();
+
+    // Check distance
+    this->dist_to_goal = std::pow(
+        std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
+        std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
+        , 0.5);
+
+    std::cout << "Distance is " << this->dist_to_goal << " with points " << this->goal_x << ", " << this->goal_y << std::endl;
+  }
+
+  // Update goal box
+  auto new_pose = ::ignition::math::Pose3d();
+  new_pose.Set(goal_x, goal_y, 0.05, 0.0, 0.0, 0.0);
+  this->goal_box->SetWorldPose(new_pose);
+}
+
 /**
  * Function that obtains the current fitness by calling the evaluator and stores it
  */
@@ -493,8 +552,26 @@ void DifferentialCPG::save_fitness(){
   // Save sample if it is the best seen so far
   if(fitness >this->best_fitness)
   {
+    // Update fitness and sample
     this->best_fitness = fitness;
     this->best_sample = this->samples.back();
+
+    // Set new face: TODO: Verify, although it should be correct. Note that the face implemetnation copes with starting position.
+    double robot_move_angle = this->get_vector_angle(this->evaluator->previous_position_.Pos().X(),
+                                                 this->evaluator->previous_position_.Pos().Y(),
+                                                 this->evaluator->current_position_.Pos().X(),
+                                                 this->evaluator->current_position_.Pos().Y(),
+                                                 0.f,
+                                                 -1.f);
+    double start_angle = this->evaluator->previous_position_.Rot().Yaw()*180.0/M_PI;
+
+    this->face = robot_move_angle - start_angle;
+    if(this->face > 180){
+      this->face -= 360;
+    }
+    else if (this->face < -180){
+      this->face +=360;
+    }
   }
 
   if (this->verbose)
@@ -684,6 +761,24 @@ void DifferentialCPG::Update(
         std::cout << std::endl << "I am cooling down " << std::endl;
       }
 
+      // Get angle we will move in under gait sub-brain
+      double robot_angle = this->robot->WorldPose().Rot().Yaw()*180.0/M_PI;
+      double move_angle = this->face + robot_angle; // TODO: Set robot face
+
+      if(move_angle >=180.0){
+        move_angle -= 360;
+      }
+      else if (move_angle <= -180){
+        move_angle += 360;
+      }
+
+      // Get angle difference in [-180, +180]
+      double angle_difference = this->goal_angle - move_angle; // TODO: Set this->goal_angle
+      if(angle_difference >180) angle_difference -= 360;
+      else if (angle_difference < -180) angle_difference +=360;
+
+      // TODO: Give angle_difference into a function
+
       // Update robot position
       this->evaluator->Update(this->robot->WorldPose(), _time, _step);
 
@@ -694,7 +789,7 @@ void DifferentialCPG::Update(
       this->set_ode_matrix();
     }
       // Else we don't want to update anything, but construct plots from this run once.
-    else
+      else
     {
       // Create plots
       if(this->run_analytics)

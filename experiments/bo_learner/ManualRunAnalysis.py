@@ -90,8 +90,6 @@ fitness_list.sort(key=lambda x: x[0])
 fitness_list.reverse()
 fitness_list
 
-
-# TODO: Results.txt has wrong order (3D plot not affected by this).
 print("Fitnesses are:")
 for e in fitness_list:
     print(e)

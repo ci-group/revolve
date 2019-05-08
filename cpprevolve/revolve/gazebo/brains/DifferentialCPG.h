@@ -266,6 +266,32 @@ namespace revolve
 
       /// \brief Use frame of reference {-1,0,1} version or not
       private: bool use_frame_of_reference;
+
+      /// \brief Function that determines the angle between the resulting vector and the normal [d1_x,d1_y]-vector.
+      private: double get_vector_angle(double p1_x, double p1_y, double p2_x, double p2_y, double d1_x, double d1_y);
+
+      /// \brief Angle that the robot acually moves in.
+      private: double face;
+
+      /// \brief Whether to use FOR using "frequency" or "amplitude"
+      private: std::string frame_of_reference_mode;
+
+      /// \brief Coordinates of the goal box
+      private: double goal_x;
+      private: double goal_y;
+
+      // \brief Angle the goal box is at against the (1,0)-vector.
+      private: double goal_angle;
+
+      // \brief Set the goalbox at some arbitrary position
+      private: void set_random_goal_box();
+
+      // \brief Distance to the goal
+      private: double dist_to_goal;
+
+      // \brief Number of goals reached
+      private: int goal_count;
+
     };
   }
 }

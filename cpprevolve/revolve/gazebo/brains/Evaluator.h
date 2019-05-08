@@ -58,13 +58,13 @@ namespace revolve
                           const double step);
 
       /// \brief Previous position of a robot
-      protected: ignition::math::Pose3d start_position_;
+      public: ignition::math::Pose3d start_position_;
 
       /// \brief Previous position of a robot
-      protected: ignition::math::Pose3d previous_position_;
+      public: ignition::math::Pose3d previous_position_;
 
       /// \brief Current position of a robot
-      protected: ignition::math::Pose3d current_position_;
+      public: ignition::math::Pose3d current_position_;
 
       /// \brief
       protected: double evaluation_rate_;
@@ -74,7 +74,6 @@ namespace revolve
       protected: double last_step_time;
       protected: double step_saving_rate;
       protected: std::vector<ignition::math::Pose3d> step_poses;
-      //      public: double current_dist_pro = 0.0;
     };
   }
 }
