@@ -104,6 +104,7 @@ class WorldManager(manage.WorldManager):
                     try:
                         self.do_restore = pickle.load(snapshot_file)
                     except Exception as e:
+                        traceback.print_exc()
                         logger.exception("Cannot restore snapshot, shutting down.")
                         sys.exit(23)
 

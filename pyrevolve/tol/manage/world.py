@@ -130,7 +130,7 @@ class World(WorldManager):
         :param color:
         :return:
         """
-        hl = Highlight("highlight_"+str(self.get_robot_id()), color)
+        hl = Highlight("highlight_" + str(self.get_robot_id()), color)
         position = position.copy()
         position.z = 0
         hl.set_position(position)
@@ -239,7 +239,7 @@ class World(WorldManager):
         self.mutator.mutate(child, in_place=True)
 
         # if self.conf.enforce_planarity:
-        # make_planar(child.root)
+            # make_planar(child.root)
 
         _, outputs, _ = child.root.io_count(recursive=True)
         if not outputs:

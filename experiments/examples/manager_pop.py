@@ -11,6 +11,7 @@ sys.path.append(newpath)
 from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
+from pyrevolve.evolution import fitness
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
@@ -58,6 +59,7 @@ async def run():
         population_size=10,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
+        fitness_function=fitness.random,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,

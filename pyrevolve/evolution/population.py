@@ -6,11 +6,13 @@ from ..custom_logging.logger import logger
 import time
 import asyncio
 
+
 class PopulationConfig:
     def __init__(self,
                  population_size: int,
                  genotype_constructor,
                  genotype_conf,
+                 fitness_function,
                  mutation_operator,
                  mutation_conf,
                  crossover_operator,
@@ -27,6 +29,7 @@ class PopulationConfig:
         :param population_size: size of the population
         :param genotype_constructor: class of the genotype used
         :param genotype_conf: configuration for genotype constructor
+        :param fitness_function: function that takes in a `RobotManager` as a parameter and produces a fitness for the robot
         :param mutation_operator: operator to be used in mutation
         :param mutation_conf: configuration for mutation operator
         :param crossover_operator: operator to be used in crossover
@@ -38,6 +41,7 @@ class PopulationConfig:
         self.population_size = population_size
         self.genotype_constructor = genotype_constructor
         self.genotype_conf = genotype_conf
+        self.fitness_function = fitness_function
         self.mutation_operator = mutation_operator
         self.mutation_conf = mutation_conf
         self.crossover_operator = crossover_operator
@@ -109,7 +113,6 @@ class Population:
                                                               self.conf.population_management_selector)
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
-        # return self.__class__(self.conf, new_individuals)
         new_population = Population(self.conf, self.simulator_connection)
         new_population.individuals = new_individuals
         return new_population
@@ -123,9 +126,6 @@ class Population:
         """
         # Parse command line / file input arguments
         await self.simulator_connection.pause(True)
-        # await self.simulator.reset(rall=True, time_only=False, model_only=False)
-        # await asyncio.sleep(2.5)
-
         for individual in new_individuals:
             logger.info(f'---\nEvaluating individual (gen {gen_num}) {individual.genotype.id} ...')
             individual.develop()
@@ -140,23 +140,20 @@ class Population:
         """
         # Insert the robot in the simulator
         insert_future = await self.simulator_connection.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
-        # await self.simulator.pause(False)
         robot_manager = await insert_future
 
         # Resume simulation
         await self.simulator_connection.pause(False)
         start = time.time()
         # Start a run loop to do some stuff
-        max_age = self.conf.evaluation_time  # + self.conf.warmup_time
+        max_age = self.conf.evaluation_time
         while robot_manager.age() < max_age:
-            individual.fitness = robot_manager.fitness()
+            individual.fitness = self.conf.fitness_function(robot_manager)
             await asyncio.sleep(1.0 / 5) # 5= state_update_frequency
         end = time.time()
-        logger.info(f'Time taken: {end-start}')
+        elapsed = end-start
+        logger.info(f'Time taken: {elapsed}')
 
-        # await self.simulator.pause(True)
         delete_future = await self.simulator_connection.delete_all_robots()  # robot_manager
-        # await self.simulator.pause(True)
         await delete_future
         await self.simulator_connection.pause(True)
-        # await self.simulator.reset(rall=True, time_only=False, model_only=False)
