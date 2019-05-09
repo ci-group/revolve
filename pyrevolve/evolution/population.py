@@ -154,6 +154,6 @@ class Population:
         elapsed = end-start
         logger.info(f'Time taken: {elapsed}')
 
+        await self.simulator_connection.pause(True)
         delete_future = await self.simulator_connection.delete_all_robots()  # robot_manager
         await delete_future
-        await self.simulator_connection.pause(True)
