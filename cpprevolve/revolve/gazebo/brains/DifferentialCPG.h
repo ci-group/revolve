@@ -223,12 +223,6 @@ namespace revolve
       /// \brief Factor to multiply output signal with
       private: double signal_factor_all_;
 
-      /// \brief Factor to multiply output signal with
-      private: double signal_factor_mid;
-
-      /// \brief Factor to multiply output signal with
-      private: double signal_factor_left_right;
-
       /// \brief Function that resets neuron state
       private: void reset_neuron_state();
 
@@ -275,16 +269,16 @@ namespace revolve
       private: double get_vector_angle(double p1_x, double p1_y, double p2_x, double p2_y, double d1_x, double d1_y);
 
       /// \brief Angle that the robot acually moves in.
-      private: double face = 0;
+      private: double face = 0.0;
 
       /// \brief Whether to use "frequency" or "amplitude" for FOR
-      private: std::string for_signal_modification_type = "amplitude";
+      private: std::string for_signal_modification_type;
 
-      /// \brief Whether to use "faster" or "slower" for FOR. TODO: access via .yaml
-      private: std::string for_speeding_approach = "slower";
+      /// \brief Whether to use "faster" or "slower" for FOR.
+      private: std::string for_speeding_approach;
 
-      /// \brief Max amplitude increase factor. 2.5 is arbitrary
-      private: double for_faster_amplitude_factor = 2.5;
+      /// \brief Max amplitude increase factor. 2.5 is arbitrary. TODO: in yaml
+      private: double for_faster_amplitude_factor;
 
       /// \brief Coordinates of the goal box
       private: double goal_x;

@@ -15,17 +15,12 @@ class BrainCPGBO(Brain):
     def __init__(self):
         # CPG hyper-parameters
         self.abs_output_bound = None
-        self.use_frame_of_reference = "false"
         self.signal_factor_all = ""
-        self.signal_factor_mid = None
-        self.signal_factor_left_right = None
-        self.range_lb = None
         self.range_ub = None
         self.init_neuron_state = None
 
         # BO hyper-parameters
         self.init_method = None  # {RS, LHS}
-        self.acquisition_function = None
         self.kernel_noise = None
         self.kernel_optimize_noise = None
         self.kernel_sigma_sq = None
@@ -35,6 +30,12 @@ class BrainCPGBO(Brain):
         self.acqui_ucb_alpha = None
         self.acqui_ei_jitter = None
         self.n_init_samples = None
+
+        # Frame of reference
+        self.use_frame_of_reference = None
+        self.for_signal_modification_type = None
+        self.for_speeding_approach = None
+        self.for_faster_amplitude_factor = None
 
         # Various
         self.n_learning_iterations = None
@@ -99,14 +100,14 @@ class BrainCPGBO(Brain):
             'reset_neuron_random': str(self.reset_neuron_random),
             'load_brain': self.load_brain,
             'use_frame_of_reference': str(self.use_frame_of_reference),
+            'for_signal_modification_type': str(self.for_signal_modification_type),
+            'for_speeding_approach': str(self.for_speeding_approach),
+            'for_faster_amplitude_factor': str(self.for_faster_amplitude_factor),
             'run_analytics': str(self.run_analytics),
             'init_neuron_state': str(self.init_neuron_state),
             'output_directory': str(self.output_directory),
             'verbose': str(self.verbose),
-            'range_lb': str(self.range_lb),
             'range_ub': str(self.range_ub),
             'signal_factor_all': str(self.signal_factor_all),
-            'signal_factor_mid': str(self.signal_factor_mid),
-            'signal_factor_left_right': str(self.signal_factor_left_right),
             'startup_time': str(self.startup_time),
         })

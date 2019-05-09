@@ -116,12 +116,15 @@ DifferentialCPG::DifferentialCPG(
   this->init_neuron_state = std::stod(controller->GetAttribute("init_neuron_state")->GetAsString());
   this->range_lb = -std::stod(controller->GetAttribute("range_ub")->GetAsString());
   this->range_ub = std::stod(controller->GetAttribute("range_ub")->GetAsString());
-  this->use_frame_of_reference = std::stoi(controller->GetAttribute("use_frame_of_reference")->GetAsString());
   this->signal_factor_all_ = std::stod(controller->GetAttribute("signal_factor_all")->GetAsString());
-  // this->signal_factor_mid = std::stod(controller->GetAttribute("signal_factor_mid")->GetAsString());
-  // this->signal_factor_left_right = std::stod(controller->GetAttribute("signal_factor_left_right")->GetAsString());
 
-  // (Global)Learner paramete
+  // FOR parameters
+  this->use_frame_of_reference = std::stoi(controller->GetAttribute("use_frame_of_reference")->GetAsString());
+  this->for_speeding_approach = controller->GetAttribute("for_speeding_approach")->GetAsString();
+  this->for_signal_modification_type = controller->GetAttribute("for_signal_modification_type")->GetAsString();
+  this->for_faster_amplitude_factor = std::stod(controller->GetAttribute("for_faster_amplitude_factor")->GetAsString());
+
+  // (Global)Learner parameters
   double kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
   bool kernel_optimize_noise_ = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
   double kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
@@ -130,7 +133,6 @@ DifferentialCPG::DifferentialCPG(
   double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
   double acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
   double acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
-  this->acquisition_function = learner->GetAttribute("acquisition_function")->GetAsString();
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
   this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
@@ -1315,14 +1317,17 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "reset_neuron_random: " << this->reset_neuron_random << std::endl;
   parameters_file << "initial state value: " << this->init_neuron_state << std::endl;
 
+  // FOR parameters
+  parameters_file << std::endl << "For signal modification: " << this->for_signal_modification_type << std::endl;
+  parameters_file << "For speeding approach: " << this->for_speeding_approach << std::endl;
+  parameters_file << "Use FOR: " << this->use_frame_of_reference << std::endl;
+
   // BO hyper-parameters
   parameters_file << std::endl << "Initialization method used: " << this->init_method << std::endl;
-  //parameters_file << "Acqui. function used: " << this->acquisition_function << std::endl;
   parameters_file << "EI jitter: " <<Params::acqui_ei::jitter() << std::endl;
   parameters_file << "UCB alpha: " << Params::acqui_ucb::alpha() << std::endl;
   parameters_file << "GP-UCB delta: " << Params::acqui_gpucb::delta() << std::endl;
   parameters_file << "Kernel noise: " << Params::kernel::noise() << std::endl;
-  parameters_file << "No. of iterations: " << Params::stop_maxiterations::iterations() << std::endl;
   parameters_file << "EXP Kernel l: " << Params::kernel_exp::l() << std::endl;
   parameters_file << "EXP Kernel sigma_sq: " << Params::kernel_exp::sigma_sq()<< std::endl;
   parameters_file << "EXP-ARD Kernel k: "<< Params::kernel_squared_exp_ard::k() << std::endl;

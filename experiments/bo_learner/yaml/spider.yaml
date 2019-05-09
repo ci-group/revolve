@@ -153,9 +153,6 @@ brain:
     reset_neuron_random: "false"
     abs_output_bound: 1.0
     signal_factor_all: 4.0
-    signal_factor_mid: 2.5
-    signal_factor_left_right: 2.5
-    range_lb: -1.0
     range_ub: 1.0
     init_neuron_state: 0.707
   learner:
@@ -172,8 +169,11 @@ brain:
     acquisition_function: "UCB"
   meta:
     run_analytics: "true"
-    n_learning_iterations: 1
-    n_cooldown_iterations: 20
+    for_signal_modification_type: "amplitude"
+    for_speeding_approach: "faster"
+    for_faster_amplitude_factor: 2.5
+    n_learning_iterations: 5
+    n_cooldown_iterations: 10
     reset_robot_position: "true"
     evaluation_rate: 60
     output_directory: ""
