@@ -127,7 +127,7 @@ class World(WorldManager):
         :param color:
         :return:
         """
-        hl = Highlight("highlight_"+str(self.get_robot_id()), color)
+        hl = Highlight("highlight_" + str(self.get_robot_id()), color)
         position = position.copy()
         position.z = 0
         hl.set_position(position)

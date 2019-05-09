@@ -4,6 +4,7 @@ from .grid import Grid
 from ..revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, TouchSensorModule, BrickSensorModule
 from ...custom_logging.logger import logger
 
+
 class Render:
 
     def __init__(self):
