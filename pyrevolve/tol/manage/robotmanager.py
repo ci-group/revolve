@@ -6,6 +6,8 @@ from pyrevolve.SDF.math import Vector3
 from pyrevolve.angle import RobotManager as RvRobotManager
 from pyrevolve.util import Time
 
+from pyrevolve.tol.manage import measures as ms
+from pyrevolve.evolution import fitness
 
 class RobotManager(RvRobotManager):
     """
@@ -77,8 +79,8 @@ class RobotManager(RvRobotManager):
                 self.conf.mating_distance_threshold:
             return False
 
-        my_fitness = self.fitness()
-        other_fitness = other.fitness()
+        my_fitness = self.old_revolve_fitness()
+        other_fitness = other.old_revolve_fitness()
 
         # Only mate with robots with nonzero fitness, check for self
         # zero-fitness to prevent division by zero.
@@ -145,36 +147,8 @@ class RobotManager(RvRobotManager):
     #
     #     csv_writer.writerow(row)
 
-    def fitness(self):
-        """
-        Fitness is proportional to both the displacement and absolute
-        velocity of the center of mass of the robot, in the formula:
-
-        (1 - d l) * (a dS + b S + c l)
-
-        Where dS is the displacement over a direct line between the
-        start and end points of the robot, S is the distance that
-        the robot has moved and l is the robot size.
-
-        Since we use an active speed window, we use this formula
-        in context of velocities instead. The parameters a, b and c
-        are modifyable through config.
-        :return:
-        """
-        age = self.age()
-        if age < (0.25 * self.conf.evaluation_time) \
-           or age < self.conf.warmup_time:
-            # We want at least some data
-            return 0.0
-
-        v_fac = self.conf.fitness_velocity_factor
-        d_fac = self.conf.fitness_displacement_factor
-        s_fac = self.conf.fitness_size_factor
-        d = 1.0 - (self.conf.fitness_size_discount * self.size)
-        v = d * (d_fac * self.displacement_velocity()
-                 + v_fac * self.velocity()
-                 + s_fac * self.size)
-        return v if v <= self.conf.fitness_limit else 0.0
+    def old_revolve_fitness(self):
+        return fitness.online_old_revolve(self)
 
     def is_evaluated(self):
         """
