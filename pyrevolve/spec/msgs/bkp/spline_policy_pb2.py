@@ -12,7 +12,6 @@ from google.protobuf import descriptor_pb2
 
 _sym_db = _symbol_database.Default()
 
-
 from . import parameter_pb2 as parameter__pb2
 
 

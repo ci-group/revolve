@@ -40,7 +40,7 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    num_generations = 50
+    num_generations = 1
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=20,
@@ -56,7 +56,7 @@ async def run():
     )
 
     population_conf = PopulationConfig(
-        population_size=10,
+        population_size=5,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         mutation_operator=standard_mutation,
@@ -67,8 +67,8 @@ async def run():
         parent_selection=lambda individuals: crossover_selection(individuals, dummy_selection, 2),
         population_management=steady_state_population_management,
         population_management_selector=dummy_selection,
-        evaluation_time=30,
-        offspring_size=5,
+        evaluation_time=1,
+        offspring_size=1,
     )
 
     settings = parser.parse_args()

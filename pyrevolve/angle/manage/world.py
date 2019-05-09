@@ -11,6 +11,7 @@ import traceback
 from asyncio import Future
 from datetime import datetime
 from pygazebo.msg import gz_string_pb2
+from pygazebo.msg.contacts_pb2 import Contacts
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.spec.msgs import BoundingBox
@@ -205,6 +206,12 @@ class WorldManager(manage.WorldManager):
             '/gazebo/default/revolve/robot_states',
             'revolve.msgs.RobotStates',
             self._update_states
+        )
+
+        self.contact_subscriber = self.manager.subscribe(
+            '/gazebo/default/physics/contacts',
+            'gazebo.msgs.Contacts',
+            self._update_contacts
         )
 
         await (self.set_state_update_frequency(
@@ -599,7 +606,6 @@ class WorldManager(manage.WorldManager):
         """
         states = RobotStates()
         states.ParseFromString(msg)
-
         self.last_time = t = Time(msg=states.time)
         if self.start_time is None or t < self.start_time:
             # A lower start time may indicate a world reset, which
@@ -610,10 +616,28 @@ class WorldManager(manage.WorldManager):
             robot_manager = self.robot_managers.get(state.name, None)
             if not robot_manager:
                 continue
-
             robot_manager.update_state(self, t, state, self.write_poses)
 
         self.call_update_triggers()
+
+    def _update_contacts(self, msg):
+        """
+        Handles the contacts with the ground info message by updating robot contacts.
+        :param msg:
+        :return:
+        """
+        contacts = Contacts()
+        contacts.ParseFromString(msg)
+
+        # if there was any contact in that instant
+        if contacts.contact:
+            # fetches one or more contact poitns for each module that has contacts
+            for module_contacts in contacts.contact:
+                robot_name = module_contacts.collision1.split('::')[0]
+                robot_manager = self.robot_managers.get(robot_name, None)
+                if not robot_manager:
+                    continue
+                robot_manager.update_contacts(self, module_contacts)
 
     def add_update_trigger(self, callback):
         """

@@ -133,6 +133,7 @@ class Population:
             print(f'Evaluation complete! Individual {individual.genotype.id} has a fitness of {individual.fitness}.')
 
     async def evaluate_single_robot(self, individual):
+
         """
         Evaluate an individual
 
@@ -150,6 +151,8 @@ class Population:
         while robot_manager.age() < max_age:
             individual.fitness = robot_manager.fitness()
             await asyncio.sleep(1.0 / 5) # 5= state_update_frequency
+
+        print(robot_manager.sum_of_contacts())
 
         await self.simulator.pause(True)
         delete_future = await self.simulator.delete_robot(robot_manager)

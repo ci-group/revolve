@@ -16,14 +16,15 @@ _sym_db = _symbol_database.Default()
 from pygazebo.msg import time_pb2 as time__pb2
 from pygazebo.msg import pose_pb2 as pose__pb2
 
+from pygazebo.msg import contacts_pb2 as contacts__pb2
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='robot_states.proto',
   package='revolve.msgs',
   syntax='proto2',
-  serialized_pb=_b('\n\x12robot_states.proto\x12\x0crevolve.msgs\x1a\ntime.proto\x1a\npose.proto\"G\n\nRobotState\x12\n\n\x02id\x18\x01 \x02(\r\x12\x0c\n\x04name\x18\x02 \x02(\t\x12\x1f\n\x04pose\x18\x03 \x02(\x0b\x32\x11.gazebo.msgs.Pose\"]\n\x0bRobotStates\x12\x1f\n\x04time\x18\x01 \x02(\x0b\x32\x11.gazebo.msgs.Time\x12-\n\x0brobot_state\x18\x02 \x03(\x0b\x32\x18.revolve.msgs.RobotState')
+  serialized_pb=_b('\n\x12robot_states.proto\x12\x0crevolve.msgs\x1a\ntime.proto\x1a\npose.proto\x1a\x0e\x63ontacts.proto\"p\n\nRobotState\x12\n\n\x02id\x18\x01 \x02(\r\x12\x0c\n\x04name\x18\x02 \x02(\t\x12\x1f\n\x04pose\x18\x03 \x02(\x0b\x32\x11.gazebo.msgs.Pose\x12\'\n\x08\x63ontacts\x18\x04 \x01(\x0b\x32\x15.gazebo.msgs.Contacts\"]\n\x0bRobotStates\x12\x1f\n\x04time\x18\x01 \x02(\x0b\x32\x11.gazebo.msgs.Time\x12-\n\x0brobot_state\x18\x02 \x03(\x0b\x32\x18.revolve.msgs.RobotState')
   ,
-  dependencies=[time__pb2.DESCRIPTOR,pose__pb2.DESCRIPTOR,])
+  dependencies=[time__pb2.DESCRIPTOR,pose__pb2.DESCRIPTOR,contacts__pb2.DESCRIPTOR,])
 
 
 
@@ -56,6 +57,13 @@ _ROBOTSTATE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='contacts', full_name='revolve.msgs.RobotState.contacts', index=3,
+      number=4, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -68,8 +76,8 @@ _ROBOTSTATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=60,
-  serialized_end=131,
+  serialized_start=76,
+  serialized_end=188,
 )
 
 
@@ -106,11 +114,12 @@ _ROBOTSTATES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=133,
-  serialized_end=226,
+  serialized_start=190,
+  serialized_end=283,
 )
 
 _ROBOTSTATE.fields_by_name['pose'].message_type = pose__pb2._POSE
+_ROBOTSTATE.fields_by_name['contacts'].message_type = contacts__pb2._CONTACTS
 _ROBOTSTATES.fields_by_name['time'].message_type = time__pb2._TIME
 _ROBOTSTATES.fields_by_name['robot_state'].message_type = _ROBOTSTATE
 DESCRIPTOR.message_types_by_name['RobotState'] = _ROBOTSTATE
