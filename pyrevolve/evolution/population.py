@@ -6,6 +6,7 @@ from ..custom_logging.logger import logger
 import time
 import asyncio
 
+
 class PopulationConfig:
     def __init__(self,
                  population_size: int,
@@ -154,9 +155,9 @@ class Population:
         end = time.time()
         logger.info(f'Time taken: {end-start}')
 
-        # await self.simulator.pause(True)
-        delete_future = await self.simulator_connection.delete_all_robots()  # robot_manager
-        # await self.simulator.pause(True)
-        await delete_future
         await self.simulator_connection.pause(True)
+        delete_future = await self.simulator_connection.delete_all_robots()  # robot_manager
+        # await self.simulator_connection.pause(True)
+        await delete_future
+        # await self.simulator_connection.pause(True)
         # await self.simulator.reset(rall=True, time_only=False, model_only=False)

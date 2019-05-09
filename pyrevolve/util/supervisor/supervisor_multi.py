@@ -7,6 +7,7 @@ import os
 import psutil
 import sys
 import time
+import asyncio
 
 from datetime import datetime
 
@@ -33,7 +34,7 @@ def terminate_process(proc):
     process.terminate()
 
 
-class Supervisor(object):
+class DynamicSimSupervisor(object):
     """
     Utility class that allows you to automatically restore a crashing
     experiment and continue to run it from a snapshotted. It does so
@@ -97,6 +98,7 @@ class Supervisor(object):
 
         self.streams = {}
         self.procs = {}
+        self.stream_future = None
 
         # Terminate all processes when the supervisor exits
         atexit.register(self._terminate_all)
@@ -135,61 +137,34 @@ class Supervisor(object):
                             models_dir_path)
                     )
 
-    async def launch_simulator(self):
-        logger.info("\nNOTE: launching only a simulator, not a manager script!\n")
-        self._launch_simulator()
-
-        # Wait for the end
-        while True:
-            for proc_name in self.procs:
-                self._pass_through_stdout()
-                ret = self.procs[proc_name].poll()
-                if ret is not None:
-                    if ret == 0:
-                        sys.stdout.write("Program {} exited normally\n"
-                                         .format(proc_name))
-                    else:
-                        sys.stderr.write("Program {} exited with code {}\n"
-                                         .format(proc_name, ret))
-
-                    return ret
+    def launch_simulator(self, address='localhost', port=11345):
+        self._launch_simulator(address=address, port=port)
+        self.stream_future = asyncio.ensure_future(self._poll_simulator())
 
     def relaunch(self):
+        self.stop()
+        self.launch_simulator()
+
+    def stop(self):
+        if self.stream_future is not None:
+            self.stream_future.cancel()
         self._terminate_all()
-        self._launch_simulator()
 
-    def launch(self):
-        """
-        (Re)launches the experiment.
-        :return:
-        """
-        if not os.path.exists(self.output_directory):
-            os.mkdir(self.output_directory)
-        if not os.path.exists(self.snapshot_directory):
-            os.mkdir(self.snapshot_directory)
+    async def _poll_simulator(self, sleep_interval=0.1):
+        self._pass_through_stdout()
+        for proc_name in self.procs:
+            ret = self.procs[proc_name].poll()
+            if ret is not None:
+                if ret == 0:
+                    sys.stdout.write("Program {} exited normally\n"
+                                     .format(proc_name))
+                else:
+                    sys.stderr.write("Program {} exited with code {}\n"
+                                     .format(proc_name, ret))
 
-        logger.info("Launching all processes...")
-        self._launch_simulator()
-
-        while True:
-            for proc_name in self.procs:
-                # Write out all received stdout
-                self._pass_through_stdout()
-
-                ret = self.procs[proc_name].poll()
-                if ret is not None:
-                    if ret == 0:
-                        sys.stdout.write("Program '{}' exited normally\n"
-                                         .format(proc_name))
-                    else:
-                        sys.stderr.write("Program '{}' exited with code {}\n"
-                                         .format(proc_name, ret))
-
-                    return ret
-
-            # We could do this a lot less often, but this way we get
-            # output once every second.
-            time.sleep(0.1)
+                return ret
+        await asyncio.sleep(sleep_interval)
+        self._task = asyncio.ensure_future(self._poll_simulator(sleep_interval))
 
     def _pass_through_stdout(self):
         """

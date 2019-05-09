@@ -22,8 +22,7 @@ from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.tol.manage import World
-from pyrevolve.util.supervisor.supervisor_multi import Supervisor
-from multiprocessing import Process
+from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 
 
@@ -68,22 +67,22 @@ async def run():
 
     experiment_conf = ExperimentConfig()
     settings = parser.parse_args()
-    simulator_supervisor = Supervisor(
+    simulator_supervisor = DynamicSimSupervisor(
         world_file=newpath + "/" + settings.world,
         simulator_cmd=settings.simulator_cmd,
         simulator_args=["--verbose"],
         plugins_dir_path=os.path.join(newpath, 'build', 'lib'),
         models_dir_path=os.path.join(newpath, 'models')
     )
-    simulator_supervisor._launch_simulator(port=11345)
+
+    simulator_supervisor.launch_simulator(port=11345)
 
     population = Population(experiment_conf.population_conf,
                             await World.create(settings, world_address=("127.0.0.1", 11345)))
     await population.init_pop()
     population.simulator_connection.disconnect()
 
-    simulator_supervisor._terminate_all()
-    simulator_supervisor._launch_simulator(port=11345)
+    simulator_supervisor.relaunch()
 
     population.simulator_connection = await World.create(settings, world_address=("127.0.0.1", 11345))
 
@@ -91,16 +90,16 @@ async def run():
     while gen_num < experiment_conf.num_generations:
         population = await population.next_gen(gen_num+1)
         population.simulator_connection.disconnect()
-        simulator_supervisor._terminate_all()
-        simulator_supervisor._launch_simulator(port=11345)
+        simulator_supervisor.relaunch()
         population.simulator_connection = await World.create(settings)
         gen_num += 1
 
     # output result after completing all generations...
+    simulator_supervisor.stop()
 
 
 def main():
-    def handler(loop, context):
+    def handler(_loop, context):
         try:
             exc = context['exception']
         except KeyError:
