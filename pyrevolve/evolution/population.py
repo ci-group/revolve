@@ -11,6 +11,7 @@ class PopulationConfig:
                  population_size: int,
                  genotype_constructor,
                  genotype_conf,
+                 fitness_function,
                  mutation_operator,
                  mutation_conf,
                  crossover_operator,
@@ -27,6 +28,7 @@ class PopulationConfig:
         :param population_size: size of the population
         :param genotype_constructor: class of the genotype used
         :param genotype_conf: configuration for genotype constructor
+        :param fitness_function: function that takes in a `RobotManager` as a parameter and produces a fitness for the robot
         :param mutation_operator: operator to be used in mutation
         :param mutation_conf: configuration for mutation operator
         :param crossover_operator: operator to be used in crossover
@@ -38,6 +40,7 @@ class PopulationConfig:
         self.population_size = population_size
         self.genotype_constructor = genotype_constructor
         self.genotype_conf = genotype_conf
+        self.fitness_function = fitness_function
         self.mutation_operator = mutation_operator
         self.mutation_conf = mutation_conf
         self.crossover_operator = crossover_operator
@@ -148,7 +151,7 @@ class Population:
         # Start a run loop to do some stuff
         max_age = self.conf.evaluation_time # + self.conf.warmup_time
         while robot_manager.age() < max_age:
-            individual.fitness = robot_manager.fitness()
+            individual.fitness = self.conf.fitness_function(robot_manager)
             await asyncio.sleep(1.0 / 5) # 5= state_update_frequency
 
         await self.simulator.pause(True)
