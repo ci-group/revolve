@@ -10,6 +10,8 @@ from pyrevolve.sdfbuilder.math import Vector3
 
 from .generated_sdf import body_spec, brain_spec
 
+from ..custom_logging.logger import logger
+
 bot_yaml = '''
 ---
 body:
@@ -54,4 +56,4 @@ model = builder.sdf_robot(bot, "libRobotControlPlugin.so")
 model.translate(Vector3(0, 0, 0.5))
 sdf = SDF()
 sdf.add_element(model)
-print(str(sdf))
+logger.info(str(sdf))
