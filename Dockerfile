@@ -1,8 +1,8 @@
 FROM ubuntu:bionic
 
 # Dependencies
-RUN apt-get update
-RUN apt-get install -y build-essential      \
+RUN apt-get update && \
+    apt-get install -y build-essential      \
                        libboost-all-dev     \
                        cmake                \
                        curl                 \
@@ -16,9 +16,12 @@ RUN apt-get install -y build-essential      \
                        python3-pip          \
                        libyaml-cpp-dev      \
                        xsltproc             \
-                       libcairo2-dev
-RUN apt-get install -y libgazebo9-dev gazebo9
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+                       libcairo2-dev        \
+                       graphviz             \
+                       libgazebo9-dev       \
+                       gazebo9           && \
+    apt-get clean  && \
+    rm -rf /var/lib/apt/lists/*
 
 ADD . /revolve
 RUN /revolve/docker/build_revolve.sh
