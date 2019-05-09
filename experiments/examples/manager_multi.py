@@ -77,14 +77,14 @@ async def run():
         models_dir_path=os.path.join(newpath, 'models')
     )
 
-    simulator_supervisor.launch_simulator(port=11345)
+    await simulator_supervisor.launch_simulator(port=11345)
 
     population = Population(experiment_conf.population_conf,
                             await World.create(settings, world_address=("127.0.0.1", 11345)))
     await population.init_pop()
     population.simulator_connection.disconnect()
 
-    simulator_supervisor.relaunch()
+    await simulator_supervisor.relaunch()
 
     population.simulator_connection = await World.create(settings, world_address=("127.0.0.1", 11345))
 

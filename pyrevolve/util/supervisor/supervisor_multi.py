@@ -138,12 +138,16 @@ class DynamicSimSupervisor(object):
                     )
 
     def launch_simulator(self, address='localhost', port=11345):
-        self._launch_simulator(address=address, port=port)
-        self.stream_future = asyncio.ensure_future(self._poll_simulator())
+        f = self._launch_simulator(address=address, port=port)
+
+        def start_output_listening(_future):
+            self.stream_future = asyncio.ensure_future(self._poll_simulator())
+        f.add_done_callback(start_output_listening)
+        return f
 
     def relaunch(self):
         self.stop()
-        self.launch_simulator()
+        return self.launch_simulator()
 
     def stop(self):
         if self.stream_future is not None:
@@ -243,29 +247,33 @@ class DynamicSimSupervisor(object):
         Launches the simulator
         :return:
         """
-        logger.info("Launching the simulator...")
-        gz_args = self.simulator_cmd + self.simulator_args
-        snapshot_world = os.path.join(
-            self.snapshot_directory,
-            self.snapshot_world_file)
-        world = snapshot_world \
-            if os.path.exists(snapshot_world) else self.world_file
-        gz_args.append(world)
 
-        env = {}
-        for key, value in os.environ.items():
-            env[key] = value
-        env['GAZEBO_MASTER_URI'] = 'http://{}:{}'.format(address, port)
+        async def start_process(_ready_str, _output_tag, _address, _port):
+            logger.info("Launching the simulator...")
+            gz_args = self.simulator_cmd + self.simulator_args
+            snapshot_world = os.path.join(
+                self.snapshot_directory,
+                self.snapshot_world_file)
+            world = snapshot_world \
+                if os.path.exists(snapshot_world) else self.world_file
+            gz_args.append(world)
 
-        self.procs[output_tag] = self._launch_with_ready_str(
-            cmd=gz_args,
-            ready_str=ready_str,
-            env=env,
-            output_tag=output_tag)
-        self._add_output_stream(output_tag)
+            env = {}
+            for key, value in os.environ.items():
+                env[key] = value
+            env['GAZEBO_MASTER_URI'] = 'http://{}:{}'.format(_address, _port)
+            self.procs[_output_tag] = await self._launch_with_ready_str(
+                cmd=gz_args,
+                ready_str=_ready_str,
+                env=env,
+                output_tag=_output_tag)
+            self._add_output_stream(_output_tag)
+
+        simulator_started = asyncio.ensure_future(start_process(ready_str, output_tag, address, port))
+        return simulator_started
 
     @staticmethod
-    def _launch_with_ready_str(cmd, ready_str, env, output_tag="simulator"):
+    async def _launch_with_ready_str(cmd, ready_str, env, output_tag="simulator"):
         """
         :param cmd:
         :param ready_str:
@@ -291,6 +299,7 @@ class DynamicSimSupervisor(object):
             sys.stderr.write("Windows may not give the optimal experience\n")
 
         ready = False
+        await asyncio.sleep(0.1)
         while not ready:
             exit_code = process.poll()
             if exit_code is not None:
@@ -320,7 +329,7 @@ class DynamicSimSupervisor(object):
                 except IOError:
                     pass
 
-            time.sleep(0.1)
+            await asyncio.sleep(0.2)
         # make out and err blocking pipes again
         if not mswindows:
             import fcntl
