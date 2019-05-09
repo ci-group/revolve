@@ -283,6 +283,9 @@ namespace revolve
       /// \brief Whether to use "faster" or "slower" for FOR. TODO: access via .yaml
       private: std::string for_speeding_approach = "slower";
 
+      /// \brief Max amplitude increase factor. 2.5 is arbitrary
+      private: double for_faster_amplitude_factor = 2.5;
+
       /// \brief Coordinates of the goal box
       private: double goal_x;
       private: double goal_y;

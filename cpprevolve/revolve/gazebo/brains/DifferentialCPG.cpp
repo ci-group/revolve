@@ -118,8 +118,8 @@ DifferentialCPG::DifferentialCPG(
   this->range_ub = std::stod(controller->GetAttribute("range_ub")->GetAsString());
   this->use_frame_of_reference = std::stoi(controller->GetAttribute("use_frame_of_reference")->GetAsString());
   this->signal_factor_all_ = std::stod(controller->GetAttribute("signal_factor_all")->GetAsString());
-  this->signal_factor_mid = std::stod(controller->GetAttribute("signal_factor_mid")->GetAsString());
-  this->signal_factor_left_right = std::stod(controller->GetAttribute("signal_factor_left_right")->GetAsString());
+  // this->signal_factor_mid = std::stod(controller->GetAttribute("signal_factor_mid")->GetAsString());
+  // this->signal_factor_left_right = std::stod(controller->GetAttribute("signal_factor_left_right")->GetAsString());
 
   // (Global)Learner paramete
   double kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
@@ -563,11 +563,11 @@ void DifferentialCPG::save_fitness(){
 
     // Set new face. I verified the correctness
     double robot_move_angle = this->get_vector_angle(this->evaluator->previous_position_.Pos().X(),
-                                                 this->evaluator->previous_position_.Pos().Y(),
-                                                 this->evaluator->current_position_.Pos().X(),
-                                                 this->evaluator->current_position_.Pos().Y(),
-                                                 0.f,
-                                                 -1.f);
+                                                     this->evaluator->previous_position_.Pos().Y(),
+                                                     this->evaluator->current_position_.Pos().X(),
+                                                     this->evaluator->current_position_.Pos().Y(),
+                                                     0.f,
+                                                     -1.f);
     double start_angle = this->evaluator->previous_position_.Rot().Yaw()*180.0/M_PI;
 
     this->face = robot_move_angle - start_angle;
@@ -620,9 +620,9 @@ void DifferentialCPG::bo_step(){
 
       // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
       limbo::bayes_opt::BOptimizer<Params,
-          limbo::initfun<Init_t>,
-          limbo::modelfun<GP_t>,
-          limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
+                                   limbo::initfun<Init_t>,
+                                   limbo::modelfun<GP_t>,
+                                   limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
       // Optimize. Pass dummy evaluation function and observations .
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
@@ -757,8 +757,8 @@ void DifferentialCPG::Update(
       // Update position
       this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     }
-    // If we are finished learning, deploy this model.
-    // TODO: Investigate if the validation bug is still present. For now always work with load_brain
+      // If we are finished learning, deploy this model.
+      // TODO: Investigate if the validation bug is still present. For now always work with load_brain
     else if((this->current_iteration >= (this->n_init_samples +
                                          this->n_learning_iterations))
             and (this->current_iteration < (this->n_init_samples +
@@ -780,7 +780,7 @@ void DifferentialCPG::Update(
       this->set_ode_matrix();
     }
       // Else we don't want to update anything, but construct plots from this run once.
-      else
+    else
     {
       // Create plots
       if(this->run_analytics)
@@ -1024,8 +1024,8 @@ void DifferentialCPG::step(
     else if (angle_difference < -180)
       angle_difference += 360;
 
-  //    std::cout << "Face: " << this->face << ". Angledifference: " << angle_difference << std::endl;
-  // Face and angle difference are working now
+    //    std::cout << "Face: " << this->face << ". Angledifference: " << angle_difference << std::endl;
+    // Face and angle difference are working now
   }
   // TODO: First step at each iteration AD is nan. Perhaps due to robot resetting
   //std::cout << "AD: "<< angle_difference;
@@ -1078,7 +1078,7 @@ void DifferentialCPG::step(
     this->next_state[i] = x[i];
   }
 
-    // Loop over all neurons to actually update their states. Note that this is a new outer for loop
+  // Loop over all neurons to actually update their states. Note that this is a new outer for loop
   auto i = 0; auto j = 0;
   for (auto &neuron : this->neurons)
   {
@@ -1091,7 +1091,7 @@ void DifferentialCPG::step(
     std::tie(x, y, z) = neuron.first;
     neuron.second = {bias, gain, this->next_state[i], frame_of_reference};
 
-      // Should be one, as output should be based on +1 neurons, which are the A neurons
+    // Should be one, as output should be based on odd neurons, which are the A neurons
     if (i % 2 == 1)
     {
       // Apply saturation formula
@@ -1108,15 +1108,15 @@ void DifferentialCPG::step(
           // Calculate factor
           my_factor = std::abs(180.0 - angle_difference)/180.0;
 
-          // Don't do anything if we are on the middle line
+          // Don't do anything unusual if we are on the middle line
           if (frame_of_reference == 0)
           {
             this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
           }
-          // Else we are either left or right
+            // Else we are either left or right
           else if (std::abs(frame_of_reference) == 1)
           {
-            // TODO: Verify the logical correctness of this
+            // TODO: Verify the (logical) correctness of this
             // If we are a right block, and we need to go right, decrease speed:
             if(frame_of_reference == 1 and angle_difference >=0)
             {
@@ -1126,7 +1126,7 @@ void DifferentialCPG::step(
             {
               this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
-            // Else behave as normal
+              // Else behave as normal
             else
             {
               this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
@@ -1137,12 +1137,49 @@ void DifferentialCPG::step(
             std::cout << "Something went wrong\n";
           }
         }
+        else if(this->for_speeding_approach == "faster" and this->for_signal_modification_type == "amplitude")
+        {
+          // Determine factor based on corner to alpha
+          double my_factor = 1.0;
+
+          // Calculate factor. Note that it uses a parameter. This thing is in [0,1]
+          my_factor = std::abs(180.0 - angle_difference)/180.0;
+
+          // Shift speeding factor to [1.0, for_faster_amplitude], e.g. [1.0, 2.5]
+          my_factor = my_factor*(this->for_faster_amplitude_factor - 1.0) + 1.0;
+
+          // Don't do anything unusual if we are on the middle line
+          if (frame_of_reference == 0)
+          {
+            this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+          }
+            // Else we are either left or right
+          else if (std::abs(frame_of_reference) == 1)
+          {
+            // TODO: Verify the (logical) correctness of this
+            // If we are a left block, and we need to go right, increase speed
+            if(frame_of_reference == -1 and angle_difference >=0)
+            {
+              this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+            }
+            // If we are a right block, and we need to go to the left, increase speed
+            else if(frame_of_reference == 1 and angle_difference <0)
+            {
+              this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+            }
+              // Else behave as normal
+            else
+            {
+              this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+            }
+          }
+        }
         else
         {
-          std::cout << "Not implemented yet \n";
+          std::cout << "FOR combination " << this->for_speeding_approach << "," << this->for_signal_modification_type << " not implemented yet \n";
         }
       }
-      // Don't use frame of reference
+        // Don't use frame of reference
       else
       {
         this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
@@ -1152,25 +1189,26 @@ void DifferentialCPG::step(
     i++;
   }
 
-  // Write state to file
-  std::ofstream state_file;
-  state_file.open(this->directory_name + "states.txt", std::ios::app);
-  for(size_t i = 0; i < this->neurons.size(); i++)
-  {
-    state_file << this->next_state[i] << ",";
-  }
-  state_file << std::endl;
-  state_file.close();
-
-  // Write signal to file
-  std::ofstream signal_file;
-  signal_file.open(this->directory_name + "signal.txt", std::ios::app);
-  for(size_t i = 0; i < this->n_motors; i++)
-  {
-    signal_file << this->output[i] << ",";
-  }
-  signal_file << std::endl;
-  signal_file.close();
+//  // Commented out due to 1GB per grid search data generation.
+//  // Write state to file
+//  std::ofstream state_file;
+//  state_file.open(this->directory_name + "states.txt", std::ios::app);
+//  for(size_t i = 0; i < this->neurons.size(); i++)
+//  {
+//    state_file << this->next_state[i] << ",";
+//  }
+//  state_file << std::endl;
+//  state_file.close();
+//
+//  // Write signal to file
+//  std::ofstream signal_file;
+//  signal_file.open(this->directory_name + "signal.txt", std::ios::app);
+//  for(size_t i = 0; i < this->n_motors; i++)
+//  {
+//    signal_file << this->output[i] << ",";
+//  }
+//  signal_file << std::endl;
+//  signal_file.close();
 }
 
 /**
@@ -1279,7 +1317,7 @@ void DifferentialCPG::save_parameters(){
 
   // BO hyper-parameters
   parameters_file << std::endl << "Initialization method used: " << this->init_method << std::endl;
-  parameters_file << "Acqui. function used: " << this->acquisition_function << std::endl;
+  //parameters_file << "Acqui. function used: " << this->acquisition_function << std::endl;
   parameters_file << "EI jitter: " <<Params::acqui_ei::jitter() << std::endl;
   parameters_file << "UCB alpha: " << Params::acqui_ucb::alpha() << std::endl;
   parameters_file << "GP-UCB delta: " << Params::acqui_gpucb::delta() << std::endl;
