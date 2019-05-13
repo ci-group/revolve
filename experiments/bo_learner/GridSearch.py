@@ -5,7 +5,6 @@
         {'range_ub': 4.5, 'signal_factor_all': 3.0}
     ]
 """
-
 from sys import platform
 import matplotlib
 if platform == "darwin":
@@ -19,15 +18,21 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 60
+n_runs = 50
 n_jobs = 60
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "spider.yaml"
+yaml_model = "gecko12.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
 search_space = {
     'range_ub': [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0],
-    'signal_factor_all': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
+    'signal_factor_all': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
+    'evaluation_rate': [60],
+    'verbose': [1],
+    'n_learning_iterations': [1],
+    'n_init_samples': [50],
+    'verbose': [0],
+    'init_neuron_state': [0.707],
 }
 
 print(search_space)

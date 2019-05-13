@@ -129,8 +129,9 @@ DifferentialCPG::DifferentialCPG(
   double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
   double acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
   double acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
-  int robot_size = std::stoi(learner->GetAttribute("robot_size")->GetAsString());
-  this->acquisition_function = learner->GetAttribute("acquisition_function")->GetAsString();
+  size_t my_robot_size = size_t(std::stoi(learner->GetAttribute("robot_size")->GetAsString()));
+
+    this->acquisition_function = learner->GetAttribute("acquisition_function")->GetAsString();
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
   this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
@@ -370,7 +371,7 @@ DifferentialCPG::~DifferentialCPG()
  */
 struct DifferentialCPG::evaluation_function{
   // Number of input dimension (samples.size())
-  BO_PARAM(size_t, dim_in, robot_size);
+  BO_PARAM(size_t, dim_in, 23);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);

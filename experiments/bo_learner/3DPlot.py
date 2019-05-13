@@ -12,7 +12,7 @@ import plotly.offline as py
 import plotly.graph_objs as go
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557008086/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557209570/"
 var1 = "range_ub"
 var2 = "signal_factor"
 parameter_file = "parameters.txt"
@@ -67,7 +67,7 @@ results = df.sort_values(by = [0,1]).to_numpy()
 
 # Prepare for 3D plot
 my_size_x = 11
-my_size_y = 10
+my_size_y = 13
 X =results[:,0].reshape((my_size_x,  my_size_y))
 Y =results[:,1].reshape((my_size_x,  my_size_y))
 Z =results[:,2].reshape((my_size_x,  my_size_y))
@@ -77,6 +77,10 @@ for i in range(my_size_x):
     for j in range(my_size_y):
         print(X[i,j], Y[i,j], Z[i,j])
 
+print(X)
+print(Y)
+print(Z)
+print(type(X), type(Y), type(Z))
 # Construct 3D plot
 fig = plt.figure(figsize=(10,10))
 ax = plt.axes(projection='3d')
@@ -86,6 +90,14 @@ ax.set_xlabel(var1)
 ax.set_ylabel(var2)
 ax.set_zlabel("fitness")
 plt.savefig(path + "3Dplot.png")
+
+
+# Contour plot
+#plt.contour(X,Y,Z, 15, linewidths = 0.5, colors = 'k')
+#plt.pcolormesh(X,Y,Z, cmap = plt.get_cmap('hot'))
+#plt.colorbar()
+#plt.show()
+
 
 # Get data for plotly
 data = [
@@ -109,3 +121,9 @@ layout = go.Layout(
 # Construct ploty
 fig = go.Figure(data=data, layout = layout)
 py.plot(fig, filename=path + "interactive_3d")
+
+# Save XYZ
+np.savetxt(path + "X.txt", np.matrix(X), fmt='%f', delimiter = ",")
+np.savetxt(path + "Y.txt", np.matrix(Y), fmt='%f', delimiter = ",")
+np.savetxt(path + "Z.txt", np.matrix(Z), fmt='%f', delimiter = ",")
+

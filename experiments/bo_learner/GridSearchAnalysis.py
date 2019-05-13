@@ -80,8 +80,6 @@ for i, path_ in enumerate(path_list):
         # Save fitness
         fitnesses_mon[:,j] = np.array(my_fitness_mon)
         fitnesses[:,j] = np.array(my_fitness)
-        
-        #print(subfolder.split("/")[-3],subfolder.split("/")[-2], fitnesses_mon[-1,j])
 
         # Plot the avg fitness
         plt.plot(fitnesses_mon[:, j], linewidth = 1, color = "blue")

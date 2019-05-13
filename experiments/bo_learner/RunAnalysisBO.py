@@ -42,7 +42,6 @@ def fitness_per_iteration_plot(my_directory, my_data, n_initial_samples, n_no_le
     plt.axvline(x=len(my_data) - n_no_learning_iterations, color="red", linestyle="dashed")
     plt.grid()
     plt.plot(my_data[:-(n_no_learning_iterations + 1)])
-
     # Save plots
     plt.savefig(my_directory + "/fitness.png")
 
@@ -59,6 +58,7 @@ def max_fitness_plot(my_directory, my_data, n_initial_samples, n_no_learning_ite
     plt.axvline(x=n_initial_samples, color="green", linestyle="dashed")
     plt.grid()
     plt.plot(my_data[:-(n_no_learning_iterations + 1)])
+    print(my_data[-1])
 
     # Save plots
     plt.savefig(my_directory + "/fitness_monotonic.png")
