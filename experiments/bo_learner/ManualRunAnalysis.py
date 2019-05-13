@@ -6,10 +6,10 @@ from glob import glob
 if platform == "darwin":
     matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
-
+import time
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557008086/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557046999/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/maarten/projects/revolve-simulator/revolve/experiments/bo_learner/yaml/yaml_temp/"
 
@@ -53,15 +53,14 @@ for i, path_ in enumerate(path_list):
     # For all n_runs
     for j, subfolder in enumerate(subfolder_list):
         # Get fitness file
-        my_fitness = [(line.rstrip('\n')) for line in open(subfolder + "/" + fitness_file)]
-
+        my_fitness = [float((line.rstrip('\n'))) for line in open(subfolder + "/" + fitness_file)]
         # Take maximum n_rows_max
         my_fitness = my_fitness[:n_rows_max]
 
         # Take minimum n_rows_max
         while(len(my_fitness) < n_rows_max):
             my_fitness += [my_fitness[-1]]
-            print("Added a fitness")
+            #print("Added a fitness")
 
         # Transfer fitness to monotonic sequence and save
         my_fitness_mon = [e if e >= max(my_fitness[:ix+1]) else max(my_fitness[:ix+1]) for ix, e in enumerate(my_fitness)]
@@ -69,6 +68,9 @@ for i, path_ in enumerate(path_list):
         # Save fitness
         fitnesses_mon[:,j] = np.array(my_fitness_mon)
         fitnesses[:,j] = np.array(my_fitness)
+        
+        if subfolder.split("/")[-3] =="59":
+            print(subfolder.split("/")[-3],subfolder.split("/")[-2], fitnesses_mon[-1,j])
 
         # Plot the avg fitness
         plt.plot(fitnesses_mon[:, j], linewidth = 1, color = "blue")
@@ -81,6 +83,8 @@ for i, path_ in enumerate(path_list):
     plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
     plt.tight_layout()
     plt.savefig(path_ + "/" + str(round(avg_fitness_mon[-1], 7)) + ".png")
+    fig = plt.gcf()
+    plt.close(fig)
 
     # Save fitness
     fitness_list += [[round(avg_fitness_mon[-1], 5), i]]
