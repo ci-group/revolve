@@ -35,9 +35,21 @@ for i, path_ in enumerate(path_list):
     # Do fitness analysis
     subfolder_list = glob(path_ + "/*/")
     subfolder_list = [d for d in subfolder_list if os.path.isfile(d + fitness_file)]
-    n_subruns = len(subfolder_list)
     n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
     n_rows_max = 50
+    n_rows_min = 40
+
+    # Remove all rows with a small number of values
+    subfolder_list_temp = subfolder_list
+    for j_, subfolder_ in enumerate(subfolder_list_temp):
+        # Get fitness file
+        my_fitness_ = [(line.rstrip('\n')) for line in open(subfolder_ + "/" + fitness_file)]
+        if len(my_fitness_) < n_rows_min:
+            subfolder_list.remove(subfolder_)
+            print("Remove ", subfolder_, "length", len(my_fitness_))
+
+    # Save thisnumber of subruns
+    n_subruns = len(subfolder_list)
 
     # Working variables
     fitnesses = np.empty((n_rows_max,n_subruns))
@@ -60,7 +72,7 @@ for i, path_ in enumerate(path_list):
         # Take minimum n_rows_max
         while(len(my_fitness) < n_rows_max):
             my_fitness += [my_fitness[-1]]
-            #print("Added a fitness")
+            print("Added a fitness for ", subfolder)
 
         # Transfer fitness to monotonic sequence and save
         my_fitness_mon = [e if e >= max(my_fitness[:ix+1]) else max(my_fitness[:ix+1]) for ix, e in enumerate(my_fitness)]
@@ -69,8 +81,7 @@ for i, path_ in enumerate(path_list):
         fitnesses_mon[:,j] = np.array(my_fitness_mon)
         fitnesses[:,j] = np.array(my_fitness)
         
-        if subfolder.split("/")[-3] =="59":
-            print(subfolder.split("/")[-3],subfolder.split("/")[-2], fitnesses_mon[-1,j])
+        #print(subfolder.split("/")[-3],subfolder.split("/")[-2], fitnesses_mon[-1,j])
 
         # Plot the avg fitness
         plt.plot(fitnesses_mon[:, j], linewidth = 1, color = "blue")
