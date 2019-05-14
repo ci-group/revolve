@@ -27,7 +27,8 @@ using namespace revolve::gazebo;
 
 /////////////////////////////////////////////////
 WorldController::WorldController()
-    : robotStatesPubFreq_(5)
+    : delete_robot(0, -1)
+    , robotStatesPubFreq_(5)
     , lastRobotStatesUpdateTime_(0)
 {
 }
@@ -112,6 +113,27 @@ void WorldController::Reset()
 /////////////////////////////////////////////////
 void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
 {
+    { // check if there are robots to delete
+        this->deleteMutex_.lock();
+        auto model = std::get<0>(this->delete_robot);
+        auto request_id = std::get<1>(this->delete_robot);
+        if (model) {
+            this->world_->SetPaused(true);
+            this->world_->RemoveModel(model);
+            this->world_->SetPaused(false);
+
+            gz::msgs::Response resp;
+            resp.set_id(request_id);
+            resp.set_request("delete_robot");
+            resp.set_response("success");
+            this->responsePub_->Publish(resp);
+
+            this->delete_robot = {nullptr, -1};
+        }
+        this->deleteMutex_.unlock();
+    }
+
+
   if (not this->robotStatesPubFreq_)
   {
     return;
@@ -168,21 +190,16 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
       // Using `World::RemoveModel()` from here crashes the transport
       // library, the cause of which I've yet to figure out - it has
       // something to do with race conditions where the model is used by
-      // the world while it is being updated. Fixing this completely
-      // appears to be a rather involved process, instead, we'll use an
-      // `entity_delete` request, which will make sure deleting the model
-      // happens on the world thread.
-      gz::msgs::Request deleteReq;
-      auto id = gz::physics::getUniqueId();
-      deleteReq.set_id(id);
-      deleteReq.set_request("entity_delete");
-      deleteReq.set_data(model->GetScopedName());
+      // the world while it is being updated. Fixing this by sending a request
+      // to execute in the main tread - `WorldController::OnUpdate` function.
+      // Beware, this means that the robot will not be removed while the simulation
+      // is paused.
 
       this->deleteMutex_.lock();
-      this->deleteMap_[id] = request->id();
+      //TODO add a queue
+      this->delete_robot = {model, request->id()};
       this->deleteMutex_.unlock();
 
-      this->requestPub_->Publish(deleteReq);
     }
     else
     {
@@ -270,26 +287,4 @@ void WorldController::OnModel(ConstModelPtr &msg)
 /////////////////////////////////////////////////
 void WorldController::HandleResponse(ConstResponsePtr &response)
 {
-  if (response->request() not_eq "entity_delete")
-  {
-    return;
-  }
-
-  int id;
-  {
-    boost::mutex::scoped_lock lock(this->deleteMutex_);
-    if (this->deleteMap_.count(response->id()) <= 0)
-    {
-      return;
-    }
-
-    id = this->deleteMap_[response->id()];
-    this->deleteMap_.erase(id);
-  }
-
-  gz::msgs::Response resp;
-  resp.set_id(id);
-  resp.set_request("delete_robot");
-  resp.set_response("success");
-  this->responsePub_->Publish(resp);
 }

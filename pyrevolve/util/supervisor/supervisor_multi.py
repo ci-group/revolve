@@ -6,14 +6,14 @@ import subprocess
 import os
 import psutil
 import sys
-import time
 import asyncio
 
 from datetime import datetime
 
-from ...custom_logging.logger import logger
+from ...custom_logging.logger import create_logger
 
 from .nbsr import NonBlockingStreamReader as NBSR
+
 mswindows = (sys.platform == "win32")
 
 
@@ -57,7 +57,8 @@ class DynamicSimSupervisor(object):
                  snapshot_world_file="snapshot.world",
                  restore_directory=None,
                  plugins_dir_path=None,
-                 models_dir_path=None
+                 models_dir_path=None,
+                 simulator_name='simulator'
                  ):
         """
 
@@ -93,12 +94,14 @@ class DynamicSimSupervisor(object):
         self.simulator_args = simulator_args if simulator_args is not None else ["-u"]
         self.simulator_cmd = simulator_cmd \
             if isinstance(simulator_cmd, list) else [simulator_cmd]
+        self._simulator_name = simulator_name
 
         self.world_file = os.path.abspath(world_file)
 
         self.streams = {}
         self.procs = {}
         self.stream_future = None
+        self._logger = create_logger(simulator_name)
 
         # Terminate all processes when the supervisor exits
         atexit.register(self._terminate_all)
@@ -125,28 +128,30 @@ class DynamicSimSupervisor(object):
                 new_env_var = models_dir_path
             os.environ['GAZEBO_MODEL_PATH'] = new_env_var
 
-        logger.info("Created Supervisor with:"
-                    "\n\t- simulator command: {} {}"
-                    "\n\t- world file: {}"
-                    "\n\t- simulator plugin dir: {}"
-                    "\n\t- simulator models dir: {}"
-                    .format(simulator_cmd,
-                            simulator_args,
-                            world_file,
-                            plugins_dir_path,
-                            models_dir_path)
-                    )
+        self._logger.info("Created Supervisor with:"
+                          "\n\t- simulator command: {} {}"
+                          "\n\t- world file: {}"
+                          "\n\t- simulator plugin dir: {}"
+                          "\n\t- simulator models dir: {}"
+                          .format(simulator_cmd,
+                                  simulator_args,
+                                  world_file,
+                                  plugins_dir_path,
+                                  models_dir_path)
+                          )
 
     def launch_simulator(self, address='localhost', port=11345):
-        f = self._launch_simulator(address=address, port=port)
+        f = self._launch_simulator(output_tag=self._simulator_name, address=address, port=port)
 
         def start_output_listening(_future):
             self.stream_future = asyncio.ensure_future(self._poll_simulator())
+
         f.add_done_callback(start_output_listening)
         return f
 
-    def relaunch(self):
+    async def relaunch(self, sleep_time=1):
         self.stop()
+        await asyncio.sleep(sleep_time)
         return self.launch_simulator()
 
     def stop(self):
@@ -160,11 +165,11 @@ class DynamicSimSupervisor(object):
             ret = self.procs[proc_name].poll()
             if ret is not None:
                 if ret == 0:
-                    sys.stdout.write("Program {} exited normally\n"
-                                     .format(proc_name))
+                    self._logger.info("Program {} exited normally"
+                                      .format(proc_name))
                 else:
-                    sys.stderr.write("Program {} exited with code {}\n"
-                                     .format(proc_name, ret))
+                    self._logger.error("Program {} exited with code {}"
+                                       .format(proc_name, ret))
 
                 return ret
         await asyncio.sleep(sleep_interval)
@@ -190,10 +195,9 @@ class DynamicSimSupervisor(object):
                     if err:
                         self.write_stderr(err)
             except Exception as e:
-                logger.exception("Exception while handling file reading")
+                self._logger.exception("Exception while handling file reading")
 
-    @staticmethod
-    def write_stdout(data):
+    def write_stdout(self, data):
         """
         Overridable method to write to stdout, useful if you
         want to apply some kind of filter, or write to a file
@@ -202,10 +206,12 @@ class DynamicSimSupervisor(object):
         :param data:
         :return:
         """
-        sys.stdout.write(data)
+        data = str(data).strip()
+        if len(data) > 0:
+            self._logger.info(data)
+        # sys.stdout.write(data)
 
-    @staticmethod
-    def write_stderr(data):
+    def write_stderr(self, data):
         """
         Overridable method to write to stderr, useful if you
         want to apply some kind of filter, or write to a file
@@ -213,14 +219,17 @@ class DynamicSimSupervisor(object):
         :param data:
         :return:
         """
-        sys.stderr.write(data)
+        data = str(data).strip()
+        if len(data) > 0:
+            self._logger.error(data)
+        # sys.stderr.write(data)
 
     def _terminate_all(self):
         """
         Terminates all running processes
         :return:
         """
-        logger.info("Terminating processes...")
+        self._logger.info("Terminating processes...")
         for proc in list(self.procs.values()):
             if proc.poll() is None:
                 terminate_process(proc)
@@ -239,17 +248,20 @@ class DynamicSimSupervisor(object):
         :param name:
         :return:
         """
-        self.streams[name] = (NBSR(self.procs[name].stdout, name),
-                              NBSR(self.procs[name].stderr, name))
+        # self.streams[name] = (NBSR(self.procs[name].stdout, name),
+        #                       NBSR(self.procs[name].stderr, name))
+        self.streams[name] = (NBSR(self.procs[name].stdout, prefix=None),
+                              NBSR(self.procs[name].stderr, prefix=None))
 
-    def _launch_simulator(self, ready_str="World plugin loaded", output_tag="simulator", address='localhost', port=11345):
+    def _launch_simulator(self, ready_str="World plugin loaded", output_tag="simulator", address='localhost',
+                          port=11345):
         """
         Launches the simulator
         :return:
         """
 
         async def start_process(_ready_str, _output_tag, _address, _port):
-            logger.info("Launching the simulator...")
+            self._logger.info("Launching the simulator...")
             gz_args = self.simulator_cmd + self.simulator_args
             snapshot_world = os.path.join(
                 self.snapshot_directory,
@@ -272,8 +284,7 @@ class DynamicSimSupervisor(object):
         simulator_started = asyncio.ensure_future(start_process(ready_str, output_tag, address, port))
         return simulator_started
 
-    @staticmethod
-    async def _launch_with_ready_str(cmd, ready_str, env, output_tag="simulator"):
+    async def _launch_with_ready_str(self, cmd, ready_str, env, output_tag="simulator"):
         """
         :param cmd:
         :param ready_str:
@@ -296,7 +307,7 @@ class DynamicSimSupervisor(object):
         else:
             # hint on how to fix it here:
             # https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
-            sys.stderr.write("Windows may not give the optimal experience\n")
+            self._logger.error("Windows may not give the optimal experience")
 
         ready = False
         await asyncio.sleep(0.1)
@@ -306,16 +317,16 @@ class DynamicSimSupervisor(object):
                 # flush out all stdout and stderr
                 out, err = process.communicate()
                 if out is not None:
-                    sys.stdout.write("{}\n".format(out.decode('utf-8')))
+                    self._logger.info("{}".format(out.decode('utf-8')))
                 if err is not None:
-                    sys.stderr.write("{}\n".format(err.decode('utf-8')))
+                    self._logger.error("{}".format(err.decode('utf-8')))
                 raise RuntimeError("Error launching {}, exit with code {}"
                                    .format(cmd, exit_code))
 
             try:
                 out = process.stdout.readline().decode('utf-8')
                 if len(out) > 0:
-                    sys.stdout.write("[{}-launch] {}".format(output_tag, out))
+                    self._logger.info("[launch] {}".format(out.strip()))
                 if ready_str in out:
                     ready = True
             except IOError:
@@ -325,7 +336,7 @@ class DynamicSimSupervisor(object):
                 try:
                     err = process.stderr.readline().decode('utf-8')
                     if len(err) > 0:
-                        sys.stderr.write("[{}-launch] {}".format(output_tag, err))
+                        self._logger.error("[launch] {}".format(err.strip()))
                 except IOError:
                     pass
 
@@ -340,6 +351,6 @@ class DynamicSimSupervisor(object):
         else:
             # hint on how to fix it here:
             # https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
-            sys.stderr.write("Windows may not give the optimal experience\n")
+            self._logger.error("Windows may not give the optimal experience")
 
         return process

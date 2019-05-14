@@ -71,7 +71,7 @@ namespace revolve
       std::map< std::string, int > insertMap_;
 
       // Maps `entity_delete` IDs to `delete_robot` ids
-      std::map< int, int > deleteMap_;
+      std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot;
 
       // Stores the world
       ::gazebo::physics::WorldPtr world_;

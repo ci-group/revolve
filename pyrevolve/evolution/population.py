@@ -125,14 +125,25 @@ class Population:
         :param gen_num: generation number
         """
         # Parse command line / file input arguments
-        await self.simulator_connection.pause(True)
+        # await self.simulator_connection.pause(True)
+        robot_futures = []
         for individual in new_individuals:
-            logger.info(f'---\nEvaluating individual (gen {gen_num}) {individual.genotype.id} ...')
+            logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
             individual.develop()
-            await self.evaluate_single_robot(individual)
-            logger.info(f'Evaluation complete! Individual {individual.genotype.id} has a fitness of {individual.fitness}.')
+            robot_futures.append(self.evaluate_single_robot(individual))
 
-    async def evaluate_single_robot(self, individual):
+        await asyncio.sleep(1)
+
+        for i, future in enumerate(robot_futures):
+            individual = new_individuals[i]
+            logger.info(f'Evaluation of Individual {individual.phenotype.id}')
+            individual.fitness = await future
+            logger.info(f'Evaluation complete! Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+
+    def evaluate_single_robot(self, individual):
+        return self.simulator_connection.test_robot(individual.phenotype, self.conf)
+
+    async def _evaluate_single_robot(self, individual):
         """
         Evaluate an individual
 
@@ -149,11 +160,12 @@ class Population:
         max_age = self.conf.evaluation_time
         while robot_manager.age() < max_age:
             individual.fitness = self.conf.fitness_function(robot_manager)
-            await asyncio.sleep(1.0 / 5) # 5= state_update_frequency
+            await asyncio.sleep(1.0 / 5)  # 5= state_update_frequency
         end = time.time()
         elapsed = end-start
         logger.info(f'Time taken: {elapsed}')
 
-        await self.simulator_connection.pause(True)
         delete_future = await self.simulator_connection.delete_all_robots()  # robot_manager
         await delete_future
+        await self.simulator_connection.pause(True)
+        await self.simulator_connection.reset()
