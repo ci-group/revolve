@@ -35,11 +35,25 @@ for i, path_ in enumerate(path_list):
     # Do fitness analysis
     subfolder_list = glob(path_ + "/*/")
     subfolder_list = [d for d in subfolder_list if os.path.isfile(d + fitness_file)]
-    n_subruns = len(subfolder_list)
     n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
     n_rows_max = 50
+    n_rows_min = 40
 
-    # Working variables
+    # Remove all rows with a small number of values
+    subfolder_list_temp = subfolder_list
+    for j_, subfolder_ in enumerate(subfolder_list_temp):
+        # Get fitness file
+        my_fitness = [(line.rstrip('\n')) for line in open(subfolder_ + "/" + fitness_file)]
+        if len(my_fitness) < n_rows_min:
+            subfolder_list.remove(subfolder_)
+            print("Remove ", subfolder_)
+
+    # Save thisnumber of subruns
+    n_subruns = len(subfolder_list)
+
+
+
+# Working variables
     fitnesses = np.empty((n_rows_max,n_subruns))
     fitnesses_mon = np.empty((n_rows_max,n_subruns))
 

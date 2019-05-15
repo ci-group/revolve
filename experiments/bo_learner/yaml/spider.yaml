@@ -170,12 +170,12 @@ brain:
   meta:
     run_analytics: "true"
     for_signal_modification_type: "amplitude"
-    for_speeding_approach: "faster"
+    for_speeding_approach: "slower"
     for_faster_amplitude_factor: 2.5
-    n_learning_iterations: 5
+    n_learning_iterations: 50
     n_cooldown_iterations: 10
     reset_robot_position: "true"
-    evaluation_rate: 60
+    evaluation_rate: 40
     output_directory: ""
     verbose: 1
     startup_time: 0

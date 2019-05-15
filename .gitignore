@@ -72,3 +72,5 @@ target/
 *.sdf
 *.urdf
 *.yaml
+!/models/box/model.sdf
+!/models/box/model.config
