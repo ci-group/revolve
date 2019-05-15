@@ -123,7 +123,11 @@ namespace revolve
       std::map< std::tuple< int, int, int, int, int, int >, std::tuple<int, int > >
           connections;
 
-      /// \brief Runge-Kutta 45 stepper
+        /// \brief Dict of motor[x,y] to index in motors
+      public: std::map< std::tuple< int, int>, int> motor_coordinates;
+
+
+        /// \brief Runge-Kutta 45 stepper
       protected: boost::numeric::odeint::runge_kutta4< state_type > stepper;
 
       /// \brief Pointer to access parameters
@@ -296,6 +300,7 @@ namespace revolve
       // \brief Number of goals reached
       private: int goal_count;
       private: double angle_diff;
+
 
     };
   }

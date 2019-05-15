@@ -164,6 +164,7 @@ DifferentialCPG::DifferentialCPG(
   auto motor = actuators->HasElement("rv:servomotor")
                ? actuators->GetElement("rv:servomotor")
                : sdf::ElementPtr();
+  auto j = 0;
   while(motor)
   {
     if (not motor->HasAttribute("coordinates"))
@@ -197,24 +198,22 @@ DifferentialCPG::DifferentialCPG(
     };
 
     // Pass coordinates
-    auto coord_x = std::stoi(coordinates[0]);
-    auto coord_y = std::stoi(coordinates[1]);
-    if (this->verbose)
-    {
-      std::cout << "coord_x,coord_y = " << coord_x << "," << coord_y << std::endl;
-    }
+    int coord_x = std::stoi(coordinates[0]);
+    int coord_y = std::stoi(coordinates[1]);
+
     auto motor_id = motor->GetAttribute("part_id")->GetAsString();
     this->positions[motor_id] = {coord_x, coord_y};
+    this->motor_coordinates[{coord_x, coord_y}] = j;
 
     // Set frame of reference
     int frame_of_reference = 0;
     // We are a left neuron
-    if (coord_x < 0)
+    if (coord_y < 0)
     {
       frame_of_reference = -1;
     }
       // We are a right neuron: TODO: MAke this neat in coordinates
-    else if (coord_x == 0 and coord_y < 0)
+    else if (coord_y > 0)
     {
       frame_of_reference = 1;
     }
@@ -223,8 +222,16 @@ DifferentialCPG::DifferentialCPG(
     this->neurons[{coord_x, coord_y, 1}] = {0.f, 0.f, this->init_neuron_state, frame_of_reference}; //Neuron A
     this->neurons[{coord_x, coord_y, -1}] = {0.f, 0.f, -this->init_neuron_state, frame_of_reference}; // Neuron B
 
+    if (this->verbose)
+    {
+      std::cout << motor_id << ": coord_x,coord_y = " << coord_x << "," << coord_y << std::endl;
+      std::cout << this->motor_coordinates[{coord_x, coord_y}] << std::endl;
+      //" has FOR" << frame_of_reference << std::endl;
+    }
+
     // TODO: Add check for duplicate coordinates
     motor = motor->GetNextElement("rv:servomotor");
+    j++;
   }
 
   // Add connections between neighbouring neurons
@@ -409,7 +416,7 @@ DifferentialCPG::~DifferentialCPG()
 struct DifferentialCPG::evaluation_function{
     // TODO: Make this neat. I don't know how though.
     // Number of input dimension (samples.size())
-    BO_PARAM(size_t, dim_in, 18);
+    BO_PARAM(size_t, dim_in, 33);
 
     // number of dimensions of the fitness
     BO_PARAM(size_t, dim_out, 1);
@@ -698,10 +705,10 @@ void DifferentialCPG::Update(
           , 0.5);
 
   // TOO: MAke eps parameter
-  if (dist_to_goal < 0.75)
-  {
-    this->set_random_goal_box();
-  }
+//  if (dist_to_goal < 0.75)
+//  {
+//    this->set_random_goal_box();
+//  }
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
@@ -826,7 +833,7 @@ void DifferentialCPG::Update(
   // Do the stepping
   this->step(_time, this->output);
 
-  // Send new signals to the motors
+  // Send new signals to the motors: TODO: Each motor should be assigned to some output.
   p = 0;
   for (const auto &motor: _motors)
   {
@@ -1094,7 +1101,7 @@ void DifferentialCPG::step(
           x,
           _time,
           dt);
-
+  int k_;
   // Copy values into nextstate
   for (size_t i = 0; i < this->neurons.size(); i++)
   {
@@ -1102,8 +1109,8 @@ void DifferentialCPG::step(
   }
 //  std::cout <<  "Angledifference is" << angle_difference << "Face is  " <<this->face << std::endl;
 
-  // Loop over all neurons to actually update their states. Note that this is a new outer for loop
-  auto i = 0; auto j = 0;
+  // Loop over all neurons to actually update their states. Note that this is a new outer for loop; TODO ERROR HERE
+  auto i = 0;
   for (auto &neuron : this->neurons)
   {
     // Get bias gain and state for this neuron. Note that we don't take the coordinates.
@@ -1111,9 +1118,10 @@ void DifferentialCPG::step(
     double bias, gain, state;
     int frame_of_reference;
     std::tie(bias, gain, state, frame_of_reference) = neuron.second;
-    double x, y, z;
+    int x, y, z;
     std::tie(x, y, z) = neuron.first;
     neuron.second = {bias, gain, this->next_state[i], frame_of_reference};
+    k_ = this->motor_coordinates[{x,y}];
 
     // Should be one, as output should be based on odd neurons, which are the A neurons
     if (i % 2 == 1)
@@ -1122,7 +1130,7 @@ void DifferentialCPG::step(
       auto x = this->next_state[i];
 
       // Use frame of reference
-      if(use_frame_of_reference and this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
+      if(use_frame_of_reference and this->current_iteration >= (this->n_init_samples + this->n_learning_iterations) or true)
       {
         if(this->for_speeding_approach == "slower" and this->for_signal_modification_type == "amplitude")
         {
@@ -1133,29 +1141,31 @@ void DifferentialCPG::step(
           // Don't do anything unusual if we are on the middle line
           if (frame_of_reference == 0)
           {
-            this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+            this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
           }
             // Else we are either left or right
           else if (std::abs(frame_of_reference) == 1)
           {
-            // TODO: Verify the (logical) correctness of this
             // If we are a right block, and we need to go right, decrease speed:
             if(frame_of_reference == 1 and angle_difference < 0)
             {
-              this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+              this->output[k_] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
             else if(frame_of_reference == -1 and angle_difference > 0)
             {
-              this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+              this->output[k_] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
               // Else behave as normal
             else
             {
-              this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+              this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
 
             // Test coordinates (frame of reference) encoding here
-            //this->output[j] = 0;
+            if (frame_of_reference == -1)
+            {
+              this->output[k_] = 0;
+            }
           }
           else
           {
@@ -1173,7 +1183,7 @@ void DifferentialCPG::step(
           // Don't do anything unusual if we are on the middle line
           if (frame_of_reference == 0)
           {
-            this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+            this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
           }
             // Else we are either left or right
           else if (std::abs(frame_of_reference) == 1)
@@ -1182,17 +1192,17 @@ void DifferentialCPG::step(
             // If we are a left block, and we need to go right, increase speed
             if(frame_of_reference == -1 and angle_difference >=0)
             {
-              this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+              this->output[k_] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
               // If we are a right block, and we need to go to the left, increase speed
             else if(frame_of_reference == 1 and angle_difference <0)
             {
-              this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+              this->output[k_] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
               // Else behave as normal
             else
             {
-              this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+              this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
           }
         }
@@ -1214,9 +1224,9 @@ void DifferentialCPG::step(
         // Don't use frame of reference
       else
       {
-        this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+        this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       }
-      j++;
+      k_++;
     }
     i++;
   }
