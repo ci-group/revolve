@@ -140,15 +140,15 @@ body:
                   id          : Leg31
                   type        : FixedBrick
                   params:
-                    red: 0.04
-                    green: 0.26
-                    blue: 0.72
+                    red: 1.0
+                    green: 0.0
+                    blue: 0.0
                   orientation : 0
 brain:
   type: bo-cpg
   controller:
     use_frame_of_reference: 1
-    load_brain: ""
+    load_brain: "/home/maarten/CLionProjects/revolve/output/cpg_bo/1557918943/best_brain.txt"
     reset_neuron_state_bool: "true"
     reset_neuron_random: "false"
     abs_output_bound: 1.0
@@ -173,7 +173,7 @@ brain:
     for_speeding_approach: "slower"
     for_faster_amplitude_factor: 2.5
     n_learning_iterations: 100
-    n_cooldown_iterations: 10
+    n_cooldown_iterations: 100
     reset_robot_position: "true"
     evaluation_rate: 80
     output_directory: ""
