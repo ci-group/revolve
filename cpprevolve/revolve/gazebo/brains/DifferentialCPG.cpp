@@ -557,7 +557,7 @@ void DifferentialCPG::save_fitness(){
   double fitness = this->evaluator->Fitness();
 
   // Save sample if it is the best seen so far
-  if(fitness >this->best_fitness)
+  if(fitness >this->best_fitness or true)
   {
     // Update fitness and sample
     this->best_fitness = fitness;
@@ -568,8 +568,8 @@ void DifferentialCPG::save_fitness(){
                                                      this->evaluator->previous_position_.Pos().Y(),
                                                      this->evaluator->current_position_.Pos().X(),
                                                      this->evaluator->current_position_.Pos().Y(),
-                                                     0.f,
-                                                     -1.f);
+                                                     -1.f,
+                                                     0.f);
     double start_angle = this->evaluator->previous_position_.Rot().Yaw()*180.0/M_PI;
 
     this->face = robot_move_angle - start_angle;
@@ -804,10 +804,7 @@ void DifferentialCPG::Update(
     this->evaluator->Reset();
     this->current_iteration += 1;
   }
-
-  // TODO: Give angle_difference into a function
-
-
+  
   // Do the stepping
   this->step(_time, this->output);
 
@@ -1004,7 +1001,12 @@ void DifferentialCPG::step(
   if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations or true) // TODO: CHange when finished debugging
   {
     // Get angle of goal
-    this->angle_to_goal = this->get_vector_angle(this->evaluator->current_position_.Pos().X(), this->evaluator->current_position_.Pos().Y(), this->goal_x, this->goal_y, 0.f, -1.f);
+    this->angle_to_goal = this->get_vector_angle(this->evaluator->current_position_.Pos().X(),
+        this->evaluator->current_position_.Pos().Y(),
+        this->goal_x,
+        this->goal_y,
+        -1.f,
+        0.f);
 
     // Get angle against (1,0)-vector we will move towards
     robot_angle = this->robot->WorldPose().Rot().Yaw() * 180.0 / M_PI;
@@ -1104,11 +1106,8 @@ void DifferentialCPG::step(
       {
         if(this->for_speeding_approach == "slower" and this->for_signal_modification_type == "amplitude")
         {
-          // Determine factor based on corner to alpha
-          double my_factor = 1.0;
-
           // Calculate factor
-          my_factor = std::abs(180.0 - angle_difference)/180.0;
+          double my_factor = std::abs(180.0 - angle_difference)/180.0;
 
           // Don't do anything unusual if we are on the middle line
           if (frame_of_reference == 0)
@@ -1141,11 +1140,8 @@ void DifferentialCPG::step(
         }
         else if(this->for_speeding_approach == "faster" and this->for_signal_modification_type == "amplitude")
         {
-          // Determine factor based on corner to alpha
-          double my_factor = 1.0;
-
           // Calculate factor. Note that it uses a parameter. This thing is in [0,1]
-          my_factor = std::abs(180.0 - angle_difference)/180.0;
+          double my_factor = std::abs(180.0 - angle_difference)/180.0;
 
           // Shift speeding factor to [1.0, for_faster_amplitude], e.g. [1.0, 2.5]
           my_factor = my_factor*(this->for_faster_amplitude_factor - 1.0) + 1.0;
@@ -1176,6 +1172,14 @@ void DifferentialCPG::step(
             }
           }
         }
+        else if(this->for_speeding_approach == "slower" and this->for_signal_modification_type == "frequency")
+        {
+          std::cout << "TODO\n";
+        }
+        else if(this->for_speeding_approach == "faster" and this->for_signal_modification_type == "frequency")
+        {
+          std::cout << "TODO\n";
+        }
         else
         {
           std::cout << "FOR combination " << this->for_speeding_approach << "," << this->for_signal_modification_type << " not implemented yet \n";
@@ -1185,6 +1189,12 @@ void DifferentialCPG::step(
       else
       {
         this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
+
+        // TODO: Remove this
+        if(frame_of_reference == -1)
+        {
+          this->output[j] = 0;
+        }
       }
       j++;
     }
