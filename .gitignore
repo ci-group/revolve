@@ -71,6 +71,5 @@ target/
 # Revolve related
 *.sdf
 *.urdf
-*.yaml
 !/models/box/model.sdf
 !/models/box/model.config

@@ -295,6 +295,7 @@ namespace revolve
 
       // \brief Number of goals reached
       private: int goal_count;
+      private: double angle_diff;
 
     };
   }

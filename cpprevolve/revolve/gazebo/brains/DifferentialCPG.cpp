@@ -545,13 +545,11 @@ void DifferentialCPG::set_random_goal_box(){
     std::cout << "Distance is " << this->dist_to_goal << " with points " << this->goal_x << ", " << this->goal_y << std::endl;
   }
 
+
   // Update goal box
   auto new_pose = ::ignition::math::Pose3d();
   new_pose.Set(goal_x, goal_y, 0.05, 0.0, 0.0, 0.0);
   this->goal_box->SetWorldPose(new_pose);
-
-  // Set new goal angle
-
 }
 
 /**
@@ -700,7 +698,7 @@ void DifferentialCPG::Update(
           , 0.5);
 
   // TOO: MAke eps parameter
-  if (dist_to_goal < 0.5)
+  if (dist_to_goal < 0.75)
   {
     this->set_random_goal_box();
   }
@@ -726,6 +724,8 @@ void DifferentialCPG::Update(
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
     std::cout <<"Distance is " << this->dist_to_goal <<std::endl;
+    std::cout <<"Anglediff is " << this->angle_diff <<std::endl;
+
     // Update position
     this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     this->start_fitness_recording = true;
@@ -1052,7 +1052,7 @@ void DifferentialCPG::step(
   }
   // TODO: First step at each iteration AD is nan. Perhaps due to robot resetting
   //std::cout << "AD: "<< angle_difference;
-
+  this->angle_diff = angle_difference;
 
   int neuron_count = 0;
   for (const auto &neuron : this->neurons)
@@ -1100,6 +1100,7 @@ void DifferentialCPG::step(
   {
     this->next_state[i] = x[i];
   }
+//  std::cout <<  "Angledifference is" << angle_difference << "Face is  " <<this->face << std::endl;
 
   // Loop over all neurons to actually update their states. Note that this is a new outer for loop
   auto i = 0; auto j = 0;
@@ -1127,6 +1128,7 @@ void DifferentialCPG::step(
         {
           // Calculate factor: TODO: Make a smoothed function over factor.
           double my_factor = (180.0 - std::abs(angle_difference))/180.0;
+          my_factor = std::pow(my_factor, 3.0);
 
           // Don't do anything unusual if we are on the middle line
           if (frame_of_reference == 0)
@@ -1138,11 +1140,11 @@ void DifferentialCPG::step(
           {
             // TODO: Verify the (logical) correctness of this
             // If we are a right block, and we need to go right, decrease speed:
-            if(frame_of_reference == 1 and angle_difference >=0)
+            if(frame_of_reference == 1 and angle_difference < 0)
             {
               this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
-            else if(frame_of_reference == -1 and angle_difference <0)
+            else if(frame_of_reference == -1 and angle_difference > 0)
             {
               this->output[j] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
@@ -1151,6 +1153,9 @@ void DifferentialCPG::step(
             {
               this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
+
+            // Test coordinates (frame of reference) encoding here
+            //this->output[j] = 0;
           }
           else
           {
@@ -1204,6 +1209,8 @@ void DifferentialCPG::step(
           std::cout << "FOR combination " << this->for_speeding_approach << "," << this->for_signal_modification_type << " not implemented yet \n";
         }
       }
+
+
         // Don't use frame of reference
       else
       {
