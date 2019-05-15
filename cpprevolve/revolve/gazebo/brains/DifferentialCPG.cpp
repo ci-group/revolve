@@ -213,8 +213,8 @@ DifferentialCPG::DifferentialCPG(
     {
       frame_of_reference = -1;
     }
-      // We are a right neuron
-    else if (coord_x > 0)
+      // We are a right neuron: TODO: MAke this neat in coordinates
+    else if (coord_x == 0 and coord_y < 0)
     {
       frame_of_reference = 1;
     }
@@ -557,7 +557,7 @@ void DifferentialCPG::save_fitness(){
   double fitness = this->evaluator->Fitness();
 
   // Save sample if it is the best seen so far
-  if(fitness >this->best_fitness or true)
+  if(fitness >this->best_fitness)
   {
     // Update fitness and sample
     this->best_fitness = fitness;
@@ -1028,7 +1028,7 @@ void DifferentialCPG::step(
     else if (angle_difference < -180)
       angle_difference += 360;
 
-    //    std::cout << "Face: " << this->face << ". Angledifference: " << angle_difference << std::endl;
+    std::cout << "Face: " << this->face << ". Angledifference: " << angle_difference << std::endl;
     // Face and angle difference are working now
   }
   // TODO: First step at each iteration AD is nan. Perhaps due to robot resetting
@@ -1189,12 +1189,6 @@ void DifferentialCPG::step(
       else
       {
         this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
-
-        // TODO: Remove this
-        if(frame_of_reference == -1)
-        {
-          this->output[j] = 0;
-        }
       }
       j++;
     }
