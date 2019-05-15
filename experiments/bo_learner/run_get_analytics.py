@@ -2,12 +2,12 @@ from glob import glob
 import os
 
 python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557046999/59/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557477606/47/"
 
 
-paths = glob(path + "*")
+paths = glob(path + "*/")
 print(len(paths))
-paths = [p for p in paths if os.path.isfile(p + "/fitnesses.txt")]
+paths = [p for p in paths if os.path.isfile(p + "fitnesses.txt")]
 print(len(paths))
 
 for path in paths:

@@ -12,7 +12,7 @@ import plotly.offline as py
 import plotly.graph_objs as go
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557209570/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557701167/"
 var1 = "range_ub"
 var2 = "signal_factor"
 parameter_file = "parameters.txt"
@@ -72,15 +72,6 @@ X =results[:,0].reshape((my_size_x,  my_size_y))
 Y =results[:,1].reshape((my_size_x,  my_size_y))
 Z =results[:,2].reshape((my_size_x,  my_size_y))
 
-# Verbose
-for i in range(my_size_x):
-    for j in range(my_size_y):
-        print(X[i,j], Y[i,j], Z[i,j])
-
-print(X)
-print(Y)
-print(Z)
-print(type(X), type(Y), type(Z))
 # Construct 3D plot
 fig = plt.figure(figsize=(10,10))
 ax = plt.axes(projection='3d')
@@ -90,13 +81,6 @@ ax.set_xlabel(var1)
 ax.set_ylabel(var2)
 ax.set_zlabel("fitness")
 plt.savefig(path + "3Dplot.png")
-
-
-# Contour plot
-#plt.contour(X,Y,Z, 15, linewidths = 0.5, colors = 'k')
-#plt.pcolormesh(X,Y,Z, cmap = plt.get_cmap('hot'))
-#plt.colorbar()
-#plt.show()
 
 
 # Get data for plotly

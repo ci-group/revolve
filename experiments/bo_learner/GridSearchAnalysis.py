@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557046999/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557701167/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/maarten/projects/revolve-simulator/revolve/experiments/bo_learner/yaml/yaml_temp/"
 
@@ -35,7 +35,10 @@ for i, path_ in enumerate(path_list):
     # Do fitness analysis
     subfolder_list = glob(path_ + "/*/")
     subfolder_list = [d for d in subfolder_list if os.path.isfile(d + fitness_file)]
-    n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
+    try:
+        n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
+    except:
+        None
     n_rows_max = 50
     n_rows_min = 40
 
