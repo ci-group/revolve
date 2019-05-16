@@ -416,7 +416,7 @@ DifferentialCPG::~DifferentialCPG()
 struct DifferentialCPG::evaluation_function{
     // TODO: Make this neat. I don't know how though.
     // Number of input dimension (samples.size())
-    BO_PARAM(size_t, dim_in, 33);
+    BO_PARAM(size_t, dim_in, 18);
 
     // number of dimensions of the fitness
     BO_PARAM(size_t, dim_out, 1);
@@ -578,8 +578,8 @@ void DifferentialCPG::save_fitness(){
                                                      this->evaluator->previous_position_.Pos().Y(),
                                                      this->evaluator->current_position_.Pos().X(),
                                                      this->evaluator->current_position_.Pos().Y(),
-                                                     -1.f,
-                                                     0.f);
+                                                     0.f,
+                                                     -1.f);
     double start_angle = this->evaluator->previous_position_.Rot().Yaw()*180.0/M_PI;
 
     this->face = robot_move_angle - start_angle;
@@ -791,6 +791,15 @@ void DifferentialCPG::Update(
                                             this->n_learning_iterations +
                                             this->n_cooldown_iterations - 1)))
     {
+      if(this->current_iteration == this->n_init_samples + this->n_learning_iterations)
+      {
+        // Create plots
+        if(this->run_analytics)
+        {
+          // Construct plots
+          this->get_analytics();
+        }
+      }
 
       if(this->verbose)
       {
@@ -809,13 +818,6 @@ void DifferentialCPG::Update(
       // Else we don't want to update anything, but construct plots from this run once.
     else
     {
-      // Create plots
-      if(this->run_analytics)
-      {
-        // Construct plots
-        this->get_analytics();
-      }
-
       // Exit
       if(this->verbose)
       {
@@ -1023,15 +1025,15 @@ void DifferentialCPG::step(
   double robot_angle, move_angle, angle_difference;
 
   // Get angles when we need them
-  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations or true) // TODO: CHange when finished debugging
+  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations or true) // TODO: CHange when finished debuggi.g
   {
     // Get angle of goal
     this->angle_to_goal = this->get_vector_angle(this->evaluator->current_position_.Pos().X(),
                                                  this->evaluator->current_position_.Pos().Y(),
                                                  this->goal_x,
                                                  this->goal_y,
-                                                 -1.f,
-                                                 0.f);
+                                                 0.f,
+                                                 -1.f);
 
     // Get angle against (1,0)-vector we will move towards
     robot_angle = this->robot->WorldPose().Rot().Yaw() * 180.0 / M_PI;
@@ -1130,7 +1132,7 @@ void DifferentialCPG::step(
       auto x = this->next_state[i];
 
       // Use frame of reference
-      if(use_frame_of_reference and this->current_iteration >= (this->n_init_samples + this->n_learning_iterations) or true)
+      if(use_frame_of_reference and this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
       {
         if(this->for_speeding_approach == "slower" and this->for_signal_modification_type == "amplitude")
         {
@@ -1161,11 +1163,11 @@ void DifferentialCPG::step(
               this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
 
-            // Test coordinates (frame of reference) encoding here
-            if (frame_of_reference == -1)
-            {
-              this->output[k_] = 0;
-            }
+//            // Test coordinates (frame of reference) encoding here
+//            if (frame_of_reference == -1)
+//            {
+//              this->output[k_] = 0;
+//            }
           }
           else
           {
