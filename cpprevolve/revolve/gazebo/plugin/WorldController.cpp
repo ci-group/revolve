@@ -27,7 +27,7 @@ using namespace revolve::gazebo;
 
 /////////////////////////////////////////////////
 WorldController::WorldController()
-    : delete_robot(0, -1)
+    : delete_robot_queue()
     , robotStatesPubFreq_(5)
     , lastRobotStatesUpdateTime_(0)
 {
@@ -115,20 +115,23 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
 {
     { // check if there are robots to delete
         this->deleteMutex_.lock();
-        auto model = std::get<0>(this->delete_robot);
-        auto request_id = std::get<1>(this->delete_robot);
-        if (model) {
-            this->world_->SetPaused(true);
-            this->world_->RemoveModel(model);
-            this->world_->SetPaused(false);
+        if (not this->delete_robot_queue.empty()) {
+            std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot =
+                    this->delete_robot_queue.front();
+            this->delete_robot_queue.pop();
+            auto model = std::get<0>(delete_robot);
+            auto request_id = std::get<1>(delete_robot);
+            if (model) {
+                this->world_->SetPaused(true);
+                this->world_->RemoveModel(model);
+                this->world_->SetPaused(false);
 
-            gz::msgs::Response resp;
-            resp.set_id(request_id);
-            resp.set_request("delete_robot");
-            resp.set_response("success");
-            this->responsePub_->Publish(resp);
-
-            this->delete_robot = {nullptr, -1};
+                gz::msgs::Response resp;
+                resp.set_id(request_id);
+                resp.set_request("delete_robot");
+                resp.set_response("success");
+                this->responsePub_->Publish(resp);
+            }
         }
         this->deleteMutex_.unlock();
     }
@@ -196,8 +199,7 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
       // is paused.
 
       this->deleteMutex_.lock();
-      //TODO add a queue
-      this->delete_robot = {model, request->id()};
+      this->delete_robot_queue.emplace(std::make_tuple(model, request->id()));
       this->deleteMutex_.unlock();
 
     }

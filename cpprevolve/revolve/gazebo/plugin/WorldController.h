@@ -26,6 +26,7 @@
 
 #include <map>
 #include <string>
+#include <queue>
 
 #include <boost/thread/mutex.hpp>
 
@@ -70,8 +71,8 @@ namespace revolve
       // Maps model names to insert request IDs
       std::map< std::string, int > insertMap_;
 
-      // Maps `entity_delete` IDs to `delete_robot` ids
-      std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot;
+      // Queue of `delete_robot` requests
+      std::queue<std::tuple< ::gazebo::physics::ModelPtr, int>> delete_robot_queue;
 
       // Stores the world
       ::gazebo::physics::WorldPtr world_;
