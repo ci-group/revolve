@@ -210,12 +210,12 @@ DifferentialCPG::DifferentialCPG(
     // We are a left neuron
     if (coord_y < 0)
     {
-      frame_of_reference = -1;
+      frame_of_reference = 1;
     }
       // We are a right neuron: TODO: MAke this neat in coordinates
     else if (coord_y > 0)
     {
-      frame_of_reference = 1;
+      frame_of_reference = -1;
     }
 
     // Save neurons: bias/gain/state. Make sure initial states are of different sign.
@@ -316,7 +316,7 @@ DifferentialCPG::DifferentialCPG(
     boost::split(weights, line, boost::is_any_of(","));
 
     // Save weights for brain
-    Eigen::VectorXd loaded_brain(this->n_weights);
+    Eigen::VectorXd loaded_brain(this->n_weights + 1);
     for(size_t j = 0; j < this->n_weights; j++)
     {
       loaded_brain(j) = std::stod(weights.at(j));
@@ -329,6 +329,9 @@ DifferentialCPG::DifferentialCPG(
     {
       std::cout << std::endl;
     }
+
+    // Save face
+    this->face = std::stod(weights.at(n_weights));
 
     // Close brain
     brain_file.close();
@@ -578,8 +581,8 @@ void DifferentialCPG::save_fitness(){
                                                      this->evaluator->previous_position_.Pos().Y(),
                                                      this->evaluator->current_position_.Pos().X(),
                                                      this->evaluator->current_position_.Pos().Y(),
-                                                     0.f,
-                                                     -1.f);
+                                                     -1.f,
+                                                     0.f);
     double start_angle = this->evaluator->previous_position_.Rot().Yaw()*180.0/M_PI;
 
     this->face = robot_move_angle - start_angle;
@@ -1032,8 +1035,8 @@ void DifferentialCPG::step(
                                                  this->evaluator->current_position_.Pos().Y(),
                                                  this->goal_x,
                                                  this->goal_y,
-                                                 0.f,
-                                                 -1.f);
+                                                 -1.f,
+                                                 0.f);
 
     // Get angle against (1,0)-vector we will move towards
     robot_angle = this->robot->WorldPose().Rot().Yaw() * 180.0 / M_PI;
@@ -1109,7 +1112,7 @@ void DifferentialCPG::step(
   {
     this->next_state[i] = x[i];
   }
-//  std::cout <<  "Angledifference is" << angle_difference << "Face is  " <<this->face << std::endl;
+  std::cout <<  "Angledifference is" << angle_difference << "Face is  " <<this->face << std::endl;
 
   // Loop over all neurons to actually update their states. Note that this is a new outer for loop; TODO ERROR HERE
   auto i = 0;
@@ -1163,11 +1166,11 @@ void DifferentialCPG::step(
               this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
 
-//            // Test coordinates (frame of reference) encoding here
-//            if (frame_of_reference == -1)
-//            {
-//              this->output[k_] = 0;
-//            }
+            // Test coordinates (frame of reference) encoding here
+            if (frame_of_reference == 1)
+            {
+              this->output[k_] = 0;
+            }
           }
           else
           {
@@ -1228,7 +1231,6 @@ void DifferentialCPG::step(
       {
         this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       }
-      k_++;
     }
     i++;
   }
@@ -1387,6 +1389,12 @@ void DifferentialCPG::save_parameters(){
  * @param _output
  */
 void DifferentialCPG::get_analytics(){
+  // Save face
+  std::ofstream face_file;
+  face_file.open(this->directory_name + "face.txt");
+  face_file << this->face << std::endl;
+  face_file.close();
+
   // Call python file to construct plots
   std::string plot_command = "experiments/bo_learner/RunAnalysisBO.py "
                              + this->directory_name

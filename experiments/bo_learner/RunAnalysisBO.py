@@ -77,9 +77,14 @@ def save_best_brain(path):
     my_fitness = [float(line.rstrip('\n')) for line in open(path + "fitnesses.txt")]
     my_samples = [line.rstrip('\n') for line in open(path + "samples.txt")]
     ix_best = np.argmax(my_fitness)
-    # Exclude last comma while saving brain
-    np.savetxt(path + "/best_brain.txt", [my_samples[ix_best][:-2]], delimiter=",", fmt="%s")
 
+    # Get face
+    face = [str(line.rstrip('\n')) for line in open(path + "face.txt")][0]
+    print([my_samples[ix_best][:-2] + "," + face])
+    print(face)
+    print([my_samples[ix_best][:-2] + face])
+    # Exclude last comma while saving brain
+    np.savetxt(path + "/best_brain.txt", [my_samples[ix_best][:-2] + "," + face], delimiter=",", fmt="%s")
 
 # Get and process data
 fitness_data = get_data(root_directory, "fitnesses.txt")
