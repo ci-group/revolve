@@ -444,7 +444,7 @@ void DifferentialCPG::bo_init_sampling(){
               << std::endl;
 
     // Information purposes
-    std::cout << std::endl << "Sample method: " << this->init_method << ". Initial "
+    std::cout << std::endl << "Sample method: " << this->init_method << ".Initial "
                                                                         "samples are: " << std::endl;
   }
 
@@ -538,8 +538,11 @@ void DifferentialCPG::set_random_goal_box(){
   // Goal caught
   this->goal_count += 1;
 
-  // Generate end-point for targeted locomotion that is at least 1 unit of distance away
-  std::cout << "SetrandomGoalBox \n";
+  if(this->verbose)
+  {
+    // Generate end-point for targeted locomotion that is at least 1 unit of distance away
+    std::cout << "SetrandomGoalBox \n";
+  }
 
   // Set new position that is sufficiently far away
   while(this->dist_to_goal <= 5.0){
@@ -553,7 +556,10 @@ void DifferentialCPG::set_random_goal_box(){
             std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
             , 0.5);
 
-    std::cout << "Distance is " << this->dist_to_goal << " with points " << this->goal_x << ", " << this->goal_y << std::endl;
+    if(this->verbose)
+    {
+      std::cout << "Distance is " << this->dist_to_goal << " with points " << this->goal_x << ", " << this->goal_y << std::endl;
+    }
   }
 
 
@@ -734,8 +740,8 @@ void DifferentialCPG::Update(
   // Evaluate policy on certain time limit, or if we just started
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
-    std::cout <<"Distance is " << this->dist_to_goal <<std::endl;
-    std::cout <<"Anglediff is " << this->angle_diff <<std::endl;
+//    std::cout <<"Distance is " << this->dist_to_goal <<std::endl;
+//    std::cout <<"Anglediff is " << this->angle_diff <<std::endl;
 
     // Update position
     this->evaluator->Update(this->robot->WorldPose(), _time, _step);
@@ -1128,7 +1134,7 @@ void DifferentialCPG::step(
   //std::cout <<  "Angledifference is" << angle_difference << "Face is  " <<this->face << std::endl;
 
   // Loop over all neurons to actually update their states. Note that this is a new outer for loop; TODO ERROR HERE
-  auto i = 0;
+  auto i = 0; auto j = 0;
   for (auto &neuron : this->neurons)
   {
     // Get bias gain and state for this neuron. Note that we don't take the coordinates.
@@ -1142,7 +1148,7 @@ void DifferentialCPG::step(
 
     // Get the position in the output-vector for this neuron at position x,y
     k_ = this->motor_coordinates[{x,y}];
-
+    //k_ = j;
     // Should be one, as output should be based on odd neurons, which are the A neurons
     if (i % 2 == 1)
     {
@@ -1232,7 +1238,7 @@ void DifferentialCPG::step(
         }
         else if(this->for_speeding_approach == "slower" and this->for_signal_modification_type == "frequency")
         {
-          std::cout << "TODO\n";
+          std::cout << "TODO \n";
         }
         else if(this->for_speeding_approach == "faster" and this->for_signal_modification_type == "frequency")
         {
@@ -1248,6 +1254,7 @@ void DifferentialCPG::step(
       {
         this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       }
+      j++;
     }
     i++;
   }

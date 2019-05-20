@@ -8,8 +8,8 @@ if platform == "darwin":
 import matplotlib.pyplot as plt
 
 
-# Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1556919226/"
+# Parameters/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1558380290/0
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1558380290/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/maarten/projects/revolve-simulator/revolve/experiments/bo_learner/yaml/yaml_temp/"
 
@@ -36,8 +36,8 @@ for i, path_ in enumerate(path_list):
     subfolder_list = glob(path_ + "/*/")
     subfolder_list = [d for d in subfolder_list if os.path.isfile(d + fitness_file)]
     n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
-    n_rows_max = 50
-    n_rows_min = 40
+    n_rows_max = 200
+    n_rows_min = 180
 
     # Remove all rows with a small number of values
     subfolder_list_temp = subfolder_list
@@ -67,7 +67,7 @@ for i, path_ in enumerate(path_list):
     # For all n_runs
     for j, subfolder in enumerate(subfolder_list):
         # Get fitness file
-        my_fitness = [(line.rstrip('\n')) for line in open(subfolder + "/" + fitness_file)]
+        my_fitness = [float(line.rstrip('\n')) for line in open(subfolder + "/" + fitness_file)]
 
         # Take maximum n_rows_max
         my_fitness = my_fitness[:n_rows_max]
@@ -79,7 +79,7 @@ for i, path_ in enumerate(path_list):
 
         # Transfer fitness to monotonic sequence and save
         my_fitness_mon = [e if e >= max(my_fitness[:ix+1]) else max(my_fitness[:ix+1]) for ix, e in enumerate(my_fitness)]
-
+        print(j,subfolder, my_fitness_mon[-1])
         # Save fitness
         fitnesses_mon[:,j] = np.array(my_fitness_mon)
         fitnesses[:,j] = np.array(my_fitness)
