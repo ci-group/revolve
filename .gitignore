@@ -71,4 +71,3 @@ target/
 # Revolve related
 *.sdf
 *.urdf
-*.yaml
