@@ -47,7 +47,7 @@ async def run():
 
     # Start a run loop to do some stuff
     while True:
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(5.0)
 
 
 def main():

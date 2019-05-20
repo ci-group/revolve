@@ -106,7 +106,10 @@ namespace revolve
       /// \brief Register of motor IDs and their x,y-coordinates
       protected: std::map< std::string, std::tuple< int, int > > positions;
 
-      /// \brief Register of individual neurons in x,y,z-coordinates
+      public: std::map< std::tuple< int, int>, int> motor_coordinates;
+
+
+        /// \brief Register of individual neurons in x,y,z-coordinates
       /// \details x,y-coordinates define position of a robot's module and
       // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
       // values are a bias, gain, state and frame of reference of each neuron.

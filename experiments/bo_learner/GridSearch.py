@@ -11,19 +11,19 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 15
-n_jobs = 45
+n_runs = 2
+n_jobs = 1
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "spider.yaml"
+yaml_model = "spider9.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = "~/projects/revolve2/.venv/bin/python3"
+python_interpreter = ".venv/bin/python3"
 search_space = {
-    'n_learning_iterations': [1],
+    'n_learning_iterations': [5],
     'n_init_samples': [12],
-    'evaluation_rate': [50],
+    'evaluation_rate': [100],
     'use_frame_of_reference:': [0],
-    'verbose': [0],
-    'signal_factor_all': [1.0, 1.5, 4.0],
+    'verbose': [1],
+    'signal_factor_all': [4.0],
 }
 
 print(search_space)
@@ -108,7 +108,8 @@ def run(i, sub_directory, model, params):
                  " ./revolve.py" \
                  " --manager " + manager + \
                  " --world-address " + world_address + \
-                 " --robot-yaml " + yaml_model
+                 " --robot-yaml " + yaml_model + \
+                 " --simulator-cmd gazebo"
 
     return_code = os.system(py_command)
     if return_code == 32512:

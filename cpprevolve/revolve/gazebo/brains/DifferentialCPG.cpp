@@ -160,6 +160,7 @@ DifferentialCPG::DifferentialCPG(
   auto motor = actuators->HasElement("rv:servomotor")
                ? actuators->GetElement("rv:servomotor")
                : sdf::ElementPtr();
+  auto j = 0;
   while(motor)
   {
     if (not motor->HasAttribute("coordinates"))
@@ -176,7 +177,7 @@ DifferentialCPG::DifferentialCPG(
     // Check if we have exactly 2 coordinates
     if (not coordinates.size() == 2)
     {
-      throw std::runtime_error("Coordinates are not exactly of length two");
+      throw std::runtime_error("Coordinates are not exactly of length two ");
     }
 
     // Check if the coordinates are integers
@@ -201,6 +202,7 @@ DifferentialCPG::DifferentialCPG(
     }
     auto motor_id = motor->GetAttribute("part_id")->GetAsString();
     this->positions[motor_id] = {coord_x, coord_y};
+    this->motor_coordinates[{coord_x, coord_y}] = j;
 
     // Set frame of reference
     int frame_of_reference = 0;
@@ -221,6 +223,7 @@ DifferentialCPG::DifferentialCPG(
 
     // TODO: Add check for duplicate coordinates
     motor = motor->GetNextElement("rv:servomotor");
+    j++;
   }
 
   // Add connections between neighbouring neurons
@@ -638,7 +641,7 @@ void DifferentialCPG::Update(
       //this->robot->Reset();
       this->robot->ResetPhysicsStates();
       auto start_pose = ::ignition::math::Pose3d();
-      start_pose.Set(0.0, 0.0, 0.25, 0.0, 0.0, 0.0);
+      start_pose.Set(0.0, 0.0, 0.025, 0.0, 0.0, 0.0);
       this->robot->SetWorldPose(start_pose);
       this->robot->Update();
     }
@@ -963,7 +966,7 @@ void DifferentialCPG::step(
     double x, y, z;
     std::tie(x, y, z) = neuron.first;
     neuron.second = {bias, gain, this->next_state[i], frame_of_reference};
-
+    j = this->motor_coordinates[{x,y}];
       // Should be one, as output should be based on +1 neurons, which are the A neurons
     if (i % 2 == 1)
     {
@@ -994,7 +997,6 @@ void DifferentialCPG::step(
       else{
         this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       }
-      j++;
     }
     i++;
   }
