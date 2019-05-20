@@ -123,7 +123,7 @@ class Supervisor(object):
             models_dir_path = os.path.abspath(models_dir_path)
             try:
                 new_env_var = "{curr_paths}:{new_path}".format(
-                        curr_paths=os.environ["GAZEBO_MODEL_PATH"],
+                        curr_paths=os.environ["GAZEBO_MODEL_PATHm"],
                         new_path=models_dir_path)
             except KeyError:
                 new_env_var = models_dir_path
