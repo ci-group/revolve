@@ -108,7 +108,7 @@ class Plasticoding(Genotype):
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = 'genotype' + str(next(self.id_iter))
+        self.id = 'robot' + str(next(self.id_iter))
         self.grammar = {}
 
         # Auxiliary variables
@@ -181,13 +181,8 @@ class Plasticoding(Genotype):
         if self.phenotype._morphological_measurements.measurement_to_dict()['hinge_count'] > 0:
             self.valid = True
 
-    def export_phenotype_files(self, path):
-        self.export_genotype('experiments/'+path+'/genotype_'+str(self.id)+'.txt')
-        self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
-        self.render(path)
-
     def render(self, path):
-        self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
+        self.phenotype.render_body('experiments/'+path+'/body_'+str(self.id)+'.png')
         self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
 
     def develop(self):
@@ -215,7 +210,7 @@ class Plasticoding(Genotype):
                     position = position+ii+1
                 else:
                     position = position + 1
-        # print('Robot ' + str(self.id) + ' was early-developed.')
+        print('Robot ' + str(self.id) + ' was early-developed.')
 
     def late_development(self):
 
@@ -263,7 +258,7 @@ class Plasticoding(Genotype):
                 self.decode_brain_moving(symbol)
 
         self.add_imu_nodes()
-        # print('Robot ' + str(self.id) + ' was late-developed.')
+        print('Robot ' + str(self.id) + ' was late-developed.')
         return self.phenotype
 
     def move_in_body(self, symbol):

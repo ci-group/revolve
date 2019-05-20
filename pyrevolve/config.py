@@ -142,6 +142,31 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--export-snapshot',
+    default=True, type=str_to_bool,
+    help="Creates folders per survival selection step (generation), containing 2d images of the phenotypes."
+)
+
+parser.add_argument(
+    '--export-phenotype',
+    default=True, type=str_to_bool,
+    help="Exports yamls with the phenotypes."
+)
+
+parser.add_argument(
+    '--measure-individuals',
+    default=True, type=str_to_bool,
+    help="Derives descriptors from phenotypes."
+)
+
+parser.add_argument(
+    '--export-measurements',
+    default=True, type=str_to_bool,
+    help="Exports derived descriptors to text."
+)
+
+
+parser.add_argument(
     '--body-mutation-epsilon',
     default=0.05, type=float,
     help="Mutation epsilon for robot body parameters."
@@ -365,6 +390,13 @@ parser.add_argument(
         help="A robot's genome in YAML format. It is easier to transfer it "
              "than to convert it from SDF."
 )
+parser.add_argument(
+        '--experiment_name',
+        default='default_experiment', type=str,
+        help="Name of current experiment. A folder with thid name will be created."
+)
+
+
 
 
 def make_revolve_config(conf):

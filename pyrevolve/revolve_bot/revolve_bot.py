@@ -64,12 +64,12 @@ class RevolveBot:
         """
         pass
 
-    def measure_phenotype(self, export: bool = False):
+    def measure_phenotype(self, settings):
         self._morphological_measurements = self.measure_body()
         self._brain_measurements = self.measure_brain()
         print('Robot ' + str(self.id) + ' was measured.')
-        if export:
-            self.export_phenotype_measurements()
+        if settings.export_measurements:
+            self.export_phenotype_measurements(settings.experiment_name)
 
     def measure_body(self):
         """
@@ -86,14 +86,14 @@ class RevolveBot:
             print(e)
             print(traceback.format_exc())
 
-    def export_phenotype_measurements(self):
-        # !!!!! we need to define the experiment path as a parameter somewhere...
-        path = 'karine_exps'
-        file = open('experiments/'+path+'/phenotype_measurements_'+str(self.id)+'.txt', 'w+')
+    def export_phenotype_measurements(self, path):
+        file = open('experiments/'+path+'/data_fullevolution/descriptors/'
+            + 'phenotype_desc_'+str(self.id)+'.txt', 'w+')
         for key, value in self._morphological_measurements.measurement_to_dict().items():
             file.write('{} {}\n'.format(key, value))
-        for key, value in self._brain_measurements.measurement_to_dict().items():
-            file.write('{} {}\n'.format(key, value))
+                # add back later: measurement_to_dict is not neing recognized!!!!!
+        #for key, value in self._brain_measurements.measurement_to_dict().items():
+         #   file.write('{} {}\n'.format(key, value))
 
     def measure_brain(self):
         """

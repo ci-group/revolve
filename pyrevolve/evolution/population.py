@@ -20,6 +20,9 @@ class PopulationConfig:
                  population_management,
                  population_management_selector,
                  evaluation_time,
+                 experiment_name,
+                 exp_management,
+                 settings,
                  offspring_size=None):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
@@ -47,8 +50,10 @@ class PopulationConfig:
         self.population_management = population_management
         self.population_management_selector = population_management_selector
         self.evaluation_time = evaluation_time
+        self.experiment_name = experiment_name
+        self.exp_management = exp_management
+        self.settings = settings
         self.offspring_size = offspring_size
-
 
 class Population:
     def __init__(self, conf: PopulationConfig, simulator):
@@ -65,14 +70,22 @@ class Population:
         self.individuals = []
         self.simulator = simulator
 
+    def new_individual(self, genotype):
+        individual = Individual(genotype)
+        individual.develop()
+        self.individuals.append(individual)
+        self.conf.exp_management.export_genotype(individual)
+        self.conf.exp_management.export_phenotype(individual)
+        if self.conf.settings.measure_individuals:
+            individual.phenotype.measure_phenotype(self.conf.settings)
+
     async def init_pop(self):
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
         for i in range(self.conf.population_size):
-            individual = Individual(self.conf.genotype_constructor(self.conf.genotype_conf))
-            self.individuals.append(individual)
-
+           self.new_individual(self.conf.genotype_constructor(self.conf.genotype_conf))
+            
         await self.evaluate(self.individuals, 0)
 
     async def next_gen(self, gen_num):
@@ -97,8 +110,7 @@ class Population:
             # Mutation operator
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
             # Insert individual in new population
-            individual = Individual(child_genotype)
-            new_individuals.append(individual)
+            self.new_individual(child_genotype)
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
@@ -128,7 +140,6 @@ class Population:
 
         for individual in new_individuals:
             print(f'---\nEvaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            individual.develop()
             await self.evaluate_single_robot(individual)
             print(f'Evaluation complete! Individual {individual.genotype.id} has a fitness of {individual.fitness}.')
 

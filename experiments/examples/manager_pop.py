@@ -11,6 +11,7 @@ sys.path.append(newpath)
 from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
+from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
@@ -43,7 +44,7 @@ async def run():
     num_generations = 1
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=20,
+        max_structural_modules=10,
     )
 
     mutation_conf = MutationConfig(
@@ -55,8 +56,11 @@ async def run():
         crossover_prob=0.8,
     )
 
+    settings = parser.parse_args()
+    exp_management = ExperimentManagement(settings)
+
     population_conf = PopulationConfig(
-        population_size=5,
+        population_size=4,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         mutation_operator=standard_mutation,
@@ -68,20 +72,33 @@ async def run():
         population_management=steady_state_population_management,
         population_management_selector=dummy_selection,
         evaluation_time=1,
-        offspring_size=1,
+        experiment_name=settings.experiment_name,
+        exp_management=exp_management,
+        settings=settings,
+        offspring_size=1
     )
 
-    settings = parser.parse_args()
     simulator_connection = await World.create(settings)
 
     population = Population(population_conf, simulator_connection)
-    await population.init_pop()
-
     gen_num = 0
-    while gen_num < num_generations:
-        population = await population.next_gen(gen_num+1)
-        gen_num += 1
 
+    if exp_management.experiment_is_new:
+        exp_management.create_exp_folders()
+        await population.init_pop()
+        exp_management.export_snapshots(population.individuals, gen_num)
+    #else:
+        # recover here soon!
+     #   population = None
+        # set gem num as recovered pop
+     #   gen_num = 0
+      #  population.evaluate(population.individuals, gen_num)
+
+    while gen_num < num_generations:
+        gen_num += 1
+        population = await population.next_gen(gen_num)
+        exp_management.export_snapshots(population.individuals, gen_num)
+        
     # output result after completing all generations...
 
 
