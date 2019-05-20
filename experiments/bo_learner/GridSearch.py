@@ -20,21 +20,20 @@ from joblib import Parallel, delayed
 
 # Parameters
 n_runs = 100
-n_jobs = 60
+n_jobs = 1
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "spider.yaml"
+yaml_model = "spider9.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
 search_space = {
-    'range_ub': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5],
-    'signal_factor_all': [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5],
+    'verbose': [1],
 }
 
 print(search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
-start_port = 11345
+start_port = 11346
 
 
 def change_parameters(original_file, parameters):
@@ -109,7 +108,8 @@ def run(i, sub_directory, model, params):
 
     # Call the experiment
     py_command = python_interpreter + \
-                 " ./revolve.py" \
+                 " ./revolve.py" + \
+                 " --simulator-cmd gazebo" \
                  " --manager " + manager + \
                  " --world-address " + world_address + \
                  " --robot-yaml " + yaml_model

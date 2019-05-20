@@ -204,6 +204,7 @@ DifferentialCPG::DifferentialCPG(
     auto motor_id = motor->GetAttribute("part_id")->GetAsString();
     this->positions[motor_id] = {coord_x, coord_y};
     this->motor_coordinates[{coord_x, coord_y}] = j;
+    this->part_ids[{coord_x, coord_y}] = motor_id;
 
     // Set frame of reference
     int frame_of_reference = 0;
@@ -343,7 +344,7 @@ DifferentialCPG::DifferentialCPG(
     }
 
     this->best_sample = loaded_brain;
-
+    this->best_fitness = 999.99;
     // Set ODE matrix at initialization
     this->set_ode_matrix();
 
@@ -581,8 +582,8 @@ void DifferentialCPG::save_fitness(){
                                                      this->evaluator->previous_position_.Pos().Y(),
                                                      this->evaluator->current_position_.Pos().X(),
                                                      this->evaluator->current_position_.Pos().Y(),
-                                                     -1.f,
-                                                     0.f);
+                                                     0.f,
+                                                     -1.f);
     double start_angle = this->evaluator->previous_position_.Rot().Yaw()*180.0/M_PI;
 
     this->face = robot_move_angle - start_angle;
@@ -707,11 +708,11 @@ void DifferentialCPG::Update(
           std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
           , 0.5);
 
-  // TOO: MAke eps parameter
-//  if (dist_to_goal < 0.75)
-//  {
-//    this->set_random_goal_box();
-//  }
+   //TODO: MAke eps parameter
+  if (dist_to_goal < 0.5 or this->current_iteration == this->n_init_samples + n_learning_iterations)
+  {
+    this->set_random_goal_box();
+  }
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
@@ -838,12 +839,22 @@ void DifferentialCPG::Update(
   // Do the stepping
   this->step(_time, this->output);
 
-  // Send new signals to the motors: TODO: Each motor should be assigned to some output.
+  // Send new signals to the motors: TODO: Match outputs and motors here
   p = 0;
+  auto k = 0;
   for (const auto &motor: _motors)
   {
+    // TODO: Sort the output s.t it corresponds to motors?
+    int x,y;
+    std::tie(x,y) = this->positions[motor->PartId()];
+    //std::cout << k <<  ": " << motor->PartId() << "x,y " << x << "," << y << std::endl;
+
+//    int ix = this->motor_coordinates[{x,y}];
+
+    // Update motor
     motor->Update(this->output + p, _step);
     p += motor->Outputs();
+    k++;
   }
 }
 
@@ -1028,15 +1039,15 @@ void DifferentialCPG::step(
   double robot_angle, move_angle, angle_difference;
 
   // Get angles when we need them
-  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations or true) // TODO: CHange when finished debuggi.g
+  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations)
   {
-    // Get angle of goal
-    this->angle_to_goal = this->get_vector_angle(this->evaluator->current_position_.Pos().X(),
-                                                 this->evaluator->current_position_.Pos().Y(),
+    // Get angle of goal:
+    this->angle_to_goal = this->get_vector_angle(this->robot->WorldPose().Pos().X(),
+                                                 this->robot->WorldPose().Pos().Y(),
                                                  this->goal_x,
                                                  this->goal_y,
-                                                 -1.f,
-                                                 0.f);
+                                                 0.f,
+                                                 -1.f);
 
     // Get angle against (1,0)-vector we will move towards
     robot_angle = this->robot->WorldPose().Rot().Yaw() * 180.0 / M_PI;
@@ -1051,7 +1062,9 @@ void DifferentialCPG::step(
       move_angle += 360;
     }
 
-    // Get angle difference in [-180, +180]
+//    std::cout <<  "Move angle:" << move_angle << std::endl;
+//    std::cout << "Angle to goal: " << this->angle_to_goal << std::endl;
+//    // Get angle difference in [-180, +180]
     angle_difference = this->angle_to_goal - move_angle;
     if (angle_difference > 180)
       angle_difference -= 360;
@@ -1112,7 +1125,7 @@ void DifferentialCPG::step(
   {
     this->next_state[i] = x[i];
   }
-  std::cout <<  "Angledifference is" << angle_difference << "Face is  " <<this->face << std::endl;
+  //std::cout <<  "Angledifference is" << angle_difference << "Face is  " <<this->face << std::endl;
 
   // Loop over all neurons to actually update their states. Note that this is a new outer for loop; TODO ERROR HERE
   auto i = 0;
@@ -1126,11 +1139,16 @@ void DifferentialCPG::step(
     int x, y, z;
     std::tie(x, y, z) = neuron.first;
     neuron.second = {bias, gain, this->next_state[i], frame_of_reference};
+
+    // Get the position in the output-vector for this neuron at position x,y
     k_ = this->motor_coordinates[{x,y}];
 
     // Should be one, as output should be based on odd neurons, which are the A neurons
     if (i % 2 == 1)
     {
+      auto motor_id = this->part_ids[{x, y}];
+      //std::cout << "Motor_id" << motor_id <<  " corresponds to output " << k_ <<  " x,y,z " << x << ","<< y << "," << z <<std::endl;
+
       // Apply saturation formula
       auto x = this->next_state[i];
 
@@ -1165,12 +1183,13 @@ void DifferentialCPG::step(
             {
               this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
-
-            // Test coordinates (frame of reference) encoding here
-            if (frame_of_reference == 1)
-            {
-              this->output[k_] = 0;
-            }
+//
+//            // Test coordinates (frame of reference) encoding here
+//            if (frame_of_reference == 1)
+//            {
+//              this->output[k_] = 0;
+//              std::cout << "Warning: output set to 0" << std::endl;
+//            }
           }
           else
           {
@@ -1224,8 +1243,6 @@ void DifferentialCPG::step(
           std::cout << "FOR combination " << this->for_speeding_approach << "," << this->for_signal_modification_type << " not implemented yet \n";
         }
       }
-
-
         // Don't use frame of reference
       else
       {

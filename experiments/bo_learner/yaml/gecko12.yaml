@@ -245,7 +245,7 @@ brain:
     for_faster_amplitude_factor: 2.5
     n_learning_iterations: 60
     n_cooldown_iterations: 100
-    reset_robot_position: "false"
+    reset_robot_position: "true"
     evaluation_rate: 80
     output_directory: ""
     verbose: 1

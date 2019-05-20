@@ -125,7 +125,7 @@ namespace revolve
 
         /// \brief Dict of motor[x,y] to index in motors
       public: std::map< std::tuple< int, int>, int> motor_coordinates;
-
+      public: std::map< std::tuple< int, int>, std::string> part_ids;
 
         /// \brief Runge-Kutta 45 stepper
       protected: boost::numeric::odeint::runge_kutta4< state_type > stepper;
