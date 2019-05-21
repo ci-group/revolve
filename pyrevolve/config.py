@@ -142,9 +142,9 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--export-snapshot',
+    '--recovery-enabled',
     default=True, type=str_to_bool,
-    help="Creates folders per survival selection step (generation), containing 2d images of the phenotypes."
+    help=" ."
 )
 
 parser.add_argument(

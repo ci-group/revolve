@@ -44,7 +44,7 @@ async def run():
     num_generations = 1
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=10,
+        max_structural_modules=10
     )
 
     mutation_conf = MutationConfig(
@@ -59,8 +59,16 @@ async def run():
     settings = parser.parse_args()
     exp_management = ExperimentManagement(settings)
 
+    if exp_management.experiment_is_new() or not settings.recovery_enabled:
+        gen_num = 0
+        next_robot_id = 0
+    else:
+        recovery_state = exp_management.read_recovery_state()
+        gen_num = int(recovery_state[0])
+        next_robot_id = int(recovery_state[1])
+
     population_conf = PopulationConfig(
-        population_size=4,
+        population_size=2,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         mutation_operator=standard_mutation,
@@ -80,24 +88,22 @@ async def run():
 
     simulator_connection = await World.create(settings)
 
-    population = Population(population_conf, simulator_connection)
-    gen_num = 0
+    population = Population(population_conf, simulator_connection, next_robot_id)
 
-    if exp_management.experiment_is_new:
+    if exp_management.experiment_is_new() or not settings.recovery_enabled:
+        print('novovovovovovovovovo')
         exp_management.create_exp_folders()
         await population.init_pop()
         exp_management.export_snapshots(population.individuals, gen_num)
-    #else:
-        # recover here soon!
-     #   population = None
-        # set gem num as recovered pop
-     #   gen_num = 0
-      #  population.evaluate(population.individuals, gen_num)
+    else:
+        print('velhooooo')
+        population.load_pop()
 
     while gen_num < num_generations:
         gen_num += 1
         population = await population.next_gen(gen_num)
         exp_management.export_snapshots(population.individuals, gen_num)
+        exp_management.update_recovery_state(gen_num, population.next_robot_id)
         
     # output result after completing all generations...
 

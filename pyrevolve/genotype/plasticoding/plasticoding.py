@@ -57,7 +57,7 @@ class Alphabet(Enum):
             [Alphabet.JOINT_HORIZONTAL, []],
             [Alphabet.JOINT_VERTICAL, []],
             [Alphabet.BLOCK, []],
-            [Alphabet.SENSOR, []],
+            #[Alphabet.SENSOR, []],
         ]
 
     @staticmethod
@@ -100,15 +100,14 @@ class Plasticoding(Genotype):
     """
     L-system genotypic representation, enhanced with epigenetic capabilities for phenotypic plasticity, through Genetic Programming.
     """
-    id_iter = itertools.count()
 
-    def __init__(self, conf):
+    def __init__(self, conf, robot_id):
         """
         :param conf:
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = 'robot' + str(next(self.id_iter))
+        self.id = 'robot' + str(robot_id)
         self.grammar = {}
 
         # Auxiliary variables
@@ -687,7 +686,8 @@ class PlasticodingConfig:
                  weight_max=1,
                  axiom_w=Alphabet.CORE_COMPONENT,
                  i_iterations=3,
-                 max_structural_modules=100
+                 max_structural_modules=100,
+                 robot_id=0
                  ):
         self.initialization_genome = initialization_genome
         self.e_max_groups = e_max_groups
@@ -700,3 +700,4 @@ class PlasticodingConfig:
         self.axiom_w = axiom_w
         self.i_iterations = i_iterations
         self.max_structural_modules = max_structural_modules
+        self.robot_id = robot_id

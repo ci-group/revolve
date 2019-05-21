@@ -23,7 +23,8 @@ class PopulationConfig:
                  experiment_name,
                  exp_management,
                  settings,
-                 offspring_size=None):
+                 offspring_size=None,
+                 next_robot_id=0):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -54,9 +55,10 @@ class PopulationConfig:
         self.exp_management = exp_management
         self.settings = settings
         self.offspring_size = offspring_size
+        self.next_robot_id = next_robot_id
 
 class Population:
-    def __init__(self, conf: PopulationConfig, simulator):
+    def __init__(self, conf: PopulationConfig, simulator, next_robot_id):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -69,6 +71,7 @@ class Population:
         self.conf = conf
         self.individuals = []
         self.simulator = simulator
+        self.next_robot_id = next_robot_id
 
     def new_individual(self, genotype):
         individual = Individual(genotype)
@@ -79,12 +82,20 @@ class Population:
         if self.conf.settings.measure_individuals:
             individual.phenotype.measure_phenotype(self.conf.settings)
 
+    # def list_snapshot_robots(self):
+
+
+    async def load_pop(self, robots_list):
+        #list_snapshot_robots()
+        print('fijsnfisd')
+
     async def init_pop(self):
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
         for i in range(self.conf.population_size):
-           self.new_individual(self.conf.genotype_constructor(self.conf.genotype_conf))
+           self.new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+           self.next_robot_id += 1
             
         await self.evaluate(self.individuals, 0)
 
@@ -104,9 +115,12 @@ class Population:
             # Crossover
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
-                child = self.conf.crossover_operator(parents, self.conf.crossover_conf)
+                child = self.conf.crossover_operator(parents, self.conf.crossover_conf, self.next_robot_id)
             else:
-                child = self.conf.selection(self.individuals)
+                # gotta add next_robot_id to the selection method later!!!!!!
+                child = self.conf.selection(self.individuals, self.next_robot_id)
+            self.next_robot_id += 1
+
             # Mutation operator
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
             # Insert individual in new population
@@ -122,7 +136,7 @@ class Population:
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
         # return self.__class__(self.conf, new_individuals)
-        new_population = Population(self.conf, self.simulator)
+        new_population = Population(self.conf, self.simulator, self.next_robot_id)
         new_population.individuals = new_individuals
         return new_population
 
