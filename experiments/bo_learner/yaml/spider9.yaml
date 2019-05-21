@@ -158,10 +158,10 @@ brain:
   learner:
     n_init_samples: 20
     init_method: "LHS"
-    kernel_noise: 0.00000001
+    kernel_noise: 0.01
     kernel_optimize_noise: "false"
     kernel_sigma_sq: 0.1
-    kernel_l: 0.2
+    kernel_l: 0.1
     kernel_squared_exp_ard_k: 2
     acqui_gpucb_delta: 0.1
     acqui_ucb_alpha: 0.5

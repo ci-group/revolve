@@ -27,8 +27,8 @@ manager = "experiments/bo_learner/manager.py"
 python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
 search_space = {
     'verbose': [0],
-    'n_learning_iterations': [150],
-    'n_init_samples': [50],
+    'n_learning_iterations': [100],
+    'n_init_samples': [100],
 }
 
 print(search_space)

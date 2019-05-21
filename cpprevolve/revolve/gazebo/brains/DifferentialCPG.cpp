@@ -1199,7 +1199,7 @@ void DifferentialCPG::step(
           }
           else
           {
-            std::cout << "Something went wrong\n";
+            std::cout << "Something  went wrong\n";
           }
         }
         else if(this->for_speeding_approach == "faster" and this->for_signal_modification_type == "amplitude")

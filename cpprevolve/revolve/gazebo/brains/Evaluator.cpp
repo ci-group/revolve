@@ -90,7 +90,7 @@ double Evaluator::Fitness()
     ////********** directed locomotion fitness function **********////
     // Gongjin: directions(forward) of heads are the orientation(+x axis) - 1.570796
     // Maarten: - M_PI means going south; -PI/2.0 going east
-    double beta0 = this->start_position_.Rot().Yaw()- M_PI/2.0;
+    double beta0 = this->start_position_.Rot().Yaw()- M_PI;
 
     if (beta0 < - M_PI) //always less than pi (beta0 + max(40degree) < pi)
     {
