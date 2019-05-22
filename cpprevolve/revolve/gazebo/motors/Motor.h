@@ -77,7 +77,7 @@ namespace revolve
       protected: ::gazebo::physics::ModelPtr model_;
 
       /// \brief ID of the body part the motor belongs to
-      public: std::string partId_;
+      protected: std::string partId_;
 
       /// \brief Robot-wide unique motor ID
       protected: std::string motorId_;

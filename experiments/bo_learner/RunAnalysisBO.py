@@ -80,9 +80,7 @@ def save_best_brain(path):
 
     # Get face
     face = [str(line.rstrip('\n')) for line in open(path + "face.txt")][0]
-    print([my_samples[ix_best][:-2] + "," + face])
-    print(face)
-    print([my_samples[ix_best][:-2] + face])
+
     # Exclude last comma while saving brain
     np.savetxt(path + "/best_brain.txt", [my_samples[ix_best][:-2] + "," + face], delimiter=",", fmt="%s")
 

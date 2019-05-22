@@ -125,7 +125,7 @@ namespace revolve
 
         /// \brief Dict of motor[x,y] to index in motors
       public: std::map< std::tuple< int, int>, int> motor_coordinates;
-      public: std::map< std::tuple< int, int>, std::string> part_ids;
+//      public: std::map< std::tuple< int, int>, std::string> part_ids;
 
         /// \brief Runge-Kutta 45 stepper
       protected: boost::numeric::odeint::runge_kutta4< state_type > stepper;
@@ -289,12 +289,12 @@ namespace revolve
       private: double goal_y;
 
       // \brief Angle the goal box is at against our face
-      private: double angle_to_goal;
+      private: double angle_to_goal = 0.0;
 
       // \brief Set the goalbox at some arbitrary position
       private: void set_random_goal_box();
 
-      // \brief Distance to the goal
+      // \brief Distance to the goalsss
       private: double dist_to_goal;
 
       // \brief Number of goals reached

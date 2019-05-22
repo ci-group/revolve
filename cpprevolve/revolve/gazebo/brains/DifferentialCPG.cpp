@@ -204,7 +204,7 @@ DifferentialCPG::DifferentialCPG(
     auto motor_id = motor->GetAttribute("part_id")->GetAsString();
     this->positions[motor_id] = {coord_x, coord_y};
     this->motor_coordinates[{coord_x, coord_y}] = j;
-    this->part_ids[{coord_x, coord_y}] = motor_id;
+//    this->part_ids[{coord_x, coord_y}] = motor_id;
 
     // Set frame of reference
     int frame_of_reference = 0;
@@ -714,11 +714,11 @@ void DifferentialCPG::Update(
           std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
           , 0.5);
 
-   //TODO: MAke eps parameter
-  if (dist_to_goal < 0.5 or this->current_iteration == this->n_init_samples + n_learning_iterations)
-  {
-    this->set_random_goal_box();
-  }
+//   //TODO: MAke eps parameter
+//  if (dist_to_goal < 0.5 or this->current_iteration == this->n_init_samples + n_learning_iterations)
+//  {
+//    this->set_random_goal_box();
+//  }
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
@@ -847,20 +847,11 @@ void DifferentialCPG::Update(
 
   // Send new signals to the motors: TODO: Match outputs and motors here
   p = 0;
-  auto k = 0;
   for (const auto &motor: _motors)
   {
-    // TODO: Sort the output s.t it corresponds to motors?
-    int x,y;
-    std::tie(x,y) = this->positions[motor->PartId()];
-    //std::cout << k <<  ": " << motor->PartId() << "x,y " << x << "," << y << std::endl;
-
-//    int ix = this->motor_coordinates[{x,y}];
-
     // Update motor
     motor->Update(this->output + p, _step);
     p += motor->Outputs();
-    k++;
   }
 }
 
@@ -1045,7 +1036,7 @@ void DifferentialCPG::step(
   double robot_angle, move_angle, angle_difference;
 
   // Get angles when we need them
-  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations)
+  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations or true) // TODO: CHange when finished debuggi.g
   {
     // Get angle of goal:
     this->angle_to_goal = this->get_vector_angle(this->robot->WorldPose().Pos().X(),
@@ -1148,11 +1139,11 @@ void DifferentialCPG::step(
 
     // Get the position in the output-vector for this neuron at position x,y
     k_ = this->motor_coordinates[{x,y}];
-    //k_ = j;
+
     // Should be one, as output should be based on odd neurons, which are the A neurons
     if (i % 2 == 1)
     {
-      auto motor_id = this->part_ids[{x, y}];
+//      auto motor_id = this->part_ids[{x, y}];
       //std::cout << "Motor_id" << motor_id <<  " corresponds to output " << k_ <<  " x,y,z " << x << ","<< y << "," << z <<std::endl;
 
       // Apply saturation formula
@@ -1254,7 +1245,6 @@ void DifferentialCPG::step(
       {
         this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
       }
-      j++;
     }
     i++;
   }

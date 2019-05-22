@@ -20,16 +20,17 @@ from joblib import Parallel, delayed
 
 # Parameters
 n_runs = 30
-n_jobs = 30
+n_jobs = 2
 my_yaml_path = "experiments/bo_learner/yaml/"
 yaml_model = "spider9.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
 search_space = {
-    'verbose': [0],
-    'n_learning_iterations': [100],
-    'n_init_samples': [100],
+    'verbose': [1],
+    'n_learning_iterations': [13],
+    'n_init_samples': [6],
 }
+
 
 print(search_space)
 # You don't have to change this
