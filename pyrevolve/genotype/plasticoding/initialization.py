@@ -3,12 +3,12 @@ from pyrevolve.genotype.plasticoding.plasticoding import Alphabet
 import random
 
 
-def _generate_grammar(conf):
+def _generate_random_grammar(conf):
     """
     Initializing a new genotype,
     :param conf: e_max_groups, maximum number of groups of symbols
     :return: a random new Genome
-    :rtype: Plasticoding
+    :rtype: dictionary
     """
     s_segments = random.randint(1, conf.e_max_groups)
     grammar = {}
@@ -47,14 +47,18 @@ def _generate_grammar(conf):
     return grammar
 
 
-def random_initialization(conf, next_robot_id):
+def standard_initialization(conf, next_robot_id, is_new=True, path=''):
     """
-    Initializing a new genotype.
-    :param conf: e_max_groups, maximum number of groups of symbols
+    Initializing a genotype.
+    :param new_old: whether a genotype is new or restored
     :type conf: PlasticodingConfig
-    :return: a random new Genome
+    :return: a Genome
     :rtype: Plasticoding
     """
+    
     genotype = Plasticoding(conf, next_robot_id)
-    genotype.grammar = _generate_grammar(conf)
+    if is_new:
+        genotype.grammar = _generate_random_grammar(conf)
+    else:
+        genotype.load_genotype(path)
     return genotype

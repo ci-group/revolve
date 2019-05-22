@@ -107,7 +107,7 @@ class Plasticoding(Genotype):
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = 'robot' + str(robot_id)
+        self.id = str(robot_id)
         self.grammar = {}
 
         # Auxiliary variables
@@ -179,10 +179,6 @@ class Plasticoding(Genotype):
     def check_validity(self):
         if self.phenotype._morphological_measurements.measurement_to_dict()['hinge_count'] > 0:
             self.valid = True
-
-    def render(self, path):
-        self.phenotype.render_body('experiments/'+path+'/body_'+str(self.id)+'.png')
-        self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
 
     def develop(self):
         self.early_development()
@@ -676,7 +672,7 @@ from pyrevolve.genotype.plasticoding import initialization
 
 class PlasticodingConfig:
     def __init__(self,
-                 initialization_genome=initialization.random_initialization,
+                 initialization_genome=initialization.standard_initialization,
                  e_max_groups=3,
                  oscillator_param_min=1,
                  oscillator_param_max=10,

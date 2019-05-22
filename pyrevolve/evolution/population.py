@@ -4,6 +4,7 @@ from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
 import time
 import asyncio
+import os
 
 
 class PopulationConfig:
@@ -82,12 +83,17 @@ class Population:
         if self.conf.settings.measure_individuals:
             individual.phenotype.measure_phenotype(self.conf.settings)
 
-    # def list_snapshot_robots(self):
-
-
-    async def load_pop(self, robots_list):
-        #list_snapshot_robots()
-        print('fijsnfisd')
+    def load_pop(self, gen_num):
+        path = 'experiments/'+self.conf.experiment_name
+        for r, d, f in os.walk(path +'/selectedpop_'+str(gen_num)):
+            for file in f:
+                if 'body' in file:
+                    genotype_id = file.split('_')[1].split('.')[0]
+                    genotype = self.conf.genotype_constructor(self.conf.genotype_conf, genotype_id,
+                                    False, path+'/data_fullevolution/genotypes/genotype_'+genotype_id+'.txt')
+                    individual = Individual(genotype)
+                    individual.develop()
+                    self.individuals.append(individual)
 
     async def init_pop(self):
         """
@@ -115,7 +121,7 @@ class Population:
             # Crossover
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
-                child = self.conf.crossover_operator(parents, self.conf.crossover_conf, self.next_robot_id)
+                child = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf, self.next_robot_id)
             else:
                 # gotta add next_robot_id to the selection method later!!!!!!
                 child = self.conf.selection(self.individuals, self.next_robot_id)

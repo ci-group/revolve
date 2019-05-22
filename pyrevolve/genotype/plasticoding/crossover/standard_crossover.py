@@ -15,7 +15,7 @@ fh.setFormatter(formatter)
 crossover_logger.addHandler(fh)
 
 
-def generate_child_genotype(parents, crossover_conf, next_robot_id):
+def generate_child_genotype(parents, genotype_conf, crossover_conf, next_robot_id):
     """
     Generates a child (individual) by randomly mixing production rules from two parents
 
@@ -24,8 +24,8 @@ def generate_child_genotype(parents, crossover_conf, next_robot_id):
     :return: child genotype
     """
     grammar = {}
-    chance_of_crossover = random.uniform(0.0, 1.0)
-    if chance_of_crossover <= crossover_conf.crossover_prob:
+    crossover_attempt = random.uniform(0.0, 1.0)
+    if crossover_attempt > crossover_conf.crossover_prob:
         grammar = parents[0].genotype.grammar
     else:
         for letter in Alphabet.modules():
@@ -33,12 +33,12 @@ def generate_child_genotype(parents, crossover_conf, next_robot_id):
             # gets the production rule for the respective letter
             grammar[letter[0]] = parents[parent].genotype.grammar[letter[0]]
 
-    genotype = Plasticoding(PlasticodingConfig(), next_robot_id)
+    genotype = Plasticoding(genotype_conf, next_robot_id)
     genotype.grammar = grammar
     return genotype.clone()
 
 
-def standard_crossover(parents, crossover_conf, next_robot_id):
+def standard_crossover(parents, genotype_conf, crossover_conf, next_robot_id):
     """
     Creates an child (individual) through crossover with two parents
 
@@ -46,7 +46,7 @@ def standard_crossover(parents, crossover_conf, next_robot_id):
 
     :return: child (individual)
     """
-    genotype = generate_child_genotype(parents, crossover_conf, next_robot_id)
+    genotype = generate_child_genotype(parents, genotype_conf, crossover_conf, next_robot_id)
     child = Individual(genotype)
     crossover_logger.info(
         f'crossover: for genome {child.genotype.id} - p1: {parents[0].genotype.id} p2: {parents[1].genotype.id}.')

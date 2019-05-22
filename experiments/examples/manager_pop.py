@@ -16,7 +16,7 @@ from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
 from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.plasticoding.initialization import random_initialization
+from pyrevolve.genotype.plasticoding.initialization import standard_initialization
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
@@ -24,7 +24,7 @@ from pyrevolve.tol.manage import World
 
 
 def dummy_selection(individuals):
-    return individuals[0]
+    return individuals[-1]
 
 
 def crossover_selection(individuals, selector, howmany:int):
@@ -41,7 +41,7 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    num_generations = 1
+    num_generations = 10
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=10
@@ -68,8 +68,8 @@ async def run():
         next_robot_id = int(recovery_state[1])
 
     population_conf = PopulationConfig(
-        population_size=2,
-        genotype_constructor=random_initialization,
+        population_size=4,
+        genotype_constructor=standard_initialization,
         genotype_conf=genotype_conf,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
@@ -83,7 +83,7 @@ async def run():
         experiment_name=settings.experiment_name,
         exp_management=exp_management,
         settings=settings,
-        offspring_size=1
+        offspring_size=2
     )
 
     simulator_connection = await World.create(settings)
@@ -91,13 +91,11 @@ async def run():
     population = Population(population_conf, simulator_connection, next_robot_id)
 
     if exp_management.experiment_is_new() or not settings.recovery_enabled:
-        print('novovovovovovovovovo')
         exp_management.create_exp_folders()
         await population.init_pop()
         exp_management.export_snapshots(population.individuals, gen_num)
     else:
-        print('velhooooo')
-        population.load_pop()
+        population.load_pop(gen_num)
 
     while gen_num < num_generations:
         gen_num += 1
