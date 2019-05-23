@@ -715,10 +715,10 @@ void DifferentialCPG::Update(
           , 0.5);
 
 //   //TODO: MAke eps parameter
-//  if (dist_to_goal < 0.5 or this->current_iteration == this->n_init_samples + n_learning_iterations)
-//  {
-//    this->set_random_goal_box();
-//  }
+  if (dist_to_goal < 0.5)
+  {
+    this->set_random_goal_box();
+  }
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
@@ -803,6 +803,9 @@ void DifferentialCPG::Update(
     {
       if(this->current_iteration == this->n_init_samples + this->n_learning_iterations)
       {
+        std::cout << "Set goal count to 0" << std::endl;
+        this->goal_count = 0;
+
         // Create plots
         if(this->run_analytics)
         {
