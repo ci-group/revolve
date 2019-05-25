@@ -18,19 +18,23 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 2
-n_jobs = 1
+run_gazebo = False
+n_runs = 10
+n_jobs = 60
 my_yaml_path = "experiments/bo_learner/yaml/"
 yaml_model = "spider9.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = ".venv/bin/python3"
 search_space = {
-    'n_learning_iterations': [1],
-    'n_init_samples': [12],
-    'evaluation_rate': [50],
-    'use_frame_of_reference:': [0],
-    'verbose': [1],
-    'signal_factor_all': [1.0, 1.5, 4.0],
+    'n_learning_iterations': [1500],
+    'n_init_samples': [20],
+    'evaluation_rate': [60],
+    'verbose': [0],
+    'kernel_sigma_sq': [1],
+    'kernel_l': [0.02, 0.05, 0.1, 0.2],
+    'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
+    'range_ub': [1.5],
+    'signal_factor_all': [4.0],
 }
 
 print(search_space)
@@ -109,15 +113,22 @@ def run(i, sub_directory, model, params):
     world_address = "127.0.0.1:" + str(start_port + i)
     os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(start_port + i)
     os.environ["LIBGL_ALWAYS_INDIRECT"] = "0"
-
-    # Call the experiment
-    py_command = python_interpreter + \
-                 " ./revolve.py" \
-                 " --manager " + manager + \
-                 " --world-address " + world_address + \
-                 " --robot-yaml " + yaml_model + \
-                 " --simulator-cmd gazebo"
-
+    py_command = ""
+    if run_gazebo:
+        # Call the experiment
+        py_command = python_interpreter + \
+                     " ./revolve.py" \
+                     " --manager " + manager + \
+                     " --world-address " + world_address + \
+                     " --robot-yaml " + yaml_model + \
+                     " --simulator-cmd gazebo"
+    else:
+        # Call the experiment
+        py_command = python_interpreter + \
+                     " ./revolve.py" \
+                     " --manager " + manager + \
+                     " --world-address " + world_address + \
+                     " --robot-yaml " + yaml_model
     return_code = os.system(py_command)
     if return_code == 32512:
         print("Specify a valid python interpreter in the parameters")
@@ -127,10 +138,22 @@ if __name__ == "__main__":
     # Get permutations
     keys, values = zip(*search_space.items())
     experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
-    # experiments = [
-    #     {'range_ub': 1.0, 'signal_factor_all': 1.0},
-    #     {'range_ub': 1.0, 'signal_factor_all': 4.0}
-    # ]
+
+    # PASTE THE EXPERIMENTS HERE, IN THE FORMAT SHOWN BELOW
+    experiments = [
+        {'init_method': "LHS", 'kernel_l': 0.02, 'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.1, 'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.2, 'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.1},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.3},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 1.0},
+        {'init_method': "RS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.5},
+    ]
+    # 'kernel_l': [0.02, 0.05, 0.1, 0.2],
+    # 'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
+
     n_unique_experiments = len(experiments)
 
     # Get id's on the permutations
