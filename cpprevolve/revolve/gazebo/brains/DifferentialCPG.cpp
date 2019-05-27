@@ -148,7 +148,6 @@ DifferentialCPG::DifferentialCPG(
   this->abs_output_bound = std::stoi(learner->GetAttribute("abs_output_bound")->GetAsString());
   this->verbose = std::stoi(controller->GetAttribute("verbose")->GetAsString());
 
-
   // Create transport node
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
@@ -328,6 +327,11 @@ DifferentialCPG::DifferentialCPG(
         std::cout << loaded_brain(j)  << ",";
       }
     }
+    if(this->verbose)
+    {
+      std::cout << std::endl;
+    }
+
     // Save face
     this->face = std::stod(weights.at(n_weights));
 
@@ -423,7 +427,7 @@ DifferentialCPG::~DifferentialCPG()
 struct DifferentialCPG::evaluation_function{
     // TODO: Make this neat. I don't know how though.
     // Number of input dimension (samples.size())
-    BO_PARAM(size_t, dim_in, 13);
+    BO_PARAM(size_t, dim_in, 18);
 
     // number of dimensions of the fitness
     BO_PARAM(size_t, dim_out, 1);
@@ -447,7 +451,7 @@ void DifferentialCPG::bo_init_sampling(){
               << std::endl;
 
     // Information purposes
-    std::cout << std::endl << "Sampling method:" << this->init_method << ".Initial "
+    std::cout << std::endl << "Sample method: " << this->init_method << ".Initial "
                                                                         "samples are: " << std::endl;
   }
 
@@ -852,6 +856,9 @@ void DifferentialCPG::Update(
     {
       if(this->current_iteration == this->n_init_samples + this->n_learning_iterations)
       {
+        std::cout << "Set goal count to 0" << std::endl;
+        this->goal_count = 0;
+
         // Create plots
         if(this->run_analytics)
         {
