@@ -19,24 +19,31 @@ from glob import glob
 from joblib import Parallel, delayed
 
 # Parameters
-n_runs = 30
-n_jobs = 2
+min_lines = 5
+visualize_gazebo = False
+n_runs = 5
+n_jobs = 4
+yaml_model = "gecko7.yaml"
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "spider9.yaml"
-manager = "experiments/bo_learner/manager.py"
-python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
 search_space = {
-    'verbose': [1],
-    'n_learning_iterations': [13],
-    'n_init_samples': [6],
+    'verbose': [0],
+    'n_learning_iterations': [2],
+    'n_init_samples': [5],
+    'n_cooldown_iterations': [0],
+    'acqui_ucb_alpha': [0.1, 0.2, 0.3, 0.4],
+    #'for_slower_amplitude_factor': [2.0,4.0,6.0]
 }
-
-
 print(search_space)
+
+# Config parameters
+manager = "experiments/bo_learner/manager.py"
+python_interpreter = "/home/maarten/projects/revolve-simulator/revolve/.venv36/bin/python"
+
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
 start_port = 11346
+finished = False
 
 
 def change_parameters(original_file, parameters):
@@ -90,15 +97,19 @@ def run(i, sub_directory, model, params):
     # Get yaml file id
     k = params["id"]
 
+    my_time = str(round(time.time(), 2))
+    my_run_path = output_path + str(k) + "/" + my_time + "/"
+    os.mkdir(my_run_path)
+
     # Select relevant yaml file
     yaml_model = my_yaml_path + sub_directory + model.split(".yaml")[0] + "-" + str(k) + ".yaml"
-
+    print(yaml_model)
     # Get relevant yaml file
     yaml_file = [(line.rstrip('\n')) for line in open(yaml_model)]
 
     # Change output_directory
     index = [ix for ix, x in enumerate(yaml_file) if "output_directory" in x][0]
-    yaml_file[index] = "    output_directory: " + output_path + str(k) + "/" + str(i) + "/"
+    yaml_file[index] = f'    output_directory: "{my_run_path}"'
 
     # Write temporarily with identifier
     write_file(my_yaml_path + sub_directory + model.split(".yaml")[0] + "-" + str(k) + "-" + str(i) + ".yaml", yaml_file)
@@ -108,14 +119,22 @@ def run(i, sub_directory, model, params):
     world_address = "127.0.0.1:" + str(start_port + i)
     os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(start_port + i)
     os.environ["LIBGL_ALWAYS_INDIRECT"] = "0"
+    py_command = ""
 
     # Call the experiment
-    py_command = python_interpreter + \
-                 " ./revolve.py" + \
-                 " --manager " + manager + \
-                 " --world-address " + world_address + \
-                 " --robot-yaml " + yaml_model
-    # " --simulator-cmd gazebo" \
+    if not visualize_gazebo:
+        py_command = python_interpreter + \
+                     " ./revolve.py" + \
+                     " --manager " + manager + \
+                     " --world-address " + world_address + \
+                     " --robot-yaml " + yaml_model
+    else:
+        py_command = python_interpreter + \
+                     " ./revolve.py" + \
+                     " --manager " + manager + \
+                     " --world-address " + world_address + \
+                     " --robot-yaml " + yaml_model + \
+                     " --simulator-cmd gazebo" \
 
     return_code = os.system(py_command)
     if return_code == 32512:
@@ -126,7 +145,7 @@ if __name__ == "__main__":
     # Get permutations
     keys, values = zip(*search_space.items())
     experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
-
+    unique_experiments = experiments
     n_unique_experiments = len(experiments)
 
     # Get id's on the permutations
@@ -149,15 +168,63 @@ if __name__ == "__main__":
     if not os.path.isdir("output/cpg_bo"):
         os.mkdir("output/cpg_bo")
     os.mkdir(output_path)
-    for l in range(n_unique_experiments):   # Create dirs
 
-        os.mkdir(output_path + str(l) + "/")
+    # Create experiment group directories
+    for i in range(n_unique_experiments):
+        os.mkdir(output_path + str(i) + "/")
 
-    # Run experiments in parallel
-    Parallel(n_jobs=n_jobs)(delayed(run)(i,
-                                         my_sub_directory,
-                                         yaml_model,
-                                         experiment) for i, experiment in enumerate(experiments))
+    while not finished:
+        # Run experiments in parallel
+        Parallel(n_jobs=n_jobs)(delayed(run)(i,
+                                             my_sub_directory,
+                                             yaml_model,
+                                             experiment) for i, experiment in enumerate(experiments))
+
+        # Count number of finished runs for all experiments. Read this from the parameters file
+        runs_succesful = {}
+        experiment_list = glob(output_path + "*/")
+
+        for ix,e in enumerate(experiment_list):
+            runs = glob(e + "*/")
+            runs_succesful[str(e.split("/")[-2])] = 0
+
+            for my_run in runs:
+                if os.path.isfile(my_run + "fitnesses.txt"):
+                    n_lines = len([(line.rstrip('\n')) for line in open(my_run + "fitnesses.txt")])
+
+                    # In case we had a succesful run
+                    if n_lines > min_lines:
+                        runs_succesful[str(e.split("/")[-2])] += 1
+
+        to_run = {}
+        for key, val in runs_succesful.items():
+            to_run[key] = n_runs - val
+        to_run = {k: v for k, v in to_run.items() if v > 0}
+
+        # If the experiment list is empty
+        if not bool(to_run):
+            finished = True
+        else:
+            print(f"To finish {sum(to_run.values())} runs")
+
+            # Empty experiments list
+            experiments = []
+
+            # Use spare computing capacity
+            while sum(to_run.values()) < n_jobs - len(to_run):
+                print(to_run)
+
+                for key, value in to_run.items():
+                    to_run[key] += 1
+
+            # Construct new experiment list
+            for key, val in to_run.items():
+                for i in range(val):
+                    entry = unique_experiments[int(key)]
+                    experiments.append(entry)
+
+    # START ANALYSIS HERE
+    print("I will now perform analysis")
 
     # Do analysis
     fitness_list = []
