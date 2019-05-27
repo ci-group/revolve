@@ -587,8 +587,6 @@ void DifferentialCPG::save_fitness(){
     // Update fitness and sample
     this->best_fitness = fitness;
     this->best_sample = this->samples.at(this->current_iteration - 1);
-    std::cout << this->current_iteration <<std::endl;
-    // TODO: Verify bugfix
 
     // Set new face. I verified the correctness
     double robot_move_angle = this->get_vector_angle(this->evaluator->start_position_.Pos().X(),
@@ -640,6 +638,19 @@ void DifferentialCPG::save_fitness(){
   fitness_file.open(this->directory_name + "fitnesses.txt", std::ios::app);
   fitness_file << fitness << std::endl;
   fitness_file.close();
+
+  // Save speed
+  double speed = std::pow(
+      std::pow(this->evaluator->start_position_.Pos().X() - this->evaluator->current_position_.Pos().X(), 2) +
+      std::pow(this->evaluator->start_position_.Pos().Y() - this->evaluator->current_position_.Pos().Y(), 2), 0.5);
+  speed /= this->evaluation_rate;
+
+  // Save to file
+  std::ofstream speed_file;
+  speed_file.open(this->directory_name + "speed.txt", std::ios::app);
+  speed_file << speed  << std::endl;
+  speed_file.close();
+
 }
 
 /**
@@ -762,17 +773,14 @@ void DifferentialCPG::Update(
     double speed = distance_travelled/(_time - this->corner_threshold_met_time);
 
     // Save to file
-    std::ofstream speed_file;
-    speed_file.open(this->directory_name + "speed.txt", std::ios::app);
-    speed_file << "," << speed << "," << distance_travelled << std::endl;
-    speed_file.close();
+    std::ofstream speed_to_object_file;
+    speed_to_object_file.open(this->directory_name + "speed_to_object.txt", std::ios::app);
+    speed_to_object_file << "," << speed << "," << distance_travelled << std::endl;
+    speed_to_object_file.close();
 
     // Reset goal box
     this->set_random_goal_box();
   }
-
-  // Check if we are within angle alpha for the first time
-
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
@@ -793,6 +801,7 @@ void DifferentialCPG::Update(
     // Update position
     this->start_fitness_recording = false;
   }
+
   // Evaluate policy on certain time limit, or if we just started
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
