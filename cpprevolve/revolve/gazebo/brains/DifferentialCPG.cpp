@@ -586,16 +586,18 @@ void DifferentialCPG::save_fitness(){
   {
     // Update fitness and sample
     this->best_fitness = fitness;
-    this->best_sample = this->samples.back();
+    this->best_sample = this->samples.at(this->current_iteration - 1);
+    std::cout << this->current_iteration <<std::endl;
+    // TODO: Verify bugfix
 
     // Set new face. I verified the correctness
-    double robot_move_angle = this->get_vector_angle(this->evaluator->previous_position_.Pos().X(),
-                                                     this->evaluator->previous_position_.Pos().Y(),
+    double robot_move_angle = this->get_vector_angle(this->evaluator->start_position_.Pos().X(),
+                                                     this->evaluator->start_position_.Pos().Y(),
                                                      this->evaluator->current_position_.Pos().X(),
                                                      this->evaluator->current_position_.Pos().Y(),
                                                      0.f,
                                                      -1.f);
-    double start_angle = this->evaluator->previous_position_.Rot().Yaw()*180.0/M_PI;
+    double start_angle = this->evaluator->start_position_.Rot().Yaw()*180.0/M_PI;
 
     this->face = robot_move_angle - start_angle;
     if(this->face > 180){
