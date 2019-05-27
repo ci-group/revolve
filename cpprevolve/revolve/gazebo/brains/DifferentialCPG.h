@@ -53,7 +53,7 @@
 // Set global variables for the param structure of BO with default values
 inline constexpr double kernel_noise_ = 0.0000001;
 inline constexpr bool kernel_optimize_noise_ = false;
-inline constexpr double kernel_sigma_sq_ = 0.001;
+inline constexpr double kernel_sigma_sq_ = 1;
 inline constexpr double kernel_l_ = 0.2;
 inline constexpr int kernel_squared_exp_ard_k_ = 4;
 inline constexpr double acqui_gpucb_delta_ = 0.1;
@@ -172,7 +172,7 @@ namespace revolve
       private: void save_parameters();
 
       /// \brief Best fitness seen so far
-      private: double best_fitness = 0;
+      private: double best_fitness = -10.0;
 
       /// \brief Sample corresponding to best fitness
       private: Eigen::VectorXd best_sample;

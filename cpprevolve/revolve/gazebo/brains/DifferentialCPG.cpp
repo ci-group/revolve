@@ -357,6 +357,7 @@ DifferentialCPG::DifferentialCPG(
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
+  this->evaluator->directory_name = this->directory_name;
 }
 
 /**
@@ -374,7 +375,7 @@ DifferentialCPG::~DifferentialCPG()
  */
 struct DifferentialCPG::evaluation_function{
   // Number of input dimension (samples.size())
-  BO_PARAM(size_t, dim_in, 18);
+  BO_PARAM(size_t, dim_in, 26);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -614,20 +615,21 @@ void DifferentialCPG::Update(
     p += sensor->Inputs();
   }
 
+  this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+
   // Only start recording the fitness after the startup time each iteration
   double elapsed_evaluation_time = _time - this->start_time;
-  if((std::fmod(elapsed_evaluation_time, (int)this->evaluation_rate) >= this->startup_time) &
-     this->start_fitness_recording)
+  if((std::fmod(elapsed_evaluation_time, (int)this->evaluation_rate) >= this->startup_time) & this->start_fitness_recording)
   {
     // Update position
-    this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+//    this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     this->start_fitness_recording = false;
   }
   // Evaluate policy on certain time limit, or if we just started
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
     // Update position
-    this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+//    this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     this->start_fitness_recording = true;
 
     // Get and save fitness (but not at start)
@@ -642,7 +644,7 @@ void DifferentialCPG::Update(
       //this->robot->Reset();
       this->robot->ResetPhysicsStates();
       auto start_pose = ::ignition::math::Pose3d();
-      start_pose.Set(0.0, 0.0, 0.025, 0.0, 0.0, 0.0);
+      start_pose.Set(0.0, 0.0, 0.05, 0.0, 0.0, 0.0);
       this->robot->SetWorldPose(start_pose);
       this->robot->Update();
     }
@@ -674,7 +676,7 @@ void DifferentialCPG::Update(
       this->set_ode_matrix();
 
       // Update position
-      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+//      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     }
       // If we are finished learning but are cooling down - reset once
     else if((this->current_iteration >= (this->n_init_samples +
@@ -689,7 +691,7 @@ void DifferentialCPG::Update(
       }
 
       // Update robot position
-      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+//      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
 
       // Use best sample in next iteration
       this->samples.push_back(this->best_sample);

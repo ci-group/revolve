@@ -75,6 +75,7 @@ namespace revolve
       protected: double step_saving_rate;
       protected: std::vector<ignition::math::Pose3d> step_poses;
       //      public: double current_dist_pro = 0.0;
+    public: std::string directory_name = "";
     };
   }
 }
