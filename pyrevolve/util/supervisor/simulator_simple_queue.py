@@ -20,7 +20,15 @@ class SimulatorSimpleQueue:
         self._free_simulator = [True for _ in range(n_cores)]
         self._workers = []
 
+    async def _start_debug(self):
+        connection_future = await World.create(self._settings, world_address=("127.0.0.1", 11345))
+        self._connections.append(connection_future)
+        self._workers.append(asyncio.create_task(self._simulator_queue_worker(0)))
+
     async def start(self):
+        if self._settings.simulator_cmd == 'debug':
+            await self._start_debug()
+            return
         future_launches = []
         future_connections = []
         for i in range(self._n_cores):
