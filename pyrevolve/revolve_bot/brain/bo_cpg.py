@@ -20,7 +20,7 @@ class BrainCPGBO(Brain):
         self.init_neuron_state = None
 
         # BO hyper-parameters
-        self.init_method = None  # {RS, LHS}
+        self.init_method = None
         self.kernel_noise = None
         self.kernel_optimize_noise = None
         self.kernel_sigma_sq = None
@@ -36,6 +36,7 @@ class BrainCPGBO(Brain):
         self.for_signal_modification_type = None
         self.for_speeding_approach = None
         self.for_faster_amplitude_factor = None
+        self.for_slower_amplitude_factor = None
 
         # Various
         self.n_learning_iterations = None
@@ -103,6 +104,7 @@ class BrainCPGBO(Brain):
             'for_signal_modification_type': str(self.for_signal_modification_type),
             'for_speeding_approach': str(self.for_speeding_approach),
             'for_faster_amplitude_factor': str(self.for_faster_amplitude_factor),
+            'for_slower_amplitude_factor': str(self.for_slower_amplitude_factor),
             'run_analytics': str(self.run_analytics),
             'init_neuron_state': str(self.init_neuron_state),
             'output_directory': str(self.output_directory),

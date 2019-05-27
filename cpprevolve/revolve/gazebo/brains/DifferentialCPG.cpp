@@ -123,6 +123,7 @@ DifferentialCPG::DifferentialCPG(
   this->for_speeding_approach = controller->GetAttribute("for_speeding_approach")->GetAsString();
   this->for_signal_modification_type = controller->GetAttribute("for_signal_modification_type")->GetAsString();
   this->for_faster_amplitude_factor = std::stod(controller->GetAttribute("for_faster_amplitude_factor")->GetAsString());
+  this->for_slower_amplitude_factor = std::stod(controller->GetAttribute("for_slower_amplitude_factor")->GetAsString());
 
   // (Global)Learner parameters
   double kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
@@ -146,6 +147,7 @@ DifferentialCPG::DifferentialCPG(
   this->evaluation_rate = std::stoi(learner->GetAttribute("evaluation_rate")->GetAsString());
   this->abs_output_bound = std::stoi(learner->GetAttribute("abs_output_bound")->GetAsString());
   this->verbose = std::stoi(controller->GetAttribute("verbose")->GetAsString());
+
 
   // Create transport node
   this->node_.reset(new gz::transport::Node());
@@ -326,13 +328,14 @@ DifferentialCPG::DifferentialCPG(
         std::cout << loaded_brain(j)  << ",";
       }
     }
-    if(this->verbose)
-    {
-      std::cout << std::endl;
-    }
-
     // Save face
     this->face = std::stod(weights.at(n_weights));
+
+    if(this->verbose)
+    {
+      std::cout << this->face << std::endl;
+    }
+
 
     // Close brain
     brain_file.close();
@@ -420,7 +423,7 @@ DifferentialCPG::~DifferentialCPG()
 struct DifferentialCPG::evaluation_function{
     // TODO: Make this neat. I don't know how though.
     // Number of input dimension (samples.size())
-    BO_PARAM(size_t, dim_in, 18);
+    BO_PARAM(size_t, dim_in, 13);
 
     // number of dimensions of the fitness
     BO_PARAM(size_t, dim_out, 1);
@@ -444,7 +447,7 @@ void DifferentialCPG::bo_init_sampling(){
               << std::endl;
 
     // Information purposes
-    std::cout << std::endl << "Sample method: " << this->init_method << ".Initial "
+    std::cout << std::endl << "Sampling method:" << this->init_method << ".Initial "
                                                                         "samples are: " << std::endl;
   }
 
@@ -562,7 +565,6 @@ void DifferentialCPG::set_random_goal_box(){
     }
   }
 
-
   // Update goal box
   auto new_pose = ::ignition::math::Pose3d();
   new_pose.Set(goal_x, goal_y, 0.05, 0.0, 0.0, 0.0);
@@ -603,6 +605,16 @@ void DifferentialCPG::save_fitness(){
     {
       std::cout << "New face: " << this->face << std::endl;
     }
+
+    // Save brain and face in append mode
+    std::ofstream brain_file;
+    brain_file.open(this->directory_name + "brain.txt", std::ios::app);
+    for(int i = 0; i < this->n_weights; i++)
+    {
+      brain_file << this->best_sample[i] << ",";
+    }
+    brain_file << this->face << "," << fitness << std::endl;
+    brain_file.close();
   }
 
   if (this->verbose)
@@ -708,17 +720,54 @@ void DifferentialCPG::Update(
   // Prevent two threads from accessing the same resource at the same time
   boost::mutex::scoped_lock lock(this->networkMutex_);
 
+  // Check if we can start measuring speed: TODO: Add angle to difference as well
+  if (not this->corner_threshold_met and std::abs(this->angle_diff) < 20)
+  {
+    if(this->verbose)
+    {
+      std::cout << "Start recording fitness" << std::endl;
+    }
+    // Save current time
+    this->corner_threshold_met_time = _time;
+    this->corner_threshold_met = true;
+
+    // Save starting position
+    this->evaluator->start_position_threshold = this->evaluator->current_position_;
+    // Save for speed measuring
+  }
+
   // Update goal box distance
   this->dist_to_goal = std::pow(
           std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
           std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
           , 0.5);
 
-//   //TODO: MAke eps parameter
-//  if (dist_to_goal < 0.5 or this->current_iteration == this->n_init_samples + n_learning_iterations)
-//  {
-//    this->set_random_goal_box();
-//  }
+   //TODO: MAke eps parameter
+  if (this->dist_to_goal < 0.5)
+  {
+    // Calculate time it took to perform the targeted locomtion task
+    this->corner_threshold_met = false;
+
+    // Calculate Euclidean distance travelled
+    double distance_travelled = std::pow(
+        std::pow(this->evaluator->start_position_threshold.Pos().X() - this->evaluator->current_position_.Pos().X(), 2) +
+        std::pow(this->evaluator->start_position_threshold.Pos().Y() - this->evaluator->current_position_.Pos().Y(), 2), 0.5);
+
+    // Scale with time to get speed
+    double speed = distance_travelled/(_time - this->corner_threshold_met_time);
+
+    // Save to file
+    std::ofstream speed_file;
+    speed_file.open(this->directory_name + "speed.txt", std::ios::app);
+    speed_file << "," << speed << "," << distance_travelled << std::endl;
+    speed_file.close();
+
+    // Reset goal box
+    this->set_random_goal_box();
+  }
+
+  // Check if we are within angle alpha for the first time
+
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
@@ -740,8 +789,8 @@ void DifferentialCPG::Update(
   // Evaluate policy on certain time limit, or if we just started
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
-//    std::cout <<"Distance is " << this->dist_to_goal <<std::endl;
-//    std::cout <<"Anglediff is " << this->angle_diff <<std::endl;
+    std::cout <<"Distance is " << this->dist_to_goal <<std::endl;
+    std::cout <<"Anglediff is " << this->angle_diff <<std::endl;
 
     // Update position
     this->evaluator->Update(this->robot->WorldPose(), _time, _step);
@@ -1156,7 +1205,7 @@ void DifferentialCPG::step(
         {
           // Calculate factor: TODO: Make a smoothed function over factor.
           double my_factor = (180.0 - std::abs(angle_difference))/180.0;
-          my_factor = std::pow(my_factor, 3.0);
+          my_factor = std::pow(my_factor, this->for_slower_amplitude_factor);
 
           // Don't do anything unusual if we are on the middle line
           if (frame_of_reference == 0)
@@ -1378,6 +1427,8 @@ void DifferentialCPG::save_parameters(){
   // FOR parameters
   parameters_file << std::endl << "For signal modification: " << this->for_signal_modification_type << std::endl;
   parameters_file << "For speeding approach: " << this->for_speeding_approach << std::endl;
+  parameters_file << "For slower amplitude factor: " << this->for_slower_amplitude_factor << std::endl;
+  parameters_file << "For faster amplitude factor: " << this->for_faster_amplitude_factor << std::endl;
   parameters_file << "Use FOR: " << this->use_frame_of_reference << std::endl;
 
   // BO hyper-parameters

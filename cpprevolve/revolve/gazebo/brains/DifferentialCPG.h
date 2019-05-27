@@ -269,6 +269,10 @@ namespace revolve
       /// \brief Use frame of reference {-1,0,1} version or not
       private: bool use_frame_of_reference;
 
+      // \brief Start measuring the speed as soon as it's value is true.
+      private: bool corner_threshold_met = false;
+      private: double corner_threshold_met_time = 0.0;
+
       /// \brief Function that determines the angle between the resulting vector and the normal [d1_x,d1_y]-vector.
       private: double get_vector_angle(double p1_x, double p1_y, double p2_x, double p2_y, double d1_x, double d1_y);
 
@@ -283,10 +287,11 @@ namespace revolve
 
       /// \brief Max amplitude increase factor. 2.5 is arbitrary. TODO: in yaml
       private: double for_faster_amplitude_factor;
+      private: double for_slower_amplitude_factor;
 
       /// \brief Coordinates of the goal box
-      private: double goal_x;
-      private: double goal_y;
+      private: double goal_x = 0.0;
+      private: double goal_y = 0.0;
 
       // \brief Angle the goal box is at against our face
       private: double angle_to_goal = 0.0;
@@ -295,11 +300,11 @@ namespace revolve
       private: void set_random_goal_box();
 
       // \brief Distance to the goalsss
-      private: double dist_to_goal;
+      private: double dist_to_goal = 0.0;
 
       // \brief Number of goals reached
       private: int goal_count;
-      private: double angle_diff;
+      private: double angle_diff = 999;
 
 
     };

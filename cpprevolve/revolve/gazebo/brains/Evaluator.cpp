@@ -90,7 +90,7 @@ double Evaluator::Fitness()
     ////********** directed locomotion fitness function **********////
     // Gongjin: directions(forward) of heads are the orientation(+x axis) - 1.570796
     // Maarten: - M_PI means going south; -PI/2.0 going east
-    double beta0 = this->start_position_.Rot().Yaw()- M_PI;
+    double beta0 = this->start_position_.Rot().Yaw()- M_PI/2.0;
 
     if (beta0 < - M_PI) //always less than pi (beta0 + max(40degree) < pi)
     {
@@ -114,9 +114,6 @@ double Evaluator::Fitness()
     {
       alpha = std::abs(beta1 - beta0);
     }
-    std::ofstream alphatxt;
-    alphatxt.open("../alpha.txt", std::ios::app);
-    alphatxt << std::fixed << alpha << std::endl; //scientific notation
 
     double A = std::tan(beta0);
     double B = this->start_position_.Pos().Y()
@@ -153,23 +150,10 @@ double Evaluator::Fitness()
       penalty = 0.01 * dist_penalty;
     }
 
-    std::ofstream dist_pro;
-    dist_pro.open("../dist_pro.txt", std::ios::app);
-    dist_pro << std::fixed << dist_projection << std::endl; //scientific notation
-
-    std::ofstream dist_path_txt;
-    dist_path_txt.open("../distPath.txt", std::ios::app);
-    dist_path_txt << std::fixed << path_length << std::endl;
-
     //fitness_direction = dist_projection / (alpha + ksi) - penalty;
     fitness_direction = std::abs(dist_projection) / path_length *
                         (dist_projection / (alpha + ksi) - penalty);
 
-    std::ofstream fitness_file;
-    fitness_file.open("../fitness.txt", std::ios::app);
-    fitness_file << std::fixed << fitness_direction << std::endl; //scientific notation
-
-    fitness_direction = 0.05 + fitness_direction;
     fitness_value = fitness_direction;
   }
   return fitness_value;
