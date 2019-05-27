@@ -177,7 +177,7 @@ namespace revolve
       private: void save_parameters();
 
       /// \brief Best fitness seen so far
-      private: double best_fitness = 0;
+      private: double best_fitness = -10.0;
 
       /// \brief Sample corresponding to best fitness
       private: Eigen::VectorXd best_sample;

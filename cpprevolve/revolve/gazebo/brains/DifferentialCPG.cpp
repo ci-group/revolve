@@ -425,9 +425,8 @@ DifferentialCPG::~DifferentialCPG()
  * Dummy function for limbo
  */
 struct DifferentialCPG::evaluation_function{
-    // TODO: Make this neat. I don't know how though.
     // Number of input dimension (samples.size())
-    BO_PARAM(size_t, dim_in, 18);
+    BO_PARAM(size_t, dim_in, 13);
 
     // number of dimensions of the fitness
     BO_PARAM(size_t, dim_out, 1);
@@ -444,7 +443,7 @@ void DifferentialCPG::bo_init_sampling(){
   if(this->verbose)
   {
     // We only want to optimize the weights for now.
-    std::cout << "Number of weights = connections/2 + n_motors are "
+    std::cout << "Number of weights = connections/2 + n_motors are  "
               << this->connections.size()/2
               << " + "
               << this->n_motors
@@ -781,13 +780,15 @@ void DifferentialCPG::Update(
     p += sensor->Inputs();
   }
 
+  // Update position here (fix by Gongjin)
+  this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+
   // Only start recording the fitness after the startup time each iteration
   double elapsed_evaluation_time = _time - this->start_time;
   if((std::fmod(elapsed_evaluation_time, (int)this->evaluation_rate) >= this->startup_time) &
      this->start_fitness_recording)
   {
     // Update position
-    this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     this->start_fitness_recording = false;
   }
   // Evaluate policy on certain time limit, or if we just started
@@ -797,7 +798,6 @@ void DifferentialCPG::Update(
     std::cout <<"Anglediff is " << this->angle_diff <<std::endl;
 
     // Update position
-    this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     this->start_fitness_recording = true;
 
     // Get and save fitness (but not at start)
@@ -842,9 +842,6 @@ void DifferentialCPG::Update(
 
       // Set new weights
       this->set_ode_matrix();
-
-      // Update position
-      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     }
       // If we are finished learning, deploy this model.
       // TODO: Investigate if the validation bug is still present. For now always work with load_brain
@@ -872,7 +869,8 @@ void DifferentialCPG::Update(
         std::cout << std::endl << "I am cooling down " << std::endl;
       }
 
-      // Update robot position
+      // Update robot position. This is allowed to be here, as it's in the cooling down fase. This is the face in which
+      // we only care about speed.
       this->evaluator->Update(this->robot->WorldPose(), _time, _step);
 
       // Use best sample in next iteration

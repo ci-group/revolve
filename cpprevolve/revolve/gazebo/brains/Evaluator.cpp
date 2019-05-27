@@ -97,11 +97,6 @@ double Evaluator::Fitness()
       beta0 = 2 * M_PI - std::abs(beta0);
     }
 
-    //save direction to coordinates.txt
-    std::ofstream coordinates;
-    coordinates.open("../coordinates.txt", std::ios::app);
-    coordinates << std::fixed << "direction: " << beta0 << std::endl;
-
     double beta1 = std::atan2(
         this->current_position_.Pos().Y() - this->start_position_.Pos().Y(),
         this->current_position_.Pos().X() - this->start_position_.Pos().X());
