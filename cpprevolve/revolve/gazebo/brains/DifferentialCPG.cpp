@@ -63,6 +63,7 @@ using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Kernel_t = limbo::kernel::MaternFiveHalves<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 
+double test_global = 0.02;
 /**
  * Constructor for DifferentialCPG class.
  *
@@ -132,12 +133,14 @@ DifferentialCPG::DifferentialCPG(
   double kernel_l_ = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
   int kernel_squared_exp_ard_k_ = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
   double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
-  double acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
+  acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
   double acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
   this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
   this->init_method = learner->GetAttribute("init_method")->GetAsString();
+  test_global = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
+  std::cout << "GLobal is " << test_global << std::endl;
 
   // Meta parameters
   this->startup_time = std::stoi(controller->GetAttribute("startup_time")->GetAsString());
@@ -1336,6 +1339,12 @@ void DifferentialCPG::step(
 //  signal_file.close();
 }
 
+
+// Make constexpre here that returns the double value
+constexpr auto transform_double(double a) {
+  return a;
+}
+
 /**
  * Struct that holds the parameters on which BO is called. This is required
  * by limbo.
@@ -1394,7 +1403,7 @@ struct DifferentialCPG::Params{
 
     struct acqui_gpucb : public limbo::defaults::acqui_gpucb {
         //UCB(x) = \mu(x) + \kappa \sigma(x).
-        BO_PARAM(double, delta, acqui_gpucb_delta_); // default delta = 0.1, delta in (0,1) convergence guaranteed
+        BO_PARAM(double, delta, 1);//acqui_gpucb_delta_); // default delta = 0.1, delta in (0,1) convergence guaranteed
     };
 
     struct acqui_ei : public limbo::defaults::acqui_ei{
@@ -1407,11 +1416,14 @@ struct DifferentialCPG::Params{
     };
 
     struct acqui_ucb : public limbo::defaults::acqui_ucb {
+        //constexpr double ra = acqui_ucb_alpha_;
         //UCB(x) = \mu(x) + \alpha \sigma(x). high alpha have high exploration
         //iterations is high, alpha can be low for high accuracy in enough iterations.
         // In contrast, the lsow iterations should have high alpha for high
         // searching in limited iterations, which guarantee to optimal.
-        BO_PARAM(double, alpha, acqui_ucb_alpha_); // default alpha = 0.5
+//        BO_PARAM(double, alpha, transform_double(acqui_ucb_alpha_)); // default alpha = 0.5
+      BO_PARAM(double, alpha, transform_double(0.5)); // default alpha = 0.5
+
     };
 };
 
