@@ -17,9 +17,11 @@ import matplotlib.pyplot as plt
 from glob import glob
 from joblib import Parallel, delayed
 
+
 # Parameters
+min_lines = 1200
 run_gazebo = False
-n_runs = 10
+n_runs = 20
 n_jobs = 60
 my_yaml_path = "experiments/bo_learner/yaml/"
 yaml_model = "spider9.yaml"
@@ -42,7 +44,13 @@ print(search_space)
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
 start_port = 11345
+finished = False
 
+# Make in revolve/build to allow runs from terminal
+os.system('nmcli connection up id "Ripper intranet"')
+os.system('cmake /home/gongjinlan/projects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
+os.system("make -j60")
+os.system('nmcli connection down id "Ripper intranet"')
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
@@ -95,15 +103,19 @@ def run(i, sub_directory, model, params):
     # Get yaml file id
     k = params["id"]
 
+    my_time = str(round(time.time(), 2))
+    my_run_path = output_path + str(k) + "/" + my_time + "/"
+    os.mkdir(my_run_path)
+
     # Select relevant yaml file
     yaml_model = my_yaml_path + sub_directory + model.split(".yaml")[0] + "-" + str(k) + ".yaml"
-
+    print(yaml_model)
     # Get relevant yaml file
     yaml_file = [(line.rstrip('\n')) for line in open(yaml_model)]
 
     # Change output_directory
     index = [ix for ix, x in enumerate(yaml_file) if "output_directory" in x][0]
-    yaml_file[index] = "    output_directory: " + output_path + str(k) + "/" + str(i) + "/"
+    yaml_file[index] = f'    output_directory: "{my_run_path}"'
 
     # Write temporarily with identifier
     write_file(my_yaml_path + sub_directory + model.split(".yaml")[0] + "-" + str(k) + "-" + str(i) + ".yaml", yaml_file)
@@ -114,21 +126,22 @@ def run(i, sub_directory, model, params):
     os.environ["GAZEBO_MASTER_URI"] = "http://localhost:" + str(start_port + i)
     os.environ["LIBGL_ALWAYS_INDIRECT"] = "0"
     py_command = ""
-    if run_gazebo:
-        # Call the experiment
+
+    # Call the experiment
+    if not run_gazebo:
         py_command = python_interpreter + \
-                     " ./revolve.py" \
-                     " --manager " + manager + \
-                     " --world-address " + world_address + \
-                     " --robot-yaml " + yaml_model + \
-                     " --simulator-cmd gazebo"
-    else:
-        # Call the experiment
-        py_command = python_interpreter + \
-                     " ./revolve.py" \
+                     " ./revolve.py" + \
                      " --manager " + manager + \
                      " --world-address " + world_address + \
                      " --robot-yaml " + yaml_model
+    else:
+        py_command = python_interpreter + \
+                     " ./revolve.py" + \
+                     " --manager " + manager + \
+                     " --world-address " + world_address + \
+                     " --robot-yaml " + yaml_model + \
+                     " --simulator-cmd gazebo" \
+
     return_code = os.system(py_command)
     if return_code == 32512:
         print("Specify a valid python interpreter in the parameters")
@@ -153,7 +166,7 @@ if __name__ == "__main__":
     ]
     # 'kernel_l': [0.02, 0.05, 0.1, 0.2],
     # 'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
-
+    unique_experiments = experiments
     n_unique_experiments = len(experiments)
 
     # Get id's on the permutations
@@ -176,15 +189,63 @@ if __name__ == "__main__":
     if not os.path.isdir("output/cpg_bo"):
         os.mkdir("output/cpg_bo")
     os.mkdir(output_path)
-    for l in range(n_unique_experiments):   # Create dirs
 
-        os.mkdir(output_path + str(l) + "/")
+    # Create experiment group directories
+    for i in range(n_unique_experiments):
+        os.mkdir(output_path + str(i) + "/")
 
-    # Run experiments in parallel
-    Parallel(n_jobs=n_jobs)(delayed(run)(i,
-                                         my_sub_directory,
-                                         yaml_model,
-                                         experiment) for i, experiment in enumerate(experiments))
+    while not finished:
+        # Run experiments in parallel
+        Parallel(n_jobs=n_jobs)(delayed(run)(i,
+                                             my_sub_directory,
+                                             yaml_model,
+                                             experiment) for i, experiment in enumerate(experiments))
+
+        # Count number of finished runs for all experiments. Read this from the parameters file
+        runs_succesful = {}
+        experiment_list = glob(output_path + "*/")
+
+        for ix,e in enumerate(experiment_list):
+            runs = glob(e + "*/")
+            runs_succesful[str(e.split("/")[-2])] = 0
+
+            for my_run in runs:
+                if os.path.isfile(my_run + "fitnesses.txt"):
+                    n_lines = len([(line.rstrip('\n')) for line in open(my_run + "fitnesses.txt")])
+
+                    # In case we had a succesful run
+                    if n_lines > min_lines:
+                        runs_succesful[str(e.split("/")[-2])] += 1
+
+        to_run = {}
+        for key, val in runs_succesful.items():
+            to_run[key] = n_runs - val
+        to_run = {k: v for k, v in to_run.items() if v > 0}
+
+        # If the experiment list is empty
+        if not bool(to_run):
+            finished = True
+        else:
+            print(f"To finish {sum(to_run.values())} runs")
+
+            # Empty experiments list
+            experiments = []
+
+            # Use spare computing capacity
+            while sum(to_run.values()) < n_jobs - len(to_run):
+                print(to_run)
+
+                for key, value in to_run.items():
+                    to_run[key] += 1
+
+            # Construct new experiment list
+            for key, val in to_run.items():
+                for i in range(val):
+                    entry = unique_experiments[int(key)]
+                    experiments.append(entry)
+
+    # START ANALYSIS HERE
+    print("I will now perform analysis")
 
     # Do analysis
     fitness_list = []
