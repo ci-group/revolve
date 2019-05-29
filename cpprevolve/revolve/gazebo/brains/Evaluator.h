@@ -57,7 +57,7 @@ namespace revolve
                           const double time,
                           const double step);
 
-      /// \brief Previous position of a robot
+      /// \brief start position of a robot
       protected: ignition::math::Pose3d start_position_;
 
       /// \brief Previous position of a robot
