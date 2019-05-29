@@ -50,17 +50,6 @@
 /// (bias, tau, gain) or (phase offset, period, gain)
 #define MAX_NEURON_PARAMS 3
 
-// Set global variables for the param structure of BO with default values
-extern constexpr double kernel_noise_ = 0.0000001;
-extern constexpr bool kernel_optimize_noise_ = false;
-extern constexpr int kernel_squared_exp_ard_k_ = 4;
-extern constexpr double acqui_gpucb_delta_ = 0.1;
-extern constexpr double acqui_ei_jitter_= 0.f;
-double acqui_ucb_alpha_;
-extern  constexpr double kernel_sigma_sq_ = 0.0;
-extern  constexpr double kernel_l_ = 0.0;
-
-
 typedef std::vector< double > state_type;
 
 namespace revolve
@@ -306,6 +295,15 @@ namespace revolve
       private: int goal_count;
       private: double angle_diff = 999;
 
+      // BO Learner parameters
+      private: double kernel_noise_;
+      private: bool kernel_optimize_noise_;
+      private: double kernel_sigma_sq_;
+      private: double kernel_l_;
+      private: int kernel_squared_exp_ard_k_;
+      private: double acqui_gpucb_delta_ ;
+      private: double acqui_ucb_alpha_;
+      private: double acqui_ei_jitter_;
 
     };
   }

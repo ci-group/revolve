@@ -35,7 +35,8 @@
 #include <limbo/acqui/ei.hpp>
 #include <limbo/bayes_opt/bo_base.hpp>
 #include <limbo/init/lhs.hpp>
-#include <limbo/kernel/exp.hpp>
+#include <limbo/kernel/kernel.hpp>
+#include <limbo/kernel/matern_five_halves.hpp>
 #include <limbo/model/gp.hpp>
 #include <limbo/mean/mean.hpp>
 #include <limbo/tools/macros.hpp>
@@ -63,7 +64,7 @@ using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Kernel_t = limbo::kernel::MaternFiveHalves<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 
-double test_global = 0.02;
+
 /**
  * Constructor for DifferentialCPG class.
  *
@@ -71,14 +72,14 @@ double test_global = 0.02;
  * @param robot_config
  */
 DifferentialCPG::DifferentialCPG(
-        const ::gazebo::physics::ModelPtr &_model,
-        const ::gazebo::physics::ModelPtr &_box,
-        const sdf::ElementPtr robot_config,
-        const std::vector< revolve::gazebo::MotorPtr > &_motors,
-        const std::vector< revolve::gazebo::SensorPtr > &_sensors)
-        : next_state(nullptr)
-        , input(new double[_sensors.size()])
-        , output(new double[_motors.size()])
+    const ::gazebo::physics::ModelPtr &_model,
+    const ::gazebo::physics::ModelPtr &_box,
+    const sdf::ElementPtr robot_config,
+    const std::vector< revolve::gazebo::MotorPtr > &_motors,
+    const std::vector< revolve::gazebo::SensorPtr > &_sensors)
+    : next_state(nullptr)
+    , input(new double[_sensors.size()])
+    , output(new double[_motors.size()])
 {
 
   this->learner = robot_config->GetElement("rv:brain")->GetElement("rv:learner");
@@ -126,21 +127,21 @@ DifferentialCPG::DifferentialCPG(
   this->for_faster_amplitude_factor = std::stod(controller->GetAttribute("for_faster_amplitude_factor")->GetAsString());
   this->for_slower_amplitude_factor = std::stod(controller->GetAttribute("for_slower_amplitude_factor")->GetAsString());
 
-  // (Global)Learner parameters
-  double kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
-  bool kernel_optimize_noise_ = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
-  double kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
-  double kernel_l_ = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
-  int kernel_squared_exp_ard_k_ = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
-  double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
-  acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
-  double acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
+  // Limbo BO Learner parameters
+  this->kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
+  this->kernel_optimize_noise_ = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
+  this->kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
+  this->kernel_l_ = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
+  this->kernel_squared_exp_ard_k_ = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
+  this->acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());
+  this->acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
+  this->acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
+
+  // Non-limbo BO learner para
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
   this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
   this->init_method = learner->GetAttribute("init_method")->GetAsString();
-  test_global = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
-  std::cout << "GLobal is " << test_global << std::endl;
 
   // Meta parameters
   this->startup_time = std::stoi(controller->GetAttribute("startup_time")->GetAsString());
@@ -208,7 +209,7 @@ DifferentialCPG::DifferentialCPG(
     auto motor_id = motor->GetAttribute("part_id")->GetAsString();
     this->positions[motor_id] = {coord_x, coord_y};
     this->motor_coordinates[{coord_x, coord_y}] = j;
-//    this->part_ids[{coord_x, coord_y}] = motor_id;
+    //    this->part_ids[{coord_x, coord_y}] = motor_id;
 
     // Set frame of reference
     int frame_of_reference = 0;
@@ -377,9 +378,6 @@ DifferentialCPG::DifferentialCPG(
     this->bo_init_sampling();
   }
 
-  // Save parameters
-  this->save_parameters();
-
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
 }
@@ -428,15 +426,15 @@ DifferentialCPG::~DifferentialCPG()
  * Dummy function for limbo
  */
 struct DifferentialCPG::evaluation_function{
-    // Number of input dimension (samples.size())
-    BO_PARAM(size_t, dim_in, 13);
+  // Number of input dimension (samples.size())
+  BO_PARAM(size_t, dim_in, 13);
 
-    // number of dimensions of the fitness
-    BO_PARAM(size_t, dim_out, 1);
+  // number of dimensions of the fitness
+  BO_PARAM(size_t, dim_out, 1);
 
-    Eigen::VectorXd operator()(const Eigen::VectorXd &x) const {
-      return limbo::tools::make_vector(0);
-    };
+  Eigen::VectorXd operator()(const Eigen::VectorXd &x) const {
+    return limbo::tools::make_vector(0);
+  };
 };
 
 /**
@@ -561,9 +559,9 @@ void DifferentialCPG::set_random_goal_box(){
 
     // Check distance
     this->dist_to_goal = std::pow(
-            std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
-            std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
-            , 0.5);
+        std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
+        std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
+        , 0.5);
 
     if(this->verbose)
     {
@@ -657,30 +655,130 @@ void DifferentialCPG::save_fitness(){
 }
 
 /**
+ * Struct that holds the parameters on which BO is called. This is required
+ * by limbo.
+ */
+struct DifferentialCPG::Params{
+
+  struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
+  };
+
+  // depending on which internal optimizer we use, we need to import different parameters
+#ifdef USE_NLOPT
+  struct opt_nloptnograd : public limbo::defaults::opt_nloptnograd {
+  };
+#elif defined(USE_LIBCMAES)
+  struct opt_cmaes : public lm::defaults::opt_cmaes {
+    };
+#else
+#error(NO SOLVER IS DEFINED)
+#endif
+  struct kernel : public limbo::defaults::kernel {
+    BO_PARAM(double, noise, 0.001);
+    BO_PARAM(bool, optimize_noise, false);
+  };
+
+  struct bayes_opt_bobase : public limbo::defaults::bayes_opt_bobase {
+    // set stats_enabled to prevent creating all the directories
+    BO_PARAM(bool, stats_enabled, false);
+    BO_PARAM(bool, bounded, true);
+  };
+
+  // 1 Iteration as we will perform limbo step by steop
+  struct stop_maxiterations : public limbo::defaults::stop_maxiterations {
+    BO_PARAM(int, iterations, 1);
+  };
+
+  struct kernel_exp : public limbo::defaults::kernel_exp {
+    /// @ingroup kernel_defaults
+    BO_PARAM(double, sigma_sq, 0.1);
+    BO_PARAM(double, l, 0.1); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
+  };
+
+  struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
+    /// @ingroup kernel_defaults
+    BO_PARAM(int, k, 3); // k number of columns used to compute M
+    /// @ingroup kernel_defaults
+    BO_PARAM(double, sigma_sq, 0.1); //brochu2010tutorial p.9 without sigma_sq
+  };
+
+  struct kernel_maternfivehalves : public limbo::defaults::kernel_maternfivehalves
+  {
+    BO_DYN_PARAM(double, sigma_sq); //brochu2010tutorial p.9 without sigma_sq
+    BO_DYN_PARAM(double, l); //characteristic length scale
+  };
+
+  struct acqui_gpucb : public limbo::defaults::acqui_gpucb {
+    //UCB(x) = \mu(x) + \kappa \sigma(x).
+    BO_PARAM(double, delta, 0.1 );//acqui_gpucb_delta_); // default delta = 0.1, delta in (0,1) convergence guaranteed
+  };
+
+  struct acqui_ei : public limbo::defaults::acqui_ei{
+    BO_PARAM(double, jitter, 0.5);
+  };
+
+  // This is just a placeholder to be able to use limbo with revolve
+  struct init_lhs : public limbo::defaults::init_lhs{
+    BO_PARAM(int, samples, 0);
+  };
+
+  struct acqui_ucb : public limbo::defaults::acqui_ucb {
+    //constexpr double ra = acqui_ucb_alpha_;
+    //UCB(x) = \mu(x) + \alpha \sigma(x). high alpha have high exploration
+    //iterations is high, alpha can be low for high accuracy in enough iterations.
+    // In contrast, the lsow iterations should have high alpha for high
+    // searching in limited iterations, which guarantee to optimal.
+    //        BO_PARAM(double, alpha, transform_double(acqui_ucb_alpha_)); // default alpha = 0.5
+    BO_DYN_PARAM(double, alpha); // default alpha = 0.5
+
+  };
+};
+
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::acqui_ucb, alpha);
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, sigma_sq);
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, l);
+
+/**
  * Wrapper function that makes calls to limbo to solve the current BO
  * iteration and returns the best sample
  */
 void DifferentialCPG::bo_step(){
+  Params::acqui_ucb::set_alpha(this->acqui_ucb_alpha_);
+  Params::kernel_maternfivehalves::set_l(this->kernel_l_);
+  Params::kernel_maternfivehalves::set_sigma_sq(this->kernel_sigma_sq_);
+
+  // Save all parameters once
+  if (this->current_iteration == 0)
+  {
+    // Save parameters
+    this->save_parameters();
+  }
+
   // In case we are done with the initial random sampling.
   if (this->current_iteration >= this->n_init_samples)
   {
     // Holder for sample
     Eigen::VectorXd x;
-    // TODO: THIS RESULTS IN A BUG:
-    // std::cout << "Acquisition function:  " << this->acquisition_function << std::endl;
     if(true)
     {
-
       // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
       limbo::bayes_opt::BOptimizer<Params,
-              limbo::initfun<Init_t>,
-              limbo::modelfun<GP_t>,
-              limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
+                                   limbo::initfun<Init_t>,
+                                   limbo::modelfun<GP_t>,
+                                   limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
       // Optimize. Pass dummy evaluation function and observations .
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
                           this->samples,
                           this->observations);
+
+      // Write parametesr to verify thread-stability after the run
+      std::ofstream dyn_parameters_file;
+      dyn_parameters_file.open(this->directory_name + "dynamic_parameters.txt", std::ios::app);
+      dyn_parameters_file << Params::acqui_ucb::alpha() << ",";
+      dyn_parameters_file << Params::kernel_maternfivehalves::sigma_sq() << ",";
+      dyn_parameters_file << Params::kernel_maternfivehalves::l() << std::endl;
+      dyn_parameters_file.close();
 
       x = boptimizer.last_sample();
     }
@@ -731,10 +829,10 @@ void DifferentialCPG::bo_step(){
  * @param _step
  */
 void DifferentialCPG::Update(
-        const std::vector< revolve::gazebo::MotorPtr > &_motors,
-        const std::vector< revolve::gazebo::SensorPtr > &_sensors,
-        const double _time,
-        const double _step)
+    const std::vector< revolve::gazebo::MotorPtr > &_motors,
+    const std::vector< revolve::gazebo::SensorPtr > &_sensors,
+    const double _time,
+    const double _step)
 {
   // Prevent two threads from accessing the same resource at the same time
   boost::mutex::scoped_lock lock(this->networkMutex_);
@@ -757,11 +855,11 @@ void DifferentialCPG::Update(
 
   // Update goal box distance
   this->dist_to_goal = std::pow(
-          std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
-          std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
-          , 0.5);
+      std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
+      std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
+      , 0.5);
 
-   //TODO: MAke eps parameter
+  //TODO: MAke eps parameter
   if (this->dist_to_goal < 0.5)
   {
     // Calculate time it took to perform the targeted locomtion task
@@ -1097,8 +1195,8 @@ void DifferentialCPG::reset_neuron_state(){
  * @param _output
  */
 void DifferentialCPG::step(
-        const double _time,
-        double *_output)
+    const double _time,
+    double *_output)
 {
   // Init
   double robot_angle, move_angle, angle_difference;
@@ -1127,9 +1225,9 @@ void DifferentialCPG::step(
       move_angle += 360;
     }
 
-//    std::cout <<  "Move angle:" << move_angle << std::endl;
-//    std::cout << "Angle to goal: " << this->angle_to_goal << std::endl;
-//    // Get angle difference in [-180, +180]
+    //    std::cout <<  "Move angle:" << move_angle << std::endl;
+    //    std::cout << "Angle to goal: " << this->angle_to_goal << std::endl;
+    //    // Get angle difference in [-180, +180]
     angle_difference = this->angle_to_goal - move_angle;
     if (angle_difference > 180)
       angle_difference -= 360;
@@ -1170,20 +1268,20 @@ void DifferentialCPG::step(
 
   // Perform one step
   stepper.do_step(
-          [this](const state_type &x, state_type &dxdt, double t)
+      [this](const state_type &x, state_type &dxdt, double t)
+      {
+        for(size_t i = 0; i < this->neurons.size(); i++)
+        {
+          dxdt[i] = 0;
+          for(size_t j = 0; j < this->neurons.size(); j++)
           {
-              for(size_t i = 0; i < this->neurons.size(); i++)
-              {
-                dxdt[i] = 0;
-                for(size_t j = 0; j < this->neurons.size(); j++)
-                {
-                  dxdt[i] += x[j]*this->ode_matrix[j][i];
-                }
-              }
-          },
-          x,
-          _time,
-          dt);
+            dxdt[i] += x[j]*this->ode_matrix[j][i];
+          }
+        }
+      },
+      x,
+      _time,
+      dt);
   int k_;
   // Copy values into nextstate
   for (size_t i = 0; i < this->neurons.size(); i++)
@@ -1211,7 +1309,7 @@ void DifferentialCPG::step(
     // Should be one, as output should be based on odd neurons, which are the A neurons
     if (i % 2 == 1)
     {
-//      auto motor_id = this->part_ids[{x, y}];
+      //      auto motor_id = this->part_ids[{x, y}];
       //std::cout << "Motor_id" << motor_id <<  " corresponds to output " << k_ <<  " x,y,z " << x << ","<< y << "," << z <<std::endl;
 
       // Apply saturation formula
@@ -1248,13 +1346,13 @@ void DifferentialCPG::step(
             {
               this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
-//
-//            // Test coordinates (frame of reference) encoding here
-//            if (frame_of_reference == 1)
-//            {
-//              this->output[k_] = 0;
-//              std::cout << "Warning: output set to 0" << std::endl;
-//            }
+            //
+            //            // Test coordinates (frame of reference) encoding here
+            //            if (frame_of_reference == 1)
+            //            {
+            //              this->output[k_] = 0;
+            //              std::cout << "Warning: output set to 0" << std::endl;
+            //            }
           }
           else
           {
@@ -1317,26 +1415,26 @@ void DifferentialCPG::step(
     i++;
   }
 
-//  // Commented out due to 1GB per grid search data generation.
-//  // Write state to file
-//  std::ofstream state_file;
-//  state_file.open(this->directory_name + "states.txt", std::ios::app);
-//  for(size_t i = 0; i < this->neurons.size(); i++)
-//  {
-//    state_file << this->next_state[i] << ",";
-//  }
-//  state_file << std::endl;
-//  state_file.close();
-//
-//  // Write signal to file
-//  std::ofstream signal_file;
-//  signal_file.open(this->directory_name + "signal.txt", std::ios::app);
-//  for(size_t i = 0; i < this->n_motors; i++)
-//  {
-//    signal_file << this->output[i] << ",";
-//  }
-//  signal_file << std::endl;
-//  signal_file.close();
+  //  // Commented out due to 1GB per grid search data generation.
+  //  // Write state to file
+  //  std::ofstream state_file;
+  //  state_file.open(this->directory_name + "states.txt", std::ios::app);
+  //  for(size_t i = 0; i < this->neurons.size(); i++)
+  //  {
+  //    state_file << this->next_state[i] << ",";
+  //  }
+  //  state_file << std::endl;
+  //  state_file.close();
+  //
+  //  // Write signal to file
+  //  std::ofstream signal_file;
+  //  signal_file.open(this->directory_name + "signal.txt", std::ios::app);
+  //  for(size_t i = 0; i < this->n_motors; i++)
+  //  {
+  //    signal_file << this->output[i] << ",";
+  //  }
+  //  signal_file << std::endl;
+  //  signal_file.close();
 }
 
 
@@ -1345,87 +1443,7 @@ constexpr auto transform_double(double a) {
   return a;
 }
 
-/**
- * Struct that holds the parameters on which BO is called. This is required
- * by limbo.
- */
-struct DifferentialCPG::Params{
 
-    struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
-    };
-
-    // depending on which internal optimizer we use, we need to import different parameters
-#ifdef USE_NLOPT
-    struct opt_nloptnograd : public limbo::defaults::opt_nloptnograd {
-    };
-#elif defined(USE_LIBCMAES)
-    struct opt_cmaes : public lm::defaults::opt_cmaes {
-    };
-#else
-#error(NO SOLVER IS DEFINED)
-#endif
-    struct kernel : public limbo::defaults::kernel {
-        BO_PARAM(double, noise, kernel_noise_);
-
-        BO_PARAM(bool, optimize_noise, kernel_optimize_noise_);
-    };
-
-    struct bayes_opt_bobase : public limbo::defaults::bayes_opt_bobase {
-        // set stats_enabled to prevent creating all the directories
-        BO_PARAM(bool, stats_enabled, false);
-
-        BO_PARAM(bool, bounded, true);
-    };
-
-    // 1 Iteration as we will perform limbo step by steop
-    struct stop_maxiterations : public limbo::defaults::stop_maxiterations {
-        BO_PARAM(int, iterations, 1);
-    };
-
-    struct kernel_exp : public limbo::defaults::kernel_exp {
-        /// @ingroup kernel_defaults
-        BO_PARAM(double, sigma_sq, kernel_sigma_sq_);
-        BO_PARAM(double, l, kernel_l_); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
-    };
-
-    struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
-        /// @ingroup kernel_defaults
-        BO_PARAM(int, k, kernel_squared_exp_ard_k_); // k number of columns used to compute M
-        /// @ingroup kernel_defaults
-        BO_PARAM(double, sigma_sq, kernel_sigma_sq_); //brochu2010tutorial p.9 without sigma_sq
-    };
-
-    struct kernel_maternfivehalves : public limbo::defaults::kernel_maternfivehalves
-    {
-        BO_PARAM(double, sigma_sq, kernel_sigma_sq_); //brochu2010tutorial p.9 without sigma_sq
-        BO_PARAM(double, l, kernel_l_); //characteristic length scale
-    };
-
-    struct acqui_gpucb : public limbo::defaults::acqui_gpucb {
-        //UCB(x) = \mu(x) + \kappa \sigma(x).
-        BO_PARAM(double, delta, 1);//acqui_gpucb_delta_); // default delta = 0.1, delta in (0,1) convergence guaranteed
-    };
-
-    struct acqui_ei : public limbo::defaults::acqui_ei{
-        BO_PARAM(double, jitter, acqui_ei_jitter_);
-    };
-
-    // This is just a placeholder to be able to use limbo with revolve
-    struct init_lhs : public limbo::defaults::init_lhs{
-        BO_PARAM(int, samples, 0);
-    };
-
-    struct acqui_ucb : public limbo::defaults::acqui_ucb {
-        //constexpr double ra = acqui_ucb_alpha_;
-        //UCB(x) = \mu(x) + \alpha \sigma(x). high alpha have high exploration
-        //iterations is high, alpha can be low for high accuracy in enough iterations.
-        // In contrast, the lsow iterations should have high alpha for high
-        // searching in limited iterations, which guarantee to optimal.
-//        BO_PARAM(double, alpha, transform_double(acqui_ucb_alpha_)); // default alpha = 0.5
-      BO_PARAM(double, alpha, transform_double(0.5)); // default alpha = 0.5
-
-    };
-};
 
 /**
  * Save the parameters used in this run to a file.
@@ -1462,7 +1480,7 @@ void DifferentialCPG::save_parameters(){
   // BO hyper-parameters
   parameters_file << std::endl << "Initialization method used: " << this->init_method << std::endl;
   parameters_file << "EI jitter: " <<Params::acqui_ei::jitter() << std::endl;
-  parameters_file << "UCB alpha: " << Params::acqui_ucb::alpha() << std::endl;
+  parameters_file << "UCB alpha: " << DifferentialCPG::Params::acqui_ucb::alpha() << std::endl;
   parameters_file << "GP-UCB delta: " << Params::acqui_gpucb::delta() << std::endl;
   parameters_file << "Kernel noise: " << Params::kernel::noise() << std::endl;
   parameters_file << "EXP Kernel l: " << Params::kernel_exp::l() << std::endl;
