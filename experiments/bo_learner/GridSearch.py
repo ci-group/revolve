@@ -19,6 +19,7 @@ from joblib import Parallel, delayed
 
 
 # Parameters
+seconds_timeout = 3600*2.5
 min_lines = 1200
 run_gazebo = False
 n_runs = 20
@@ -154,15 +155,19 @@ if __name__ == "__main__":
 
     # PASTE THE EXPERIMENTS HERE, IN THE FORMAT SHOWN BELOW
     experiments = [
-        {'init_method': "LHS", 'kernel_l': 0.02, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.2, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.1},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.3},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 1.0},
-        {'init_method': "RS", 'kernel_l': 0.05, 'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},   # BASE RUN
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 0.01,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 0.05,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.3},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
+        {'init_method': "RS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
     ]
     # 'kernel_l': [0.02, 0.05, 0.1, 0.2],
     # 'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
@@ -196,10 +201,13 @@ if __name__ == "__main__":
 
     while not finished:
         # Run experiments in parallel
-        Parallel(n_jobs=n_jobs)(delayed(run)(i,
-                                             my_sub_directory,
-                                             yaml_model,
-                                             experiment) for i, experiment in enumerate(experiments))
+        try:
+            Parallel(n_jobs=n_jobs, timeout = seconds_timeout)(delayed(run)(i,
+                                                             my_sub_directory,
+                                                             yaml_model,
+                                                             experiment) for i, experiment in enumerate(experiments))
+        except:
+            print("Some runs are killed by timeout")
 
         # Count number of finished runs for all experiments. Read this from the parameters file
         runs_succesful = {}
