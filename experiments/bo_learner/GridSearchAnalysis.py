@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 # Parameters/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1558380290/0
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1558385583/"
+path = "/home/maarten/Desktop/spider9/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/maarten/projects/revolve-simulator/revolve/experiments/bo_learner/yaml/yaml_temp/"
 
@@ -35,25 +35,26 @@ for i, path_ in enumerate(path_list):
     # Do fitness analysis
     subfolder_list = glob(path_ + "/*/")
     subfolder_list = [d for d in subfolder_list if os.path.isfile(d + fitness_file)]
-    n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
-    n_rows_max = 200
-    n_rows_min = 180
+    try:
+        n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
+    except:
+        None
+    n_rows_min = 1450
+    n_rows_max = 1500
 
     # Remove all rows with a small number of values
     subfolder_list_temp = subfolder_list
     for j_, subfolder_ in enumerate(subfolder_list_temp):
         # Get fitness file
-        my_fitness = [(line.rstrip('\n')) for line in open(subfolder_ + "/" + fitness_file)]
-        if len(my_fitness) < n_rows_min:
+        my_fitness_ = [(line.rstrip('\n')) for line in open(subfolder_ + "/" + fitness_file)]
+        if len(my_fitness_) < n_rows_min:
             subfolder_list.remove(subfolder_)
-            print("Remove ", subfolder_)
+            print("Remove ", subfolder_, "length", len(my_fitness_))
 
     # Save thisnumber of subruns
     n_subruns = len(subfolder_list)
 
-
-
-# Working variables
+    # Working variables
     fitnesses = np.empty((n_rows_max,n_subruns))
     fitnesses_mon = np.empty((n_rows_max,n_subruns))
 
@@ -67,22 +68,25 @@ for i, path_ in enumerate(path_list):
     # For all n_runs
     for j, subfolder in enumerate(subfolder_list):
         # Get fitness file
-        my_fitness = [float(line.rstrip('\n')) for line in open(subfolder + "/" + fitness_file)]
-
+        my_fitness = [float((line.rstrip('\n'))) for line in open(subfolder + "/" + fitness_file)]
         # Take maximum n_rows_max
         my_fitness = my_fitness[:n_rows_max]
 
         # Take minimum n_rows_max
         while(len(my_fitness) < n_rows_max):
             my_fitness += [my_fitness[-1]]
-            print("Added a fitness")
+            print("Added a fitness for ", subfolder)
 
         # Transfer fitness to monotonic sequence and save
         my_fitness_mon = [e if e >= max(my_fitness[:ix+1]) else max(my_fitness[:ix+1]) for ix, e in enumerate(my_fitness)]
-        print(j,subfolder, my_fitness_mon[-1])
+
         # Save fitness
         fitnesses_mon[:,j] = np.array(my_fitness_mon)
         fitnesses[:,j] = np.array(my_fitness)
+
+        # Save the fitnesses of all runs
+        with open(path_ + "/experiment_fitnesses.txt" , 'a') as experiment_fitness_file:
+            experiment_fitness_file.write(",".join([str(my_fitness_mon[-1]), subfolder.split("/")[-2]]) + "\n")
 
         # Plot the avg fitness
         plt.plot(fitnesses_mon[:, j], linewidth = 1, color = "blue")
@@ -95,6 +99,8 @@ for i, path_ in enumerate(path_list):
     plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
     plt.tight_layout()
     plt.savefig(path_ + "/" + str(round(avg_fitness_mon[-1], 7)) + ".png")
+    fig = plt.gcf()
+    plt.close(fig)
 
     # Save fitness
     fitness_list += [[round(avg_fitness_mon[-1], 5), i]]
@@ -104,6 +110,8 @@ fitness_list.sort(key=lambda x: x[0])
 fitness_list.reverse()
 fitness_list
 
+
+# TODO: Results.txt has wrong order (3D plot not affected by this).
 print("Fitnesses are:")
 for e in fitness_list:
     print(e)
