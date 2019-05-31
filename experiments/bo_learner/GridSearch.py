@@ -22,7 +22,7 @@ from joblib import Parallel, delayed
 min_lines = 5
 visualize_gazebo = False
 n_runs = 5
-n_jobs = 4
+n_jobs = 3
 yaml_model = "gecko7.yaml"
 my_yaml_path = "experiments/bo_learner/yaml/"
 search_space = {
