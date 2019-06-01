@@ -296,15 +296,25 @@ namespace revolve
       private: double angle_diff = 999;
 
       // BO Learner parameters
-      private: double kernel_noise_;
-      private: bool kernel_optimize_noise_;
       private: double kernel_sigma_sq_;
       private: double kernel_l_;
-      private: int kernel_squared_exp_ard_k_;
-      private: double acqui_gpucb_delta_ ;
       private: double acqui_ucb_alpha_;
-      private: double acqui_ei_jitter_;
 
+      // Targeted locomotion learner parameters
+      private: double for_slower_power;
+      private: bool for_use_hill_climber = true;
+      private: double for_best_avg_speed = 0.0;
+      private: double for_step_size = 3.0;
+      private: double for_speed = 0;
+      private: bool for_go_up = true;
+      private: bool for_interim = false;
+      private: int for_iteration_counter = 0;
+      private: int for_power_iteration = -1;
+      private: int for_interim_counter = 0;
+      private: int for_n = 1;
+      private: int for_subqueue_size = 0;
+      private: std::vector<double> for_queue;
+      private: std::vector<std::vector<double>> for_speeds;
     };
   }
 }

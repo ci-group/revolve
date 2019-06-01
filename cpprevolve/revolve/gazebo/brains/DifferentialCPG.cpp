@@ -125,17 +125,12 @@ DifferentialCPG::DifferentialCPG(
   this->for_speeding_approach = controller->GetAttribute("for_speeding_approach")->GetAsString();
   this->for_signal_modification_type = controller->GetAttribute("for_signal_modification_type")->GetAsString();
   this->for_faster_amplitude_factor = std::stod(controller->GetAttribute("for_faster_amplitude_factor")->GetAsString());
-  this->for_slower_amplitude_factor = std::stod(controller->GetAttribute("for_slower_amplitude_factor")->GetAsString());
+  this->for_slower_power = std::stod(controller->GetAttribute("for_slower_amplitude_factor")->GetAsString());
 
   // Limbo BO Learner parameters
-  this->kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
-  this->kernel_optimize_noise_ = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
   this->kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
   this->kernel_l_ = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
-  this->kernel_squared_exp_ard_k_ = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
-  this->acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());
   this->acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
-  this->acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
 
   // Non-limbo BO learner para
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
@@ -377,6 +372,8 @@ DifferentialCPG::DifferentialCPG(
     // Initialize BO
     this->bo_init_sampling();
   }
+  // Initialize queue
+  this->for_queue.push_back(this->for_slower_power);
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
@@ -552,10 +549,10 @@ void DifferentialCPG::set_random_goal_box(){
   }
 
   // Set new position that is sufficiently far away
-  while(this->dist_to_goal <= 5.0){
+  while(this->dist_to_goal <= 3.0){
     // Generate new goal points in the neighbourhood of the robot
-    this->goal_x = ((double) rand() / (RAND_MAX))*10.f - 5.0 + this->evaluator->current_position_.Pos().X();
-    this->goal_y = ((double) rand() / (RAND_MAX))*10.f - 5.0 + this->evaluator->current_position_.Pos().Y();
+    this->goal_x = ((double) rand() / (RAND_MAX))*6.f - 3.0 + this->evaluator->current_position_.Pos().X();
+    this->goal_y = ((double) rand() / (RAND_MAX))*6.f - 3.0 + this->evaluator->current_position_.Pos().Y();
 
     // Check distance
     this->dist_to_goal = std::pow(
@@ -651,7 +648,6 @@ void DifferentialCPG::save_fitness(){
   speed_file.open(this->directory_name + "speed.txt", std::ios::app);
   speed_file << speed  << std::endl;
   speed_file.close();
-
 }
 
 /**
@@ -820,6 +816,13 @@ void DifferentialCPG::bo_step(){
   }
 }
 
+
+// Sorting function to be used by hillclimber
+bool cmp(const std::vector<double> &a,const std::vector<double> &b)
+{
+  return a[0]>b[0];
+}
+
 /**
  * Callback function that defines the movement of the robot
  *
@@ -872,6 +875,13 @@ void DifferentialCPG::Update(
 
     // Scale with time to get speed
     double speed = distance_travelled/(_time - this->corner_threshold_met_time);
+    this->for_power_iteration += 1;
+    this->for_speed += speed;
+
+    if(this->verbose)
+    {
+      std::cout << "Pow " << this->for_slower_power << ". Object number: " << this->for_power_iteration << ". Speed: " << speed << std::endl;
+    }
 
     // Save to file
     std::ofstream speed_to_object_file;
@@ -913,7 +923,7 @@ void DifferentialCPG::Update(
     this->start_fitness_recording = true;
 
     // Get and save fitness (but not at start)
-    if(not (_time - _step < 0.001 ))
+    if((not (_time - _step < 0.001 )))
     {
       this->save_fitness();
     }
@@ -963,20 +973,20 @@ void DifferentialCPG::Update(
                                             this->n_learning_iterations +
                                             this->n_cooldown_iterations - 1)))
     {
-      if(this->current_iteration == this->n_init_samples + this->n_learning_iterations)
+      if (this->current_iteration == this->n_init_samples + this->n_learning_iterations)
       {
         std::cout << "Set goal count to 0" << std::endl;
         this->goal_count = 0;
 
         // Create plots
-        if(this->run_analytics)
+        if (this->run_analytics)
         {
           // Construct plots
           this->get_analytics();
         }
       }
 
-      if(this->verbose)
+      if (this->verbose)
       {
         std::cout << std::endl << "I am cooling down " << std::endl;
       }
@@ -991,6 +1001,7 @@ void DifferentialCPG::Update(
       // Set ODE matrix
       this->set_ode_matrix();
     }
+
       // Else we don't want to update anything, but construct plots from this run once.
     else
     {
@@ -1007,6 +1018,144 @@ void DifferentialCPG::Update(
     this->evaluator->Reset();
     this->current_iteration += 1;
   }
+
+  ///////////////////////////////////////////////////////////////////////
+  //                      HILL-CLIMBER ALGORITHM
+  ///////////////////////////////////////////////////////////////////////
+
+  if (this->for_use_hill_climber and this->current_iteration >= this->n_init_samples + this->n_learning_iterations)
+  {
+
+    if (this->for_interim)
+    {
+      this->for_interim_counter += 1;
+    }
+
+    // Iteration counter for both interim and non-interim mode as we always want n evaluations to save
+    if (this->for_power_iteration >= this->for_n)
+    {
+      // Save speed details of last this->for_n runs
+      std::vector< double > speed(2);
+      speed[0] = this->for_speed / this->for_n;
+      speed[1] = this->for_slower_power;
+      std::cout << "Power " << speed[1] << " has average speed to object " << speed[0] << std::endl;
+      this->for_speeds.push_back(speed);
+      this->for_power_iteration = 0;
+
+      // Add element to queue in case we are not interim
+      if (this->for_speed > this->for_best_avg_speed and not this->for_interim)
+      {
+        // Save new best speed
+        this->for_best_avg_speed = this->for_speed;
+
+        // Add element to queue
+        if (this->for_go_up)
+        {
+          this->for_queue.push_back(this->for_slower_power + this->for_step_size);
+        }
+        else
+        {
+          if(std::abs(this->for_slower_power - this->for_step_size) < 0.001)
+          {
+            this->for_interim = true;
+          }
+          else
+          {
+            this->for_queue.push_back(this->for_slower_power - this->for_step_size);
+          }
+        }
+      }
+      else
+      {
+        if (this->for_iteration_counter == 1)
+        {
+          this->for_queue.push_back(this->for_slower_power - 2 * this->for_step_size);
+          this->for_go_up = false;
+        }
+        else if (not this->for_interim)
+        {
+          this->for_interim = true;
+        }
+      }
+
+      this->for_speed = 0;
+
+      if (this->for_interim and this->for_interim_counter == this->for_subqueue_size)
+      {
+        double point_a = this->for_speeds[0][1];
+        std::vector< int > neighbours;
+
+        // Find all neighbours
+        std::cout << "Point A " << point_a << " " << this->for_speeds[0][0] << std::endl;
+        for (int k = 0; k < this->for_speeds.size(); k++)
+        {
+          if (std::abs(std::abs(this->for_speeds[k][1] - point_a) - this->for_step_size) < 0.001)
+          {
+            // Save both the speed and the location of the neighbours. Note we can have 1 neighbour
+            neighbours.push_back(k);
+            std::cout << "Neighbour: " << this->for_speeds[k][1] << " speed " << this->for_speeds[k][0] << std::endl;
+          }
+        }
+        // Pick best neighbour
+        double point_b;
+
+        if(neighbours.size() == 2)
+        {
+          if (this->for_speeds[neighbours[0]][0] > this->for_speeds[neighbours[1]][0])
+          {
+            // Neighbour 0 is best
+            point_b = this->for_speeds[neighbours[0]][1];
+          }
+          else
+          {
+            // Neighbour 1 is best
+            point_b = this->for_speeds[neighbours[1]][1];
+          }
+        }// If we only have one neighbour
+        else
+        {
+          point_b = this->for_speeds[neighbours[0]][1];
+        }
+
+        // Find next points
+        this->for_step_size /= 4;
+        double my_range = std::abs(point_b - point_a) / this->for_step_size;
+        std::cout << "Step size is " << this->for_step_size << " and range is " << my_range;
+
+        // Generate sub-queue
+        this->for_subqueue_size = 0;
+        if (point_a < point_b)
+        {
+          point_a += this->for_step_size;
+          while (point_a < point_b)
+          {
+            this->for_queue.push_back(point_a);
+            point_a += this->for_step_size;
+            this->for_subqueue_size += 1;
+          }
+        }
+        else
+        {
+          point_b += this->for_step_size;
+          while (point_b < point_a)
+          {
+            this->for_queue.push_back(point_b);
+            point_b += this->for_step_size;
+            this->for_subqueue_size += 1;
+          }
+        }
+
+        // Reset counter
+        this->for_interim_counter = 0;
+      }
+
+      // Only take next element in queue once we've evaluated this->for_n number of times.
+      this->for_iteration_counter += 1;
+    }
+    // Pick power in the queue that we are interested in
+    this->for_slower_power = this->for_queue[this->for_iteration_counter];
+  }
+
 
   // Do the stepping
   this->step(_time, this->output);
@@ -1322,7 +1471,7 @@ void DifferentialCPG::step(
         {
           // Calculate factor: TODO: Make a smoothed function over factor.
           double my_factor = (180.0 - std::abs(angle_difference))/180.0;
-          my_factor = std::pow(my_factor, this->for_slower_amplitude_factor);
+          my_factor = std::pow(my_factor, this->for_slower_power);
 
           // Don't do anything unusual if we are on the middle line
           if (frame_of_reference == 0)
