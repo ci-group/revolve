@@ -549,10 +549,10 @@ void DifferentialCPG::set_random_goal_box(){
   }
 
   // Set new position that is sufficiently far away
-  while(this->dist_to_goal <= 3.0){
+  while(this->dist_to_goal <= 5.0){
     // Generate new goal points in the neighbourhood of the robot
-    this->goal_x = ((double) rand() / (RAND_MAX))*6.f - 3.0 + this->evaluator->current_position_.Pos().X();
-    this->goal_y = ((double) rand() / (RAND_MAX))*6.f - 3.0 + this->evaluator->current_position_.Pos().Y();
+    this->goal_x = ((double) rand() / (RAND_MAX))*10.f - 5.0 + this->evaluator->current_position_.Pos().X();
+    this->goal_y = ((double) rand() / (RAND_MAX))*10.f - 5.0 + this->evaluator->current_position_.Pos().Y();
 
     // Check distance
     this->dist_to_goal = std::pow(
@@ -886,7 +886,7 @@ void DifferentialCPG::Update(
     // Save to file
     std::ofstream speed_to_object_file;
     speed_to_object_file.open(this->directory_name + "speed_to_object.txt", std::ios::app);
-    speed_to_object_file << "," << speed << "," << distance_travelled << std::endl;
+    speed_to_object_file << speed << "," << distance_travelled << "," << this->for_slower_power <<std::endl;
     speed_to_object_file.close();
 
     // Reset goal box
@@ -916,8 +916,10 @@ void DifferentialCPG::Update(
   // Evaluate policy on certain time limit, or if we just started
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
-    std::cout <<"Distance is " << this->dist_to_goal <<std::endl;
-    std::cout <<"Anglediff is " << this->angle_diff <<std::endl;
+    if(this->verbose)
+    {
+      std::cout <<"Distance is " << this->dist_to_goal << " and anglediff " << this->angle_diff <<std::endl;
+    }
 
     // Update position
     this->start_fitness_recording = true;
@@ -1025,14 +1027,8 @@ void DifferentialCPG::Update(
 
   if (this->for_use_hill_climber and this->current_iteration >= this->n_init_samples + this->n_learning_iterations)
   {
-
-    if (this->for_interim)
-    {
-      this->for_interim_counter += 1;
-    }
-
     // Iteration counter for both interim and non-interim mode as we always want n evaluations to save
-    if (this->for_power_iteration >= this->for_n)
+    if (this->for_power_iteration >= this->for_n and this->for_step_size > this->for_step_size_eps)
     {
       // Save speed details of last this->for_n runs
       std::vector< double > speed(2);
@@ -1041,6 +1037,12 @@ void DifferentialCPG::Update(
       std::cout << "Power " << speed[1] << " has average speed to object " << speed[0] << std::endl;
       this->for_speeds.push_back(speed);
       this->for_power_iteration = 0;
+
+      // Update interim counter
+      if (this->for_interim)
+      {
+        this->for_interim_counter += 1;
+      }
 
       // Add element to queue in case we are not interim
       if (this->for_speed > this->for_best_avg_speed and not this->for_interim)
@@ -1080,6 +1082,7 @@ void DifferentialCPG::Update(
 
       this->for_speed = 0;
 
+      // Generate new sub-queue
       if (this->for_interim and this->for_interim_counter == this->for_subqueue_size)
       {
         double point_a = this->for_speeds[0][1];
@@ -1119,7 +1122,7 @@ void DifferentialCPG::Update(
 
         // Find next points
         this->for_step_size /= 4;
-        double my_range = std::abs(point_b - point_a) / this->for_step_size;
+        double my_range = std::abs(point_b - point_a);
         std::cout << "Step size is " << this->for_step_size << " and range is " << my_range;
 
         // Generate sub-queue
@@ -1152,6 +1155,7 @@ void DifferentialCPG::Update(
       // Only take next element in queue once we've evaluated this->for_n number of times.
       this->for_iteration_counter += 1;
     }
+
     // Pick power in the queue that we are interested in
     this->for_slower_power = this->for_queue[this->for_iteration_counter];
   }
@@ -1638,6 +1642,9 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "EXP-ARD Kernel sigma_sq: "<< Params::kernel_squared_exp_ard::sigma_sq() << std::endl;
   parameters_file << "MFH Kernel sigma_sq: "<< Params::kernel_maternfivehalves::sigma_sq() << std::endl;
   parameters_file << "MFH Kernel l: "<< Params::kernel_maternfivehalves::l() << std::endl << std::endl;
+
+  // Targeted locomotion parameters
+  parameters_file << std::endl << "for_n: " << this->for_n << std::endl;
   parameters_file.close();
 }
 
