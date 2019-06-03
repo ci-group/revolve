@@ -149,10 +149,10 @@ class DynamicSimSupervisor(object):
         f.add_done_callback(start_output_listening)
         return f
 
-    async def relaunch(self, sleep_time=1):
+    async def relaunch(self, sleep_time=1, address='localhost', port=11345):
         self.stop()
         await asyncio.sleep(sleep_time)
-        return self.launch_simulator()
+        return self.launch_simulator(address=address, port=port)
 
     def stop(self):
         if self.stream_future is not None:

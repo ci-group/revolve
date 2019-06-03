@@ -68,41 +68,50 @@ class SimulatorSimpleQueue:
 
     async def _restart_simulator(self, i):
         # restart simulator
+        address = 'localhost'
+        port = 11345+i
         logger.error("Restarting simulator")
         self._connections[i].disconnect()
-        await (await self._supervisors[i].relaunch(5))
+        await (await self._supervisors[i].relaunch(10, address=address, port=port))
         await asyncio.sleep(5)
-        self._connections[i] = await World.create(self._settings, world_address=("127.0.0.1", 11345+i))
+        self._connections[i] = await World.create(self._settings, world_address=(address, port))
+
+    async def _worker_evaluate_robot(self, connection, robot, future, conf):
+        await asyncio.sleep(0.01)
+        start = time.time()
+        evaluation_future = asyncio.create_task(self._evaluate_robot(connection, robot, conf))
+        while not evaluation_future.done():
+            elapsed = time.time()-start
+            # WAITED TO MUCH, RESTART SIMULATOR
+            if elapsed > 120:
+                logger.error(f"Simulator restarted after {elapsed}")
+                return False
+            await asyncio.sleep(0.2)
+
+        elapsed = time.time()-start
+        logger.info(f"time taken to do a simulation {elapsed}")
+
+        robot_fitness = await evaluation_future
+        future.set_result(robot_fitness)
+
+        return True
 
     async def _simulator_queue_worker(self, i):
         self._free_simulator[i] = True
         while True:
             logger.info(f"simulator {i} waiting for robot")
             (robot, future, conf) = await self._robot_queue.get()
-            logger.info(f"Picking up robot {robot.id} into simulator {i}")
-            await asyncio.sleep(0.01)
             self._free_simulator[i] = False
-
-            start = time.time()
-            evaluation_future = asyncio.create_task(self._evaluate_robot(self._connections[i], robot, conf))
-            while not evaluation_future.done():
-                elapsed = time.time()-start
-                # WAITED TO MUCH, RESTART SIMULATOR
-                # if elapsed > 5:
-                #     await self._robot_queue.put((robot, future, conf))
-                #     await self._restart_simulator(i)
-                #     break
-                await asyncio.sleep(0.1)
-            elapsed = time.time()-start
-            logger.info(f"time taken to do a simulation {elapsed}")
-
-            robot_fitness = await evaluation_future
-            # robot_fitness = evaluation_future.result()
-            future.set_result(robot_fitness)
-
+            logger.info(f"Picking up robot {robot.id} into simulator {i}")
+            success = await self._worker_evaluate_robot(self._connections[i], robot, future, conf)
+            if success:
+                logger.info(f"simulator {i} finished robot {robot.id}")
+            else:
+                # restart of the simulator happened
+                await self._robot_queue.put((robot, future, conf))
+                await self._restart_simulator(i)
             self._robot_queue.task_done()
             self._free_simulator[i] = True
-            logger.info(f"simulator {i} finished robot {robot.id}")
 
     @staticmethod
     async def _evaluate_robot(simulator_connection, robot, conf):
