@@ -21,7 +21,7 @@ class Link(SDF.Posable):
         self.collisions = []
         self.joints = []
 
-        SDF.sub_element_text(self, 'self_collide', self_collide)
+        SDF.sub_element_text(self, 'self_collide', False)
 
     def iter_elements(self, condition):
         """

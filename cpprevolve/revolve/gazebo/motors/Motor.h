@@ -55,7 +55,7 @@ namespace revolve
       /// values if it specifies `n` outputs.
       /// \param[in] step Actuation time in seconds
       public: virtual void Update(
-          double *_output,
+          const double *_output,
           double _step) = 0;
 
       /// \brief Retrieve the ID

@@ -37,7 +37,7 @@ async def run():
     )
 
     population_conf = PopulationConfig(
-        population_size=100,
+        population_size=10,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         fitness_function=fitness.online_old_revolve,
@@ -50,7 +50,7 @@ async def run():
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=30,
-        offspring_size=50,
+        offspring_size=10,
     )
 
     settings = parser.parse_args()
