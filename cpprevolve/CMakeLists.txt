@@ -68,7 +68,7 @@ include_directories(${YAML_CPP_INCLUDE_DIR})
 # Find Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
-    find_package(gazebo 9 REQUIRED CONFIG
+    find_package(gazebo 10 REQUIRED CONFIG
             PATHS "${LOCAL_GAZEBO_DIR}"
             NO_DEFAULT_PATH)
     message(WARNING "Using local Gazebo @ ${gazebo_DIR}")
@@ -77,6 +77,16 @@ else()
 endif()
 include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
+
+# Gazebo dependencies
+# Find avcodec
+pkg_check_modules(libavcodec libavcodec)
+if (NOT libavcodec_FOUND)
+    BUILD_WARNING ("libavcodec not found. Audio-video capabilities of gazebo are probably disabled.")
+else()
+    include_directories(${libavcodec_INCLUDE_DIRS})
+    link_directories(${libavcodec_LIBRARY_DIRS})
+endif ()
 
 # Find Protobuf
 # TODO: This part is currently a mess, and it should be handeled better

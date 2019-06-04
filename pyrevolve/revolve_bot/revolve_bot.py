@@ -299,3 +299,5 @@ class RevolveBot:
             except Exception as e:
                 logger.exception('Failed rendering 2d robot')
 
+    def __repr__(self):
+        return f'RevolveBot({self.id})'
