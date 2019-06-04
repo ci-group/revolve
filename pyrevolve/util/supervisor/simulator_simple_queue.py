@@ -10,10 +10,11 @@ from pyrevolve.SDF.math import Vector3
 
 
 class SimulatorSimpleQueue:
-    def __init__(self, n_cores: int, settings):
+    def __init__(self, n_cores: int, settings, port_start=11345):
         assert (n_cores > 0)
-        self._settings = settings
         self._n_cores = n_cores
+        self._settings = settings
+        self._port_start = port_start
         self._supervisors = []
         self._connections = []
         self._robot_queue = asyncio.Queue()
@@ -21,7 +22,7 @@ class SimulatorSimpleQueue:
         self._workers = []
 
     async def _start_debug(self):
-        connection_future = await World.create(self._settings, world_address=("127.0.0.1", 11345))
+        connection_future = await World.create(self._settings, world_address=("127.0.0.1", self._port_start))
         self._connections.append(connection_future)
         self._workers.append(asyncio.create_task(self._simulator_queue_worker(0)))
 
@@ -40,14 +41,14 @@ class SimulatorSimpleQueue:
                 models_dir_path=os.path.join('.', 'models'),
                 simulator_name='gazebo_{}'.format(i)
             )
-            simulator_future_launch = simulator_supervisor.launch_simulator(port=11345+i)
+            simulator_future_launch = simulator_supervisor.launch_simulator(port=self._port_start+i)
 
             future_launches.append(simulator_future_launch)
             self._supervisors.append(simulator_supervisor)
 
         for i, future_launch in enumerate(future_launches):
             await future_launch
-            connection_future = World.create(self._settings, world_address=("127.0.0.1", 11345+i))
+            connection_future = World.create(self._settings, world_address=("127.0.0.1", self._port_start+i))
             future_connections.append(connection_future)
 
         for i, future_conn in enumerate(future_connections):
@@ -69,7 +70,7 @@ class SimulatorSimpleQueue:
     async def _restart_simulator(self, i):
         # restart simulator
         address = 'localhost'
-        port = 11345+i
+        port = self._port_start+i
         logger.error("Restarting simulator")
         self._connections[i].disconnect()
         await (await self._supervisors[i].relaunch(10, address=address, port=port))

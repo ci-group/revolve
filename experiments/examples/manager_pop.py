@@ -37,7 +37,7 @@ async def run():
     )
 
     population_conf = PopulationConfig(
-        population_size=10,
+        population_size=100,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         fitness_function=fitness.online_old_revolve,
@@ -50,11 +50,11 @@ async def run():
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=30,
-        offspring_size=10,
+        offspring_size=50,
     )
 
     settings = parser.parse_args()
-    simulator_queue = SimulatorSimpleQueue(1, settings)
+    simulator_queue = SimulatorSimpleQueue(5, settings, port_start=11435)
     await simulator_queue.start()
 
     population = Population(population_conf, simulator_queue)
