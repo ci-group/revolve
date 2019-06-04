@@ -232,6 +232,11 @@ class WorldManager(manage.WorldManager):
         if self.do_restore:
             await (self.restore_snapshot(self.do_restore))
 
+    def disconnect(self):
+        super().disconnect()
+        self.pose_subscriber.remove()
+        self.battery_handler.stop()
+
     async def create_snapshot(self):
         """
         Creates a snapshot of the world in the output directory.

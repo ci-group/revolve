@@ -19,7 +19,7 @@ class Joint(SDF.Posable):
         super().__init__(
             'joint',
             {
-                'id': _id,
+                # 'id': _id,
                 'name': name,
                 'type': 'revolute'
             },

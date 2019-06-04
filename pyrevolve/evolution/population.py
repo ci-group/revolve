@@ -64,7 +64,7 @@ class PopulationConfig:
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig, world, next_robot_id):
+    def __init__(self, conf: PopulationConfig, simulator_connection, next_robot_id):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -72,14 +72,14 @@ class Population:
         conf variable.
 
         :param conf: configuration of the system
-        :param world: connection to the world
+        :param simulator_connection: connection to the simulator
         """
         self.conf = conf
         self.individuals = []
-        self.world = world
+        self.simulator_connection = simulator_connection
         self.next_robot_id = next_robot_id
 
-    def new_individual(self, genotype):
+    def _new_individual(self, genotype):
         individual = Individual(genotype)
         individual.develop()
         self.individuals.append(individual)
@@ -105,8 +105,8 @@ class Population:
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
         for i in range(self.conf.population_size):
-           self.new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
-           self.next_robot_id += 1
+            self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+            self.next_robot_id += 1
 
         await self.evaluate(self.individuals, 0)
 
@@ -126,6 +126,7 @@ class Population:
             # Crossover
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
+                #TODO remove the genotype_conf and next_robot_id
                 child = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf, self.next_robot_id)
             else:
                 #TODO gotta add next_robot_id to the selection method later!!!!!!
@@ -135,7 +136,7 @@ class Population:
             # Mutation operator
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
             # Insert individual in new population
-            self.new_individual(child_genotype)
+            self._new_individual(child_genotype)
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
@@ -146,8 +147,7 @@ class Population:
                                                               self.conf.population_management_selector)
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
-        # return self.__class__(self.conf, new_individuals)
-        new_population = Population(self.conf, self.world, self.next_robot_id)
+        new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
         new_population.individuals = new_individuals
         return new_population
 
@@ -159,24 +159,37 @@ class Population:
         :param gen_num: generation number
         """
         # Parse command line / file input arguments
-        await self.world.pause(True)
+        # await self.simulator_connection.pause(True)
+        robot_futures = []
         for individual in new_individuals:
-            logger.info(f'---\nEvaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            await self.evaluate_single_robot(individual)
-            logger.info(f'Evaluation complete! Individual {individual.genotype.id} has a fitness of {individual.fitness}.')
+            logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
+            robot_futures.append(self.evaluate_single_robot(individual))
 
-    async def evaluate_single_robot(self, individual):
+        await asyncio.sleep(1)
+
+        for i, future in enumerate(robot_futures):
+            individual = new_individuals[i]
+            logger.info(f'Evaluation of Individual {individual.phenotype.id}')
+            individual.fitness = await future
+            logger.info(f'Evaluation complete! Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+
+    def evaluate_single_robot(self, individual):
+        if individual.phenotype is None:
+            individual.develop()
+        return self.simulator_connection.test_robot(individual.phenotype, self.conf)
+
+    async def _evaluate_single_robot(self, individual):
         """
         Evaluate an individual
 
         :param individual: an individual from the new population
         """
         # Insert the robot in the simulator
-        insert_future = await self.world.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
+        insert_future = await self.simulator_connection.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
         robot_manager = await insert_future
 
         # Resume simulation
-        await self.world.pause(False)
+        await self.simulator_connection.pause(False)
         start = time.time()
         # Start a run loop to do some stuff
         max_age = self.conf.evaluation_time
@@ -187,6 +200,7 @@ class Population:
         elapsed = end-start
         logger.info(f'Time taken: {elapsed}')
 
-        delete_future = await self.world.delete_all_robots()  # robot_manager
+        delete_future = await self.simulator_connection.delete_all_robots()  # robot_manager
         await delete_future
-        await self.world.pause(True)
+        await self.simulator_connection.pause(True)
+        await self.simulator_connection.reset()

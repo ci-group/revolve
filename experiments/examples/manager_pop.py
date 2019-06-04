@@ -1,13 +1,5 @@
 #!/usr/bin/env python3
-import os
-import sys
 import asyncio
-
-# Add `..` folder in search path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-newpath = os.path.join(current_dir, '..', '..')
-sys.path.append(newpath)
-
 from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
@@ -21,19 +13,8 @@ from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
-from pyrevolve.tol.manage import World
-
-def dummy_selection(individuals):
-    return individuals[-1]
-
-
-def crossover_selection(individuals, selector, howmany:int):
-    selected = []
-    for i in range(howmany):
-        selected.append(
-            selector(individuals)
-        )
-    return selected
+from pyrevolve.evolution.selection import multiple_selection, tournament_selection
+from pyrevolve.util.supervisor.simulator_simple_queue import SimulatorSimpleQueue
 
 
 async def run():
@@ -41,10 +22,10 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    num_generations = 10
+    num_generations = 100
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=10
+        max_structural_modules=20,
     )
 
     mutation_conf = MutationConfig(
@@ -68,32 +49,36 @@ async def run():
         next_robot_id = 0
 
     population_conf = PopulationConfig(
-        population_size=10,
+        population_size=100,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.random,
+        fitness_function=fitness.online_old_revolve,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
         crossover_conf=crossover_conf,
-        selection=dummy_selection,
-        parent_selection=lambda individuals: crossover_selection(individuals, dummy_selection, 2),
+        selection=lambda individuals: tournament_selection(individuals, 2),
+        parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
         population_management=steady_state_population_management,
-        population_management_selector=dummy_selection,
-        evaluation_time=1,
+        population_management_selector=tournament_selection,
+        evaluation_time=30,
+        offspring_size=50,
         experiment_name=settings.experiment_name,
         exp_management=exp_management,
         settings=settings,
-        offspring_size=2
     )
 
-    simulator_connection = await World.create(settings)
+    settings = parser.parse_args()
+    simulator_queue = SimulatorSimpleQueue(5, settings, port_start=11435)
+    await simulator_queue.start()
 
-    population = Population(population_conf, simulator_connection, next_robot_id)
+    population = Population(population_conf, simulator_queue, next_robot_id)
 
     if not exp_management.experiment_is_new() and settings.recovery_enabled:
+        # loading a previous state of the experiment
         population.load_pop(gen_num)
     else:
+        # starting a new experiment
         exp_management.create_exp_folders()
         await population.init_pop()
         exp_management.export_snapshots(population.individuals, gen_num)
@@ -108,13 +93,27 @@ async def run():
 
 
 def main():
-    def handler(loop, context):
-        exc = context['exception']
+    import traceback
+
+    def handler(_loop, context):
+        try:
+            exc = context['exception']
+        except KeyError:
+            print(context['message'])
+            return
+
         if isinstance(exc, DisconnectError) \
                 or isinstance(exc, ConnectionResetError):
             print("Got disconnect / connection reset - shutting down.")
-            sys.exit(0)
-        raise context['exception']
+            # sys.exit(0)
+
+        if isinstance(exc, OSError) and exc.errno == 9:
+            print(exc)
+            traceback.print_exc()
+            return
+
+        traceback.print_exc()
+        raise exc
 
     try:
         loop = asyncio.get_event_loop()

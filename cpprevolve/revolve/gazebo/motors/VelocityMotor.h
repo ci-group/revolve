@@ -56,7 +56,7 @@ namespace revolve
       /// \param[in,out] outputs
       /// \param[in] step
       virtual void Update(
-          double *outputs,
+          const double *outputs,
           double step);
 
       /// \brief World update event function
