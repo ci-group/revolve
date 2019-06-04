@@ -103,7 +103,8 @@ class Plasticoding(Genotype):
 
     def __init__(self, conf, robot_id):
         """
-        :param conf:
+        :param conf: configurations for lsystem
+        :param robot_id: unique id of the robot
         :type conf: PlasticodingConfig
         """
         self.conf = conf

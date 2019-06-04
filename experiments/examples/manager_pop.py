@@ -41,7 +41,7 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    num_generations = 10
+    num_generations = 4
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=10
@@ -59,13 +59,13 @@ async def run():
     settings = parser.parse_args()
     exp_management = ExperimentManagement(settings)
 
-    if exp_management.experiment_is_new() or not settings.recovery_enabled:
-        gen_num = 0
-        next_robot_id = 0
-    else:
+    if not exp_management.experiment_is_new() and settings.recovery_enabled:
         recovery_state = exp_management.read_recovery_state()
         gen_num = int(recovery_state[0])
         next_robot_id = int(recovery_state[1])
+    else:
+        gen_num = 0
+        next_robot_id = 0
 
     population_conf = PopulationConfig(
         population_size=4,
@@ -90,12 +90,12 @@ async def run():
 
     population = Population(population_conf, simulator_connection, next_robot_id)
 
-    if exp_management.experiment_is_new() or not settings.recovery_enabled:
+    if not exp_management.experiment_is_new() and settings.recovery_enabled:
+        population.load_pop(gen_num)
+    else:
         exp_management.create_exp_folders()
         await population.init_pop()
         exp_management.export_snapshots(population.individuals, gen_num)
-    else:
-        population.load_pop(gen_num)
 
     while gen_num < num_generations:
         gen_num += 1

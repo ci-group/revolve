@@ -144,7 +144,7 @@ parser.add_argument(
 parser.add_argument(
     '--recovery-enabled',
     default=True, type=str_to_bool,
-    help=" ."
+    help="Wheather recovery is enabled."
 )
 
 parser.add_argument(

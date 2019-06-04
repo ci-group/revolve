@@ -247,9 +247,8 @@ class RobotManager(object):
 
         return balance
 
-    def logs_position_orientation(self, o, evaluation_time, robotid, generation, experiment_name):
-        # define a path properly somewhere!!!!!!
-        f = open('../../../l-system/experiments/'+ experiment_name+'/offspringpop'+generation+'/positions_'+robotid+'.txt', "a+")
+    def logs_position_orientation(self, o, evaluation_time, robotid, dirpath):
+        f = open(dirpath+'/data_fullevolution/descriptors/positions_'+robotid+'.txt', "a+")
 
         if self.second <= evaluation_time:
 
