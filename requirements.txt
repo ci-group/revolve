@@ -8,4 +8,4 @@ psutil==3.4.2
 pycairo>=1.18.0
 graphviz>=0.10.1 
 
--e /home/matteo/projects/pygazebo/
+-e git+https://github.com/ci-group/pygazebo.git@py2to3#egg=pygazebo
