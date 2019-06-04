@@ -1,18 +1,7 @@
 from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet, PlasticodingConfig
 from pyrevolve.evolution.individual import Individual
 import random
-import os
-import logging
-
-crossover_logger = logging.getLogger('__name__')
-crossover_logger.setLevel(logging.INFO)
-
-fh = logging.FileHandler('mut-cross.log', mode='w')
-fh.setLevel(logging.INFO)
-
-formatter = logging.Formatter('%(message)s')
-fh.setFormatter(formatter)
-crossover_logger.addHandler(fh)
+from ....custom_logging.logger import genotype_logger
 
 
 def generate_child_genotype(parents, genotype_conf, crossover_conf, next_robot_id):
@@ -48,6 +37,6 @@ def standard_crossover(parents, genotype_conf, crossover_conf, next_robot_id):
     """
     genotype = generate_child_genotype(parents, genotype_conf, crossover_conf, next_robot_id)
     child = Individual(genotype)
-    crossover_logger.info(
+    genotype_logger.info(
         f'crossover: for genome {child.genotype.id} - p1: {parents[0].genotype.id} p2: {parents[1].genotype.id}.')
     return child

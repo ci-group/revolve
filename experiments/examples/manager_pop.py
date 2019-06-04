@@ -11,17 +11,17 @@ sys.path.append(newpath)
 from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
+from pyrevolve.evolution import fitness
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
 from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.plasticoding.initialization import standard_initialization
+from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.tol.manage import World
-
 
 def dummy_selection(individuals):
     return individuals[-1]
@@ -41,7 +41,7 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    num_generations = 4
+    num_generations = 10
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=10
@@ -68,9 +68,10 @@ async def run():
         next_robot_id = 0
 
     population_conf = PopulationConfig(
-        population_size=4,
-        genotype_constructor=standard_initialization,
+        population_size=10,
+        genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
+        fitness_function=fitness.random,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
@@ -102,7 +103,7 @@ async def run():
         population = await population.next_gen(gen_num)
         exp_management.export_snapshots(population.individuals, gen_num)
         exp_management.update_recovery_state(gen_num, population.next_robot_id)
-        
+
     # output result after completing all generations...
 
 

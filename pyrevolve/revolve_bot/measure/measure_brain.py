@@ -3,6 +3,7 @@ import math
 # belong to TODO
 import fnmatch
 from ..brain.brain_nn import BrainNN
+from ...custom_logging.logger import logger
 
 class MeasureBrain:
     def __init__(self, brain: BrainNN, max_param: int):
@@ -69,7 +70,7 @@ class MeasureBrain:
         Create lists of parameter values
         """
         if not isinstance(self.brain, BrainNN):
-            print('Brain not supported')
+            logger.error('Brain not supported')
             return
         self.params = self.brain.params
         if self.params is not None:

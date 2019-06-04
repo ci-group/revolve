@@ -8,14 +8,14 @@ from pygazebo.msg import world_control_pb2
 
 # Revolve
 from ..connect import connect, RequestHandler
-from ...logging import logger
+import logging
+from ...custom_logging.logger import logger
 
 # Construct a message base from the time. This should make
 # it unique enough for consecutive use when the script
 # is restarted.
 _a = time.time()
 MSG_BASE = int(_a - 14e8 + (_a - int(_a)) * 1e5)
-
 
 class WorldManager(object):
     """
@@ -58,8 +58,8 @@ class WorldManager(object):
         :return:
         """
         self = cls(
-                _private=cls._PRIVATE,
-                world_address=world_address,
+            _private=cls._PRIVATE,
+            world_address=world_address,
         )
         await self._init()
         return self
@@ -77,13 +77,13 @@ class WorldManager(object):
         self.manager = await (connect(self.world_address))
 
         self.world_control = await (self.manager.advertise(
-                topic_name='/gazebo/default/world_control',
-                msg_type='gazebo.msgs.WorldControl'
+            topic_name='/gazebo/default/world_control',
+            msg_type='gazebo.msgs.WorldControl'
         ))
 
         self.request_handler = await (RequestHandler.create(
-                manager=self.manager,
-                msg_id_base=MSG_BASE
+            manager=self.manager,
+            msg_id_base=MSG_BASE
         ))
 
         # Wait for connections
@@ -96,9 +96,9 @@ class WorldManager(object):
         :return: Future for the published message
         """
         if pause:
-            logger.debug("Pausing the world.")
+            logger.info("Pausing the world.")
         else:
-            logger.debug("Resuming the world.")
+            logger.info("Resuming the world.")
 
         msg = world_control_pb2.WorldControl()
         msg.pause = pause
@@ -119,7 +119,7 @@ class WorldManager(object):
         :param rall:
         :return:
         """
-        logger.debug("Resetting the world state.")
+        logger.info("Resetting the world state.")
         msg = world_control_pb2.WorldControl()
         msg.reset.all = rall
         msg.reset.model_only = model_only
@@ -142,8 +142,8 @@ class WorldManager(object):
         :return:
         """
         future = await (self.request_handler.do_gazebo_request(
-                request="insert_sdf",
-                data=str(sdf)
+            request="insert_sdf",
+            data=str(sdf)
         ))
         return future
 
@@ -161,7 +161,7 @@ class WorldManager(object):
         :return:
         """
         future = await (self.request_handler.do_gazebo_request(
-                request=req,
-                data=name
+            request=req,
+            data=name
         ))
         return future
