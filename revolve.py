@@ -2,13 +2,27 @@
 import os
 import sys
 import asyncio
+import importlib
 
 from pygazebo.pygazebo import DisconnectError
-from experiments.examples.manager_pop import run
+from pyrevolve import parser
 
 here = os.path.dirname(os.path.abspath(__file__))
 rvpath = os.path.abspath(os.path.join(here, '..', 'revolve'))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+
+async def run():
+    arguments = parser.parse_args()
+    if arguments.test_robot is not None:
+        return await test_robot_run(arguments.test_robot)
+
+    if arguments.manager is not None:
+        # this split will give errors on windows
+        manager_lib = os.path.splitext(arguments.manager)[0]
+        manager_lib = '.'.join(manager_lib.split('/'))
+        manager = importlib.import_module(manager_lib).run
+        return await manager()
 
 
 def main():

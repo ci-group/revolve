@@ -24,7 +24,7 @@ class PopulationConfig:
                  population_management_selector,
                  evaluation_time,
                  experiment_name,
-                 exp_management,
+                 experiment_management,
                  settings,
                  offspring_size=None,
                  next_robot_id=0):
@@ -41,6 +41,10 @@ class PopulationConfig:
         :param selection: selection type
         :param parent_selection: selection type during parent selection
         :param population_management: type of population management ie. steady state or generational
+        :param evaluation_time: duration of an experiment
+        :param experiment_name: name for the folder of the current experiment
+        :param experiment_management: object with methods for managing the current experiment
+        :param settings: general config.py
         :param offspring_size (optional): size of offspring (for steady state)
         """
         self.population_size = population_size
@@ -57,7 +61,7 @@ class PopulationConfig:
         self.population_management_selector = population_management_selector
         self.evaluation_time = evaluation_time
         self.experiment_name = experiment_name
-        self.exp_management = exp_management
+        self.experiment_management = experiment_management
         self.settings = settings
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
@@ -73,6 +77,7 @@ class Population:
 
         :param conf: configuration of the system
         :param simulator_connection: connection to the simulator
+        :param next_robot_id: (sequential) id of the next individual to be created
         """
         self.conf = conf
         self.individuals = []
@@ -82,20 +87,22 @@ class Population:
     def _new_individual(self, genotype):
         individual = Individual(genotype)
         individual.develop()
-        self.individuals.append(individual)
-        self.conf.exp_management.export_genotype(individual)
-        self.conf.exp_management.export_phenotype(individual)
+        self.conf.experiment_management.export_genotype(individual)
+        self.conf.experiment_management.export_phenotype(individual)
         if self.conf.settings.measure_individuals:
             individual.phenotype.measure_phenotype(self.conf.settings)
+
+        return individual
 
     def load_pop(self, gen_num):
         path = 'experiments/'+self.conf.experiment_name
         for r, d, f in os.walk(path +'/selectedpop_'+str(gen_num)):
             for file in f:
                 if 'body' in file:
-                    genotype_id = file.split('_')[1].split('.')[0]
-                    genotype = self.conf.genotype_constructor(self.conf.genotype_conf, genotype_id,
-                                    False, path+'/data_fullevolution/genotypes/genotype_'+genotype_id+'.txt')
+                    genotype_id = file.split('.')[0].split('_')[-1]
+                    genotype = self.conf.genotype_constructor(self.conf.genotype_conf, genotype_id)
+                    genotype.load_genotype(f'{path}/data_fullevolution/genotypes/genotype_{genotype_id}.txt')
+
                     individual = Individual(genotype)
                     individual.develop()
                     self.individuals.append(individual)
@@ -105,7 +112,8 @@ class Population:
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
         for i in range(self.conf.population_size):
-            self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+            individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+            self.individuals.append(individual)
             self.next_robot_id += 1
 
         await self.evaluate(self.individuals, 0)
@@ -129,14 +137,15 @@ class Population:
                 #TODO remove the genotype_conf and next_robot_id
                 child = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf, self.next_robot_id)
             else:
-                #TODO gotta add next_robot_id to the selection method later!!!!!!
-                child = self.conf.selection(self.individuals, self.next_robot_id)
+                child = self.conf.selection(self.individuals)
+                child.robot_id = self.next_robot_id
             self.next_robot_id += 1
 
             # Mutation operator
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
             # Insert individual in new population
-            self._new_individual(child_genotype)
+            individual = self._new_individual(child_genotype)
+            new_individuals.append(individual)
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
@@ -195,6 +204,7 @@ class Population:
         max_age = self.conf.evaluation_time
         while robot_manager.age() < max_age:
             individual.fitness = self.conf.fitness_function(robot_manager)
+            self.conf.experiment_management.export_fitness(individual)
             await asyncio.sleep(1.0 / 5)  # 5= state_update_frequency
         end = time.time()
         elapsed = end-start

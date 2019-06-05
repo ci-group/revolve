@@ -4,20 +4,21 @@ from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
-from pyrevolve.experiment_management import ExperimentManagement
+from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
+from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
 from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
 from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
-from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.util.supervisor.simulator_simple_queue import SimulatorSimpleQueue
 
 
 async def run():
+    print('fosfsijfnskjfnskjfhdbnjfhs')
     """
     The main coroutine, which is started below.
     """
@@ -38,21 +39,19 @@ async def run():
     )
 
     settings = parser.parse_args()
-    exp_management = ExperimentManagement(settings)
+    experiment_management = ExperimentManagement(settings)
 
-    if not exp_management.experiment_is_new() and settings.recovery_enabled:
-        recovery_state = exp_management.read_recovery_state()
-        gen_num = int(recovery_state[0])
-        next_robot_id = int(recovery_state[1])
+    if settings.recovery_enabled and not experiment_management.experiment_is_new():
+        gen_num, next_robot_id = experiment_management.read_recovery_state()
     else:
         gen_num = 0
         next_robot_id = 0
 
     population_conf = PopulationConfig(
-        population_size=100,
+        population_size=10,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.online_old_revolve,
+        fitness_function=fitness.displacement_velocity_hill,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
@@ -61,33 +60,37 @@ async def run():
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
-        evaluation_time=30,
-        offspring_size=50,
+        evaluation_time=15,
+        offspring_size=5,
         experiment_name=settings.experiment_name,
-        exp_management=exp_management,
-        settings=settings,
+        experiment_management=experiment_management,
+        settings=settings,  # TODO remove this
     )
 
     settings = parser.parse_args()
-    simulator_queue = SimulatorSimpleQueue(5, settings, port_start=11435)
+    simulator_queue = SimulatorSimpleQueue(settings.n_cores, settings, port_start=11435)
     await simulator_queue.start()
 
     population = Population(population_conf, simulator_queue, next_robot_id)
 
-    if not exp_management.experiment_is_new() and settings.recovery_enabled:
+    if settings.recovery_enabled and not experiment_management.experiment_is_new():
         # loading a previous state of the experiment
         population.load_pop(gen_num)
+        # We load the population, but not the fitness, so we recalculate it
+        # TODO speed up recovery by loading the saved fitness instead
+        await population.evaluate(population.individuals, gen_num)
     else:
         # starting a new experiment
-        exp_management.create_exp_folders()
+        experiment_management.create_exp_folders()
         await population.init_pop()
-        exp_management.export_snapshots(population.individuals, gen_num)
+        experiment_management.export_snapshots(population.individuals, gen_num)
+        experiment_management.update_recovery_state(gen_num, population.next_robot_id)
 
     while gen_num < num_generations:
         gen_num += 1
         population = await population.next_gen(gen_num)
-        exp_management.export_snapshots(population.individuals, gen_num)
-        exp_management.update_recovery_state(gen_num, population.next_robot_id)
+        experiment_management.export_snapshots(population.individuals, gen_num)
+        experiment_management.update_recovery_state(gen_num, population.next_robot_id)
 
     # output result after completing all generations...
 

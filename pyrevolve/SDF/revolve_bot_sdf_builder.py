@@ -117,7 +117,7 @@ def _sdf_attach_module(module_slot, module_orientation: float,
     collision.translate(collision.to_parent_direction(old_translation))
 
 
-def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, slot_chain=''):
+def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, slot_chain):
     """
     Recursive function that takes a module and returns a list of SDF links and joints that
     that module and his children have generated.
@@ -213,7 +213,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
             continue
 
         my_slot = module.boxslot(Orientation(my_slot))
-        slot_chain = '{}{}'.format(slot_chain, my_slot.orientation.short_repr())
+        child_slot_chain = '{}{}'.format(slot_chain, my_slot.orientation.short_repr())
 
         children_links, \
         children_joints, \
@@ -221,7 +221,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
                                           my_link,
                                           my_slot,
                                           my_collision,
-                                          slot_chain)
+                                          child_slot_chain)
         links.extend(children_links)
         joints.extend(children_joints)
         sensors.extend(children_sensors)

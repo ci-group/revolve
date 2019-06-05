@@ -414,6 +414,11 @@ class WorldManager(manage.WorldManager):
         :type pose: Pose|Vector3
         :return: A future that resolves with the created `Robot` object.
         """
+
+        # if the ID is digit, when removing the robot, the simulation will try to remove random stuff from the
+        # environment and give weird crash errors
+        assert(not str(revolve_bot.id).isdigit())
+
         sdf_bot = revolve_bot.to_sdf(pose)
 
         if self.output_directory:

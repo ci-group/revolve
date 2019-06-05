@@ -47,18 +47,14 @@ def _generate_random_grammar(conf):
     return grammar
 
 
-def standard_initialization(conf, next_robot_id, is_new=True, path=''):
+def random_initialization(conf, next_robot_id):
     """
-    Initializing a genotype.
-    :param new_old: whether a genotype is new or restored
+    Initializing a random genotype.
     :type conf: PlasticodingConfig
     :return: a Genome
     :rtype: Plasticoding
     """
-    
     genotype = Plasticoding(conf, next_robot_id)
-    if is_new:
-        genotype.grammar = _generate_random_grammar(conf)
-    else:
-        genotype.load_genotype(path)
+    genotype.grammar = _generate_random_grammar(conf)
+       
     return genotype

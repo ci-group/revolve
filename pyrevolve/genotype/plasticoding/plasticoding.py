@@ -58,7 +58,7 @@ class Alphabet(Enum):
             [Alphabet.JOINT_HORIZONTAL, []],
             [Alphabet.JOINT_VERTICAL, []],
             [Alphabet.BLOCK, []],
-            #[Alphabet.SENSOR, []],
+            [Alphabet.SENSOR, []],
         ]
 
     @staticmethod
@@ -212,7 +212,7 @@ class Plasticoding(Genotype):
     def late_development(self):
 
         self.phenotype = RevolveBot()
-        self.phenotype._id = self.id.replace('genome', 'pheno')
+        self.phenotype._id = "robot_{}".format(self.id)
         self.phenotype._brain = BrainNN()
 
         for symbol in self.intermediate_phenotype:

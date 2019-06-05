@@ -234,7 +234,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--manager',
-    # default='experiments/examples/manager.py',
+    default='experiments/examples/manager_pop.py',
     type=str,
     help="Determine which manager to use."
 )
@@ -396,7 +396,17 @@ parser.add_argument(
         help="Name of current experiment. A folder with thid name will be created."
 )
 
+parser.add_argument(
+        '--test-robot',
+        default=None, type=str,
+        help="Start a simulation with a single robot instead of running evolution. Loads yaml robots."
+)
 
+parser.add_argument(
+        '--n-cores',
+        default=1, type=int,
+        help="Number of simulators to use at the same time"
+)
 
 
 def make_revolve_config(conf):

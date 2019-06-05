@@ -5,6 +5,7 @@ import fnmatch
 from ..brain.brain_nn import BrainNN
 from ...custom_logging.logger import logger
 
+
 class MeasureBrain:
     def __init__(self, brain: BrainNN, max_param: int):
         """
