@@ -25,7 +25,7 @@ class PopulationConfig:
                  evaluation_time,
                  experiment_name,
                  experiment_management,
-                 settings,
+                 measure_individuals,
                  offspring_size=None,
                  next_robot_id=0):
         """
@@ -44,7 +44,7 @@ class PopulationConfig:
         :param evaluation_time: duration of an experiment
         :param experiment_name: name for the folder of the current experiment
         :param experiment_management: object with methods for managing the current experiment
-        :param settings: general config.py
+        :param measure_individuals: weather or not to perform  phenotypic measurements
         :param offspring_size (optional): size of offspring (for steady state)
         """
         self.population_size = population_size
@@ -62,7 +62,7 @@ class PopulationConfig:
         self.evaluation_time = evaluation_time
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
-        self.settings = settings
+        self.measure_individuals = measure_individuals
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
 
@@ -89,8 +89,8 @@ class Population:
         individual.develop()
         self.conf.experiment_management.export_genotype(individual)
         self.conf.experiment_management.export_phenotype(individual)
-        if self.conf.settings.measure_individuals:
-            individual.phenotype.measure_phenotype(self.conf.settings)
+        if self.conf.measure_individuals:
+            individual.phenotype.measure_phenotype(self.conf.experiment_name)
 
         return individual
 
@@ -134,11 +134,11 @@ class Population:
             # Crossover
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
-                #TODO remove the genotype_conf and next_robot_id
-                child = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf, self.next_robot_id)
+                child = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
             else:
                 child = self.conf.selection(self.individuals)
-                child.robot_id = self.next_robot_id
+
+            child.id = self.next_robot_id
             self.next_robot_id += 1
 
             # Mutation operator

@@ -102,7 +102,7 @@ class Plasticoding(Genotype):
     L-system genotypic representation, enhanced with epigenetic capabilities for phenotypic plasticity, through Genetic Programming.
     """
 
-    def __init__(self, conf, robot_id):
+    def __init__(self, conf, robot_id=''):
         """
         :param conf: configurations for lsystem
         :param robot_id: unique id of the robot

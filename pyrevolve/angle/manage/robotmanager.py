@@ -149,12 +149,6 @@ class RobotManager(object):
 
         self._contacts.append(number_contacts)
 
-    def sum_of_contacts(self):
-        sum_of_contacts = 0
-        for c in self._contacts:
-            sum_of_contacts += c
-        return sum_of_contacts
-
     def age(self):
         """
         Returns this robot's age as a Time object.

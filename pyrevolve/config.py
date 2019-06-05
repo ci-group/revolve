@@ -63,6 +63,7 @@ def str_to_address(v):
     host, port = v.split(":", 1)
     return host, int(port)
 
+#TODO remove obsolete params
 
 parser = CustomParser(fromfile_prefix_chars='@')
 parser.add_argument(
@@ -92,7 +93,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--evaluation-time',
-    default=12, type=float,
+    default=30, type=float,
     help="The size of the `speed window` for each robot, i.e. the number of "
          "past (simulation) seconds over which its speed is evaluated. In "
          "offline evolution, this determines the length of the experiment run."
@@ -160,13 +161,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--export-measurements',
-    default=True, type=str_to_bool,
-    help="Exports derived descriptors to text."
-)
-
-
-parser.add_argument(
     '--body-mutation-epsilon',
     default=0.05, type=float,
     help="Mutation epsilon for robot body parameters."
@@ -228,7 +222,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--world',
-    default='worlds/gait-learning.world', type=str,
+    default='worlds/plan.world', type=str,
     help="Determine which world to use."
 )
 
@@ -406,6 +400,18 @@ parser.add_argument(
         '--n-cores',
         default=1, type=int,
         help="Number of simulators to use at the same time"
+)
+
+parser.add_argument(
+    '--z-start',
+    default=0.01, type=float,
+    help="Position in the z axis where the robot is placed at the beginning of the simulation."
+)
+
+parser.add_argument(
+    '--port-start',
+    default=11345, type=int,
+    help="Gazebo port to connect to"
 )
 
 

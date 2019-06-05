@@ -116,10 +116,10 @@ class SimulatorSimpleQueue:
             self._robot_queue.task_done()
             self._free_simulator[i] = True
 
-    @staticmethod
+    #@staticmethod
     async def _evaluate_robot(simulator_connection, robot, conf):
         await simulator_connection.pause(True)
-        insert_future = await simulator_connection.insert_robot(robot, Vector3(0, 0, 0.05))
+        insert_future = await simulator_connection.insert_robot(robot, Vector3(0, 0, self._settings.z_start))
         robot_manager = await insert_future
         await simulator_connection.pause(False)
         start = time.time()

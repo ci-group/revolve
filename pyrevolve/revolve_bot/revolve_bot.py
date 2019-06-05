@@ -66,12 +66,11 @@ class RevolveBot:
         """
         pass
 
-    def measure_phenotype(self, settings):
+    def measure_phenotype(self, experiment_name):
         self._morphological_measurements = self.measure_body()
         self._brain_measurements = self.measure_brain()
         logger.info('Robot ' + str(self.id) + ' was measured.')
-        if settings.export_measurements:
-            self.export_phenotype_measurements(settings.experiment_name)
+        self.export_phenotype_measurements(experiment_name)
 
     def measure_body(self):
         """

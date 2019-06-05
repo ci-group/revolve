@@ -18,7 +18,6 @@ from pyrevolve.util.supervisor.simulator_simple_queue import SimulatorSimpleQueu
 
 
 async def run():
-    print('fosfsijfnskjfnskjfhdbnjfhs')
     """
     The main coroutine, which is started below.
     """
@@ -26,7 +25,7 @@ async def run():
     num_generations = 100
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=20,
+        max_structural_modules=15,
     )
 
     mutation_conf = MutationConfig(
@@ -48,7 +47,7 @@ async def run():
         next_robot_id = 0
 
     population_conf = PopulationConfig(
-        population_size=10,
+        population_size=100,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         fitness_function=fitness.displacement_velocity_hill,
@@ -60,15 +59,15 @@ async def run():
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
-        evaluation_time=15,
-        offspring_size=5,
+        evaluation_time=settings.evaluation_time,
+        offspring_size=50,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
-        settings=settings,  # TODO remove this
+        measure_individuals=settings.measure_individuals,
     )
 
     settings = parser.parse_args()
-    simulator_queue = SimulatorSimpleQueue(settings.n_cores, settings, port_start=11435)
+    simulator_queue = SimulatorSimpleQueue(settings.n_cores, settings, settings.port_start)
     await simulator_queue.start()
 
     population = Population(population_conf, simulator_queue, next_robot_id)
