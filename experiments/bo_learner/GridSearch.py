@@ -19,13 +19,13 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-seconds_timeout = 3600*2.5
-min_lines = 1200
+min_lines = 1450
 run_gazebo = False
-n_runs = 20
+n_runs = 20 # Naar 20
+run_factor = 5
 n_jobs = 60
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "spider9.yaml"
+yaml_model = "babyA.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = ".venv/bin/python3"
 search_space = {
@@ -48,10 +48,10 @@ start_port = 11345
 finished = False
 
 # Make in revolve/build to allow runs from terminal
-os.system('nmcli connection up id "Ripper intranet"')
+#os.system('nmcli connection up id "Ripper intranet"')
 os.system('cmake /home/gongjinlan/projects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
 os.system("make -j60")
-os.system('nmcli connection down id "Ripper intranet"')
+#os.system('nmcli connection down id "Ripper intranet"')
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
@@ -96,7 +96,7 @@ def create_yamls(yaml_path, model, sub_directory, experiments):
 def run(i, sub_directory, model, params):
     # Sleepy time when starting up to save gazebo from misery
     if i < n_jobs:
-        time.sleep(i)
+        time.sleep(5*i)
     else:
         print("Todo: Make sure you are leaving 2 seconds in between firing "
               "gazebos")
@@ -155,19 +155,30 @@ if __name__ == "__main__":
 
     # PASTE THE EXPERIMENTS HERE, IN THE FORMAT SHOWN BELOW
     experiments = [
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},   # BASE RUN
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},   # BASE RUN
+
+        # BASE RUN
         {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 0.01,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 0.05,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.3},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
-        {'init_method': "RS", 'kernel_l': 0.05, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 1.0, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 1.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.1,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
+        # BASE RUN
+
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.2},
+        # BASE RUN
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.5},
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 2.0},
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 3.0},
+        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 4.0},
+
+        {'init_method': "RS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        # BASE RUN
     ]
     # 'kernel_l': [0.02, 0.05, 0.1, 0.2],
     # 'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
@@ -179,7 +190,7 @@ if __name__ == "__main__":
         my_dict["id"] = ix
 
     # Create a list with parameters to iterate over
-    experiments *= n_runs
+    experiments *= n_runs*run_factor
 
     # Save to yaml files
     create_yamls(yaml_path=my_yaml_path,
@@ -200,57 +211,58 @@ if __name__ == "__main__":
         os.mkdir(output_path + str(i) + "/")
 
     while not finished:
-        # Run experiments in parallel
-        try:
-            Parallel(n_jobs=n_jobs, timeout = seconds_timeout)(delayed(run)(i,
-                                                             my_sub_directory,
-                                                             yaml_model,
-                                                             experiment) for i, experiment in enumerate(experiments))
-        except:
-            print("Some runs are killed by timeout")
+        with Parallel(n_jobs=n_jobs) as parallel:
+            # Run experiments in parallel
+            try:
+                parallel(delayed(run)(i,
+                                     my_sub_directory,
+                                     yaml_model,
+                                     experiment) for i, experiment in enumerate(experiments))
+            except:
+                print("Some runs are killed by timeout")
 
-        # Count number of finished runs for all experiments. Read this from the parameters file
-        runs_succesful = {}
-        experiment_list = glob(output_path + "*/")
+            # Count number of finished runs for all experiments. Read this from the parameters file
+            runs_succesful = {}
+            experiment_list = glob(output_path + "*/")
 
-        for ix,e in enumerate(experiment_list):
-            runs = glob(e + "*/")
-            runs_succesful[str(e.split("/")[-2])] = 0
+            for ix,e in enumerate(experiment_list):
+                runs = glob(e + "*/")
+                runs_succesful[str(e.split("/")[-2])] = 0
 
-            for my_run in runs:
-                if os.path.isfile(my_run + "fitnesses.txt"):
-                    n_lines = len([(line.rstrip('\n')) for line in open(my_run + "fitnesses.txt")])
+                for my_run in runs:
+                    if os.path.isfile(my_run + "fitnesses.txt"):
+                        n_lines = len([(line.rstrip('\n')) for line in open(my_run + "fitnesses.txt")])
 
-                    # In case we had a succesful run
-                    if n_lines > min_lines:
-                        runs_succesful[str(e.split("/")[-2])] += 1
+                        # In case we had a succesful run
+                        if n_lines > min_lines:
+                            runs_succesful[str(e.split("/")[-2])] += 1
 
-        to_run = {}
-        for key, val in runs_succesful.items():
-            to_run[key] = n_runs - val
-        to_run = {k: v for k, v in to_run.items() if v > 0}
+            to_run = {}
+            for key, val in runs_succesful.items():
+                to_run[key] = n_runs - val
+            to_run = {k: v for k, v in to_run.items() if v > 0}
 
-        # If the experiment list is empty
-        if not bool(to_run):
-            finished = True
-        else:
-            print(f"To finish {sum(to_run.values())} runs")
+            # If the experiment list is empty
+            if not bool(to_run):
+                finished = True
+            else:
+                print(f"To finish {sum(to_run.values())} runs")
 
-            # Empty experiments list
-            experiments = []
+                # Empty experiments list
+                experiments = []
 
-            # Use spare computing capacity
-            while sum(to_run.values()) < n_jobs - len(to_run):
-                print(to_run)
+                # Use spare computing capacity
+                while sum(to_run.values()) < n_jobs - len(to_run):
+                    print(to_run)
 
-                for key, value in to_run.items():
-                    to_run[key] += 1
+                    for key, value in to_run.items():
+                        to_run[key] += 1
 
-            # Construct new experiment list
-            for key, val in to_run.items():
-                for i in range(val):
-                    entry = unique_experiments[int(key)]
-                    experiments.append(entry)
+                # Construct new experiment list
+                for key, val in to_run.items():
+                    for i in range(val):
+                        entry = unique_experiments[int(key)]
+                        experiments.append(entry)
 
     # START ANALYSIS HERE
     print("I will now perform analysis")
