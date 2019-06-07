@@ -8,7 +8,7 @@ body:
     green: 0.26
     blue: 0.72
   children    :
-    0:
+    1:
       id          : Leg00Joint
       type        : ActiveHinge
       params:
@@ -61,7 +61,7 @@ body:
                             green: 0.26
                             blue: 0.72
                           orientation : -90
-    1:
+    0:
       id          : Leg10Joint
       type        : ActiveHinge
       params:
@@ -74,9 +74,9 @@ body:
           id          : Leg10
           type        : FixedBrick
           params:
-            red: 0.04
-            green: 0.26
-            blue: 0.72
+            red: 0.95
+            green: 0.54
+            blue: 0.17
           orientation : -90
     2:
       id          : Leg20Joint

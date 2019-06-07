@@ -4,9 +4,9 @@ body:
   id          : Core
   type        : Core
   params:
-    red: 0.04
-    green: 0.26
-    blue: 0.72
+    red: 0.95
+    green: 0.54
+    blue: 0.17
   children    :
     2:
       slot        : 0
@@ -33,8 +33,8 @@ body:
               type        : ActiveHinge
               params:
                 red: 0.98
-                green: 0.0
-                blue: 0.0
+                green: 0.98
+                blue: 0.98
               orientation : 90
               children    :
                 1:
@@ -296,7 +296,7 @@ body:
                                                       params:
                                                         red: 0.98
                                                         green: 0.98
-                                                        blue: 0.0
+                                                        blue: 0.98
                                                       orientation : 0
                                                       children    :
                                                         1:

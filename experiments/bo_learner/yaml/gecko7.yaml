@@ -4,9 +4,9 @@ body:
   id          : Core
   type        : Core
   params:
-    red: 0.04
-    green: 0.26
-    blue: 0.72
+    red: 0.95
+    green: 0.54
+    blue: 0.17
   children    :
     2:
       slot        : 0
