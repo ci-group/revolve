@@ -152,7 +152,7 @@ brain:
     reset_neuron_state_bool: "true"
     reset_neuron_random: "false"
     abs_output_bound: 1.0
-    signal_factor_all: 5.0
+    signal_factor_all: 4.0
     range_ub: 1.5
     init_neuron_state: 0.707
   learner:
@@ -171,9 +171,10 @@ brain:
     run_analytics: "true"
     for_signal_modification_type: "amplitude"
     for_speeding_approach: "slower"
-    for_faster_amplitude_factor: 2.5
+    for_faster_amplitude_factor: 2.0
+    for_slower_amplitude_factor: 9.0
     n_learning_iterations: 180
-    n_cooldown_iterations: 5
+    n_cooldown_iterations: 100
     reset_robot_position: "false"
     evaluation_rate: 60
     output_directory: ""

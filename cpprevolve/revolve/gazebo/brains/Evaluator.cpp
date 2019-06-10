@@ -105,7 +105,7 @@ double Evaluator::Fitness()
     if (std::abs(beta1 - beta0) > M_PI)
     {
       //alpha = 2 * M_PI - std::abs(beta1) - std::abs(beta0);
-      alpha = 2 * M_PI - std::abs(beta1 - beta0);
+      alpha = 2 * M_PI - std::abs(beta1) - std::abs(beta0);
     } else
     {
       alpha = std::abs(beta1 - beta0);

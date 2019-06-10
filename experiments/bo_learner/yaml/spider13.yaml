@@ -228,7 +228,7 @@ brain:
     reset_neuron_state_bool: "true"
     reset_neuron_random: "false"
     abs_output_bound: 1.0
-    signal_factor_all: 5.0
+    signal_factor_all: 4.0
     range_ub: 1.5
     init_neuron_state: 0.707
   learner:

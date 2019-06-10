@@ -188,11 +188,11 @@ brain:
   type: bo-cpg
   controller:
     use_frame_of_reference: 1
-    load_brain: ""
+    load_brain: "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1558624806/0/1/best_brain.txt"
     reset_neuron_state_bool: "true"
     reset_neuron_random: "false"
     abs_output_bound: 1.0
-    signal_factor_all: 5.0
+    signal_factor_all: 4.0
     range_ub: 1.5
     init_neuron_state: 0.707
   learner:
@@ -212,10 +212,10 @@ brain:
     for_signal_modification_type: "amplitude"
     for_speeding_approach: "slower"
     for_faster_amplitude_factor: 2.5
-    n_learning_iterations: 60
+    n_learning_iterations: 160
     n_cooldown_iterations: 100
     reset_robot_position: "false"
-    evaluation_rate: 80
+    evaluation_rate: 60
     output_directory: ""
     verbose: 1
     startup_time: 0

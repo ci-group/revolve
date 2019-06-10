@@ -21,16 +21,18 @@ from joblib import Parallel, delayed
 # Parameters
 min_lines = 5
 visualize_gazebo = False
-n_runs = 5
-n_jobs = 3
-yaml_model = "gecko7.yaml"
+n_runs = 20
+n_jobs = 4
+yaml_model = "spider9.yaml"
 my_yaml_path = "experiments/bo_learner/yaml/"
 search_space = {
-    'verbose': [0],
-    'n_learning_iterations': [2],
-    'n_init_samples': [5],
-    'n_cooldown_iterations': [0],
-    'acqui_ucb_alpha': [0.1, 0.2, 0.3, 0.4],
+    'verbose': [1],
+    'n_learning_iterations': [470],
+    'n_init_samples': [50],
+    'n_cooldown_iterations': [1],
+    'acqui_ucb_alpha': [1.0],
+    'kernel_sigma_sq': [1.0],
+    'kernel_l': [1.5],
     #'for_slower_amplitude_factor': [2.0,4.0,6.0]
 }
 print(search_space)
