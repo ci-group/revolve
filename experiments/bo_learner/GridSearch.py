@@ -19,13 +19,12 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-min_lines = 1450
+min_lines = 1480
 run_gazebo = False
-n_runs = 20 # Naar 20
-run_factor = 5
-n_jobs = 60
+n_runs = 15 # Naar 20
+n_jobs = 30
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "babyA.yaml"
+yaml_model = "babyC.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = ".venv/bin/python3"
 search_space = {
@@ -44,14 +43,12 @@ print(search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
-start_port = 11345
+start_port = 11000
 finished = False
 
 # Make in revolve/build to allow runs from terminal
-#os.system('nmcli connection up id "Ripper intranet"')
 os.system('cmake /home/gongjinlan/projects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
 os.system("make -j60")
-#os.system('nmcli connection down id "Ripper intranet"')
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
@@ -188,9 +185,6 @@ if __name__ == "__main__":
     # Get id's on the permutations
     for ix, my_dict in enumerate(experiments):
         my_dict["id"] = ix
-
-    # Create a list with parameters to iterate over
-    experiments *= n_runs*run_factor
 
     # Save to yaml files
     create_yamls(yaml_path=my_yaml_path,

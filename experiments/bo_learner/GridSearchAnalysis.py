@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 
 # Parameters
-path = "/home/gongjinlan/projects/revolve/output/cpg_bo/main_1559854435/"
+path = "/home/gongjinlan/projects/revolve/output/cpg_bo/main_1559644358-BO-gecko7/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/gongjinlan/projects/revolve/experiments/bo_learner/yaml/yaml_temp/"
 
@@ -17,6 +17,9 @@ yaml_temp_path = "/home/gongjinlan/projects/revolve/experiments/bo_learner/yaml/
 path_list = glob(path + "*")
 path_list = [path_ for path_ in path_list if os.path.isdir(path_)]
 n_dirs = len(path_list)
+max_dirs = 20
+n_rows_max = 1500
+n_rows_min = 1450
 
 # Holder
 results = np.empty((n_dirs, 3))
@@ -40,8 +43,6 @@ for i, path_ in enumerate(path_list):
         n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
     except:
         None
-    n_rows_max = 1500
-    n_rows_min = 1450
 
     # Remove all rows with a small number of values
     subfolder_list_temp = []
@@ -68,6 +69,10 @@ for i, path_ in enumerate(path_list):
     plt.ylabel("Fitness")
     plt.grid()
 
+    # Clean file
+    open(path_ + "/experiment_fitnesses.txt", 'w').close()
+    kx = 0
+
     # For all n_runs
     for j, subfolder in enumerate(subfolder_list_temp):
         # print( subfolder)
@@ -93,8 +98,10 @@ for i, path_ in enumerate(path_list):
         fitnesses[:,j] = np.array(my_fitness)
 
         # Save the fitnesses of all runs
-        with open(path_ + "/experiment_fitnesses.txt" , 'a') as experiment_fitness_file:
-            experiment_fitness_file.write(",".join([str(my_fitness_mon[-1]), subfolder.split("/")[-2]]) + "\n")
+        with open(path_ + "/experiment_fitnesses.txt", 'a') as experiment_fitness_file:
+            if kx < max_dirs:
+                experiment_fitness_file.write(",".join([str(my_fitness_mon[-1]), subfolder.split("/")[-2]]) + "\n")
+                kx += 1
 
         # Plot the avg fitness
         plt.plot(fitnesses_mon[:, j], linewidth = 1, color = "blue")

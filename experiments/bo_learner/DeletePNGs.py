@@ -1,8 +1,7 @@
 from glob import glob
 import os
 
-python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557477606/"
+path = "/home/gongjinlan/projects/revolve/output/cpg_bo/main_1559644358-BO-gecko7/"
 print(path)
 
 paths = glob(path + "*/*.png")
