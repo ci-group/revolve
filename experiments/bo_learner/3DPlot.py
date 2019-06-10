@@ -12,13 +12,13 @@ import plotly.offline as py
 import plotly.graph_objs as go
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1556919226/"
+path = "/home/maarten/Thesis_output/cpg_tuning/main_1557701167/"
 var1 = "range_ub"
 var2 = "signal_factor"
 parameter_file = "parameters.txt"
 
 # Set matplotlib font
-font = {'size' : 13}
+font = {'size' : 18}
 matplotlib.rc('font', **font)
 
 # Get all sub-directories
@@ -58,25 +58,46 @@ df = pd.DataFrame(results)
 results = df.sort_values(by = [0,1]).to_numpy()
 
 # Prepare for 3D plot
-my_size = int(np.sqrt(n_dirs))
-X =results[:,0].reshape((my_size,  my_size))
-Y =results[:,1].reshape((my_size,  my_size))
-Z =results[:,2].reshape((my_size,  my_size))
+my_size_x = 11
+my_size_y = 13
+X =results[:,0].reshape((my_size_x,  my_size_y))
+Y =results[:,1].reshape((my_size_x,  my_size_y))
+Z =results[:,2].reshape((my_size_x,  my_size_y))
+
+
+X = np.loadtxt(path + "X.txt", delimiter=",").reshape((my_size_x,  my_size_y))
+Y = np.loadtxt(path + "Y.txt", delimiter=",").reshape((my_size_x,  my_size_y))
+Z = np.loadtxt(path + "Z.txt", delimiter=",").reshape((my_size_x,  my_size_y)) - 0.05
 
 # Verbose
-for i in range(my_size):
-    for j in range(my_size):
+for i in range(my_size_x):
+    for j in range(my_size_y):
         print(X[i,j], Y[i,j], Z[i,j])
 
-# Construct 3D plot
-fig = plt.figure(figsize=(10,10))
-ax = plt.axes(projection='3d')
-ax.plot_wireframe(X, Y, Z, rstride=1, cstride=1,
-               cmap='viridis', edgecolor='none')
-ax.set_xlabel(var1)
-ax.set_ylabel(var2)
-ax.set_zlabel("fitness")
-plt.savefig(path + "3Dplot.png")
+# # Construct 3D plot
+# fig = plt.figure(figsize=(10,10))
+# ax = plt.axes(projection='3d')
+# ax.plot_wireframe(X, Y, Z, rstride=1, cstride=1,
+#                cmap='viridis', edgecolor='none')
+# ax.set_xlabel(var1)
+# ax.set_ylabel(var2)
+# ax.set_zlabel("fitness")
+# plt.savefig(path + "3Dplot.png")
+
+
+# Create plot
+levels = 40
+fig, ax = plt.subplots()
+cs = plt.contourf(X.tolist(),Y.tolist(),Z.tolist(),extend = "both", cmap = "hot_r", levels = levels)
+#cs = plt.contourf(X,Y,Z,extend = "both", cmap = "hot_r", levels = levels)
+cs.changed()
+fig.colorbar(cs)
+plt.xlabel("Frequency factor")
+plt.ylabel("Amplitude factor")
+plt.title("Gecko12")
+plt.tight_layout()
+plt.savefig(path + "/gecko12-contour" + str(levels) + ".png")
+#plt.show()
 
 # Get data for plotly
 data = [
@@ -98,6 +119,6 @@ data = [
 # )
 
 # Construct ploty
-fig = go.Figure(data=data)
-py.plot(fig, filename=path + "interactive_3d")
-print(len(X), len(Y), len(Z))
+#fig = go.Figure(data=data)
+#py.plot(fig, filename=path + "interactive_3d")
+#print(len(X), len(Y), len(Z))
