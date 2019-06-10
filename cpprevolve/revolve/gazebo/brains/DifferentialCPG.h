@@ -50,17 +50,6 @@
 /// (bias, tau, gain) or (phase offset, period, gain)
 #define MAX_NEURON_PARAMS 3
 
-// Set global variables for the param structure of BO with default values
-inline constexpr double kernel_noise_ = 0.0000001;
-inline constexpr bool kernel_optimize_noise_ = false;
-inline constexpr double kernel_sigma_sq_ = 0.001;
-inline constexpr double kernel_l_ = 0.2;
-inline constexpr int kernel_squared_exp_ard_k_ = 4;
-inline constexpr double acqui_gpucb_delta_ = 0.1;
-inline constexpr double acqui_ucb_alpha_ = 0.5;
-inline constexpr double acqui_ei_jitter_= 0.f;
-
-
 typedef std::vector< double > state_type;
 
 namespace revolve
@@ -177,7 +166,7 @@ namespace revolve
       private: void save_parameters();
 
       /// \brief Best fitness seen so far
-      private: double best_fitness = 0;
+      private: double best_fitness = -10.0;
 
       /// \brief Sample corresponding to best fitness
       private: Eigen::VectorXd best_sample;
@@ -269,6 +258,10 @@ namespace revolve
       /// \brief Use frame of reference {-1,0,1} version or not
       private: bool use_frame_of_reference;
 
+      // \brief Start measuring the speed as soon as it's value is true.
+      private: bool corner_threshold_met = false;
+      private: double corner_threshold_met_time = 0.0;
+
       /// \brief Function that determines the angle between the resulting vector and the normal [d1_x,d1_y]-vector.
       private: double get_vector_angle(double p1_x, double p1_y, double p2_x, double p2_y, double d1_x, double d1_y);
 
@@ -283,10 +276,11 @@ namespace revolve
 
       /// \brief Max amplitude increase factor. 2.5 is arbitrary. TODO: in yaml
       private: double for_faster_amplitude_factor;
+      private: double for_slower_amplitude_factor;
 
       /// \brief Coordinates of the goal box
-      private: double goal_x;
-      private: double goal_y;
+      private: double goal_x = 0.0;
+      private: double goal_y = 0.0;
 
       // \brief Angle the goal box is at against our face
       private: double angle_to_goal = 0.0;
@@ -295,13 +289,34 @@ namespace revolve
       private: void set_random_goal_box();
 
       // \brief Distance to the goalsss
-      private: double dist_to_goal;
+      private: double dist_to_goal = 0.0;
 
       // \brief Number of goals reached
       private: int goal_count;
-      private: double angle_diff;
+      private: double angle_diff = 999;
 
+      // BO Learner parameters
+      private: double kernel_sigma_sq_;
+      private: double kernel_l_;
+      private: double acqui_ucb_alpha_;
 
+      // Targeted locomotion learner parameters
+      private: double for_slower_power;
+      private: bool for_use_hill_climber = false;
+      private: double for_best_avg_speed = 0.0;
+      private: double for_step_size_eps = 0.05;
+      private: double for_step_size = 3.0;
+      private: double for_speed = 0.0;
+      private: bool for_go_up = true;
+      private: bool for_interim = false;
+      private: int for_iteration_counter = 0;
+      private: int for_power_iteration = -1;
+      private: int for_interim_counter = 0;
+      private: int for_n = 5;
+      private: int for_subqueue_size = 0;
+      private: std::vector<double> for_queue;
+      private: std::vector<std::vector<double>> for_speeds;
+      private: double highest_speed = 0.0;
     };
   }
 }

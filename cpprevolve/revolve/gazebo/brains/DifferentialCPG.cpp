@@ -35,7 +35,8 @@
 #include <limbo/acqui/ei.hpp>
 #include <limbo/bayes_opt/bo_base.hpp>
 #include <limbo/init/lhs.hpp>
-#include <limbo/kernel/exp.hpp>
+#include <limbo/kernel/kernel.hpp>
+#include <limbo/kernel/matern_five_halves.hpp>
 #include <limbo/model/gp.hpp>
 #include <limbo/mean/mean.hpp>
 #include <limbo/tools/macros.hpp>
@@ -63,6 +64,7 @@ using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Kernel_t = limbo::kernel::MaternFiveHalves<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 
+
 /**
  * Constructor for DifferentialCPG class.
  *
@@ -70,14 +72,14 @@ using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
  * @param robot_config
  */
 DifferentialCPG::DifferentialCPG(
-        const ::gazebo::physics::ModelPtr &_model,
-        const ::gazebo::physics::ModelPtr &_box,
-        const sdf::ElementPtr robot_config,
-        const std::vector< revolve::gazebo::MotorPtr > &_motors,
-        const std::vector< revolve::gazebo::SensorPtr > &_sensors)
-        : next_state(nullptr)
-        , input(new double[_sensors.size()])
-        , output(new double[_motors.size()])
+    const ::gazebo::physics::ModelPtr &_model,
+    const ::gazebo::physics::ModelPtr &_box,
+    const sdf::ElementPtr robot_config,
+    const std::vector< revolve::gazebo::MotorPtr > &_motors,
+    const std::vector< revolve::gazebo::SensorPtr > &_sensors)
+    : next_state(nullptr)
+    , input(new double[_sensors.size()])
+    , output(new double[_motors.size()])
 {
 
   this->learner = robot_config->GetElement("rv:brain")->GetElement("rv:learner");
@@ -123,16 +125,14 @@ DifferentialCPG::DifferentialCPG(
   this->for_speeding_approach = controller->GetAttribute("for_speeding_approach")->GetAsString();
   this->for_signal_modification_type = controller->GetAttribute("for_signal_modification_type")->GetAsString();
   this->for_faster_amplitude_factor = std::stod(controller->GetAttribute("for_faster_amplitude_factor")->GetAsString());
+  this->for_slower_power = std::stod(controller->GetAttribute("for_slower_amplitude_factor")->GetAsString());
 
-  // (Global)Learner parameters
-  double kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
-  bool kernel_optimize_noise_ = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
-  double kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
-  double kernel_l_ = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
-  int kernel_squared_exp_ard_k_ = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
-  double acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());;
-  double acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
-  double acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
+  // Limbo BO Learner parameters
+  this->kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
+  this->kernel_l_ = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
+  this->acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
+
+  // Non-limbo BO learner para
   this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
   this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
   this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
@@ -204,7 +204,7 @@ DifferentialCPG::DifferentialCPG(
     auto motor_id = motor->GetAttribute("part_id")->GetAsString();
     this->positions[motor_id] = {coord_x, coord_y};
     this->motor_coordinates[{coord_x, coord_y}] = j;
-//    this->part_ids[{coord_x, coord_y}] = motor_id;
+    //    this->part_ids[{coord_x, coord_y}] = motor_id;
 
     // Set frame of reference
     int frame_of_reference = 0;
@@ -262,13 +262,11 @@ DifferentialCPG::DifferentialCPG(
       // Get information of this neuron (that we call neighbour).
       int near_x, near_y; std::tie(near_x, near_y) = neighbour.second;
 
-      // If there is a node that is a Moore neighbour, we set it to be a neighbour for their A-nodes.
+      // If there is a node that is a dist 2 neighbour we set it to be a neighbour for their A-nodes.
       // Thus the connections list only contains connections to the A-neighbourhood, and not the
       // A->B and B->A for some node (which makes sense).
       int dist_x = std::abs(x - near_x);
       int dist_y = std::abs(y - near_y);
-
-      // TODO: Verify for non-spiders
       if (dist_x + dist_y == 2)
       {
         if(std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
@@ -334,6 +332,12 @@ DifferentialCPG::DifferentialCPG(
     // Save face
     this->face = std::stod(weights.at(n_weights));
 
+    if(this->verbose)
+    {
+      std::cout << this->face << std::endl;
+    }
+
+
     // Close brain
     brain_file.close();
 
@@ -366,9 +370,8 @@ DifferentialCPG::DifferentialCPG(
     // Initialize BO
     this->bo_init_sampling();
   }
-
-  // Save parameters
-  this->save_parameters();
+  // Initialize queue
+  this->for_queue.push_back(this->for_slower_power);
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
@@ -418,16 +421,15 @@ DifferentialCPG::~DifferentialCPG()
  * Dummy function for limbo
  */
 struct DifferentialCPG::evaluation_function{
-    // TODO: Make this neat. I don't know how though.
-    // Number of input dimension (samples.size())
-    BO_PARAM(size_t, dim_in, 18);
+  // Number of input dimension (samples.size())
+  BO_PARAM(size_t, dim_in, 18);
 
-    // number of dimensions of the fitness
-    BO_PARAM(size_t, dim_out, 1);
+  // number of dimensions of the fitness
+  BO_PARAM(size_t, dim_out, 1);
 
-    Eigen::VectorXd operator()(const Eigen::VectorXd &x) const {
-      return limbo::tools::make_vector(0);
-    };
+  Eigen::VectorXd operator()(const Eigen::VectorXd &x) const {
+    return limbo::tools::make_vector(0);
+  };
 };
 
 /**
@@ -437,7 +439,7 @@ void DifferentialCPG::bo_init_sampling(){
   if(this->verbose)
   {
     // We only want to optimize the weights for now.
-    std::cout << "Number of weights = connections/2 + n_motors are "
+    std::cout << "Number of weights = connections/2 + n_motors are  "
               << this->connections.size()/2
               << " + "
               << this->n_motors
@@ -541,7 +543,7 @@ void DifferentialCPG::set_random_goal_box(){
   if(this->verbose)
   {
     // Generate end-point for targeted locomotion that is at least 1 unit of distance away
-    std::cout << "SetrandomGoalBox \n";
+    std::cout << "SetrandomGoalBox\n";
   }
 
   // Set new position that is sufficiently far away
@@ -552,16 +554,15 @@ void DifferentialCPG::set_random_goal_box(){
 
     // Check distance
     this->dist_to_goal = std::pow(
-            std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
-            std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
-            , 0.5);
+        std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
+        std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
+        , 0.5);
 
     if(this->verbose)
     {
       std::cout << "Distance is " << this->dist_to_goal << " with points " << this->goal_x << ", " << this->goal_y << std::endl;
     }
   }
-
 
   // Update goal box
   auto new_pose = ::ignition::math::Pose3d();
@@ -581,16 +582,16 @@ void DifferentialCPG::save_fitness(){
   {
     // Update fitness and sample
     this->best_fitness = fitness;
-    this->best_sample = this->samples.back();
+    this->best_sample = this->samples.at(this->current_iteration - 1);
 
     // Set new face. I verified the correctness
-    double robot_move_angle = this->get_vector_angle(this->evaluator->previous_position_.Pos().X(),
-                                                     this->evaluator->previous_position_.Pos().Y(),
+    double robot_move_angle = this->get_vector_angle(this->evaluator->start_position_.Pos().X(),
+                                                     this->evaluator->start_position_.Pos().Y(),
                                                      this->evaluator->current_position_.Pos().X(),
                                                      this->evaluator->current_position_.Pos().Y(),
                                                      0.f,
                                                      -1.f);
-    double start_angle = this->evaluator->previous_position_.Rot().Yaw()*180.0/M_PI;
+    double start_angle = this->evaluator->start_position_.Rot().Yaw()*180.0/M_PI;
 
     this->face = robot_move_angle - start_angle;
     if(this->face > 180){
@@ -603,12 +604,57 @@ void DifferentialCPG::save_fitness(){
     {
       std::cout << "New face: " << this->face << std::endl;
     }
+
+    // Save brain and face in append mode
+    std::ofstream brain_file;
+    brain_file.open(this->directory_name + "brain.txt", std::ios::app);
+    for(int i = 0; i < this->n_weights; i++)
+    {
+      brain_file << this->best_sample[i] << ",";
+    }
+    brain_file << this->face << "," << fitness << std::endl;
+    brain_file.close();
+
+    // Save speed
+    double speed = std::pow(
+        std::pow(this->evaluator->start_position_.Pos().X() - this->evaluator->current_position_.Pos().X(), 2) +
+        std::pow(this->evaluator->start_position_.Pos().Y() - this->evaluator->current_position_.Pos().Y(), 2), 0.5);
+    speed /= this->evaluation_rate;
+
+    this->highest_speed = speed;
+    // Save to file
+    std::ofstream speed_file;
+    speed_file.open(this->directory_name + "speed.txt", std::ios::app);
+    speed_file << speed  << std::endl;
+    speed_file.close();
   }
 
   if (this->verbose)
   {
+    double my_speed = std::pow(
+        std::pow(this->evaluator->start_position_.Pos().X() - this->evaluator->current_position_.Pos().X(), 2) +
+        std::pow(this->evaluator->start_position_.Pos().Y() - this->evaluator->current_position_.Pos().Y(), 2), 0.5);
+    my_speed /= this->evaluation_rate;
+
+    // Set new face. I verified the correctness
+    double robot_move_angle = this->get_vector_angle(this->evaluator->start_position_.Pos().X(),
+                                                     this->evaluator->start_position_.Pos().Y(),
+                                                     this->evaluator->current_position_.Pos().X(),
+                                                     this->evaluator->current_position_.Pos().Y(),
+                                                     0.f,
+                                                     -1.f);
+    double start_angle = this->evaluator->start_position_.Rot().Yaw()*180.0/M_PI;
+
+    double face_ = robot_move_angle - start_angle;
+    if(face_ > 180){
+      face_ -= 360;
+    }
+    else if (face_< -180){
+      face_ +=360;
+    }
+
     std::cout << "Iteration number " << this->current_iteration << " has fitness " <<
-              fitness << ". Best fitness: " << this->best_fitness << std::endl;
+              fitness << " and speed " << my_speed << " and face " << face_ << ". Best fitness: " << this->best_fitness << ". Highest speed: " << this->highest_speed << std::endl;
   }
 
   // Limbo requires fitness value to be of type Eigen::VectorXd
@@ -623,33 +669,134 @@ void DifferentialCPG::save_fitness(){
   fitness_file.open(this->directory_name + "fitnesses.txt", std::ios::app);
   fitness_file << fitness << std::endl;
   fitness_file.close();
+
+
 }
+
+/**
+ * Struct that holds the parameters on which BO is called. This is required
+ * by limbo.
+ */
+struct DifferentialCPG::Params{
+
+  struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
+  };
+
+  // depending on which internal optimizer we use, we need to import different parameters
+#ifdef USE_NLOPT
+  struct opt_nloptnograd : public limbo::defaults::opt_nloptnograd {
+  };
+#elif defined(USE_LIBCMAES)
+  struct opt_cmaes : public lm::defaults::opt_cmaes {
+    };
+#else
+#error(NO SOLVER IS DEFINED)
+#endif
+  struct kernel : public limbo::defaults::kernel {
+    BO_PARAM(double, noise, 0.001);
+    BO_PARAM(bool, optimize_noise, false);
+  };
+
+  struct bayes_opt_bobase : public limbo::defaults::bayes_opt_bobase {
+    // set stats_enabled to prevent creating all the directories
+    BO_PARAM(bool, stats_enabled, false);
+    BO_PARAM(bool, bounded, true);
+  };
+
+  // 1 Iteration as we will perform limbo step by steop
+  struct stop_maxiterations : public limbo::defaults::stop_maxiterations {
+    BO_PARAM(int, iterations, 1);
+  };
+
+  struct kernel_exp : public limbo::defaults::kernel_exp {
+    /// @ingroup kernel_defaults
+    BO_PARAM(double, sigma_sq, 0.1);
+    BO_PARAM(double, l, 0.1); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
+  };
+
+  struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
+    /// @ingroup kernel_defaults
+    BO_PARAM(int, k, 3); // k number of columns used to compute M
+    /// @ingroup kernel_defaults
+    BO_PARAM(double, sigma_sq, 0.1); //brochu2010tutorial p.9 without sigma_sq
+  };
+
+  struct kernel_maternfivehalves : public limbo::defaults::kernel_maternfivehalves
+  {
+    BO_DYN_PARAM(double, sigma_sq); //brochu2010tutorial p.9 without sigma_sq
+    BO_DYN_PARAM(double, l); //characteristic length scale
+  };
+
+  struct acqui_gpucb : public limbo::defaults::acqui_gpucb {
+    //UCB(x) = \mu(x) + \kappa \sigma(x).
+    BO_PARAM(double, delta, 0.1 );//acqui_gpucb_delta_); // default delta = 0.1, delta in (0,1) convergence guaranteed
+  };
+
+  struct acqui_ei : public limbo::defaults::acqui_ei{
+    BO_PARAM(double, jitter, 0.5);
+  };
+
+  // This is just a placeholder to be able to use limbo with revolve
+  struct init_lhs : public limbo::defaults::init_lhs{
+    BO_PARAM(int, samples, 0);
+  };
+
+  struct acqui_ucb : public limbo::defaults::acqui_ucb {
+    //constexpr double ra = acqui_ucb_alpha_;
+    //UCB(x) = \mu(x) + \alpha \sigma(x). high alpha have high exploration
+    //iterations is high, alpha can be low for high accuracy in enough iterations.
+    // In contrast, the lsow iterations should have high alpha for high
+    // searching in limited iterations, which guarantee to optimal.
+    BO_DYN_PARAM(double, alpha); // default alpha = 0.5
+
+  };
+};
+
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::acqui_ucb, alpha);
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, sigma_sq);
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, l);
 
 /**
  * Wrapper function that makes calls to limbo to solve the current BO
  * iteration and returns the best sample
  */
 void DifferentialCPG::bo_step(){
+  Params::acqui_ucb::set_alpha(this->acqui_ucb_alpha_);
+  Params::kernel_maternfivehalves::set_l(this->kernel_l_);
+  Params::kernel_maternfivehalves::set_sigma_sq(this->kernel_sigma_sq_);
+
+  // Save all parameters once
+  if (this->current_iteration == 0)
+  {
+    // Save parameters
+    this->save_parameters();
+  }
+
   // In case we are done with the initial random sampling.
   if (this->current_iteration >= this->n_init_samples)
   {
     // Holder for sample
     Eigen::VectorXd x;
-    // TODO: THIS RESULTS IN A BUG:
-    // std::cout << "Acquisition function:  " << this->acquisition_function << std::endl;
     if(true)
     {
-
       // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
       limbo::bayes_opt::BOptimizer<Params,
-              limbo::initfun<Init_t>,
-              limbo::modelfun<GP_t>,
-              limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
+                                   limbo::initfun<Init_t>,
+                                   limbo::modelfun<GP_t>,
+                                   limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
       // Optimize. Pass dummy evaluation function and observations .
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
                           this->samples,
                           this->observations);
+
+      // Write parametesr to verify thread-stability after the run
+      std::ofstream dyn_parameters_file;
+      dyn_parameters_file.open(this->directory_name + "dynamic_parameters.txt", std::ios::app);
+      dyn_parameters_file << Params::acqui_ucb::alpha() << ",";
+      dyn_parameters_file << Params::kernel_maternfivehalves::sigma_sq() << ",";
+      dyn_parameters_file << Params::kernel_maternfivehalves::l() << std::endl;
+      dyn_parameters_file.close();
 
       x = boptimizer.last_sample();
     }
@@ -691,6 +838,13 @@ void DifferentialCPG::bo_step(){
   }
 }
 
+
+// Sorting function to be used by hillclimber
+bool cmp(const std::vector<double> &a,const std::vector<double> &b)
+{
+  return a[0]>b[0];
+}
+
 /**
  * Callback function that defines the movement of the robot
  *
@@ -700,23 +854,64 @@ void DifferentialCPG::bo_step(){
  * @param _step
  */
 void DifferentialCPG::Update(
-        const std::vector< revolve::gazebo::MotorPtr > &_motors,
-        const std::vector< revolve::gazebo::SensorPtr > &_sensors,
-        const double _time,
-        const double _step)
+    const std::vector< revolve::gazebo::MotorPtr > &_motors,
+    const std::vector< revolve::gazebo::SensorPtr > &_sensors,
+    const double _time,
+    const double _step)
 {
   // Prevent two threads from accessing the same resource at the same time
   boost::mutex::scoped_lock lock(this->networkMutex_);
 
+  // Check if we can start measuring speed: TODO: Add angle to difference as well
+  if (not this->corner_threshold_met and std::abs(this->angle_diff) < 20)
+  {
+    if(this->verbose)
+    {
+      std::cout << "Start recording fitness" << std::endl;
+    }
+    // Save current time
+    this->corner_threshold_met_time = _time;
+    this->corner_threshold_met = true;
+
+    // Save starting position
+    this->evaluator->start_position_threshold = this->evaluator->current_position_;
+    // Save for speed measuring
+  }
+
   // Update goal box distance
   this->dist_to_goal = std::pow(
-          std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
-          std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
-          , 0.5);
+      std::pow(this->goal_x - this->evaluator->current_position_.Pos().X(), 2) +
+      std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
+      , 0.5);
 
-//   //TODO: MAke eps parameter
-  if (dist_to_goal < 0.5)
+  //TODO: MAke eps parameter
+  if (this->dist_to_goal < 0.5 or false)
   {
+    // Calculate time it took to perform the targeted locomtion task
+    this->corner_threshold_met = false;
+
+    // Calculate Euclidean distance travelled
+    double distance_travelled = std::pow(
+        std::pow(this->evaluator->start_position_threshold.Pos().X() - this->evaluator->current_position_.Pos().X(), 2) +
+        std::pow(this->evaluator->start_position_threshold.Pos().Y() - this->evaluator->current_position_.Pos().Y(), 2), 0.5);
+
+    // Scale with time to get speed
+    double speed = distance_travelled/(_time - this->corner_threshold_met_time);
+    this->for_power_iteration += 1;
+    this->for_speed += speed;
+
+    if(this->verbose)
+    {
+      std::cout << "Pow " << this->for_slower_power << ". Object number: " << this->for_power_iteration << ". Speed: " << speed << std::endl;
+    }
+
+    // Save to file
+    std::ofstream speed_to_object_file;
+    speed_to_object_file.open(this->directory_name + "speed_to_object.txt", std::ios::app);
+    speed_to_object_file << speed << "," << distance_travelled << "," << this->for_slower_power <<std::endl;
+    speed_to_object_file.close();
+
+    // Reset goal box
     this->set_random_goal_box();
   }
 
@@ -728,27 +923,31 @@ void DifferentialCPG::Update(
     p += sensor->Inputs();
   }
 
+  // Update position here (fix by Gongjin)
+  this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+
   // Only start recording the fitness after the startup time each iteration
   double elapsed_evaluation_time = _time - this->start_time;
   if((std::fmod(elapsed_evaluation_time, (int)this->evaluation_rate) >= this->startup_time) &
      this->start_fitness_recording)
   {
     // Update position
-    this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     this->start_fitness_recording = false;
   }
+
   // Evaluate policy on certain time limit, or if we just started
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
-//    std::cout <<"Distance is " << this->dist_to_goal <<std::endl;
-//    std::cout <<"Anglediff is " << this->angle_diff <<std::endl;
+    if(this->verbose)
+    {
+      std::cout <<"Distance is " << this->dist_to_goal << " and anglediff " << this->angle_diff <<std::endl;
+    }
 
     // Update position
-    this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     this->start_fitness_recording = true;
 
     // Get and save fitness (but not at start)
-    if(not (_time - _step < 0.001 ))
+    if((not (_time - _step < 0.001 )))
     {
       this->save_fitness();
     }
@@ -789,9 +988,6 @@ void DifferentialCPG::Update(
 
       // Set new weights
       this->set_ode_matrix();
-
-      // Update position
-      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     }
       // If we are finished learning, deploy this model.
       // TODO: Investigate if the validation bug is still present. For now always work with load_brain
@@ -801,25 +997,26 @@ void DifferentialCPG::Update(
                                             this->n_learning_iterations +
                                             this->n_cooldown_iterations - 1)))
     {
-      if(this->current_iteration == this->n_init_samples + this->n_learning_iterations)
+      if (this->current_iteration == this->n_init_samples + this->n_learning_iterations)
       {
         std::cout << "Set goal count to 0" << std::endl;
         this->goal_count = 0;
 
         // Create plots
-        if(this->run_analytics)
+        if (this->run_analytics)
         {
           // Construct plots
           this->get_analytics();
         }
       }
 
-      if(this->verbose)
+      if (this->verbose)
       {
         std::cout << std::endl << "I am cooling down " << std::endl;
       }
 
-      // Update robot position
+      // Update robot position. This is allowed to be here, as it's in the cooling down fase. This is the face in which
+      // we only care about speed.
       this->evaluator->Update(this->robot->WorldPose(), _time, _step);
 
       // Use best sample in next iteration
@@ -828,6 +1025,7 @@ void DifferentialCPG::Update(
       // Set ODE matrix
       this->set_ode_matrix();
     }
+
       // Else we don't want to update anything, but construct plots from this run once.
     else
     {
@@ -844,6 +1042,155 @@ void DifferentialCPG::Update(
     this->evaluator->Reset();
     this->current_iteration += 1;
   }
+
+  ///////////////////////////////////////////////////////////////////////
+  //                      HILL-CLIMBER ALGORITHM
+  ///////////////////////////////////////////////////////////////////////
+
+  if (this->for_use_hill_climber and this->current_iteration >= this->n_init_samples + this->n_learning_iterations)
+  {
+    // Iteration counter for both interim and non-interim mode as we always want n evaluations to save
+    if (this->for_power_iteration >= this->for_n and this->for_step_size > this->for_step_size_eps)
+    {
+      // Save speed details of last this->for_n runs
+      std::vector< double > speed(2);
+      speed[0] = this->for_speed / this->for_n;
+      speed[1] = this->for_slower_power;
+      if(this->verbose)
+      {
+        std::cout << "Power " << speed[1] << " has average speed to object " << speed[0] << std::endl;
+      }
+      this->for_speeds.push_back(speed);
+      this->for_power_iteration = 0;
+
+      // Update interim counter
+      if (this->for_interim)
+      {
+        this->for_interim_counter += 1;
+      }
+
+      // Add element to queue in case we are not interim
+      if (this->for_speed > this->for_best_avg_speed and not this->for_interim)
+      {
+        // Save new best speed
+        this->for_best_avg_speed = this->for_speed;
+
+        // Add element to queue
+        if (this->for_go_up)
+        {
+          this->for_queue.push_back(this->for_slower_power + this->for_step_size);
+        }
+        else
+        {
+          if(std::abs(this->for_slower_power - this->for_step_size) < 0.001)
+          {
+            this->for_interim = true;
+          }
+          else
+          {
+            this->for_queue.push_back(this->for_slower_power - this->for_step_size);
+          }
+        }
+      }
+      else
+      {
+        if (this->for_iteration_counter == 1)
+        {
+          this->for_queue.push_back(this->for_slower_power - 2 * this->for_step_size);
+          this->for_go_up = false;
+        }
+        else if (not this->for_interim)
+        {
+          this->for_interim = true;
+        }
+      }
+
+      this->for_speed = 0;
+
+      // Generate new sub-queue
+      if (this->for_interim and this->for_interim_counter == this->for_subqueue_size)
+      {
+        double point_a = this->for_speeds[0][1];
+        std::vector< int > neighbours;
+
+        // Find all neighbours
+        if(this->verbose)
+        {
+          std::cout << "Point A " << point_a << " " << this->for_speeds[0][0] << std::endl;
+        }
+        for (int k = 0; k < this->for_speeds.size(); k++)
+        {
+          if (std::abs(std::abs(this->for_speeds[k][1] - point_a) - this->for_step_size) < 0.001)
+          {
+            // Save both the speed and the location of the neighbours. Note we can have 1 neighbour
+            neighbours.push_back(k);
+            if(this->verbose)
+            {
+              std::cout << "Neighbour: " << this->for_speeds[k][1] << " speed " << this->for_speeds[k][0] << std::endl;
+            }
+          }
+        }
+        // Pick best neighbour
+        double point_b;
+
+        if(neighbours.size() == 2)
+        {
+          if (this->for_speeds[neighbours[0]][0] > this->for_speeds[neighbours[1]][0])
+          {
+            // Neighbour 0 is best
+            point_b = this->for_speeds[neighbours[0]][1];
+          }
+          else
+          {
+            // Neighbour 1 is best
+            point_b = this->for_speeds[neighbours[1]][1];
+          }
+        }// If we only have one neighbour
+        else
+        {
+          point_b = this->for_speeds[neighbours[0]][1];
+        }
+
+        // Find next points
+        this->for_step_size /= 4;
+        double my_range = std::abs(point_b - point_a);
+        std::cout << "Step size is " << this->for_step_size << " and range is " << my_range;
+
+        // Generate sub-queue
+        this->for_subqueue_size = 0;
+        if (point_a < point_b)
+        {
+          point_a += this->for_step_size;
+          while (point_a < point_b)
+          {
+            this->for_queue.push_back(point_a);
+            point_a += this->for_step_size;
+            this->for_subqueue_size += 1;
+          }
+        }
+        else
+        {
+          point_b += this->for_step_size;
+          while (point_b < point_a)
+          {
+            this->for_queue.push_back(point_b);
+            point_b += this->for_step_size;
+            this->for_subqueue_size += 1;
+          }
+        }
+
+        // Reset counter
+        this->for_interim_counter = 0;
+      }
+
+      // Only take next element in queue once we've evaluated this->for_n number of times.
+      this->for_iteration_counter += 1;
+    }
+
+    // Pick power in the queue that we are interested in
+    this->for_slower_power = this->for_queue[this->for_iteration_counter];
+  }
+
 
   // Do the stepping
   this->step(_time, this->output);
@@ -1032,8 +1379,8 @@ void DifferentialCPG::reset_neuron_state(){
  * @param _output
  */
 void DifferentialCPG::step(
-        const double _time,
-        double *_output)
+    const double _time,
+    double *_output)
 {
   // Init
   double robot_angle, move_angle, angle_difference;
@@ -1062,9 +1409,9 @@ void DifferentialCPG::step(
       move_angle += 360;
     }
 
-//    std::cout <<  "Move angle:" << move_angle << std::endl;
-//    std::cout << "Angle to goal: " << this->angle_to_goal << std::endl;
-//    // Get angle difference in [-180, +180]
+    //    std::cout <<  "Move angle:" << move_angle << std::endl;
+    //    std::cout << "Angle to goal: " << this->angle_to_goal << std::endl;
+    //    // Get angle difference in [-180, +180]
     angle_difference = this->angle_to_goal - move_angle;
     if (angle_difference > 180)
       angle_difference -= 360;
@@ -1105,20 +1452,20 @@ void DifferentialCPG::step(
 
   // Perform one step
   stepper.do_step(
-          [this](const state_type &x, state_type &dxdt, double t)
+      [this](const state_type &x, state_type &dxdt, double t)
+      {
+        for(size_t i = 0; i < this->neurons.size(); i++)
+        {
+          dxdt[i] = 0;
+          for(size_t j = 0; j < this->neurons.size(); j++)
           {
-              for(size_t i = 0; i < this->neurons.size(); i++)
-              {
-                dxdt[i] = 0;
-                for(size_t j = 0; j < this->neurons.size(); j++)
-                {
-                  dxdt[i] += x[j]*this->ode_matrix[j][i];
-                }
-              }
-          },
-          x,
-          _time,
-          dt);
+            dxdt[i] += x[j]*this->ode_matrix[j][i];
+          }
+        }
+      },
+      x,
+      _time,
+      dt);
   int k_;
   // Copy values into nextstate
   for (size_t i = 0; i < this->neurons.size(); i++)
@@ -1146,7 +1493,7 @@ void DifferentialCPG::step(
     // Should be one, as output should be based on odd neurons, which are the A neurons
     if (i % 2 == 1)
     {
-//      auto motor_id = this->part_ids[{x, y}];
+      //      auto motor_id = this->part_ids[{x, y}];
       //std::cout << "Motor_id" << motor_id <<  " corresponds to output " << k_ <<  " x,y,z " << x << ","<< y << "," << z <<std::endl;
 
       // Apply saturation formula
@@ -1159,7 +1506,7 @@ void DifferentialCPG::step(
         {
           // Calculate factor: TODO: Make a smoothed function over factor.
           double my_factor = (180.0 - std::abs(angle_difference))/180.0;
-          my_factor = std::pow(my_factor, 3.0);
+          my_factor = std::pow(my_factor, this->for_slower_power);
 
           // Don't do anything unusual if we are on the middle line
           if (frame_of_reference == 0)
@@ -1183,13 +1530,12 @@ void DifferentialCPG::step(
             {
               this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
-//
-//            // Test coordinates (frame of reference) encoding here
-//            if (frame_of_reference == 1)
-//            {
-//              this->output[k_] = 0;
-//              std::cout << "Warning: output set to 0" << std::endl;
-//            }
+            //            // Test coordinates (frame of reference) encoding here
+            //            if (frame_of_reference == 1)
+            //            {
+            //              this->output[k_] = 0;
+            //              std::cout << "Warning: output set to 0" << std::endl;
+            //            }
           }
           else
           {
@@ -1252,106 +1598,27 @@ void DifferentialCPG::step(
     i++;
   }
 
-//  // Commented out due to 1GB per grid search data generation.
-//  // Write state to file
-//  std::ofstream state_file;
-//  state_file.open(this->directory_name + "states.txt", std::ios::app);
-//  for(size_t i = 0; i < this->neurons.size(); i++)
-//  {
-//    state_file << this->next_state[i] << ",";
-//  }
-//  state_file << std::endl;
-//  state_file.close();
+//    // Commented out due to 1GB per grid search data generation. Could later be useful
+//    // Write state to file
+//    std::ofstream state_file;
+//    state_file.open(this->directory_name + "states.txt", std::ios::app);
+//    for(size_t i = 0; i < this->neurons.size(); i++)
+//    {
+//      state_file << this->next_state[i] << ",";
+//    }
+//    state_file << std::endl;
+//    state_file.close();
 //
-//  // Write signal to file
-//  std::ofstream signal_file;
-//  signal_file.open(this->directory_name + "signal.txt", std::ios::app);
-//  for(size_t i = 0; i < this->n_motors; i++)
-//  {
-//    signal_file << this->output[i] << ",";
-//  }
-//  signal_file << std::endl;
-//  signal_file.close();
+//    // Write signal to file
+//    std::ofstream signal_file;
+//    signal_file.open(this->directory_name + "signal.txt", std::ios::app);
+//    for(size_t i = 0; i < this->n_motors; i++)
+//    {
+//      signal_file << this->output[i] << ",";
+//    }
+//    signal_file << std::endl;
+//    signal_file.close();
 }
-
-/**
- * Struct that holds the parameters on which BO is called. This is required
- * by limbo.
- */
-struct DifferentialCPG::Params{
-
-    struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
-    };
-
-    // depending on which internal optimizer we use, we need to import different parameters
-#ifdef USE_NLOPT
-    struct opt_nloptnograd : public limbo::defaults::opt_nloptnograd {
-    };
-#elif defined(USE_LIBCMAES)
-    struct opt_cmaes : public lm::defaults::opt_cmaes {
-    };
-#else
-#error(NO SOLVER IS DEFINED)
-#endif
-    struct kernel : public limbo::defaults::kernel {
-        BO_PARAM(double, noise, kernel_noise_);
-
-        BO_PARAM(bool, optimize_noise, kernel_optimize_noise_);
-    };
-
-    struct bayes_opt_bobase : public limbo::defaults::bayes_opt_bobase {
-        // set stats_enabled to prevent creating all the directories
-        BO_PARAM(bool, stats_enabled, false);
-
-        BO_PARAM(bool, bounded, true);
-    };
-
-    // 1 Iteration as we will perform limbo step by steop
-    struct stop_maxiterations : public limbo::defaults::stop_maxiterations {
-        BO_PARAM(int, iterations, 1);
-    };
-
-    struct kernel_exp : public limbo::defaults::kernel_exp {
-        /// @ingroup kernel_defaults
-        BO_PARAM(double, sigma_sq, kernel_sigma_sq_);
-        BO_PARAM(double, l, kernel_l_); // the width of the kernel. Note that it assumes equally sized ranges over dimensions
-    };
-
-    struct kernel_squared_exp_ard : public limbo::defaults::kernel_squared_exp_ard {
-        /// @ingroup kernel_defaults
-        BO_PARAM(int, k, kernel_squared_exp_ard_k_); // k number of columns used to compute M
-        /// @ingroup kernel_defaults
-        BO_PARAM(double, sigma_sq, kernel_sigma_sq_); //brochu2010tutorial p.9 without sigma_sq
-    };
-
-    struct kernel_maternfivehalves : public limbo::defaults::kernel_maternfivehalves
-    {
-        BO_PARAM(double, sigma_sq, kernel_sigma_sq_); //brochu2010tutorial p.9 without sigma_sq
-        BO_PARAM(double, l, kernel_l_); //characteristic length scale
-    };
-
-    struct acqui_gpucb : public limbo::defaults::acqui_gpucb {
-        //UCB(x) = \mu(x) + \kappa \sigma(x).
-        BO_PARAM(double, delta, acqui_gpucb_delta_); // default delta = 0.1, delta in (0,1) convergence guaranteed
-    };
-
-    struct acqui_ei : public limbo::defaults::acqui_ei{
-        BO_PARAM(double, jitter, acqui_ei_jitter_);
-    };
-
-    // This is just a placeholder to be able to use limbo with revolve
-    struct init_lhs : public limbo::defaults::init_lhs{
-        BO_PARAM(int, samples, 0);
-    };
-
-    struct acqui_ucb : public limbo::defaults::acqui_ucb {
-        //UCB(x) = \mu(x) + \alpha \sigma(x). high alpha have high exploration
-        //iterations is high, alpha can be low for high accuracy in enough iterations.
-        // In contrast, the lsow iterations should have high alpha for high
-        // searching in limited iterations, which guarantee to optimal.
-        BO_PARAM(double, alpha, acqui_ucb_alpha_); // default alpha = 0.5
-    };
-};
 
 /**
  * Save the parameters used in this run to a file.
@@ -1381,12 +1648,14 @@ void DifferentialCPG::save_parameters(){
   // FOR parameters
   parameters_file << std::endl << "For signal modification: " << this->for_signal_modification_type << std::endl;
   parameters_file << "For speeding approach: " << this->for_speeding_approach << std::endl;
+  parameters_file << "For slower amplitude factor: " << this->for_slower_amplitude_factor << std::endl;
+  parameters_file << "For faster amplitude factor: " << this->for_faster_amplitude_factor << std::endl;
   parameters_file << "Use FOR: " << this->use_frame_of_reference << std::endl;
 
   // BO hyper-parameters
   parameters_file << std::endl << "Initialization method used: " << this->init_method << std::endl;
   parameters_file << "EI jitter: " <<Params::acqui_ei::jitter() << std::endl;
-  parameters_file << "UCB alpha: " << Params::acqui_ucb::alpha() << std::endl;
+  parameters_file << "UCB alpha: " << DifferentialCPG::Params::acqui_ucb::alpha() << std::endl;
   parameters_file << "GP-UCB delta: " << Params::acqui_gpucb::delta() << std::endl;
   parameters_file << "Kernel noise: " << Params::kernel::noise() << std::endl;
   parameters_file << "EXP Kernel l: " << Params::kernel_exp::l() << std::endl;
@@ -1395,6 +1664,9 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "EXP-ARD Kernel sigma_sq: "<< Params::kernel_squared_exp_ard::sigma_sq() << std::endl;
   parameters_file << "MFH Kernel sigma_sq: "<< Params::kernel_maternfivehalves::sigma_sq() << std::endl;
   parameters_file << "MFH Kernel l: "<< Params::kernel_maternfivehalves::l() << std::endl << std::endl;
+
+  // Targeted locomotion parameters
+  parameters_file << std::endl << "for_n: " << this->for_n << std::endl;
   parameters_file.close();
 }
 

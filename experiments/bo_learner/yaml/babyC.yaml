@@ -302,7 +302,7 @@ brain:
   type: bo-cpg
   controller:
     use_frame_of_reference: 1
-    load_brain: ""
+    load_brain: "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1558602500/0/1/best_brain.txt"
     reset_neuron_state_bool: "true"
     reset_neuron_random: "false"
     abs_output_bound: 1.0
