@@ -262,13 +262,11 @@ DifferentialCPG::DifferentialCPG(
       // Get information of this neuron (that we call neighbour).
       int near_x, near_y; std::tie(near_x, near_y) = neighbour.second;
 
-      // If there is a node that is a Moore neighbour, we set it to be a neighbour for their A-nodes.
+      // If there is a node that is a dist 2 neighbour we set it to be a neighbour for their A-nodes.
       // Thus the connections list only contains connections to the A-neighbourhood, and not the
       // A->B and B->A for some node (which makes sense).
       int dist_x = std::abs(x - near_x);
       int dist_y = std::abs(y - near_y);
-
-      // TODO: Verify for non-spiders
       if (dist_x + dist_y == 2)
       {
         if(std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
@@ -424,7 +422,7 @@ DifferentialCPG::~DifferentialCPG()
  */
 struct DifferentialCPG::evaluation_function{
   // Number of input dimension (samples.size())
-  BO_PARAM(size_t, dim_in, 13);
+  BO_PARAM(size_t, dim_in, 18);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -545,7 +543,7 @@ void DifferentialCPG::set_random_goal_box(){
   if(this->verbose)
   {
     // Generate end-point for targeted locomotion that is at least 1 unit of distance away
-    std::cout << "SetrandomGoalBox \n";
+    std::cout << "SetrandomGoalBox\n";
   }
 
   // Set new position that is sufficiently far away
@@ -616,12 +614,47 @@ void DifferentialCPG::save_fitness(){
     }
     brain_file << this->face << "," << fitness << std::endl;
     brain_file.close();
+
+    // Save speed
+    double speed = std::pow(
+        std::pow(this->evaluator->start_position_.Pos().X() - this->evaluator->current_position_.Pos().X(), 2) +
+        std::pow(this->evaluator->start_position_.Pos().Y() - this->evaluator->current_position_.Pos().Y(), 2), 0.5);
+    speed /= this->evaluation_rate;
+
+    this->highest_speed = speed;
+    // Save to file
+    std::ofstream speed_file;
+    speed_file.open(this->directory_name + "speed.txt", std::ios::app);
+    speed_file << speed  << std::endl;
+    speed_file.close();
   }
 
   if (this->verbose)
   {
+    double my_speed = std::pow(
+        std::pow(this->evaluator->start_position_.Pos().X() - this->evaluator->current_position_.Pos().X(), 2) +
+        std::pow(this->evaluator->start_position_.Pos().Y() - this->evaluator->current_position_.Pos().Y(), 2), 0.5);
+    my_speed /= this->evaluation_rate;
+
+    // Set new face. I verified the correctness
+    double robot_move_angle = this->get_vector_angle(this->evaluator->start_position_.Pos().X(),
+                                                     this->evaluator->start_position_.Pos().Y(),
+                                                     this->evaluator->current_position_.Pos().X(),
+                                                     this->evaluator->current_position_.Pos().Y(),
+                                                     0.f,
+                                                     -1.f);
+    double start_angle = this->evaluator->start_position_.Rot().Yaw()*180.0/M_PI;
+
+    double face_ = robot_move_angle - start_angle;
+    if(face_ > 180){
+      face_ -= 360;
+    }
+    else if (face_< -180){
+      face_ +=360;
+    }
+
     std::cout << "Iteration number " << this->current_iteration << " has fitness " <<
-              fitness << ". Best fitness: " << this->best_fitness << std::endl;
+              fitness << " and speed " << my_speed << " and face " << face_ << ". Best fitness: " << this->best_fitness << ". Highest speed: " << this->highest_speed << std::endl;
   }
 
   // Limbo requires fitness value to be of type Eigen::VectorXd
@@ -637,17 +670,7 @@ void DifferentialCPG::save_fitness(){
   fitness_file << fitness << std::endl;
   fitness_file.close();
 
-  // Save speed
-  double speed = std::pow(
-      std::pow(this->evaluator->start_position_.Pos().X() - this->evaluator->current_position_.Pos().X(), 2) +
-      std::pow(this->evaluator->start_position_.Pos().Y() - this->evaluator->current_position_.Pos().Y(), 2), 0.5);
-  speed /= this->evaluation_rate;
 
-  // Save to file
-  std::ofstream speed_file;
-  speed_file.open(this->directory_name + "speed.txt", std::ios::app);
-  speed_file << speed  << std::endl;
-  speed_file.close();
 }
 
 /**
@@ -724,7 +747,6 @@ struct DifferentialCPG::Params{
     //iterations is high, alpha can be low for high accuracy in enough iterations.
     // In contrast, the lsow iterations should have high alpha for high
     // searching in limited iterations, which guarantee to optimal.
-    //        BO_PARAM(double, alpha, transform_double(acqui_ucb_alpha_)); // default alpha = 0.5
     BO_DYN_PARAM(double, alpha); // default alpha = 0.5
 
   };
@@ -863,7 +885,7 @@ void DifferentialCPG::Update(
       , 0.5);
 
   //TODO: MAke eps parameter
-  if (this->dist_to_goal < 0.5)
+  if (this->dist_to_goal < 0.5 or false)
   {
     // Calculate time it took to perform the targeted locomtion task
     this->corner_threshold_met = false;
@@ -1034,7 +1056,10 @@ void DifferentialCPG::Update(
       std::vector< double > speed(2);
       speed[0] = this->for_speed / this->for_n;
       speed[1] = this->for_slower_power;
-      std::cout << "Power " << speed[1] << " has average speed to object " << speed[0] << std::endl;
+      if(this->verbose)
+      {
+        std::cout << "Power " << speed[1] << " has average speed to object " << speed[0] << std::endl;
+      }
       this->for_speeds.push_back(speed);
       this->for_power_iteration = 0;
 
@@ -1089,14 +1114,20 @@ void DifferentialCPG::Update(
         std::vector< int > neighbours;
 
         // Find all neighbours
-        std::cout << "Point A " << point_a << " " << this->for_speeds[0][0] << std::endl;
+        if(this->verbose)
+        {
+          std::cout << "Point A " << point_a << " " << this->for_speeds[0][0] << std::endl;
+        }
         for (int k = 0; k < this->for_speeds.size(); k++)
         {
           if (std::abs(std::abs(this->for_speeds[k][1] - point_a) - this->for_step_size) < 0.001)
           {
             // Save both the speed and the location of the neighbours. Note we can have 1 neighbour
             neighbours.push_back(k);
-            std::cout << "Neighbour: " << this->for_speeds[k][1] << " speed " << this->for_speeds[k][0] << std::endl;
+            if(this->verbose)
+            {
+              std::cout << "Neighbour: " << this->for_speeds[k][1] << " speed " << this->for_speeds[k][0] << std::endl;
+            }
           }
         }
         // Pick best neighbour
@@ -1499,7 +1530,6 @@ void DifferentialCPG::step(
             {
               this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
             }
-            //
             //            // Test coordinates (frame of reference) encoding here
             //            if (frame_of_reference == 1)
             //            {
@@ -1568,35 +1598,27 @@ void DifferentialCPG::step(
     i++;
   }
 
-  //  // Commented out due to 1GB per grid search data generation.
-  //  // Write state to file
-  //  std::ofstream state_file;
-  //  state_file.open(this->directory_name + "states.txt", std::ios::app);
-  //  for(size_t i = 0; i < this->neurons.size(); i++)
-  //  {
-  //    state_file << this->next_state[i] << ",";
-  //  }
-  //  state_file << std::endl;
-  //  state_file.close();
-  //
-  //  // Write signal to file
-  //  std::ofstream signal_file;
-  //  signal_file.open(this->directory_name + "signal.txt", std::ios::app);
-  //  for(size_t i = 0; i < this->n_motors; i++)
-  //  {
-  //    signal_file << this->output[i] << ",";
-  //  }
-  //  signal_file << std::endl;
-  //  signal_file.close();
+//    // Commented out due to 1GB per grid search data generation. Could later be useful
+//    // Write state to file
+//    std::ofstream state_file;
+//    state_file.open(this->directory_name + "states.txt", std::ios::app);
+//    for(size_t i = 0; i < this->neurons.size(); i++)
+//    {
+//      state_file << this->next_state[i] << ",";
+//    }
+//    state_file << std::endl;
+//    state_file.close();
+//
+//    // Write signal to file
+//    std::ofstream signal_file;
+//    signal_file.open(this->directory_name + "signal.txt", std::ios::app);
+//    for(size_t i = 0; i < this->n_motors; i++)
+//    {
+//      signal_file << this->output[i] << ",";
+//    }
+//    signal_file << std::endl;
+//    signal_file.close();
 }
-
-
-// Make constexpre here that returns the double value
-constexpr auto transform_double(double a) {
-  return a;
-}
-
-
 
 /**
  * Save the parameters used in this run to a file.

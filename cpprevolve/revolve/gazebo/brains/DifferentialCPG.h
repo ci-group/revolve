@@ -302,7 +302,7 @@ namespace revolve
 
       // Targeted locomotion learner parameters
       private: double for_slower_power;
-      private: bool for_use_hill_climber = true;
+      private: bool for_use_hill_climber = false;
       private: double for_best_avg_speed = 0.0;
       private: double for_step_size_eps = 0.05;
       private: double for_step_size = 3.0;
@@ -316,6 +316,7 @@ namespace revolve
       private: int for_subqueue_size = 0;
       private: std::vector<double> for_queue;
       private: std::vector<std::vector<double>> for_speeds;
+      private: double highest_speed = 0.0;
     };
   }
 }
