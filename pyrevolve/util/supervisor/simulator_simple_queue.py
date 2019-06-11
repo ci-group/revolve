@@ -116,8 +116,7 @@ class SimulatorSimpleQueue:
             self._robot_queue.task_done()
             self._free_simulator[i] = True
 
-    #@staticmethod
-    async def _evaluate_robot(simulator_connection, robot, conf):
+    async def _evaluate_robot(self, simulator_connection, robot, conf):
         await simulator_connection.pause(True)
         insert_future = await simulator_connection.insert_robot(robot, Vector3(0, 0, self._settings.z_start))
         robot_manager = await insert_future
@@ -132,7 +131,8 @@ class SimulatorSimpleQueue:
         logger.info(f'Time taken: {elapsed}')
 
         robot_fitness = conf.fitness_function(robot_manager)
-        delete_future = await simulator_connection.delete_all_robots()  # robot_manager
+        delete_future = await simulator_connection.delete_all_robots()
+        # delete_future = await simulator_connection.delete_robot(robot_manager)
         await delete_future
         await simulator_connection.pause(True)
         await simulator_connection.reset(rall=True, time_only=True, model_only=False)

@@ -222,7 +222,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--world',
-    default='worlds/plan.world', type=str,
+    default='worlds/plane.world', type=str,
     help="Determine which world to use."
 )
 

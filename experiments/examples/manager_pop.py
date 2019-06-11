@@ -39,8 +39,9 @@ async def run():
 
     settings = parser.parse_args()
     experiment_management = ExperimentManagement(settings)
+    recovery_enabled = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
-    if settings.recovery_enabled and not experiment_management.experiment_is_new():
+    if recovery_enabled:
         gen_num, next_robot_id = experiment_management.read_recovery_state()
     else:
         gen_num = 0
@@ -50,7 +51,7 @@ async def run():
         population_size=100,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.displacement_velocity_hill,
+        fitness_function=fitness.online_old_revolve,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
@@ -72,7 +73,7 @@ async def run():
 
     population = Population(population_conf, simulator_queue, next_robot_id)
 
-    if settings.recovery_enabled and not experiment_management.experiment_is_new():
+    if recovery_enabled:
         # loading a previous state of the experiment
         population.load_pop(gen_num)
         # We load the population, but not the fitness, so we recalculate it
@@ -92,40 +93,3 @@ async def run():
         experiment_management.update_recovery_state(gen_num, population.next_robot_id)
 
     # output result after completing all generations...
-
-
-def main():
-    import traceback
-
-    def handler(_loop, context):
-        try:
-            exc = context['exception']
-        except KeyError:
-            print(context['message'])
-            return
-
-        if isinstance(exc, DisconnectError) \
-                or isinstance(exc, ConnectionResetError):
-            print("Got disconnect / connection reset - shutting down.")
-            # sys.exit(0)
-
-        if isinstance(exc, OSError) and exc.errno == 9:
-            print(exc)
-            traceback.print_exc()
-            return
-
-        traceback.print_exc()
-        raise exc
-
-    try:
-        loop = asyncio.get_event_loop()
-        loop.set_exception_handler(handler)
-        loop.run_until_complete(run())
-    except KeyboardInterrupt:
-        print("Got CtrlC, shutting down.")
-
-
-if __name__ == '__main__':
-    print("STARTING")
-    main()
-    print("FINISHED")
