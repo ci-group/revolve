@@ -139,6 +139,7 @@ class Population:
                 child = self.conf.selection(self.individuals)
 
             child.id = self.next_robot_id
+            child.genotype.id = self.next_robot_id
             self.next_robot_id += 1
 
             # Mutation operator

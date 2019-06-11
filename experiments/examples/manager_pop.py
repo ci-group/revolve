@@ -48,7 +48,7 @@ async def run():
         next_robot_id = 0
 
     population_conf = PopulationConfig(
-        population_size=100,
+        population_size=10,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         fitness_function=fitness.displacement_velocity_hill,
@@ -61,7 +61,7 @@ async def run():
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=settings.evaluation_time,
-        offspring_size=50,
+        offspring_size=5,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         measure_individuals=settings.measure_individuals,
