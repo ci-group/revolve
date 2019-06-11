@@ -66,12 +66,11 @@ class RevolveBot:
         """
         pass
 
-    def measure_phenotype(self, export: bool = False):
+    def measure_phenotype(self, experiment_name):
         self._morphological_measurements = self.measure_body()
         self._brain_measurements = self.measure_brain()
         logger.info('Robot ' + str(self.id) + ' was measured.')
-        if export:
-            self.export_phenotype_measurements()
+        self.export_phenotype_measurements(experiment_name)
 
     def measure_body(self):
         """
@@ -86,14 +85,14 @@ class RevolveBot:
         except Exception as e:
             logger.exception('Failed measuring body')
 
-    def export_phenotype_measurements(self):
-        # !!!!! we need to define the experiment path as a parameter somewhere...
-        path = 'karine_exps'
-        file = open('experiments/'+path+'/phenotype_measurements_'+str(self.id)+'.txt', 'w+')
-        for key, value in self._morphological_measurements.measurement_to_dict().items():
-            file.write('{} {}\n'.format(key, value))
-        for key, value in self._brain_measurements.measurement_to_dict().items():
-            file.write('{} {}\n'.format(key, value))
+    def export_phenotype_measurements(self, path):
+        with open('experiments/' + path + '/data_fullevolution/descriptors/'
+                  + 'phenotype_desc_' + str(self.id) + '.txt', 'w+') as file:
+            # TODO this crashes
+            for key, value in self._morphological_measurements.measurements_to_dict().items():
+                file.write('{} {}\n'.format(key, value))
+            for key, value in self._brain_measurements.measurements_to_dict().items():
+                file.write('{} {}\n'.format(key, value))
 
     def measure_brain(self):
         """

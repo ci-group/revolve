@@ -36,6 +36,8 @@ class Orientation(Enum):
             return 'E'
         elif self == self.WEST:
             return 'W'
+        else:
+            assert False
 
 
 class RevolveModule:
@@ -137,7 +139,7 @@ class RevolveModule:
         has_children = False
 
         children = {}
-        for i, child in enumerate(self.children):
+        for i, child in self.iter_children():
             if child is not None:
                 children[i] = child.to_yaml()
                 has_children = True

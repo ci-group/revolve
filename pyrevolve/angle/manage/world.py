@@ -11,6 +11,7 @@ import traceback
 from asyncio import Future
 from datetime import datetime
 from pygazebo.msg import gz_string_pb2
+from pygazebo.msg.contacts_pb2 import Contacts
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.spec.msgs import BoundingBox
@@ -206,6 +207,12 @@ class WorldManager(manage.WorldManager):
             self._update_states
         )
 
+        self.contact_subscriber = self.manager.subscribe(
+            '/gazebo/default/physics/contacts',
+            'gazebo.msgs.Contacts',
+            self._update_contacts
+        )
+
         await (self.set_state_update_frequency(
             freq=self.state_update_frequency
         ))
@@ -221,6 +228,7 @@ class WorldManager(manage.WorldManager):
 
         # Wait for connections
         await (self.pose_subscriber.wait_for_connection())
+        await (self.contact_subscriber.wait_for_connection())
 
         if self.do_restore:
             await (self.restore_snapshot(self.do_restore))
@@ -228,6 +236,7 @@ class WorldManager(manage.WorldManager):
     def disconnect(self):
         super().disconnect()
         self.pose_subscriber.remove()
+        self.contact_subscriber.remove()
         self.battery_handler.stop()
 
     async def create_snapshot(self):
@@ -407,6 +416,11 @@ class WorldManager(manage.WorldManager):
         :type pose: Pose|Vector3
         :return: A future that resolves with the created `Robot` object.
         """
+
+        # if the ID is digit, when removing the robot, the simulation will try to remove random stuff from the
+        # environment and give weird crash errors
+        assert(not str(revolve_bot.id).isdigit())
+
         sdf_bot = revolve_bot.to_sdf(pose)
 
         if self.output_directory:
@@ -603,7 +617,6 @@ class WorldManager(manage.WorldManager):
         """
         states = RobotStates()
         states.ParseFromString(msg)
-
         self.last_time = t = Time(msg=states.time)
         if self.start_time is None or t < self.start_time:
             # A lower start time may indicate a world reset, which
@@ -614,10 +627,28 @@ class WorldManager(manage.WorldManager):
             robot_manager = self.robot_managers.get(state.name, None)
             if not robot_manager:
                 continue
-
             robot_manager.update_state(self, t, state, self.write_poses)
 
         self.call_update_triggers()
+
+    def _update_contacts(self, msg):
+        """
+        Handles the contacts with the ground info message by updating robot contacts.
+        :param msg:
+        :return:
+        """
+        contacts = Contacts()
+        contacts.ParseFromString(msg)
+
+        # if there was any contact in that instant
+        if contacts.contact:
+            # fetches one or more contact poitns for each module that has contacts
+            for module_contacts in contacts.contact:
+                robot_name = module_contacts.collision1.split('::')[0]
+                robot_manager = self.robot_managers.get(robot_name, None)
+                if not robot_manager:
+                    continue
+                robot_manager.update_contacts(self, module_contacts)
 
     def add_update_trigger(self, callback):
         """

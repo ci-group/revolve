@@ -165,7 +165,9 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
 
       auto poseMsg = stateMsg->mutable_pose();
       auto relativePose = model->RelativePose();
+
       gz::msgs::Set(poseMsg, relativePose);
+
     }
 
     if (msg.robot_state_size() > 0)

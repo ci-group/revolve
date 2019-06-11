@@ -5,6 +5,7 @@ from pyrevolve.SDF.math import Vector3
 from ..custom_logging.logger import logger
 import time
 import asyncio
+import os
 
 
 class PopulationConfig:
@@ -22,7 +23,11 @@ class PopulationConfig:
                  population_management,
                  population_management_selector,
                  evaluation_time,
-                 offspring_size=None):
+                 experiment_name,
+                 experiment_management,
+                 measure_individuals,
+                 offspring_size=None,
+                 next_robot_id=0):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -36,6 +41,10 @@ class PopulationConfig:
         :param selection: selection type
         :param parent_selection: selection type during parent selection
         :param population_management: type of population management ie. steady state or generational
+        :param evaluation_time: duration of an experiment
+        :param experiment_name: name for the folder of the current experiment
+        :param experiment_management: object with methods for managing the current experiment
+        :param measure_individuals: weather or not to perform  phenotypic measurements
         :param offspring_size (optional): size of offspring (for steady state)
         """
         self.population_size = population_size
@@ -51,11 +60,15 @@ class PopulationConfig:
         self.population_management = population_management
         self.population_management_selector = population_management_selector
         self.evaluation_time = evaluation_time
+        self.experiment_name = experiment_name
+        self.experiment_management = experiment_management
+        self.measure_individuals = measure_individuals
         self.offspring_size = offspring_size
+        self.next_robot_id = next_robot_id
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig, simulator_connection):
+    def __init__(self, conf: PopulationConfig, simulator_connection, next_robot_id):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -64,18 +77,44 @@ class Population:
 
         :param conf: configuration of the system
         :param simulator_connection: connection to the simulator
+        :param next_robot_id: (sequential) id of the next individual to be created
         """
         self.conf = conf
         self.individuals = []
         self.simulator_connection = simulator_connection
+        self.next_robot_id = next_robot_id
+
+    def _new_individual(self, genotype):
+        individual = Individual(genotype)
+        individual.develop()
+        self.conf.experiment_management.export_genotype(individual)
+        self.conf.experiment_management.export_phenotype(individual)
+        if self.conf.measure_individuals:
+            individual.phenotype.measure_phenotype(self.conf.experiment_name)
+
+        return individual
+
+    def load_pop(self, gen_num):
+        path = 'experiments/'+self.conf.experiment_name
+        for r, d, f in os.walk(path +'/selectedpop_'+str(gen_num)):
+            for file in f:
+                if 'body' in file:
+                    genotype_id = file.split('.')[0].split('_')[-1]
+                    genotype = self.conf.genotype_constructor(self.conf.genotype_conf, genotype_id)
+                    genotype.load_genotype(f'{path}/data_fullevolution/genotypes/genotype_{genotype_id}.txt')
+
+                    individual = Individual(genotype)
+                    individual.develop()
+                    self.individuals.append(individual)
 
     async def init_pop(self):
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
         for i in range(self.conf.population_size):
-            individual = Individual(self.conf.genotype_constructor(self.conf.genotype_conf))
+            individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
             self.individuals.append(individual)
+            self.next_robot_id += 1
 
         await self.evaluate(self.individuals, 0)
 
@@ -95,13 +134,17 @@ class Population:
             # Crossover
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
-                child = self.conf.crossover_operator(parents, self.conf.crossover_conf)
+                child = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
             else:
                 child = self.conf.selection(self.individuals)
+
+            child.id = self.next_robot_id
+            self.next_robot_id += 1
+
             # Mutation operator
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
             # Insert individual in new population
-            individual = Individual(child_genotype)
+            individual = self._new_individual(child_genotype)
             new_individuals.append(individual)
 
         # evaluate new individuals
@@ -113,7 +156,7 @@ class Population:
                                                               self.conf.population_management_selector)
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
-        new_population = Population(self.conf, self.simulator_connection)
+        new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
         new_population.individuals = new_individuals
         return new_population
 
@@ -129,7 +172,6 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            individual.develop()
             robot_futures.append(self.evaluate_single_robot(individual))
 
         await asyncio.sleep(1)
@@ -141,6 +183,8 @@ class Population:
             logger.info(f'Evaluation complete! Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
 
     def evaluate_single_robot(self, individual):
+        if individual.phenotype is None:
+            individual.develop()
         return self.simulator_connection.test_robot(individual.phenotype, self.conf)
 
     async def _evaluate_single_robot(self, individual):
@@ -160,6 +204,7 @@ class Population:
         max_age = self.conf.evaluation_time
         while robot_manager.age() < max_age:
             individual.fitness = self.conf.fitness_function(robot_manager)
+            self.conf.experiment_management.export_fitness(individual)
             await asyncio.sleep(1.0 / 5)  # 5= state_update_frequency
         end = time.time()
         elapsed = end-start

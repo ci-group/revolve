@@ -6,6 +6,8 @@ from collections import deque
 
 from pyrevolve.SDF.math import Vector3, Quaternion
 from pyrevolve.util import Time
+import math
+import os
 
 
 class RobotManager(object):
@@ -48,6 +50,7 @@ class RobotManager(object):
         self._dt = deque(maxlen=speed_window)
         self._positions = deque(maxlen=speed_window)
         self._orientations = deque(maxlen=speed_window)
+        self._contacts = deque(maxlen=speed_window)
         self._seconds = deque(maxlen=speed_window)
         self._times = deque(maxlen=speed_window)
 
@@ -137,6 +140,14 @@ class RobotManager(object):
         self._dt.append(dt)
         self._orientations.append(euler)
         self._seconds.append(age.sec)
+
+    def update_contacts(self, world, module_contacts):
+
+        number_contacts = 0
+        for position in module_contacts.position:
+            number_contacts += 1
+
+        self._contacts.append(number_contacts)
 
     def age(self):
         """

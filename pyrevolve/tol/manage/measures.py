@@ -65,33 +65,45 @@ def head_balance(robot_manager):
     balance = 1 - balance
     return balance
 
-def logs_position_orientation(robot_manager, o, evaluation_time, robotid, generation, experiment_name):
-    # define a path properly somewhere!!!!!!
-    f = open('../../../l-system/experiments/' + experiment_name +
-             '/offspringpop'+generation+'/positions_'+robotid+'.txt', "a+")
-    if robot_manager.second <= evaluation_time:
-        robot_manager.avg_roll += robot_manager._orientations[o][0]
-        robot_manager.avg_pitch += robot_manager._orientations[o][1]
-        robot_manager.avg_yaw += robot_manager._orientations[o][2]
-        robot_manager.avg_x += robot_manager._positions[o].x
-        robot_manager.avg_y += robot_manager._positions[o].y
-        robot_manager.avg_z += robot_manager._positions[o].z
-        robot_manager.avg_roll = robot_manager.avg_roll/robot_manager.count_group
-        robot_manager.avg_pitch = robot_manager.avg_pitch/robot_manager.count_group
-        robot_manager.avg_yaw = robot_manager.avg_yaw/robot_manager.count_group
-        robot_manager.avg_x = robot_manager.avg_x/robot_manager.count_group
-        robot_manager.avg_y = robot_manager.avg_y/robot_manager.count_group
-        robot_manager.avg_z = robot_manager.avg_z/robot_manager.count_group
-        robot_manager.avg_roll = robot_manager.avg_roll * 180 / math.pi
-        robot_manager.avg_pitch = robot_manager.avg_pitch * 180 / math.pi
-        robot_manager.avg_yaw = robot_manager.avg_yaw * 180 / math.pi
-        f.write(str(robot_manager.second) + ' ' + str(robot_manager.avg_roll) + ' ' + str(robot_manager.avg_pitch) + ' ' + str(robot_manager.avg_yaw)
-                + ' ' + str(robot_manager.avg_x) + ' ' + str(robot_manager.avg_y) + ' ' + str(robot_manager.avg_z) + '\n')
-        robot_manager.second += 1
-        robot_manager.avg_roll = 0
-        robot_manager.avg_pitch = 0
-        robot_manager.avg_yaw = 0
-        robot_manager.avg_x = 0
-        robot_manager.avg_y = 0
-        robot_manager.avg_z = 0
-        robot_manager.count_group = 1
+
+def sum_of_contacts(robot_manager):
+    sum_of_contacts = 0
+    for c in robot_manager._contacts:
+        sum_of_contacts += c
+    return sum_of_contacts
+
+def logs_position_orientation(robot_manager, o, evaluation_time, robotid, path):
+
+    with open(path+'/data_fullevolution/descriptors/positions_'+robotid+'.txt', "a+") as f:
+
+        if robot_manager.second <= evaluation_time:
+            robot_manager.avg_roll += robot_manager._orientations[o][0]
+            robot_manager.avg_pitch += robot_manager._orientations[o][1]
+            robot_manager.avg_yaw += robot_manager._orientations[o][2]
+            robot_manager.avg_x += robot_manager._positions[o].x
+            robot_manager.avg_y += robot_manager._positions[o].y
+            robot_manager.avg_z += robot_manager._positions[o].z
+            robot_manager.avg_roll = robot_manager.avg_roll/robot_manager.count_group
+            robot_manager.avg_pitch = robot_manager.avg_pitch/robot_manager.count_group
+            robot_manager.avg_yaw = robot_manager.avg_yaw/robot_manager.count_group
+            robot_manager.avg_x = robot_manager.avg_x/robot_manager.count_group
+            robot_manager.avg_y = robot_manager.avg_y/robot_manager.count_group
+            robot_manager.avg_z = robot_manager.avg_z/robot_manager.count_group
+            robot_manager.avg_roll = robot_manager.avg_roll * 180 / math.pi
+            robot_manager.avg_pitch = robot_manager.avg_pitch * 180 / math.pi
+            robot_manager.avg_yaw = robot_manager.avg_yaw * 180 / math.pi
+            f.write(str(robot_manager.second) + ' '
+                    + str(robot_manager.avg_roll) + ' '
+                    + str(robot_manager.avg_pitch) + ' '
+                    + str(robot_manager.avg_yaw) + ' '
+                    + str(robot_manager.avg_x) + ' '
+                    + str(robot_manager.avg_y) + ' '
+                    + str(robot_manager.avg_z) + '\n')
+            robot_manager.second += 1
+            robot_manager.avg_roll = 0
+            robot_manager.avg_pitch = 0
+            robot_manager.avg_yaw = 0
+            robot_manager.avg_x = 0
+            robot_manager.avg_y = 0
+            robot_manager.avg_z = 0
+            robot_manager.count_group = 1

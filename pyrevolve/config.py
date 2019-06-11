@@ -63,6 +63,7 @@ def str_to_address(v):
     host, port = v.split(":", 1)
     return host, int(port)
 
+#TODO remove obsolete params
 
 parser = CustomParser(fromfile_prefix_chars='@')
 parser.add_argument(
@@ -92,7 +93,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--evaluation-time',
-    default=12, type=float,
+    default=30, type=float,
     help="The size of the `speed window` for each robot, i.e. the number of "
          "past (simulation) seconds over which its speed is evaluated. In "
          "offline evolution, this determines the length of the experiment run."
@@ -139,6 +140,24 @@ parser.add_argument(
     default=True, type=str_to_bool,
     help="Force bricks to be in default orientation and disable parametric "
          "bar joint rotation."
+)
+
+parser.add_argument(
+    '--recovery-enabled',
+    default=True, type=str_to_bool,
+    help="Wheather recovery is enabled."
+)
+
+parser.add_argument(
+    '--export-phenotype',
+    default=True, type=str_to_bool,
+    help="Exports yamls with the phenotypes."
+)
+
+parser.add_argument(
+    '--measure-individuals',
+    default=True, type=str_to_bool,
+    help="Derives descriptors from phenotypes."
 )
 
 parser.add_argument(
@@ -203,13 +222,13 @@ parser.add_argument(
 
 parser.add_argument(
     '--world',
-    default='worlds/gait-learning.world', type=str,
+    default='worlds/plane.world', type=str,
     help="Determine which world to use."
 )
 
 parser.add_argument(
     '--manager',
-    # default='experiments/examples/manager.py',
+    default='experiments/examples/manager_pop.py',
     type=str,
     help="Determine which manager to use."
 )
@@ -364,6 +383,35 @@ parser.add_argument(
         default=None, type=str,
         help="A robot's genome in YAML format. It is easier to transfer it "
              "than to convert it from SDF."
+)
+parser.add_argument(
+        '--experiment_name',
+        default='default_experiment', type=str,
+        help="Name of current experiment. A folder with thid name will be created."
+)
+
+parser.add_argument(
+        '--test-robot',
+        default=None, type=str,
+        help="Start a simulation with a single robot instead of running evolution. Loads yaml robots."
+)
+
+parser.add_argument(
+        '--n-cores',
+        default=1, type=int,
+        help="Number of simulators to use at the same time"
+)
+
+parser.add_argument(
+    '--z-start',
+    default=0.01, type=float,
+    help="Position in the z axis where the robot is placed at the beginning of the simulation."
+)
+
+parser.add_argument(
+    '--port-start',
+    default=11345, type=int,
+    help="Gazebo port to connect to"
 )
 
 

@@ -101,15 +101,15 @@ class Plasticoding(Genotype):
     """
     L-system genotypic representation, enhanced with epigenetic capabilities for phenotypic plasticity, through Genetic Programming.
     """
-    id_iter = itertools.count()
 
-    def __init__(self, conf):
+    def __init__(self, conf, robot_id=''):
         """
-        :param conf:
+        :param conf: configurations for lsystem
+        :param robot_id: unique id of the robot
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = 'genotype' + str(next(self.id_iter))
+        self.id = str(robot_id)
         self.grammar = {}
 
         # Auxiliary variables
@@ -182,15 +182,6 @@ class Plasticoding(Genotype):
         if self.phenotype._morphological_measurements.measurement_to_dict()['hinge_count'] > 0:
             self.valid = True
 
-    def export_phenotype_files(self, path):
-        self.export_genotype('experiments/'+path+'/genotype_'+str(self.id)+'.txt')
-        self.phenotype.save_file('experiments/'+path+'/'+str(self.id)+'.yaml')
-        self.render(path)
-
-    def render(self, path):
-        self.phenotype.render2d('experiments/'+path+'/body_'+str(self.id)+'.png')
-        self.phenotype.render_brain('experiments/'+path+'/brain_' + str(self.id))
-
     def develop(self):
         self.early_development()
         phenotype = self.late_development()
@@ -221,7 +212,7 @@ class Plasticoding(Genotype):
     def late_development(self):
 
         self.phenotype = RevolveBot()
-        self.phenotype._id = self.id.replace('genome', 'pheno')
+        self.phenotype._id = "robot_{}".format(self.id)
         self.phenotype._brain = BrainNN()
 
         for symbol in self.intermediate_phenotype:
@@ -693,7 +684,8 @@ class PlasticodingConfig:
                  weight_max=1,
                  axiom_w=Alphabet.CORE_COMPONENT,
                  i_iterations=3,
-                 max_structural_modules=100
+                 max_structural_modules=100,
+                 robot_id=0
                  ):
         self.initialization_genome = initialization_genome
         self.e_max_groups = e_max_groups
@@ -706,3 +698,4 @@ class PlasticodingConfig:
         self.axiom_w = axiom_w
         self.i_iterations = i_iterations
         self.max_structural_modules = max_structural_modules
+        self.robot_id = robot_id

@@ -1,5 +1,6 @@
 # (G,P)
 
+
 class Individual:
     def __init__(self, genotype, phenotype=None):
         """
@@ -20,3 +21,11 @@ class Individual:
         """
         if self.phenotype is None:
             self.phenotype = self.genotype.develop()
+
+    def __repr__(self):
+        _id = None
+        if self.phenotype is not None:
+            _id = self.phenotype.id
+        elif self.genotype.id is not None:
+            _id = self.genotype.id
+        return f'Individual_{_id}({self.fitness})'

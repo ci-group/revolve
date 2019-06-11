@@ -113,8 +113,8 @@ def standard_mutation(genotype, mutation_conf):
     :return: modified genotype
     """
     new_genotype = genotype.clone()
-    chance_of_mutation = random.uniform(0.0, 1.0)
-    if chance_of_mutation <= mutation_conf.mutation_prob:
+    mutation_attempt = random.uniform(0.0, 1.0)
+    if mutation_attempt > mutation_conf.mutation_prob:
         return new_genotype
     else:
         mutation_type = random.randint(1, 3)  # NTS: better way?

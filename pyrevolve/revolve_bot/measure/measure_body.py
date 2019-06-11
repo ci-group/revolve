@@ -283,6 +283,8 @@ class MeasureBody:
         """
         if self.free_slots is None:
             self.count_free_slots()
+        if self.free_slots == 0:
+            self.free_slots = 0.0001
         self.sensors = self.touch_sensor_count / self.free_slots
         return self.sensors
 
@@ -368,9 +370,9 @@ class MeasureBody:
         self.measure_branching()
         self.measure_sensors()
         self.measure_size()
-        return self.measurement_to_dict()
+        return self.measurements_to_dict()
 
-    def measurement_to_dict(self):
+    def measurements_to_dict(self):
         """
         Return dict of all measurements
         :return:

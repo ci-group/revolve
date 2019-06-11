@@ -4,7 +4,7 @@ import random
 from ....custom_logging.logger import genotype_logger
 
 
-def generate_child_genotype(parents, crossover_conf):
+def generate_child_genotype(parents, genotype_conf, crossover_conf):
     """
     Generates a child (individual) by randomly mixing production rules from two parents
 
@@ -13,8 +13,8 @@ def generate_child_genotype(parents, crossover_conf):
     :return: child genotype
     """
     grammar = {}
-    chance_of_crossover = random.uniform(0.0, 1.0)
-    if chance_of_crossover <= crossover_conf.crossover_prob:
+    crossover_attempt = random.uniform(0.0, 1.0)
+    if crossover_attempt > crossover_conf.crossover_prob:
         grammar = parents[0].genotype.grammar
     else:
         for letter in Alphabet.modules():
@@ -22,12 +22,12 @@ def generate_child_genotype(parents, crossover_conf):
             # gets the production rule for the respective letter
             grammar[letter[0]] = parents[parent].genotype.grammar[letter[0]]
 
-    genotype = Plasticoding(PlasticodingConfig())
+    genotype = Plasticoding(genotype_conf)
     genotype.grammar = grammar
     return genotype.clone()
 
 
-def standard_crossover(parents, crossover_conf):
+def standard_crossover(parents, genotype_conf, crossover_conf):
     """
     Creates an child (individual) through crossover with two parents
 
@@ -35,7 +35,7 @@ def standard_crossover(parents, crossover_conf):
 
     :return: child (individual)
     """
-    genotype = generate_child_genotype(parents, crossover_conf)
+    genotype = generate_child_genotype(parents, genotype_conf, crossover_conf)
     child = Individual(genotype)
     genotype_logger.info(
         f'crossover: for genome {child.genotype.id} - p1: {parents[0].genotype.id} p2: {parents[1].genotype.id}.')
