@@ -22,7 +22,7 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    num_generations = 100
+    num_generations = 2#100
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,
@@ -51,7 +51,7 @@ async def run():
         population_size=100,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.online_old_revolve,
+        fitness_function=fitness.displacement_velocity_hill,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,

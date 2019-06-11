@@ -42,7 +42,7 @@ def online_old_revolve(robot_manager):
     return v if v <= robot_manager.conf.fitness_limit else 0.0
 
 def displacement_velocity_hill(robot_manager):
-    _displacement_velocity_hill = displacement_velocity_hill(robot_manager)
+    _displacement_velocity_hill = measures.displacement_velocity_hill(robot_manager)
     if _displacement_velocity_hill < 0:
         _displacement_velocity_hill /= 10
     elif _displacement_velocity_hill == 0:
@@ -55,8 +55,8 @@ def displacement_velocity_hill(robot_manager):
 
 def floor_is_lava(robot_manager):
 
-    _displacement_velocity_hill = displacement_velocity_hill(robot_manager)
-    _sum_of_contacts = sum_of_contacts(robot_manager)
+    _displacement_velocity_hill = measures.displacement_velocity_hill(robot_manager)
+    _sum_of_contacts = measures.sum_of_contacts(robot_manager)
     if _displacement_velocity_hill >= 0:
         fitness = _displacement_velocity_hill *_(1/_sum_of_contacts)
     else:
