@@ -188,30 +188,30 @@ class Population:
             individual.develop()
         return self.simulator_connection.test_robot(individual.phenotype, self.conf)
 
-    async def _evaluate_single_robot(self, individual):
-        """
-        Evaluate an individual
-
-        :param individual: an individual from the new population
-        """
-        # Insert the robot in the simulator
-        insert_future = await self.simulator_connection.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
-        robot_manager = await insert_future
-
-        # Resume simulation
-        await self.simulator_connection.pause(False)
-        start = time.time()
-        # Start a run loop to do some stuff
-        max_age = self.conf.evaluation_time
-        while robot_manager.age() < max_age:
-            individual.fitness = self.conf.fitness_function(robot_manager)
-            self.conf.experiment_management.export_fitness(individual)
-            await asyncio.sleep(1.0 / 5)  # 5= state_update_frequency
-        end = time.time()
-        elapsed = end-start
-        logger.info(f'Time taken: {elapsed}')
-
-        delete_future = await self.simulator_connection.delete_all_robots()  # robot_manager
-        await delete_future
-        await self.simulator_connection.pause(True)
-        await self.simulator_connection.reset()
+    #TODO kill this method?
+    # async def _evaluate_single_robot(self, individual):
+    #     """
+    #     Evaluate an individual
+    #
+    #     :param individual: an individual from the new population
+    #     """
+    #     # Insert the robot in the simulator
+    #     insert_future = await self.simulator_connection.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
+    #     robot_manager = await insert_future
+    #
+    #     # Resume simulation
+    #     await self.simulator_connection.pause(False)
+    #     start = time.time()
+    #     # Start a run loop to do some stuff
+    #     max_age = self.conf.evaluation_time
+    #     while robot_manager.age() < max_age:
+    #         individual.fitness = self.conf.fitness_function(robot_manager)
+    #         await asyncio.sleep(1.0 / 5)  # 5= state_update_frequency
+    #     end = time.time()
+    #     elapsed = end-start
+    #     logger.info(f'Time taken: {elapsed}')
+    #
+    #     delete_future = await self.simulator_connection.delete_all_robots()  # robot_manager
+    #     await delete_future
+    #     await self.simulator_connection.pause(True)
+    #     await self.simulator_connection.reset()

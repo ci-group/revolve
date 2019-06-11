@@ -26,10 +26,11 @@ class ExperimentManagement:
             individual.phenotype.save_file('experiments/'+self.settings.experiment_name
                                             +'/data_fullevolution/phenotypes/phenotype_'+str(individual.genotype.id)+'.yaml')
 
-    def export_fitness(self, individual):
-        f = open('experiments/'+ self.settings.experiment_name + '/data_fullevolution/fitness_'+str(individual.genotype.id)+'.txt', "w")
-        f.write(str(individual.fitness))
-        f.close()
+    def export_fitnesses(self, individuals):
+        for individual in individuals:
+            f = open(f'experiments/{self.settings.experiment_name}/data_fullevolution/fitness_{individual.genotype.id}.txt', "w")
+            f.write(str(individual.fitness))
+            f.close()
 
     def export_snapshots(self, individuals, gen_num):
         if self.settings.recovery_enabled:
