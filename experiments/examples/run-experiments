@@ -1,6 +1,7 @@
 #!/bin/bash
 while true
 	do
-        python ../../revolve.py
+        ./revolve.py --experiment_name baseline
+        ./revolve.py --experiment_name lava
 sleep 1
 done

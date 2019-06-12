@@ -22,10 +22,10 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    num_generations = 3#100
+    num_generations = 1000
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=15,
+        max_structural_modules=100,
     )
 
     mutation_conf = MutationConfig(
@@ -48,7 +48,7 @@ async def run():
         next_robot_id = 0
 
     population_conf = PopulationConfig(
-        population_size=4,
+        population_size=20,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         fitness_function=fitness.displacement_velocity_hill,
@@ -61,7 +61,7 @@ async def run():
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=settings.evaluation_time,
-        offspring_size=2,
+        offspring_size=10,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         measure_individuals=settings.measure_individuals,
@@ -75,22 +75,17 @@ async def run():
 
     if recovery_enabled:
         # loading a previous state of the experiment
-        population.load_pop(gen_num)
-        # We load the population, but not the fitness, so we recalculate it
-        # TODO speed up recovery by loading the saved fitness instead
-        await population.evaluate(population.individuals, gen_num)
+        await population.load_pop(gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
         await population.init_pop()
-        experiment_management.export_fitnesses(population.individuals)
         experiment_management.export_snapshots(population.individuals, gen_num)
         experiment_management.update_recovery_state(gen_num, population.next_robot_id)
 
     while gen_num < num_generations:
         gen_num += 1
         population = await population.next_gen(gen_num)
-        experiment_management.export_fitnesses(population.individuals)
         experiment_management.export_snapshots(population.individuals, gen_num)
         experiment_management.update_recovery_state(gen_num, population.next_robot_id)
 
