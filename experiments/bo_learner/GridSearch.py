@@ -14,37 +14,27 @@ from joblib import Parallel, delayed
 # Parameters
 min_lines = 1450
 run_gazebo = False
-n_runs = 20 # Naar 20
-run_factor = 5
-n_jobs = 60
+n_runs = 200 # Naar 20
+run_factor = 1
+n_jobs = 45
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "babyA.yaml"
+yaml_model = "spider17.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = ".venv/bin/python3"
+python_interpreter = "venv/bin/python3"
 search_space = {
-    'n_learning_iterations': [1500],
-    'n_init_samples': [20],
-    'evaluation_rate': [60],
     'verbose': [0],
-    'kernel_sigma_sq': [1],
-    'kernel_l': [0.02, 0.05, 0.1, 0.2],
-    'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
-    'range_ub': [1.5],
-    'signal_factor_all': [4.0],
 }
 
 print(search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
-start_port = 11345
+start_port = 12500
 finished = False
 
 # Make in revolve/build to allow runs from terminal
-#os.system('nmcli connection up id "Ripper intranet"')
-os.system('cmake /home/gongjinlan/projects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
+os.system('cmake /home/maarten/CLionProjects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
 os.system("make -j60")
-#os.system('nmcli connection down id "Ripper intranet"')
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
@@ -145,36 +135,6 @@ if __name__ == "__main__":
     # Get permutations
     keys, values = zip(*search_space.items())
     experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
-
-    # PASTE THE EXPERIMENTS HERE, IN THE FORMAT SHOWN BELOW
-    experiments = [
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},   # BASE RUN
-
-        # BASE RUN
-        {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 1.0, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 1.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.1,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
-        # BASE RUN
-
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.2},
-        # BASE RUN
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 2.0},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 3.0},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 4.0},
-
-        {'init_method': "RS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
-        # BASE RUN
-    ]
-    # 'kernel_l': [0.02, 0.05, 0.1, 0.2],
-    # 'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
     unique_experiments = experiments
     n_unique_experiments = len(experiments)
 
@@ -183,7 +143,7 @@ if __name__ == "__main__":
         my_dict["id"] = ix
 
     # Create a list with parameters to iterate over
-    experiments *= n_runs*run_factor
+    experiments *= n_runs
 
     # Save to yaml files
     create_yamls(yaml_path=my_yaml_path,
