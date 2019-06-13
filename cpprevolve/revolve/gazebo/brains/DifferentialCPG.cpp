@@ -564,6 +564,12 @@ void DifferentialCPG::set_random_goal_box(){
     }
   }
 
+  // Max speed of 0.0025
+  this->goal_iteration_counter_max = std::round(this->dist_to_goal/0.0025);
+  if(this->verbose)
+  {
+    std::cout << "Max iterations: " << this->goal_iteration_counter_max << std::endl;
+  }
   // Update goal box
   auto new_pose = ::ignition::math::Pose3d();
   new_pose.Set(goal_x, goal_y, 0.05, 0.0, 0.0, 0.0);
@@ -885,7 +891,7 @@ void DifferentialCPG::Update(
       , 0.5);
 
   //TODO: MAke eps parameter
-  if (this->dist_to_goal < 0.5 or false)
+  if (this->dist_to_goal < 0.5)
   {
     // Calculate time it took to perform the targeted locomtion task
     this->corner_threshold_met = false;
@@ -913,6 +919,12 @@ void DifferentialCPG::Update(
 
     // Reset goal box
     this->set_random_goal_box();
+
+    // Check if we are finished
+    if(this->goal_count >= this->goal_count_max)
+    {
+      std::exit(0);
+    }
   }
 
   // Read sensor data and feed the neural network
@@ -938,6 +950,22 @@ void DifferentialCPG::Update(
   // Evaluate policy on certain time limit, or if we just started
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
+    this->goal_iteration_counter += 1;
+    if(this->goal_iteration_counter >= this->goal_iteration_counter_max)
+    {
+      // Make clear that we failed in reaching this goal
+      this->goal_iteration_counter = 0;
+
+      // Store data
+      std::ofstream speed_to_object_file;
+      speed_to_object_file.open(this->directory_name + "speed_to_object.txt", std::ios::app);
+      speed_to_object_file << "-1" << "," << "-1" << "," << this->for_slower_power <<std::endl;
+      speed_to_object_file.close();
+
+      // Set new goal box (this also increases goal counter)
+      this->set_random_goal_box();
+    }
+
     if(this->verbose)
     {
       std::cout <<"Distance is " << this->dist_to_goal << " and anglediff " << this->angle_diff <<std::endl;
@@ -1386,7 +1414,7 @@ void DifferentialCPG::step(
   double robot_angle, move_angle, angle_difference;
 
   // Get angles when we need them
-  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations or true) // TODO: CHange when finished debuggi.g
+  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations) // TODO: CHange when finished debuggi.g
   {
     // Get angle of goal:
     this->angle_to_goal = this->get_vector_angle(this->robot->WorldPose().Pos().X(),

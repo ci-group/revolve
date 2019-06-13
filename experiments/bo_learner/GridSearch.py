@@ -15,22 +15,44 @@ from joblib import Parallel, delayed
 min_lines = 1450
 run_gazebo = False
 n_runs = 20 # Naar 20
-run_factor = 5
-n_jobs = 60
+run_factor = 1
+n_jobs = 1
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "babyA.yaml"
+yaml_model = "spider9.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = ".venv/bin/python3"
 search_space = {
-    'n_learning_iterations': [1500],
-    'n_init_samples': [20],
-    'evaluation_rate': [60],
-    'verbose': [0],
-    'kernel_sigma_sq': [1],
-    'kernel_l': [0.02, 0.05, 0.1, 0.2],
-    'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
-    'range_ub': [1.5],
-    'signal_factor_all': [4.0],
+    'load_brain': ["/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413674.66/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413690.01/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413740.12/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413736.87/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413675.02/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413745.13/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413690.05/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413624.82/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413599.76/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413727.08/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413572.37/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413619.82/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413670.02/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413629.86/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413700.05/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413703.86/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413594.75/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413732.06/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413730.12/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413605.55/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413629.18/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413604.75/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413574.67/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413614.76/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413720.11/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413660.01/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413775.18/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413783.9/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413755.14/best_brain.txt",
+                   "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413579.69/best_brain.txt",
+                   ],
 }
 
 print(search_space)

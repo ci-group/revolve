@@ -13,8 +13,8 @@ import time
 path = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/gongjinlan/projects/revolve/experiments/bo_learner/yaml/yaml_temp/"
-n_rows_max = 1500
 n_rows_min = 1450
+n_rows_max = 1500
 max_dirs = 30
 
 # Get all sub-directories
@@ -74,9 +74,9 @@ for i, path_ in enumerate(path_list):
     subfolder_list_temp_2 = subfolder_list_temp_2[:max_dirs]
 
     # Save the names of these brains in a txt file
-    with open(path_ + "/brain_all.txt", 'a') as brain_file:
+    with open(path_ + "/brain_all.txt", 'a') as all_brain_file:
         for x in subfolder_list_temp_2:
-            brain_file.write('"' + x + 'best_brain.txt"' + ",\n")
+            all_brain_file.write('"' + x + 'best_brain_' + str(n_rows_max) + '.txt"' + ",\n")
 
     # Save this number of subruns
     n_subruns = len(subfolder_list_temp_2)
@@ -120,6 +120,40 @@ for i, path_ in enumerate(path_list):
         # Save the fitnesses of all runs
         with open(path_ + "/experiment_fitnesses.txt" , 'a') as experiment_fitness_file:
             experiment_fitness_file.write(",".join([str(my_fitness_mon[-1]), subfolder.split("/")[-2]]) + "\n")
+
+        print(j,subfolder)
+
+        # Save the brain to prevent dead references
+        # Find index of best brain
+        brain = [(line.rstrip('\n')) for line in open(subfolder + "/" + "brain.txt")]
+        my_fitness_str = [str(x) for x in my_fitness]
+        fitness_list = []
+        index_list =[]
+        brain_list = []
+        for b in brain:
+            f = b.split(",")[-1]
+            first_index = my_fitness_str.index(f)
+            fitness_list += [f]
+            index_list += [first_index]
+
+        # Find best brain under time constraint
+        for ix, e in enumerate(index_list):
+            if e > n_rows_max:
+                ix -= 1
+                break
+
+        try:
+            nb1 = index_list[ix-1]
+            nb2 = index_list[ix+1]
+            print(f"Brain with time {index_list[ix]} neighbours are {index_list[ix-1]} and {index_list[ix+1]}")
+        except:
+            print(f"Brain with time {index_list[ix]} has at most 1 neighbour")
+
+        # Write this brain
+        open(subfolder + "/" + "/best_brain" + str(n_rows_max) +".txt", 'w').close()
+        with open(subfolder + "/" + "/best_brain" + str(n_rows_max) +".txt", 'a') as brain_file:
+            brain_file.write(brain[ix] +"\n")
+
 
         # Plot the avg fitness
         plt.plot(fitnesses_mon[:, j], linewidth = 0.5, color = "blue")

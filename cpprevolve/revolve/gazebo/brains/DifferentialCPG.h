@@ -292,7 +292,10 @@ namespace revolve
       private: double dist_to_goal = 0.0;
 
       // \brief Number of goals reached
-      private: int goal_count;
+      private: int goal_count_max = 10;
+      private: int goal_count = 0;
+      private: int goal_iteration_counter = 0;
+      private: int goal_iteration_counter_max = 40; // Value not used but updated
       private: double angle_diff = 999;
 
       // BO Learner parameters
