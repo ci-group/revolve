@@ -10,9 +10,12 @@ import time
 
 
 # Parameters
-path = "/home/gongjinlan/projects/revolve/output/cpg_bo/main_1559854435/"
+path = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/gongjinlan/projects/revolve/experiments/bo_learner/yaml/yaml_temp/"
+n_rows_max = 1500
+n_rows_min = 1450
+max_dirs = 30
 
 # Get all sub-directories
 path_list = glob(path + "*")
@@ -21,6 +24,8 @@ n_dirs = len(path_list)
 
 # Holder
 results = np.empty((n_dirs, 3))
+
+
 
 # Check if it's numeric:
 fitness_list = []
@@ -34,6 +39,10 @@ for i, path_ in enumerate(path_list):
     # Cope with unsorted issue
     path_ =  "/".join(path_.split("/")[:-1]) + "/" + str(i)
 
+    # Clear files
+    open(path_ + '/brain_all.txt', 'w').close()
+    open(path_ + '/experiment_fitnesses.txt', 'w').close()
+
     # Do fitness analysis
     subfolder_list = glob(path_ + "/*/")
     subfolder_list = [d for d in subfolder_list if os.path.isfile(d + fitness_file)]
@@ -41,8 +50,6 @@ for i, path_ in enumerate(path_list):
         n_rows = len([(line.rstrip('\n')) for line in open(subfolder_list[0] + "/" + fitness_file)])
     except:
         None
-    n_rows_max = 1500
-    n_rows_min = 1450
 
     # Remove all rows with a small number of values
     subfolder_list_temp = []
@@ -54,8 +61,25 @@ for i, path_ in enumerate(path_list):
         else:
             print("Exclude ", subfolder_, "length", len(my_fitness_))
 
-    # Save thisnumber of subruns
-    n_subruns = len(subfolder_list_temp)
+    # Check which paths don't have a brain.txt
+    subfolder_list_temp_2 = []
+    for j_, subfolder_ in enumerate(subfolder_list_temp):
+        par = subfolder_list_temp
+        if os.path.isfile(subfolder_ + "/brain.txt"):
+            subfolder_list_temp_2 += [subfolder_]
+        else:
+            print("Exclude ", subfolder_, " due lack of brain")
+
+    print(f"Select top {max_dirs} from {len(subfolder_list_temp_2)} directories")
+    subfolder_list_temp_2 = subfolder_list_temp_2[:max_dirs]
+
+    # Save the names of these brains in a txt file
+    with open(path_ + "/brain_all.txt", 'a') as brain_file:
+        for x in subfolder_list_temp_2:
+            brain_file.write('"' + x + 'best_brain.txt"' + ",\n")
+
+    # Save this number of subruns
+    n_subruns = len(subfolder_list_temp_2)
     subrun_numbers += [[n_subruns, i]]
 
     # Working variables
@@ -64,13 +88,13 @@ for i, path_ in enumerate(path_list):
 
     # Create plot
     plt.figure()
-    plt.title("Monotonic - Param setting " + str(i))
+    plt.title(path.split("-")[-1][:-1].capitalize())
     plt.xlabel("Iteration")
     plt.ylabel("Fitness")
     plt.grid()
 
     # For all n_runs
-    for j, subfolder in enumerate(subfolder_list_temp):
+    for j, subfolder in enumerate(subfolder_list_temp_2):
         # print( subfolder)
         # Get fitness file
         my_fitness = [float((line.rstrip('\n'))) for line in open(subfolder + "/" + fitness_file)]
@@ -79,7 +103,7 @@ for i, path_ in enumerate(path_list):
 
         # Take minimum n_rows_max
         c_ = 0
-        while(len(my_fitness) < n_rows_max):
+        while len(my_fitness) < n_rows_max:
             my_fitness += [my_fitness[-1]]
             c_ += 1
 
@@ -98,7 +122,7 @@ for i, path_ in enumerate(path_list):
             experiment_fitness_file.write(",".join([str(my_fitness_mon[-1]), subfolder.split("/")[-2]]) + "\n")
 
         # Plot the avg fitness
-        plt.plot(fitnesses_mon[:, j], linewidth = 1, color = "blue")
+        plt.plot(fitnesses_mon[:, j], linewidth = 0.5, color = "blue")
 
     # Take average value over the n_runs
     avg_fitness = np.mean(fitnesses, axis=1)
@@ -106,6 +130,7 @@ for i, path_ in enumerate(path_list):
 
     # Save plot
     plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
+    plt.xlim(0,1500)
     plt.tight_layout()
     plt.savefig(path_ + "/" + str(round(avg_fitness_mon[-1], 7)) + ".png")
     fig = plt.gcf()
@@ -121,6 +146,7 @@ fitness_list
 
 
 # TODO: Results.txt has wrong order (3D plot not affected by this).
+open(path + '/results.txt', 'w').close()
 print("Fitnesses are:")
 for e in fitness_list:
     print(e)
