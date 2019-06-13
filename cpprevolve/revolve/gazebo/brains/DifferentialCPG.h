@@ -303,19 +303,23 @@ namespace revolve
       private: double kernel_l_;
       private: double acqui_ucb_alpha_;
 
-      // Targeted locomotion learner parameters
-      private: double for_slower_power;
+      // Hill climber parameters
+      /// \brief Number of times we should get an object during hill climbing
+      private: int for_n = 5;
       private: bool for_use_hill_climber = false;
-      private: double for_best_avg_speed = 0.0;
+      private: double for_slower_power = 1.0; // Set in yaml
       private: double for_step_size_eps = 0.05;
       private: double for_step_size = 3.0;
+
+      // Targeted locomotion learner parameters
+      private: double for_best_avg_speed = 0.0;
       private: double for_speed = 0.0;
       private: bool for_go_up = true;
       private: bool for_interim = false;
       private: int for_iteration_counter = 0;
       private: int for_power_iteration = -1;
       private: int for_interim_counter = 0;
-      private: int for_n = 5;
+
       private: int for_subqueue_size = 0;
       private: std::vector<double> for_queue;
       private: std::vector<std::vector<double>> for_speeds;

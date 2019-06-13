@@ -359,6 +359,8 @@ DifferentialCPG::DifferentialCPG(
     {
       std::cout << std::endl << "Brain has been loaded." << std::endl;
     }
+
+    this->save_parameters();
   }
   else
   {
@@ -422,7 +424,17 @@ DifferentialCPG::~DifferentialCPG()
  */
 struct DifferentialCPG::evaluation_function{
   // Number of input dimension (samples.size())
-  BO_PARAM(size_t, dim_in, 18);
+  //    Spider9: 18
+  //    Spider13: 26
+  //    Spider17:34
+  //    Gecko7: 13
+  //    Gekoc12:23
+  //    Gecko17: 33
+  //    BabyA: 16.
+  //    babyB: 22
+  //    Babyc: 32
+
+    BO_PARAM(size_t, dim_in, 23);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -676,7 +688,11 @@ void DifferentialCPG::save_fitness(){
   fitness_file << fitness << std::endl;
   fitness_file.close();
 
-
+  // Write fitness to file
+  std::ofstream dist_to_object_file;
+  dist_to_object_file.open(this->directory_name + "dist_to_object.txt", std::ios::app);
+  dist_to_object_file << this->dist_to_goal << std::endl;
+  dist_to_object_file.close();
 }
 
 /**
@@ -1027,7 +1043,10 @@ void DifferentialCPG::Update(
     {
       if (this->current_iteration == this->n_init_samples + this->n_learning_iterations)
       {
-        std::cout << "Set goal count to 0" << std::endl;
+        if (this->verbose)
+        {
+          std::cout << "Set goal count to 0" << std::endl;
+        }
         this->goal_count = 0;
 
         // Create plots
@@ -1676,7 +1695,7 @@ void DifferentialCPG::save_parameters(){
   // FOR parameters
   parameters_file << std::endl << "For signal modification: " << this->for_signal_modification_type << std::endl;
   parameters_file << "For speeding approach: " << this->for_speeding_approach << std::endl;
-  parameters_file << "For slower amplitude factor: " << this->for_slower_amplitude_factor << std::endl;
+  parameters_file << "For slower amplitude factor: " << this->for_slower_power << std::endl;
   parameters_file << "For faster amplitude factor: " << this->for_faster_amplitude_factor << std::endl;
   parameters_file << "Use FOR: " << this->use_frame_of_reference << std::endl;
 

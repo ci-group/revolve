@@ -10,11 +10,11 @@ import time
 
 
 # Parameters
-path = "/home/maarten/projects/revolve-simulator/revolve/output/cpg_bo/main_1560413536-1-spider13/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/"
 fitness_file = "fitnesses.txt"
-yaml_temp_path = "/home/gongjinlan/projects/revolve/experiments/bo_learner/yaml/yaml_temp/"
+yaml_temp_path = "/home/maarten/CLionProjects/revolve/experiments/bo_learner/yaml/yaml_temp/"
 n_rows_min = 1450
-n_rows_max = 1500
+n_rows_max = 1501  # This one defines the brain as well
 max_dirs = 30
 
 # Get all sub-directories
@@ -76,7 +76,7 @@ for i, path_ in enumerate(path_list):
     # Save the names of these brains in a txt file
     with open(path_ + "/brain_all.txt", 'a') as all_brain_file:
         for x in subfolder_list_temp_2:
-            all_brain_file.write('"' + x + 'best_brain_' + str(n_rows_max) + '.txt"' + ",\n")
+            all_brain_file.write('"'+ "'" + x + 'best_brain' + str(n_rows_max) + ".txt" +  "'"  +'"'+ ",\n")
 
     # Save this number of subruns
     n_subruns = len(subfolder_list_temp_2)
@@ -127,13 +127,11 @@ for i, path_ in enumerate(path_list):
         # Find index of best brain
         brain = [(line.rstrip('\n')) for line in open(subfolder + "/" + "brain.txt")]
         my_fitness_str = [str(x) for x in my_fitness]
-        fitness_list = []
         index_list =[]
         brain_list = []
         for b in brain:
             f = b.split(",")[-1]
             first_index = my_fitness_str.index(f)
-            fitness_list += [f]
             index_list += [first_index]
 
         # Find best brain under time constraint

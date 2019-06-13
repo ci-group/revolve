@@ -12,16 +12,50 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-min_lines = 1450
+targeted = True
+n_objects = 10
+min_lines = 0 # This is a bit different with targeted flow
 run_gazebo = False
-n_runs = 20 # Naar 20
-run_factor = 5
-n_jobs = 60
+n_runs = 3
+run_factor = 1
+n_jobs = 45
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "spider17.yaml"
+yaml_model = "gecko12.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "venv/bin/python3"
 search_space = {
+    'load_brain': ["'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402776.6/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402867.6/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402792.11/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402866.78/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402921.83/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402756.57/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402835.06/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402801.66/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402906.81/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402715.14/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402766.59/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402911.82/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402901.81/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402881.8/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402896.81/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402756.89/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402886.8/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402903.65/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402816.72/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402748.91/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402822.82/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402786.65/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402761.58/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402806.69/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402771.6/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402871.79/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402876.8/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402898.57/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402749.7/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402916.82/best_brain1501.txt'"
+                   ],
+    'for_slower_amplitude_factor': [5, 7, 9, 11, 13, 15],
     'verbose': [0],
 }
 
@@ -29,7 +63,7 @@ print(search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
-start_port = 12500
+start_port = 14000
 finished = False
 
 # Make in revolve/build to allow runs from terminal
@@ -79,7 +113,7 @@ def create_yamls(yaml_path, model, sub_directory, experiments):
 def run(i, sub_directory, model, params):
     # Sleepy time when starting up to save gazebo from misery
     if i < n_jobs:
-        time.sleep(5*i)
+        time.sleep(3*i)
     else:
         print("Todo: Make sure you are leaving 2 seconds in between firing "
               "gazebos")
@@ -183,12 +217,19 @@ if __name__ == "__main__":
                 runs_succesful[str(e.split("/")[-2])] = 0
 
                 for my_run in runs:
-                    if os.path.isfile(my_run + "fitnesses.txt"):
-                        n_lines = len([(line.rstrip('\n')) for line in open(my_run + "fitnesses.txt")])
+                    if not targeted:
+                        if os.path.isfile(my_run + "fitnesses.txt"):
+                            n_lines = len([(line.rstrip('\n')) for line in open(my_run + "fitnesses.txt")])
 
-                        # In case we had a succesful run
-                        if n_lines > min_lines:
-                            runs_succesful[str(e.split("/")[-2])] += 1
+                            # In case we had a succesful run
+                            if n_lines > min_lines:
+                                runs_succesful[str(e.split("/")[-2])] += 1
+                    else:
+                        if os.path.isfile(my_run + "speed_to_object.txt"):
+                            n_lines = len([(line.rstrip('\n')) for line in open(my_run + "speed_to_object.txt")])
+                            if n_lines >= n_objects:
+                                runs_succesful[str(e.split("/")[-2])] += 1
+
 
             to_run = {}
             for key, val in runs_succesful.items():
