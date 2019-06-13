@@ -387,7 +387,7 @@ parser.add_argument(
 parser.add_argument(
         '--experiment_name',
         default='default_experiment', type=str,
-        help="Name of current experiment. A folder with thid name will be created."
+        help="Name of current experiment. A folder with this name will be created."
 )
 
 parser.add_argument(
@@ -404,7 +404,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--z-start',
-    default=0.01, type=float,
+    default=0.03, type=float,
     help="Position in the z axis where the robot is placed at the beginning of the simulation."
 )
 

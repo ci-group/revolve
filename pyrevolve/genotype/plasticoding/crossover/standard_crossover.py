@@ -22,7 +22,7 @@ def generate_child_genotype(parents, genotype_conf, crossover_conf):
             # gets the production rule for the respective letter
             grammar[letter[0]] = parents[parent].genotype.grammar[letter[0]]
 
-    genotype = Plasticoding(genotype_conf)
+    genotype = Plasticoding(genotype_conf, 'tmp')
     genotype.grammar = grammar
     return genotype.clone()
 

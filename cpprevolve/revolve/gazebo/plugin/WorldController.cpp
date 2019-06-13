@@ -114,26 +114,25 @@ void WorldController::Reset()
 void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
 {
     { // check if there are robots to delete
-        this->deleteMutex_.lock();
-        if (not this->delete_robot_queue.empty()) {
-            std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot =
-                    this->delete_robot_queue.front();
-            this->delete_robot_queue.pop();
-            auto model = std::get<0>(delete_robot);
-            auto request_id = std::get<1>(delete_robot);
-            if (model) {
-                this->world_->SetPaused(true);
-                this->world_->RemoveModel(model);
-                this->world_->SetPaused(false);
-
-                gz::msgs::Response resp;
-                resp.set_id(request_id);
-                resp.set_request("delete_robot");
-                resp.set_response("success");
-                this->responsePub_->Publish(resp);
+        std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot;
+        {
+            boost::mutex::scoped_lock lock(this->deleteMutex_);
+            if (not this->delete_robot_queue.empty()) {
+                delete_robot = this->delete_robot_queue.front();
+                this->delete_robot_queue.pop();
             }
         }
-        this->deleteMutex_.unlock();
+        auto model = std::get<0>(delete_robot);
+        auto request_id = std::get<1>(delete_robot);
+        if (model) {
+            this->world_->RemoveModel(model);
+
+            gz::msgs::Response resp;
+            resp.set_id(request_id);
+            resp.set_request("delete_robot");
+            resp.set_response("success");
+            this->responsePub_->Publish(resp);
+        }
     }
 
 

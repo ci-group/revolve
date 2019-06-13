@@ -15,6 +15,8 @@ class ExperimentManagement:
         os.mkdir(dirpath+'/data_fullevolution/genotypes')
         os.mkdir(dirpath+'/data_fullevolution/phenotypes')
         os.mkdir(dirpath+'/data_fullevolution/descriptors')
+        os.mkdir(dirpath+'/data_fullevolution/fitness')
+        os.mkdir(dirpath+'/data_fullevolution/phenotype_images')
 
     def export_genotype(self, individual):
          if self.settings.recovery_enabled:
@@ -26,10 +28,17 @@ class ExperimentManagement:
             individual.phenotype.save_file('experiments/'+self.settings.experiment_name
                                             +'/data_fullevolution/phenotypes/phenotype_'+str(individual.genotype.id)+'.yaml')
 
-    def export_fitness(self, individual):
-        f = open('experiments/'+ self.settings.experiment_name + '/data_fullevolution/fitness_'+str(individual.genotype.id)+'.txt', "w")
-        f.write(str(individual.fitness))
-        f.close()
+    def export_fitnesses(self, individuals):
+        for individual in individuals:
+            f = open(f'experiments/{self.settings.experiment_name}/data_fullevolution/fitness/fitness_{individual.genotype.id}.txt', "w")
+            f.write(str(individual.fitness))
+            f.close()
+
+    def export_phenotype_images(self, dirpath, individual):
+        individual.phenotype.render_body('experiments/'+self.settings.experiment_name
+                                         +'/'+dirpath+'/body_'+str(individual.phenotype.id)+'.png')
+        individual.phenotype.render_brain('experiments/'+self.settings.experiment_name
+                                          +'/'+dirpath+'/brain_' + str(individual.phenotype.id))
 
     def export_snapshots(self, individuals, gen_num):
         if self.settings.recovery_enabled:
@@ -38,8 +47,7 @@ class ExperimentManagement:
                 shutil.rmtree('experiments/'+dirpath)
             os.mkdir('experiments/'+dirpath)
             for ind in individuals:
-                ind.phenotype.render_body('experiments/'+dirpath+'/body_'+str(ind.phenotype.id)+'.png')
-                ind.phenotype.render_brain('experiments/'+dirpath+'/brain_' + str(ind.phenotype.id))
+                self.export_phenotype_images('selectedpop_'+str(gen_num), ind)
 
     def experiment_is_new(self):
         if os.path.isfile('experiments/{}/selectedpop_to_recover.txt'.format(self.settings.experiment_name)):
