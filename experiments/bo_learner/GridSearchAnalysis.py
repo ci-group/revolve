@@ -76,7 +76,7 @@ for i, path_ in enumerate(path_list):
     # Save the names of these brains in a txt file
     with open(path_ + "/brain_all.txt", 'a') as brain_file:
         for x in subfolder_list_temp_2:
-            brain_file.write('"' + x + '"' + ",\n")
+            brain_file.write('"' + x + 'best_brain.txt"' + ",\n")
 
     # Save this number of subruns
     n_subruns = len(subfolder_list_temp_2)
