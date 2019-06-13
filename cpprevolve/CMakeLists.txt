@@ -1,5 +1,5 @@
 # CMake Required Version
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required (VERSION 3.12.1)
 
 # Project name
 project (Revolve)
@@ -32,8 +32,7 @@ add_definitions(-pedantic -Wno-long-long -Wall -Wextra -Wformat=2
                 -Wswitch-enum -Wuninitialized 
                 -Wswitch-default -Winit-self -Wfloat-equal -fPIC )
 
-# Use C++11 (removed - the Gazebo flags below do this)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set (CMAKE_CXX_STANDARD 11)
 
 # Debug Flags 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
@@ -45,23 +44,43 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   # adaptable according to individual needs
   set(CMAKE_MACOSX_RPATH ON)
-  #    set(CMAKE_SKIP_BUILD_RPATH FALSE)
-  #    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-  #    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-  #    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  #set(CMAKE_SKIP_BUILD_RPATH FALSE)
+  #set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+  #set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  #set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif ()
+
 
 # Finding dependencies
 # _____________________________________________________________________________
+
+
+# PKG-CONFIG
+find_package(PkgConfig REQUIRED)
 
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Find Eigen3 - A lightweight C++ template library for vector and matrix math
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+# Find NLOpt - Non Linear Optimization
+pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
+include_directories(${NLOpt_INCLUDE_DIRS})
+link_directories(${NLOpt_LIBRARY_DIRS})
+
+# Find Limbo - LIbrary for Model-Based Optimization
+set(LIMBO_DIR ../thirdparty/limbo)
+set(LIMBO_DEFINES USE_NLOPT)
+include_directories(${LIMBO_DIR}/src)
+
 # Find GSL - GNU Scientific Library
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 
+# Find Yaml-cpp
 find_package(yaml-cpp REQUIRED)
 include_directories(${YAML_CPP_INCLUDE_DIR})
 
@@ -198,12 +217,19 @@ add_library(
     revolve-gazebo
     ${REVOLVE_GZ_SRC}
 )
+
 target_link_libraries(
     revolve-gazebo
     ${GAZEBO_LIBRARIES}
     ${Boost_LIBRARIES}
     ${GSL_LIBRARIES}
     ${YAML_CPP_LIBRARIES}
+    ${NLOpt_LIBRARIES}
+)
+
+target_compile_definitions(
+    revolve-gazebo
+    PUBLIC ${LIMBO_DEFINES}
 )
 
 # Create World plugin

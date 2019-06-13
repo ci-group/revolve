@@ -170,10 +170,10 @@ class Supervisor(object):
         (Re)launches the experiment.
         :return:
         """
-        if not os.path.exists(self.output_directory):
-            os.mkdir(self.output_directory)
-        if not os.path.exists(self.snapshot_directory):
-            os.mkdir(self.snapshot_directory)
+        # if not os.path.exists(self.output_directory):
+        #     os.mkdir(self.output_directory)
+        # if not os.path.exists(self.snapshot_directory):
+        #     os.mkdir(self.snapshot_directory)
 
         logger.info("Launching all processes...")
         self._launch_simulator()
