@@ -48,3 +48,6 @@ add_executable(pigs
 add_executable(pig2vcd
         pig2vcd.c)
 
+set(PIGPIO_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
+
+
