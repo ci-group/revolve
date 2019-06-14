@@ -6,4 +6,7 @@ project (Revolve)
 
 # Include cmake subdirectories
 add_subdirectory(revolve/brains)
-add_subdirectory(revolve/gazebo)
+
+if (NOT ${BUILD_ONLY_BRAIN})
+    add_subdirectory(revolve/gazebo)
+endif()
