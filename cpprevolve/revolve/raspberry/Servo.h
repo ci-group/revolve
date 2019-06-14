@@ -6,12 +6,16 @@
 #define REVOLVE_SERVO_H
 
 #include "PIGPIOConnection.h"
+#include "../brains/controller/actuators/Actuator.h"
+
 
 namespace revolve {
 
-class Servo {
+class Servo
+    : public Actuator
+{
 public:
-    explicit Servo(short pin, unsigned int frequency=50, int range=1000, bool inverse=false);
+    explicit Servo(double coordinate_x, double coordinate_y, double coordinate_z, short pin, unsigned int frequency=50, int range=1000, bool inverse=false);
 
     ~Servo() {
         this->off();
@@ -27,6 +31,8 @@ public:
     void center() { move_to_position(0); }
 
     void off();
+
+    virtual void write(const double *output, double step) override;
 
 private:
     short pin;
