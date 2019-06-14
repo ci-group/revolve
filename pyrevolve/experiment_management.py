@@ -39,14 +39,13 @@ class ExperimentManagement:
         individual.phenotype.render_body('experiments/'+self.settings.experiment_name +'/'+dirpath+'/body_'+str(individual.phenotype.id)+'.png')
         individual.phenotype.render_brain('experiments/'+self.settings.experiment_name +'/'+dirpath+'/brain_' + str(individual.phenotype.id))
 
-
     def export_failed_eval_robot(self,individual):
         if self.settings.recover_enabled:
             individual.genotype.export_genotype('experiments/'+self.settings.experiment_name
-                                                +'/data_fullevolution/failed_eval_robots/genotype_'+str(individual.genotype.id)+'.txt')
+                                                + '/data_fullevolution/failed_eval_robots/genotype_' +str(individual.genotype.id)+'.txt')
         if self.settings.export_phenotype:
             individual.phenotype.save_file('experiments/'+self.settings.experiment_name
-                                           +'/data_fullevolution/failed_eval_robots/phenotype_'+str(individual.genotype.id)+'.yaml')
+                                           + '/data_fullevolution/failed_eval_robots/phenotype_' +str(individual.genotype.id)+'.yaml')
 
     def export_snapshots(self, individuals, gen_num):
         if self.settings.recovery_enabled:
