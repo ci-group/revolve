@@ -88,6 +88,16 @@ class SimulatorSimpleQueue:
             # WAITED TO MUCH, RESTART SIMULATOR
             if elapsed > 120:
                 logger.error(f"Simulator restarted after {elapsed}")
+                robot.failed_eval_attempt_count += 1
+                logger.info(f"Robot {robot.phenotype.id} current failed attempt: {robot.failed_eval_attempt_count}")
+                if robot.failed_eval_attempt_count == 3:
+                    logger.info("Robot failed to be evaluated 3 times. Fitness set to 0")
+                    # Save robot for inspection
+                    conf.experiment_management.export_failed_eval_robot(robot)
+                    # Set robot fitness to 0 and remove robot from queue
+                    robot_fitness = 0
+                    future.set_result(robot_fitness)
+                    return True
                 return False
             await asyncio.sleep(0.2)
 
@@ -96,7 +106,7 @@ class SimulatorSimpleQueue:
 
         exception = evaluation_future.exception()
         if exception is not None:
-            logger.exception(f"Exception running robot {robot}", exc_info=exception)
+            logger.exception(f"Exception running robot {robot.phenotype}", exc_info=exception)
             return False
 
         robot_fitness = await evaluation_future
@@ -110,10 +120,10 @@ class SimulatorSimpleQueue:
             logger.info(f"simulator {i} waiting for robot")
             (robot, future, conf) = await self._robot_queue.get()
             self._free_simulator[i] = False
-            logger.info(f"Picking up robot {robot.id} into simulator {i}")
+            logger.info(f"Picking up robot {robot.phenotype.id} into simulator {i}")
             success = await self._worker_evaluate_robot(self._connections[i], robot, future, conf)
             if success:
-                logger.info(f"simulator {i} finished robot {robot.id}")
+                logger.info(f"simulator {i} finished robot {robot.phenotype.id}")
             else:
                 # restart of the simulator happened
                 await self._robot_queue.put((robot, future, conf))
@@ -123,7 +133,7 @@ class SimulatorSimpleQueue:
 
     async def _evaluate_robot(self, simulator_connection, robot, conf):
         await simulator_connection.pause(True)
-        insert_future = await simulator_connection.insert_robot(robot, Vector3(0, 0, self._settings.z_start))
+        insert_future = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, self._settings.z_start))
         robot_manager = await insert_future
         await simulator_connection.pause(False)
         start = time.time()
@@ -145,3 +155,4 @@ class SimulatorSimpleQueue:
 
     async def _joint(self):
         await self._robot_queue.join()
+

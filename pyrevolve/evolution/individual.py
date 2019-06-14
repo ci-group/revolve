@@ -13,6 +13,7 @@ class Individual:
         self.phenotype = phenotype
         self.fitness = None
         self.parents = None
+        self.failed_eval_attempt_count = 0
 
     def develop(self):
         """
@@ -29,3 +30,4 @@ class Individual:
         elif self.genotype.id is not None:
             _id = self.genotype.id
         return f'Individual_{_id}({self.fitness})'
+
