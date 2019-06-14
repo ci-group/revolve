@@ -10,7 +10,7 @@ import time
 
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/maarten/CLionProjects/revolve/experiments/bo_learner/yaml/yaml_temp/"
 n_rows_min = 1450
@@ -24,12 +24,13 @@ n_dirs = len(path_list)
 
 # Holder
 results = np.empty((n_dirs, 3))
-
-
+times = [100,250,500,1000,1501]
 
 # Check if it's numeric:
 fitness_list = []
 subrun_numbers = []
+open(path_list[0] + '/brain_all_1501.txt', 'w').close()
+
 for i, path_ in enumerate(path_list):
     try:
         int(path_.split("/")[-1] )
@@ -76,7 +77,12 @@ for i, path_ in enumerate(path_list):
     # Save the names of these brains in a txt file
     with open(path_ + "/brain_all.txt", 'a') as all_brain_file:
         for x in subfolder_list_temp_2:
-            all_brain_file.write('"'+ "'" + x + 'best_brain' + str(n_rows_max) + ".txt" +  "'"  +'"'+ ",\n")
+            for time in times:
+                all_brain_file.write('"'+ "'" + x + 'best_brain' + str(time) + ".txt" +  "'"  +'"'+ ",\n")
+
+    with open(path_ + "/brain_all_1501.txt", 'a') as all_brain_file:
+        for x in subfolder_list_temp_2:
+            all_brain_file.write('"'+ "'" + x + 'best_brain1501.txt' +  "'"  +'"'+ ",\n")
 
     # Save this number of subruns
     n_subruns = len(subfolder_list_temp_2)
@@ -134,24 +140,24 @@ for i, path_ in enumerate(path_list):
             first_index = my_fitness_str.index(f)
             index_list += [first_index]
 
-        # Find best brain under time constraint
-        for ix, e in enumerate(index_list):
-            if e > n_rows_max:
-                ix -= 1
-                break
+        # Find best brain under time constraint for a list of times
+        for time in times:
+            for ix, e in enumerate(index_list):
+                if e > time:
+                    ix -= 1
+                    break
 
-        try:
-            nb1 = index_list[ix-1]
-            nb2 = index_list[ix+1]
-            print(f"Brain with time {index_list[ix]} neighbours are {index_list[ix-1]} and {index_list[ix+1]}")
-        except:
-            print(f"Brain with time {index_list[ix]} has at most 1 neighbour")
+            try:
+                nb1 = index_list[ix-1]
+                nb2 = index_list[ix+1]
+                print(f"Brain with time {index_list[ix]} neighbours are {index_list[ix-1]} and {index_list[ix+1]}")
+            except:
+                print(f"Brain with time {index_list[ix]} has at most 1 neighbour")
 
-        # Write this brain
-        open(subfolder + "/" + "/best_brain" + str(n_rows_max) +".txt", 'w').close()
-        with open(subfolder + "/" + "/best_brain" + str(n_rows_max) +".txt", 'a') as brain_file:
-            brain_file.write(brain[ix] +"\n")
-
+            # Write this brain
+            open(subfolder + "/" + "/best_brain" + str(time) +".txt", 'w').close()
+            with open(subfolder + "/" + "/best_brain" + str(time) +".txt", 'a') as brain_file:
+                brain_file.write(brain[ix] +"\n")
 
         # Plot the avg fitness
         plt.plot(fitnesses_mon[:, j], linewidth = 0.5, color = "blue")

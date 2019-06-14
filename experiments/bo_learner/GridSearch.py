@@ -16,54 +16,54 @@ targeted = True
 n_objects = 10
 min_lines = 0 # This is a bit different with targeted flow
 run_gazebo = False
-n_runs = 3
+n_runs = 4
 run_factor = 1
-n_jobs = 45
+n_jobs = 60
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "gecko12.yaml"
+yaml_model = "spider13.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "venv/bin/python3"
 search_space = {
-    'load_brain': ["'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402776.6/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402867.6/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402792.11/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402866.78/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402921.83/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402756.57/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402835.06/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402801.66/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402906.81/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402715.14/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402766.59/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402911.82/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402901.81/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402881.8/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402896.81/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402756.89/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402886.8/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402903.65/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402816.72/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402748.91/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402822.82/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402786.65/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402761.58/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402806.69/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402771.6/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402871.79/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402876.8/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402898.57/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402749.7/best_brain1501.txt'",
-                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560402690-1-gecko12/0/1560402916.82/best_brain1501.txt'"
-                   ],
-    'for_slower_amplitude_factor': [5, 7, 9, 11, 13, 15],
     'verbose': [0],
+    'load_brain': ["'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413705.47/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413720.11/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413674.66/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413579.69/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413765.15/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413605.55/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413690.05/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413732.06/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413629.18/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413639.91/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413745.13/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413740.12/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413655.0/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413604.75/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413589.75/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413690.01/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413755.14/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413715.1/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413736.87/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413730.12/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413614.76/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413700.05/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413735.12/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413685.04/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413624.82/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413599.76/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413783.9/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413629.86/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413619.82/best_brain1501.txt'",
+                   "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/0/1560413703.86/best_brain1501.txt'"],
+    'for_slower_amplitude_factor': [1.0,3.0]
+
 }
 
 print(search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
-start_port = 14000
+start_port = 13400
 finished = False
 
 # Make in revolve/build to allow runs from terminal
@@ -113,7 +113,7 @@ def create_yamls(yaml_path, model, sub_directory, experiments):
 def run(i, sub_directory, model, params):
     # Sleepy time when starting up to save gazebo from misery
     if i < n_jobs:
-        time.sleep(3*i)
+        time.sleep(3.5*i)
     else:
         print("Todo: Make sure you are leaving 2 seconds in between firing "
               "gazebos")

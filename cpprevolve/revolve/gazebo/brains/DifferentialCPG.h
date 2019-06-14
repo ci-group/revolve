@@ -292,10 +292,10 @@ namespace revolve
       private: double dist_to_goal = 0.0;
 
       // \brief Number of goals reached
-      private: int goal_count_max = 10;
+      private: int goal_count_max = 10; // SET THIS BACK TO 40 FOR EXP3
       private: int goal_count = 0;
       private: int goal_iteration_counter = 0;
-      private: int goal_iteration_counter_max = 40; // Value not used but updated
+      private: int goal_iteration_counter_max = 0; // Value not used but updated
       private: double angle_diff = 999;
 
       // BO Learner parameters
@@ -305,11 +305,11 @@ namespace revolve
 
       // Hill climber parameters
       /// \brief Number of times we should get an object during hill climbing
-      private: int for_n = 5;
-      private: bool for_use_hill_climber = false;
-      private: double for_slower_power = 1.0; // Set in yaml
+      private: int for_n = 4;
+      private: bool for_use_hill_climber = false; // SET THIS BACK TO TRUE FOR HILL CLIMBER
+      private: double for_slower_power = 9.0; // Set in yaml
       private: double for_step_size_eps = 0.05;
-      private: double for_step_size = 3.0;
+      private: double for_step_size = 2.0;
 
       // Targeted locomotion learner parameters
       private: double for_best_avg_speed = 0.0;

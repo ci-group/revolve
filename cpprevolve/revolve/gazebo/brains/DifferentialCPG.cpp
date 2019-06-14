@@ -434,7 +434,7 @@ struct DifferentialCPG::evaluation_function{
   //    babyB: 22
   //    Babyc: 32
 
-    BO_PARAM(size_t, dim_in, 23);
+    BO_PARAM(size_t, dim_in, 26);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -576,8 +576,8 @@ void DifferentialCPG::set_random_goal_box(){
     }
   }
 
-  // Max speed of 0.0025
-  this->goal_iteration_counter_max = std::round(this->dist_to_goal/0.0025);
+  // Min speed of 0.004
+  this->goal_iteration_counter_max = 25;
   if(this->verbose)
   {
     std::cout << "Max iterations: " << this->goal_iteration_counter_max << std::endl;
@@ -910,6 +910,7 @@ void DifferentialCPG::Update(
   if (this->dist_to_goal < 0.5)
   {
     // Calculate time it took to perform the targeted locomtion task
+    this->goal_iteration_counter = 0;
     this->corner_threshold_met = false;
 
     // Calculate Euclidean distance travelled
@@ -975,11 +976,12 @@ void DifferentialCPG::Update(
       // Store data
       std::ofstream speed_to_object_file;
       speed_to_object_file.open(this->directory_name + "speed_to_object.txt", std::ios::app);
-      speed_to_object_file << "-1" << "," << "-1" << "," << this->for_slower_power <<std::endl;
+      speed_to_object_file << "0" << "," << "0" << "," << this->for_slower_power <<std::endl;
       speed_to_object_file.close();
 
       // Set new goal box (this also increases goal counter)
       this->set_random_goal_box();
+      this->corner_threshold_met = false;
     }
 
     if(this->verbose)
