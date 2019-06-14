@@ -10,7 +10,7 @@ import time
 
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560413536-1-spider13/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560423026-1-spider17/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/maarten/CLionProjects/revolve/experiments/bo_learner/yaml/yaml_temp/"
 n_rows_min = 1450

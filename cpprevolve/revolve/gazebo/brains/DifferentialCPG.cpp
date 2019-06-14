@@ -434,7 +434,7 @@ struct DifferentialCPG::evaluation_function{
   //    babyB: 22
   //    Babyc: 32
 
-    BO_PARAM(size_t, dim_in, 26);
+    BO_PARAM(size_t, dim_in, 33);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -577,7 +577,7 @@ void DifferentialCPG::set_random_goal_box(){
   }
 
   // Min speed of 0.004
-  this->goal_iteration_counter_max = 25;
+  this->goal_iteration_counter_max = std::round(this->dist_to_goal/this->evaluation_rate/0.0025);
   if(this->verbose)
   {
     std::cout << "Max iterations: " << this->goal_iteration_counter_max << std::endl;
@@ -915,8 +915,8 @@ void DifferentialCPG::Update(
 
     // Calculate Euclidean distance travelled
     double distance_travelled = std::pow(
-        std::pow(this->evaluator->start_position_threshold.Pos().X() - this->evaluator->current_position_.Pos().X(), 2) +
-        std::pow(this->evaluator->start_position_threshold.Pos().Y() - this->evaluator->current_position_.Pos().Y(), 2), 0.5);
+        std::pow(this->evaluator->start_position_threshold.Pos().X() - this->robot->WorldPose().Pos().X(), 2) +
+        std::pow(this->evaluator->start_position_threshold.Pos().Y() - this->robot->WorldPose().Pos().Y(), 2), 0.5);
 
     // Scale with time to get speed
     double speed = distance_travelled/(_time - this->corner_threshold_met_time);
@@ -968,6 +968,7 @@ void DifferentialCPG::Update(
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
     this->goal_iteration_counter += 1;
+    std::cout << goal_iteration_counter << "," << this->goal_iteration_counter_max << std::endl;
     if(this->goal_iteration_counter >= this->goal_iteration_counter_max)
     {
       // Make clear that we failed in reaching this goal
