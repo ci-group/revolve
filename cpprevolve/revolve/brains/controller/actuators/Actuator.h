@@ -5,6 +5,8 @@
 #ifndef REVOLVE_ACTUATOR_H
 #define REVOLVE_ACTUATOR_H
 
+#include <tuple>
+
 namespace revolve {
 
 class Actuator

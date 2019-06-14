@@ -7,6 +7,8 @@
 
 #include "actuators/Actuator.h"
 #include "sensors/Sensor.h"
+#include <vector>
+#include <memory>
 
 namespace revolve
 {
