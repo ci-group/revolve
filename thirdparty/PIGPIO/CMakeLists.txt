@@ -50,4 +50,12 @@ add_executable(pig2vcd
 
 set(PIGPIO_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        PUBLIC_HEADER DESTINATION include
+        FILES_MATCHING PATTERN "pi*.h")
+
+install(TARGETS pigpio pigpio_if pigpio_if2 pig2vcd pigpiod pigs
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib)
+
 
