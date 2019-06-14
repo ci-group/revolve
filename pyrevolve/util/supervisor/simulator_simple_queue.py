@@ -94,10 +94,7 @@ class SimulatorSimpleQueue:
                     logger.info("Robot failed to be evaluated 3 times. Fitness set to 0")
                     # Save robot for inspection
                     conf.experiment_management.export_failed_eval_robot(robot)
-                    # Set robot fitness to 0 and remove robot from queue
-                    robot_fitness = 0
-                    future.set_result(robot_fitness)
-                    return True
+                    break
                 return False
             await asyncio.sleep(0.2)
 
@@ -109,7 +106,10 @@ class SimulatorSimpleQueue:
             logger.exception(f"Exception running robot {robot.phenotype}", exc_info=exception)
             return False
 
-        robot_fitness = await evaluation_future
+        if robot.failed_eval_attempt_count == 3:
+            robot_fitness = 0
+        else:
+            robot_fitness = await evaluation_future
         future.set_result(robot_fitness)
 
         return True
