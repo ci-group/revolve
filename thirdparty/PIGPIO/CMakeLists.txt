@@ -58,6 +58,10 @@ install(TARGETS pigpio pigpio_if pigpio_if2 pig2vcd pigpiod pigs
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DESTINATION /etc/systemd/system/
+        FILES_MATCHING PATTERN "*.service")
+
 enable_testing()
 add_test(NAME pigpio
         COMMAND x_pigpio)
