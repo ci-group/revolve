@@ -10,7 +10,7 @@
 
 typedef std::unique_ptr<revolve::Servo> Servo_p;
 
-std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const std::string &filename = "robot_conf.yaml");
+std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_servos);
 void reset(std::vector<Servo_p> &servos);
 void center(std::vector<Servo_p> &servos);
 void control(std::vector<Servo_p> &servos);
@@ -18,9 +18,22 @@ void control(std::vector<Servo_p> &servos);
 
 int main( int argc, const char* argv[] )
 {
-    PIGPIOConnection pigpio("10.0.0.110");
+    YAML::Node config = YAML::LoadFile("robot_conf.yaml");
 
-    std::vector<Servo_p> servos = read_conf(pigpio);
+    std::string ip = PI_DEFAULT_SOCKET_ADDR_STR;
+    unsigned short port = PI_DEFAULT_SOCKET_PORT;
+
+    try {
+        YAML::Node pigpio_address = config["robot_address"];
+        ip = pigpio_address["ip"].as<std::string>(PI_DEFAULT_SOCKET_ADDR_STR);
+        port = pigpio_address["port"].as<unsigned short>(PI_DEFAULT_SOCKET_PORT);
+    } catch (const YAML::RepresentationException &e) {
+        // pass
+    }
+    std::cout << "Connecting to PIGPIO " << ip << ':' << port << std::endl;
+    PIGPIOConnection pigpio(ip, port);
+    YAML::Node yaml_servos = config["servos"];
+    std::vector<Servo_p> servos = read_conf(pigpio, yaml_servos);
 
 
     if (argc >= 2 and (std::string(argv[1]) == "reset"))
@@ -41,12 +54,8 @@ int main( int argc, const char* argv[] )
     }
 }
 
-std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const std::string &filename)
+std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_servos)
 {
-    YAML::Node config = YAML::LoadFile(filename);
-
-    YAML::Node yaml_servos = config["servos"];
-
     std::vector<Servo_p> servos;
     for (const YAML::Node &yaml_servo: yaml_servos) {
         unsigned short pin;

@@ -11,11 +11,16 @@ extern "C" {
 
 #include <exception>
 #include <stdexcept>
+#include <sstream>
 
 class PIGPIOConnection {
 public:
-    explicit PIGPIOConnection(const char* address= nullptr, const char* port= nullptr) {
-        this->connection = pigpio_start(address, port);
+    explicit PIGPIOConnection(
+            const std::string &address = PI_DEFAULT_SOCKET_ADDR_STR,
+            unsigned short port = PI_DEFAULT_SOCKET_PORT)
+    {
+        std::stringstream port_str; port_str << port;
+        this->connection = pigpio_start(address.c_str(), port_str.str().c_str());
         if (this->connection < 0) {
             throw std::runtime_error("connection unsuccessful");
         }
