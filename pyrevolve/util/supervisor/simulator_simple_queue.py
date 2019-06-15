@@ -91,10 +91,9 @@ class SimulatorSimpleQueue:
                 robot.failed_eval_attempt_count += 1
                 logger.info(f"Robot {robot.phenotype.id} current failed attempt: {robot.failed_eval_attempt_count}")
                 if robot.failed_eval_attempt_count == 3:
-                    logger.info("Robot failed to be evaluated 3 times. Fitness set to 0")
+                    logger.info("Robot failed to be evaluated 3 times.")
                     # Save robot for inspection
                     conf.experiment_management.export_failed_eval_robot(robot)
-                    break
                 return False
             await asyncio.sleep(0.2)
 
@@ -106,10 +105,7 @@ class SimulatorSimpleQueue:
             logger.exception(f"Exception running robot {robot.phenotype}", exc_info=exception)
             return False
 
-        if robot.failed_eval_attempt_count == 3:
-            robot_fitness = 0
-        else:
-            robot_fitness = await evaluation_future
+        robot_fitness = await evaluation_future
         future.set_result(robot_fitness)
 
         return True
@@ -123,6 +119,7 @@ class SimulatorSimpleQueue:
             logger.info(f"Picking up robot {robot.phenotype.id} into simulator {i}")
             success = await self._worker_evaluate_robot(self._connections[i], robot, future, conf)
             if success:
+                robot.failed_eval_attempt_count = 0
                 logger.info(f"simulator {i} finished robot {robot.phenotype.id}")
             else:
                 # restart of the simulator happened
@@ -145,7 +142,11 @@ class SimulatorSimpleQueue:
         elapsed = end-start
         logger.info(f'Time taken: {elapsed}')
 
-        robot_fitness = conf.fitness_function(robot_manager)
+        if robot.failed_eval_attempt_count == 3:
+            logger.info(f'Robot {robot.phenotype.id} evaluation failed (reached max attempt of 3), fitness set to 0.')
+            robot_fitness = 0.00
+        else:
+            robot_fitness = conf.fitness_function(robot_manager)
         delete_future = await simulator_connection.delete_all_robots()
         # delete_future = await simulator_connection.delete_robot(robot_manager)
         await delete_future
