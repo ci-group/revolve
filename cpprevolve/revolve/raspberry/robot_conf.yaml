@@ -1,0 +1,19 @@
+robot_name: "spider9"
+robot_id: 1,
+#"servo_pins": [17,18,27,22,23,10,9,25],
+servos:
+  - pin: 17
+    coordinates: [0.1, 0.2, 0.3]
+    frequency: 50
+    range: 1000
+    inverse: False
+  - pin: 18
+    coordinates: [1,2,3]
+  - pin: 27
+  - pin: 22
+  - pin: 23
+  - pin: 10
+  - pin: 9
+  - pin: 25
+
+rgb_pins: [15,14,4]

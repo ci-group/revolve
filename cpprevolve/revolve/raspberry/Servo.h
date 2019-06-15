@@ -7,7 +7,7 @@
 
 #include "PIGPIOConnection.h"
 #include "../brains/controller/actuators/Actuator.h"
-
+#include <iostream>
 
 namespace revolve {
 
@@ -15,7 +15,16 @@ class Servo
     : public Actuator
 {
 public:
-    explicit Servo(double coordinate_x, double coordinate_y, double coordinate_z, short pin, unsigned int frequency=50, int range=1000, bool inverse=false);
+    explicit Servo(
+            double coordinate_x,
+            double coordinate_y,
+            double coordinate_z,
+            PIGPIOConnection *connection,
+            unsigned short pin,
+            unsigned int frequency=50,
+            int range=1000,
+            bool inverse=false
+    );
 
     ~Servo() {
         this->off();
@@ -34,14 +43,29 @@ public:
 
     virtual void write(const double *output, double step) override;
 
+    std::ostream &print(std::ostream &os) const
+    {
+        os << "Servo pin:\t" << this->pin << std::endl;
+        os << "\tcoordinates [" << this->coordinate_x() << ',' << this->coordinate_y() << ',' << this->coordinate_z() << ']' << std::endl;
+        os << "\tfrequency:\t" << this->frequency << std::endl;
+        os << "\trange:    \t" << this->range << std::endl;
+        os << "\tinverse:  \t" << this->inverse;
+
+        return os;
+    }
+
 private:
-    short pin;
-    PIGPIOConnection pigpio;
+    unsigned short pin;
+    PIGPIOConnection *pigpio;
+    unsigned int frequency;
+    int range;
+    bool inverse;
     float minPWM;
     float maxPWM;
 };
 
 }
 
+std::ostream &operator<<(std::ostream &os, revolve::Servo const &s);
 
 #endif //REVOLVE_SERVO_H

@@ -14,7 +14,7 @@ extern "C" {
 
 class PIGPIOConnection {
 public:
-    explicit PIGPIOConnection(char* address= nullptr, char* port= nullptr) {
+    explicit PIGPIOConnection(const char* address= nullptr, const char* port= nullptr) {
         this->connection = pigpio_start(address, port);
         if (this->connection < 0) {
             throw std::runtime_error("connection unsuccessful");

@@ -20,9 +20,9 @@ public:
             , coordinates(coordinates)
     {}
 
-    inline double coordinate_x() { return std::get<0>(this->coordinates); }
-    inline double coordinate_y() { return std::get<1>(this->coordinates); }
-    inline double coordinate_z() { return std::get<2>(this->coordinates); }
+    inline double coordinate_x() const { return std::get<0>(this->coordinates); }
+    inline double coordinate_y() const { return std::get<1>(this->coordinates); }
+    inline double coordinate_z() const { return std::get<2>(this->coordinates); }
 
     virtual void write(const double *output, double step) = 0;
 
