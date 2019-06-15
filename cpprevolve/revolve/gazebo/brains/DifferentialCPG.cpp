@@ -431,10 +431,10 @@ struct DifferentialCPG::evaluation_function{
   //    Gekoc12:23 - DONE
   //    Gecko17: 33 - DONE
   //    BabyA: 16 - DONE
-  //    babyB: 22
+  //    babyB: 22- DONE
   //    Babyc: 32
 
-    BO_PARAM(size_t, dim_in, 22);
+    BO_PARAM(size_t, dim_in, 32);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);

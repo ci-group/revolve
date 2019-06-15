@@ -10,7 +10,7 @@ import time
 
 
 # Parameters
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560423026-1-spider17/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560319461-1-babyA/"
 fitness_file = "fitnesses.txt"
 yaml_temp_path = "/home/maarten/CLionProjects/revolve/experiments/bo_learner/yaml/yaml_temp/"
 n_rows_min = 1450
@@ -92,9 +92,13 @@ for i, path_ in enumerate(path_list):
     fitnesses = np.empty((n_rows_max,n_subruns))
     fitnesses_mon = np.empty((n_rows_max,n_subruns))
 
+    name =path.split("-")[-1][:-1].capitalize()
+    if "Baby" in name:
+        name = name[:-1] + name[-1].upper()
+
     # Create plot
     plt.figure()
-    plt.title(path.split("-")[-1][:-1].capitalize())
+    plt.title(name)
     plt.xlabel("Iteration")
     plt.ylabel("Fitness")
     plt.grid()
@@ -160,17 +164,27 @@ for i, path_ in enumerate(path_list):
                 brain_file.write(brain[ix] +"\n")
 
         # Plot the avg fitness
-        plt.plot(fitnesses_mon[:, j], linewidth = 0.5, color = "blue")
+        if j == 0:
+            plt.plot(fitnesses_mon[:, j], linewidth = 0.5, color = "blue", label = "Single run")
+
+        else:
+            plt.plot(fitnesses_mon[:, j], linewidth = 0.5, color = "blue")
 
     # Take average value over the n_runs
     avg_fitness = np.mean(fitnesses, axis=1)
     avg_fitness_mon = np.mean(fitnesses_mon, axis=1)
 
     # Save plot
-    plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=2.5, color="black")
+    plt.plot(avg_fitness_mon, linestyle="dashed", linewidth=3, color="black", label = "Average")
     plt.xlim(0,1500)
     plt.tight_layout()
-    plt.savefig(path_ + "/" + str(round(avg_fitness_mon[-1], 7)) + ".png")
+    plt.title(name + " learning process", fontsize = 20)
+    plt.xlabel("Learning time (evaluations)", fontsize = 20)
+    plt.ylabel("Speed (cm/s)", fontsize = 20)
+    plt.tick_params(labelsize=16)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path_ + "/" + name + "-exp1.pdf",  bbox_inches = "tight")
     fig = plt.gcf()
     plt.close(fig)
 

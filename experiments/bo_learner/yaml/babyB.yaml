@@ -212,9 +212,9 @@ brain:
     for_signal_modification_type: "amplitude"
     for_speeding_approach: "slower"
     for_faster_amplitude_factor: 2.5
-    for_slower_amplitude_factor: 4.0
+    for_slower_amplitude_factor: 9.0
     n_learning_iterations: 1450
-    n_cooldown_iterations: 400
+    n_cooldown_iterations: 750
     reset_robot_position: "false"
     evaluation_rate: 50
     output_directory: ""
