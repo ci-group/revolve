@@ -2,12 +2,12 @@ from glob import glob
 import os
 import numpy as np
 
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560552013/"
+path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560558807/"
 path_list = glob(path + "/*/")
 path_list = [path_ for path_ in path_list if os.path.isdir(path_)]
 n_objects = 10
 old = False
-
+seen = []
 
 # Group based on value of p. Make mapping between number and p. This goes wrong.
 p_dict  = {}
@@ -33,6 +33,7 @@ for p in set(p_dict.values()):
 
 # Walk through the paths.
 for ix, path_ in enumerate(path_list):
+    fin = False
     object_reached = True
     number = path_.split("/")[-2]
     run_counter[number] = 0
@@ -63,60 +64,61 @@ for ix, path_ in enumerate(path_list):
         fail_counter[str(p_dict[str(number)])] += [number]
         print("Failed - 1")
         continue
-    else:
-        subfolder = subfolders_1[0]
 
-    # get speeds and distances
-    speeds = [(line.rstrip('\n')) for line in open(subfolder + "/speed_to_object.txt")][1:]
-    dists  = [(line.rstrip('\n')) for line in open(subfolder + "/dist_to_object.txt")]
+    for subfolder in subfolders_1:
+        if not fin:
+            # get speeds and distances
+            speeds = [(line.rstrip('\n')) for line in open(subfolder + "/speed_to_object.txt")][1:]
+            dists  = [(line.rstrip('\n')) for line in open(subfolder + "/dist_to_object.txt")]
 
-    if old:
-        # Check if we are fast enough
-        if len(speeds) < 10 and len(dists) >= 399:
-            slow_counter[str(p_dict[str(number)])] += [number]
-            #print("Too slow")
-            continue
+            if old:
+                # Check if we are fast enough
+                if len(speeds) < 10 and len(dists) >= 400:
+                    slow_counter[str(p_dict[str(number)])] += [number]
+                    #print("Too slow")
+                    continue
 
-        # Check if the run didn't fail
-        if len(speeds) < 10 and len(dists) < 400:
-            fail_counter[str(p_dict[str(number)])] += [number]
-            #print("Failed - 2")
-            continue
-    else:
-        # Check if we are fast enough
-        if "0,0,1" in speeds or "0,0,3" in speeds or "0,0,5" in speeds or "0,0,7" in speeds or "0,0,9" in speeds or "0,0,11" in speeds or "0,0,13" in speeds:
-            slow_counter[str(p_dict[str(number)])] += [number]
-            #print("Too slow")
-            continue
+                # Check if the run didn't fail
+                if len(speeds) < 10 and len(dists) < 401:
+                    fail_counter[str(p_dict[str(number)])] += [number]
+                    #print("Failed - 2")
+                    continue
+            else:
+                # Check if we are fast enough
+                if "0,0,1" in speeds or "0,0,3" in speeds or "0,0,5" in speeds or "0,0,7" in speeds or "0,0,9" in speeds or "0,0,11" in speeds or "0,0,13" in speeds or "0,0,15" in speeds:
+                    slow_counter[str(p_dict[str(number)])] += [number]
+                    #print("Too slow")
+                    continue
 
-        # Check if the run didn't fail
-        if len(speeds) <5 and len(dists) >300:
-            slow_counter[str(p_dict[str(number)])] += [number]
-            #sprint("Failed - 2")
-            continue
+                # # Check if the run didn't fail
+                # if len(speeds) <5 and len(dists) >300:
+                #     slow_counter[str(p_dict[str(number)])] += [number]
+                #     #sprint("Failed - 2")
+                #     continue
 
-        # Check if the run didn't fail
-        if len(speeds) < 10:
-            fail_counter[str(p_dict[str(number)])] += [number]
-            #sprint("Failed - 2")
-            continue
+                # Check if the run didn't fail
+                if len(speeds) < 10 and not ("0,0,1" in speeds or "0,0,3" in speeds or "0,0,5" in speeds or "0,0,7" in speeds or "0,0,9" in speeds or "0,0,11" in speeds or "0,0,13" in speeds or "0,0,15" in speeds):
+                    fail_counter[str(p_dict[str(number)])] += [number]
+                    print("Failed - 2", )
+                    continue
+            # Get average speed
+            fin = True
+            speeds_filtered = []
+            for e in speeds:
+                speed = float(e.split(",")[-3])
+                speeds_filtered += [speed]
 
-    # Get average speed
-    speeds_filtered = []
-    for e in speeds:
-        speed = float(e.split(",")[-3])
-        speeds_filtered += [speed]
-    print(speeds_filtered)
-    # Save average speed
-    my_mean = round(sum(speeds_filtered)/len(speeds_filtered),5)
+            # Save average speed
+            my_mean = round(sum(speeds_filtered)/len(speeds_filtered),5)
 
-    # Get p. This goes fine
-    my_key = subfolder.split("/")[-3]
-    p = p_dict[my_key]
+            # Get p. This goes fine
+            my_key = subfolder.split("/")[-3]
+            p = p_dict[my_key]
 
-    # Save fitness
-    p_fitness[str(p)] += [my_mean]
-    print(str(p), number, my_mean)
+            # Save fitness
+            p_fitness[str(p)] += [my_mean]
+            if my_key not in seen:
+                seen += [int(my_key)]
 
 open(path + "/speed_results.txt", "w").close()
 with open(path + '/speed_results.txt', 'a') as my_file:
@@ -143,7 +145,11 @@ for key, value in p_fitness.items():
 
 print("\nToo slow: ")
 for key, value in slow_counter.items():
-    print(key,len(value), value)
+    print(key,len(np.unique(np.array(value))), np.unique(np.array(value)))
     with open(path + '/speed_results.txt', 'a') as my_file:
         my_file.write(str(key) + "," + str(len(value))+ "\n")
+
+seen.sort()
+print(seen)
 print(path)
+
