@@ -292,7 +292,7 @@ namespace revolve
       private: double dist_to_goal = 0.0;
 
       // \brief Number of goals reached
-      private: int goal_count_max = 10; // SET THIS BACK TO 40 FOR EXP3
+      private: int goal_count_max = 10; // SET THIS BACK TO 40 FOR EXP3; 10 for exp2
       private: int goal_count = 0;
       private: int goal_iteration_counter = 0;
       private: int goal_iteration_counter_max = 0; // Value not used but updated
@@ -307,7 +307,7 @@ namespace revolve
       /// \brief Number of times we should get an object during hill climbing
       private: int for_n = 4;
       private: bool for_use_hill_climber = false; // SET THIS BACK TO TRUE FOR HILL CLIMBER
-      private: double for_slower_power = 9.0; // Set in yaml
+      private: double for_slower_power = 7.0; // Set in yaml
       private: double for_step_size_eps = 0.05;
       private: double for_step_size = 2.0;
 

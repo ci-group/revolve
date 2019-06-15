@@ -424,17 +424,17 @@ DifferentialCPG::~DifferentialCPG()
  */
 struct DifferentialCPG::evaluation_function{
   // Number of input dimension (samples.size())
-  //    Spider9: 18
-  //    Spider13: 26
+  //    Spider9: 18 - DONE
+  //    Spider13: 26 - DONE
   //    Spider17:34
-  //    Gecko7: 13
-  //    Gekoc12:23
-  //    Gecko17: 33
-  //    BabyA: 16.
+  //    Gecko7: 13 - DONE
+  //    Gekoc12:23 - DONE
+  //    Gecko17: 33 - DONE
+  //    BabyA: 16 - DONE
   //    babyB: 22
   //    Babyc: 32
 
-    BO_PARAM(size_t, dim_in, 33);
+    BO_PARAM(size_t, dim_in, 22);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -968,7 +968,6 @@ void DifferentialCPG::Update(
   if ((elapsed_evaluation_time > this->evaluation_rate) or ((_time - _step) < 0.001))
   {
     this->goal_iteration_counter += 1;
-    std::cout << goal_iteration_counter << "," << this->goal_iteration_counter_max << std::endl;
     if(this->goal_iteration_counter >= this->goal_iteration_counter_max)
     {
       // Make clear that we failed in reaching this goal
