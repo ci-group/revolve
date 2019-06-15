@@ -58,4 +58,10 @@ install(TARGETS pigpio pigpio_if pigpio_if2 pig2vcd pigpiod pigs
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
 
-
+enable_testing()
+add_test(NAME pigpio
+        COMMAND x_pigpio)
+add_test(NAME pigpiod_if
+        COMMAND x_pigpiod_if)
+add_test(NAME pigpiod_if2
+        COMMAND x_pigpiod_if2)
