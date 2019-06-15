@@ -14,6 +14,8 @@ std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_
 void reset(std::vector<Servo_p> &servos);
 void center(std::vector<Servo_p> &servos);
 void control(std::vector<Servo_p> &servos);
+void move_to(std::vector<Servo_p> &servos, double value);
+void test(std::vector<Servo_p> &servos);
 
 
 int main( int argc, const char* argv[] )
@@ -36,7 +38,7 @@ int main( int argc, const char* argv[] )
     std::vector<Servo_p> servos = read_conf(pigpio, yaml_servos);
 
 
-    if (argc >= 2 and (std::string(argv[1]) == "reset"))
+    if (argc >= 2)
     {
         std::string command = std::string(argv[1]);
         if (command == "reset")
@@ -45,6 +47,10 @@ int main( int argc, const char* argv[] )
             center(servos);
         else if (command == "controller")
             control(servos);
+        else if (command == "test")
+            test(servos);
+        else if (command == "set" && argc >=3)
+            move_to(servos, atof(argv[2]));
         else
             std::clog << "Command \"" << command << "\" not recognized" << std::endl;
     }
@@ -98,17 +104,45 @@ std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_
 
 void control(std::vector<Servo_p> &servos)
 {
+    std::cout << "Staring controller" << std::endl;
     revolve::RaspController controller;
 }
 
 void reset(std::vector<Servo_p> &servos)
 {
+    std::cout << "Shutting off servos" << std::endl;
     for (const Servo_p &servo: servos)
         servo->off();
 }
 
 void center(std::vector<Servo_p> &servos)
 {
+    std::cout << "Setting servos to center" << std::endl;
     for (const Servo_p &servo: servos)
         servo->center();
+
+    std::cout << "Press enter to continue" << std::endl;
+    std::string something;
+    std::cin >> something;
+}
+
+void move_to(std::vector<Servo_p> &servos, double value)
+{
+    std::cout << "Setting servos to " << value << std::endl;
+    for (const Servo_p &servo: servos)
+        servo->move_to_position(value);
+    std::cout << "Press enter to continue" << std::endl;
+    std::string something;
+    std::cin >> something;
+}
+
+void test(std::vector<Servo_p> &servos)
+{
+    std::cout << "Testing servos" << std::endl;
+
+    move_to(servos, -1);
+    move_to(servos, -.5);
+    move_to(servos, 0);
+    move_to(servos, 0.5);
+    move_to(servos, 1);
 }
