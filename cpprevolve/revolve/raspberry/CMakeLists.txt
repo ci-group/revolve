@@ -19,7 +19,6 @@ target_link_libraries(revolve-raspberry
 
 include_directories(${PIGPIO_HEADER_DIR})
 
-#target_link_libraries(revolve-controllers
-#        PUBLIC
-#
-#    )
+install(TARGETS revolve-raspberry
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib)

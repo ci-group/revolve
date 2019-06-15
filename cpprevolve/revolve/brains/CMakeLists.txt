@@ -34,7 +34,6 @@ include_directories(${LIMBO_DIR}/src)
 add_library(revolve-controllers SHARED ${CONTROLLER_SRCS})
 add_library(revolve-learners SHARED ${LEARNER_SRCS})
 
-#target_link_libraries(revolve-controllers
-#        PUBLIC
-#
-#    )
+install(TARGETS revolve-controllers revolve-learners
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib)
