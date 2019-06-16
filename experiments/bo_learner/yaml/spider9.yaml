@@ -169,7 +169,7 @@ brain:
     acqui_gpucb_delta: 0.5
     acqui_ucb_alpha: 0.44
     acqui_ei_jitter: 0
-    acquisition_function: "UCB"
+    acquisition_function: "GP_UCB"
   meta:
     robot_size: 18
     run_analytics: "true"

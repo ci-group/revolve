@@ -19,6 +19,8 @@
 #include <limbo/tools/random_generator.hpp>
 #include <limbo/opt/nlopt_no_grad.hpp>
 
+#include <galgo/Galgo.hpp>
+
 namespace limbo {
     namespace defaults {
         struct bayes_opt_boptimizer {
@@ -86,61 +88,59 @@ namespace limbo {
             template <typename StateFunction, typename AggregatorFunction = FirstElem>
             void optimize(const StateFunction& sfun, std::vector<Eigen::VectorXd> all_samples, std::vector<Eigen::VectorXd> all_observations, const AggregatorFunction& afun = AggregatorFunction(), bool reset = true)
             {
-                this->_init(sfun, afun, reset); //reset
+              this->_init(sfun, afun, reset); //reset
 
-                // Maarten: set observations and samples
-                this->_samples = all_samples;
-                this->_observations = all_observations;
+              // Maarten: set observations and samples
+              this->_samples = all_samples;
+              this->_observations = all_observations;
 
-                if (!this->_observations.empty()) {
-                    _model.compute(this->_samples, this->_observations);
-                }
-                else {
-                    std::cout << "OBSERVATION SET IS EMPTY \n";
-                    _model = model_t(StateFunction::dim_in(), StateFunction::dim_out());
-                }
-                acqui_optimizer_t acqui_optimizer;
+              if (!this->_observations.empty()) {
+                  _model.compute(this->_samples, this->_observations);
+              }
+              else {
+                  std::cout << "OBSERVATION SET IS EMPTY \n";
+                  _model = model_t(StateFunction::dim_in(), StateFunction::dim_out());
+              }
+              acqui_optimizer_t acqui_optimizer;
 
-                struct timeval timeStart, timeEnd;
-                double timeDiff;
+              struct timeval timeStart, timeEnd;
+              double timeDiff;
 
-                while (!this->_stop(*this, afun)) {
+              while (!this->_stop(*this, afun)) {
+                  gettimeofday(&timeStart,NULL);
+                  acquisition_function_t acqui(_model, this->_current_iteration);
 
-                    gettimeofday(&timeStart,NULL);
+                  auto acqui_optimization =
+                      [&](const Eigen::VectorXd& x, bool g) { return acqui(x, afun, g); };
+                  Eigen::VectorXd starting_point = tools::random_vector(StateFunction::dim_in(), Params::bayes_opt_bobase::bounded());
 
-                    acquisition_function_t acqui(_model, this->_current_iteration);
+                  // new samples are from the acquisition optimizer
+                  Eigen::VectorXd new_sample = acqui_optimizer(acqui_optimization, starting_point, Params::bayes_opt_bobase::bounded());
 
-                    auto acqui_optimization =
-                            [&](const Eigen::VectorXd& x, bool g) { return acqui(x, afun, g); };
-                    Eigen::VectorXd starting_point = tools::random_vector(StateFunction::dim_in(), Params::bayes_opt_bobase::bounded());
+                  ///Evaluate a sample and add the result to the 'database'(sample/observations vectors)--it does not update the model
+                  this->eval_and_add(sfun, new_sample); //add new_sample to _sample and sfun to _observations in bo_base.hpp
 
-                    // new samples are from the acquisition optimizer
-                    Eigen::VectorXd new_sample = acqui_optimizer(acqui_optimization, starting_point, Params::bayes_opt_bobase::bounded());
+                  this->_update_stats(*this, afun);
 
-                    ///Evaluate a sample and add the result to the 'database'(sample/observations vectors)--it does not update the model
-                    this->eval_and_add(sfun, new_sample);
+                  _model.add_sample(this->_samples.back(), this->_observations.back());
 
-                    this->_update_stats(*this, afun);
+                  if (Params::bayes_opt_boptimizer::hp_period() > 0
+                      && (this->_current_iteration + 1) % Params::bayes_opt_boptimizer::hp_period() == 0)
+                    _model.optimize_hyperparams();
 
-                    _model.add_sample(this->_samples.back(), this->_observations.back());
+                  this->_current_iteration++;
+                  this->_total_iterations++;
 
-                    if (Params::bayes_opt_boptimizer::hp_period() > 0
-                        && (this->_current_iteration + 1) % Params::bayes_opt_boptimizer::hp_period() == 0)
-                        _model.optimize_hyperparams();
+                  gettimeofday(&timeEnd,NULL);
 
-                    this->_current_iteration++;
-                    this->_total_iterations++;
+                  timeDiff = 1000000 * (timeEnd.tv_sec - timeStart.tv_sec)
+                             + timeEnd.tv_usec - timeStart.tv_usec; //tv_sec: value of second, tv_usec: value of microsecond
+                  timeDiff/=1000;
 
-                    gettimeofday(&timeEnd,NULL);
-
-                    timeDiff = 1000000 * (timeEnd.tv_sec - timeStart.tv_sec)
-                               + timeEnd.tv_usec - timeStart.tv_usec; //tv_sec: value of second, tv_usec: value of microsecond
-                    timeDiff/=1000;
-
-                    std::ofstream ctime;
-                    ctime.open("../ctime.txt", std::ios::app);
-                    ctime << std::fixed << timeDiff << std::endl;
-                }
+//                  std::ofstream ctime;
+//                  ctime.open("../ctime.txt", std::ios::app);
+//                  ctime << std::fixed << timeDiff << std::endl;
+              }
             }
 
             /// return the best observation so far (i.e. max(f(x)))
@@ -165,7 +165,7 @@ namespace limbo {
 
             /// Return a reference to the last sample. Used for implementation with revolve
             const Eigen::VectorXd& last_sample(){
-                return this->_samples.back();
+                return this->_samples.back(); //back(): return the last elelment of _samples
             }
 
             const model_t& model() const { return _model; }

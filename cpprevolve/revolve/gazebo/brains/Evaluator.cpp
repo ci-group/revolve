@@ -20,7 +20,7 @@
  */
 
 #include <cmath>
-
+#include_next <math.h>
 #include "Evaluator.h"
 
 using namespace revolve::gazebo;
@@ -78,9 +78,9 @@ double Evaluator::Fitness()
   }
   else if (this->locomotion_type == "directed")
   {
-
     this->step_poses.push_back(this->current_position_);
     //step_poses: x y z roll pitch yaw
+//    std::cout << "step_poses.size(): " << step_poses.size() << " ";
     for (int i=1; i < this->step_poses.size(); i++)
     {
       const auto &pose_i_1 = this->step_poses[i-1];
@@ -92,20 +92,22 @@ double Evaluator::Fitness()
 
       if(i == 1)
       {
-          coordinates << std::fixed << start_position_.Pos().X() << " " << start_position_.Pos().Y() << std::endl;
+        start_position_ = pose_i_1;
+        coordinates << std::fixed << start_position_.Pos().X() << " " << start_position_.Pos().Y() << std::endl;
       }
       coordinates << std::fixed << pose_i.Pos().X() << " " << pose_i.Pos().Y() << std::endl;
     }
-
+//    std::cout << "path_length " << path_length << " ";
     ////********** directed locomotion fitness function **********////
     //directions(forward) of heads are the orientation(+x axis) - 1.570796
-    double beta0 = this->start_position_.Rot().Yaw()- M_PI/2.0;
+    double beta0 = this->start_position_.Rot().Yaw()- M_PI/2.0 + 0.698132;
+
     if (beta0 < - M_PI) //always less than pi (beta0 + max(40degree) < pi)
     {
       beta0 = 2 * M_PI - std::abs(beta0);
     }
 
-    //save direction to coordinates.txt: This is used to make Figure 8
+    //save direction to coordinates.txt
     std::ofstream coordinates;
     coordinates.open(this->directory_name + "/coordinates.txt",std::ios::app);
     coordinates << std::fixed << beta0 << std::endl;

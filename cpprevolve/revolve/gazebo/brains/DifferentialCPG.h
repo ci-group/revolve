@@ -142,8 +142,14 @@ namespace revolve
       /// \brief Init BO loop
       public: void bo_init_sampling();
 
+      /// \brief Init EA loop
+      public: void ea_init_sampling();
+
       /// \brief Main BO loop
       public: void bo_step();
+
+      /// \brief Main EA loop
+      public: void ea_step();
 
       /// \brief evaluation rate
       private: double evaluation_rate;
@@ -177,6 +183,15 @@ namespace revolve
 
       /// \brief Number of initial samples
       private: size_t n_init_samples;
+
+      /// \brief Population size of Evolutionary Algorithm
+      private: size_t pop_size = 20;
+
+      /// \brief Population size of Evolutionary Algorithm
+      private: size_t switch_num = 300;
+
+      /// \brief The type of learning algorithm
+      private: std::string learner_algorithm = "BO";
 
       /// \brief Cool down period
       private: size_t n_cooldown_iterations;

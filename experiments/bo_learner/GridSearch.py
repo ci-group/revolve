@@ -21,22 +21,20 @@ from joblib import Parallel, delayed
 # Parameters
 min_lines = 1480
 run_gazebo = False
-n_runs = 15 # Naar 20
-n_jobs = 30
+n_runs = 1 # Naar 20
+n_jobs = 1
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "babyC.yaml"
+yaml_model = "one+.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = ".venv/bin/python3"
+python_interpreter = "~/projects/revolve/.venv/bin/python3"
 search_space = {
-    'n_learning_iterations': [1500],
-    'n_init_samples': [20],
     'evaluation_rate': [60],
-    'verbose': [0],
-    'kernel_sigma_sq': [1],
-    'kernel_l': [0.02, 0.05, 0.1, 0.2],
-    'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
-    'range_ub': [1.5],
-    'signal_factor_all': [4.0],
+    'init_method': ["LHS"],
+    'verbose': [1],
+    'kernel_l': [0.2],
+    'acqui_ucb_alpha': [3.0],
+    'n_learning_iterations': [950],
+    'n_init_samples': [50],
 }
 
 print(search_space)
@@ -47,8 +45,8 @@ start_port = 11000
 finished = False
 
 # Make in revolve/build to allow runs from terminal
-os.system('cmake /home/gongjinlan/projects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
-os.system("make -j60")
+os.system('cmake ~/projects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
+os.system("make -j4")
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
