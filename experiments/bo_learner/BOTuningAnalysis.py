@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 
-path = "/home/gongjinlan/BO_tuning_results/main_1560002003-BO-spider9-finished/"
+path = "/Users/lan/projects/revolve/BO_tuning_results/main_1560002003-BO-spider9-finished/"
 dirs = glob(path + "*/")
 
 # Base settings for alph, sigma_sq, l

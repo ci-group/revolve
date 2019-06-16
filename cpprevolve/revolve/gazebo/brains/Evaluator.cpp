@@ -100,7 +100,7 @@ double Evaluator::Fitness()
 //    std::cout << "path_length " << path_length << " ";
     ////********** directed locomotion fitness function **********////
     //directions(forward) of heads are the orientation(+x axis) - 1.570796
-    double beta0 = this->start_position_.Rot().Yaw()- M_PI/2.0 + 0.698132;
+    double beta0 = this->start_position_.Rot().Yaw()- M_PI/2.0;
 
     if (beta0 < - M_PI) //always less than pi (beta0 + max(40degree) < pi)
     {

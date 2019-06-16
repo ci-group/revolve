@@ -27,6 +27,7 @@ async def run():
     robot = revolve_bot.RevolveBot()
     robot.load_file("experiments/examples/yaml/spider.yaml")
     robot.update_substrate()
+    # robot.save_file("./spider.sdf", conf_type='sdf')
 
     # Connect to the simulator and pause
     world = await World.create(settings)

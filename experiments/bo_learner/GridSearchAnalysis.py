@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 import time
 
 # Parameters
-path = "/home/gongjinlan/projects/revolve/output/cpg_bo/main_1559644358-BO-gecko7/"
+path = "/Users/lan/projects/revolve/output/cpg_bo/main_1559644358-BO-gecko7/"
 fitness_file = "fitnesses.txt"
-yaml_temp_path = "/home/gongjinlan/projects/revolve/experiments/bo_learner/yaml/yaml_temp/"
+yaml_temp_path = "/Users/lan/projects/revolve/experiments/bo_learner/yaml/yaml_temp/"
 
 # Get all sub-directories
 path_list = glob(path + "*")

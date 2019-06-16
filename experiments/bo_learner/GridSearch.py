@@ -19,22 +19,23 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-min_lines = 1480
+min_lines = 980
 run_gazebo = False
-n_runs = 1 # Naar 20
+n_runs = 5 # Naar 20
 n_jobs = 1
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "one+.yaml"
+yaml_model = "babyA.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "~/projects/revolve/.venv/bin/python3"
 search_space = {
+    # 'load_brain': ["/Users/lan/projects/revolve/output/cpg_bo/one/main_1560413639/0/0/best_brain.txt"],
     'evaluation_rate': [60],
     'init_method': ["LHS"],
     'verbose': [1],
     'kernel_l': [0.2],
     'acqui_ucb_alpha': [3.0],
-    'n_learning_iterations': [950],
-    'n_init_samples': [50],
+    'n_learning_iterations': [980],
+    'n_init_samples': [20],
 }
 
 print(search_space)
@@ -91,7 +92,7 @@ def create_yamls(yaml_path, model, sub_directory, experiments):
 def run(i, sub_directory, model, params):
     # Sleepy time when starting up to save gazebo from misery
     if i < n_jobs:
-        time.sleep(5*i)
+        time.sleep(3*i)
     else:
         print("Todo: Make sure you are leaving 2 seconds in between firing "
               "gazebos")
@@ -150,29 +151,28 @@ if __name__ == "__main__":
 
     # PASTE THE EXPERIMENTS HERE, IN THE FORMAT SHOWN BELOW
     experiments = [
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},   # BASE RUN
+        {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 3.0},   # BASE RUN
 
         # BASE RUN
-        {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 1.0, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 1.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.1,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
-        # BASE RUN
-
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.2},
-        # BASE RUN
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 2.0},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 3.0},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 4.0},
-
-        {'init_method': "RS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.5, 'acqui_ucb_alpha': 1.0},
+        # {'init_method': "LHS", 'kernel_l': 0.5, 'kernel_sigma_sq': 0.5, 'acqui_ucb_alpha': 1.0},
+        # {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 0.5, 'acqui_ucb_alpha': 0.5},
+        #
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.1,  'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
+        # # BASE RUN
+        #
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.2},
+        # # BASE RUN
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 2.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 3.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 4.0},
+        #
+        # {'init_method': "RS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
         # BASE RUN
     ]
     # 'kernel_l': [0.02, 0.05, 0.1, 0.2],
