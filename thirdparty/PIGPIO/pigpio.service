@@ -8,6 +8,8 @@ ExecStart=/usr/local/bin/pigpiod -g
 Restart=on-failure
 #RestartPreventExitStatus=255
 Type=exec
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=20
 
 [Install]
 WantedBy=multi-user.target
