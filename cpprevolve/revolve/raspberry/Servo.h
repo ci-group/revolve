@@ -11,8 +11,7 @@
 
 namespace revolve {
 
-class Servo
-    : public Actuator
+class Servo: public revolve::Actuator
 {
 public:
     explicit Servo(

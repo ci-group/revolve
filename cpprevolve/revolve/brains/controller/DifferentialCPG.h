@@ -5,10 +5,12 @@
 #ifndef REVOLVE_DIFFERENTIALCPG_H
 #define REVOLVE_DIFFERENTIALCPG_H
 
-#include <boost/numeric/odeint.hpp>
 #include "Controller.h"
 #include "actuators/Actuator.h"
 #include "sensors/Sensor.h"
+#include <map>
+#include <boost/numeric/odeint.hpp>
+#include <Eigen/Geometry>
 
 typedef std::vector< double > state_type;
 
@@ -26,6 +28,7 @@ public:
         double signal_factor_all;
         double signal_factor_mid;
         double signal_factor_left_right;
+        double abs_output_bound;
         std::vector< double > weights;
     };
 
@@ -36,8 +39,7 @@ public:
     /// \param[in] _sensors Reference to a sensor list, it might be reordered
     DifferentialCPG(
             const ControllerParams &params,
-            const std::vector< std::shared_ptr < Actuator > > &_actuators,
-            const std::vector< std::shared_ptr < Sensor > > &_sensors);
+            const std::vector< std::unique_ptr < Actuator > > &_actuators);
 
     /// \brief Destructor
     virtual ~DifferentialCPG();
@@ -48,8 +50,8 @@ public:
     /// \param[in] _time Current world time
     /// \param[in] _step Current time step
     virtual void update(
-            const std::vector< std::shared_ptr < Actuator > > &actuators,
-            const std::vector< std::shared_ptr < Sensor > > &sensors,
+            const std::vector< std::unique_ptr < Actuator > > &actuators,
+            const std::vector< std::unique_ptr < Sensor > > &sensors,
             const double _time,
             const double _step) override;
 
@@ -57,8 +59,7 @@ protected:
 
     void step(
             const double time,
-            const double step,
-            double *_output);
+            const double step);
 
     void set_ode_matrix();
 
@@ -68,8 +69,6 @@ private:
 
 public:
     std::map< std::tuple< double, double >, size_t > motor_coordinates;
-
-    double abs_output_bound;
 
 protected:
     /// \brief Register of motor IDs and their x,y-coordinates
@@ -98,9 +97,6 @@ protected:
 private:
     /// \brief Used to determine the next state array
     double *next_state;
-
-    /// \brief One input state for each input neuron
-    double *input;
 
     /// \brief Used to determine the output to the motors array
     double *output;
@@ -137,6 +133,8 @@ private:
 
     /// \brief Use frame of reference {-1,0,1} version or not
     bool use_frame_of_reference;
+
+    double abs_output_bound;
 };
 
 }

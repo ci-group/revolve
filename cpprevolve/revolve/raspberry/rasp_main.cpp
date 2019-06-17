@@ -13,51 +13,55 @@ typedef std::unique_ptr<revolve::Servo> Servo_p;
 std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_servos);
 void reset(std::vector<Servo_p> &servos);
 void center(std::vector<Servo_p> &servos);
-void control(std::vector<Servo_p> &servos);
+void control(std::vector<Servo_p> &servos, const YAML::Node &controller_conf);
 void move_to(std::vector<Servo_p> &servos, double value);
 void test(std::vector<Servo_p> &servos);
 
 
 int main( int argc, const char* argv[] )
 {
-    YAML::Node config = YAML::LoadFile("robot_conf.yaml");
-
-    std::string ip = PI_DEFAULT_SOCKET_ADDR_STR;
-    unsigned short port = PI_DEFAULT_SOCKET_PORT;
-
     try {
-        YAML::Node pigpio_address = config["robot_address"];
-        ip = pigpio_address["ip"].as<std::string>(PI_DEFAULT_SOCKET_ADDR_STR);
-        port = pigpio_address["port"].as<unsigned short>(PI_DEFAULT_SOCKET_PORT);
-    } catch (const YAML::RepresentationException &e) {
-        // pass
-    }
-    std::cout << "Connecting to PIGPIO " << ip << ':' << port << std::endl;
-    PIGPIOConnection pigpio(ip, port);
-    YAML::Node yaml_servos = config["servos"];
-    std::vector<Servo_p> servos = read_conf(pigpio, yaml_servos);
+        YAML::Node config = YAML::LoadFile("robot_conf.yaml");
+
+        std::string ip = PI_DEFAULT_SOCKET_ADDR_STR;
+        unsigned short port = PI_DEFAULT_SOCKET_PORT;
+
+        try {
+            YAML::Node pigpio_address = config["robot_address"];
+            ip = pigpio_address["ip"].as<std::string>(PI_DEFAULT_SOCKET_ADDR_STR);
+            port = pigpio_address["port"].as<unsigned short>(PI_DEFAULT_SOCKET_PORT);
+        } catch (const YAML::RepresentationException &e) {
+            // pass
+        }
+        std::cout << "Connecting to PIGPIO " << ip << ':' << port << std::endl;
+        PIGPIOConnection pigpio(ip, port);
+        YAML::Node yaml_servos = config["servos"];
+        std::vector<Servo_p> servos = read_conf(pigpio, yaml_servos);
 
 
-    if (argc >= 2)
-    {
-        std::string command = std::string(argv[1]);
-        if (command == "reset")
-            reset(servos);
-        else if (command == "center")
-            center(servos);
-        else if (command == "controller")
-            control(servos);
-        else if (command == "test")
-            test(servos);
-        else if (command == "set" && argc >=3)
-            move_to(servos, atof(argv[2]));
-        else
-            std::clog << "Command \"" << command << "\" not recognized" << std::endl;
+        if (argc >= 2) {
+            std::string command = std::string(argv[1]);
+            if (command == "reset")
+                reset(servos);
+            else if (command == "center")
+                center(servos);
+            else if (command == "controller")
+                control(servos, config["controller"]);
+            else if (command == "test")
+                test(servos);
+            else if (command == "set" && argc >= 3)
+                move_to(servos, atof(argv[2]));
+            else
+                std::clog << "Command \"" << command << "\" not recognized" << std::endl;
+        } else {
+            control(servos, config["controller"]);
+        }
+    } catch (const std::exception &e) {
+        std::cerr<<"Exception occurred"<< std::endl;
+        std::cerr<<e.what()<< std::endl;
     }
-    else
-    {
-        control(servos);
-    }
+
+    return 0;
 }
 
 std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_servos)
@@ -102,10 +106,25 @@ std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_
     return servos;
 }
 
-void control(std::vector<Servo_p> &servos)
+void control(std::vector<Servo_p> &servos, const YAML::Node &controller_conf)
 {
     std::cout << "Staring controller" << std::endl;
-    revolve::RaspController controller;
+    std::vector<std::unique_ptr<revolve::Sensor>> sensors;
+    std::vector<std::unique_ptr<revolve::Actuator>> actuators;
+    actuators.reserve(servos.size());
+    for (Servo_p &servo: servos) {
+        actuators.emplace_back(std::move(servo));
+    }
+
+    revolve::RaspController controller(
+        std::move(actuators),
+        std::move(sensors),
+        controller_conf
+    );
+
+    while (true) {
+        controller.update();
+    }
 }
 
 void reset(std::vector<Servo_p> &servos)

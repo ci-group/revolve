@@ -19,6 +19,8 @@
  *
  */
 
+#include "DifferentialCPG.h"
+
 // STL macros
 #include <cstdlib>
 #include <map>
@@ -35,8 +37,6 @@
 
 #include "sensors/Sensor.h"
 
-#include "DifferentialCPG.h"
-
 // TODO: Resolve odd behaviour at the end of the validation procedure
 // This behaviour is not present if you directly load a trained controller
 
@@ -51,11 +51,9 @@ using namespace revolve;
  */
 DifferentialCPG::DifferentialCPG(
         const DifferentialCPG::ControllerParams &params,
-        const std::vector< std::shared_ptr< Actuator > > &actuators,
-        const std::vector< std::shared_ptr< Sensor > > &sensors)
+        const std::vector< std::unique_ptr< Actuator > > &actuators)
         : next_state(nullptr)
         , n_motors(actuators.size())
-        , input(new double[sensors.size()])
         , output(new double[actuators.size()])
 {
     // Controller parameters
@@ -67,9 +65,10 @@ DifferentialCPG::DifferentialCPG(
     this->signal_factor_all_ = params.signal_factor_all;
     this->signal_factor_mid = params.signal_factor_mid;
     this->signal_factor_left_right = params.signal_factor_left_right;
+    this->abs_output_bound = params.abs_output_bound;
 
     size_t j=0;
-    for (const std::shared_ptr<Actuator> &actuator: actuators)
+    for (const std::unique_ptr<Actuator> &actuator: actuators)
     {
         // Pass coordinates
         auto coord_x = actuator->coordinate_x();
@@ -97,7 +96,7 @@ DifferentialCPG::DifferentialCPG(
 
     // Add connections between neighbouring neurons
     int i = 0;
-    for (const std::shared_ptr<Actuator> &actuator: actuators)
+    for (const std::unique_ptr<Actuator> &actuator: actuators)
     {
         // Get name and x,y-coordinates of all neurons.
         double x = actuator->coordinate_x();
@@ -117,7 +116,7 @@ DifferentialCPG::DifferentialCPG(
         }
 
         // Loop over all positions. We call it neighbours, but we still need to check if they are a neighbour.
-        for (const std::shared_ptr<Actuator> &neighbour: actuators)
+        for (const std::unique_ptr<Actuator> &neighbour: actuators)
         {
             // Get information of this neuron (that we call neighbour).
             double near_x = neighbour->coordinate_x();
@@ -130,7 +129,7 @@ DifferentialCPG::DifferentialCPG(
             double dist_y = std::fabs(y - near_y);
 
             // TODO: Verify for non-spiders
-            if ((dist_x + dist_y - 2) < 0.01)
+            if (std::fabs(dist_x + dist_y - 2) < 0.01)
             {
                 if(std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
                    std::get<0>(this->connections[{near_x, near_y, 1, x, y, 1}]) != 1)
@@ -169,7 +168,6 @@ DifferentialCPG::DifferentialCPG(
 DifferentialCPG::~DifferentialCPG()
 {
     delete[] this->next_state;
-    delete[] this->input;
     delete[] this->output;
 }
 
@@ -182,23 +180,15 @@ DifferentialCPG::~DifferentialCPG()
  * @param _step
  */
 void DifferentialCPG::update(
-        const std::vector< std::shared_ptr < Actuator > > &actuators,
-        const std::vector< std::shared_ptr < Sensor > > &sensors,
+        const std::vector< std::unique_ptr < Actuator > > &actuators,
+        const std::vector< std::unique_ptr < Sensor > > &sensors,
         const double time,
         const double step)
 {
-    // Read sensor data and feed the neural network
-    unsigned int p = 0;
-    for (const auto &sensor : sensors)
-    {
-        sensor->read(this->input + p);
-        p += sensor->n_inputs();
-    }
-
     // Send new signals to the motors
-    this->step(time, step, this->output);
+    this->step(time, step);
 
-    p = 0;
+    unsigned int p = 0;
     for (const auto &actuator: actuators)
     {
         actuator->write(this->output + p, step);
@@ -371,8 +361,7 @@ void DifferentialCPG::reset_neuron_state(){
  */
 void DifferentialCPG::step(
         const double time,
-        const double dt,
-        double *_output)
+        const double dt)
 {
     int neuron_count = 0;
     for (const auto &neuron : this->neurons)

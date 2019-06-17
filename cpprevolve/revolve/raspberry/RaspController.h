@@ -5,20 +5,30 @@
 #ifndef REVOLVE_RASPCONTROLLER_H
 #define REVOLVE_RASPCONTROLLER_H
 
+#include <ctime>
+#include <yaml-cpp/node/node.h>
 #include "../brains/controller/Controller.h"
+#include "Timer.h"
 
 namespace revolve {
 
 class RaspController
-        : public revolve::Controller
 {
 public:
-    explicit RaspController();
+    explicit RaspController(
+            std::vector<std::unique_ptr< Actuator > > actuators,
+            std::vector<std::unique_ptr< Sensor > > sensors,
+            const YAML::Node &conf);
 
-    ~RaspController() override;
+    ~RaspController();
 
-    void update(const std::vector<std::shared_ptr<Actuator> > &_actuators,
-                const std::vector<std::shared_ptr<Sensor> > &_sensors, const double _time, const double _step) override;
+    void update();
+
+private:
+    std::unique_ptr<revolve::Controller> revolve_controller;
+    Timer timer;
+    std::vector< std::unique_ptr< revolve::Actuator > > actuators;
+    std::vector< std::unique_ptr< revolve::Sensor > > sensors;
 };
 
 }
