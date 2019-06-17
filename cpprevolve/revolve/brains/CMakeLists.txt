@@ -37,7 +37,7 @@ target_include_directories(revolve-learners
         PUBLIC ${LIMBO_DIR}/src
         PUBLIC ${NLOpt_INCLUDE_DIRS})
 
-target_link_directories(revolve-learners
+target_include_directories(revolve-learners
         PUBLIC ${NLOpt_LIBRARY_DIRS})
 
 install(TARGETS revolve-controllers revolve-learners
