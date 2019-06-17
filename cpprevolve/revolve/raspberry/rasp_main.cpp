@@ -14,6 +14,7 @@ std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_
 void reset(std::vector<Servo_p> &servos);
 void center(std::vector<Servo_p> &servos);
 void control(std::vector<Servo_p> &servos, const YAML::Node &controller_conf);
+void learner(std::vector<Servo_p> &servos, const YAML::Node &controller_conf);
 void move_to(std::vector<Servo_p> &servos, double value);
 void test(std::vector<Servo_p> &servos);
 
@@ -47,6 +48,8 @@ int main( int argc, const char* argv[] )
                 center(servos);
             else if (command == "controller")
                 control(servos, config["controller"]);
+            else if (command == "learner")
+                learner(servos, config["controllers"]);
             else if (command == "test")
                 test(servos);
             else if (command == "set" && argc >= 3)
@@ -122,6 +125,39 @@ void control(std::vector<Servo_p> &servos, const YAML::Node &controller_conf)
         controller_conf
     );
 
+    while (true) {
+        controller.update();
+    }
+}
+
+void learner(std::vector<Servo_p> &servos, const YAML::Node &controllers_conf)
+{
+    std::cout << "Staring controller" << std::endl;
+    std::vector<std::unique_ptr<revolve::Sensor>> sensors;
+    std::vector<std::unique_ptr<revolve::Actuator>> actuators;
+    actuators.reserve(servos.size());
+    for (Servo_p &servo: servos) {
+        actuators.emplace_back(std::move(servo));
+    }
+
+    revolve::RaspController controller(
+            std::move(actuators),
+            std::move(sensors),
+            controllers_conf[0]
+    );
+
+    Timer timer;
+    unsigned short counter = 0;
+    for (const YAML::Node &controller_conf: controllers_conf) {
+        std::cout << "Loading controller[" << ++counter << "] fitness: " << controller_conf["fitness"].as<double>(-1) << std::endl;
+        controller.set_new_controller(controller_conf);
+        timer.reset();
+        while (timer.elapsed_now() < 30.0) {
+            controller.update();
+        }
+    }
+
+    std::cout << "Evaluation finished, keeping best controller" << std::endl;
     while (true) {
         controller.update();
     }

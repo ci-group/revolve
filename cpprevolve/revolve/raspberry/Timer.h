@@ -21,6 +21,7 @@ public:
         return time_difference(prev, last_step_);
     }
     double elapsed() const { return time_difference(beg_, last_step_); }
+    double elapsed_now() const { return time_difference(beg_, clock_::now()); }
 
 private:
     typedef std::chrono::high_resolution_clock clock_;

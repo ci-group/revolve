@@ -16,6 +16,31 @@ RaspController::RaspController(
     , actuators(std::move(actuators))
     , sensors(std::move(sensors))
 {
+    this->set_new_controller(conf);
+}
+
+RaspController::~RaspController() = default;
+
+#include <chrono>
+#include <thread>
+
+void RaspController::update()
+{
+    double step = this->timer.step();
+    double time = this->timer.elapsed();
+    if (step == 0)
+        return;
+    this->revolve_controller->update(
+        this->actuators,
+        this->sensors,
+        time,
+        step
+    );
+//    std::this_thread::sleep_for(std::chrono::milliseconds(125));
+}
+
+void RaspController::set_new_controller(const YAML::Node &conf)
+{
     std::string type = conf["type"].as<std::string>("");
     if (type.empty()) {
         throw std::runtime_error("Controller type not set");
@@ -42,27 +67,5 @@ RaspController::RaspController(
     } else {
         throw std::runtime_error("Controller " + type + " not supported (yet)");
     }
-
-
-
 }
 
-RaspController::~RaspController() = default;
-
-#include <chrono>
-#include <thread>
-
-void RaspController::update()
-{
-    double step = this->timer.step();
-    double time = this->timer.elapsed();
-    if (step == 0)
-        return;
-    this->revolve_controller->update(
-        this->actuators,
-        this->sensors,
-        time,
-        step
-    );
-//    std::this_thread::sleep_for(std::chrono::milliseconds(125));
-}

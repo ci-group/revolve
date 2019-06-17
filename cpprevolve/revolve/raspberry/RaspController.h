@@ -24,6 +24,8 @@ public:
 
     void update();
 
+    void set_new_controller(const YAML::Node &conf);
+
 private:
     std::unique_ptr<revolve::Controller> revolve_controller;
     Timer timer;
