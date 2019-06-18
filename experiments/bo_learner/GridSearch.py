@@ -19,12 +19,12 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-min_lines = 980
+min_lines = 1480
 run_gazebo = False
-n_runs = 5 # Naar 20
+n_runs = 1 # Naar 20
 n_jobs = 1
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "babyA.yaml"
+yaml_model = "one.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "~/projects/revolve/.venv/bin/python3"
 search_space = {
@@ -34,8 +34,8 @@ search_space = {
     'verbose': [1],
     'kernel_l': [0.2],
     'acqui_ucb_alpha': [3.0],
-    'n_learning_iterations': [980],
-    'n_init_samples': [20],
+    'n_learning_iterations': [950],
+    'n_init_samples': [50],
 }
 
 print(search_space)

@@ -175,6 +175,12 @@ namespace revolve
       /// \brief Starting time
       private: double start_time;
 
+      /// \brief time interval evaluating and learning for each iteration
+      private: double timeDiff;
+
+      /// \brief the time stamp of starting and end.
+      private: struct timeval timeStart, timeEnd;
+
       /// \brief BO attributes
       private: size_t current_iteration = 0;
 

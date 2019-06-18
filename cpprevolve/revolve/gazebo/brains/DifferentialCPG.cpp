@@ -355,6 +355,7 @@ DifferentialCPG::DifferentialCPG(
     // Get weights in line
     std::vector<std::string> weights;
     boost::split(weights, line, boost::is_any_of(","));
+
     // Save weights for brain
     Eigen::VectorXd loaded_brain(this->n_weights);
     for(size_t j = 0; j < this->n_weights; j++)
@@ -434,7 +435,7 @@ struct DifferentialCPG::evaluation_function{
   // TODO: Make this neat. I don't know how though.
   // Number of input dimension (samples.size())
   //spider9:18,spider13:26,spider17:34,gecko7:13,gecko12:23,gecko17:33,babyA:16,babyB:22,babyC:32,one+:12
-  BO_PARAM(size_t, dim_in, 16);
+  BO_PARAM(size_t, dim_in, 12);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -658,8 +659,8 @@ void DifferentialCPG::save_fitness(){
   {
     if((this->current_iteration % pop_size == 1) and (this->current_iteration not_eq 1))
     {
-//      std::cout << "current_iteration: " << this->current_iteration
-//                << " fitness: " << fitness << std::endl;
+      std::cout << "current_iteration: " << this->current_iteration
+                << " fitness: " << fitness << std::endl;
       if(fitness < this->best_fitness)
       {
         fitness = 0.5 * (fitness + this->best_fitness);
@@ -721,18 +722,14 @@ void DifferentialCPG::ea_step(){
   galgo::Parameter< _TYPE, NBIT > par14({(_TYPE)0.0, (_TYPE)1.0});
   galgo::Parameter< _TYPE, NBIT > par15({(_TYPE)0.0, (_TYPE)1.0});
   galgo::Parameter< _TYPE, NBIT > par16({(_TYPE)0.0, (_TYPE)1.0});
-//  galgo::Parameter< _TYPE, NBIT > par17({(_TYPE)0.0, (_TYPE)1.0});
-//  galgo::Parameter< _TYPE, NBIT > par18({(_TYPE)0.0, (_TYPE)1.0});
+  galgo::Parameter< _TYPE, NBIT > par17({(_TYPE)0.0, (_TYPE)1.0});
+  galgo::Parameter< _TYPE, NBIT > par18({(_TYPE)0.0, (_TYPE)1.0});
   //                  galgo::Parameter< _TYPE, NBIT > par19({(_TYPE)0.0, (_TYPE)1.0});
   //                  galgo::Parameter< _TYPE, NBIT > par20({(_TYPE)0.0, (_TYPE)1.0});
 
-  galgo::GeneticAlgorithm< _TYPE > ga(config, par1, par2, par3, par4, par5, par6, par7, par8, par9, par10, par11, par12,
-                                                            par13,
-                                                            par14,
-                                                            par15,
-                                                            par16
-//                                                            par17,
-//                                                            par18
+  galgo::GeneticAlgorithm< _TYPE > ga(config, par1, par2, par3, par4, par5, par6, par7, par8, par9, par10, par11, par12, par13, par14, par15, par16,
+                                                            par17,
+                                                            par18
       //                                                      par19,
       //                                                      par20
   );
@@ -1051,12 +1048,14 @@ void DifferentialCPG::Update(
 //      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
     }
     // If we are finished learning but are cooling down - reset once
-    else if((this->current_iteration >= (this->n_init_samples + this->n_learning_iterations))
-            and (this->current_iteration < (this->n_init_samples + this->n_learning_iterations + this->n_cooldown_iterations - 1)))
+    else if((this->current_iteration >= (this->n_init_samples +
+                                         this->n_learning_iterations))
+            and (this->current_iteration < (this->n_init_samples +
+                                            this->n_learning_iterations +
+                                            this->n_cooldown_iterations - 1)))
     {
       if(this->verbose)
       {
-
         std::cout << std::endl << "I am cooling down " << std::endl;
       }
 
@@ -1091,6 +1090,20 @@ void DifferentialCPG::Update(
     this->start_time = _time;
     this->evaluator->Reset();
     this->current_iteration += 1;
+
+    // get the end time of an evaluation and learning process
+    if(not (_time - _step < 0.001 ))
+    {
+      gettimeofday(&timeEnd,NULL);
+      timeDiff = timeEnd.tv_sec - timeStart.tv_sec + 0.000001 * (timeEnd.tv_usec - timeStart.tv_usec);
+      // Write overhead time to file
+      std::ofstream ctime_file;
+      ctime_file.open(this->directory_name + "ctime.txt", std::ios::app);
+      ctime_file << std::fixed << timeDiff << std::endl;
+      ctime_file.close();
+    }
+    // get the starting time of an evaluation
+    gettimeofday(&timeStart,NULL);
   }
 
   // Send new signals to the motors
@@ -1098,9 +1111,12 @@ void DifferentialCPG::Update(
   p = 0;
   for (const auto &motor: _motors)
   {
+//    this->output[p] = -1;
     motor->Update(this->output + p, _step);
+//    std::cout << '\t' << *(this->output+p);
     p += motor->Outputs();
   }
+//  std::cout << std::endl;
 }
 
 /**
@@ -1126,11 +1142,15 @@ void DifferentialCPG::set_ode_matrix(){
   auto index = 0;
 
   auto num_sample = 0;
+  if(this->learner_algorithm == "BO")
+  {
+    num_sample = this->current_iteration;
+  }
   if(this->learner_algorithm == "EA")
   {
     num_sample = this->current_iteration % this->pop_size;
   }
-  else if(this->learner_algorithm == "BOEA")
+  if(this->learner_algorithm == "BOEA")
   {
     if(this->current_iteration < switch_num)
     {
@@ -1140,10 +1160,6 @@ void DifferentialCPG::set_ode_matrix(){
     {
       num_sample = this->current_iteration % this->pop_size;
     }
-  }
-  else
-  {
-    num_sample = this->current_iteration;
   }
 //  std::cout << "current_iteration: " << this->current_iteration
 //            << " num_sample: " << num_sample << std::endl;
