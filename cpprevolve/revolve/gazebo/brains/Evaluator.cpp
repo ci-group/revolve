@@ -47,7 +47,7 @@ Evaluator::Evaluator(const double _evaluationRate,
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "directed"; // {directed, gait}
+  this->locomotion_type = "gait"; // {directed, gait}
   this->path_length = 0.0;
 }
 
@@ -70,10 +70,16 @@ double Evaluator::Fitness()
   if(this->locomotion_type == "gait")
   {
     double dS;
-    dS = std::sqrt(std::pow(this->previous_position_.Pos().X() -
-                            this->current_position_.Pos().X(), 2) +
-                   std::pow(this->previous_position_.Pos().Y() -
-                            this->current_position_.Pos().Y(), 2));
+//    dS = std::sqrt(std::pow(this->previous_position_.Pos().X() -
+//                            this->current_position_.Pos().X(), 2) +
+//                   std::pow(this->previous_position_.Pos().Y() -
+//                            this->current_position_.Pos().Y(), 2));
+    for(int i = 1; i < this->step_poses.size(); i++)
+    {
+      const auto &pose_i_1 = this->step_poses[i-1];
+      const auto &pose_i = this->step_poses[i];
+      dS += Evaluator::measure_distance(pose_i_1, pose_i);
+    }
     fitness_value = dS / this->evaluation_rate_;
   }
   else if (this->locomotion_type == "directed")
