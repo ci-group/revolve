@@ -7,5 +7,6 @@ protobuf>=3.0.0
 psutil==3.4.2
 pycairo>=1.18.0
 graphviz>=0.10.1 
+cma>=2.7.0
 
 -e git+https://github.com/ci-group/pygazebo.git@py2to3#egg=pygazebo

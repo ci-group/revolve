@@ -3,6 +3,7 @@
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
 from ..custom_logging.logger import logger
+from pyrevolve.evolution.learning import Learning
 import time
 import asyncio
 import os
@@ -185,6 +186,10 @@ class Population:
     def evaluate_single_robot(self, individual):
         if individual.phenotype is None:
             individual.develop()
+        
+        #learn_brain = Learning(individual, 5)
+        #individual = learn_brain.learn_brain_through_cma_es()
+
         return self.simulator_connection.test_robot(individual.phenotype, self.conf)
 
     async def _evaluate_single_robot(self, individual):
