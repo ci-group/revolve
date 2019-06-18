@@ -175,6 +175,12 @@ namespace revolve
       /// \brief Starting time
       private: double start_time;
 
+      /// \brief time interval evaluating and learning for each iteration
+      private: double timeDiff;
+
+      /// \brief the time stamp of starting and end.
+      private: struct timeval timeStart, timeEnd;
+
       /// \brief BO attributes
       private: size_t current_iteration = 0;
 
@@ -191,7 +197,7 @@ namespace revolve
       private: size_t switch_num = 300;
 
       /// \brief The type of learning algorithm
-      private: std::string learner_algorithm = "BO";
+      private: std::string learner_algorithm = "BOEA";
 
       /// \brief Cool down period
       private: size_t n_cooldown_iterations;

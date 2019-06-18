@@ -4,9 +4,9 @@ body:
   id          : Core
   type        : Core
   params:
-    red: 0.04
+    red: 0.98
     green: 0.98
-    blue: 0.04
+    blue: 0.98
   children    :
     2:
       slot        : 0
@@ -101,8 +101,8 @@ body:
           type        : FixedBrick
           params:
             red: 0.04
-            green: 0.26
-            blue: 0.72
+            green: 0.04
+            blue: 0.98
           orientation : -90
           children    :
             1:
@@ -118,8 +118,8 @@ body:
                   type        : FixedBrick
                   params:
                     red: 0.04
-                    green: 0.26
-                    blue: 0.72
+                    green: 0.04
+                    blue: 0.98
                   orientation : 0
 brain:
   type: bo-cpg

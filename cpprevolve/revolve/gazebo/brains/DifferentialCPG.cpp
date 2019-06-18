@@ -718,18 +718,22 @@ void DifferentialCPG::ea_step(){
   galgo::Parameter< _TYPE, NBIT > par10({(_TYPE)0.0, (_TYPE)1.0});
   galgo::Parameter< _TYPE, NBIT > par11({(_TYPE)0.0, (_TYPE)1.0});
   galgo::Parameter< _TYPE, NBIT > par12({(_TYPE)0.0, (_TYPE)1.0});
-  galgo::Parameter< _TYPE, NBIT > par13({(_TYPE)0.0, (_TYPE)1.0});
-  galgo::Parameter< _TYPE, NBIT > par14({(_TYPE)0.0, (_TYPE)1.0});
-  galgo::Parameter< _TYPE, NBIT > par15({(_TYPE)0.0, (_TYPE)1.0});
-  galgo::Parameter< _TYPE, NBIT > par16({(_TYPE)0.0, (_TYPE)1.0});
-  galgo::Parameter< _TYPE, NBIT > par17({(_TYPE)0.0, (_TYPE)1.0});
-  galgo::Parameter< _TYPE, NBIT > par18({(_TYPE)0.0, (_TYPE)1.0});
+//  galgo::Parameter< _TYPE, NBIT > par13({(_TYPE)0.0, (_TYPE)1.0});
+//  galgo::Parameter< _TYPE, NBIT > par14({(_TYPE)0.0, (_TYPE)1.0});
+//  galgo::Parameter< _TYPE, NBIT > par15({(_TYPE)0.0, (_TYPE)1.0});
+//  galgo::Parameter< _TYPE, NBIT > par16({(_TYPE)0.0, (_TYPE)1.0});
+//  galgo::Parameter< _TYPE, NBIT > par17({(_TYPE)0.0, (_TYPE)1.0});
+//  galgo::Parameter< _TYPE, NBIT > par18({(_TYPE)0.0, (_TYPE)1.0});
   //                  galgo::Parameter< _TYPE, NBIT > par19({(_TYPE)0.0, (_TYPE)1.0});
   //                  galgo::Parameter< _TYPE, NBIT > par20({(_TYPE)0.0, (_TYPE)1.0});
 
-  galgo::GeneticAlgorithm< _TYPE > ga(config, par1, par2, par3, par4, par5, par6, par7, par8, par9, par10, par11, par12, par13, par14, par15, par16,
-                                                            par17,
-                                                            par18
+  galgo::GeneticAlgorithm< _TYPE > ga(config, par1, par2, par3, par4, par5, par6, par7, par8, par9, par10, par11, par12
+//                                                              par13,
+//                                                              par14,
+//                                                              par15,
+//                                                              par16,
+//                                                            par17,
+//                                                            par18
       //                                                      par19,
       //                                                      par20
   );
@@ -1089,6 +1093,20 @@ void DifferentialCPG::Update(
     this->start_time = _time;
     this->evaluator->Reset();
     this->current_iteration += 1;
+
+    // get the end time of an evaluation and learning process
+    if(not (_time - _step < 0.001 ))
+    {
+      gettimeofday(&timeEnd,NULL);
+      timeDiff = timeEnd.tv_sec - timeStart.tv_sec + 0.000001 * (timeEnd.tv_usec - timeStart.tv_usec);
+      // Write overhead time to file
+      std::ofstream ctime_file;
+      ctime_file.open(this->directory_name + "ctime.txt", std::ios::app);
+      ctime_file << std::fixed << timeDiff << std::endl;
+      ctime_file.close();
+    }
+    // get the starting time of an evaluation
+    gettimeofday(&timeStart,NULL);
   }
 
   // Send new signals to the motors
@@ -1096,9 +1114,12 @@ void DifferentialCPG::Update(
   p = 0;
   for (const auto &motor: _motors)
   {
+//    this->output[p] = -1;
     motor->Update(this->output + p, _step);
+//    std::cout << '\t' << *(this->output+p);
     p += motor->Outputs();
   }
+//  std::cout << std::endl;
 }
 
 /**
