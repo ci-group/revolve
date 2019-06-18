@@ -94,6 +94,11 @@ class SimulatorSimpleQueue:
         elapsed = time.time()-start
         logger.info(f"time taken to do a simulation {elapsed}")
 
+        exception = evaluation_future.exception()
+        if exception is not None:
+            logger.exception(f"Exception running robot {robot}", exc_info=exception)
+            return False
+
         robot_fitness = await evaluation_future
         future.set_result(robot_fitness)
 

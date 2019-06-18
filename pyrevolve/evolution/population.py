@@ -90,12 +90,13 @@ class Population:
         individual.develop()
         self.conf.experiment_management.export_genotype(individual)
         self.conf.experiment_management.export_phenotype(individual)
+        self.conf.experiment_management.export_phenotype_images('data_fullevolution/phenotype_images', individual)
         if self.conf.measure_individuals:
             individual.phenotype.measure_phenotype(self.conf.experiment_name)
 
         return individual
 
-    def load_pop(self, gen_num):
+    async def load_pop(self, gen_num):
         path = 'experiments/'+self.conf.experiment_name
         for r, d, f in os.walk(path +'/selectedpop_'+str(gen_num)):
             for file in f:
@@ -106,6 +107,11 @@ class Population:
 
                     individual = Individual(genotype)
                     individual.develop()
+
+                    with open(path+'/data_fullevolution/fitness/fitness_'+genotype_id+'.txt') as f:
+                        lines = f.readlines()
+                        individual.fitness = float(lines[0])
+
                     self.individuals.append(individual)
 
     async def init_pop(self):
@@ -118,6 +124,7 @@ class Population:
             self.next_robot_id += 1
 
         await self.evaluate(self.individuals, 0)
+        self.conf.experiment_management.export_fitnesses(self.individuals)
 
     async def next_gen(self, gen_num):
         """
@@ -140,6 +147,7 @@ class Population:
                 child = self.conf.selection(self.individuals)
 
             child.id = self.next_robot_id
+            child.genotype.id = self.next_robot_id
             self.next_robot_id += 1
 
             # Mutation operator
@@ -150,6 +158,7 @@ class Population:
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
+        self.conf.experiment_management.export_fitnesses(new_individuals)
 
         # create next population
         if self.conf.population_management_selector is not None:
@@ -159,6 +168,7 @@ class Population:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
         new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
         new_population.individuals = new_individuals
+
         return new_population
 
     async def evaluate(self, new_individuals, gen_num):
@@ -191,31 +201,3 @@ class Population:
         #individual = learn_brain.learn_brain_through_cma_es()
 
         return self.simulator_connection.test_robot(individual.phenotype, self.conf)
-
-    async def _evaluate_single_robot(self, individual):
-        """
-        Evaluate an individual
-
-        :param individual: an individual from the new population
-        """
-        # Insert the robot in the simulator
-        insert_future = await self.simulator_connection.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
-        robot_manager = await insert_future
-
-        # Resume simulation
-        await self.simulator_connection.pause(False)
-        start = time.time()
-        # Start a run loop to do some stuff
-        max_age = self.conf.evaluation_time
-        while robot_manager.age() < max_age:
-            individual.fitness = self.conf.fitness_function(robot_manager)
-            self.conf.experiment_management.export_fitness(individual)
-            await asyncio.sleep(1.0 / 5)  # 5= state_update_frequency
-        end = time.time()
-        elapsed = end-start
-        logger.info(f'Time taken: {elapsed}')
-
-        delete_future = await self.simulator_connection.delete_all_robots()  # robot_manager
-        await delete_future
-        await self.simulator_connection.pause(True)
-        await self.simulator_connection.reset()
