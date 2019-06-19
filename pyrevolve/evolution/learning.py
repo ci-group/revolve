@@ -2,12 +2,14 @@ import asyncio
 import os
 import sys
 import cma
+import time
+import threading
 from pyrevolve.gazebo.manage import WorldManager as World
 from pyrevolve.SDF.math import Vector3
 
 
 class Learning:
-    def __init__(self, individual, max_age_robot=10):
+    def __init__(self, individual, max_age_robot, simulator_connection, population_conf):
         """
         :param individual: individual to perform learning on brain
         """
@@ -15,6 +17,9 @@ class Learning:
         self.vector_values = None
         self.param_references = None
         self.max_age_robot = max_age_robot
+        self.simulator_connection = simulator_connection
+        self.population_conf = population_conf
+        self.asyncio_loop = None
 
     def vectorize_brain(self):
         """
@@ -69,11 +74,11 @@ class Learning:
         robot_manager = await insert_future
         await world.pause(False)
         while robot_manager.age() < self.max_age_robot:
-            pass
+            await asyncio.sleep(0.05)
         print('fitness: {}'.format(robot_manager.fitness()))
         return robot_manager.fitness()
 
-    def cma_es_evaluate_vector(self, vector):
+    async def cma_es_evaluate_vector(self, vector):
         """
         :param vector: list of vector values to evaluate in individual
         :return: fitness of vector
@@ -83,33 +88,43 @@ class Learning:
 
         self.devectorize_brain(vector, self.param_references)
 
-        # TODO: PERFORM EVALUTATION ON INDIVIDUAL
-        self.individual.fitness = self.evaluate_single_robot(self.individual)
+        future = self.simulator_connection.test_robot(self.individual.phenotype, self.population_conf)
 
+        self.individual.fitness = await future
+
+        
+        print(self.individual.fitness)
         return self.individual.fitness
 
-    def vector_cma_es(self):
+
+    async def vector_cma_es(self):
         """
         Covariance matrix adaptation evolution strategy
         :return: best vector result
+        """
+        # cma evolution strategy with sigma set to 0.1
+        cma_strategy = cma.CMAEvolutionStrategy(self.vector_values, 0.1)
+        await cma_strategy.optimize(self.cma_es_evaluate_vector)
+
+        # return best vector
+        best_vector = cma_strategy.result.xbest
+        return best_vector
+
+    async def learn_brain_through_cma_es(self):
+        """
+        Learn brain parameters by optimization through CMA-ES
+        :return: individual with learned brain parameters
         """
         if self.individual.phenotype._brain is None:
             return
 
         self.vectorize_brain()
+        
+        print(self.vector_values)
 
-        # cma evolution strategy with sigma set to 0.1
-        cma_strategy = cma.CMAEvolutionStrategy(self.vector_values, 0.1)
-        cma_strategy.optimize(self.cma_es_evaluate_vector)
-
-        # return best vector
-        return cma_strategy.result.xbest
-
-    def learn_brain_through_cma_es(self):
-        """
-        Learn brain parameters by optimization through CMA-ES
-        :return: individual with learned brain parameters
-        """
-        best_vector = self.vector_cma_es()
-        self.devectorize_brain(best_vector, self.param_references)
+        if len(self.vector_values) > 0:        
+            best_vector = await self.vector_cma_es()
+            print(best_vector)
+            self.devectorize_brain(best_vector, self.param_references)
+        
         return self.individual

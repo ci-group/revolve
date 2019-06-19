@@ -183,7 +183,7 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(self.evaluate_single_robot(individual))
+            robot_futures.append(await self.evaluate_single_robot(individual))
 
         await asyncio.sleep(1)
 
@@ -193,11 +193,11 @@ class Population:
             individual.fitness = await future
             logger.info(f'Evaluation complete! Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
 
-    def evaluate_single_robot(self, individual):
+    async def evaluate_single_robot(self, individual):
         if individual.phenotype is None:
             individual.develop()
         
-        #learn_brain = Learning(individual, 5)
-        #individual = learn_brain.learn_brain_through_cma_es()
+        learn_brain = Learning(individual, 5, self.simulator_connection, self.conf)
+        individual = await learn_brain.learn_brain_through_cma_es()
 
         return self.simulator_connection.test_robot(individual.phenotype, self.conf)
