@@ -106,11 +106,9 @@ class Population:
 
                     individual = Individual(genotype)
                     individual.develop()
-
                     with open(path+'/data_fullevolution/fitness/fitness_'+genotype_id+'.txt') as f:
                         lines = f.readlines()
                         individual.fitness = float(lines[0])
-
                     self.individuals.append(individual)
 
     async def init_pop(self):
@@ -167,7 +165,6 @@ class Population:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
         new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
         new_population.individuals = new_individuals
-
         return new_population
 
     async def evaluate(self, new_individuals, gen_num):
@@ -195,4 +192,6 @@ class Population:
     def evaluate_single_robot(self, individual):
         if individual.phenotype is None:
             individual.develop()
-        return self.simulator_connection.test_robot(individual.phenotype, self.conf)
+        return self.simulator_connection.test_robot(individual, self.conf)
+
+
