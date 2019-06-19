@@ -87,7 +87,8 @@ class WorldManager(manage.WorldManager):
 
         self.do_restore = None
 
-        if output_directory:
+        # Sorry Matteo
+        if False: #output_directory:
             if not restore:
                 restore = datetime.now() \
                     .strftime(datetime.now().strftime('%Y%m%d%H%M%S'))
@@ -433,12 +434,16 @@ class WorldManager(manage.WorldManager):
 
         future = Future()
         insert_future = await self.insert_model(sdf_bot)
-        # TODO: Unhandled error in exception handler. Fix this.
-        insert_future.add_done_callback(lambda fut: self._robot_inserted(
-            robot=revolve_bot,
-            msg=fut.result(),
-            return_future=future
-        ))
+        def _callback(_future):
+            try:
+                self._robot_inserted(
+                        robot=revolve_bot,
+                        msg=_future.result(),
+                        return_future=future
+                        )
+            except Exception as e:
+                _future.set_exception(e)
+        insert_future.add_done_callback(_callback)
         return future
 
     def to_sdfbot(

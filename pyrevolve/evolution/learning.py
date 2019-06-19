@@ -88,7 +88,7 @@ class Learning:
 
         self.devectorize_brain(vector, self.param_references)
 
-        future = self.simulator_connection.test_robot(self.individual.phenotype, self.population_conf)
+        future = self.simulator_connection.test_robot(self.individual, self.population_conf)
 
         self.individual.fitness = await future
 

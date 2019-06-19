@@ -78,7 +78,7 @@ class World(WorldManager):
         self._reproducing = False
 
         # Write settings to config file
-        if self.output_directory:
+        if None:#self.output_directory:
             parser.record(
                 args=conf,
                 file=os.path.join(self.output_directory, "settings.conf")

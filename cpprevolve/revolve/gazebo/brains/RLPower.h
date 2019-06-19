@@ -185,7 +185,7 @@ namespace revolve
       /// \brief Maximal number of stored ranked policies
       private: size_t maxRankedPolicies_;
 
-      /// \brief Maximal number of evaluations
+      /// \brief Maximal numberEvaluator of evaluations
       private: size_t maxEvaluations_;
 
       /// \brief The size of a spline before beeing increased
