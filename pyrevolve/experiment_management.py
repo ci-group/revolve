@@ -42,6 +42,8 @@ class ExperimentManagement:
     def export_failed_eval_robot(self,individual):
         individual.genotype.export_genotype(f'experiments/{self.settings.experiment_name}/data_fullevolution/failed_eval_robots/genotype_{str(individual.genotype.id)}.txt')
         individual.phenotype.save_file(f'experiments/{self.settings.experiment_name}/data_fullevolution/failed_eval_robots/phenotype_{str(individual.genotype.id)}.yaml')
+        individual.phenotype.save_file(f'experiments/{self.settings.experiment_name}/data_fullevolution/failed_eval_robots/phenotype_{str(individual.genotype.id)}.sdf', conf_type='sdf')
+
 
     def export_snapshots(self, individuals, gen_num):
         if self.settings.recovery_enabled:
