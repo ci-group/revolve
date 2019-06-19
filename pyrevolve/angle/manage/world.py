@@ -87,7 +87,8 @@ class WorldManager(manage.WorldManager):
 
         self.do_restore = None
 
-        if output_directory:
+        # Sorry Matteo
+        if False: #output_directory:
             if not restore:
                 restore = datetime.now() \
                     .strftime(datetime.now().strftime('%Y%m%d%H%M%S'))

@@ -76,4 +76,3 @@ Pipfile.lock
 # Revolve related
 *.sdf
 *.urdf
-*.yaml

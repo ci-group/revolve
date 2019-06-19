@@ -414,6 +414,12 @@ parser.add_argument(
     help="Gazebo port to connect to"
 )
 
+parser.add_argument(
+        '--robot-yaml',
+        default=None, type=str,
+        help="The path to a robot's yaml file"
+)
+
 
 def make_revolve_config(conf):
     """
