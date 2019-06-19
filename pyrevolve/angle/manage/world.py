@@ -433,12 +433,6 @@ class WorldManager(manage.WorldManager):
 
         future = Future()
         insert_future = await self.insert_model(sdf_bot)
-        # TODO: Unhandled error in exception handler. Fix this.
-        ''' insert_future.add_done_callback(lambda fut: self._robot_inserted(
-            robot=revolve_bot,
-            msg=fut.result(),
-            return_future=future
-        )) '''
         def _callback(_future):
             try:
                 self._robot_inserted(
