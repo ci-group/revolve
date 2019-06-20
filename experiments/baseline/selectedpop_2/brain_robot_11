@@ -1,0 +1,10 @@
+digraph brain {
+	node [margin=0]
+	node [shape=square]
+	node1 [label="node1
+Oscillator 
+ 2
+ period: 7.3095
+ phase_offset: 10.0
+ amplitude: 1.8956"]
+}

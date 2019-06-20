@@ -1,7 +1,7 @@
 #!/bin/bash
 while true
 	do
-        ./revolve.py --experiment_name baseline
-        ./revolve.py --experiment_name lava
+	    ./revolve.py --experiment_name lava3 --manager experiments/examples/manager_pop_2.py --n-cores 5
+        ./revolve.py --experiment_name baseline3 --manager experiments/examples/manager_pop.py --n-cores 5
 sleep 1
 done

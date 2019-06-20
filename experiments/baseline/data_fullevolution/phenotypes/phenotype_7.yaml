@@ -1,0 +1,68 @@
+id: robot_7
+body:
+  id: '1'
+  type: CoreComponent
+  orientation: 0
+  params: {blue: 0, green: 1, red: 1}
+  children:
+    1:
+      id: '5'
+      type: ActiveHinge
+      orientation: 0
+      params: {blue: 0.58, green: 0.08, red: 1}
+      children:
+        1:
+          id: '6'
+          type: FixedBrick
+          orientation: 0
+          params: {blue: 1, green: 0, red: 0}
+          children:
+            2:
+              id: 6s2
+              type: TouchSensor
+              orientation: 0
+              params: {blue: 0.7, green: 0.7, red: 0.7}
+            3:
+              id: 6s3
+              type: TouchSensor
+              orientation: 0
+              params: {blue: 0.7, green: 0.7, red: 0.7}
+    2:
+      id: '2'
+      type: FixedBrick
+      orientation: 0
+      params: {blue: 1, green: 0, red: 0}
+      children:
+        1:
+          id: '3'
+          type: ActiveHinge
+          orientation: 0
+          params: {blue: 0.58, green: 0.08, red: 1}
+        2:
+          id: '4'
+          type: ActiveHinge
+          orientation: 90
+          params: {blue: 0, green: 0, red: 0.7}
+brain:
+  type: neural-network
+  neurons:
+    node1: {id: node1, layer: output, part_id: '3', type: Oscillator}
+    node2: {id: node2, layer: output, part_id: '4', type: Oscillator}
+    node3: {id: node3, layer: output, part_id: '5', type: Oscillator}
+    node4: {id: node4, layer: input, part_id: 6s3, type: Input}
+    node5: {id: node5, layer: input, part_id: 6s2, type: Input}
+    node-core1: {id: node-core1, layer: input, part_id: '1', type: Input}
+    node-core2: {id: node-core2, layer: input, part_id: '1', type: Input}
+    node-core3: {id: node-core3, layer: input, part_id: '1', type: Input}
+    node-core4: {id: node-core4, layer: input, part_id: '1', type: Input}
+    node-core5: {id: node-core5, layer: input, part_id: '1', type: Input}
+    node-core6: {id: node-core6, layer: input, part_id: '1', type: Input}
+  connections:
+  - {dst: node1, src: node4, weight: -0.5292402649530779}
+  - {dst: node2, src: node4, weight: -0.09434795567127963}
+  - {dst: node3, src: node4, weight: 0.870470241794103}
+  - {dst: node3, src: node5, weight: -0.7462080508857798}
+  params:
+    node1: {amplitude: 5.958925183134717, period: 2.905149763568084, phase_offset: 7.770732141490192}
+    node2: {amplitude: 3.3058243191022627, period: 3.934332920666442, phase_offset: 1.360183534545115}
+    node3: {amplitude: 1.1153749458938047, period: 1.718588860121968, phase_offset: 7.881955125671565}

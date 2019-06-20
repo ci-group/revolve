@@ -1,0 +1,129 @@
+digraph brain {
+	node [margin=0]
+	node [shape=square]
+	node1 [label="node1
+Oscillator 
+ 3
+ period: 4.7271
+ phase_offset: 6.7102
+ amplitude: 9.2044"]
+	node [shape=square]
+	node2 [label="node2
+Oscillator 
+ 4
+ period: 4.9796
+ phase_offset: 4.0782
+ amplitude: 1.88"]
+	node [shape=square]
+	node3 [label="node3
+Oscillator 
+ 5
+ period: 10.0
+ phase_offset: 5.3723
+ amplitude: 1.3592"]
+	node [shape=square]
+	node4 [label="node4
+Oscillator 
+ 6
+ period: 3.3832
+ phase_offset: 2.7345
+ amplitude: 3.4806"]
+	node [shape=square]
+	node5 [label="node5
+Oscillator 
+ 7
+ period: 8.0719
+ phase_offset: 5.2416
+ amplitude: 4.9639"]
+	node [shape=square]
+	node6 [label="node6
+Oscillator 
+ 8
+ period: 5.6341
+ phase_offset: 1.0076
+ amplitude: 9.239"]
+	node [shape=square]
+	node7 [label="node7
+Oscillator 
+ 9
+ period: 8.1317
+ phase_offset: 8.1455
+ amplitude: 2.086"]
+	node [shape=square]
+	node8 [label="node8
+Oscillator 
+ 10
+ period: 1.3746
+ phase_offset: 3.3547
+ amplitude: 7.166"]
+	node [shape=square]
+	node9 [label="node9
+Oscillator 
+ 11
+ period: 7.2479
+ phase_offset: 5.2416
+ amplitude: 4.9639"]
+	node [shape=square]
+	node10 [label="node10
+Oscillator 
+ 12
+ period: 8.0719
+ phase_offset: 5.2416
+ amplitude: 4.9639"]
+	node [shape=square]
+	node11 [label="node11
+Oscillator 
+ 13
+ period: 5.6341
+ phase_offset: 1.7339
+ amplitude: 9.239"]
+	node [shape=square]
+	node12 [label="node12
+Oscillator 
+ 14
+ period: 8.1317
+ phase_offset: 8.1455
+ amplitude: 2.086"]
+	node [shape=square]
+	node13 [label="node13
+Oscillator 
+ 15
+ period: 3.462
+ phase_offset: 3.3547
+ amplitude: 7.166"]
+	node [shape=square]
+	node14 [label="node14
+Oscillator 
+ 16
+ period: 7.0432
+ phase_offset: 1.7339
+ amplitude: 9.239"]
+	node [shape=square]
+	node15 [label="node15
+Oscillator 
+ 17
+ period: 7.0432
+ phase_offset: 1.7339
+ amplitude: 9.239"]
+	node [shape=square]
+	node16 [label="node16
+Oscillator 
+ 18
+ period: 8.1317
+ phase_offset: 8.1455
+ amplitude: 2.086"]
+	node [shape=square]
+	node17 [label="node17
+Oscillator 
+ 19
+ period: 3.462
+ phase_offset: 3.3547
+ amplitude: 7.166"]
+	node [shape=square]
+	node18 [label="node18
+Oscillator 
+ 20
+ period: 5.6341
+ phase_offset: 1.7339
+ amplitude: 9.239"]
+}

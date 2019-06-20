@@ -1,0 +1,55 @@
+digraph brain {
+	node [margin=0]
+	node [shape=square]
+	node1 [label="node1
+Oscillator 
+ 2
+ period: 6.4423
+ phase_offset: 6.6446
+ amplitude: 6.5322"]
+	node [shape=square]
+	node2 [label="node2
+Oscillator 
+ 4
+ period: 2.1421
+ phase_offset: 8.4213
+ amplitude: 3.3714"]
+	node [shape=square]
+	node3 [label="node3
+Oscillator 
+ 5
+ period: 1.0
+ phase_offset: 1.0
+ amplitude: 8.2178"]
+	node [shape=circle]
+	node4 [label="node4
+Sensor 
+ 3s2"]
+	node [shape=circle]
+	node5 [label="node5
+Sensor 
+ 3s1"]
+	node [shape=square]
+	node6 [label="node6
+Oscillator 
+ 6
+ period: 1.0
+ phase_offset: 8.4213
+ amplitude: 2.3572"]
+	node [shape=square]
+	node7 [label="node7
+Oscillator 
+ 8
+ period: 3.7078
+ phase_offset: 1.0
+ amplitude: 1.3802"]
+	node4 -> node1 [label=-0.867]
+	node4 -> node2 [label=0.0386]
+	node4 -> node3 [label=-1.0]
+	node5 -> node3 [label=0.6212]
+	node3 -> node3 [label=0.3598]
+	node4 -> node6 [label=1.0]
+	node6 -> node6 [label=0.8561]
+	node4 -> node7 [label=-0.8481]
+	node7 -> node7 [label=0.8561]
+}

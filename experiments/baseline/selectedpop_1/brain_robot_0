@@ -1,0 +1,17 @@
+digraph brain {
+	node [margin=0]
+	node [shape=square]
+	node1 [label="node1
+Oscillator 
+ 2
+ period: 7.1991
+ phase_offset: 2.7334
+ amplitude: 3.2081"]
+	node [shape=square]
+	node2 [label="node2
+Oscillator 
+ 3
+ period: 1.904
+ phase_offset: 4.6612
+ amplitude: 10.0"]
+}

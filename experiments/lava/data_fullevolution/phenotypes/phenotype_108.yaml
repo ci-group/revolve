@@ -1,0 +1,52 @@
+id: robot_108
+body:
+  id: '1'
+  type: CoreComponent
+  orientation: 0
+  params: {blue: 0, green: 1, red: 1}
+  children:
+    0:
+      id: '4'
+      type: ActiveHinge
+      orientation: 0
+      params: {blue: 0.58, green: 0.08, red: 1}
+      children:
+        1:
+          id: '5'
+          type: FixedBrick
+          orientation: 0
+          params: {blue: 1, green: 0, red: 0}
+    1:
+      id: '2'
+      type: ActiveHinge
+      orientation: 0
+      params: {blue: 0.58, green: 0.08, red: 1}
+    2:
+      id: 1s2
+      type: TouchSensor
+      orientation: 0
+      params: {blue: 0.7, green: 0.7, red: 0.7}
+    3:
+      id: '3'
+      type: FixedBrick
+      orientation: 0
+      params: {blue: 1, green: 0, red: 0}
+brain:
+  type: neural-network
+  neurons:
+    node1: {id: node1, layer: output, part_id: '2', type: Oscillator}
+    node2: {id: node2, layer: input, part_id: 1s2, type: Input}
+    node3: {id: node3, layer: output, part_id: '4', type: Oscillator}
+    node-core1: {id: node-core1, layer: input, part_id: '1', type: Input}
+    node-core2: {id: node-core2, layer: input, part_id: '1', type: Input}
+    node-core3: {id: node-core3, layer: input, part_id: '1', type: Input}
+    node-core4: {id: node-core4, layer: input, part_id: '1', type: Input}
+    node-core5: {id: node-core5, layer: input, part_id: '1', type: Input}
+    node-core6: {id: node-core6, layer: input, part_id: '1', type: Input}
+  connections:
+  - {dst: node1, src: node2, weight: 0.6457138723335938}
+  - {dst: node1, src: node1, weight: 0.6074750746856492}
+  - {dst: node3, src: node2, weight: 0.803638832288281}
+  params:
+    node1: {amplitude: 5.400859474175087, period: 4.7109245413906145, phase_offset: 3.8140810379950842}
+    node3: {amplitude: 5.169070514403863, period: 5.032903955456927, phase_offset: 6.956477718777892}

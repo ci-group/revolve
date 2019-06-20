@@ -1,0 +1,97 @@
+id: robot_127
+body:
+  id: '1'
+  type: CoreComponent
+  orientation: 0
+  params: {blue: 0, green: 1, red: 1}
+  children:
+    0:
+      id: '6'
+      type: ActiveHinge
+      orientation: 0
+      params: {blue: 0.58, green: 0.08, red: 1}
+      children:
+        1:
+          id: '7'
+          type: FixedBrick
+          orientation: 0
+          params: {blue: 1, green: 0, red: 0}
+          children:
+            3:
+              id: '8'
+              type: ActiveHinge
+              orientation: 90
+              params: {blue: 0, green: 0, red: 0.7}
+              children:
+                1:
+                  id: '9'
+                  type: FixedBrick
+                  orientation: 270
+                  params: {blue: 1, green: 0, red: 0}
+                  children:
+                    3:
+                      id: '10'
+                      type: ActiveHinge
+                      orientation: 90
+                      params: {blue: 0, green: 0, red: 0.7}
+                      children:
+                        1:
+                          id: '11'
+                          type: FixedBrick
+                          orientation: 270
+                          params: {blue: 1, green: 0, red: 0}
+    1:
+      id: '2'
+      type: ActiveHinge
+      orientation: 0
+      params: {blue: 0.58, green: 0.08, red: 1}
+    2:
+      id: 1s2
+      type: TouchSensor
+      orientation: 0
+      params: {blue: 0.7, green: 0.7, red: 0.7}
+    3:
+      id: '3'
+      type: FixedBrick
+      orientation: 0
+      params: {blue: 1, green: 0, red: 0}
+      children:
+        2:
+          id: '5'
+          type: FixedBrick
+          orientation: 0
+          params: {blue: 1, green: 0, red: 0}
+        3:
+          id: '4'
+          type: ActiveHinge
+          orientation: 90
+          params: {blue: 0, green: 0, red: 0.7}
+brain:
+  type: neural-network
+  neurons:
+    node1: {id: node1, layer: output, part_id: '2', type: Oscillator}
+    node2: {id: node2, layer: input, part_id: 1s2, type: Input}
+    node3: {id: node3, layer: output, part_id: '4', type: Oscillator}
+    node4: {id: node4, layer: output, part_id: '6', type: Oscillator}
+    node5: {id: node5, layer: output, part_id: '8', type: Oscillator}
+    node6: {id: node6, layer: output, part_id: '10', type: Oscillator}
+    node-core1: {id: node-core1, layer: input, part_id: '1', type: Input}
+    node-core2: {id: node-core2, layer: input, part_id: '1', type: Input}
+    node-core3: {id: node-core3, layer: input, part_id: '1', type: Input}
+    node-core4: {id: node-core4, layer: input, part_id: '1', type: Input}
+    node-core5: {id: node-core5, layer: input, part_id: '1', type: Input}
+    node-core6: {id: node-core6, layer: input, part_id: '1', type: Input}
+  connections:
+  - {dst: node1, src: node2, weight: 1}
+  - {dst: node1, src: node1, weight: 0.6074750746856492}
+  - {dst: node3, src: node2, weight: -0.8853647382716678}
+  - {dst: node4, src: node2, weight: 0.4081726000761121}
+  - {dst: node4, src: node4, weight: 0.6074750746856492}
+  - {dst: node5, src: node2, weight: -0.8853647382716678}
+  - {dst: node6, src: node2, weight: 0.953958078330926}
+  params:
+    node1: {amplitude: 6.494410361537341, period: 6.031231010752762, phase_offset: 4.709989978130146}
+    node3: {amplitude: 7.712981259408224, period: 1.5792482308313562, phase_offset: 5.175811303037721}
+    node4: {amplitude: 7.3795633528533, period: 5.118751768415216, phase_offset: 7.738821020605237}
+    node5: {amplitude: 7.712981259408224, period: 1.5792482308313562, phase_offset: 5.175811303037721}
+    node6: {amplitude: 5.870742135377818, period: 7.309277388302308, phase_offset: 1.7483392669567863}

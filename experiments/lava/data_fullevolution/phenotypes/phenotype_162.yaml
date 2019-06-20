@@ -1,0 +1,57 @@
+id: robot_162
+body:
+  id: '1'
+  type: CoreComponent
+  orientation: 0
+  params: {blue: 0, green: 1, red: 1}
+  children:
+    0:
+      id: '3'
+      type: ActiveHinge
+      orientation: 0
+      params: {blue: 0.58, green: 0.08, red: 1}
+      children:
+        1:
+          id: '4'
+          type: ActiveHinge
+          orientation: 90
+          params: {blue: 0, green: 0, red: 0.7}
+    1:
+      id: '2'
+      type: ActiveHinge
+      orientation: 0
+      params: {blue: 0.58, green: 0.08, red: 1}
+    2:
+      id: 1s2
+      type: TouchSensor
+      orientation: 0
+      params: {blue: 0.7, green: 0.7, red: 0.7}
+    3:
+      id: 1s3
+      type: TouchSensor
+      orientation: 0
+      params: {blue: 0.7, green: 0.7, red: 0.7}
+brain:
+  type: neural-network
+  neurons:
+    node1: {id: node1, layer: output, part_id: '2', type: Oscillator}
+    node2: {id: node2, layer: input, part_id: 1s2, type: Input}
+    node3: {id: node3, layer: input, part_id: 1s3, type: Input}
+    node4: {id: node4, layer: output, part_id: '3', type: Oscillator}
+    node5: {id: node5, layer: output, part_id: '4', type: Oscillator}
+    node-core1: {id: node-core1, layer: input, part_id: '1', type: Input}
+    node-core2: {id: node-core2, layer: input, part_id: '1', type: Input}
+    node-core3: {id: node-core3, layer: input, part_id: '1', type: Input}
+    node-core4: {id: node-core4, layer: input, part_id: '1', type: Input}
+    node-core5: {id: node-core5, layer: input, part_id: '1', type: Input}
+    node-core6: {id: node-core6, layer: input, part_id: '1', type: Input}
+  connections:
+  - {dst: node1, src: node2, weight: 1}
+  - {dst: node1, src: node1, weight: 0.762610398616075}
+  - {dst: node1, src: node3, weight: 0.7624575155885305}
+  - {dst: node4, src: node2, weight: 0.4081726000761121}
+  - {dst: node5, src: node2, weight: -0.057698496392302845}
+  params:
+    node1: {amplitude: 8.681512136261848, period: 6.031231010752762, phase_offset: 4.709989978130146}
+    node4: {amplitude: 8.473114240215553, period: 5.118751768415216, phase_offset: 7.738821020605237}
+    node5: {amplitude: 9.673374039708923, period: 9.556086191464939, phase_offset: 6.220818353319784}

@@ -1,0 +1,91 @@
+digraph brain {
+	node [margin=0]
+	node [shape=circle]
+	node1 [label="node1
+Sensor 
+ 2s2"]
+	node [shape=circle]
+	node2 [label="node2
+Sensor 
+ 3s2"]
+	node [shape=square]
+	node3 [label="node3
+Oscillator 
+ 4
+ period: 10.0
+ phase_offset: 7.3228
+ amplitude: 1.0"]
+	node [shape=circle]
+	node4 [label="node4
+Sensor 
+ 2s1"]
+	node [shape=circle]
+	node5 [label="node5
+Sensor 
+ 2s3"]
+	node [shape=square]
+	node6 [label="node6
+Oscillator 
+ 7
+ period: 9.1979
+ phase_offset: 9.487
+ amplitude: 2.4202"]
+	node [shape=square]
+	node7 [label="node7
+Oscillator 
+ 10
+ period: 10.0
+ phase_offset: 9.487
+ amplitude: 2.4202"]
+	node [shape=circle]
+	node8 [label="node8
+Sensor 
+ 8s1"]
+	node [shape=circle]
+	node9 [label="node9
+Sensor 
+ 11s2"]
+	node [shape=square]
+	node10 [label="node10
+Oscillator 
+ 12
+ period: 9.8098
+ phase_offset: 7.3228
+ amplitude: 4.4524"]
+	node [shape=circle]
+	node11 [label="node11
+Sensor 
+ 11s3"]
+	node [shape=square]
+	node12 [label="node12
+Oscillator 
+ 14
+ period: 9.1979
+ phase_offset: 9.487
+ amplitude: 2.0691"]
+	node [shape=circle]
+	node13 [label="node13
+Sensor 
+ 13s3"]
+	node [shape=square]
+	node14 [label="node14
+Oscillator 
+ 16
+ period: 9.1979
+ phase_offset: 9.487
+ amplitude: 2.4202"]
+	node1 -> node3 [label=-1.0]
+	node2 -> node3 [label=1.0]
+	node3 -> node3 [label=0.1584]
+	node4 -> node3 [label=0.6914]
+	node5 -> node3 [label=-0.2606]
+	node2 -> node6 [label=-0.6948]
+	node2 -> node7 [label=-0.6948]
+	node8 -> node3 [label=0.6914]
+	node9 -> node3 [label=0.1653]
+	node9 -> node10 [label=0.4358]
+	node11 -> node3 [label=-0.2606]
+	node2 -> node12 [label=-0.6948]
+	node13 -> node3 [label=-0.2606]
+	node2 -> node14 [label=-0.6948]
+}

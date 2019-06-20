@@ -1,0 +1,40 @@
+id: robot_54
+body:
+  id: '1'
+  type: CoreComponent
+  orientation: 0
+  params: {blue: 0, green: 1, red: 1}
+  children:
+    1:
+      id: '2'
+      type: ActiveHinge
+      orientation: 0
+      params: {blue: 0.58, green: 0.08, red: 1}
+      children:
+        1:
+          id: '3'
+          type: ActiveHinge
+          orientation: 0
+          params: {blue: 0.58, green: 0.08, red: 1}
+          children:
+            1:
+              id: '4'
+              type: ActiveHinge
+              orientation: 0
+              params: {blue: 0.58, green: 0.08, red: 1}
+brain:
+  type: neural-network
+  neurons:
+    node1: {id: node1, layer: output, part_id: '2', type: Oscillator}
+    node2: {id: node2, layer: output, part_id: '3', type: Oscillator}
+    node3: {id: node3, layer: output, part_id: '4', type: Oscillator}
+    node-core1: {id: node-core1, layer: input, part_id: '1', type: Input}
+    node-core2: {id: node-core2, layer: input, part_id: '1', type: Input}
+    node-core3: {id: node-core3, layer: input, part_id: '1', type: Input}
+    node-core4: {id: node-core4, layer: input, part_id: '1', type: Input}
+    node-core5: {id: node-core5, layer: input, part_id: '1', type: Input}
+    node-core6: {id: node-core6, layer: input, part_id: '1', type: Input}
+  params:
+    node1: {amplitude: 7.1036725218395365, period: 9.620578684233777, phase_offset: 9.994271744581955}
+    node2: {amplitude: 9.454818148327073, period: 4.467319042018599, phase_offset: 9.47116451258322}
+    node3: {amplitude: 8.429152205181621, period: 4.467319042018599, phase_offset: 9.47116451258322}

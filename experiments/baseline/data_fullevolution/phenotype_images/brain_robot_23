@@ -1,0 +1,119 @@
+digraph brain {
+	node [margin=0]
+	node [shape=square]
+	node1 [label="node1
+Oscillator 
+ 2
+ period: 6.1348
+ phase_offset: 9.8508
+ amplitude: 9.4026"]
+	node [shape=square]
+	node2 [label="node2
+Oscillator 
+ 3
+ period: 2.7483
+ phase_offset: 3.9896
+ amplitude: 3.5355"]
+	node [shape=circle]
+	node3 [label="node3
+Sensor 
+ 1s2"]
+	node [shape=square]
+	node4 [label="node4
+Oscillator 
+ 4
+ period: 10.0
+ phase_offset: 10.0
+ amplitude: 6.8266"]
+	node [shape=square]
+	node5 [label="node5
+Oscillator 
+ 5
+ period: 4.171
+ phase_offset: 9.9556
+ amplitude: 3.0238"]
+	node [shape=square]
+	node6 [label="node6
+Oscillator 
+ 6
+ period: 7.6131
+ phase_offset: 5.024
+ amplitude: 5.5347"]
+	node [shape=square]
+	node7 [label="node7
+Oscillator 
+ 8
+ period: 9.4749
+ phase_offset: 6.4488
+ amplitude: 6.2059"]
+	node [shape=square]
+	node8 [label="node8
+Oscillator 
+ 9
+ period: 2.1652
+ phase_offset: 5.9144
+ amplitude: 8.5274"]
+	node [shape=square]
+	node9 [label="node9
+Oscillator 
+ 11
+ period: 10.0
+ phase_offset: 6.4488
+ amplitude: 6.2059"]
+	node [shape=square]
+	node10 [label="node10
+Oscillator 
+ 12
+ period: 8.5063
+ phase_offset: 10.0
+ amplitude: 6.8266"]
+	node [shape=circle]
+	node11 [label="node11
+Sensor 
+ 10s3"]
+	node [shape=square]
+	node12 [label="node12
+Oscillator 
+ 13
+ period: 4.171
+ phase_offset: 9.9556
+ amplitude: 3.0238"]
+	node [shape=square]
+	node13 [label="node13
+Oscillator 
+ 14
+ period: 7.6131
+ phase_offset: 5.024
+ amplitude: 5.5347"]
+	node [shape=square]
+	node14 [label="node14
+Oscillator 
+ 15
+ period: 2.1652
+ phase_offset: 5.9144
+ amplitude: 8.5274"]
+	node [shape=square]
+	node15 [label="node15
+Oscillator 
+ 17
+ period: 9.4749
+ phase_offset: 6.4488
+ amplitude: 6.2059"]
+	node3 -> node1 [label=0.6611]
+	node3 -> node2 [label=0.2792]
+	node3 -> node4 [label=-0.1856]
+	node3 -> node5 [label=-0.6635]
+	node3 -> node6 [label=-0.7237]
+	node1 -> node1 [label=-0.952]
+	node3 -> node7 [label=-0.9747]
+	node3 -> node8 [label=0.2083]
+	node3 -> node9 [label=-0.9747]
+	node3 -> node10 [label=-0.1856]
+	node11 -> node10 [label=-0.4921]
+	node11 -> node12 [label=-0.6635]
+	node11 -> node1 [label=0.3701]
+	node11 -> node13 [label=-0.7237]
+	node11 -> node14 [label=0.2083]
+	node10 -> node10 [label=-0.4543]
+	node11 -> node15 [label=-0.9747]
+}

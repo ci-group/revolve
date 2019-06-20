@@ -1,0 +1,87 @@
+id: robot_28
+body:
+  id: '1'
+  type: CoreComponent
+  orientation: 0
+  params: {blue: 0, green: 1, red: 1}
+  children:
+    3:
+      id: '2'
+      type: ActiveHinge
+      orientation: 0
+      params: {blue: 0.58, green: 0.08, red: 1}
+      children:
+        1:
+          id: '3'
+          type: FixedBrick
+          orientation: 0
+          params: {blue: 1, green: 0, red: 0}
+          children:
+            3:
+              id: '4'
+              type: FixedBrick
+              orientation: 0
+              params: {blue: 1, green: 0, red: 0}
+              children:
+                1:
+                  id: '5'
+                  type: ActiveHinge
+                  orientation: 0
+                  params: {blue: 0.58, green: 0.08, red: 1}
+                2:
+                  id: '6'
+                  type: ActiveHinge
+                  orientation: 0
+                  params: {blue: 0.58, green: 0.08, red: 1}
+                  children:
+                    1:
+                      id: '7'
+                      type: ActiveHinge
+                      orientation: 0
+                      params: {blue: 0.58, green: 0.08, red: 1}
+                      children:
+                        1:
+                          id: '8'
+                          type: ActiveHinge
+                          orientation: 0
+                          params: {blue: 0.58, green: 0.08, red: 1}
+                          children:
+                            1:
+                              id: '9'
+                              type: FixedBrick
+                              orientation: 0
+                              params: {blue: 1, green: 0, red: 0}
+                              children:
+                                3:
+                                  id: '10'
+                                  type: FixedBrick
+                                  orientation: 0
+                                  params: {blue: 1, green: 0, red: 0}
+                                  children:
+                                    1:
+                                      id: '11'
+                                      type: ActiveHinge
+                                      orientation: 0
+                                      params: {blue: 0.58, green: 0.08, red: 1}
+brain:
+  type: neural-network
+  neurons:
+    node1: {id: node1, layer: output, part_id: '2', type: Oscillator}
+    node2: {id: node2, layer: output, part_id: '5', type: Oscillator}
+    node3: {id: node3, layer: output, part_id: '6', type: Oscillator}
+    node4: {id: node4, layer: output, part_id: '7', type: Oscillator}
+    node5: {id: node5, layer: output, part_id: '8', type: Oscillator}
+    node6: {id: node6, layer: output, part_id: '11', type: Oscillator}
+    node-core1: {id: node-core1, layer: input, part_id: '1', type: Input}
+    node-core2: {id: node-core2, layer: input, part_id: '1', type: Input}
+    node-core3: {id: node-core3, layer: input, part_id: '1', type: Input}
+    node-core4: {id: node-core4, layer: input, part_id: '1', type: Input}
+    node-core5: {id: node-core5, layer: input, part_id: '1', type: Input}
+    node-core6: {id: node-core6, layer: input, part_id: '1', type: Input}
+  params:
+    node1: {amplitude: 1.8351584526465177, period: 9.055808744135428, phase_offset: 6.073048903944951}
+    node2: {amplitude: 1.705013263534904, period: 9.197922442487506, phase_offset: 9.487044179723634}
+    node3: {amplitude: 3.05603653794193, period: 6.963469496550036, phase_offset: 2.792552836490662}
+    node4: {amplitude: 4.101339036278161, period: 9.80976290816468, phase_offset: 7.322766028401571}
+    node5: {amplitude: 4.088309429016521, period: 9.80976290816468, phase_offset: 7.322766028401571}
+    node6: {amplitude: 2.420191524760925, period: 9.197922442487506, phase_offset: 9.487044179723634}

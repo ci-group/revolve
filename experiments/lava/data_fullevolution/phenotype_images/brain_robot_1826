@@ -1,0 +1,107 @@
+digraph brain {
+	node [margin=0]
+	node [shape=square]
+	node1 [label="node1
+Oscillator 
+ 2
+ period: 6.4423
+ phase_offset: 6.6446
+ amplitude: 4.7203"]
+	node [shape=square]
+	node2 [label="node2
+Oscillator 
+ 4
+ period: 2.1421
+ phase_offset: 8.4213
+ amplitude: 3.3714"]
+	node [shape=square]
+	node3 [label="node3
+Oscillator 
+ 5
+ period: 6.2091
+ phase_offset: 9.1622
+ amplitude: 3.8416"]
+	node [shape=square]
+	node4 [label="node4
+Oscillator 
+ 6
+ period: 1.0
+ phase_offset: 1.0
+ amplitude: 6.6224"]
+	node [shape=square]
+	node5 [label="node5
+Oscillator 
+ 7
+ period: 2.1421
+ phase_offset: 8.4213
+ amplitude: 3.3714"]
+	node [shape=square]
+	node6 [label="node6
+Oscillator 
+ 8
+ period: 6.2091
+ phase_offset: 9.1622
+ amplitude: 2.8274"]
+	node [shape=square]
+	node7 [label="node7
+Oscillator 
+ 10
+ period: 3.7078
+ phase_offset: 1.0395
+ amplitude: 1.0"]
+	node [shape=circle]
+	node8 [label="node8
+Sensor 
+ 9s1"]
+	node [shape=square]
+	node9 [label="node9
+Oscillator 
+ 11
+ period: 4.0364
+ phase_offset: 1.5629
+ amplitude: 9.748"]
+	node [shape=square]
+	node10 [label="node10
+Oscillator 
+ 12
+ period: 4.8888
+ phase_offset: 9.1622
+ amplitude: 3.8416"]
+	node [shape=square]
+	node11 [label="node11
+Oscillator 
+ 14
+ period: 3.7078
+ phase_offset: 1.0
+ amplitude: 1.0"]
+	node [shape=square]
+	node12 [label="node12
+Oscillator 
+ 15
+ period: 4.0364
+ phase_offset: 1.5629
+ amplitude: 9.748"]
+	node [shape=square]
+	node13 [label="node13
+Oscillator 
+ 16
+ period: 6.2091
+ phase_offset: 9.1622
+ amplitude: 3.8416"]
+	node8 -> node1 [label=0.8933]
+	node8 -> node2 [label=0.0386]
+	node8 -> node3 [label=0.6292]
+	node8 -> node4 [label=0.5973]
+	node8 -> node5 [label=0.0386]
+	node8 -> node6 [label=0.6292]
+	node8 -> node7 [label=0.4484]
+	node7 -> node7 [label=0.3598]
+	node8 -> node9 [label=0.8534]
+	node9 -> node9 [label=0.8561]
+	node8 -> node10 [label=0.6292]
+	node10 -> node10 [label=0.7259]
+	node8 -> node11 [label=-0.8481]
+	node8 -> node12 [label=0.8534]
+	node12 -> node12 [label=0.8561]
+	node8 -> node13 [label=0.6292]
+}

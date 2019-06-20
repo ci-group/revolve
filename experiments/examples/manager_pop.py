@@ -48,7 +48,7 @@ async def run():
         next_robot_id = 0
 
     population_conf = PopulationConfig(
-        population_size=100,
+        population_size=10,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         fitness_function=fitness.displacement_velocity_hill,
@@ -61,7 +61,7 @@ async def run():
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=settings.evaluation_time,
-        offspring_size=100,
+        offspring_size=25,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         measure_individuals=settings.measure_individuals,
@@ -76,6 +76,9 @@ async def run():
     if recovery_enabled:
         # loading a previous state of the experiment
         await population.load_pop(gen_num)
+        # for this test, order by fitness, and allow limit of finals
+       # await population.load_pop(12)
+        #await population.evaluate(population.individuals, 12)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()

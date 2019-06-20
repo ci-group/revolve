@@ -1,0 +1,27 @@
+digraph brain {
+	node [margin=0]
+	node [shape=circle]
+	node1 [label="node1
+Sensor 
+ 2s2"]
+	node [shape=circle]
+	node2 [label="node2
+Sensor 
+ 3s2"]
+	node [shape=circle]
+	node3 [label="node3
+Sensor 
+ 3s1"]
+	node [shape=circle]
+	node4 [label="node4
+Sensor 
+ 3s3"]
+	node [shape=circle]
+	node5 [label="node5
+Sensor 
+ 2s1"]
+	node [shape=circle]
+	node6 [label="node6
+Sensor 
+ 2s3"]
+}
