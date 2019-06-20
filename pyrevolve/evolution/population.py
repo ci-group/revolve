@@ -100,7 +100,7 @@ class Population:
         for r, d, f in os.walk(path +'/selectedpop_'+str(gen_num)):
             for file in f:
                 if 'body' in file:
-                    genotype_id = file.split('.')[0].split('_')[-1]
+                    genotype_id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
                     genotype = self.conf.genotype_constructor(self.conf.genotype_conf, genotype_id)
                     genotype.load_genotype(f'{path}/data_fullevolution/genotypes/genotype_{genotype_id}.txt')
 
