@@ -28,6 +28,12 @@ def displacement(robot_manager):
         robot_manager._times[-1] - robot_manager._times[0]
     )
 
+
+def displacement_vanilla(robot_manager):
+    
+    dist, time = displacement(robot_manager)
+    return np.sqrt(dist.x**2 + dist.y**2)
+
 def displacement_velocity(robot_manager):
     """
     Returns the displacement velocity, i.e. the velocity
