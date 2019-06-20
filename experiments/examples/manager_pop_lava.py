@@ -51,7 +51,7 @@ async def run():
         population_size=100,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.displacement_velocity_hill,
+        fitness_function=fitness.floor_is_lava,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
@@ -76,7 +76,6 @@ async def run():
     if recovery_enabled:
         # loading a previous state of the experiment
         await population.load_pop(gen_num)
-        # for this test, order by fitness, and allow limit of finals
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()

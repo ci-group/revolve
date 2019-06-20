@@ -386,7 +386,7 @@ parser.add_argument(
 )
 parser.add_argument(
         '--experiment_name',
-        default='default_experiment', type=str,
+        default='data/default_experiment', type=str,
         help="Name of current experiment. A folder with this name will be created."
 )
 

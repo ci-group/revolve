@@ -7,6 +7,7 @@ from pyrevolve.evolution.population import PopulationConfig
 from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 from pyrevolve.SDF.math import Vector3
+from pyrevolve.tol.manage import measures
 
 
 class SimulatorSimpleQueue:
@@ -146,12 +147,21 @@ class SimulatorSimpleQueue:
             logger.info(f'Time taken: {elapsed}')
 
             robot_fitness = conf.fitness_function(robot_manager)
+
+            measures_list = {'displacement_velocity_hill': measures.displacement_velocity_hill(robot_manager),
+                             'head_balance': measures.head_balance(robot_manager),
+                             'sum_of_contacts': measures.sum_of_contacts(robot_manager),
+                             'displacement_velocity': measures.displacement_velocity(robot_manager)
+                             }
+            conf.experiment_management.export_behavior_measures(robot.phenotype.id, measures_list)
+
             delete_future = await simulator_connection.delete_all_robots()
         # delete_future = await simulator_connection.delete_robot(robot_manager)
             await delete_future
             await simulator_connection.pause(True)
             await simulator_connection.reset(rall=True, time_only=True, model_only=False)
         return robot_fitness
+
 
     async def _joint(self):
         await self._robot_queue.join()
