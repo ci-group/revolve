@@ -97,8 +97,12 @@ void WorldController::Load(
       this);
 
   // Bind to the world update event to perform some logic
-  this->updateConnection_ = gz::event::Events::ConnectWorldUpdateBegin(
-      boost::bind(&WorldController::OnUpdate, this, _1));
+  this->onBeginUpdateConnection = gz::event::Events::ConnectWorldUpdateBegin(
+      [this] (const ::gazebo::common::UpdateInfo &_info) {this->OnBeginUpdate(_info);});
+
+  // Bind to the world update event to perform some logic
+  this->onEndUpdateConnection = gz::event::Events::ConnectWorldUpdateEnd(
+        [this] () {this->OnEndUpdate();});
 
   // Robot pose publisher
   this->robotStatesPub_ = this->node_->Advertise< revolve::msgs::RobotStates >(
@@ -111,31 +115,8 @@ void WorldController::Reset()
 }
 
 /////////////////////////////////////////////////
-void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
+void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info)
 {
-    { // check if there are robots to delete
-        std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot;
-        {
-            boost::mutex::scoped_lock lock(this->deleteMutex_);
-            if (not this->delete_robot_queue.empty()) {
-                delete_robot = this->delete_robot_queue.front();
-                this->delete_robot_queue.pop();
-            }
-        }
-        auto model = std::get<0>(delete_robot);
-        auto request_id = std::get<1>(delete_robot);
-        if (model) {
-            this->world_->RemoveModel(model);
-
-            gz::msgs::Response resp;
-            resp.set_id(request_id);
-            resp.set_request("delete_robot");
-            resp.set_response("success");
-            this->responsePub_->Publish(resp);
-        }
-    }
-
-
   if (not this->robotStatesPubFreq_)
   {
     return;
@@ -150,6 +131,7 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
     msgs::RobotStates msg;
     gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
+    boost::recursive_mutex::scoped_lock lock(*this->world_->Physics()->GetPhysicsUpdateMutex());
     for (const auto &model : this->world_->Models())
     {
       if (model->IsStatic())
@@ -176,6 +158,32 @@ void WorldController::OnUpdate(const ::gazebo::common::UpdateInfo &_info)
     }
   }
 }
+
+void WorldController::OnEndUpdate()
+{
+    { // check if there are robots to delete
+        std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot;
+        {
+            boost::mutex::scoped_lock lock(this->deleteMutex_);
+            if (not this->delete_robot_queue.empty()) {
+                delete_robot = this->delete_robot_queue.front();
+                this->delete_robot_queue.pop();
+            }
+        }
+        auto model = std::get<0>(delete_robot);
+        auto request_id = std::get<1>(delete_robot);
+        if (model) {
+            this->world_->RemoveModel(model);
+
+            gz::msgs::Response resp;
+            resp.set_id(request_id);
+            resp.set_request("delete_robot");
+            resp.set_response("success");
+            this->responsePub_->Publish(resp);
+        }
+    }
+}
+
 
 /////////////////////////////////////////////////
 // Process insert and delete requests

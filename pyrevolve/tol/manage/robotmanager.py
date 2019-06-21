@@ -9,6 +9,7 @@ from pyrevolve.util import Time
 from pyrevolve.tol.manage import measures as ms
 from pyrevolve.evolution import fitness
 
+
 class RobotManager(RvRobotManager):
     """
     Class to manage a single robot
@@ -88,21 +89,6 @@ class RobotManager(RvRobotManager):
             my_fitness == 0 or
             (other_fitness / my_fitness) >= self.conf.mating_fitness_threshold
         )
-
-    def distance_to(self, vec, planar=True):
-        """
-        Calculates the Euclidean distance from this robot to
-        the given vector position.
-        :param vec:
-        :type vec: Vector3
-        :param planar: If true, only x/y coordinates are considered.
-        :return:
-        """
-        diff = self.last_position - vec
-        if planar:
-            diff.z = 0
-
-        return diff.norm()
 
     @staticmethod
     def header():

@@ -121,6 +121,7 @@ class World(WorldManager):
             robot=robot,
             position=position,
             time=time,
+            battery_level=robot.battery_level,
         )
 
     async def add_highlight(self, position, color):

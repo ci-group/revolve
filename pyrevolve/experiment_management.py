@@ -1,6 +1,7 @@
 import os
 import shutil
 
+
 class ExperimentManagement:
 
     def __init__(self, settings):
@@ -19,21 +20,21 @@ class ExperimentManagement:
         os.mkdir(dirpath+'/data_fullevolution/phenotype_images')
         os.mkdir(dirpath+'/data_fullevolution/failed_eval_robots')
 
+    def _export_folder(self):
+        return f'experiments/{self.settings.experiment_name}/data_fullevolution/'
+
     def export_genotype(self, individual):
         if self.settings.recovery_enabled:
-            individual.genotype.export_genotype('experiments/'+self.settings.experiment_name
-                                                +'/data_fullevolution/genotypes/genotype_'+str(individual.genotype.id)+'.txt')
+            individual.export_genotype(self._export_folder())
 
     def export_phenotype(self, individual):
         if self.settings.export_phenotype:
-            individual.phenotype.save_file('experiments/'+self.settings.experiment_name
-                                           +'/data_fullevolution/phenotypes/phenotype_'+str(individual.genotype.id)+'.yaml')
+            individual.export_phenotype(self._export_folder())
 
     def export_fitnesses(self, individuals):
+        folder = self._export_folder()
         for individual in individuals:
-            f = open(f'experiments/{self.settings.experiment_name}/data_fullevolution/fitness/fitness_{individual.genotype.id}.txt', "w")
-            f.write(str(individual.fitness))
-            f.close()
+            individual.export_fitness(folder)
 
     def export_phenotype_images(self, dirpath, individual):
         individual.phenotype.render_body('experiments/'+self.settings.experiment_name +'/'+dirpath+'/body_'+str(individual.phenotype.id)+'.png')
@@ -55,7 +56,7 @@ class ExperimentManagement:
                 self.export_phenotype_images('selectedpop_'+str(gen_num), ind)
 
     def experiment_is_new(self):
-        if os.path.isfile('experiments/{}/selectedpop_to_recover.txt'.format(self.settings.experiment_name)):
+        if os.path.isfile(f'experiments/{self.settings.experiment_name}/selectedpop_to_recover.txt'):
             return False
         else:
             return True
@@ -70,6 +71,3 @@ class ExperimentManagement:
             contents = f.read()
         state = contents.split(' ')
         return int(state[0]), int(state[1])
-
-
-

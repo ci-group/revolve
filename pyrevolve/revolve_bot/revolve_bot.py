@@ -33,7 +33,7 @@ class RevolveBot:
         self._morphological_measurements = None
         self._brain_measurements = None
         self._behavioural_measurements = None
-        # self._battery_level = None
+        self.battery_level = 0.0
 
     @property
     def id(self):
@@ -104,7 +104,6 @@ class RevolveBot:
             return measure
         except Exception as e:
             logger.exception('Failed measuring brain')
-
 
     def load(self, text, conf_type):
         """

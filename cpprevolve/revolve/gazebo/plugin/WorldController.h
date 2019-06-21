@@ -66,7 +66,8 @@ namespace revolve
       virtual void OnModel(ConstModelPtr &msg);
 
       // Method called
-      virtual void OnUpdate(const ::gazebo::common::UpdateInfo &_info);
+      virtual void OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info);
+      virtual void OnEndUpdate();
 
       // Maps model names to insert request IDs
       std::map< std::string, int > insertMap_;
@@ -109,7 +110,8 @@ namespace revolve
       unsigned int robotStatesPubFreq_;
 
       // Pointer to the update event connection
-      ::gazebo::event::ConnectionPtr updateConnection_;
+      ::gazebo::event::ConnectionPtr onBeginUpdateConnection;
+      ::gazebo::event::ConnectionPtr onEndUpdateConnection;
 
       // Last (simulation) time robot info was sent
       double lastRobotStatesUpdateTime_;
