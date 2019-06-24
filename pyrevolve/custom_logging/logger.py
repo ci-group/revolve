@@ -22,7 +22,7 @@ def create_logger(name='revolve', level=logging.DEBUG, handlers=None):
 logger = create_logger(
     name='revolve',
     level=logging.DEBUG,
-    handlers=logging.StreamHandler(sys.stdout)
+    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler('./revolve.log', mode='w')]
 )
 
 # Genotype logger for logging mutation and crossover details to a file
