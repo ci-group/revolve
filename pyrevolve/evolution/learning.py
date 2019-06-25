@@ -1,7 +1,7 @@
 import asyncio
 import os
 import sys
-import cma
+from thirdparty.pycma import cma
 import time
 import threading
 from pyrevolve.gazebo.manage import WorldManager as World
@@ -9,17 +9,19 @@ from pyrevolve.SDF.math import Vector3
 
 
 class Learning:
-    def __init__(self, individual, max_age_robot, simulator_connection, population_conf):
+    def __init__(self, individual, simulator_connection, population_conf, max_func_evals=100):
         """
         :param individual: individual to perform learning on brain
         """
         self.individual = individual
+        self.robot_id = None
         self.vector_values = None
         self.param_references = None
-        self.max_age_robot = max_age_robot
         self.simulator_connection = simulator_connection
         self.population_conf = population_conf
-        self.asyncio_loop = None
+        self.max_func_evals = max_func_evals
+        self.learn_counter = 0
+        self.vectors_fitnessess = {}
 
     def vectorize_brain(self):
         """
@@ -35,17 +37,14 @@ class Learning:
         # vectorize parameter values
         for node in brain.nodes:
             if node in brain.params:
-                self.param_references[node +
-                                      '_period'] = len(self.vector_values)
+                self.param_references[f'{node}_period'] = len(self.vector_values)
                 self.vector_values.append(brain.params[node].period)
-                self.param_references[node +
-                                      '_offset'] = len(self.vector_values)
+                self.param_references[f'{node}_offset'] = len(self.vector_values)
                 self.vector_values.append(brain.params[node].phase_offset)
-                self.param_references[node +
-                                      '_amplitude'] = len(self.vector_values)
+                self.param_references[f'{node}_amplitude'] = len(self.vector_values)
                 self.vector_values.append(brain.params[node].amplitude)
 
-    def devectorize_brain(self, vecorized_brain, brain_references):
+    def devectorize_brain(self, vector):
         """
         Cast vectorized values back into original brain parameters
         """
@@ -54,29 +53,41 @@ class Learning:
         if brain is None or self.vector_values is None or self.param_references is None:
             return
 
+        self.vector_values = vector
+
         # cast vector values back into brain
         for node in brain.nodes:
             if node in brain.params:
-                brain.params[node].period = self.vector_values[self.param_references[node + '_period']]
-                brain.params[node].offset = self.vector_values[self.param_references[node + '_offset']]
-                brain.params[node].amplitude = self.vector_values[self.param_references[node + '_amplitude']]
+                brain.params[node].period = float(self.vector_values[self.param_references[f'{node}_period']])
+                brain.params[node].phase_offset = float(self.vector_values[self.param_references[f'{node}_offset']])
+                brain.params[node].amplitude = float(self.vector_values[self.param_references[f'{node}_amplitude']])
 
         self.individual.phenotype._brain = brain
 
-    async def evaluate_single_robot(self, individual):
+    def ensure_bounds_parameters(self):
         """
-        Evaluate single robot in simulation and return fitness
-        :param individual:
-        :return: fitness of evaluated individual
+        Ensure upper/lower bounds of brain parameters: <-10, +10>
         """
-        world = await World.create()
-        insert_future = await world.insert_robot(individual.phenotype, Vector3(0, 0, 0.25))
-        robot_manager = await insert_future
-        await world.pause(False)
-        while robot_manager.age() < self.max_age_robot:
-            await asyncio.sleep(0.05)
-        print('fitness: {}'.format(robot_manager.fitness()))
-        return robot_manager.fitness()
+        vector_bounds_ensured = []
+
+        self.vectorize_brain()
+
+        for i in range(len(self.vector_values)):
+            val = self.vector_values[i]
+            val = 10 if val > 10 else val
+            val = -10 if val < -10 else val
+            vector_bounds_ensured.append(val)
+
+        self.devectorize_brain(vector_bounds_ensured)
+
+    def best_vector_fitness(self):
+        """
+        Get vector with best aqcuired fitness
+        :return: fitness, vector
+        """
+        best_vector_key = max(self.vectors_fitnessess, key=self.vectors_fitnessess.get)
+        best = self.vectors_fitnessess[best_vector_key]
+        return best[0], best[1]
 
     async def cma_es_evaluate_vector(self, vector):
         """
@@ -86,25 +97,40 @@ class Learning:
         if self.param_references is None:
             return
 
-        self.devectorize_brain(vector, self.param_references)
+        self.vector_values = vector
+
+        if self.robot_id is None:
+            self.robot_id = self.individual.phenotype.id
+
+        # set unique robot id
+        self.individual.phenotype._id = f'{self.robot_id}_{self.learn_counter}'
+
+        # set vector in brain to collect fitness of robot
+        self.devectorize_brain(vector)
+
+        # parameter values must be in range <-10, 10>
+        self.ensure_bounds_parameters()
+
+        #self.individual.phenotype.save_file(f'/home/vm/Downloads/robots_sdf/{self.individual.phenotype._id}.sdf', 'sdf')
 
         future = self.simulator_connection.test_robot(self.individual, self.population_conf)
-
         self.individual.fitness = await future
 
-        
-        print(self.individual.fitness)
-        return self.individual.fitness
+        self.vectors_fitnessess[self.individual.phenotype._id] = [self.individual.fitness, vector]
 
+        self.learn_counter += 1
+
+        # return negative fitness, as cma lib makes use of base fitness function
+        return -self.individual.fitness
 
     async def vector_cma_es(self):
         """
         Covariance matrix adaptation evolution strategy
         :return: best vector result
         """
-        # cma evolution strategy with sigma set to 0.1
-        cma_strategy = cma.CMAEvolutionStrategy(self.vector_values, 0.1)
-        await cma_strategy.optimize(self.cma_es_evaluate_vector)
+        # cma evolution strategy with sigma set to 0.5
+        cma_strategy = cma.CMAEvolutionStrategy(self.vector_values, 0.5)
+        await cma_strategy.optimize(self.cma_es_evaluate_vector, maxfun=self.max_func_evals)
 
         # return best vector
         best_vector = cma_strategy.result.xbest
@@ -118,13 +144,18 @@ class Learning:
         if self.individual.phenotype._brain is None:
             return
 
+        # turn brain into vector for cma
         self.vectorize_brain()
-        
-        print(self.vector_values)
 
-        if len(self.vector_values) > 0:        
+        # set original fitness of robot as first index of list fitnesses_aqcuired
+        await self.cma_es_evaluate_vector(self.vector_values)
+
+        # algorithm does not work for empty vectors
+        if len(self.vector_values) > 0:
             best_vector = await self.vector_cma_es()
-            print(best_vector)
-            self.devectorize_brain(best_vector, self.param_references)
-        
+            self.devectorize_brain(best_vector)
+
+        # set correct fitness for best vector in individual
+        await self.cma_es_evaluate_vector(best_vector)
+
         return self.individual
