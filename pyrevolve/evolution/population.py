@@ -117,6 +117,9 @@ class Population:
         """
         for i in range(self.conf.population_size):
             individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+            if individual.phenotype is None:
+                individual.develop()
+
             self.individuals.append(individual)
             self.next_robot_id += 1
 
@@ -151,6 +154,9 @@ class Population:
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
             # Insert individual in new population
             individual = self._new_individual(child_genotype)
+            if individual.phenotype is None:
+                individual.develop()
+
             new_individuals.append(individual)
 
         # evaluate new individuals
@@ -190,8 +196,6 @@ class Population:
             logger.info(f'Evaluation complete! Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
 
     def evaluate_single_robot(self, individual):
-        if individual.phenotype is None:
-            individual.develop()
         return self.simulator_connection.test_robot(individual, self.conf)
 
 

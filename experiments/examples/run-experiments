@@ -1,8 +1,12 @@
 #!/bin/bash
 while true
 	do
-	./revolve.py --experiment_name data/baseline --manager experiments/examples/manager_pop.py --n-cores 2
-	    ./revolve.py --experiment_name data/lava --manager experiments/examples/manager_pop_lava.py --n-cores 2
+
+       for i in {1..3}; do
+	    ./revolve.py --experiment_name data/lava_$i --manager experiments/examples/manager_pop_lava.py --n-cores 4;
+	    ./revolve.py --experiment_name data/baseline_$i --manager experiments/examples/manager_pop.py --n-cores 4;
+	   done
+
 
 sleep 1
 done

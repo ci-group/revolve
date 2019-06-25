@@ -15,6 +15,7 @@ from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.simulator_simple_queue import SimulatorSimpleQueue
+import numpy as np
 
 
 async def run():
@@ -66,8 +67,19 @@ async def run():
 
     population = Population(population_conf, simulator_queue, 0)
 
-    # choose a snapshot here
+    # choose a snapshot here. and the maximum best individuals you wish to watch
     generation = 100
-
+    max_best = 10
     await population.load_pop(generation)
+
+    fitnesses = []
+    for ind in population.individuals:
+        fitnesses.append(ind.fitness)
+    fitnesses = np.array(fitnesses)
+
+    ini = len(population.individuals)-max_best
+    fin = len(population.individuals)
+    population.individuals = np.array(population.individuals)
+    population.individuals = population.individuals[np.argsort(fitnesses)[ini:fin]]
+
     await population.evaluate(population.individuals, generation)
