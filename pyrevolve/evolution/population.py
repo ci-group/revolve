@@ -27,7 +27,7 @@ class PopulationConfig:
                  experiment_management,
                  measure_individuals,
                  offspring_size=None,
-                 next_robot_id=0):
+                 next_robot_id=1):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -95,49 +95,73 @@ class Population:
 
         return individual
 
-    async def load_pop(self, gen_num):
+    async def load_individual(self, id):
+        path = 'experiments/'+self.conf.experiment_name
+        genotype = self.conf.genotype_constructor(self.conf.genotype_conf, id)
+        genotype.load_genotype(f'{path}/data_fullevolution/genotypes/genotype_{id}.txt')
+
+        individual = Individual(genotype)
+        individual.develop()
+        with open(path+'/data_fullevolution/fitness/fitness_'+id+'.txt') as f:
+            lines = f.readlines()
+            individual.fitness = float(lines[0])
+        return individual
+
+    async def load_snapshot(self, gen_num):
+        """
+        Recovers all genotypes and fitnesses of robots in the lastest selected population
+        :param gen_num: number of the generation snapshot to recover
+        """
         path = 'experiments/'+self.conf.experiment_name
         for r, d, f in os.walk(path +'/selectedpop_'+str(gen_num)):
             for file in f:
                 if 'body' in file:
-                    genotype_id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
-                    genotype = self.conf.genotype_constructor(self.conf.genotype_conf, genotype_id)
-                    genotype.load_genotype(f'{path}/data_fullevolution/genotypes/genotype_{genotype_id}.txt')
+                    id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
+                    self.individuals.append(await self.load_individual(id))
 
-                    individual = Individual(genotype)
-                    individual.develop()
-                    with open(path+'/data_fullevolution/fitness/fitness_'+genotype_id+'.txt') as f:
-                        lines = f.readlines()
-                        individual.fitness = float(lines[0])
-                    self.individuals.append(individual)
+    async def load_offspring(self, last_snapshot, population_size, offspring_size, next_robot_id):
+        """
+        Recovers the part of an unfinished offspring
+        :param
+        :return:
+        """
+        individuals = []
+        # number of robots expected until the latest snapshot
+        if last_snapshot == -1:
+            n_robots = 0
+        else:
+            n_robots = population_size + last_snapshot * offspring_size
 
-    async def init_pop(self):
+        for robot_id in range(n_robots+1, next_robot_id):
+            individuals.append(await self.load_individual('robot_'+str(robot_id)))
+
+        self.next_robot_id = next_robot_id
+        return individuals
+
+    async def init_pop(self, recovered_individuals=[]):
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
-        for i in range(self.conf.population_size):
+        for i in range(self.conf.population_size-len(recovered_individuals)):
             individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
-            if individual.phenotype is None:
-                individual.develop()
-
             self.individuals.append(individual)
             self.next_robot_id += 1
 
         await self.evaluate(self.individuals, 0)
-        self.conf.experiment_management.export_fitnesses(self.individuals)
+        self.individuals = recovered_individuals + self.individuals
 
-    async def next_gen(self, gen_num):
+    async def next_gen(self, gen_num, recovered_individuals=[]):
         """
         Creates next generation of the population through selection, mutation, crossover
 
         :param gen_num: generation number
-
+        :param individuals: recovered offspring
         :return: new population
         """
 
         new_individuals = []
 
-        for _i in range(self.conf.offspring_size):
+        for _i in range(self.conf.offspring_size-len(recovered_individuals)):
             # Selection operator (based on fitness)
             # Crossover
             if self.conf.crossover_operator is not None:
@@ -154,14 +178,13 @@ class Population:
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
             # Insert individual in new population
             individual = self._new_individual(child_genotype)
-            if individual.phenotype is None:
-                individual.develop()
 
             new_individuals.append(individual)
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
-        self.conf.experiment_management.export_fitnesses(new_individuals)
+
+        new_individuals = recovered_individuals + new_individuals
 
         # create next population
         if self.conf.population_management_selector is not None:
@@ -171,13 +194,14 @@ class Population:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
         new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
         new_population.individuals = new_individuals
+
         return new_population
 
     async def evaluate(self, new_individuals, gen_num):
         """
         Evaluates each individual in the new gen population
 
-        :param new_individuals: newly created population after an evolution itertation
+        :param new_individuals: newly created population after an evolution iteration
         :param gen_num: generation number
         """
         # Parse command line / file input arguments
@@ -194,8 +218,11 @@ class Population:
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
             individual.fitness = await future
             logger.info(f'Evaluation complete! Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+            self.conf.experiment_management.export_fitness(individual)
 
     def evaluate_single_robot(self, individual):
+        if individual.phenotype is None:
+            individual.develop()
         return self.simulator_connection.test_robot(individual, self.conf)
 
 

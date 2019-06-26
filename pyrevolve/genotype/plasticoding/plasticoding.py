@@ -255,7 +255,8 @@ class Plasticoding(Genotype):
                 self.decode_brain_moving(symbol)
 
         self.add_imu_nodes()
-        # logger.info('Robot ' + str(self.id) + ' was late-developed.')
+        logger.info('Robot ' + str(self.id) + ' was late-developed.')
+
         return self.phenotype
 
     def move_in_body(self, symbol):

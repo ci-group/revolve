@@ -62,7 +62,7 @@ async def run():
     )
 
     settings = parser.parse_args()
-    simulator_queue = SimulatorSimpleQueue(settings.n_cores, settings, settings.port_start)
+    simulator_queue = SimulatorSimpleQueue(settings, settings.port_start)
     await simulator_queue.start()
 
     population = Population(population_conf, simulator_queue, 0)
@@ -70,7 +70,7 @@ async def run():
     # choose a snapshot here. and the maximum best individuals you wish to watch
     generation = 100
     max_best = 10
-    await population.load_pop(generation)
+    await population.load_snapshot(generation)
 
     fitnesses = []
     for ind in population.individuals:

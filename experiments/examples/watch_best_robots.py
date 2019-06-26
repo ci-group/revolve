@@ -15,6 +15,7 @@ from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.simulator_simple_queue import SimulatorSimpleQueue
+import numpy as np
 
 
 async def run():
@@ -22,7 +23,7 @@ async def run():
     The main coroutine, which is started below.
     """
     # Parse command line / file input arguments
-    num_generations = 100
+
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -39,19 +40,12 @@ async def run():
 
     settings = parser.parse_args()
     experiment_management = ExperimentManagement(settings)
-    recovery_enabled = settings.recovery_enabled and not experiment_management.experiment_is_new()
-
-    if recovery_enabled:
-        gen_num, next_robot_id = experiment_management.read_recovery_state()
-    else:
-        gen_num = 0
-        next_robot_id = 0
 
     population_conf = PopulationConfig(
         population_size=100,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.floor_is_lava,
+        fitness_function=fitness.displacement_velocity_hill,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
@@ -68,25 +62,24 @@ async def run():
     )
 
     settings = parser.parse_args()
-    simulator_queue = SimulatorSimpleQueue(settings.n_cores, settings, settings.port_start)
+    simulator_queue = SimulatorSimpleQueue(settings, settings.port_start)
     await simulator_queue.start()
 
-    population = Population(population_conf, simulator_queue, next_robot_id)
+    population = Population(population_conf, simulator_queue, 0)
 
-    if recovery_enabled:
-        # loading a previous state of the experiment
-        await population.load_pop(gen_num)
-    else:
-        # starting a new experiment
-        experiment_management.create_exp_folders()
-        await population.init_pop()
-        experiment_management.export_snapshots(population.individuals, gen_num)
-        experiment_management.update_recovery_state(gen_num, population.next_robot_id)
+    # choose a snapshot here. and the maximum best individuals you wish to watch
+    generation = 100
+    max_best = 10
+    await population.load_snapshot(generation)
 
-    while gen_num < num_generations:
-        gen_num += 1
-        population = await population.next_gen(gen_num)
-        experiment_management.export_snapshots(population.individuals, gen_num)
-        experiment_management.update_recovery_state(gen_num, population.next_robot_id)
+    fitnesses = []
+    for ind in population.individuals:
+        fitnesses.append(ind.fitness)
+    fitnesses = np.array(fitnesses)
 
-    # output result after completing all generations...
+    ini = len(population.individuals)-max_best
+    fin = len(population.individuals)
+    population.individuals = np.array(population.individuals)
+    population.individuals = population.individuals[np.argsort(fitnesses)[ini:fin]]
+
+    await population.evaluate(population.individuals, generation)
