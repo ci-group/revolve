@@ -1,11 +1,12 @@
 import os
 
+
 # set these variables according to your experiments #
 dirpath = '../'
 experiments_type = [
-                    'default_experiment'
+                    'plane'
                     ]
-runs = 1
+runs = 10
 # set these variables according to your experiments #
 
 def build_headers(path):
