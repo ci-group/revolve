@@ -2,11 +2,11 @@ from datetime import datetime, timedelta
 import os
 
 # set these variables according to your experiments #
-dir_path = '../data'
-experiments_names = ['baseline_',
-                     'lava_'
+dir_path = 'data'
+experiments_names = ['_baseline',
+                     '_lava'
                      ]
-runs = 10
+runs = 3#10
 limit_of_minutes = 5
 # set these variables according to your experiments #
 
@@ -27,10 +27,8 @@ while 1:
                         filetime = datetime.fromtimestamp(os.path.getctime(path+'/'+file))
                         files.append(filetime)
                 files.sort()
-                print(files)
                 time_ago = datetime.now() - timedelta(minutes=limit_of_minutes)
-                print(files[-1])
-                print(time_ago)
+
                 if files[-1] > time_ago:
                      some_has_been_updated = True
 
