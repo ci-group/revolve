@@ -100,7 +100,12 @@ class RevolveBot:
         """
         try:
             measure = MeasureBrain(self._brain, 10)
-            measure.measure_all()
+            measure_b = MeasureBody(self._body)
+            measure_b.count_active_hinges()
+            if measure_b.active_hinges_count > 0:
+                measure.measure_all()
+            else:
+                measure.set_all_zero()
             return measure
         except Exception as e:
             logger.exception('Failed measuring brain')
