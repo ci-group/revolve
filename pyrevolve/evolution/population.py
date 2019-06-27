@@ -192,16 +192,6 @@ class Population:
 
     async def evaluate_single_robot(self, individual):
         if individual.phenotype is None:
-            individual.develop()
-        
-        learn_brain = Learning(individual, self.simulator_connection, self.conf, 25)
-        individual = await learn_brain.learn_brain_through_cma_es()
-        original_fitness = learn_brain.vectors_fitnessess[f'{learn_brain.robot_id}_0'][0]
-        learned_fitness, vector = learn_brain.best_vector_fitness()
-
-
-        file = open(f'/home/vm/Downloads/learned_fitnessess.csv', 'a')
-        file.write(f'{learn_brain.robot_id}, {original_fitness}, {learned_fitness}\n')
-        file.close()
+                individual.develop()
 
         return self.simulator_connection.test_robot(individual, self.conf)
