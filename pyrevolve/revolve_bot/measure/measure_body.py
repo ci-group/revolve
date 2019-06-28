@@ -83,14 +83,11 @@ class MeasureBody:
         """
         if self.absolute_size is None:
             self.measure_absolute_size()
-        if self.absolute_size < 5:
-            self.branching = 0
-            return self.branching
         if self.branching_modules_count is None:
             self.count_branching_bricks()
-        if self.branching_modules_count == 0:
+        if self.branching_modules_count == 0 or self.absolute_size < 5:
             self.branching = 0
-            return 0
+            return self.branching
         practical_limit_branching_bricks = math.floor((self.absolute_size-2)/3)
         self.branching = self.branching_modules_count / practical_limit_branching_bricks
         return self.branching
@@ -151,11 +148,11 @@ class MeasureBody:
         """
         if self.absolute_size is None:
             self.measure_absolute_size()
-        if self.absolute_size < 3:
-            self.length_of_limbs = 0
-            return 0
         if self.extensiveness is None:
             self.calculate_extremities_extensiveness(None, False, True)
+        if self.absolute_size < 3:
+            self.length_of_limbs = 0
+            return self.length_of_limbs
         practical_limit_extensiveness = self.absolute_size - 2
         self.length_of_limbs = self.extensiveness / practical_limit_extensiveness
         return self.length_of_limbs
@@ -232,15 +229,12 @@ class MeasureBody:
         """
         if self.absolute_size is None:
             self.measure_absolute_size()
-        if self.absolute_size < 3:
-            self.joints = 0
-            return 0
         if self.active_hinges_count is None:
             self.count_active_hinges()
-        practical_limit_active_hinges = self.absolute_size - 2
-        if self.active_hinges_count == 0:
+        if self.active_hinges_count == 0 or self.absolute_size < 3:
             self.joints = 0
-            return 0
+            return self.joints
+        practical_limit_active_hinges = self.absolute_size - 2
         self.joints = self.active_hinges_count / practical_limit_active_hinges
         return self.joints
 
@@ -343,17 +337,6 @@ class MeasureBody:
         except Exception as e:
             logger.exception(f'Exception: {e}. \nFailed measuring width and height')
 
-    def measure_size(self):
-        """
-        Measure size of robot, specified by the amount of modules divided by the limit
-        :return: False if max_permitted_modules is None
-        """
-        if self.max_permitted_modules is None:
-            return False
-        if self.absolute_size is None:
-            self.measure_absolute_size()
-        self.size = self.absolute_size / self.max_permitted_modules
-
     def measure_all(self):
         """
         Perform all measurements
@@ -369,7 +352,6 @@ class MeasureBody:
         self.measure_symmetry()
         self.measure_branching()
         self.measure_sensors()
-        self.measure_size()
         return self.measurements_to_dict()
 
     def measurements_to_dict(self):
@@ -395,10 +377,9 @@ class MeasureBody:
             'width': self.width,
             'height': self.height,
             'absolute_size': self.absolute_size,
-            'size': self.size,
             'sensors': self.sensors,
             'symmetry': self.symmetry
         }
 
     def __repr__(self):
-        return self.measurement_to_dict().__repr__()
+        return self.measurements_to_dict().__repr__()

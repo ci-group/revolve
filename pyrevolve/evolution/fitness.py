@@ -48,8 +48,8 @@ def displacement_velocity_hill(robot_manager):
     elif _displacement_velocity_hill == 0:
         _displacement_velocity_hill = -0.1
     # temp elif
-    elif _displacement_velocity_hill > 0:
-        _displacement_velocity_hill *= _displacement_velocity_hill
+   # elif _displacement_velocity_hill > 0:
+    #    _displacement_velocity_hill *= _displacement_velocity_hill
 
     return _displacement_velocity_hill
 
@@ -58,8 +58,8 @@ def floor_is_lava(robot_manager):
     _displacement_velocity_hill = measures.displacement_velocity_hill(robot_manager)
     _sum_of_contacts = measures.sum_of_contacts(robot_manager)
     if _displacement_velocity_hill >= 0:
-        fitness = _displacement_velocity_hill *_(1/_sum_of_contacts)
+        fitness = _displacement_velocity_hill * (1/ max(_sum_of_contacts,0.001) )
     else:
-        fitness = _displacement_velocity_hill /_(1/_sum_of_contacts)
+        fitness = _displacement_velocity_hill / (1/ max(_sum_of_contacts,0.001) )
 
     return fitness
