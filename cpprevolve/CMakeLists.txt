@@ -76,6 +76,10 @@ set(LIMBO_DIR ../thirdparty/limbo)
 set(LIMBO_DEFINES USE_NLOPT)
 include_directories(${LIMBO_DIR}/src)
 
+# Find galgo library for EA
+set(GALGO_DIR ../thirdparty/galgo)
+include_directories(${GALGO_DIR})
+
 # Find GSL - GNU Scientific Library
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})

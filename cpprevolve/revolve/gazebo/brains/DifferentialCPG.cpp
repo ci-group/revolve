@@ -45,6 +45,7 @@
 #include <galgo/Galgo.hpp>
 #include <galgo/GeneticAlgorithm.hpp>
 #include <galgo/Population.hpp>
+//#include <galgo/Evolution.hpp>
 
 // Project headers
 #include "../motors/Motor.h"
@@ -70,7 +71,7 @@ using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 
 ///**************** configuration galgo real value ***************///
 template <typename _TYPE>
-void set_my_config(galgo::ConfigInfo<_TYPE>& config)
+void set_my_config(galgo::ConfigInfo<_TYPE>& config, double mutrate)
 {
   // override some defaults
   config.mutinfo._sigma           = 1.0;
@@ -78,7 +79,7 @@ void set_my_config(galgo::ConfigInfo<_TYPE>& config)
   config.mutinfo._ratio_boundary  = 0.10;
   //ea: 0.4, 0.6, boea:
   config.covrate = 0.4;  // 0.0 if no cros-over
-  config.mutrate = 0.6; // mutation rate usually is 1.0 for real-valued
+  config.mutrate = mutrate; // mutation rate usually is 1.0 for real-valued
   config.recombination_ratio = 0.60; //Real Valued crossover ratio, can't be 0.5 because 0.5 will generate two same offsprings after Xover
 
   config.elitpop      = 1;
@@ -168,21 +169,23 @@ DifferentialCPG::DifferentialCPG(
   this->signal_factor_mid = std::stod(controller->GetAttribute("signal_factor_mid")->GetAsString());
   this->signal_factor_left_right = std::stod(controller->GetAttribute("signal_factor_left_right")->GetAsString());
 
-    // Limbo BO Learner parameters
-    this->kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
-    this->kernel_optimize_noise_ = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
-    this->kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
-    this->kernel_l_ = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
-    this->kernel_squared_exp_ard_k_ = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
-    this->acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());
-    this->acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
-    this->acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
+  // Limbo BO Learner parameters
+  this->kernel_noise_ = std::stod(learner->GetAttribute("kernel_noise")->GetAsString());
+  this->kernel_optimize_noise_ = std::stoi(learner->GetAttribute("kernel_optimize_noise")->GetAsString());
+  this->kernel_sigma_sq_ = std::stod(learner->GetAttribute("kernel_sigma_sq")->GetAsString());
+  this->kernel_l_ = std::stod(learner->GetAttribute("kernel_l")->GetAsString());
+  this->kernel_squared_exp_ard_k_ = std::stoi(learner->GetAttribute("kernel_squared_exp_ard_k")->GetAsString());
+  this->acqui_gpucb_delta_ = std::stod(learner->GetAttribute("acqui_gpucb_delta")->GetAsString());
+  this->acqui_ucb_alpha_ = std::stod(learner->GetAttribute("acqui_ucb_alpha")->GetAsString());
+  this->acqui_ei_jitter_ = std::stod(learner->GetAttribute("acqui_ei_jitter")->GetAsString());
+  this->gaussian_step_size_ = std::stod(learner->GetAttribute("gaussian_step_size")->GetAsString());
+  this->mutrate_ = std::stod(learner->GetAttribute("mutrate")->GetAsString());
 
-    // Non-limbo BO learner para
-    this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
-    this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
-    this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
-    this->init_method = learner->GetAttribute("init_method")->GetAsString();
+  // Non-limbo BO learner para
+  this->n_init_samples = std::stoi(learner->GetAttribute("n_init_samples")->GetAsString());
+  this->n_learning_iterations = std::stoi(learner->GetAttribute("n_learning_iterations")->GetAsString());
+  this->n_cooldown_iterations = std::stoi(learner->GetAttribute("n_cooldown_iterations")->GetAsString());
+  this->init_method = learner->GetAttribute("init_method")->GetAsString();
 
   // Meta parameters
   this->startup_time = std::stoi(controller->GetAttribute("startup_time")->GetAsString());
@@ -435,7 +438,7 @@ struct DifferentialCPG::evaluation_function{
   // TODO: Make this neat. I don't know how though.
   // Number of input dimension (samples.size())
   //spider9:18,spider13:26,spider17:34,gecko7:13,gecko12:23,gecko17:33,babyA:16,babyB:22,babyC:32,one+:12
-  BO_PARAM(size_t, dim_in, 12);
+  BO_PARAM(size_t, dim_in, 16);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -572,6 +575,9 @@ void DifferentialCPG::bo_init_sampling(){
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all weights
+      srand((unsigned)time(NULL));
+      // trash first one, because it could be the same and I do not know why
+      auto trash_first = rand();
       for (size_t j = 0; j < this->n_weights; j++)
       {
         // Generate a random number in [0, 1]. Transform later
@@ -668,7 +674,7 @@ void DifferentialCPG::save_fitness(){
     }
   }
   // Save sample if it is the best seen so far
-  if(fitness >this->best_fitness)
+  if(fitness > this->best_fitness)
   {
     this->best_fitness = fitness;
     this->best_sample = this->samples.back();
@@ -690,7 +696,8 @@ void DifferentialCPG::save_fitness(){
   // Write fitness to file
   std::ofstream fitness_file;
   fitness_file.open(this->directory_name + "fitnesses.txt", std::ios::app);
-  fitness_file << fitness << std::endl;
+  fitness_file << std::fixed << fitness << std::endl;
+  fitness_file.flush();
   fitness_file.close();
 }
 
@@ -703,7 +710,7 @@ void DifferentialCPG::ea_step(){
   using _TYPE = float; //float, double, char, int, long
   const int NBIT = 64; // Has to remain between 1 and 64, 32:float
   galgo::ConfigInfo<_TYPE> config;  // A new instance of config get initial defaults
-  set_my_config<_TYPE>(config);    // Override some defaults
+  set_my_config<_TYPE>(config, this->mutrate_);    // Override some defaults
 
   // initializing parameters lower and upper bounds
   galgo::Parameter< _TYPE, NBIT > par1({(_TYPE)0.0, (_TYPE)1.0});
@@ -733,7 +740,7 @@ void DifferentialCPG::ea_step(){
       //                                                      par19,
       //                                                      par20
   );
-  ga.run(this->learner_algorithm, this->current_iteration, this->switch_num, this->samples, this->observations);
+  ga.run(this->learner_algorithm, this->current_iteration, this->gaussian_step_size_, this->switch_num, this->samples, this->observations);
 
   // clear old samples and observations before pass new individuals to samples
   this->samples.clear();
@@ -871,15 +878,13 @@ void DifferentialCPG::bo_step(){
                           this->observations);
       x = boptimizer.last_sample();
 
-        // Write parametesr to verify thread-stability after the run
-        std::ofstream dyn_parameters_file;
-        dyn_parameters_file.open(this->directory_name + "dynamic_parameters.txt", std::ios::app);
-        dyn_parameters_file << Params::acqui_ucb::alpha() << ",";
-        dyn_parameters_file << Params::kernel_maternfivehalves::sigma_sq() << ",";
-        dyn_parameters_file << Params::kernel_maternfivehalves::l() << std::endl;
-        dyn_parameters_file.close();
-
-
+      // Write parametesr to verify thread-stability after the run
+      std::ofstream dyn_parameters_file;
+      dyn_parameters_file.open(this->directory_name + "dynamic_parameters.txt", std::ios::app);
+      dyn_parameters_file << Params::acqui_ucb::alpha() << ",";
+      dyn_parameters_file << Params::kernel_maternfivehalves::sigma_sq() << ",";
+      dyn_parameters_file << Params::kernel_maternfivehalves::l() << std::endl;
+      dyn_parameters_file.close();
     }
       //        else if(this->acquisition_function == "GP_UCB")
       //        {
@@ -1474,7 +1479,10 @@ void DifferentialCPG::save_parameters(){
   parameters_file << "EXP-ARD Kernel k: "<< Params::kernel_squared_exp_ard::k() << std::endl;
   parameters_file << "EXP-ARD Kernel sigma_sq: "<< Params::kernel_squared_exp_ard::sigma_sq() << std::endl;
   parameters_file << "MFH Kernel sigma_sq: "<< Params::kernel_maternfivehalves::sigma_sq() << std::endl;
-  parameters_file << "MFH Kernel l: "<< Params::kernel_maternfivehalves::l() << std::endl << std::endl;
+  parameters_file << "MFH Kernel l: "<< Params::kernel_maternfivehalves::l() << std::endl;
+  parameters_file << "gaussian_step_size: "<< this->gaussian_step_size_ << std::endl;
+  parameters_file << "mutrate: "<< this->mutrate_ << std::endl << std::endl;
+
   parameters_file.close();
 }
 
