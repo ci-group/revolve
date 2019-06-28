@@ -66,11 +66,19 @@ def head_balance(robot_manager):
     return balance
 
 
-def sum_of_contacts(robot_manager):
-    sum_of_contacts = 0
+def contacts(robot_manager, robot):
+    avg_contacts = 0
     for c in robot_manager._contacts:
-        sum_of_contacts += c
-    return sum_of_contacts
+        avg_contacts += c
+    print('sdfjndsjfndsjkfsn')
+    print(robot.phenotype.id)
+    print(avg_contacts)
+    print(robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size'])
+
+    avg_contacts = avg_contacts / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']
+    print(avg_contacts)
+    print('kkkkkkkkkkkk')
+    return avg_contacts
 
 def logs_position_orientation(robot_manager, o, evaluation_time, robotid, path):
 

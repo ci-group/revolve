@@ -217,7 +217,7 @@ class Population:
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
             individual.fitness = await future
-            logger.info(f'Evaluation complete! Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+            logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             self.conf.experiment_management.export_fitness(individual)
 
     def evaluate_single_robot(self, individual):
