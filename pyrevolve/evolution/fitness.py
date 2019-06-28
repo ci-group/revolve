@@ -59,8 +59,6 @@ def floor_is_lava(robot_manager, robot):
     _contacts = measures.contacts(robot_manager, robot)
 
     _contacts = max(_contacts, 0.0001)
-    print('againnnnn')
-    print(_contacts)
     if _displacement_velocity_hill >= 0:
         fitness = _displacement_velocity_hill / _contacts
     else:
