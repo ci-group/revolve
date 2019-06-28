@@ -22,28 +22,44 @@ from pyrevolve.revolve_bot.brain import BrainRLPowerSplines
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
 ROBOT_BATTERY = 5000
-MIN_POP = 10
-MAX_POP = 30
+INDIVIDUAL_MAX_AGE = 60  # 5 minutes
+SEED_POPULATION_START = 30
+MIN_POP = 20
+MAX_POP = 300
 Z_SPAWN_DISTANCE = 0.5
 LIMIT_X = 5
 LIMIT_Y = 5
 MATURE_AGE = 60
 MATE_DISTANCE = 0.6
 MATING_COOLDOWN = 60
+COUPLE_MATING_LIMIT = 5
 
 PLASTICODING_CONF = PlasticodingConfig()
 CROSSOVER_CONF = CrossoverConfig(crossover_prob=1.0)
 MUTATION_CONF = MutationConfig(mutation_prob=0.8, genotype_conf=PLASTICODING_CONF)
-DATA_FOLDER = f'{os.path.dirname(os.path.realpath(__file__))}/3/'
+DATA_FOLDER_BASE = os.path.dirname(os.path.realpath(__file__))
 
 
-def make_folders(dirpath=DATA_FOLDER):
-    if os.path.exists(dirpath):
-        shutil.rmtree(dirpath)
+def make_folders(base_dirpath):
+
+    assert(os.path.isdir(base_dirpath))
+    counter = 0
+    while True:
+        dirpath = os.path.join(base_dirpath, str(counter))
+        if not os.path.exists(dirpath):
+            break
+        counter += 1
+
+    print(f"CHOSEN EXPERIMENT FOLDER {dirpath}")
+
+    # if os.path.exists(dirpath):
+    #     shutil.rmtree(dirpath)
     os.mkdir(dirpath)
     os.mkdir(dirpath+'/genotypes')
     os.mkdir(dirpath+'/phenotypes')
     os.mkdir(dirpath+'/descriptors')
+
+    return dirpath
 
 
 class OnlineIndividual(Individual):
@@ -61,7 +77,7 @@ class OnlineIndividual(Individual):
 
     def develop(self):
         super().develop()
-        self.phenotype._brain = BrainRLPowerSplines(evaluation_rate=10.0)
+        # self.phenotype._brain = BrainRLPowerSplines(evaluation_rate=10.0)
 
     def age(self):
         return self.manager.age()
@@ -104,12 +120,12 @@ class OnlineIndividual(Individual):
         if self.distance_to(other) > MATE_DISTANCE:
             return False
 
-        # mate_count = self.manager.mated_with.get(other.manager.name, 0)
-        # if mate_count > 5:
-        #     return False
-
         if self.manager.last_mate is not None and \
                 float(self.manager.last_update - self.manager.last_mate) < MATING_COOLDOWN:
+            return False
+
+        mate_count = self.manager.mated_with.get(other.manager.name, 0)
+        if mate_count > COUPLE_MATING_LIMIT:
             return False
 
         return True
@@ -124,6 +140,13 @@ class OnlineIndividual(Individual):
         """
         if not (self._wants_to_mate(other) and other._wants_to_mate(self)):
             return None
+
+        # save the mating
+        self.manager.last_mate = self.manager.last_update
+        if other.manager.name in self.manager.mated_with:
+            self.manager.mated_with[other.manager.name] += 1
+        else:
+            self.manager.mated_with[other.manager.name] = 1
 
         genotype = standard_crossover([self.genotype, other.genotype], PLASTICODING_CONF, CROSSOVER_CONF)
         genotype = standard_mutation(genotype, MUTATION_CONF)
@@ -194,26 +217,26 @@ async def insert_robot(world, robot, pos):
     return robot_manager
 
 
-async def insert_individual(world, individual, pos):
+async def insert_individual(world, individual, pos, data_folder):
     individual.develop()
     individual.manager = await insert_robot(world, individual.phenotype, pos)
-    individual.export(DATA_FOLDER)
+    individual.export(data_folder)
     return individual
 
 
-async def remove_individual(world, individual):
-    individual.export(DATA_FOLDER)
+async def remove_individual(world, individual, data_folder):
+    individual.export(data_folder)
     await world.delete_robot(individual.manager)
 
 
-async def generate_insert_random_robot(world, _id, robots):
+async def generate_insert_random_robot(world, _id, robots, data_folder):
     # Load a robot from yaml
     genotype = random_initialization(PLASTICODING_CONF, _id)
     individual = OnlineIndividual(genotype)
-    return await insert_individual(world, individual, free_random_spawn_pos(robots))
+    return await insert_individual(world, individual, free_random_spawn_pos(robots), data_folder)
 
 
-async def mating_season(world, log, robots, robot_counter):
+async def mating_season(world, log, robots, robot_counter, data_folder):
     class BreakIt(Exception):
         pass
     try:
@@ -240,7 +263,7 @@ async def mating_season(world, log, robots, robot_counter):
                 pos3 = free_random_spawn_pos(robots)
 
                 robots.append(individual3)
-                await insert_individual(world, individual3, pos3)
+                await insert_individual(world, individual3, pos3, data_folder)
                 log.info(f"MATE!!!! between {individual1} and {individual2} generated {individual3}")
 
     except BreakIt:
@@ -251,12 +274,11 @@ async def mating_season(world, log, robots, robot_counter):
 
 async def run():
     robot_counter = 0
-    make_folders()
+    data_folder = make_folders(DATA_FOLDER_BASE)
     log = logger.create_logger('experiment', handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(f'{DATA_FOLDER}/experiment_manager.log', mode='w')
+        logging.FileHandler(os.path.join(data_folder, 'experiment_manager.log'), mode='w')
     ])
-
 
     # Parse command line / file input arguments
     settings = parser.parse_args()
@@ -275,8 +297,19 @@ async def run():
 
     # Connect to the simulator and pause
     world = await World.create(settings, world_address=('127.0.0.1', settings.port_start))
+    await asyncio.sleep(1)
 
     robots = []
+
+    log.info("SEEDING POPULATION STARTED")
+    await world.pause(True)
+    while len(robots) < SEED_POPULATION_START:
+        robot_counter += 1
+        individual = await generate_insert_random_robot(world, robot_counter, robots, data_folder)
+        log.info(f"LOW REACHED: inserting new random robot: {individual}")
+        robots.append(individual)
+    await world.pause(False)
+    log.info("SEEDING POPULATION FINISHED")
 
     # Start a run loop to do some stuff
     while True:
@@ -286,16 +319,16 @@ async def run():
             #          f"battery {individual.manager.charge()} "
             #          f"age {individual.manager.age()} "
             #          f"fitness is {fitness.online_old_revolve(individual.manager)}")
-            if individual.charge() < 0:
+            if individual.age() > INDIVIDUAL_MAX_AGE:
                 log.info(f"ROBOT DIES OF OLD AGE: {individual}")
                 robots.remove(individual)
-                await remove_individual(world, individual)
+                await remove_individual(world, individual, data_folder)
 
-        robot_counter = await mating_season(world, log, robots, robot_counter)
+        robot_counter = await mating_season(world, log, robots, robot_counter, data_folder)
 
         while len(robots) < MIN_POP:
             robot_counter += 1
-            individual = await generate_insert_random_robot(world, robot_counter, robots)
+            individual = await generate_insert_random_robot(world, robot_counter, robots, data_folder)
             log.info(f"LOW REACHED: inserting new random robot: {individual}")
             robots.append(individual)
 
@@ -304,5 +337,3 @@ async def run():
             #     return
 
         await asyncio.sleep(0.05)
-
-

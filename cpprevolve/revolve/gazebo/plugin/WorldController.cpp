@@ -106,7 +106,7 @@ void WorldController::Load(
 
   // Robot pose publisher
   this->robotStatesPub_ = this->node_->Advertise< revolve::msgs::RobotStates >(
-      "~/revolve/robot_states", 50);
+      "~/revolve/robot_states", 500);
 }
 
 void WorldController::Reset()
@@ -115,48 +115,44 @@ void WorldController::Reset()
 }
 
 /////////////////////////////////////////////////
-void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info)
-{
-  if (not this->robotStatesPubFreq_)
-  {
-    return;
-  }
-
-  auto secs = 1.0 / this->robotStatesPubFreq_;
-  auto time = _info.simTime.Double();
-  if ((time - this->lastRobotStatesUpdateTime_) >= secs)
-  {
-    // Send robot info update message, this only sends the
-    // main pose of the robot (which is all we need for now)
-    msgs::RobotStates msg;
-    gz::msgs::Set(msg.mutable_time(), _info.simTime);
-
-    boost::recursive_mutex::scoped_lock lock(*this->world_->Physics()->GetPhysicsUpdateMutex());
-    for (const auto &model : this->world_->Models())
-    {
-      if (model->IsStatic())
-      {
-        // Ignore static models such as the ground and obstacles
-        continue;
-      }
-
-      auto stateMsg = msg.add_robot_state();
-      stateMsg->set_name(model->GetScopedName());
-      stateMsg->set_id(model->GetId());
-
-      auto poseMsg = stateMsg->mutable_pose();
-      auto relativePose = model->RelativePose();
-
-      gz::msgs::Set(poseMsg, relativePose);
-
+void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
+    if (not this->robotStatesPubFreq_) {
+        return;
     }
 
-    if (msg.robot_state_size() > 0)
-    {
-      this->robotStatesPub_->Publish(msg);
-      this->lastRobotStatesUpdateTime_ = time;
+    auto secs = 1.0 / this->robotStatesPubFreq_;
+    auto time = _info.simTime.Double();
+    if ((time - this->lastRobotStatesUpdateTime_) >= secs) {
+        // Send robot info update message, this only sends the
+        // main pose of the robot (which is all we need for now)
+        msgs::RobotStates msg;
+        gz::msgs::Set(msg.mutable_time(), _info.simTime);
+
+        {
+            boost::recursive_mutex::scoped_lock lock(*this->world_->Physics()->GetPhysicsUpdateMutex());
+            for (const auto &model : this->world_->Models()) {
+                if (model->IsStatic()) {
+                    // Ignore static models such as the ground and obstacles
+                    continue;
+                }
+
+                auto stateMsg = msg.add_robot_state();
+                stateMsg->set_name(model->GetScopedName());
+                stateMsg->set_id(model->GetId());
+
+                auto poseMsg = stateMsg->mutable_pose();
+                auto relativePose = model->RelativePose();
+
+                gz::msgs::Set(poseMsg, relativePose);
+
+            }
+        }
+
+        if (msg.robot_state_size() > 0) {
+            this->robotStatesPub_->Publish(msg);
+            this->lastRobotStatesUpdateTime_ = time;
+        }
     }
-  }
 }
 
 void WorldController::OnEndUpdate()
@@ -173,7 +169,9 @@ void WorldController::OnEndUpdate()
         auto model = std::get<0>(delete_robot);
         auto request_id = std::get<1>(delete_robot);
         if (model) {
+//            this->world_->SetPaused(true);
             this->world_->RemoveModel(model);
+//            this->world_->SetPaused(true);
 
             gz::msgs::Response resp;
             resp.set_id(request_id);
@@ -238,7 +236,9 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     this->insertMap_[name] = request->id();
     this->insertMutex_.unlock();
 
+//    this->world_->SetPaused(true);
     this->world_->InsertModelString(robotSDF.ToString());
+//    this->world_->SetPaused(false);
 
     // Don't leak memory
     // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element

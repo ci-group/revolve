@@ -79,12 +79,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--visualize-sensors',
-    default=False, type=bool,
-    help='Visualize sensors (helpful for debugging purposes)'
-)
-
-parser.add_argument(
     '--pose-update-frequency',
     default=5, type=int,
     help="The frequency at which the world is requested to send robot pose"

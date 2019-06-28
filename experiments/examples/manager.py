@@ -27,6 +27,7 @@ async def run():
     robot = revolve_bot.RevolveBot()
     robot.load_file("experiments/examples/yaml/spider.yaml")
     robot.update_substrate()
+    # robot._brain = BrainRLPowerSplines()
 
     # Connect to the simulator and pause
     world = await World.create(settings)

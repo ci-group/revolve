@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os
+import sys
 import dateutil.parser
 import yaml
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 from pyrevolve.revolve_bot import RevolveBot
 
 
@@ -72,16 +74,16 @@ def read_data(folder_name: str):
     }
 
 
-if __name__ == '__main__':
-    data = read_data('2')
-    print(f'{data}')
+def draw_chart(folder_name: str, ax):
+    data = read_data(folder_name)
+    # print(f'{data}')
     for logline in data['log']:
-        print(f'{logline}')
+        # print(f'{logline}')
         if logline.event_type == 'NEW':
             robot_id = logline.text[41:].split('(')[0]
             robot_id = robot_id[11:]
             data['robots'][robot_id].life['birth_reason'] = 'NEW'
-            print(f'{logline.event_type} => {robot_id}')
+            # print(f'{logline.event_type} => {robot_id}')
 
     robot_points = []
     robot_points_new = []
@@ -93,7 +95,7 @@ if __name__ == '__main__':
 
     for robot_id in data['robots']:
         robot_log = data['robots'][robot_id]
-        print(f'{robot_log}')
+        # print(f'{robot_log}')
         life = robot_log.life
         birth = life['starting_time']
         age = life['age']
@@ -103,6 +105,8 @@ if __name__ == '__main__':
             robot_points.append(('MATE', birth))
         if life['death'] is not None:
             robot_points.append(('DEATH', life['death']))
+
+    print(f"Drawing {len(data['robots'])} robots, global time TODO")
 
     robot_points.sort(key=lambda e: e[1])
     pop_size = 0
@@ -124,17 +128,63 @@ if __name__ == '__main__':
         else:
             raise RuntimeError("WAT?")
 
+    return robot_points_new, robot_points_new_pop, \
+           robot_points_mate, robot_points_mate_pop, \
+           robot_points_death, robot_points_death_pop
+
+
+if __name__ == '__main__':
+    folder_name = sys.argv[1]
+
     matplotlib.use('Qt5Agg')
     # matplotlib.use('GTK3Cairo')
     # matplotlib.use('GTK3Agg')
     fig, ax = plt.subplots()
-    ax.scatter(x=robot_points_new, y=robot_points_new_pop, label='new')
-    ax.scatter(x=robot_points_mate, y=robot_points_mate_pop, label='mate')
-    ax.scatter(x=robot_points_death, y=robot_points_death_pop, label='death')
+    plt.ion()
+
+    robot_points_new, robot_points_new_pop, \
+    robot_points_mate, robot_points_mate_pop, \
+    robot_points_death, robot_points_death_pop = draw_chart(folder_name, ax)
+
+    new_scatter = ax.scatter(x=robot_points_new, y=robot_points_new_pop, label='new')
+    mate_scatter = ax.scatter(x=robot_points_mate, y=robot_points_mate_pop, label='mate')
+    death_scatter = ax.scatter(x=robot_points_death, y=robot_points_death_pop, label='death')
     ax.legend()
+    plt.draw()
+    plt.pause(0.01)
 
-    plt.show()
+    def update_data(dataset, points, points_pop):
+        assert(len(points) == len(points_pop))
+        if len(points) == 0:
+            return
+        new_data = np.matrix([[x, y] for x, y in zip(points, points_pop)])
+        dataset.set_offsets(new_data)
+
+    while True:
+        robot_points_new, robot_points_new_pop, \
+        robot_points_mate, robot_points_mate_pop, \
+        robot_points_death, robot_points_death_pop = draw_chart(folder_name, ax)
+
+        update_data(new_scatter, robot_points_new, robot_points_new_pop)
+        update_data(mate_scatter, robot_points_mate, robot_points_mate_pop)
+        update_data(death_scatter, robot_points_death, robot_points_death_pop)
 
 
+        plt.draw()
+        plt.pause(2)
 
-
+    #
+    # # Example: loops monitoring events forever.
+    # #
+    # import pyinotify
+    #
+    # # Instanciate a new WatchManager (will be used to store watches).
+    # wm = pyinotify.WatchManager()
+    # # Associate this WatchManager with a Notifier (will be used to report and
+    # # process events).
+    # notifier = pyinotify.Notifier(wm)
+    # # Add a new watch on /tmp for ALL_EVENTS.
+    # wm.add_watch(os.path.join(folder_name, 'experiment_manager.log'), pyinotify.ALL_EVENTS)
+    # # Loop forever and handle events.
+    # notifier.loop()
+    #

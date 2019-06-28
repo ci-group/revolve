@@ -227,6 +227,15 @@ target_link_libraries(
         ${GAZEBO_LIBRARIES}
 )
 
+# Create Torus World plugin
+add_library(TorusWorldPlugin SHARED
+        plugin/register_torus_world_plugin.cpp
+)
+target_link_libraries(TorusWorldPlugin
+        revolve-gazebo
+        ${GAZEBO_LIBRARIES}
+)
+
 # Create Robot plugin
 add_library(
         RobotControlPlugin SHARED

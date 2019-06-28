@@ -150,6 +150,13 @@ class RobotManager(RvRobotManager):
         """
         return self.initial_charge - (float(self.age()) * self.size)
 
+    def inverse_charge(self):
+        """
+        Returns the remaining battery charge of this robot.
+        :return:
+        """
+        return self.initial_charge - (float(self.age()) / self.size)
+
     def did_mate_with(self, other):
         """
         Called when this robot mated with another robot successfully.
