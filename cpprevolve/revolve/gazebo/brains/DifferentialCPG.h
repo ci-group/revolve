@@ -197,7 +197,7 @@ namespace revolve
       private: size_t switch_num = 300;
 
       /// \brief The type of learning algorithm
-      private: std::string learner_algorithm = "BOEA";
+      private: std::string learner_algorithm = "EA";
 
       /// \brief Cool down period
       private: size_t n_cooldown_iterations;
@@ -280,15 +280,20 @@ namespace revolve
       /// \brief Use frame of reference {-1,0,1} version or not
       private: bool use_frame_of_reference;
 
-        // BO Learner parameters
-    private: double kernel_noise_;
-    private: bool kernel_optimize_noise_;
-    public: double kernel_sigma_sq_;
-    public: double kernel_l_;
-    private: int kernel_squared_exp_ard_k_;
-    private: double acqui_gpucb_delta_ ;
-    public: double acqui_ucb_alpha_;
-    private: double acqui_ei_jitter_;
+      // BO Learner parameters
+      private: double kernel_noise_;
+      private: bool kernel_optimize_noise_;
+      public: double kernel_sigma_sq_;
+      public: double kernel_l_;
+      private: int kernel_squared_exp_ard_k_;
+      private: double acqui_gpucb_delta_ ;
+      public: double acqui_ucb_alpha_;
+      private: double acqui_ei_jitter_;
+
+      //EA Learner parameters
+      public: double gaussian_step_size_;
+      public: double mutrate_;
+
     };
   }
 }

@@ -19,22 +19,22 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-min_lines = 980
+min_lines = 1490
 run_gazebo = False
-n_runs = 1 # Naar 20
-n_jobs = 1
+n_runs = 4 # Naar 20
+n_jobs = 2
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "one.yaml"
+yaml_model = "babyA.yaml"
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "~/projects/revolve/.venv/bin/python3"
 search_space = {
     'evaluation_rate': [60],
     'init_method': ["LHS"],
     'verbose': [1],
-    'kernel_l': [0.2],
-    'acqui_ucb_alpha': [3.0],
-    'n_learning_iterations': [980],
-    'n_init_samples': [20],
+    'kernel_l': [0.1],
+    'acqui_ucb_alpha': [1.0],
+    'n_learning_iterations': [1450],
+    'n_init_samples': [50],
 }
 
 print(search_space)
@@ -150,30 +150,36 @@ if __name__ == "__main__":
 
     # PASTE THE EXPERIMENTS HERE, IN THE FORMAT SHOWN BELOW
     experiments = [
-        {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 3.0},   # BASE RUN
+        {'init_method': "LHS", 'gaussian_step_size': 0.2999, 'mutrate': 0.6},
+        {'init_method': "LHS", 'gaussian_step_size': 0.2999, 'mutrate': 0.7},
+        {'init_method': "LHS", 'gaussian_step_size': 0.3111, 'mutrate': 0.6},
+        {'init_method': "LHS", 'gaussian_step_size': 0.3111, 'mutrate': 0.7},
 
-        # # BASE RUN
-        # {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
-        # {'init_method': "LHS", 'kernel_l': 0.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-        # {'init_method': "LHS", 'kernel_l': 1.0, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-        # {'init_method': "LHS", 'kernel_l': 1.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},   # BASE RUN
         #
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.1,  'acqui_ucb_alpha': 0.5},
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
-        # # BASE RUN
-        #
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.2},
-        # # BASE RUN
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.5},
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 2.0},
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 3.0},
-        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 4.0},
-        #
-        # {'init_method': "RS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
-        # BASE RUN
+        # # # BASE RUN
+        # {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0},
+        # {'init_method': "LHS", 'kernel_l': 0.3, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0},
+        # {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 2.0},
+        # {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 3.0},
+        # spider9 gait learning
+        # {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 2.0},
+        # spider13
+        # {'init_method': "LHS", 'kernel_l': 0.05/0.1/0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0},
+        # spider17
+        # {'init_method': "LHS", 'kernel_l': 0.1/0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0},
+        # gecko7
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0},
+        # gecko12
+        # {'init_method': "LHS", 'kernel_l': 0.1/0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0/2.0},
+        # gecko17
+        # {'init_method': "LHS", 'kernel_l': 0.3, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0},
+        # babyA
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0},
+        # babyC
+        # {'init_method': "LHS", 'kernel_l': 0.1/0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 1.0/2.0},
+
     ]
     # 'kernel_l': [0.02, 0.05, 0.1, 0.2],
     # 'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
@@ -183,6 +189,7 @@ if __name__ == "__main__":
     # Get id's on the permutations
     for ix, my_dict in enumerate(experiments):
         my_dict["id"] = ix
+    experiments *=n_runs
 
     # Save to yaml files
     create_yamls(yaml_path=my_yaml_path,
