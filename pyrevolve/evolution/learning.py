@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+import numpy as np
 from thirdparty.pycma import cma
 import time
 import threading
@@ -89,13 +90,16 @@ class Learning:
         best = self.vectors_fitnessess[best_vector_key]
         return best[0], best[1]
 
-    async def cma_es_evaluate_vector(self, vector):
+    async def cma_es_evaluate_vector(self, vector, np_array=True):
         """
         :param vector: list of vector values to evaluate in individual
         :return: fitness of vector
         """
         if self.param_references is None:
             return
+        
+        if isinstance(vector, np.ndarray):
+            vector = vector.tolist()
 
         self.vector_values = vector
 
@@ -148,7 +152,7 @@ class Learning:
         self.vectorize_brain()
 
         # set original fitness of robot as first index of list fitnesses_aqcuired
-        await self.cma_es_evaluate_vector(self.vector_values)
+        await self.cma_es_evaluate_vector(self.vector_values, False)
 
         # algorithm does not work for empty vectors
         if len(self.vector_values) > 0:
@@ -156,6 +160,6 @@ class Learning:
             self.devectorize_brain(best_vector)
 
         # set correct fitness for best vector in individual
-        await self.cma_es_evaluate_vector(best_vector)
+        await self.cma_es_evaluate_vector(best_vector, False)
 
         return self.individual

@@ -16,16 +16,23 @@ from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.simulator_simple_queue import SimulatorSimpleQueue
+from pyrevolve.custom_logging.logger import logger
+
 
 async def run():
     """
     The main coroutine, which is started below.
     """
-    # Parse command line / file input arguments
-    num_generations = 100
+
+    # experiment params #
+    num_generations = 5
+    population_size = 5
+    offspring_size = 5
+
+    max_learning_evaluations = 10
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=20,
+        max_structural_modules=100,
     )
 
     mutation_conf = MutationConfig(
@@ -36,19 +43,25 @@ async def run():
     crossover_conf = CrossoverConfig(
         crossover_prob=0.8,
     )
+    # experiment params #
 
+    # Parse command line / file input arguments
     settings = parser.parse_args()
     experiment_management = ExperimentManagement(settings)
-    recovery_enabled = settings.recovery_enabled and not experiment_management.experiment_is_new()
+    do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
-    if recovery_enabled:
-        gen_num, next_robot_id = experiment_management.read_recovery_state()
+    if do_recovery:
+        gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size, offspring_size)
+
+        if gen_num == num_generations-1:
+            logger.info('Experiment is already complete.')
+            return
     else:
         gen_num = 0
-        next_robot_id = 0
+        next_robot_id = 1
 
     population_conf = PopulationConfig(
-        population_size=100,
+        population_size=population_size,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         fitness_function=fitness.displacement_velocity_hill,
@@ -61,13 +74,11 @@ async def run():
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=settings.evaluation_time,
-        offspring_size=100,
+        offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         measure_individuals=settings.measure_individuals,
     )
-
-    max_learning_evaluations = 50
 
     settings = parser.parse_args()
     simulator_queue = SimulatorSimpleQueue(settings.n_cores, settings, settings.port_start)
@@ -75,42 +86,66 @@ async def run():
 
     population = Population(population_conf, simulator_queue, next_robot_id)
 
-    if recovery_enabled:
+    if do_recovery:
         # loading a previous state of the experiment
-        await population.load_pop(gen_num)
+        await population.load_snapshot(gen_num)
+        logger.info('Recovered snapshot '+str(gen_num))
+        if has_offspring:
+            individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
+            gen_num += 1
+            logger.info('Recovered unfinished offspring '+str(gen_num))
+
+            if gen_num == 0:
+                await population.init_pop(individuals)
+
+                for i in range(len(population.individuals)):
+                    learned_ind = await learn(population.individuals[i], simulator_queue, population_conf, max_learning_evaluations)
+                    population.individuals[i] = learned_ind                
+
+            else:
+                population = await population.next_gen(gen_num, individuals)
+
+                for i in range(len(population.individuals)):
+                    learned_ind = await learn(population.individuals[i], simulator_queue, population_conf, max_learning_evaluations)
+                    population.individuals[i] = learned_ind                 
+
+            experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
         await population.init_pop()
-        
+
         for i in range(len(population.individuals)):
             learned_ind = await learn(population.individuals[i], simulator_queue, population_conf, max_learning_evaluations)
-            population.individuals[i] = learned_ind
+            population.individuals[i] = learned_ind 
 
         experiment_management.export_snapshots(population.individuals, gen_num)
-        experiment_management.update_recovery_state(gen_num, population.next_robot_id)
 
-    while gen_num < num_generations:
+    while gen_num < num_generations-1:
         gen_num += 1
-        
         population = await population.next_gen(gen_num)
 
         for i in range(len(population.individuals)):
             learned_ind = await learn(population.individuals[i], simulator_queue, population_conf, max_learning_evaluations)
-            population.individuals[i] = learned_ind        
-        
+            population.individuals[i] = learned_ind 
+
         experiment_management.export_snapshots(population.individuals, gen_num)
-        experiment_management.update_recovery_state(gen_num, population.next_robot_id)
 
     # output result after completing all generations...
 
-
-async def learn(simulator, conf, individual, max_learning_evaluations):
-    if individual.phenotype is None:
-        individual.develop()
+async def learn(individual, simulator, conf, max_learning_evaluations):
+    #individual.develop()
 
     learn_brain = Learning(individual, simulator, conf, max_learning_evaluations)
-    individual = await learn_brain.learn_brain_through_cma_es()
+    individual_1 = await learn_brain.learn_brain_through_cma_es()
+    one_ = learn_brain.vectors_fitnessess
+
+    learn_brain = Learning(individual, simulator, conf, max_learning_evaluations)
+    individual_2 = await learn_brain.learn_brain_through_cma_es()
+    two_ = learn_brain.vectors_fitnessess
+    print(12345)
+    print(one_)    
+    print(two_)
             
     #original_fitness = learn_brain.vectors_fitnessess[f'{learn_brain.robot_id}_0'][0]
     #learned_fitness, vector = learn_brain.best_vector_fitness()
