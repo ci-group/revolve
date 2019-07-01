@@ -2,11 +2,10 @@ from datetime import datetime, timedelta
 import os
 
 # set these variables according to your experiments #
-dir_path = 'data'
-experiments_names = ['_baseline',
-                     '_lava'
+dir_path = '../'
+experiments_names = ['default_experiment'
                      ]
-runs = 3#10
+runs = 1
 limit_of_minutes = 10
 # set these variables according to your experiments #
 
@@ -34,14 +33,13 @@ while 1:
                 time_ago = time_now - timedelta(minutes=limit_of_minutes)
 
                 if files[-1] > time_ago:
-                     some_has_been_updated = True
+                    some_has_been_updated = True
 
     if not some_has_been_updated:
-       youngest.sort()
-       print(str(time_now) + ': youngest file from ' + str(youngest[-1]))
-       os.system(" kill $(  ps aux | grep 'gzserver' | awk '{print $2}')")
-       os.system(" kill $(  ps aux | grep 'revolve.py' | awk '{print $2}')")
-       print('  killled gzserver and revolve.py to force an error!')
+        youngest.sort()
+        print(str(time_now) + ': youngest file from ' + str(youngest[-1]))
+        os.system(" kill $(  ps aux | grep 'gzserver' | awk '{print $2}')")
+        os.system(" kill $(  ps aux | grep 'revolve.py' | awk '{print $2}')")
+        print('  killled gzserver and revolve.py to force an error!')
 
     some_has_been_updated = False
-

@@ -130,8 +130,8 @@ class SimulatorSimpleQueue:
 
     async def _evaluate_robot(self, simulator_connection, robot, conf):
         if robot.failed_eval_attempt_count == 3:
-            logger.info(f'Robot {robot.phenotype.id} evaluation failed (reached max attempt of 3), fitness set to 0.')
-            robot_fitness = 0.00
+            logger.info(f'Robot {robot.phenotype.id} evaluation failed (reached max attempt of 3), fitness set to None.')
+            robot_fitness = None
         else:
             await simulator_connection.pause(True)
             insert_future = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, self._settings.z_start))
@@ -146,11 +146,11 @@ class SimulatorSimpleQueue:
             elapsed = end-start
             logger.info(f'Time taken: {elapsed}')
 
-            robot_fitness = conf.fitness_function(robot_manager)
+            robot_fitness = conf.fitness_function(robot_manager, robot)
 
             measures_list = {'displacement_velocity_hill': measures.displacement_velocity_hill(robot_manager),
                              'head_balance': measures.head_balance(robot_manager),
-                             'sum_of_contacts': measures.sum_of_contacts(robot_manager),
+                             'contacts': measures.contacts(robot_manager, robot),
                              'displacement_velocity': measures.displacement_velocity(robot_manager)
                              }
             conf.experiment_management.export_behavior_measures(robot.phenotype.id, measures_list)

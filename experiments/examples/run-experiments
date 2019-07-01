@@ -3,7 +3,7 @@ while true
 	do
 
        for i in {1..10}; do
-	    ./revolve.py --experiment_name exp_$i --manager experiments/examples/manager_pop.py --n-cores 5;
+	    ./revolve.py --experiment_name default_experiment_$i --manager experiments/examples/manager_pop.py --n-cores 5;
 	    sleep 5s
 	   done
 done
