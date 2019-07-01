@@ -70,7 +70,6 @@ class RevolveBot:
         self._morphological_measurements = self.measure_body()
         self._brain_measurements = self.measure_brain()
         logger.info('Robot ' + str(self.id) + ' was measured.')
-        self.export_phenotype_measurements(experiment_name)
 
     def measure_body(self):
         """
