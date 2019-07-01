@@ -90,8 +90,7 @@ class Population:
         self.conf.experiment_management.export_genotype(individual)
         self.conf.experiment_management.export_phenotype(individual)
         self.conf.experiment_management.export_phenotype_images('data_fullevolution/phenotype_images', individual)
-        if self.conf.measure_individuals:
-            individual.phenotype.measure_phenotype(self.conf.experiment_name)
+        individual.phenotype.measure_phenotype(self.conf.experiment_name)
 
         return individual
 
@@ -102,6 +101,7 @@ class Population:
 
         individual = Individual(genotype)
         individual.develop()
+        individual.phenotype.measure_phenotype(self.conf.experiment_name)
         with open(path+'/data_fullevolution/fitness/fitness_'+id+'.txt') as f:
             lines = f.readlines()
             individual.fitness = float(lines[0])
