@@ -391,6 +391,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--run',
+    default='1', type=str,
+    help="Run of repetition of an experiment."
+)
+
+parser.add_argument(
         '--test-robot',
         default=None, type=str,
         help="Start a simulation with a single robot instead of running evolution. Loads yaml robots."

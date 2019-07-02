@@ -1,6 +1,7 @@
 import os
 import shutil
 import numpy as np
+from pyrevolve.custom_logging.logger import logger
 
 class ExperimentManagement:
 
@@ -66,6 +67,7 @@ class ExperimentManagement:
             os.mkdir(self.dirpath+path)
             for ind in individuals:
                 self.export_phenotype_images('selectedpop_'+str(gen_num), ind)
+            logger.info('Exported snapshot '+str(gen_num)+' with ' + str(len(individuals))+' individuals')
 
     def experiment_is_new(self):
         if not os.path.exists(self.dirpath):

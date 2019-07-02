@@ -47,6 +47,8 @@ async def run():
     experiment_management = ExperimentManagement(settings)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
+    logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
+
     if do_recovery:
         gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size, offspring_size)
 
@@ -86,7 +88,7 @@ async def run():
     if do_recovery:
         # loading a previous state of the experiment
         await population.load_snapshot(gen_num)
-        logger.info('Recovered snapshot '+str(gen_num))
+        logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
         if has_offspring:
             individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1

@@ -196,6 +196,7 @@ class Population:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
         new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
         new_population.individuals = new_individuals
+        logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
         return new_population
 
