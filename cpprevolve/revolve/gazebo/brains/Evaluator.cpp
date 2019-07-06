@@ -137,11 +137,11 @@ double Evaluator::Fitness()
           std::pow((this->start_position_.Pos().X() - X_p), 2.0) +
           std::pow((this->start_position_.Pos().Y() - Y_p), 2.0));
     }
-    // Problem can't be in here. Only in places where current_positions is temporarily updated
     dist_penalty = std::sqrt(
         std::pow((this->current_position_.Pos().X() - X_p), 2.0) +
         std::pow((this->current_position_.Pos().Y() - Y_p), 2.0));
     penalty = 0.01 * dist_penalty;
+
     //fitness_direction = dist_projection / (alpha + ksi) - penalty;
     fitness_direction = (std::abs(dist_projection) / path_length) *
                         (dist_projection / (alpha + ksi) - penalty);

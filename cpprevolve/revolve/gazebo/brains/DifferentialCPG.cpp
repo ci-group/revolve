@@ -213,7 +213,7 @@ DifferentialCPG::DifferentialCPG(
     {
       frame_of_reference = 1;
     }
-      // We are a right neuron: TODO: MAke this neat in coordinates
+      // We are a right neuron:
     else if (coord_y > 0)
     {
       frame_of_reference = -1;
@@ -230,7 +230,6 @@ DifferentialCPG::DifferentialCPG(
       //" has FOR" << frame_of_reference << std::endl;
     }
 
-    // TODO: Add check for duplicate coordinates
     motor = motor->GetNextElement("rv:servomotor");
     j++;
   }
@@ -423,18 +422,7 @@ DifferentialCPG::~DifferentialCPG()
  * Dummy function for limbo
  */
 struct DifferentialCPG::evaluation_function{
-  // Number of input dimension (samples.size())
-  //    Spider9: 18 - DONE
-  //    Spider13: 26 - DONE
-  //    Spider17:34
-  //    Gecko7: 13 - DONE
-  //    Gekoc12:23 - DONE
-  //    Gecko17: 33 - DONE
-  //    BabyA: 16 - DONE
-  //    babyB: 22- DONE
-  //    Babyc: 32
-
-    BO_PARAM(size_t, dim_in, 32);
+  BO_PARAM(size_t, dim_in, 32);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -799,61 +787,26 @@ void DifferentialCPG::bo_step(){
   {
     // Holder for sample
     Eigen::VectorXd x;
-    if(true)
-    {
-      // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
-      limbo::bayes_opt::BOptimizer<Params,
-                                   limbo::initfun<Init_t>,
-                                   limbo::modelfun<GP_t>,
-                                   limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
+    // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+    limbo::bayes_opt::BOptimizer<Params,
+                                 limbo::initfun<Init_t>,
+                                 limbo::modelfun<GP_t>,
+                                 limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
-      // Optimize. Pass dummy evaluation function and observations .
-      boptimizer.optimize(DifferentialCPG::evaluation_function(),
-                          this->samples,
-                          this->observations);
+    // Optimize. Pass dummy evaluation function and observations .
+    boptimizer.optimize(DifferentialCPG::evaluation_function(),
+                        this->samples,
+                        this->observations);
 
-      // Write parametesr to verify thread-stability after the run
-      std::ofstream dyn_parameters_file;
-      dyn_parameters_file.open(this->directory_name + "dynamic_parameters.txt", std::ios::app);
-      dyn_parameters_file << Params::acqui_ucb::alpha() << ",";
-      dyn_parameters_file << Params::kernel_maternfivehalves::sigma_sq() << ",";
-      dyn_parameters_file << Params::kernel_maternfivehalves::l() << std::endl;
-      dyn_parameters_file.close();
+    // Write parametesr to verify thread-stability after the run
+    std::ofstream dyn_parameters_file;
+    dyn_parameters_file.open(this->directory_name + "dynamic_parameters.txt", std::ios::app);
+    dyn_parameters_file << Params::acqui_ucb::alpha() << ",";
+    dyn_parameters_file << Params::kernel_maternfivehalves::sigma_sq() << ",";
+    dyn_parameters_file << Params::kernel_maternfivehalves::l() << std::endl;
+    dyn_parameters_file.close();
 
-      x = boptimizer.last_sample();
-    }
-      //        else if(this->acquisition_function == "GP_UCB")
-      //        {
-      //            // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
-      //            limbo::bayes_opt::BOptimizer<Params,
-      //                    limbo::initfun<Init_t>,
-      //                    limbo::modelfun<GP_t>,
-      //                    limbo::acquifun<limbo::acqui::GP_UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
-      //
-      //            // Optimize. Pass dummy evaluation function and observations .
-      //            boptimizer.optimize(DifferentialCPG::evaluation_function(),
-      //                                this->samples,
-      //                                this->observations);
-      //            x = boptimizer.last_sample();
-      //        }
-      //        else if(this->acquisition_function == "EI")
-      //        {
-      //            // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
-      //            limbo::bayes_opt::BOptimizer<Params,
-      //                    limbo::initfun<Init_t>,
-      //                    limbo::modelfun<GP_t>,
-      //                    limbo::acquifun<limbo::acqui::EI<DifferentialCPG::Params, GP_t>>> boptimizer;
-      //
-      //            // Optimize. Pass dummy evaluation function and observations .
-      //            boptimizer.optimize(DifferentialCPG::evaluation_function(),
-      //                                this->samples,
-      //                                this->observations);
-      //            x = boptimizer.last_sample();
-      //        }
-    else
-    {
-      std::cout << "Specify correct acquisition function: {EI, UCB, GP_UCB}" << std::endl;
-    }
+    x = boptimizer.last_sample();
 
     // Save this x_hat_star
     this->samples.push_back(x);
@@ -884,7 +837,7 @@ void DifferentialCPG::Update(
   // Prevent two threads from accessing the same resource at the same time
   boost::mutex::scoped_lock lock(this->networkMutex_);
 
-  // Check if we can start measuring speed: TODO: Add angle to difference as well
+  // Check if we can start measuring speed
   if (not this->corner_threshold_met and std::abs(this->angle_diff) < 20)
   {
     if(this->verbose)
@@ -906,7 +859,6 @@ void DifferentialCPG::Update(
       std::pow(this->goal_y - this->evaluator->current_position_.Pos().Y(), 2)
       , 0.5);
 
-  //TODO: MAke eps parameter
   if (this->dist_to_goal < 0.5)
   {
     // Calculate time it took to perform the targeted locomtion task
@@ -1092,159 +1044,10 @@ void DifferentialCPG::Update(
     this->current_iteration += 1;
   }
 
-  ///////////////////////////////////////////////////////////////////////
-  //                      HILL-CLIMBER ALGORITHM
-  ///////////////////////////////////////////////////////////////////////
-
-  if (this->for_use_hill_climber and this->current_iteration >= this->n_init_samples + this->n_learning_iterations)
-  {
-    // Iteration counter for both interim and non-interim mode as we always want n evaluations to save
-    if (this->for_power_iteration >= this->for_n and this->for_step_size > this->for_step_size_eps)
-    {
-      // Save speed details of last this->for_n runs
-      std::vector< double > speed(2);
-      speed[0] = this->for_speed / this->for_n;
-      speed[1] = this->for_slower_power;
-      if(this->verbose)
-      {
-        std::cout << "Power " << speed[1] << " has average speed to object " << speed[0] << std::endl;
-      }
-      this->for_speeds.push_back(speed);
-      this->for_power_iteration = 0;
-
-      // Update interim counter
-      if (this->for_interim)
-      {
-        this->for_interim_counter += 1;
-      }
-
-      // Add element to queue in case we are not interim
-      if (this->for_speed > this->for_best_avg_speed and not this->for_interim)
-      {
-        // Save new best speed
-        this->for_best_avg_speed = this->for_speed;
-
-        // Add element to queue
-        if (this->for_go_up)
-        {
-          this->for_queue.push_back(this->for_slower_power + this->for_step_size);
-        }
-        else
-        {
-          if(std::abs(this->for_slower_power - this->for_step_size) < 0.001)
-          {
-            this->for_interim = true;
-          }
-          else
-          {
-            this->for_queue.push_back(this->for_slower_power - this->for_step_size);
-          }
-        }
-      }
-      else
-      {
-        if (this->for_iteration_counter == 1)
-        {
-          this->for_queue.push_back(this->for_slower_power - 2 * this->for_step_size);
-          this->for_go_up = false;
-        }
-        else if (not this->for_interim)
-        {
-          this->for_interim = true;
-        }
-      }
-
-      this->for_speed = 0;
-
-      // Generate new sub-queue
-      if (this->for_interim and this->for_interim_counter == this->for_subqueue_size)
-      {
-        double point_a = this->for_speeds[0][1];
-        std::vector< int > neighbours;
-
-        // Find all neighbours
-        if(this->verbose)
-        {
-          std::cout << "Point A " << point_a << " " << this->for_speeds[0][0] << std::endl;
-        }
-        for (int k = 0; k < this->for_speeds.size(); k++)
-        {
-          if (std::abs(std::abs(this->for_speeds[k][1] - point_a) - this->for_step_size) < 0.001)
-          {
-            // Save both the speed and the location of the neighbours. Note we can have 1 neighbour
-            neighbours.push_back(k);
-            if(this->verbose)
-            {
-              std::cout << "Neighbour: " << this->for_speeds[k][1] << " speed " << this->for_speeds[k][0] << std::endl;
-            }
-          }
-        }
-        // Pick best neighbour
-        double point_b;
-
-        if(neighbours.size() == 2)
-        {
-          if (this->for_speeds[neighbours[0]][0] > this->for_speeds[neighbours[1]][0])
-          {
-            // Neighbour 0 is best
-            point_b = this->for_speeds[neighbours[0]][1];
-          }
-          else
-          {
-            // Neighbour 1 is best
-            point_b = this->for_speeds[neighbours[1]][1];
-          }
-        }// If we only have one neighbour
-        else
-        {
-          point_b = this->for_speeds[neighbours[0]][1];
-        }
-
-        // Find next points
-        this->for_step_size /= 4;
-        double my_range = std::abs(point_b - point_a);
-        std::cout << "Step size is " << this->for_step_size << " and range is " << my_range;
-
-        // Generate sub-queue
-        this->for_subqueue_size = 0;
-        if (point_a < point_b)
-        {
-          point_a += this->for_step_size;
-          while (point_a < point_b)
-          {
-            this->for_queue.push_back(point_a);
-            point_a += this->for_step_size;
-            this->for_subqueue_size += 1;
-          }
-        }
-        else
-        {
-          point_b += this->for_step_size;
-          while (point_b < point_a)
-          {
-            this->for_queue.push_back(point_b);
-            point_b += this->for_step_size;
-            this->for_subqueue_size += 1;
-          }
-        }
-
-        // Reset counter
-        this->for_interim_counter = 0;
-      }
-
-      // Only take next element in queue once we've evaluated this->for_n number of times.
-      this->for_iteration_counter += 1;
-    }
-
-    // Pick power in the queue that we are interested in
-    this->for_slower_power = this->for_queue[this->for_iteration_counter];
-  }
-
-
   // Do the stepping
   this->step(_time, this->output);
 
-  // Send new signals to the motors: TODO: Match outputs and motors here
+  // Send new signals to the motors
   p = 0;
   for (const auto &motor: _motors)
   {
@@ -1435,8 +1238,7 @@ void DifferentialCPG::step(
   double robot_angle, move_angle, angle_difference;
 
   // Get angles when we need them
-  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations) // TODO: CHange when finished debuggi.g
-  {
+  if(this->current_iteration >= this->n_init_samples + this->n_learning_iterations)
     // Get angle of goal:
     this->angle_to_goal = this->get_vector_angle(this->robot->WorldPose().Pos().X(),
                                                  this->robot->WorldPose().Pos().Y(),
@@ -1445,34 +1247,25 @@ void DifferentialCPG::step(
                                                  0.f,
                                                  -1.f);
 
-    // Get angle against (1,0)-vector we will move towards
-    robot_angle = this->robot->WorldPose().Rot().Yaw() * 180.0 / M_PI;
-    move_angle = this->face + robot_angle;
+  // Get angle against (1,0)-vector we will move towards
+  robot_angle = this->robot->WorldPose().Rot().Yaw() * 180.0 / M_PI;
+  move_angle = this->face + robot_angle;
 
-    if (move_angle >= 180.0)
-    {
-      move_angle -= 360;
-    }
-    else if (move_angle <= -180)
-    {
-      move_angle += 360;
-    }
-
-    //    std::cout <<  "Move angle:" << move_angle << std::endl;
-    //    std::cout << "Angle to goal: " << this->angle_to_goal << std::endl;
-    //    // Get angle difference in [-180, +180]
-    angle_difference = this->angle_to_goal - move_angle;
-    if (angle_difference > 180)
-      angle_difference -= 360;
-    else if (angle_difference < -180)
-      angle_difference += 360;
-
-    // TODO: Verfiy in simulation that angledifference is correct. This is a sufficient condition for checking if angle_to_goal is correct
-    // std::cout << "Face: " << this->face << ". Angledifference: " << angle_difference << std::endl;
-    // Face and angle difference are working now
+  if (move_angle >= 180.0)
+  {
+    move_angle -= 360;
   }
-  // TODO: First step at each iteration AD is nan. Perhaps due to robot resetting
-  //std::cout << "AD: "<< angle_difference;
+  else if (move_angle <= -180)
+  {
+    move_angle += 360;
+  }
+
+  // Get angle difference in [-180, +180]
+  angle_difference = this->angle_to_goal - move_angle;
+  if (angle_difference > 180)
+    angle_difference -= 360;
+  else if (angle_difference < -180)
+    angle_difference += 360;
   this->angle_diff = angle_difference;
 
   int neuron_count = 0;
@@ -1521,8 +1314,6 @@ void DifferentialCPG::step(
   {
     this->next_state[i] = x[i];
   }
-  //std::cout <<  "Angledifference is" << angle_difference << "Face is  " <<this->face << std::endl;
-
   // Loop over all neurons to actually update their states. Note that this is a new outer for loop; TODO ERROR HERE
   auto i = 0; auto j = 0;
   for (auto &neuron : this->neurons)
@@ -1542,9 +1333,6 @@ void DifferentialCPG::step(
     // Should be one, as output should be based on odd neurons, which are the A neurons
     if (i % 2 == 1)
     {
-      //      auto motor_id = this->part_ids[{x, y}];
-      //std::cout << "Motor_id" << motor_id <<  " corresponds to output " << k_ <<  " x,y,z " << x << ","<< y << "," << z <<std::endl;
-
       // Apply saturation formula
       auto x = this->next_state[i];
 
@@ -1591,52 +1379,6 @@ void DifferentialCPG::step(
             std::cout << "Something  went wrong\n";
           }
         }
-        else if(this->for_speeding_approach == "faster" and this->for_signal_modification_type == "amplitude")
-        {
-          // Calculate factor. Note that it uses a parameter. This thing is in [0,1]
-          double my_factor = std::abs(180.0 - angle_difference)/180.0;
-
-          // Shift speeding factor to [1.0, for_faster_amplitude], e.g. [1.0, 2.5]
-          my_factor = my_factor*(this->for_faster_amplitude_factor - 1.0) + 1.0;
-
-          // Don't do anything unusual if we are on the middle line
-          if (frame_of_reference == 0)
-          {
-            this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
-          }
-            // Else we are either left or right
-          else if (std::abs(frame_of_reference) == 1)
-          {
-            // TODO: Verify the (logical) correctness of this
-            // If we are a left block, and we need to go right, increase speed
-            if(frame_of_reference == -1 and angle_difference >=0)
-            {
-              this->output[k_] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
-            }
-              // If we are a right block, and we need to go to the left, increase speed
-            else if(frame_of_reference == 1 and angle_difference <0)
-            {
-              this->output[k_] = my_factor*this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
-            }
-              // Else behave as normal
-            else
-            {
-              this->output[k_] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0*x/this->abs_output_bound)) -1);
-            }
-          }
-        }
-        else if(this->for_speeding_approach == "slower" and this->for_signal_modification_type == "frequency")
-        {
-          std::cout << "TODO \n";
-        }
-        else if(this->for_speeding_approach == "faster" and this->for_signal_modification_type == "frequency")
-        {
-          std::cout << "TODO\n";
-        }
-        else
-        {
-          std::cout << "FOR combination " << this->for_speeding_approach << "," << this->for_signal_modification_type << " not implemented yet \n";
-        }
       }
         // Don't use frame of reference
       else
@@ -1647,26 +1389,6 @@ void DifferentialCPG::step(
     i++;
   }
 
-//    // Commented out due to 1GB per grid search data generation. Could later be useful
-//    // Write state to file
-//    std::ofstream state_file;
-//    state_file.open(this->directory_name + "states.txt", std::ios::app);
-//    for(size_t i = 0; i < this->neurons.size(); i++)
-//    {
-//      state_file << this->next_state[i] << ",";
-//    }
-//    state_file << std::endl;
-//    state_file.close();
-//
-//    // Write signal to file
-//    std::ofstream signal_file;
-//    signal_file.open(this->directory_name + "signal.txt", std::ios::app);
-//    for(size_t i = 0; i < this->n_motors; i++)
-//    {
-//      signal_file << this->output[i] << ",";
-//    }
-//    signal_file << std::endl;
-//    signal_file.close();
 }
 
 /**
