@@ -3,10 +3,10 @@ import os
 
 # set these variables according to your experiments #
 dir_path = 'data'
-experiments_names = ['_baseline',
-                     '_lava'
+experiments_names = ['plane',
+                     'lava'
                      ]
-runs = 3#10
+runs = 10
 limit_of_minutes = 10
 # set these variables according to your experiments #
 
@@ -22,6 +22,9 @@ while 1:
         for run in range(0, runs):
 
             path = dir_path + "/" + exp +'_'+str(run+1) + "/data_fullevolution/fitness"
+            time_now = datetime.now()
+            time_ago = time_now - timedelta(minutes=limit_of_minutes)
+
             if os.path.isdir(path):
                 files = []
                 for r, d, f in os.walk(path):
@@ -30,8 +33,6 @@ while 1:
                         files.append(filetime)
                 files.sort()
                 youngest.append(files[-1])
-                time_now = datetime.now()
-                time_ago = time_now - timedelta(minutes=limit_of_minutes)
 
                 if files[-1] > time_ago:
                      some_has_been_updated = True
@@ -44,4 +45,8 @@ while 1:
        print('  killled gzserver and revolve.py to force an error!')
 
     some_has_been_updated = False
+
+
+
+
 
