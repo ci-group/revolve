@@ -25,35 +25,38 @@
 
 #include <revolve/gazebo/motors/Motor.h>
 
-namespace revolve
-{
-  namespace gazebo
-  {
-    class JointMotor
-            : public Motor
-    {
-      /// \brief Constructor
-      /// \brief[in] _model Model identifier
-      /// \brief[in] _partId Module identifier
-      /// \brief[in] _motorId Motor identifier
-      /// \brief[in] _outputs Number of motor outputs
-      public: JointMotor(
-          ::gazebo::physics::ModelPtr _model,
-          const std::string &_partId,
-          const std::string &_motorId,
-          sdf::ElementPtr _motor,
-          const unsigned int _outputs);
+namespace revolve {
+namespace gazebo {
 
-      /// \brief Destructor
-      public: virtual ~JointMotor();
+class JointMotor : public Motor {
+    /// \brief Constructor
+    /// \brief[in] _model Model identifier
+    /// \brief[in] _partId Module identifier
+    /// \brief[in] _motorId Motor identifier
+    /// \brief[in] _outputs Number of motor outputs
+public:
+    JointMotor(
+            ::gazebo::physics::ModelPtr _model,
+            const std::string &_partId,
+            const std::string &_motorId,
+            sdf::ElementPtr _motor,
+            const unsigned int _outputs);
 
-      /// \brief The joint this motor is controlling
-      protected: ::gazebo::physics::JointPtr joint_;
+    /// \brief Destructor
+public:
+    virtual ~JointMotor();
 
-      /// \brief  Scoped name of the controlled joint
-      protected: std::string jointName_;
-    };
-  } /* namespace gazebo */
+    /// \brief The joint this motor is controlling
+protected:
+    ::gazebo::physics::JointPtr joint_;
+
+    /// \brief  Scoped name of the controlled joint
+    std::string jointName_;
+
+    /// \brief The id of the consumer
+    uint32_t consumerId_;
+};
+} /* namespace gazebo */
 } /* namespace revolve */
 
 #endif /* REVOLVE_GAZEBO_MOTORS_JOINTMOTOR_H_ */

@@ -47,7 +47,7 @@ Evaluator::Evaluator(const double _evaluationRate,
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "directed"; // {directed, gait}
+  this->locomotion_type = "battery"; // {directed, gait, battery}
   this->path_length = 0.0;
 }
 
@@ -162,6 +162,112 @@ double Evaluator::Fitness()
     fitness_direction = std::abs(dist_projection) / path_length *
                         (dist_projection / (alpha + ksi) - penalty);
     fitness_value = fitness_direction;
+  }
+  else if (this->locomotion_type == "battery")
+  {
+
+      // f = (D_p/D) * b -[ (1 - (D_p/D) ) * (b_t - (len * size(13-34) * P) ) ]
+      double initial_battery = 1; // b      -> initial battery level. 1 (100%)
+      double battery_time = 0.15;   // b_t    -> battery drainage, how much battery robot loses when idle (over time)
+      double distance_projection;   // D_p    -> distance projection, the path the robot takes
+      double shortest_distance;     // D      -> the shortest path to target
+                                    // len    -> this->path_length
+      double robot_size = 17;       // size   -> the size of the robot TODO get the size from the robot manager
+      double power_used = 0.01;     // P      -> the amount of power used by each servo motor TODO calculate this with Torque * Angular Velocity
+
+      // initializing the coordinates of the charging station (±1.6, ±1.6, 0.12) (x,y,z)
+      ignition::math::Pose3d target_coord;
+      target_coord.Pos().X() = 1.6;
+      target_coord.Pos().Y() = 1.6;
+      target_coord.Pos().Z() = 0.12;
+      // calculating the shortest/initial distance
+      shortest_distance = measure_distance(this->start_position_, target_coord);
+      std::cout << "b: " << initial_battery <<  "\n";
+      std::cout << "b_t: " << battery_time <<  "\n";
+      std::cout << "D: " << shortest_distance <<  "\n";
+      std::cout << "size: " << robot_size <<  "\n";
+      std::cout << "P: " << power_used <<  "\n";
+
+
+
+      // calculating the path length
+      this->step_poses.push_back(this->current_position_);
+      //step_poses: x y z roll pitch yaw
+
+//    std::cout << "step_poses.size(): " << step_poses.size() << " ";
+
+      for (int i=1; i < this->step_poses.size(); i++)
+      {
+          const auto &pose_i_1 = this->step_poses[i-1];
+          const auto &pose_i = this->step_poses[i];
+          this->path_length += Evaluator::measure_distance(pose_i_1, pose_i);
+          //save coordinations to coordinates.txt
+          std::ofstream coordinates;
+          coordinates.open(this->directory_name + "/coordinates.txt",std::ios::app);
+
+          if(i == 1)
+          {
+              start_position_ = pose_i_1;
+              coordinates << std::fixed << start_position_.Pos().X() << " " << start_position_.Pos().Y() << std::endl;
+          }
+          coordinates << std::fixed << pose_i.Pos().X() << " " << pose_i.Pos().Y() << std::endl;
+      }
+
+      std::cout << "len: " << this <<  "\n";
+
+      // calculating the distance projection
+
+      ////********** directed locomotion fitness function **********////
+      //directions(forward) of heads are the orientation(+x axis) - 1.570796
+      double beta0 = this->start_position_.Rot().Yaw()- M_PI/2.0;
+
+      if (beta0 < - M_PI) //always less than pi (beta0 + max(40degree) < pi)
+      {
+          beta0 = 2 * M_PI - std::abs(beta0);
+      }
+
+      double beta1 = std::atan2(
+              this->current_position_.Pos().Y() - this->start_position_.Pos().Y(),
+              this->current_position_.Pos().X() - this->start_position_.Pos().X());
+
+      double alpha;
+      if (std::abs(beta1 - beta0) > M_PI)
+      {
+          alpha = 2 * M_PI - std::abs(beta1) - std::abs(beta0);
+      } else
+      {
+          alpha = std::abs(beta1 - beta0);
+      }
+
+      double A = std::tan(beta0);
+      double B = this->start_position_.Pos().Y()
+                 - A * this->start_position_.Pos().X();
+
+      double X_p = (A * (this->current_position_.Pos().Y() - B)
+                    + this->current_position_.Pos().X()) / (A * A + 1);
+      double Y_p = A * X_p + B;
+
+      //calculate the dist_projection
+      if (alpha > 0.5 * M_PI)
+      {
+          distance_projection = -std::sqrt(
+                  std::pow((this->start_position_.Pos().X() - X_p), 2.0) +
+                  std::pow((this->start_position_.Pos().Y() - Y_p), 2.0));
+      }
+      else
+      {
+          distance_projection = std::sqrt(
+                  std::pow((this->start_position_.Pos().X() - X_p), 2.0) +
+                  std::pow((this->start_position_.Pos().Y() - Y_p), 2.0));
+      }
+      // ************************
+      std::cout << "D_p: " << distance_projection <<  "\n";
+
+
+
+      //f = (D_p/D) * b -[ (1 - (D_p/D) ) * (b_t - (len * size(13-34) * P) ) ]
+      fitness_value = (distance_projection/shortest_distance) * initial_battery -
+              ((1 - (distance_projection/shortest_distance) ) * (battery_time + (this->path_length * robot_size * power_used)));
   }
   return fitness_value;
 }

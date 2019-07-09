@@ -60,19 +60,6 @@ namespace revolve
       /// according to the update rate specified in the robot plugin.
       public: virtual void DoUpdate(const ::gazebo::common::UpdateInfo _info);
 
-      /// \brief Returns the battery level
-      /// \details Methods allows reading and writing the battery level in
-      /// the robot SDF. This is mostly useful for the `BatterySensor` to
-      /// obtain the battery state, and storing it in the SDF also means it
-      /// will be adequately backed up in an eventual snapshot.
-      public: double BatteryLevel();
-
-      /// \brief Sets the battery level if possible
-      public: void SetBatteryLevel(double _level);
-
-      /// \brief Request listener for battery update
-      public: void UpdateBattery(ConstRequestPtr &_request);
-
       /// \brief Detects and loads motors in the plugin spec
       protected: virtual void LoadActuators(const sdf::ElementPtr _sdf);
 
@@ -101,12 +88,6 @@ namespace revolve
       /// \brief Networking node
       protected: ::gazebo::transport::NodePtr node_;
 
-      /// \brief Subscriber for battery update request
-      protected: ::gazebo::transport::SubscriberPtr batterySetSub_;
-
-      /// \brief Responder for battery update request
-      protected: ::gazebo::transport::PublisherPtr batterySetPub_;
-
       /// \brief Holds an instance of the motor factory
       protected: MotorFactoryPtr motorFactory_;
 
@@ -122,9 +103,6 @@ namespace revolve
       /// \brief Time of initialisation
       protected: double initTime_;
 
-      /// \brief rv:battery element, if present
-      protected: sdf::ElementPtr batteryElem_;
-
       /// \brief Time of the last actuation, in seconds and nanoseconds
       protected: ::gazebo::common::Time lastActuationTime_;
 
@@ -139,6 +117,9 @@ namespace revolve
 
       /// \brief Pointer to the world
       protected: ::gazebo::physics::WorldPtr world_;
+
+      /// \brief Pointer to the battery
+      protected: ::gazebo::common::BatteryPtr battery_;
 
       /// \brief Driver update event pointer
       private: ::gazebo::event::ConnectionPtr updateConnection_;

@@ -14,6 +14,7 @@ from pyrevolve import revolve_bot
 from pyrevolve import parser
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import World
+from pyrevolve.evolution import fitness
 
 
 async def run():
@@ -27,6 +28,7 @@ async def run():
     robot = revolve_bot.RevolveBot()
     robot.load_file("experiments/examples/yaml/spider.yaml")
     robot.update_substrate()
+    robot.save_file("./spider.sdf", conf_type='sdf')
 
     # Connect to the simulator and pause
     world = await World.create(settings)
@@ -45,8 +47,8 @@ async def run():
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
-        print("Robot fitness is {fitness}".format(
-                fitness=robot_manager.fitness()))
+        fitness_=fitness.random(robot_manager)
+        print(f"Robot fitness is {fitness_}")
         await asyncio.sleep(1.0)
 
 

@@ -294,4 +294,8 @@ def _sdf_brain_plugin_conf(
     if robot_genome is not None:
         SDF.sub_element_text(config, 'rv:genome', str(robot_genome))
 
+    initial_charge = 10
+    battery = xml.etree.ElementTree.SubElement(config, 'rv:battery')
+    SDF.sub_element_text(battery, 'voltage', initial_charge)
+
     return plugin

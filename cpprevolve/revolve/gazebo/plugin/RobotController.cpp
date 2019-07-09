@@ -62,13 +62,6 @@ void RobotController::Load(
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
 
-  // Subscribe to robot battery state updater
-  this->batterySetSub_ = this->node_->Subscribe(
-      "~/battery_level/request",
-      &RobotController::UpdateBattery,
-      this);
-  this->batterySetPub_ = this->node_->Advertise< gz::msgs::Response >(
-      "~/battery_level/response");
 
   if (not _sdf->HasElement("rv:robot_config"))
   {
@@ -103,34 +96,6 @@ void RobotController::Load(
 
   // Call startup function which decides on actuation
   this->Startup(_parent, _sdf);
-}
-
-/////////////////////////////////////////////////
-void RobotController::UpdateBattery(ConstRequestPtr &_request)
-{
-  if (_request->data() not_eq this->model_->GetName() and
-      _request->data() not_eq this->model_->GetScopedName())
-  {
-    return;
-  }
-
-  gz::msgs::Response resp;
-  resp.set_id(_request->id());
-  resp.set_request(_request->request());
-
-  if (_request->request() == "set_battery_level")
-  {
-    resp.set_response("success");
-    this->SetBatteryLevel(_request->dbl_data());
-  }
-  else
-  {
-    std::stringstream ss;
-    ss << this->BatteryLevel();
-    resp.set_response(ss.str());
-  }
-
-  batterySetPub_->Publish(resp);
 }
 
 /////////////////////////////////////////////////
@@ -251,7 +216,8 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
 {
   auto currentTime = _info.simTime.Double() - initTime_;
 
-  brain_->Update(motors_, sensors_, currentTime, actuationTime_);
+  this->brain_->Update(motors_, sensors_, currentTime, actuationTime_);
+  this->battery_->Update();
 }
 
 /////////////////////////////////////////////////
@@ -259,26 +225,16 @@ void RobotController::LoadBattery(const sdf::ElementPtr _sdf)
 {
   if (_sdf->HasElement("rv:battery"))
   {
-    this->batteryElem_ = _sdf->GetElement("rv:battery");
-  }
-}
-
-/////////////////////////////////////////////////
-double RobotController::BatteryLevel()
-{
-  if (not batteryElem_ or not batteryElem_->HasElement("rv:level"))
-  {
-    return 0.0;
-  }
-
-  return batteryElem_->GetElement("rv:level")->Get< double >();
-}
-
-/////////////////////////////////////////////////
-void RobotController::SetBatteryLevel(double _level)
-{
-  if (batteryElem_ and batteryElem_->HasElement("rv:level"))
-  {
-    batteryElem_->GetElement("rv:level")->Set(_level);
+    sdf::ElementPtr batteryElem = _sdf->GetElement("rv:battery");
+    this->battery_.reset(new ::gazebo::common::Battery());
+    this->battery_->UpdateParameters(batteryElem);
+    this->battery_->ResetVoltage();
+    this->battery_->SetUpdateFunc([](const ::gazebo::common::BatteryPtr &battery) -> double {
+        std::cout << "battery: " << battery->Voltage() << "V" << std::endl;
+        for (const auto &consumer: battery->PowerLoads()) {
+            std::cout << "comsumer: " << consumer.first << " -> " << consumer.second << std::endl;   
+        }
+        return battery->Voltage();
+    });
   }
 }

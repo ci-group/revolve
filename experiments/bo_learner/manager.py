@@ -26,7 +26,7 @@ async def run():
     # Load a robot from yaml
     robot = revolve_bot.RevolveBot()
     if settings.robot_yaml is None:
-        robot.load_file("experiments/bo_learner/yaml/spider.yaml")
+        robot.load_file("experiments/bo_learner/yaml/spider9.yaml")
     else:
         robot.load_file(settings.robot_yaml)
     robot.update_substrate()

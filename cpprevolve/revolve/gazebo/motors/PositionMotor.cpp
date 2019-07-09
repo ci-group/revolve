@@ -127,8 +127,12 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
     position += (position > 0 ? -2 * M_PI : 2 * M_PI);
   }
 
-  auto error = position - this->positionTarget_;
-  auto cmd = this->pid_.Update(error, stepTime);
+  auto test = this->joint_->GetForceTorque(0);
 
+  auto error = position - this->positionTarget_;
+  auto cmd = this->pid_.Update(error, stepTime); // angular velocity
+
+  std::cout << "~~~~~~ MOTORID: " << this->motorId_<< " ~~~~~\n";
+  std::cout << "watts:\t" << cmd * test.body1Torque.Length() << "\tor\t" << cmd * test.body2Torque.Length() << "\n";
   this->joint_->SetParam("vel", 0, cmd);
 }
