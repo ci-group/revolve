@@ -7,11 +7,12 @@ from pygazebo.msg import request_pb2, response_pb2
 
 # Default connection address to keep things DRY. This is an array rather than
 #  a tuple, so it is writeable as long as you change the separate elements.
-default_address = ["127.0.0.1", 11345]
+DEFAULT_ADDRESS = "127.0.0.1"
+DEFAULT_PORT = 11345
 
 
-async def connect(address=default_address):
-    manager = await pygazebo.connect(address=tuple(address))
+async def connect(address=DEFAULT_ADDRESS, port=DEFAULT_PORT):
+    manager = await pygazebo.connect(address=address, port=port)
     return manager
 
 
@@ -121,19 +122,19 @@ class RequestHandler(object):
         if self.publisher is not None:
             return
 
-        self.subscriber = self.manager.subscribe(
+        self.subscriber = await self.manager.subscribe(
             self.subscribe,
             self.response_type,
             self._callback
         )
-        self.publisher = await (self.manager.advertise(
-            self.advertise, self.request_type))
+        self.publisher = await self.manager.advertise(
+            self.advertise, self.request_type)
 
         if self.wait_for_publisher:
-            await (self.subscriber.wait_for_connection())
+            await self.subscriber.wait_for_connection()
 
         if self.wait_for_subscriber:
-            await (self.publisher.wait_for_listener())
+            await self.publisher.wait_for_listener()
 
     def stop(self):
         self.subscriber.remove()

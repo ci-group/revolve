@@ -202,34 +202,34 @@ class WorldManager(manage.WorldManager):
         await (super(WorldManager, self)._init())
 
         # Subscribe to pose updates
-        self.pose_subscriber = self.manager.subscribe(
+        self.pose_subscriber = await self.manager.subscribe(
             '/gazebo/default/revolve/robot_states',
             'revolve.msgs.RobotStates',
             self._update_states
         )
 
-        self.contact_subscriber = self.manager.subscribe(
+        self.contact_subscriber = await self.manager.subscribe(
             '/gazebo/default/physics/contacts',
             'gazebo.msgs.Contacts',
             self._update_contacts
         )
 
-        await (self.set_state_update_frequency(
+        await self.set_state_update_frequency(
             freq=self.state_update_frequency
-        ))
+        )
 
-        self.battery_handler = await (RequestHandler.create(
+        self.battery_handler = await RequestHandler.create(
             manager=self.manager,
             advertise='/gazebo/default/battery_level/request',
             subscribe='/gazebo/default/battery_level/response',
             # There will not be robots yet, so don't wait for this
             wait_for_publisher=False,
             wait_for_subscriber=False
-        ))
+        )
 
         # Wait for connections
-        await (self.pose_subscriber.wait_for_connection())
-        await (self.contact_subscriber.wait_for_connection())
+        await self.pose_subscriber.wait_for_connection()
+        await self.contact_subscriber.wait_for_connection()
 
         if self.do_restore:
             await (self.restore_snapshot(self.do_restore))

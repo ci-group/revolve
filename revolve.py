@@ -4,7 +4,6 @@ import sys
 import asyncio
 import importlib
 
-from pygazebo.pygazebo import DisconnectError
 from pyrevolve import parser
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -35,8 +34,7 @@ def main():
             print(context['message'])
             return
 
-        if isinstance(exc, DisconnectError) \
-                or isinstance(exc, ConnectionResetError):
+        if isinstance(exc, ConnectionResetError):
             print("Got disconnect / connection reset - shutting down.")
             sys.exit(0)
 
@@ -45,7 +43,7 @@ def main():
             traceback.print_exc()
             return
 
-        traceback.print_exc()
+        # traceback.print_exc()
         raise exc
 
     try:

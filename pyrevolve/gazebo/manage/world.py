@@ -79,20 +79,20 @@ class WorldManager(object):
 
         # Initialize the manager connections as well as the general request
         # handler
-        self.manager = await (connect(self.world_address))
+        self.manager = await connect(self.world_address[0], self.world_address[1])
 
-        self.world_control = await (self.manager.advertise(
+        self.world_control = await self.manager.advertise(
             topic_name='/gazebo/default/world_control',
             msg_type='gazebo.msgs.WorldControl'
-        ))
+        )
 
-        self.request_handler = await (RequestHandler.create(
+        self.request_handler = await RequestHandler.create(
             manager=self.manager,
             msg_id_base=MSG_BASE
-        ))
+        )
 
         # Wait for connections
-        await (self.world_control.wait_for_listener())
+        await self.world_control.wait_for_listener()
 
     async def pause(self, pause=True):
         """
