@@ -11,6 +11,7 @@ from pyrevolve.custom_logging import logger
 from pyrevolve import parser
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import World
+from pyrevolve.evolution import fitness
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
 from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
@@ -190,95 +191,142 @@ def random_spawn_pos():
     )
 
 
-def is_pos_occupied(pos, robots, distance):
-    for robot in robots:
-        if robot.distance_to(pos) < distance:
-            return True
+class Population(object):
+    def __init__(self, log, data_folder, connection):
+        self._log = log
+        self._data_folder = data_folder
+        self._connection = connection
+        self._robots = []
+        self._robot_id_counter = 0
 
-    return False
+    def __len__(self):
+        return len(self._robots)
 
+    async def _insert_robot(self, robot, pos: Vector3):
+        robot.update_substrate()
+        robot.battery_level = ROBOT_BATTERY
+        await (await self._connection.delete_model(robot.id))
 
-def free_random_spawn_pos(robots, distance=MATE_DISTANCE+0.1):
-    pos = random_spawn_pos()
-    while is_pos_occupied(pos, robots, distance):
+        # Insert the robot in the simulator
+        insert_future = await self._connection.insert_robot(robot, pos)
+        robot_manager = await insert_future
+        return robot_manager
+
+    async def _insert_individual(self, individual: OnlineIndividual, pos: Vector3):
+        individual.develop()
+        individual.manager = await self._insert_robot(individual.phenotype, pos)
+        individual.export(self._data_folder)
+        return individual
+
+    async def _remove_individual(self, individual: OnlineIndividual):
+        individual.export(self._data_folder)
+        await self._connection.delete_robot(individual.manager)
+
+    def _is_pos_occupied(self, pos, distance):
+        for robot in self._robots:
+            if robot.distance_to(pos) < distance:
+                return True
+        return False
+
+    def _free_random_spawn_pos(self, distance=MATE_DISTANCE+0.1):
         pos = random_spawn_pos()
+        while self._is_pos_occupied(pos, distance):
+            pos = random_spawn_pos()
+        return pos
 
-    return pos
+    async def _generate_insert_random_robot(self, _id: int):
+        # Load a robot from yaml
+        genotype = random_initialization(PLASTICODING_CONF, _id)
+        individual = OnlineIndividual(genotype)
+        return await self._insert_individual(individual, self._free_random_spawn_pos())
 
+    async def seed_initial_population(self, pause_while_inserting: bool):
+        """
+        Seed a new population
+        """
+        if pause_while_inserting:
+            await self._connection.pause(True)
+        await self.immigration_season()
+        if pause_while_inserting:
+            await self._connection.pause(False)
 
-async def insert_robot(world, robot, pos):
-    robot.update_substrate()
-    robot.battery_level = ROBOT_BATTERY
-    await (await world.delete_model(robot.id))
+    def print_population(self):
+        for individual in self._robots:
+            self._log.info(f"{individual} "
+                           f"battery {individual.manager.charge()} "
+                           f"age {individual.manager.age()} "
+                           f"fitness is {fitness.online_old_revolve(individual.manager)}")
 
-    # Insert the robot in the simulator
-    insert_future = await world.insert_robot(robot, pos)
-    robot_manager = await insert_future
-    return robot_manager
+    async def death_season(self):
+        """
+        Checks for age in the all population and if it's their time of that (currently based on age)
+        """
+        for individual in self._robots:
+            if individual.age() > INDIVIDUAL_MAX_AGE:
+                self._log.debug(f"Attempting ROBOT DIES OF OLD AGE: {individual}")
+                self._robots.remove(individual)
+                await self._remove_individual(individual)
+                self._log.info(f"ROBOT DIES OF OLD AGE: {individual}")
 
+    async def immigration_season(self):
+        """
+        Generates new random individual that are inserted in our population if the population size is too little
+        """
+        while len(self._robots) < SEED_POPULATION_START:
+            self._robot_id_counter += 1
+            self._log.debug(f"Attempting LOW REACHED")
+            individual = await self._generate_insert_random_robot(self._robot_id_counter)
+            self._log.info(f"LOW REACHED: inserting new random robot: {individual}")
+            self._robots.append(individual)
 
-async def insert_individual(world, individual, pos, data_folder):
-    individual.develop()
-    individual.manager = await insert_robot(world, individual.phenotype, pos)
-    individual.export(data_folder)
-    return individual
-
-
-async def remove_individual(world, individual, data_folder):
-    individual.export(data_folder)
-    await world.delete_robot(individual.manager)
-
-
-async def generate_insert_random_robot(world, _id, robots, data_folder):
-    # Load a robot from yaml
-    genotype = random_initialization(PLASTICODING_CONF, _id)
-    individual = OnlineIndividual(genotype)
-    return await insert_individual(world, individual, free_random_spawn_pos(robots), data_folder)
-
-
-async def mating_season(world, log, robots, robot_counter, data_folder):
-    class BreakIt(Exception):
-        pass
-    try:
-        if len(robots) > MAX_POP:
-            raise BreakIt
-        for individual1 in robots:
-            if not individual1.mature():
-                continue
-            for individual2 in robots:
-                if len(robots) > MAX_POP:
-                    raise BreakIt
-                if individual1 is individual2:
+    async def mating_season(self):
+        """
+        Checks if mating condition are met for all couple of robots. If so, it produces a new robot from crossover.
+        That robot is inserted into the population.
+        """
+        class BreakIt(Exception):
+            pass
+        try:
+            if len(self._robots) > MAX_POP:
+                raise BreakIt
+            for individual1 in self._robots:
+                if not individual1.mature():
                     continue
+                for individual2 in self._robots:
+                    if len(self._robots) > MAX_POP:
+                        raise BreakIt
+                    if individual1 is individual2:
+                        continue
 
-                individual3 = individual1.mate(individual2)
-                if individual3 is None:
-                    continue
+                    individual3 = individual1.mate(individual2)
+                    if individual3 is None:
+                        continue
 
-                robot_counter += 1
-                individual3.genotype.id = robot_counter
+                    self._robot_id_counter += 1
+                    individual3.genotype.id = self._robot_id_counter
 
-                # pos3 = (individual1.pos() + individual2.pos())/2
-                # pos3.z = Z_SPAWN_DISTANCE
-                pos3 = free_random_spawn_pos(robots)
+                    # pos3 = (individual1.pos() + individual2.pos())/2
+                    # pos3.z = Z_SPAWN_DISTANCE
+                    pos3 = self._free_random_spawn_pos()
 
-                robots.append(individual3)
-                await insert_individual(world, individual3, pos3, data_folder)
-                log.info(f"MATE!!!! between {individual1} and {individual2} generated {individual3}")
+                    self._robots.append(individual3)
+                    self._log.debug(f"Attempting mate between {individual1} and {individual2} generated {individual3}")
+                    await self._insert_individual(individual3, pos3)
+                    self._log.info(f"MATE!!!! between {individual1} and {individual2} generated {individual3}")
 
-    except BreakIt:
-        pass
-
-    return robot_counter
+        except BreakIt:
+            pass
 
 
 async def run():
-    robot_counter = 0
     data_folder = make_folders(DATA_FOLDER_BASE)
     log = logger.create_logger('experiment', handlers=[
         logging.StreamHandler(sys.stdout),
         logging.FileHandler(os.path.join(data_folder, 'experiment_manager.log'), mode='w')
     ])
+
+    # Set debug level to DEBUG
+    log.setLevel(logging.DEBUG)
 
     # Parse command line / file input arguments
     settings = parser.parse_args()
@@ -296,44 +344,20 @@ async def run():
         await simulator_supervisor.launch_simulator(port=settings.port_start)
 
     # Connect to the simulator and pause
-    world = await World.create(settings, world_address=('127.0.0.1', settings.port_start))
+    connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start))
     await asyncio.sleep(1)
 
-    robots = []
+    robot_population = Population(log, data_folder, connection)
 
     log.info("SEEDING POPULATION STARTED")
-    await world.pause(True)
-    while len(robots) < SEED_POPULATION_START:
-        robot_counter += 1
-        individual = await generate_insert_random_robot(world, robot_counter, robots, data_folder)
-        log.info(f"LOW REACHED: inserting new random robot: {individual}")
-        robots.append(individual)
-    await world.pause(False)
+    await robot_population.seed_initial_population(pause_while_inserting=True)
     log.info("SEEDING POPULATION FINISHED")
 
-    # Start a run loop to do some stuff
+    # Start the main life loop
     while True:
-        # Print robot fitness every second
-        for individual in robots:
-            # log.info(f"{individual} "
-            #          f"battery {individual.manager.charge()} "
-            #          f"age {individual.manager.age()} "
-            #          f"fitness is {fitness.online_old_revolve(individual.manager)}")
-            if individual.age() > INDIVIDUAL_MAX_AGE:
-                log.info(f"ROBOT DIES OF OLD AGE: {individual}")
-                robots.remove(individual)
-                await remove_individual(world, individual, data_folder)
 
-        robot_counter = await mating_season(world, log, robots, robot_counter, data_folder)
-
-        while len(robots) < MIN_POP:
-            robot_counter += 1
-            individual = await generate_insert_random_robot(world, robot_counter, robots, data_folder)
-            log.info(f"LOW REACHED: inserting new random robot: {individual}")
-            robots.append(individual)
-
-        # if len(robot_managers) == 0:
-            #     log.info("Robot population got extended")
-            #     return
+        await robot_population.death_season()
+        await robot_population.mating_season()
+        await robot_population.immigration_season()
 
         await asyncio.sleep(0.05)
