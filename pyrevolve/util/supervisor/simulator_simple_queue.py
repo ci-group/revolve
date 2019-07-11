@@ -24,7 +24,7 @@ class SimulatorSimpleQueue:
     async def _start_debug(self):
         connection = await World.create(self._settings, world_address=("127.0.0.1", self._port_start))
         self._connections.append(connection)
-        self._workers.append(asyncio.create_task(self._simulator_queue_worker(0)))
+        self._workers.append(asyncio.ensure_future(self._simulator_queue_worker(0)))
 
     async def start(self):
         if self._settings.simulator_cmd == 'debug':
@@ -55,7 +55,7 @@ class SimulatorSimpleQueue:
 
         for i, future_conn in enumerate(future_connections):
             self._connections.append(await future_conn)
-            self._workers.append(asyncio.create_task(self._simulator_queue_worker(i)))
+            self._workers.append(asyncio.ensure_future(self._simulator_queue_worker(i)))
 
         await asyncio.sleep(1)
 
@@ -82,7 +82,7 @@ class SimulatorSimpleQueue:
     async def _worker_evaluate_robot(self, connection, robot, future, conf):
         await asyncio.sleep(0.01)
         start = time.time()
-        evaluation_future = asyncio.create_task(self._evaluate_robot(connection, robot, conf))
+        evaluation_future = asyncio.ensure_future(self._evaluate_robot(connection, robot, conf))
         while not evaluation_future.done():
             elapsed = time.time()-start
             # WAITED TO MUCH, RESTART SIMULATOR
