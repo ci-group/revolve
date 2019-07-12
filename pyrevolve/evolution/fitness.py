@@ -8,7 +8,7 @@ def random(robot_manager):
     return py_random.random()
 
 def displacement(robot_manager):
-    return measures.displacement(robot_manager)
+    return measures.displacement(robot_manager)[0].magnitude()
 
 def displacement_velocity(robot_manager):
     return measures.displacement_velocity(robot_manager)

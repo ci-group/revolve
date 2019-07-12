@@ -4,6 +4,7 @@ import sys
 import asyncio
 import importlib
 
+from pyrevolve.data_analisys.visualize_robot import test_robot_run
 from pyrevolve import parser
 
 here = os.path.dirname(os.path.abspath(__file__))
