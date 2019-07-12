@@ -133,8 +133,7 @@ class SimulatorSimpleQueue:
             robot_fitness = 0.00
         else:
             await simulator_connection.pause(True)
-            insert_future = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, self._settings.z_start))
-            robot_manager = await insert_future
+            robot_manager = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, self._settings.z_start))
             await simulator_connection.pause(False)
             start = time.time()
             # Start a run loop to do some stuff
@@ -146,9 +145,8 @@ class SimulatorSimpleQueue:
             logger.info(f'Time taken: {elapsed}')
 
             robot_fitness = conf.fitness_function(robot_manager)
-            delete_future = await simulator_connection.delete_all_robots()
-        # delete_future = await simulator_connection.delete_robot(robot_manager)
-            await delete_future
+            await simulator_connection.delete_all_robots()
+            # await simulator_connection.delete_robot(robot_manager)
             await simulator_connection.pause(True)
             await simulator_connection.reset(rall=True, time_only=True, model_only=False)
         return robot_fitness

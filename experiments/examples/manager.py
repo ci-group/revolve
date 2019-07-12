@@ -33,12 +33,11 @@ async def run():
     world = await World.create(settings)
     await world.pause(True)
 
-    await (await world.delete_model(robot.id))
+    await world.delete_model(robot.id)
     await asyncio.sleep(2.5)
 
     # Insert the robot in the simulator
-    insert_future = await world.insert_robot(robot, Vector3(0, 0, 0.25))
-    robot_manager = await insert_future
+    robot_manager = await world.insert_robot(robot, Vector3(0, 0, 0.25))
 
     # Resume simulation
     await world.pause(False)

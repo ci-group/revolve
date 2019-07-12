@@ -172,7 +172,7 @@ class World(WorldManager):
         """
         futures = []
         for tree, pose in zip(trees, poses):
-            future = await (self.insert_robot(tree, pose))
+            future = self.insert_robot(tree, pose)
             futures.append(future)
 
         future = multi_future(futures)
@@ -213,7 +213,7 @@ class World(WorldManager):
                 end=end,
                 thickness=constants.WALL_THICKNESS,
                 height=constants.WALL_HEIGHT)
-            future = await (self.insert_model(SDF(elements=[wall])))
+            future = self.insert_model(SDF(elements=[wall]))
             futures.append(future)
 
         return multi_future(futures)

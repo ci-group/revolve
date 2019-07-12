@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from asyncio import Future
+import asyncio
 
 import pygazebo
 from pygazebo.msg import request_pb2, response_pb2
@@ -155,6 +155,8 @@ class RequestHandler(object):
             # Message was not requested here, ignore it
             return
 
+        #TODO why you save this here if you are about to delete this?
+        # deletion happens in self._handled()
         req[msg_id] = msg
 
         # Call the future's set_result
@@ -217,7 +219,7 @@ class RequestHandler(object):
         :param msg_id: Force the message to use this ID. Sequencer is used if no
                        message ID is specified.
         :type msg_id: int
-        :return:
+        :return: Response to the request
         """
         if msg_id is None:
             msg_id = self.get_msg_id()
@@ -232,8 +234,7 @@ class RequestHandler(object):
         if dbl_data is not None:
             req.dbl_data = dbl_data
 
-        future = await (self.do_request(req))
-        return future
+        return await self.do_request(req)
 
     def _get_response_map(self, request_type):
         """
@@ -257,7 +258,7 @@ class RequestHandler(object):
         from going over the same pipe. The returned future is for the response.
 
         :param msg: Message object to publish
-        :return:
+        :return: Response to the request
         """
         msg_id = str(self.get_id_from_msg(msg))
         request_type = str(self.get_request_type_from_msg(msg))
@@ -268,8 +269,13 @@ class RequestHandler(object):
                     "Duplicate request ID: `{}` for type `{}`".format(
                             msg_id, request_type))
 
-        future = Future()
+        future = asyncio.Future()
         req[msg_id] = None
         cb[msg_id] = future
-        await self.publisher.publish(msg)
-        return future
+
+        # Ensures the message is sent, but don't wait for it.
+        # it sends to multiple listeners, some of them stop responding after a while, making this function stop for no
+        # real reason
+        asyncio.ensure_future(self.publisher.publish(msg))
+        await future
+        return future.result()

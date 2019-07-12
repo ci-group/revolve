@@ -133,11 +133,27 @@ def draw_chart(folder_name: str, ax):
            robot_points_death, robot_points_death_pop
 
 
+_oldmin = min
+def min(*args):
+    try:
+        return _oldmin(*args)
+    except ValueError:
+        return 0
+
+
+_oldmax = max
+def max(*args):
+    try:
+        return _oldmax(*args)
+    except ValueError:
+        return 0
+
+
 if __name__ == '__main__':
     folder_name = sys.argv[1]
 
     matplotlib.use('Qt5Agg')
-    # matplotlib.use('GTK3Cairo')
+    # matplotlib.use('GTK3Cairo') # live update is bugged
     # matplotlib.use('GTK3Agg')
     fig, ax = plt.subplots()
     plt.ion()
@@ -146,9 +162,10 @@ if __name__ == '__main__':
     robot_points_mate, robot_points_mate_pop, \
     robot_points_death, robot_points_death_pop = draw_chart(folder_name, ax)
 
-    new_scatter = ax.scatter(x=robot_points_new, y=robot_points_new_pop, label='new')
-    mate_scatter = ax.scatter(x=robot_points_mate, y=robot_points_mate_pop, label='mate')
-    death_scatter = ax.scatter(x=robot_points_death, y=robot_points_death_pop, label='death')
+    new_scatter, = ax.plot(robot_points_new, robot_points_new_pop, label='new', ms=10, marker='*', ls='')
+    mate_scatter, = ax.plot(robot_points_mate, robot_points_mate_pop, label='mate', ms=10, marker='+', ls='')
+    death_scatter, = ax.plot(robot_points_death, robot_points_death_pop, label='death', ms=10, marker='x', ls='')
+
     ax.legend()
     plt.draw()
     plt.pause(0.01)
@@ -157,8 +174,10 @@ if __name__ == '__main__':
         assert(len(points) == len(points_pop))
         if len(points) == 0:
             return
-        new_data = np.matrix([[x, y] for x, y in zip(points, points_pop)])
-        dataset.set_offsets(new_data)
+        X = points
+        Y = points_pop
+        dataset.set_data(X, Y)
+        return min(X), max(X), min(Y), max(Y)
 
     while True:
         robot_points_new, robot_points_new_pop, \
@@ -169,6 +188,17 @@ if __name__ == '__main__':
         update_data(mate_scatter, robot_points_mate, robot_points_mate_pop)
         update_data(death_scatter, robot_points_death, robot_points_death_pop)
 
+        minx = min(min(robot_points_new), min(robot_points_mate), min(robot_points_death))
+        maxx = max(max(robot_points_new), max(robot_points_mate), max(robot_points_death))
+        x_len = maxx - minx
+        miny = min(min(robot_points_new_pop), min(robot_points_mate_pop), min(robot_points_death_pop))
+        maxy = max(max(robot_points_new_pop), max(robot_points_mate_pop), max(robot_points_death_pop))
+        y_len = maxy - miny
+
+        half_border_ratio = 0.01
+
+        ax.set_xlim(minx - half_border_ratio * x_len, maxx + half_border_ratio * x_len)
+        ax.set_ylim(miny - half_border_ratio * y_len, maxy + half_border_ratio * y_len)
 
         plt.draw()
         plt.pause(2)

@@ -214,7 +214,8 @@ class WorldManager(manage.WorldManager):
             self._update_contacts
         )
 
-        await self.set_state_update_frequency(
+        # Awaiting this immediately will lock the program
+        update_state_future = self.set_state_update_frequency(
             freq=self.state_update_frequency
         )
 
@@ -230,6 +231,7 @@ class WorldManager(manage.WorldManager):
         # Wait for connections
         await self.pose_subscriber.wait_for_connection()
         await self.contact_subscriber.wait_for_connection()
+        await update_state_future
 
         if self.do_restore:
             await (self.restore_snapshot(self.do_restore))
@@ -255,9 +257,9 @@ class WorldManager(manage.WorldManager):
 
         # Obtain a copy of the current world SDF from Gazebo and write it to
         # file
-        response = await (self.request_handler.do_gazebo_request(
+        response = await self.request_handler.do_gazebo_request(
             request="world_sdf"
-        ))
+        )
         if response.response == "error":
             logger.warning("WARNING: requesting world state resulted in "
                            "error. Snapshot failed.")
@@ -317,12 +319,12 @@ class WorldManager(manage.WorldManager):
         :type freq: int
         :return:
         """
-        future = await (self.request_handler.do_gazebo_request(
+        result = await self.request_handler.do_gazebo_request(
             request="set_robot_state_update_frequency",
             data=str(freq)
-        ))
+        )
         self.state_update_frequency = freq
-        return future
+        return result
 
     def get_robot_id(self):
         """
@@ -432,19 +434,12 @@ class WorldManager(manage.WorldManager):
             with open(robot_file_path, 'w') as f:
                 f.write(sdf_bot)
 
-        future = Future()
-        insert_future = await self.insert_model(sdf_bot)
-        def _callback(_future):
-            try:
-                self._robot_inserted(
-                        robot=revolve_bot,
-                        msg=_future.result(),
-                        return_future=future
-                        )
-            except Exception as e:
-                _future.set_exception(e)
-        insert_future.add_done_callback(_callback)
-        return future
+        response = await self.insert_model(sdf_bot)
+        robot_manager = self._robot_inserted(
+                robot=revolve_bot,
+                msg=response
+        )
+        return robot_manager
 
     def to_sdfbot(
             self,
@@ -473,8 +468,7 @@ class WorldManager(manage.WorldManager):
         # Immediately unregister the robot so no it won't be used
         # for anything else while it is being deleted.
         self.unregister_robot(robot)
-        future = await (self.delete_model(robot.name, req="delete_robot"))
-        return future
+        return await self.delete_model(robot.name, req="delete_robot")
 
     async def delete_all_robots(self):
         """
@@ -484,7 +478,7 @@ class WorldManager(manage.WorldManager):
         """
         futures = []
         for bot in list(self.robot_managers.values()):
-            future = await (self.delete_robot(bot))
+            future = self.delete_robot(bot)
             futures.append(future)
 
         return multi_future(futures)
@@ -492,8 +486,7 @@ class WorldManager(manage.WorldManager):
     def _robot_inserted(
             self,
             robot,
-            msg,
-            return_future
+            msg
     ):
         """
         Registers a newly inserted robot and marks the insertion
@@ -502,8 +495,6 @@ class WorldManager(manage.WorldManager):
         :param robot: RevolveBot
         :param msg:
         :type msg: pygazebo.msgs.response_pb2.Response
-        :param return_future: Future to resolve with the created robot object.
-        :type return_future: Future
         :return:
         """
         inserted = ModelInserted()
@@ -519,7 +510,7 @@ class WorldManager(manage.WorldManager):
             time
         )
         self.register_robot(robot_manager)
-        return_future.set_result(robot_manager)
+        return robot_manager
 
     def create_robot_manager(
             self,
@@ -582,12 +573,11 @@ class WorldManager(manage.WorldManager):
         :param robot:
         :return:
         """
-        future = await (self.battery_handler.do_gazebo_request(
+        return await self.battery_handler.do_gazebo_request(
             request="set_battery_level",
             data=robot.name,
             dbl_data=robot.get_battery_level()
-        ))
-        return future
+        )
 
     async def update_battery_levels(self):
         """
@@ -596,7 +586,7 @@ class WorldManager(manage.WorldManager):
         """
         futures = []
         for robot in self.robot_list():
-            fut = await (self.update_battery_level(robot))
+            fut = self.update_battery_level(robot)
             futures.append(fut)
 
         if futures:

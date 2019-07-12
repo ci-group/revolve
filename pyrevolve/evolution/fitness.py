@@ -7,6 +7,9 @@ def stupid(robot_manager):
 def random(robot_manager):
     return py_random.random()
 
+def displacement(robot_manager):
+    return measures.displacement(robot_manager)
+
 def displacement_velocity(robot_manager):
     return measures.displacement_velocity(robot_manager)
 

@@ -146,11 +146,10 @@ class WorldManager(object):
         :type sdf: SDF
         :return:
         """
-        future = await (self.request_handler.do_gazebo_request(
+        return await self.request_handler.do_gazebo_request(
             request="insert_sdf",
             data=str(sdf)
-        ))
-        return future
+        )
 
     async def delete_model(
             self,
@@ -165,8 +164,7 @@ class WorldManager(object):
         occurring from deleting sensors.
         :return:
         """
-        future = await (self.request_handler.do_gazebo_request(
+        return await self.request_handler.do_gazebo_request(
             request=req,
             data=name
-        ))
-        return future
+        )

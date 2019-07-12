@@ -200,15 +200,22 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
       // Using `World::RemoveModel()` from here crashes the transport
       // library, the cause of which I've yet to figure out - it has
       // something to do with race conditions where the model is used by
-      // the world while it is being updated. Fixing this by sending a request
-      // to execute in the main tread - `WorldController::OnUpdate` function.
-      // Beware, this means that the robot will not be removed while the simulation
-      // is paused.
+      // the world while it is being updated. Fixing this completely
+      // appears to be a rather involved process, instead, we'll use an
+      // `entity_delete` request, which will make sure deleting the model
+      // happens on the world thread.
+      gz::msgs::Request deleteReq;
+      auto id = gz::physics::getUniqueId();
+      deleteReq.set_id(id);
+      deleteReq.set_request("entity_delete");
+      deleteReq.set_data(model->GetScopedName());
 
-      this->deleteMutex_.lock();
-      this->delete_robot_queue.emplace(std::make_tuple(model, request->id()));
-      this->deleteMutex_.unlock();
+      {
+        boost::mutex::scoped_lock lock(this->deleteMutex_);
+        this->delete_robot_queue.emplace(std::make_tuple(model, request->id()));
+      }
 
+      this->requestPub_->Publish(deleteReq);
     }
     else
     {
@@ -232,9 +239,10 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
                         ->GetAsString();
 
-    this->insertMutex_.lock();
-    this->insertMap_[name] = request->id();
-    this->insertMutex_.unlock();
+    {
+      boost::mutex::scoped_lock lock(this->insertMutex_);
+      this->insertMap_[name] = request->id();
+    }
 
 //    this->world_->SetPaused(true);
     this->world_->InsertModelString(robotSDF.ToString());

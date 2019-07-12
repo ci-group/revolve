@@ -152,8 +152,7 @@ class SimulatorQueue:
     @staticmethod
     async def _evaluate_robot(simulator_connection, robot, conf):
         await simulator_connection.pause(True)
-        insert_future = await simulator_connection.insert_robot(robot, Vector3(0, 0, 0.25))
-        robot_manager = await insert_future
+        robot_manager = await simulator_connection.insert_robot(robot, Vector3(0, 0, 0.25))
         await simulator_connection.pause(False)
         start = time.time()
         # Start a run loop to do some stuff
