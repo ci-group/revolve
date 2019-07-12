@@ -115,6 +115,14 @@ namespace revolve
 
       // Last (simulation) time robot info was sent
       double lastRobotStatesUpdateTime_;
+
+      // Death sentence list. It collects all the end time for all robots that have
+      // a death sentence
+      // NEGATIVE DEATH SENTENCES mean total lifetime, death sentence not yet initialized.
+      std::map< std::string, double > death_sentences_;
+
+      // Mutex for the deleteMap_
+      boost::mutex death_sentences_mutex_;
     };
   }  // namespace gazebo
 }  // namespace revolve

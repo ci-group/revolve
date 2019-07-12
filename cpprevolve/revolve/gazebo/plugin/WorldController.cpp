@@ -129,15 +129,17 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
         {
-            boost::recursive_mutex::scoped_lock lock(*this->world_->Physics()->GetPhysicsUpdateMutex());
+            boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+            boost::mutex::scoped_lock lock_death(death_sentences_mutex_);
             for (const auto &model : this->world_->Models()) {
                 if (model->IsStatic()) {
                     // Ignore static models such as the ground and obstacles
                     continue;
                 }
 
-                auto stateMsg = msg.add_robot_state();
-                stateMsg->set_name(model->GetScopedName());
+                revolve::msgs::RobotState *stateMsg = msg.add_robot_state();
+                const std::string scoped_name = model->GetScopedName();
+                stateMsg->set_name(scoped_name);
                 stateMsg->set_id(model->GetId());
 
                 auto poseMsg = stateMsg->mutable_pose();
@@ -145,6 +147,21 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 
                 gz::msgs::Set(poseMsg, relativePose);
 
+                // Death sentence check
+                const std::string name = model->GetName();
+                if (death_sentences_.count(name) > 0) {
+                    double death_sentence = death_sentences_[name];
+                    if (death_sentence < 0) {
+                        // Initialize death sentence
+                        death_sentences_[name] = time - death_sentence;
+                    } else {
+                        bool alive = death_sentence > time;
+                        stateMsg->set_dead(not alive);
+
+                        if (not alive)
+                            model->Fini();
+                    }
+                }
             }
         }
 
@@ -214,6 +231,10 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
         boost::mutex::scoped_lock lock(this->deleteMutex_);
         this->delete_robot_queue.emplace(std::make_tuple(model, request->id()));
       }
+      {
+        boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
+        this->death_sentences_.erase(model->GetName());
+      }
 
       this->requestPub_->Publish(deleteReq);
     }
@@ -234,10 +255,19 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
               << std::endl;
     sdf::SDF robotSDF;
     robotSDF.SetFromString(request->data());
+    double lifespan_timeout = request->dbl_data();
 
     // Get the model name, store in the expected map
     auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
                         ->GetAsString();
+
+    if (lifespan_timeout > 0)
+    {
+        boost::mutex::scoped_lock lock(death_sentences_mutex_);
+        // Initializes the death sentence negative because I don't dare to take the
+        // simulation time from this thread.
+        death_sentences_[name] = -lifespan_timeout;
+    }
 
     {
       boost::mutex::scoped_lock lock(this->insertMutex_);

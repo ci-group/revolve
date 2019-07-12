@@ -400,6 +400,7 @@ class WorldManager(manage.WorldManager):
             self,
             revolve_bot,
             pose=Vector3(0, 0, 0.05),
+            life_timeout=None,
     ):
         """
         Inserts a robot into the world. This consists of two steps:
@@ -417,6 +418,8 @@ class WorldManager(manage.WorldManager):
         :type revolve_bot: RevolveBot
         :param pose: Insertion pose of a robot
         :type pose: Pose|Vector3
+        :param life_timeout: Life span of the robot
+        :type life_timeout: float|None
         :return: A future that resolves with the created `Robot` object.
         """
 
@@ -434,7 +437,7 @@ class WorldManager(manage.WorldManager):
             with open(robot_file_path, 'w') as f:
                 f.write(sdf_bot)
 
-        response = await self.insert_model(sdf_bot)
+        response = await self.insert_model(sdf_bot, life_timeout)
         robot_manager = self._robot_inserted(
                 robot=revolve_bot,
                 msg=response

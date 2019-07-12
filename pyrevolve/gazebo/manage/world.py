@@ -132,7 +132,7 @@ class WorldManager(object):
         future = await (self.world_control.publish(msg))
         return future
 
-    async def insert_model(self, sdf):
+    async def insert_model(self, sdf, timeout=None):
         """
         Insert a model wrapped in an SDF tag into the world. Make
         sure it has a unique name, as it will be literally inserted into the
@@ -144,11 +144,14 @@ class WorldManager(object):
 
         :param sdf:
         :type sdf: SDF
+        :param timeout: Life span of the model
+        :type timeout: float|None
         :return:
         """
         return await self.request_handler.do_gazebo_request(
             request="insert_sdf",
-            data=str(sdf)
+            data=str(sdf),
+            dbl_data=timeout,
         )
 
     async def delete_model(
