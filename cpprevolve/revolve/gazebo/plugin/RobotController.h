@@ -29,6 +29,7 @@
 #include <gazebo/msgs/msgs.hh>
 
 #include <revolve/gazebo/Types.h>
+#include <revolve/gazebo/battery/Battery.h>
 
 namespace revolve
 {
@@ -118,8 +119,8 @@ namespace revolve
       /// \brief Pointer to the world
       protected: ::gazebo::physics::WorldPtr world_;
 
-      /// \brief Pointer to the battery
-      protected: ::gazebo::common::BatteryPtr battery_;
+      /// \brief Shared pointer to the battery
+      protected: std::shared_ptr<::revolve::gazebo::Battery> battery_;
 
       /// \brief Driver update event pointer
       private: ::gazebo::event::ConnectionPtr updateConnection_;

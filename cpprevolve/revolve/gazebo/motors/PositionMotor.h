@@ -44,7 +44,7 @@ namespace revolve
           ::gazebo::physics::ModelPtr _model,
           const std::string &_partId,
           const std::string &_motorId,
-          const sdf::ElementPtr _motor);
+          const sdf::ElementPtr &_motor);
 
       /// \brief Destructor
       public: virtual ~PositionMotor() override;

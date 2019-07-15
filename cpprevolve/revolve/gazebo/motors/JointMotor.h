@@ -52,9 +52,6 @@ protected:
 
     /// \brief  Scoped name of the controlled joint
     std::string jointName_;
-
-    /// \brief The id of the consumer
-    uint32_t consumerId_;
 };
 } /* namespace gazebo */
 } /* namespace revolve */

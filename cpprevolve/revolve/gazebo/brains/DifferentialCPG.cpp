@@ -74,10 +74,13 @@ DifferentialCPG::DifferentialCPG(
     const ::gazebo::physics::ModelPtr &_model,
     const sdf::ElementPtr robot_config,
     const std::vector< revolve::gazebo::MotorPtr > &_motors,
-    const std::vector< revolve::gazebo::SensorPtr > &_sensors)
+    const std::vector< revolve::gazebo::SensorPtr > &_sensors,
+    std::shared_ptr<::revolve::gazebo::Battery> battery
+    )
     : next_state(nullptr)
     , input(new double[_sensors.size()])
     , output(new double[_motors.size()])
+    , battery_(battery)
 {
 
   this->learner = robot_config->GetElement("rv:brain")->GetElement("rv:learner");
@@ -353,7 +356,7 @@ DifferentialCPG::DifferentialCPG(
   }
 
   // Initiate the cpp Evaluator
-  this->evaluator.reset(new Evaluator(this->evaluation_rate));
+  this->evaluator.reset(new Evaluator(battery, this->evaluation_rate));
   this->evaluator->directory_name = this->directory_name;
 }
 

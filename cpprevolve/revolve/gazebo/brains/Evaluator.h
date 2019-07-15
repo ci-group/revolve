@@ -24,6 +24,8 @@
 
 #include <gazebo/common/common.hh>
 
+#include <revolve/gazebo/battery/Battery.h>
+
 namespace revolve
 {
   namespace gazebo
@@ -31,7 +33,8 @@ namespace revolve
     class Evaluator
     {
       /// \brief Constructor
-      public: Evaluator(const double _evaluationRate,
+      public: Evaluator(std::shared_ptr<::revolve::gazebo::Battery> battery,
+                        const double _evaluationRate,
                         const double step_saving_rate = 0.1);
 
       /// \brief Destructor
@@ -66,6 +69,8 @@ namespace revolve
       /// \brief Current position of a robot
       protected: ignition::math::Pose3d current_position_;
 
+      /// \brief Shared battery pointer
+      std::shared_ptr<::revolve::gazebo::Battery> battery_;
       /// \brief
       protected: double evaluation_rate_;
 

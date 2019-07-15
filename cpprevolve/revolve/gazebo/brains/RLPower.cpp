@@ -75,7 +75,7 @@ RLPower::RLPower(
   this->InitialisePolicy(numMotors);
 
   // Start the evaluator
-  this->evaluator_.reset(new Evaluator(this->evaluationRate_));
+  //this->evaluator_.reset(new Evaluator(this->evaluationRate_/*TODO find the battery */));
 }
 
 /////////////////////////////////////////////////

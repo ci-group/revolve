@@ -56,6 +56,11 @@
                         </geometry>
                     </collision>
                     <visual name='wall_visual'>
+                    <material>
+                        <ambient>1.0 0.26 0.72 1.0</ambient>
+                        <diffuse>1.0 0.26 0.72 1.0</diffuse>
+                        <specular>0.1 0.1 0.1 1.0</specular>
+                    </material>
                         <geometry>
                             <box>
                                 <size>4.1 0.1 0.25</size>
@@ -92,6 +97,11 @@
                         </geometry>
                     </collision>
                     <visual name='wall_visual'>
+                    <material>
+                        <ambient>0.04 1.0 0.72 1.0</ambient>
+                        <diffuse>0.04 1.0 0.72 1.0</diffuse>
+                        <specular>0.1 0.1 0.1 1.0</specular>
+                    </material>
                         <geometry>
                             <box>
                                 <size>4.1 0.1 0.25</size>

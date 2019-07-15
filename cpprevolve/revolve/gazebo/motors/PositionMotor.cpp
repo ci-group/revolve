@@ -30,7 +30,7 @@ PositionMotor::PositionMotor(
     gz::physics::ModelPtr _model,
     const std::string &_partId,
     const std::string &_motorId,
-    const sdf::ElementPtr _motor)
+    const sdf::ElementPtr &_motor)
     : JointMotor(std::move(_model), _partId, _motorId, _motor, 1)
     , positionTarget_(0)
     , noise_(0)
@@ -78,7 +78,8 @@ PositionMotor::~PositionMotor() = default;
 /////////////////////////////////////////////////
 void PositionMotor::Update(
     const double *outputs,
-    double /*step*/)
+    double /*step*/
+    )
 {
   // Just one network output, which is the first
   auto output = outputs[0];
@@ -127,12 +128,22 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
     position += (position > 0 ? -2 * M_PI : 2 * M_PI);
   }
 
-  auto test = this->joint_->GetForceTorque(0);
 
   auto error = position - this->positionTarget_;
-  auto cmd = this->pid_.Update(error, stepTime); // angular velocity
+  auto cmd = this->pid_.Update(error, stepTime); // angular velocity TODO this is targeted velocisty
 
-  std::cout << "~~~~~~ MOTORID: " << this->motorId_<< " ~~~~~\n";
-  std::cout << "watts:\t" << cmd * test.body1Torque.Length() << "\tor\t" << cmd * test.body2Torque.Length() << "\n";
+  if (this->battery_)
+  {
+      ::gazebo::physics::JointWrench jointWrench = this->joint_->GetForceTorque(0);
+//      std::cout << "dot (local): " << this->joint_->LocalAxis(0).Dot(jointWrench.body1Torque) * cmd << '\t'; // dot product of torque and local axis
+
+//      std::cout << "dot (global): " << this->joint_->GlobalAxis(0).Dot(jointWrench.body1Torque) * cmd << std::endl;
+      // TODO find wich axis to use local or global
+      // TODO check the watt if it should be positive or negative
+      // TODO change this for now im using the absolute value of the watt so it always decreases from the joint movements
+      double watt = -abs(cmd * jointWrench.body1Torque.Length()); // TODO check which torque to use 1 or 2
+      this->battery_->SetPowerLoad(this->consumerId_ , watt);
+
+  }
   this->joint_->SetParam("vel", 0, cmd);
 }

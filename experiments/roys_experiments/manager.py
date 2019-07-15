@@ -17,6 +17,7 @@ from pyrevolve.tol.manage import World
 from pyrevolve.evolution import fitness
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
+
 async def run():
     """
     The main coroutine, which is started below.
@@ -26,7 +27,7 @@ async def run():
 
     # Load a robot from yaml
     robot = revolve_bot.RevolveBot()
-    robot.load_file("experiments/examples/yaml/spider.yaml")
+    robot.load_file("experiments/bo_learner/yaml/spider9.yaml")
     robot.update_substrate()
     robot.save_file("./spider.sdf", conf_type='sdf')
 
@@ -60,8 +61,8 @@ async def run():
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
-        fitness_=fitness.random(robot_manager)
-        print(f"Robot fitness is {fitness_}")
+        # fitness_=fitness(robot_manager)
+        # print(f"Robot fitness is {fitness_}")
         await asyncio.sleep(1.0)
 
 

@@ -22,6 +22,7 @@
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/motors/Motors.h>
 
+#include <revolve/gazebo/battery/Battery.h>
 namespace gz = gazebo;
 
 using namespace revolve::gazebo;
@@ -56,7 +57,7 @@ MotorPtr MotorFactory::Motor(
 }
 
 /////////////////////////////////////////////////
-MotorPtr MotorFactory::Create(sdf::ElementPtr _motorSdf)
+MotorPtr MotorFactory::Create(sdf::ElementPtr _motorSdf, std::shared_ptr<::revolve::gazebo::Battery> battery)
 {
   auto typeParam = _motorSdf->GetAttribute("type");
   auto partIdParam = _motorSdf->GetAttribute("part_id");
@@ -82,5 +83,8 @@ MotorPtr MotorFactory::Create(sdf::ElementPtr _motorSdf)
     throw std::runtime_error("Motor error");
   }
 
+// adding consumer id to motor ptr from battery so each servo is a consumer of the battery
+  motor->battery_ = battery;
+  motor->consumerId_ = battery->AddConsumer();
   return motor;
 }

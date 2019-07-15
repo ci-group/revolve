@@ -23,6 +23,8 @@
 
 #include "Evaluator.h"
 
+#include <revolve/gazebo/battery/Battery.h>
+
 using namespace revolve::gazebo;
 
 /////////////////////////////////////////////////
@@ -35,11 +37,14 @@ double Evaluator::measure_distance(
 }
 
 /////////////////////////////////////////////////
-Evaluator::Evaluator(const double _evaluationRate,
-                     const double step_saving_rate)
+Evaluator::Evaluator(std::shared_ptr<::revolve::gazebo::Battery> battery,
+                     const double _evaluationRate,
+                     const double step_saving_rate
+                     )
     : last_step_time(-1)
     , step_saving_rate(step_saving_rate)
     , step_poses(0)
+    , battery_(battery)
 {
   assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
   this->evaluation_rate_ = _evaluationRate;
@@ -165,7 +170,6 @@ double Evaluator::Fitness()
   }
   else if (this->locomotion_type == "battery")
   {
-
       // f = (D_p/D) * b -[ (1 - (D_p/D) ) * (b_t - (len * size(13-34) * P) ) ]
       double initial_battery = 1; // b      -> initial battery level. 1 (100%)
       double battery_time = 0.15;   // b_t    -> battery drainage, how much battery robot loses when idle (over time)
@@ -173,7 +177,7 @@ double Evaluator::Fitness()
       double shortest_distance;     // D      -> the shortest path to target
                                     // len    -> this->path_length
       double robot_size = 17;       // size   -> the size of the robot TODO get the size from the robot manager
-      double power_used = 0.01;     // P      -> the amount of power used by each servo motor TODO calculate this with Torque * Angular Velocity
+      double power_used = this->battery_->watts_used;     // P      -> the amount of power used by each servo motor
 
       // initializing the coordinates of the charging station (±1.6, ±1.6, 0.12) (x,y,z)
       ignition::math::Pose3d target_coord;
@@ -182,10 +186,10 @@ double Evaluator::Fitness()
       target_coord.Pos().Z() = 0.12;
       // calculating the shortest/initial distance
       shortest_distance = measure_distance(this->start_position_, target_coord);
-      std::cout << "b: " << initial_battery <<  "\n";
-      std::cout << "b_t: " << battery_time <<  "\n";
+//      std::cout << "b: " << initial_battery <<  "\n";
+//      std::cout << "b_t: " << battery_time <<  "\n";
       std::cout << "D: " << shortest_distance <<  "\n";
-      std::cout << "size: " << robot_size <<  "\n";
+//      std::cout << "size: " << robot_size <<  "\n";
       std::cout << "P: " << power_used <<  "\n";
 
 
@@ -213,7 +217,7 @@ double Evaluator::Fitness()
           coordinates << std::fixed << pose_i.Pos().X() << " " << pose_i.Pos().Y() << std::endl;
       }
 
-      std::cout << "len: " << this <<  "\n";
+      std::cout << "len: " << this->path_length <<  "\n";
 
       // calculating the distance projection
 
@@ -261,13 +265,16 @@ double Evaluator::Fitness()
                   std::pow((this->start_position_.Pos().Y() - Y_p), 2.0));
       }
       // ************************
-      std::cout << "D_p: " << distance_projection <<  "\n";
+      std::cout << "D_p: " << distance_projection << "\t";
+      std::cout << "D: " << shortest_distance << "ratio:" << distance_projection/shortest_distance << "\n";
 
 
 
       //f = (D_p/D) * b -[ (1 - (D_p/D) ) * (b_t - (len * size(13-34) * P) ) ]
       fitness_value = (distance_projection/shortest_distance) * initial_battery -
               ((1 - (distance_projection/shortest_distance) ) * (battery_time + (this->path_length * robot_size * power_used)));
+      std::cout << "fitness: " << fitness_value <<  "\n";
+      this->battery_->watts_used = 0.0;
   }
   return fitness_value;
 }
