@@ -82,27 +82,22 @@ class SimulatorSimpleQueue:
     async def _worker_evaluate_robot(self, connection, robot, future, conf):
         await asyncio.sleep(0.01)
         start = time.time()
-        evaluation_future = asyncio.create_task(self._evaluate_robot(connection, robot, conf))
-        while not evaluation_future.done():
-            elapsed = time.time()-start
+        try:
+            timeout = 120  # seconds
+            robot_fitness = await asyncio.wait_for(self._evaluate_robot(connection, robot, conf), timeout=timeout)
+        except asyncio.TimeoutError:
             # WAITED TO MUCH, RESTART SIMULATOR
-            if elapsed > 120:
-                logger.error(f"Simulator restarted after {elapsed}")
-                evaluation_future.cancel()
-                return False
-            await asyncio.sleep(1.0)
+            elapsed = time.time()-start
+            logger.error(f"Simulator restarted after {elapsed}")
+            return False
+        except Exception:
+            logger.exception(f"Exception running robot {robot.phenotype}")
+            return False
 
         elapsed = time.time()-start
         logger.info(f"time taken to do a simulation {elapsed}")
 
-        exception = evaluation_future.exception()
-        if exception is not None:
-            logger.exception(f"Exception running robot {robot.phenotype}", exc_info=exception)
-            return False
-
-        robot_fitness = await evaluation_future
         future.set_result(robot_fitness)
-
         return True
 
     async def _simulator_queue_worker(self, i):
