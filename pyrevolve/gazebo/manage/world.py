@@ -65,9 +65,9 @@ class WorldManager(object):
         await self._init()
         return self
 
-    def disconnect(self):
-        self.manager.stop()
-        self.request_handler.stop()
+    async def disconnect(self):
+        await self.manager.stop()
+        await self.request_handler.stop()
 
     async def _init(self):
         """

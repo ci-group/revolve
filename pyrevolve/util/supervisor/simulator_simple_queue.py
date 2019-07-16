@@ -74,7 +74,7 @@ class SimulatorSimpleQueue:
         address = 'localhost'
         port = self._port_start+i
         logger.error("Restarting simulator")
-        self._connections[i].disconnect()
+        await self._connections[i].disconnect()
         await (await self._supervisors[i].relaunch(10, address=address, port=port))
         await asyncio.sleep(10)
         self._connections[i] = await World.create(self._settings, world_address=(address, port))

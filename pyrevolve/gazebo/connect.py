@@ -136,8 +136,8 @@ class RequestHandler(object):
         if self.wait_for_subscriber:
             await self.publisher.wait_for_listener()
 
-    def stop(self):
-        self.subscriber.remove()
+    async def stop(self):
+        await self.subscriber.remove()
 
     def _callback(self, data):
         """
