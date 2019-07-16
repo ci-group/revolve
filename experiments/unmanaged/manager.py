@@ -178,6 +178,7 @@ class OnlineIndividual(Individual):
             'avg_orientation': str(Vector3(self.manager.avg_roll, self.manager.avg_pitch, self.manager.avg_yaw)),
             'avg_pos': str(Vector3(self.manager.avg_x, self.manager.avg_y, self.manager.avg_z)),
             'last_mate': str(self.manager.last_mate),
+            'dead': str(self.manager.dead),
         }
 
         with open(f'{folder}/life_{self.id}.yaml', 'w') as f:
@@ -221,23 +222,24 @@ class Population(object):
     def __len__(self):
         return len(self._robots)
 
-    async def _insert_robot(self, robot, pos: Vector3):
+    async def _insert_robot(self, robot, pos: Vector3, life_duration: float):
         robot.update_substrate()
         robot.battery_level = ROBOT_BATTERY
 
         # Insert the robot in the simulator
-        robot_manager = await self._connection.insert_robot(robot, pos)
+        robot_manager = await self._connection.insert_robot(robot, pos, life_duration)
         return robot_manager
 
     async def _insert_individual(self, individual: OnlineIndividual, pos: Vector3):
         individual.develop()
-        individual.manager = await self._insert_robot(individual.phenotype, pos)
+        individual.manager = await self._insert_robot(individual.phenotype, pos, INDIVIDUAL_MAX_AGE)
         individual.export(self._data_folder)
         return individual
 
-    async def _remove_individual(self, individual: OnlineIndividual):
+    def _remove_individual(self, individual: OnlineIndividual):
+        self._robots.remove(individual)
         individual.export(self._data_folder)
-        await self._connection.delete_robot(individual.manager)
+        # await self._connection.delete_robot(individual.manager)
 
     def _is_pos_occupied(self, pos, distance):
         for robot in self._robots:
@@ -270,6 +272,7 @@ class Population(object):
         """
         if pause_while_inserting:
             await self._connection.pause(True)
+        await self._connection.reset(rall=True, time_only=True, model_only=False)
         await self.immigration_season(SEED_POPULATION_START)
         if pause_while_inserting:
             await self._connection.pause(False)
@@ -286,10 +289,10 @@ class Population(object):
         Checks for age in the all population and if it's their time of that (currently based on age)
         """
         for individual in self._robots:
-            if individual.age() > INDIVIDUAL_MAX_AGE:
+            # if individual.age() > INDIVIDUAL_MAX_AGE:
+            if individual.manager.dead:
                 self._log.debug(f"Attempting ROBOT DIES OF OLD AGE: {individual}")
-                self._robots.remove(individual)
-                await self._remove_individual(individual)
+                self._remove_individual(individual)
                 self._log.info(f"ROBOT DIES OF OLD AGE: {individual}")
 
     async def immigration_season(self, population_minimum=MIN_POP):
