@@ -52,7 +52,7 @@ Evaluator::Evaluator(std::shared_ptr<::revolve::gazebo::Battery> battery,
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "battery"; // {directed, gait, battery}
+  this->locomotion_type = "directed"; // {directed, gait, battery}
   this->path_length = 0.0;
 }
 
@@ -83,7 +83,6 @@ double Evaluator::Fitness()
   }
   else if (this->locomotion_type == "directed")
   {
-
     this->step_poses.push_back(this->current_position_);
     //step_poses: x y z roll pitch yaw
     for (int i=1; i < this->step_poses.size(); i++)
@@ -188,7 +187,7 @@ double Evaluator::Fitness()
       shortest_distance = measure_distance(this->start_position_, target_coord);
 //      std::cout << "b: " << initial_battery <<  "\n";
 //      std::cout << "b_t: " << battery_time <<  "\n";
-      std::cout << "D: " << shortest_distance <<  "\n";
+//      std::cout << "D: " << shortest_distance <<  "\n";
 //      std::cout << "size: " << robot_size <<  "\n";
       std::cout << "P: " << power_used <<  "\n";
 
@@ -217,8 +216,8 @@ double Evaluator::Fitness()
           coordinates << std::fixed << pose_i.Pos().X() << " " << pose_i.Pos().Y() << std::endl;
       }
 
-      std::cout << "len: " << this->path_length <<  "\n";
-
+//      std::cout << "len: " << this->path_length <<  "\n";
+//
       // calculating the distance projection
 
       ////********** directed locomotion fitness function **********////
@@ -266,7 +265,7 @@ double Evaluator::Fitness()
       }
       // ************************
       std::cout << "D_p: " << distance_projection << "\t";
-      std::cout << "D: " << shortest_distance << "ratio:" << distance_projection/shortest_distance << "\n";
+      std::cout << "D: " << shortest_distance << " ratio:" << distance_projection/shortest_distance << "\n";
 
 
 

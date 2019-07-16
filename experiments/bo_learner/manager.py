@@ -49,7 +49,7 @@ async def run():
 
 
     # Connect to the simulator and pause
-    world = await World.create(settings)
+    world = await World.create(settings, world_address=('localhost', settings.port_start))
     await world.pause(True)
 
     await (await world.delete_model(robot.id))
