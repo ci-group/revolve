@@ -13,4 +13,4 @@ pandas
 neat-python>=0.92
 python-dateutil>=2.8.0
 
--e git+https://github.com/ci-group/pygazebo.git@async_restructure#egg=pygazebo
+-e git+https://github.com/ci-group/pygazebo.git@master#egg=pygazebo

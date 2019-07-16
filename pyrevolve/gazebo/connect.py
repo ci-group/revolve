@@ -276,6 +276,6 @@ class RequestHandler(object):
         # Ensures the message is sent, but don't wait for it.
         # it sends to multiple listeners, some of them stop responding after a while, making this function stop for no
         # real reason
-        asyncio.ensure_future(self.publisher.publish(msg))
+        await self.publisher.publish(msg)
         await future
         return future.result()

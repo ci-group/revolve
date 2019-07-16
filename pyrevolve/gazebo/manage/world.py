@@ -122,15 +122,13 @@ class WorldManager(object):
         :param model_only:
         :param time_only:
         :param rall:
-        :return:
         """
         logger.info("Resetting the world state.")
         msg = world_control_pb2.WorldControl()
         msg.reset.all = rall
         msg.reset.model_only = model_only
         msg.reset.time_only = time_only
-        future = await (self.world_control.publish(msg))
-        return future
+        await self.world_control.publish(msg)
 
     async def insert_model(self, sdf, timeout=None):
         """

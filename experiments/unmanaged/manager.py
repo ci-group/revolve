@@ -239,6 +239,8 @@ class Population(object):
     def _remove_individual(self, individual: OnlineIndividual):
         self._robots.remove(individual)
         individual.export(self._data_folder)
+
+        self._connection.unregister_robot(individual.manager)
         # await self._connection.delete_robot(individual.manager)
 
     def _is_pos_occupied(self, pos, distance):

@@ -76,7 +76,7 @@ class SimulatorSimpleQueue:
         logger.error("Restarting simulator")
         self._connections[i].disconnect()
         await (await self._supervisors[i].relaunch(10, address=address, port=port))
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
         self._connections[i] = await World.create(self._settings, world_address=(address, port))
 
     async def _worker_evaluate_robot(self, connection, robot, future, conf):
@@ -89,7 +89,7 @@ class SimulatorSimpleQueue:
             if elapsed > 120:
                 logger.error(f"Simulator restarted after {elapsed}")
                 return False
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(1.0)
 
         elapsed = time.time()-start
         logger.info(f"time taken to do a simulation {elapsed}")
@@ -133,19 +133,21 @@ class SimulatorSimpleQueue:
             robot_fitness = 0.00
         else:
             await simulator_connection.pause(True)
-            robot_manager = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, self._settings.z_start))
+            max_age = conf.evaluation_time
+            robot_manager = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, self._settings.z_start), max_age)
             await simulator_connection.pause(False)
             start = time.time()
             # Start a run loop to do some stuff
-            max_age = conf.evaluation_time
-            while robot_manager.age() < max_age:
-                await asyncio.sleep(1.0 / 5)  # 5= state_update_frequency
+            while not robot_manager.dead: #robot_manager.age() < max_age:
+                await asyncio.sleep(1.0 / 1)  # 5= state_update_frequency
+                logger.debug(f'robot dead: {robot_manager.dead}')
             end = time.time()
             elapsed = end-start
             logger.info(f'Time taken: {elapsed}')
 
             robot_fitness = conf.fitness_function(robot_manager)
-            await simulator_connection.delete_all_robots()
+            simulator_connection.unregister_robot(robot_manager)
+            # await simulator_connection.delete_all_robots()
             # await simulator_connection.delete_robot(robot_manager)
             await simulator_connection.pause(True)
             await simulator_connection.reset(rall=True, time_only=True, model_only=False)

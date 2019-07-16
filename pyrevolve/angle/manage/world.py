@@ -539,7 +539,6 @@ class WorldManager(manage.WorldManager):
         Registers a robot with its Gazebo ID in the local array.
         :param robot_manager:
         :type robot_manager: RobotManager
-        :return:
         """
         logger.info("Registering robot {}.".format(robot_manager.name))
 
@@ -554,7 +553,6 @@ class WorldManager(manage.WorldManager):
         it is deleted.
         :param robot_manager:
         :type robot_manager: RobotManager
-        :return:
         """
         logger.info("Unregistering robot {}.".format(robot_manager.name))
         del self.robot_managers[robot_manager.name]
