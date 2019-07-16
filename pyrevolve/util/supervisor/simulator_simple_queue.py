@@ -88,6 +88,7 @@ class SimulatorSimpleQueue:
             # WAITED TO MUCH, RESTART SIMULATOR
             if elapsed > 120:
                 logger.error(f"Simulator restarted after {elapsed}")
+                evaluation_future.cancel()
                 return False
             await asyncio.sleep(1.0)
 
@@ -142,8 +143,8 @@ class SimulatorSimpleQueue:
             start = time.time()
             # Start a run loop to do some stuff
             while not robot_manager.dead: #robot_manager.age() < max_age:
-                await asyncio.sleep(1.0 / 1)  # 5= state_update_frequency
-                logger.debug(f'robot dead: {robot_manager.dead}')
+                await asyncio.sleep(1.0 / 2)  # 5= state_update_frequency
+                # logger.debug(f'robot dead: {robot_manager.dead}')
             end = time.time()
             elapsed = end-start
             logger.info(f'Time taken: {elapsed}')
