@@ -151,12 +151,16 @@ def max(*args):
 
 if __name__ == '__main__':
     folder_name = sys.argv[1]
+    live_update = False
+    if len(sys.argv) > 2 and sys.argv[2] == 'live':
+        live_update = True
 
     matplotlib.use('Qt5Agg')
     # matplotlib.use('GTK3Cairo') # live update is bugged
     # matplotlib.use('GTK3Agg')
     fig, ax = plt.subplots()
-    plt.ion()
+    if live_update:
+        plt.ion()
 
     robot_points_new, robot_points_new_pop, \
     robot_points_mate, robot_points_mate_pop, \
@@ -167,54 +171,57 @@ if __name__ == '__main__':
     death_scatter, = ax.plot(robot_points_death, robot_points_death_pop, label='death', ms=10, marker='x', ls='')
 
     ax.legend()
-    plt.draw()
-    plt.pause(0.01)
-
-    def update_data(dataset, points, points_pop):
-        assert(len(points) == len(points_pop))
-        if len(points) == 0:
-            return
-        X = points
-        Y = points_pop
-        dataset.set_data(X, Y)
-        return min(X), max(X), min(Y), max(Y)
-
-    while True:
-        robot_points_new, robot_points_new_pop, \
-        robot_points_mate, robot_points_mate_pop, \
-        robot_points_death, robot_points_death_pop = draw_chart(folder_name, ax)
-
-        update_data(new_scatter, robot_points_new, robot_points_new_pop)
-        update_data(mate_scatter, robot_points_mate, robot_points_mate_pop)
-        update_data(death_scatter, robot_points_death, robot_points_death_pop)
-
-        minx = min(min(robot_points_new), min(robot_points_mate), min(robot_points_death))
-        maxx = max(max(robot_points_new), max(robot_points_mate), max(robot_points_death))
-        x_len = maxx - minx
-        miny = min(min(robot_points_new_pop), min(robot_points_mate_pop), min(robot_points_death_pop))
-        maxy = max(max(robot_points_new_pop), max(robot_points_mate_pop), max(robot_points_death_pop))
-        y_len = maxy - miny
-
-        half_border_ratio = 0.01
-
-        ax.set_xlim(minx - half_border_ratio * x_len, maxx + half_border_ratio * x_len)
-        ax.set_ylim(miny - half_border_ratio * y_len, maxy + half_border_ratio * y_len)
-
+    if not live_update:
+        plt.show()
+    else:
         plt.draw()
-        plt.pause(2)
+        plt.pause(0.01)
 
-    #
-    # # Example: loops monitoring events forever.
-    # #
-    # import pyinotify
-    #
-    # # Instanciate a new WatchManager (will be used to store watches).
-    # wm = pyinotify.WatchManager()
-    # # Associate this WatchManager with a Notifier (will be used to report and
-    # # process events).
-    # notifier = pyinotify.Notifier(wm)
-    # # Add a new watch on /tmp for ALL_EVENTS.
-    # wm.add_watch(os.path.join(folder_name, 'experiment_manager.log'), pyinotify.ALL_EVENTS)
-    # # Loop forever and handle events.
-    # notifier.loop()
-    #
+        def update_data(dataset, points, points_pop):
+            assert(len(points) == len(points_pop))
+            if len(points) == 0:
+                return
+            X = points
+            Y = points_pop
+            dataset.set_data(X, Y)
+            return min(X), max(X), min(Y), max(Y)
+
+        while True:
+            robot_points_new, robot_points_new_pop, \
+            robot_points_mate, robot_points_mate_pop, \
+            robot_points_death, robot_points_death_pop = draw_chart(folder_name, ax)
+
+            update_data(new_scatter, robot_points_new, robot_points_new_pop)
+            update_data(mate_scatter, robot_points_mate, robot_points_mate_pop)
+            update_data(death_scatter, robot_points_death, robot_points_death_pop)
+
+            minx = min(min(robot_points_new), min(robot_points_mate), min(robot_points_death))
+            maxx = max(max(robot_points_new), max(robot_points_mate), max(robot_points_death))
+            x_len = maxx - minx
+            miny = min(min(robot_points_new_pop), min(robot_points_mate_pop), min(robot_points_death_pop))
+            maxy = max(max(robot_points_new_pop), max(robot_points_mate_pop), max(robot_points_death_pop))
+            y_len = maxy - miny
+
+            half_border_ratio = 0.01
+
+            ax.set_xlim(minx - half_border_ratio * x_len, maxx + half_border_ratio * x_len)
+            ax.set_ylim(miny - half_border_ratio * y_len, maxy + half_border_ratio * y_len)
+
+            plt.draw()
+            plt.pause(2)
+
+        #
+        # # Example: loops monitoring events forever.
+        # #
+        # import pyinotify
+        #
+        # # Instanciate a new WatchManager (will be used to store watches).
+        # wm = pyinotify.WatchManager()
+        # # Associate this WatchManager with a Notifier (will be used to report and
+        # # process events).
+        # notifier = pyinotify.Notifier(wm)
+        # # Add a new watch on /tmp for ALL_EVENTS.
+        # wm.add_watch(os.path.join(folder_name, 'experiment_manager.log'), pyinotify.ALL_EVENTS)
+        # # Loop forever and handle events.
+        # notifier.loop()
+        #
