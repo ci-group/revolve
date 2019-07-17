@@ -152,12 +152,20 @@ def max(*args):
 if __name__ == '__main__':
     folder_name = sys.argv[1]
     live_update = False
-    if len(sys.argv) > 2 and sys.argv[2] == 'live':
-        live_update = True
+    save_png = False
+    if len(sys.argv) > 2:
+        if sys.argv[2] == 'live':
+            live_update = True
+        elif sys.argv[2] == 'png':
+            save_png = True
+        else:
+            print(f'Command {sys.argv[2]} not recognized')
+            sys.exit(1)
 
-    matplotlib.use('Qt5Agg')
-    # matplotlib.use('GTK3Cairo') # live update is bugged
-    # matplotlib.use('GTK3Agg')
+    if not save_png:
+        matplotlib.use('Qt5Agg')
+        # matplotlib.use('GTK3Cairo') # live update is bugged
+        # matplotlib.use('GTK3Agg')
     fig, ax = plt.subplots()
     if live_update:
         plt.ion()
@@ -172,7 +180,10 @@ if __name__ == '__main__':
 
     ax.legend()
     if not live_update:
-        plt.show()
+        if save_png:
+            plt.savefig(os.path.join(folder_name, 'population.png'), bbox_inches='tight')
+        else:
+            plt.show()
     else:
         plt.draw()
         plt.pause(0.01)
