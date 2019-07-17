@@ -23,7 +23,7 @@ from pyrevolve.revolve_bot.brain import BrainRLPowerSplines
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
 ROBOT_BATTERY = 5000
-INDIVIDUAL_MAX_AGE = 60*2  # 2 minutes
+INDIVIDUAL_MAX_AGE = 60 * 2  # 2 minutes
 INDIVIDUAL_MAX_AGE_SIGMA = 1.0
 SEED_POPULATION_START = 50
 MIN_POP = 20
@@ -65,10 +65,10 @@ def make_folders(base_dirpath):
 
 
 class OnlineIndividual(Individual):
-    def __init__(self, genotype, max_age):
+    def __init__(self, genotype, max_age=None):
         super().__init__(genotype)
         self.manager = None
-        self.max_age = max_age
+        self.max_age = random.gauss(INDIVIDUAL_MAX_AGE, INDIVIDUAL_MAX_AGE_SIGMA) if max_age is None else max_age
 
     @staticmethod
     def clone_from(other):
@@ -267,7 +267,7 @@ class Population(object):
     async def _generate_insert_random_robot(self, _id: int):
         # Load a robot from yaml
         genotype = random_initialization(PLASTICODING_CONF, _id)
-        individual = OnlineIndividual(genotype, random.gauss(INDIVIDUAL_MAX_AGE, INDIVIDUAL_MAX_AGE_SIGMA))
+        individual = OnlineIndividual(genotype)
         return await self._insert_individual(individual, self._free_random_spawn_pos())
 
     async def seed_initial_population(self, pause_while_inserting: bool):
@@ -372,7 +372,8 @@ class Population(object):
                         self._log.info('Space is too crowded! Cannot insert the new individual, giving up.')
                     else:
                         self._robots.append(individual3)
-                        self._log.debug(f'Attempting mate between {individual1} and {individual2} generated {individual3}')
+                        self._log.debug(
+                            f'Attempting mate between {individual1} and {individual2} generated {individual3}')
                         await self._insert_individual(individual3, pos3)
                         self._log.info(f'MATE!!!! between {individual1} and {individual2} generated {individual3}')
 
