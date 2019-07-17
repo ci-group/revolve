@@ -24,6 +24,7 @@ from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
 ROBOT_BATTERY = 5000
 INDIVIDUAL_MAX_AGE = 60*2  # 2 minutes
+INDIVIDUAL_MAX_AGE_SIGMA = 1.0
 SEED_POPULATION_START = 50
 MIN_POP = 20
 MAX_POP = 100
@@ -64,13 +65,14 @@ def make_folders(base_dirpath):
 
 
 class OnlineIndividual(Individual):
-    def __init__(self, genotype):
+    def __init__(self, genotype, max_age):
         super().__init__(genotype)
         self.manager = None
+        self.max_age = max_age
 
     @staticmethod
     def clone_from(other):
-        self = OnlineIndividual(other.genotype)
+        self = OnlineIndividual(other.genotype, other.max_age)
         self.phenotype = other.phenotype
         self.manager = other.manager
         self.fitness = other.fitness
@@ -232,7 +234,7 @@ class Population(object):
 
     async def _insert_individual(self, individual: OnlineIndividual, pos: Vector3):
         individual.develop()
-        individual.manager = await self._insert_robot(individual.phenotype, pos, INDIVIDUAL_MAX_AGE)
+        individual.manager = await self._insert_robot(individual.phenotype, pos, individual.max_age)
         individual.export(self._data_folder)
         return individual
 
@@ -265,7 +267,7 @@ class Population(object):
     async def _generate_insert_random_robot(self, _id: int):
         # Load a robot from yaml
         genotype = random_initialization(PLASTICODING_CONF, _id)
-        individual = OnlineIndividual(genotype)
+        individual = OnlineIndividual(genotype, random.gauss(INDIVIDUAL_MAX_AGE, INDIVIDUAL_MAX_AGE_SIGMA))
         return await self._insert_individual(individual, self._free_random_spawn_pos())
 
     async def seed_initial_population(self, pause_while_inserting: bool):
