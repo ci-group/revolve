@@ -26,15 +26,15 @@ ROBOT_BATTERY = 5000
 INDIVIDUAL_MAX_AGE = 60 * 2  # 2 minutes
 INDIVIDUAL_MAX_AGE_SIGMA = 1.0
 SEED_POPULATION_START = 50
-MIN_POP = 20
+MIN_POP = 40
 MAX_POP = 100
 Z_SPAWN_DISTANCE = 0.5
 LIMIT_X = 4
 LIMIT_Y = 4
-MATURE_AGE = 30
+MATURE_AGE = 5
 MATE_DISTANCE = 0.6
-MATING_COOLDOWN = 10
-COUPLE_MATING_LIMIT = 5
+MATING_COOLDOWN = 0.1
+COUPLE_MATING_LIMIT = 1
 MATING_INCREASE_RATE = 1.0
 
 PLASTICODING_CONF = PlasticodingConfig()
@@ -97,6 +97,12 @@ class OnlineIndividual(Individual):
     def pos(self):
         if self.manager is not None:
             return self.manager.last_position
+        else:
+            return None
+
+    def alive(self):
+        if self.manager is not None:
+            return not self.manager.dead
         else:
             return None
 
@@ -180,7 +186,7 @@ class OnlineIndividual(Individual):
             'avg_orientation': str(Vector3(self.manager.avg_roll, self.manager.avg_pitch, self.manager.avg_yaw)),
             'avg_pos': str(Vector3(self.manager.avg_x, self.manager.avg_y, self.manager.avg_z)),
             'last_mate': str(self.manager.last_mate),
-            'dead': str(self.manager.dead),
+            'alive': str(self.alive()),
         }
 
         with open(f'{folder}/life_{self.id}.yaml', 'w') as f:
@@ -229,7 +235,7 @@ class Population(object):
         robot.battery_level = ROBOT_BATTERY
 
         # Insert the robot in the simulator
-        robot_manager = await self._connection.insert_robot(robot, pos, life_duration)
+        robot_manager = await asyncio.wait_for(self._connection.insert_robot(robot, pos, life_duration), 5)
         return robot_manager
 
     async def _insert_individual(self, individual: OnlineIndividual, pos: Vector3):
@@ -238,7 +244,7 @@ class Population(object):
         individual.export(self._data_folder)
         return individual
 
-    def _remove_individual(self, individual: OnlineIndividual):
+    async def _remove_individual(self, individual: OnlineIndividual):
         self._robots.remove(individual)
         individual.export(self._data_folder)
 
@@ -294,9 +300,12 @@ class Population(object):
         """
         for individual in self._robots:
             # if individual.age() > INDIVIDUAL_MAX_AGE:
-            if individual.manager.dead:
+
+            # alive can be None or boolean
+            alive = individual.alive()
+            if alive is False:
                 self._log.debug(f"Attempting ROBOT DIES OF OLD AGE: {individual}")
-                self._remove_individual(individual)
+                await self._remove_individual(individual)
                 self._log.info(f"ROBOT DIES OF OLD AGE: {individual}")
 
     async def immigration_season(self, population_minimum=MIN_POP):
@@ -310,9 +319,8 @@ class Population(object):
                 individual = await self._generate_insert_random_robot(self._robot_id_counter)
                 self._log.info(f"LOW REACHED: inserting new random robot: {individual}")
                 self._robots.append(individual)
-            except Population.NoPositionFound:
-                # Try again with a new individual
-                pass
+            except (Population.NoPositionFound, asyncio.TimeoutError) as e:
+                self._log.error(f"LOW REACHED failed: {e}")
 
     def adjust_mating_multiplier(self, time):
         if self._recent_children_start_time < 0:
@@ -368,14 +376,18 @@ class Population(object):
                     # pos3.z = Z_SPAWN_DISTANCE
                     try:
                         pos3 = self._free_random_spawn_pos()
-                    except Population.NoPositionFound:
-                        self._log.info('Space is too crowded! Cannot insert the new individual, giving up.')
-                    else:
-                        self._robots.append(individual3)
                         self._log.debug(
                             f'Attempting mate between {individual1} and {individual2} generated {individual3}')
                         await self._insert_individual(individual3, pos3)
-                        self._log.info(f'MATE!!!! between {individual1} and {individual2} generated {individual3}')
+                        self._log.info(
+                            f'MATE!!!! between {individual1} and {individual2} generated {individual3}')
+                    except Population.NoPositionFound:
+                        self._log.info('Space is too crowded! Cannot insert the new individual, giving up.')
+                    except asyncio.TimeoutError:
+                        self._log.info(
+                            f'MATE failed!!!! between {individual1} and {individual2} generated {individual3}')
+                    else:
+                        self._robots.append(individual3)
 
         except BreakIt:
             pass
@@ -415,7 +427,7 @@ async def run():
     robot_population = Population(log, data_folder, connection)
 
     log.info("SEEDING POPULATION STARTED")
-    await robot_population.seed_initial_population(pause_while_inserting=True)
+    await robot_population.seed_initial_population(pause_while_inserting=False)
     log.info("SEEDING POPULATION FINISHED")
 
     # Start the main life loop
