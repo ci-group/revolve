@@ -1,3 +1,10 @@
+"""
+    experiments = [
+        {'range_ub': 1.0, 'signal_factor_all': 1.0},
+        {'range_ub': 1.0, 'signal_factor_all': 3.0},
+        {'range_ub': 4.5, 'signal_factor_all': 3.0}
+    ]
+"""
 from sys import platform
 import matplotlib
 if platform == "darwin":
@@ -12,63 +19,39 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-targeted = True
-n_objects = 10
-min_lines = 0 # This is a bit different with targeted flow
-run_gazebo = True
-n_runs = 1
-run_factor = 1
-n_jobs = 1
+min_lines = 110
+run_gazebo = False
+n_runs = 10 # Naar 20
+n_jobs = 4
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "spider9.yaml"
+yaml_model = "babyA.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = ".venv/bin/python3"
-start_port = 12000
+python_interpreter = "~/projects/revolve/.venv/bin/python3"
 search_space = {
+    # 'load_brain': ["/Users/lan/projects/revolve/output/cpg_bo/one/main_1560413639/0/0/best_brain.txt"],
+    'evaluation_rate': [60],
+    'init_method': ["LHS"],
     'verbose': [1],
-    # 'for_slower_amplitude_factor': [3.0],
-    # 'load_brain': ["'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378190.71/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389414.36/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378245.76/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378287.77/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378160.67/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389312.53/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378225.74/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389379.72/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389361.89/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389338.31/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389234.1/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378190.49/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378165.66/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389121.16/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389123.4/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378444.49/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378241.33/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389526.78/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389088.1/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389193.31/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389159.72/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378109.28/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389284.85/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378216.32/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389419.81/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378267.39/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378104.54/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560378235.74/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389173.43/best_brain1501.txt'",
-    #                "'/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1560378054-1-gecko17/0/1560389430.53/best_brain1501.txt'",
-    #                ]
+    'kernel_l': [0.1],
+    'acqui_ucb_alpha': [1.0],
+    'n_learning_iterations': [100],
+    'n_init_samples': [20],
+    # 'kernel_l': [0.2],
+    # 'acqui_ucb_alpha': [3.0],
+    # 'n_learning_iterations': [950],
+    # 'n_init_samples': [20],
 }
 
 print(search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
+start_port = 11000 # STEP 6
 finished = False
 
 # Make in revolve/build to allow runs from terminal
-os.system('mkdir build9 && cd build9 && cmake /Users/roy/projects/revolve -DCMAKE_BUILD_TYPE="Release"')
-os.system("make -j4")
+# os.system('mkdir build9 && cd build9 && cmake ~/projects/revolve/ -DCMAKE_BUILD_TYPE="Release" -DLOCAL_GAZEBO_DIR=""')
+# os.system("make -j4")
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
@@ -113,7 +96,7 @@ def create_yamls(yaml_path, model, sub_directory, experiments):
 def run(i, sub_directory, model, params):
     # Sleepy time when starting up to save gazebo from misery
     if i < n_jobs:
-        time.sleep(3.5*i)
+        time.sleep(5*i)
     else:
         print("Todo: Make sure you are leaving 2 seconds in between firing "
               "gazebos")
@@ -149,7 +132,7 @@ def run(i, sub_directory, model, params):
     if not run_gazebo:
         py_command = python_interpreter + \
                      " ./revolve.py" + \
-                    - " --manager " + manager + \
+                     " --manager " + manager + \
                      " --world-address " + world_address + \
                      " --robot-yaml " + yaml_model
     else:
@@ -169,15 +152,43 @@ if __name__ == "__main__":
     # Get permutations
     keys, values = zip(*search_space.items())
     experiments = [dict(zip(keys, v)) for v in itertools.product(*values)]
+
+    # PASTE THE EXPERIMENTS HERE, IN THE FORMAT SHOWN BELOW
+    experiments = [
+        {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 3.0}  # STEP 4
+
+        # # BASE RUN
+        # {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 1.0, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 1.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        #
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.1,  'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
+        # # BASE RUN
+        #
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.2},
+        # # BASE RUN
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 2.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 3.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 4.0},
+        #
+        # {'init_method': "RS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        # BASE RUN
+    ]
+    # 'kernel_l': [0.02, 0.05, 0.1, 0.2],
+    # 'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
     unique_experiments = experiments
     n_unique_experiments = len(experiments)
 
     # Get id's on the permutations
     for ix, my_dict in enumerate(experiments):
         my_dict["id"] = ix
-
-    # Create a list with parameters to iterate over
-    experiments *= n_runs
+    experiments *=n_runs
 
     # Save to yaml files
     create_yamls(yaml_path=my_yaml_path,
@@ -217,19 +228,12 @@ if __name__ == "__main__":
                 runs_succesful[str(e.split("/")[-2])] = 0
 
                 for my_run in runs:
-                    if not targeted:
-                        if os.path.isfile(my_run + "fitnesses.txt"):
-                            n_lines = len([(line.rstrip('\n')) for line in open(my_run + "fitnesses.txt")])
+                    if os.path.isfile(my_run + "fitnesses.txt"):
+                        n_lines = len([(line.rstrip('\n')) for line in open(my_run + "fitnesses.txt")])
 
-                            # In case we had a succesful run
-                            if n_lines > min_lines:
-                                runs_succesful[str(e.split("/")[-2])] += 1
-                    else:
-                        if os.path.isfile(my_run + "speed_to_object.txt"):
-                            n_lines = len([(line.rstrip('\n')) for line in open(my_run + "speed_to_object.txt")])
-                            if n_lines >= n_objects:
-                                runs_succesful[str(e.split("/")[-2])] += 1
-
+                        # In case we had a succesful run
+                        if n_lines > min_lines:
+                            runs_succesful[str(e.split("/")[-2])] += 1
 
             to_run = {}
             for key, val in runs_succesful.items():

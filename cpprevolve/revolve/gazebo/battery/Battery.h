@@ -33,6 +33,9 @@ protected:
     /// \brief amount of watts used for all servos at a time
     double watts_used;
 
+    /// \brief the time of initiation (for creating data files of battery delete later)
+    std::string time_init;
+
     friend class Evaluator;
 };
 

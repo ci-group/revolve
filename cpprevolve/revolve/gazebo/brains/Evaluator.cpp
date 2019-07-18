@@ -52,7 +52,7 @@ Evaluator::Evaluator(std::shared_ptr<::revolve::gazebo::Battery> battery,
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "directed"; // {directed, gait, battery}
+  this->locomotion_type = "directed"; // {directed, gait, battery} // STEP 3
   this->path_length = 0.0;
 }
 

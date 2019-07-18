@@ -180,6 +180,6 @@ brain:
     n_cooldown_iterations: 1
     reset_robot_position: "false"
     evaluation_rate: 60
-    output_directory: "output/cpg_bo/main_1563198613/0/1563198803.71/"
+    output_directory: "output/cpg_bo/main_1563286374/0/1563286549.13/"
     verbose: 1
     startup_time: 0

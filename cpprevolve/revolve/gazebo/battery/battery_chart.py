@@ -57,10 +57,10 @@ def main():
             watts_used.append(float(data[1]))
             current_charge.append(float(data[2]))
             if float(data[0]) > 30 and draw30:
-                # draw_graphs(global_time, watts_used, current_charge)
+                draw_graphs(global_time, watts_used, current_charge)
                 draw30 = False
         draw_graph(global_time, watts_used)
-        # draw_graphs(global_time, watts_used, current_charge)
+        draw_graphs(global_time, watts_used, current_charge)
 
 if __name__ == "__main__":
     main()
