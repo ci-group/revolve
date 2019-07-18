@@ -252,10 +252,11 @@ def _sdf_brain_plugin_conf(
         attrib={
             'name': 'robot_controller',
             'filename': controller_plugin,
-            'xmlns:rv': 'https://github.com/ci-group/revolve',
         })
 
-    config = xml.etree.ElementTree.SubElement(plugin, 'rv:robot_config')
+    config = xml.etree.ElementTree.SubElement(plugin, 'rv:robot_config', {
+        'xmlns:rv': 'https://github.com/ci-group/revolve',
+    })
 
     # update rate
     SDF.sub_element_text(config, 'rv:update_rate', update_rate)

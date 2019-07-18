@@ -172,8 +172,11 @@ class DynamicSimSupervisor(object):
         """
         self._logger.info("Terminating processes...")
         for proc in list(self.procs.values()):
-            if proc.returncode is None:
-                terminate_process(proc)
+            try:
+                if proc.returncode is None:
+                    terminate_process(proc)
+            except psutil.NoSuchProcess:
+                self._logger.debug(f'Cannot terminate already dead process "{proc}"')
 
         # flush output of all processes
         await self._flush_output_streams()
@@ -268,7 +271,7 @@ class DynamicSimSupervisor(object):
                     ready_str_found.set_result(None)
 
         async def read_stderr():
-            while not ready_str_found.done() and process.returncode is not None:
+            while not ready_str_found.done() and process.returncode is None:
                 err = await stderr.readline()
                 if err:
                     self._logger.error(f'[starting] {err}')
