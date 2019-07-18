@@ -130,7 +130,6 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 
         {
             boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
-            boost::mutex::scoped_lock lock_death(death_sentences_mutex_);
             for (const auto &model : this->world_->Models()) {
                 if (model->IsStatic()) {
                     // Ignore static models such as the ground and obstacles
@@ -149,17 +148,37 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 
                 // Death sentence check
                 const std::string name = model->GetName();
-                if (death_sentences_.count(name) > 0) {
-                    double death_sentence = death_sentences_[name];
-                    if (death_sentence < 0) {
+                bool death_sentence = false;
+                double death_sentence_value = 0;
+                {
+                    boost::mutex::scoped_lock lock_death(death_sentences_mutex_);
+                    death_sentence = death_sentences_.count(name) > 0;
+                    if (death_sentence)
+                        death_sentence_value = death_sentences_[name];
+                }
+
+                if (death_sentence) {
+                    if (death_sentence_value < 0) {
                         // Initialize death sentence
-                        death_sentences_[name] = time - death_sentence;
+                        death_sentences_[name] = time - death_sentence_value;
                     } else {
-                        bool alive = death_sentence > time;
+                        bool alive = death_sentence_value > time;
                         stateMsg->set_dead(not alive);
 
-                        if (not alive)
-                            model->Fini();
+                        if (not alive) {
+//                            model->Fini();
+                            this->world_->RemoveModel(model);
+//                            gz::msgs::Request deleteReq;
+//                            auto id = gz::physics::getUniqueId();
+//                            deleteReq.set_id(id);
+//                            deleteReq.set_request("entity_delete");
+//                            deleteReq.set_data(model->GetScopedName());
+//                            this->requestPub_->Publish(deleteReq);
+//                            //transport::requestNoReply(this->requestPub_, "entity_delete", model->GetScopedName());
+//
+                            boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
+                            this->death_sentences_.erase(model->GetName());
+                        }
                     }
                 }
             }
@@ -185,16 +204,32 @@ void WorldController::OnEndUpdate()
         }
         auto model = std::get<0>(delete_robot);
         auto request_id = std::get<1>(delete_robot);
-        if (model) {
-//            this->world_->SetPaused(true);
+        if (model)
+        {
+            boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
             this->world_->RemoveModel(model);
-//            this->world_->SetPaused(true);
 
             gz::msgs::Response resp;
             resp.set_id(request_id);
             resp.set_request("delete_robot");
             resp.set_response("success");
             this->responsePub_->Publish(resp);
+        }
+    }
+
+    { // check if there are robots to insert
+        boost::mutex::scoped_lock lock(this->insertMutex_);
+        for (auto &iterator: this->insertMap_)
+        {
+            bool &insert_operation_pending = std::get<2>(iterator.second);
+            if (insert_operation_pending)
+            {
+                // Start insert operation!
+                boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+                const std::string &robotSDF = std::get<1>(iterator.second);
+                this->world_->InsertModelString(robotSDF);
+                insert_operation_pending = false;
+            }
         }
     }
 }
@@ -271,12 +306,10 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
 
     {
       boost::mutex::scoped_lock lock(this->insertMutex_);
-      this->insertMap_[name] = request->id();
+      this->insertMap_[name] = std::make_tuple(request->id(), robotSDF.ToString(), true);
     }
 
-//    this->world_->SetPaused(true);
-    this->world_->InsertModelString(robotSDF.ToString());
-//    this->world_->SetPaused(false);
+    //this->world_->InsertModelString(robotSDF.ToString());
 
     // Don't leak memory
     // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
@@ -302,35 +335,44 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
 /////////////////////////////////////////////////
 void WorldController::OnModel(ConstModelPtr &msg)
 {
-  auto name = msg->name();
+    auto name = msg->name();
 
-  int id;
-  {
-    boost::mutex::scoped_lock lock(this->insertMutex_);
-    if (this->insertMap_.count(name) <= 0)
+    int id;
+    bool insert_operation_pending;
     {
-      // Insert was not requested here, ignore it
-      return;
+        boost::mutex::scoped_lock lock(this->insertMutex_);
+        if (this->insertMap_.count(name) <= 0)
+        {
+            // Insert was not requested here, ignore it
+            return;
+        }
+        const std::tuple<int, std::string, bool> &entry = this->insertMap_[name];
+        id = std::get<0>(entry);
+        insert_operation_pending = std::get<2>(entry);
+        if (insert_operation_pending)
+        {
+            // Insert operation has not been done yet
+            // (but you should never be here, because we are in the "OnModel" function
+            return;
+        }
+        this->insertMap_.erase(name);
     }
-    id = this->insertMap_[name];
-    this->insertMap_.erase(name);
-  }
 
-  // Respond with the inserted model
-  gz::msgs::Response resp;
-  resp.set_request("insert_sdf");
-  resp.set_response("success");
-  resp.set_id(id);
+    // Respond with the inserted model
+    gz::msgs::Response resp;
+    resp.set_request("insert_sdf");
+    resp.set_response("success");
+    resp.set_id(id);
 
-  msgs::ModelInserted inserted;
-  inserted.mutable_model()->CopyFrom(*msg);
-  gz::msgs::Set(inserted.mutable_time(), this->world_->SimTime());
-  inserted.SerializeToString(resp.mutable_serialized_data());
+    msgs::ModelInserted inserted;
+    inserted.mutable_model()->CopyFrom(*msg);
+    gz::msgs::Set(inserted.mutable_time(), this->world_->SimTime());
+    inserted.SerializeToString(resp.mutable_serialized_data());
 
-  this->responsePub_->Publish(resp);
+    this->responsePub_->Publish(resp);
 
-  std::cout << "Model `" << name << "` inserted, world now contains "
-            << this->world_->ModelCount() << " models." << std::endl;
+    std::cout << "Model `" << name << "` inserted, world now contains "
+              << this->world_->ModelCount() << " models." << std::endl;
 }
 
 /////////////////////////////////////////////////

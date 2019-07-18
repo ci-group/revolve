@@ -70,7 +70,8 @@ namespace revolve
       virtual void OnEndUpdate();
 
       // Maps model names to insert request IDs
-      std::map< std::string, int > insertMap_;
+      // model_name -> request_id, SDF, insert_operation_pending
+      std::map< std::string, std::tuple<int, std::string, bool> > insertMap_;
 
       // Queue of `delete_robot` requests
       std::queue<std::tuple< ::gazebo::physics::ModelPtr, int>> delete_robot_queue;
