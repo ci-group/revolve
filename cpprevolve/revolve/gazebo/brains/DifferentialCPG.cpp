@@ -376,7 +376,7 @@ DifferentialCPG::~DifferentialCPG()
 struct DifferentialCPG::evaluation_function{
   // Number of input dimension (samples.size())
   //spider9:18,spider13:26,spider17:34,gecko7:13,gecko12:23,gecko17:33,babyA:16,babyB:22,babyC:32,one+:12
-  BO_PARAM(size_t, dim_in, 16); // STEP 2
+  BO_PARAM(size_t, dim_in, 32); // STEP 2
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
