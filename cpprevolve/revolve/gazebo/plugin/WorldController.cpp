@@ -60,6 +60,14 @@ void WorldController::Load(
     gz::physics::WorldPtr world,
     sdf::ElementPtr /*_sdf*/)
 {
+    gz::physics::PhysicsEnginePtr physicsEngine = world->Physics();
+    assert(physicsEngine != nullptr);
+
+    // Turn on threading
+    physicsEngine->SetParam("thread_position_correction", true);
+    physicsEngine->SetParam("island_threads", 8);
+
+
   std::cout << "World plugin loaded." << std::endl;
 
   // Store the world
