@@ -97,13 +97,15 @@ def speed(robot_life):
 
 def draw_chart(folder_name: str, ax):
     data = read_data(folder_name)
+    robots = data['robots']
     # print(f'{data}')
     for logline in data['log']:
         # print(f'{logline}')
         if logline.event_type == 'NEW':
             robot_id = logline.text[41:].split('(')[0]
             robot_id = robot_id[11:]
-            data['robots'][robot_id].life['birth_reason'] = 'NEW'
+            if robot_id != '':
+                robots[robot_id].life['birth_reason'] = 'NEW'
             # print(f'{logline.event_type} => {robot_id}')
 
     robot_points = []
@@ -196,7 +198,6 @@ if __name__ == '__main__':
         # matplotlib.use('GTK3Cairo') # live update is bugged
         # matplotlib.use('GTK3Agg')
     fig, ax = plt.subplots()
-    fig2, ax2 = plt.subplots()
     if live_update:
         plt.ion()
 
@@ -208,16 +209,18 @@ if __name__ == '__main__':
     new_scatter, = ax.plot(robot_points_new, robot_points_new_pop, label='new', ms=10, marker='*', ls='')
     mate_scatter, = ax.plot(robot_points_mate, robot_points_mate_pop, label='mate', ms=10, marker='+', ls='')
     death_scatter, = ax.plot(robot_points_death, robot_points_death_pop, label='death', ms=10, marker='x', ls='')
-
-    speed_scatter, = ax2.plot(robot_points_death, robot_speed, label='speed', ms=10, marker='.', ls='')
-
     ax.legend()
-    if not live_update:
-        if save_png:
-            plt.savefig(os.path.join(folder_name, 'population.png'), bbox_inches='tight')
-        else:
-            plt.show()
-    else:
+    if save_png:
+        plt.savefig(os.path.join(folder_name, 'population.png'), bbox_inches='tight')
+
+    fig2, ax2 = plt.subplots()
+    speed_scatter, = ax2.plot(robot_points_death, robot_speed, label='speed', ms=10, marker='.', ls='')
+    if save_png:
+        plt.savefig(os.path.join(folder_name, 'population-speed.png'), bbox_inches='tight')
+
+    if not live_update and not save_png:
+        plt.show()
+    elif not save_png:
         plt.draw()
         plt.pause(0.01)
 
