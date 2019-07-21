@@ -26,6 +26,7 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format):
     joints = []
     actuators = []
     sensors = [imu_core_sensor]
+    collisions = [core_collision]
 
     core_link.append(core_visual)
     core_link.append(core_collision)
@@ -38,15 +39,17 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format):
 
         children_links, \
         children_joints, \
-        children_sensors = _module_to_sdf(child_module,
-                                          core_link,
-                                          core_slot,
-                                          core_collision,
-                                          slot_chain)
+        children_sensors, \
+        children_collisions = _module_to_sdf(child_module,
+                                             core_link,
+                                             core_slot,
+                                             core_collision,
+                                             slot_chain)
 
         links.extend(children_links)
         joints.extend(children_joints)
         sensors.extend(children_sensors)
+        collisions.extend(children_collisions)
 
     for joint in joints:
         model.append(joint)
@@ -132,6 +135,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
     links = []
     joints = []
     sensors = []
+    collisions = []
 
     my_link = parent_link
     my_collision = None
@@ -165,6 +169,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
         parent_link.append(visual_frame)
         for i, collision_frame in enumerate(collisions_frame):
             parent_link.append(collision_frame)
+            collisions.append(collision_frame)
             if i != 0:
                 old_pos = collision_frame.get_position()
                 collision_frame.set_rotation(visual_frame.get_rotation())
@@ -175,6 +180,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
         child_link.append(visual_servo)
         for i, collision_servo in enumerate(collisions_servo):
             child_link.append(collision_servo)
+            collisions.append(collision_servo)
             if i != 0:
                 old_pos = collision_servo.get_position()
                 collision_servo.set_position(collisions_servo[0].get_position())
@@ -201,6 +207,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
 
         parent_link.append(visual)
         parent_link.append(collision)
+        collisions.append(collision)
 
         my_collision = collision
 
@@ -217,16 +224,18 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
 
         children_links, \
         children_joints, \
-        children_sensors = _module_to_sdf(child_module,
-                                          my_link,
-                                          my_slot,
-                                          my_collision,
-                                          child_slot_chain)
+        children_sensors, \
+        children_collisions = _module_to_sdf(child_module,
+                                             my_link,
+                                             my_slot,
+                                             my_collision,
+                                             child_slot_chain)
         links.extend(children_links)
         joints.extend(children_joints)
         sensors.extend(children_sensors)
+        collisions.extend(children_collisions)
 
-    return links, joints, sensors
+    return links, joints, sensors, collisions
 
 
 def _sdf_brain_plugin_conf(

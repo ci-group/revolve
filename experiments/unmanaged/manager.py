@@ -23,14 +23,17 @@ from pyrevolve.revolve_bot.brain import BrainRLPowerSplines
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
 ROBOT_BATTERY = 5000
-INDIVIDUAL_MAX_AGE = 60 * 2  # 2 minutes
+ROBOT_STOP = 5000
+REPRODUCE_LOCALLY = True
+REPRODUCE_LOCALLY_RADIUS = 2
+INDIVIDUAL_MAX_AGE = 60 * 2 # 2 minutes
 INDIVIDUAL_MAX_AGE_SIGMA = 1.0
-SEED_POPULATION_START = 50
+SEED_POPULATION_START = 40
 MIN_POP = 40
-MAX_POP = 100
+MAX_POP = 70
 Z_SPAWN_DISTANCE = 0.5
-LIMIT_X = 4
-LIMIT_Y = 4
+LIMIT_X = 3
+LIMIT_Y = 3
 MATURE_AGE = 5
 MATE_DISTANCE = 0.6
 MATING_COOLDOWN = 0.1
@@ -40,11 +43,19 @@ MATING_INCREASE_RATE = 1.0
 PLASTICODING_CONF = PlasticodingConfig()
 CROSSOVER_CONF = CrossoverConfig(crossover_prob=1.0)
 MUTATION_CONF = MutationConfig(mutation_prob=0.8, genotype_conf=PLASTICODING_CONF)
-DATA_FOLDER_BASE = os.path.dirname(os.path.realpath(__file__))
+DATA_FOLDER_BASE = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    'data',
+    'exp1'
+)
 
 
 def make_folders(base_dirpath):
-    assert (os.path.isdir(base_dirpath))
+    if os.path.exists(base_dirpath):
+        assert(os.path.isdir(base_dirpath))
+    else:
+        os.makedirs(base_dirpath)
+
     counter = 0
     while True:
         dirpath = os.path.join(base_dirpath, str(counter))
@@ -198,12 +209,7 @@ class OnlineIndividual(Individual):
         self.export_life_data(folder)
 
     def __repr__(self):
-        _id = None
-        if self.phenotype is not None:
-            _id = self.phenotype.id
-        elif self.genotype.id is not None:
-            _id = self.genotype.id
-        return f'Individual_{_id}({self.age()}, {self.charge()}, {self.pos()})'
+        return f'Individual_{self.id}({self.age()}, {self.charge()}, {self.pos()})'
 
 
 def random_spawn_pos():
@@ -212,6 +218,17 @@ def random_spawn_pos():
         random.uniform(-LIMIT_Y, LIMIT_Y),
         Z_SPAWN_DISTANCE
     )
+
+def random_uniform_unit_vec():
+    return Vector3(
+        random.uniform(-1,1),
+        random.uniform(-1,1),
+        Z_SPAWN_DISTANCE
+    ).normalized()
+
+
+class Finish(Exception):
+    pass
 
 
 class Population(object):
@@ -250,6 +267,8 @@ class Population(object):
 
         self._connection.unregister_robot(individual.manager)
         # await self._connection.delete_robot(individual.manager)
+        if individual.id == f'robot_{ROBOT_STOP}':
+            raise Finish()
 
     def _is_pos_occupied(self, pos, distance):
         for robot in self._robots:
@@ -258,7 +277,8 @@ class Population(object):
         return False
 
     class NoPositionFound(Exception):
-        pass
+        def __str__(self):
+            return "NoPositionFound"
 
     def _free_random_spawn_pos(self, distance=MATE_DISTANCE + 0.1, n_tries=100):
         pos = random_spawn_pos()
@@ -268,6 +288,16 @@ class Population(object):
             if i > n_tries:
                 raise self.NoPositionFound()
             pos = random_spawn_pos()
+        return pos
+
+    def _free_random_spawn_pos_area(self, center: Vector3, radius: float=REPRODUCE_LOCALLY_RADIUS, distance=MATE_DISTANCE + 0.1, n_tries=100):
+        pos = center + (random_uniform_unit_vec() * random.uniform(0,radius))
+        i = 1
+        while self._is_pos_occupied(pos, distance):
+            i += 1
+            if i > n_tries:
+                raise self.NoPositionFound()
+            pos = center + (random_uniform_unit_vec() * random.uniform(0,radius))
         return pos
 
     async def _generate_insert_random_robot(self, _id: int):
@@ -299,14 +329,12 @@ class Population(object):
         Checks for age in the all population and if it's their time of that (currently based on age)
         """
         for individual in self._robots:
-            # if individual.age() > INDIVIDUAL_MAX_AGE:
-
             # alive can be None or boolean
             alive = individual.alive()
-            if alive is False:
-                self._log.debug(f"Attempting ROBOT DIES OF OLD AGE: {individual}")
+            if alive is False or individual.age() > individual.max_age:
+                self._log.debug(f"Attempting ROBOT DIES OF OLD AGE: {individual} - total_population: {len(self._robots)}")
                 await self._remove_individual(individual)
-                self._log.info(f"ROBOT DIES OF OLD AGE: {individual}")
+                self._log.info(f"ROBOT DIES OF OLD AGE: {individual} - total_population: {len(self._robots)}")
 
     async def immigration_season(self, population_minimum=MIN_POP):
         """
@@ -375,7 +403,11 @@ class Population(object):
                     # pos3 = (individual1.pos() + individual2.pos())/2
                     # pos3.z = Z_SPAWN_DISTANCE
                     try:
-                        pos3 = self._free_random_spawn_pos()
+                        if REPRODUCE_LOCALLY:
+                            pos3 = (individual1.pos() + individual2.pos())/2
+                            pos3 = self._free_random_spawn_pos_area(pos3)
+                        else:
+                            pos3 = self._free_random_spawn_pos()
                         self._log.debug(
                             f'Attempting mate between {individual1} and {individual2} generated {individual3}')
                         await self._insert_individual(individual3, pos3)
@@ -418,7 +450,7 @@ async def run():
         )
         await simulator_supervisor.launch_simulator(port=settings.port_start)
         # let there be some time to sync all initial output of the simulator
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(5)
 
     # Connect to the simulator and pause
     connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start))
@@ -431,10 +463,13 @@ async def run():
     log.info("SEEDING POPULATION FINISHED")
 
     # Start the main life loop
-    while True:
-        await robot_population.death_season()
-        await robot_population.mating_season()
-        await robot_population.immigration_season()
-        robot_population.adjust_mating_multiplier(connection.age())
+    try:
+        while True:
+            await robot_population.death_season()
+            await robot_population.mating_season()
+            await robot_population.immigration_season()
+            robot_population.adjust_mating_multiplier(connection.age())
 
-        await asyncio.sleep(0.05)
+            await asyncio.sleep(0.05)
+    except Finish:
+        log.info("EVOLUTION finished successfully")

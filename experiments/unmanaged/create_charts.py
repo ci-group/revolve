@@ -6,7 +6,22 @@ import yaml
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
+from pyrevolve.SDF.math import Vector3
 from pyrevolve.revolve_bot import RevolveBot
+
+
+def parse_vec3(source: str):
+    # example source: Vector3(2.394427e+00, 3.195821e-01, 2.244915e-02)
+    assert (source[:8] == 'Vector3(')
+    assert (source[-1:] == ')')
+    source = source[8:-1]
+    try:
+        x, y, z = [float(n) for n in source.split(', ')]
+    except ValueError:
+        print(f'could not parse vector3 for "{source}"')
+        return Vector3()
+    return Vector3(x, y, z)
 
 
 def read_robot(file: str):
@@ -74,6 +89,12 @@ def read_data(folder_name: str):
     }
 
 
+def speed(robot_life):
+    start_position = parse_vec3(robot_life['start_pos'])
+    last_position = parse_vec3(robot_life['last_pos'])
+    return (last_position - start_position).magnitude()
+
+
 def draw_chart(folder_name: str, ax):
     data = read_data(folder_name)
     # print(f'{data}')
@@ -92,6 +113,7 @@ def draw_chart(folder_name: str, ax):
     robot_points_new_pop = []
     robot_points_mate_pop = []
     robot_points_death_pop = []
+    robot_speed = []
 
     for robot_id in data['robots']:
         robot_log = data['robots'][robot_id]
@@ -104,7 +126,7 @@ def draw_chart(folder_name: str, ax):
         else:
             robot_points.append(('MATE', birth))
         if life['death'] is not None:
-            robot_points.append(('DEATH', life['death']))
+            robot_points.append(('DEATH', life['death'], speed(life)))
 
     print(f"Drawing {len(data['robots'])} robots, global time TODO")
 
@@ -125,28 +147,35 @@ def draw_chart(folder_name: str, ax):
             pop_size -= 1
             robot_points_death.append(time)
             robot_points_death_pop.append(pop_size)
+            robot_speed.append(robot_point[2])
         else:
             raise RuntimeError("WAT?")
 
     return robot_points_new, robot_points_new_pop, \
            robot_points_mate, robot_points_mate_pop, \
-           robot_points_death, robot_points_death_pop
+           robot_points_death, robot_points_death_pop, \
+           robot_speed
 
 
-_oldmin = min
-def min(*args):
+def my_min(*args):
     try:
-        return _oldmin(*args)
+        return min(*args)
     except ValueError:
         return 0
 
 
-_oldmax = max
-def max(*args):
+def my_max(*args):
     try:
-        return _oldmax(*args)
+        return max(*args)
     except ValueError:
         return 0
+
+
+def calculate_min_max_len(data):
+    _min = my_min([my_min(x) for x in data])
+    _max = my_max([my_max(x) for x in data])
+    _len = _max - _min
+    return _min, _max, _len
 
 
 if __name__ == '__main__':
@@ -167,16 +196,20 @@ if __name__ == '__main__':
         # matplotlib.use('GTK3Cairo') # live update is bugged
         # matplotlib.use('GTK3Agg')
     fig, ax = plt.subplots()
+    fig2, ax2 = plt.subplots()
     if live_update:
         plt.ion()
 
     robot_points_new, robot_points_new_pop, \
     robot_points_mate, robot_points_mate_pop, \
-    robot_points_death, robot_points_death_pop = draw_chart(folder_name, ax)
+    robot_points_death, robot_points_death_pop, \
+    robot_speed = draw_chart(folder_name, ax)
 
     new_scatter, = ax.plot(robot_points_new, robot_points_new_pop, label='new', ms=10, marker='*', ls='')
     mate_scatter, = ax.plot(robot_points_mate, robot_points_mate_pop, label='mate', ms=10, marker='+', ls='')
     death_scatter, = ax.plot(robot_points_death, robot_points_death_pop, label='death', ms=10, marker='x', ls='')
+
+    speed_scatter, = ax2.plot(robot_points_death, robot_speed, label='speed', ms=10, marker='.', ls='')
 
     ax.legend()
     if not live_update:
@@ -200,23 +233,29 @@ if __name__ == '__main__':
         while True:
             robot_points_new, robot_points_new_pop, \
             robot_points_mate, robot_points_mate_pop, \
-            robot_points_death, robot_points_death_pop = draw_chart(folder_name, ax)
+            robot_points_death, robot_points_death_pop, \
+            robot_speed = draw_chart(folder_name, ax)
 
             update_data(new_scatter, robot_points_new, robot_points_new_pop)
             update_data(mate_scatter, robot_points_mate, robot_points_mate_pop)
             update_data(death_scatter, robot_points_death, robot_points_death_pop)
+            update_data(speed_scatter, robot_points_death, robot_speed)
 
-            minx = min(min(robot_points_new), min(robot_points_mate), min(robot_points_death))
-            maxx = max(max(robot_points_new), max(robot_points_mate), max(robot_points_death))
-            x_len = maxx - minx
-            miny = min(min(robot_points_new_pop), min(robot_points_mate_pop), min(robot_points_death_pop))
-            maxy = max(max(robot_points_new_pop), max(robot_points_mate_pop), max(robot_points_death_pop))
-            y_len = maxy - miny
+            minx, maxx, x_len = calculate_min_max_len(
+                [robot_points_new, robot_points_mate, robot_points_death])
+            miny, maxy, y_len = calculate_min_max_len(
+                [robot_points_new_pop, robot_points_mate_pop, robot_points_death_pop])
+
+            speed_minx, speed_maxx, speedx_len = calculate_min_max_len([robot_points_death])
+            speed_miny, speed_maxy, speedy_len = calculate_min_max_len([robot_speed])
 
             half_border_ratio = 0.01
 
             ax.set_xlim(minx - half_border_ratio * x_len, maxx + half_border_ratio * x_len)
             ax.set_ylim(miny - half_border_ratio * y_len, maxy + half_border_ratio * y_len)
+
+            ax2.set_xlim(speed_minx - half_border_ratio * speedx_len, speed_maxx + half_border_ratio * speedx_len)
+            ax2.set_ylim(speed_miny - half_border_ratio * speedy_len, speed_maxy + half_border_ratio * speedy_len)
 
             plt.draw()
             plt.pause(2)

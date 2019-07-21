@@ -128,7 +128,7 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         return;
     }
 
-    auto secs = 1.0 / this->robotStatesPubFreq_;
+    auto secs = 1.0; // 1.0 / this->robotStatesPubFreq_;
     auto time = _info.simTime.Double();
     if ((time - this->lastRobotStatesUpdateTime_) >= secs) {
         // Send robot info update message, this only sends the
@@ -174,18 +174,10 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
                         stateMsg->set_dead(not alive);
 
                         if (not alive) {
-//                            model->Fini();
-                            this->world_->RemoveModel(model);
-//                            gz::msgs::Request deleteReq;
-//                            auto id = gz::physics::getUniqueId();
-//                            deleteReq.set_id(id);
-//                            deleteReq.set_request("entity_delete");
-//                            deleteReq.set_data(model->GetScopedName());
-//                            this->requestPub_->Publish(deleteReq);
-//                            //transport::requestNoReply(this->requestPub_, "entity_delete", model->GetScopedName());
-//
                             boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
                             this->death_sentences_.erase(model->GetName());
+
+                            this->models_to_remove.emplace_back(model);
                         }
                     }
                 }
@@ -197,6 +189,25 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
             this->lastRobotStatesUpdateTime_ = time;
         }
     }
+
+
+//    if (world_insert_remove_mutex.try_lock()) {
+        for (const auto &model: this->models_to_remove) {
+            std::cout << "Removing " << model->GetScopedName() << std::endl;
+//            this->world_->RemoveModel(model);
+//            gz::msgs::Request deleteReq;
+//            auto id = gz::physics::getUniqueId();
+//            deleteReq.set_id(id);
+//            deleteReq.set_request("entity_delete");
+//            deleteReq.set_data(model->GetScopedName());
+//            this->requestPub_->Publish(deleteReq);
+            gz::transport::requestNoReply(this->world_->Name(), "entity_delete", model->GetScopedName());
+            std::cout << "Removed " << model->GetScopedName() << std::endl;
+
+        }
+        this->models_to_remove.clear();
+//        this->world_insert_remove_mutex.unlock();
+//    }
 }
 
 void WorldController::OnEndUpdate()
@@ -214,8 +225,10 @@ void WorldController::OnEndUpdate()
         auto request_id = std::get<1>(delete_robot);
         if (model)
         {
-            boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
-            this->world_->RemoveModel(model);
+            {
+//                boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+                this->world_->RemoveModel(model);
+            }
 
             gz::msgs::Response resp;
             resp.set_id(request_id);
@@ -230,13 +243,16 @@ void WorldController::OnEndUpdate()
         for (auto &iterator: this->insertMap_)
         {
             bool &insert_operation_pending = std::get<2>(iterator.second);
+            //std::cout << "trying to insert " << iterator.first << " - " << insert_operation_pending << std::endl;
+//            if (insert_operation_pending and this->world_insert_remove_mutex.try_lock())
             if (insert_operation_pending)
             {
                 // Start insert operation!
-                boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+//                boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
                 const std::string &robotSDF = std::get<1>(iterator.second);
                 this->world_->InsertModelString(robotSDF);
                 insert_operation_pending = false;
+                break;
             }
         }
     }
@@ -253,36 +269,36 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     std::cout << "Processing request `" << request->id()
               << "` to delete robot `" << name << "`" << std::endl;
 
-    auto model = this->world_->ModelByName(name);
-    if (model)
-    {
-      // Tell the world to remove the model
-      // Using `World::RemoveModel()` from here crashes the transport
-      // library, the cause of which I've yet to figure out - it has
-      // something to do with race conditions where the model is used by
-      // the world while it is being updated. Fixing this completely
-      // appears to be a rather involved process, instead, we'll use an
-      // `entity_delete` request, which will make sure deleting the model
-      // happens on the world thread.
-      gz::msgs::Request deleteReq;
-      auto id = gz::physics::getUniqueId();
-      deleteReq.set_id(id);
-      deleteReq.set_request("entity_delete");
-      deleteReq.set_data(model->GetScopedName());
-
-      {
-        boost::mutex::scoped_lock lock(this->deleteMutex_);
-        this->delete_robot_queue.emplace(std::make_tuple(model, request->id()));
-      }
-      {
-        boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
-        this->death_sentences_.erase(model->GetName());
-      }
-
-      this->requestPub_->Publish(deleteReq);
-    }
-    else
-    {
+//    auto model = this->world_->ModelByName(name);
+//    if (model)
+//    {
+//      // Tell the world to remove the model
+//      // Using `World::RemoveModel()` from here crashes the transport
+//      // library, the cause of which I've yet to figure out - it has
+//      // something to do with race conditions where the model is used by
+//      // the world while it is being updated. Fixing this completely
+//      // appears to be a rather involved process, instead, we'll use an
+//      // `entity_delete` request, which will make sure deleting the model
+//      // happens on the world thread.
+//      gz::msgs::Request deleteReq;
+//      auto id = gz::physics::getUniqueId();
+//      deleteReq.set_id(id);
+//      deleteReq.set_request("entity_delete");
+//      deleteReq.set_data(model->GetScopedName());
+//
+//      {
+//        boost::mutex::scoped_lock lock(this->deleteMutex_);
+//        this->delete_robot_queue.emplace(std::make_tuple(model, request->id()));
+//      }
+//      {
+//        boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
+//        this->death_sentences_.erase(model->GetName());
+//      }
+//
+//      this->requestPub_->Publish(deleteReq);
+//    }
+//    else
+//    {
       std::cerr << "Model `" << name << "` could not be found in the world."
                 << std::endl;
       gz::msgs::Response resp;
@@ -290,7 +306,7 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
       resp.set_request("delete_robot");
       resp.set_response("error");
       this->responsePub_->Publish(resp);
-    }
+//    }
   }
   else if (request->request() == "insert_sdf")
   {
@@ -344,6 +360,7 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
 void WorldController::OnModel(ConstModelPtr &msg)
 {
     auto name = msg->name();
+    std::cout << "WorldController::OnModel(" << name << ')' << std::endl;
 
     int id;
     bool insert_operation_pending;
@@ -379,6 +396,8 @@ void WorldController::OnModel(ConstModelPtr &msg)
 
     this->responsePub_->Publish(resp);
 
+//    this->world_insert_remove_mutex.unlock();
+
     std::cout << "Model `" << name << "` inserted, world now contains "
               << this->world_->ModelCount() << " models." << std::endl;
 }
@@ -386,4 +405,30 @@ void WorldController::OnModel(ConstModelPtr &msg)
 /////////////////////////////////////////////////
 void WorldController::HandleResponse(ConstResponsePtr &response)
 {
+//    std::cout << "WorldController::HandleResponse(" << response->request() << ')' << std::endl;
+
+    if (response->request() not_eq "entity_delete")
+    {
+        return;
+    }
+
+//    int id;
+//    {
+//        boost::mutex::scoped_lock lock(this->deleteMutex_);
+//        if (this->deleteMap_.count(response->id()) <= 0)
+//        {
+//            return;
+//        }
+//
+//        id = this->deleteMap_[response->id()];
+//        this->deleteMap_.erase(id);
+//    }
+
+//    this->world_insert_remove_mutex.unlock();
+
+//    gz::msgs::Response resp;
+//    resp.set_id(id);
+//    resp.set_request("delete_robot");
+//    resp.set_response("success");
+//    this->responsePub_->Publish(resp);
 }

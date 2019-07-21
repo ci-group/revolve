@@ -4,6 +4,7 @@ Revolve body generator based on RoboGen framework
 import yaml
 import traceback
 from collections import OrderedDict
+from collections import deque
 
 from pyrevolve import SDF
 
@@ -265,6 +266,15 @@ class RevolveBot:
                                    module,
                                    new_direction,
                                    substrate_coordinates_map)
+
+    def _iter_all_elements(self):
+        to_process = deque([self._body])
+        while len(to_process) > 0:
+            elem = to_process.popleft()
+            for _i, child in elem.iter_children():
+                if child is not None:
+                    to_process.append(child)
+            yield elem
 
     def render_brain(self, img_path):
         """
