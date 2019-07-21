@@ -227,6 +227,18 @@ target_link_libraries(
         ${GAZEBO_LIBRARIES}
 )
 
+# Create Analyzer plugin
+add_library(
+        AnalyzerPlugin SHARED
+        plugin/register_analyzer_plugin.cpp
+)
+target_link_libraries(
+        AnalyzerPlugin
+#        revolve-gazebo
+#        revolve-proto
+        ${GAZEBO_LIBRARIES}
+)
+
 # Create Torus World plugin
 add_library(TorusWorldPlugin SHARED
         plugin/register_torus_world_plugin.cpp
