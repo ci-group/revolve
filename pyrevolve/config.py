@@ -222,7 +222,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--manager',
-    default='experiments/examples/manager_pop.py',
+    default=None,
     type=str,
     help="Determine which manager to use."
 )
