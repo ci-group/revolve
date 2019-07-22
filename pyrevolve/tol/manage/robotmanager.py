@@ -21,7 +21,8 @@ class RobotManager(RvRobotManager):
             robot,
             position,
             time,
-            battery_level=0.0
+            battery_level=0.0,
+            position_log_size=None,
     ):
         """
         :param conf:
@@ -34,7 +35,9 @@ class RobotManager(RvRobotManager):
         :type battery_level: float
         :return:
         """
-        speed_window = int(conf.evaluation_time * conf.pose_update_frequency)
+        time = conf.evaluation_time if time is None else time
+        speed_window = int(float(time) * conf.pose_update_frequency) + 1 if position_log_size is None \
+            else position_log_size
         super(RobotManager, self).__init__(
                 robot=robot,
                 position=position,

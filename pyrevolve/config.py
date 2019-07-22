@@ -379,7 +379,7 @@ parser.add_argument(
              "than to convert it from SDF."
 )
 parser.add_argument(
-        '--experiment_name',
+        '--experiment-name',
         default='default_experiment', type=str,
         help="Name of current experiment. A folder with this name will be created."
 )

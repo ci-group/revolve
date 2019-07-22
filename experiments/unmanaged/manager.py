@@ -5,12 +5,15 @@ import sys
 import random
 import logging
 import yaml
+import enum
+import time
 import shutil
 
 from pyrevolve.custom_logging import logger
 from pyrevolve import parser
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import World
+from pyrevolve.tol.manage import measures
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
@@ -23,7 +26,7 @@ from pyrevolve.revolve_bot.brain import BrainRLPowerSplines
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
 ROBOT_BATTERY = 5000
-ROBOT_STOP = 5000
+ROBOT_STOP = 5050
 REPRODUCE_LOCALLY = True
 REPRODUCE_LOCALLY_RADIUS = 2
 INDIVIDUAL_MAX_AGE = 60 * 2 # 2 minutes
@@ -31,7 +34,7 @@ INDIVIDUAL_MAX_AGE_SIGMA = 1.0
 SEED_POPULATION_START = 40
 MIN_POP = 40
 MAX_POP = 70
-Z_SPAWN_DISTANCE = 0.5
+Z_SPAWN_DISTANCE = 0.2
 LIMIT_X = 3
 LIMIT_Y = 3
 MATURE_AGE = 5
@@ -43,10 +46,13 @@ MATING_INCREASE_RATE = 1.0
 PLASTICODING_CONF = PlasticodingConfig()
 CROSSOVER_CONF = CrossoverConfig(crossover_prob=1.0)
 MUTATION_CONF = MutationConfig(mutation_prob=0.8, genotype_conf=PLASTICODING_CONF)
+
+# FOLDER WHERE TO SAVE THE EXPERIMENT
+# {current_folder}/data/{arguments.experiment_name}
+# example ~/projects/revolve/experiments/unmanaged/data/default_experiment
 DATA_FOLDER_BASE = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     'data',
-    'exp1'
 )
 
 
@@ -68,16 +74,26 @@ def make_folders(base_dirpath):
     # if os.path.exists(dirpath):
     #     shutil.rmtree(dirpath)
     os.mkdir(dirpath)
-    os.mkdir(dirpath + '/genotypes')
-    os.mkdir(dirpath + '/phenotypes')
-    os.mkdir(dirpath + '/descriptors')
+    os.mkdir(os.path.join(dirpath, 'genotypes'))
+    os.mkdir(os.path.join(dirpath, 'phenotypes'))
+    os.mkdir(os.path.join(dirpath, 'descriptors'))
 
     return dirpath
 
 
 class OnlineIndividual(Individual):
-    def __init__(self, genotype, max_age=None):
+    class BirthType(enum.Enum):
+        NEW = 0
+        MATE = 1
+
+    def __init__(self, genotype, max_age=None, parents=None):
         super().__init__(genotype)
+        self.parents = parents
+        if self.parents is None:
+            self.birth_type = OnlineIndividual.BirthType.NEW
+        else:
+            self.birth_type = OnlineIndividual.BirthType.MATE
+        self.children = []
         self.manager = None
         self.max_age = random.gauss(INDIVIDUAL_MAX_AGE, INDIVIDUAL_MAX_AGE_SIGMA) if max_age is None else max_age
 
@@ -122,6 +138,10 @@ class OnlineIndividual(Individual):
             return self.manager.starting_position
         else:
             return None
+
+    @property
+    def name(self):
+        return self.id
 
     def distance_to(self, other, planar: bool = True):
         """
@@ -185,9 +205,21 @@ class OnlineIndividual(Individual):
         genotype = standard_crossover([self.genotype, other.genotype], PLASTICODING_CONF, CROSSOVER_CONF)
         genotype = standard_mutation(genotype, MUTATION_CONF)
 
-        return OnlineIndividual(genotype)
+        child = OnlineIndividual(genotype)
+
+        self.children.append(child)
+        other.children.append(child)
+        return child
 
     def export_life_data(self, folder):
+        life_measures = {
+            'distance': measures.displacement(self.manager)[0],
+            'distance_magnitude': measures.displacement(self.manager)[0].magnitude(),
+            'velocity': measures.velocity(self.manager),
+            'displacement_velocity': measures.displacement_velocity(self.manager),
+            'path_length': measures.path_length(self.manager),
+        }
+
         life = {
             'starting_time': float(self.manager.starting_time),
             'age': float(self.age()),
@@ -198,9 +230,13 @@ class OnlineIndividual(Individual):
             'avg_pos': str(Vector3(self.manager.avg_x, self.manager.avg_y, self.manager.avg_z)),
             'last_mate': str(self.manager.last_mate),
             'alive': str(self.alive()),
+            'birth': str(self.birth_type),
+            'parents': [parent.name for parent in self.parents] if self.parents is not None else 'None',
+            'children': [child.name for child in self.children],
+            'measures': life_measures,
         }
 
-        with open(f'{folder}/life_{self.id}.yaml', 'w') as f:
+        with open(os.path.join(folder, f'life_{self.id}.yaml'), 'w') as f:
             f.write(str(yaml.dump(life)))
 
     def export(self, folder):
@@ -219,10 +255,11 @@ def random_spawn_pos():
         Z_SPAWN_DISTANCE
     )
 
+
 def random_uniform_unit_vec():
     return Vector3(
-        random.uniform(-1,1),
-        random.uniform(-1,1),
+        random.uniform(-1, 1),
+        random.uniform(-1, 1),
         Z_SPAWN_DISTANCE
     ).normalized()
 
@@ -426,7 +463,12 @@ class Population(object):
 
 
 async def run():
-    data_folder = make_folders(DATA_FOLDER_BASE)
+    # Parse command line / file input arguments
+    settings = parser.parse_args()
+
+    # create ata folder and logger
+    data_folder = os.path.join(DATA_FOLDER_BASE, settings.experiment_name)
+    data_folder = make_folders(data_folder)
     log = logger.create_logger('experiment', handlers=[
         logging.StreamHandler(sys.stdout),
         logging.FileHandler(os.path.join(data_folder, 'experiment_manager.log'), mode='w')
@@ -435,8 +477,39 @@ async def run():
     # Set debug level to DEBUG
     log.setLevel(logging.DEBUG)
 
-    # Parse command line / file input arguments
-    settings = parser.parse_args()
+    # Save settings
+    experimental_settings = {
+        'START': {
+            'human': time.strftime("%a, %d %b %Y %H:%M:%S"),
+            'seconds': time.time(),
+        },
+        'ROBOT_BATTERY': ROBOT_BATTERY,
+        'ROBOT_STOP': ROBOT_STOP,
+        'REPRODUCE_LOCALLY_RADIUS': REPRODUCE_LOCALLY_RADIUS,
+        'INDIVIDUAL_MAX_AGE': INDIVIDUAL_MAX_AGE,
+        'INDIVIDUAL_MAX_AGE_SIGMA': INDIVIDUAL_MAX_AGE_SIGMA,
+        'SEED_POPULATION_START': SEED_POPULATION_START,
+        'MIN_POP': MIN_POP,
+        'MAX_POP': MAX_POP,
+        'Z_SPAWN_DISTANCE': Z_SPAWN_DISTANCE,
+        'LIMIT_X': LIMIT_X,
+        'LIMIT_Y': LIMIT_Y,
+        'MATURE_AGE': MATURE_AGE,
+        'MATE_DISTANCE': MATE_DISTANCE,
+        'MATING_COOLDOWN': MATING_COOLDOWN,
+        'COUPLE_MATING_LIMIT': COUPLE_MATING_LIMIT,
+        'MATING_INCREASE_RATE': MATING_INCREASE_RATE,
+
+        'CROSSOVER_PROBABILITY': CROSSOVER_CONF.crossover_prob,
+        'MUTATION_PROBABILITY': MUTATION_CONF.mutation_prob,
+
+        # FOLDER WHERE TO SAVE THE EXPERIMENT
+        # {current_folder}/data/{arguments.experiment_name}
+        # example ~/projects/revolve/experiments/unmanaged/data/default_experiment
+        'DATA_FOLDER_BASE': DATA_FOLDER_BASE,
+    }
+    with open(os.path.join(data_folder, 'experimental_settings.yaml'), 'w') as f:
+        f.write(str(yaml.dump(experimental_settings)))
 
     # Start Simulator
     if settings.simulator_cmd != 'debug':

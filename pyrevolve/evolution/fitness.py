@@ -1,17 +1,24 @@
 import random as py_random
 from pyrevolve.tol.manage import measures
 
-def stupid(robot_manager):
+
+def stupid(_robot_manager):
     return 1.0
 
-def random(robot_manager):
+
+def random(_robot_manager):
     return py_random.random()
 
+
 def displacement(robot_manager):
-    return measures.displacement(robot_manager)[0].magnitude()
+    displacement_vec = measures.displacement(robot_manager)[0]
+    displacement_vec.z = 0
+    return displacement_vec.magnitude()
+
 
 def displacement_velocity(robot_manager):
     return measures.displacement_velocity(robot_manager)
+
 
 def online_old_revolve(robot_manager):
     """
@@ -31,7 +38,7 @@ def online_old_revolve(robot_manager):
     """
     age = robot_manager.age()
     if age < (0.25 * robot_manager.conf.evaluation_time) \
-       or age < robot_manager.conf.warmup_time:
+            or age < robot_manager.conf.warmup_time:
         # We want at least some data
         return 0.0
 
