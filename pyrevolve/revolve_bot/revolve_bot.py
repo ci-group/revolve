@@ -27,13 +27,14 @@ class RevolveBot:
     a robot's sdf mode
     """
 
-    def __init__(self, _id=None):
+    def __init__(self, _id=None, self_collide=True):
         self._id = _id
         self._body = None
         self._brain = None
         self._morphological_measurements = None
         self._brain_measurements = None
         self._behavioural_measurements = None
+        self.self_collide = self_collide
         self.battery_level = 0.0
 
     @property
@@ -155,7 +156,7 @@ class RevolveBot:
     def to_sdf(self, pose=SDF.math.Vector3(0, 0, 0.25), nice_format=None):
         if type(nice_format) is bool:
             nice_format = '\t' if nice_format else None
-        return SDF.revolve_bot_to_sdf(self, pose, nice_format)
+        return SDF.revolve_bot_to_sdf(self, pose, nice_format, self_collide=self.self_collide)
 
     def to_yaml(self):
         """

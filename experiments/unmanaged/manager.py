@@ -27,6 +27,7 @@ from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
 ROBOT_BATTERY = 5000
 ROBOT_STOP = 5050
+ROBOT_SELF_COLLIDE = False
 REPRODUCE_LOCALLY = True
 REPRODUCE_LOCALLY_RADIUS = 2
 INDIVIDUAL_MAX_AGE = 60 * 2 # 2 minutes
@@ -286,6 +287,7 @@ class Population(object):
 
     async def _insert_robot(self, robot, pos: Vector3, life_duration: float):
         robot.update_substrate()
+        robot.self_collide = ROBOT_SELF_COLLIDE
         robot.battery_level = ROBOT_BATTERY
 
         # Insert the robot in the simulator
@@ -485,6 +487,7 @@ async def run():
         },
         'ROBOT_BATTERY': ROBOT_BATTERY,
         'ROBOT_STOP': ROBOT_STOP,
+        'ROBOT_SELF_COLLIDE': ROBOT_SELF_COLLIDE,
         'REPRODUCE_LOCALLY_RADIUS': REPRODUCE_LOCALLY_RADIUS,
         'INDIVIDUAL_MAX_AGE': INDIVIDUAL_MAX_AGE,
         'INDIVIDUAL_MAX_AGE_SIGMA': INDIVIDUAL_MAX_AGE_SIGMA,

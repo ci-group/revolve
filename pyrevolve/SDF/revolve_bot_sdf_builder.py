@@ -5,7 +5,7 @@ from pyrevolve import SDF
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, Orientation, BoxSlot
 
 
-def revolve_bot_to_sdf(robot, robot_pose, nice_format):
+def revolve_bot_to_sdf(robot, robot_pose, nice_format, self_collide=True):
     from xml.etree import ElementTree
     from pyrevolve import SDF
 
@@ -19,7 +19,7 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format):
     pose_elem = SDF.Pose(robot_pose)
     model.append(pose_elem)
 
-    core_link = SDF.Link('Core')
+    core_link = SDF.Link('Core', self_collide=self_collide)
     core_visual, core_collision, imu_core_sensor = robot._body.to_sdf('', core_link)
 
     links = [core_link]
@@ -44,7 +44,8 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format):
                                              core_link,
                                              core_slot,
                                              core_collision,
-                                             slot_chain)
+                                             slot_chain,
+                                             self_collide)
 
         links.extend(children_links)
         joints.extend(children_joints)
@@ -120,7 +121,7 @@ def _sdf_attach_module(module_slot, module_orientation: float,
     collision.translate(collision.to_parent_direction(old_translation))
 
 
-def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, slot_chain):
+def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, slot_chain, self_collide):
     """
     Recursive function that takes a module and returns a list of SDF links and joints that
     that module and his children have generated.
@@ -142,7 +143,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
 
     # ACTIVE HINGE
     if type(module) is ActiveHingeModule:
-        child_link = SDF.Link('{}_Leg'.format(slot_chain))
+        child_link = SDF.Link('{}_Leg'.format(slot_chain), self_collide=self_collide)
 
         visual_frame, collisions_frame, \
         visual_servo, collisions_servo, \
@@ -229,7 +230,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
                                              my_link,
                                              my_slot,
                                              my_collision,
-                                             child_slot_chain)
+                                             child_slot_chain, self_collide)
         links.extend(children_links)
         joints.extend(children_joints)
         sensors.extend(children_sensors)
