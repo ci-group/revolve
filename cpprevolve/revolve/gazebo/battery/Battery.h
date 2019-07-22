@@ -37,6 +37,7 @@ protected:
     std::string time_init;
 
     friend class Evaluator;
+    friend class DifferentialCPG;
 };
 
 }

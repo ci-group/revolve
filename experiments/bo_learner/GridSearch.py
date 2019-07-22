@@ -24,7 +24,7 @@ run_gazebo = False
 n_runs = 10 # Naar 20
 n_jobs = 4
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "babyC.yaml"
+yaml_model = "babyA.yaml" # CHANGETHIS
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "~/projects/revolve/.venv/bin/python3"
 search_space = {
@@ -46,7 +46,7 @@ print(search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
-start_port = 11000 # STEP 6
+start_port = 13000 # STEP 6
 finished = False
 
 # Make in revolve/build to allow runs from terminal

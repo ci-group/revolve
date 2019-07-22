@@ -20,7 +20,8 @@ void Battery::Update(double global_time, double delta_time)
     }
     this->current_charge += sum * delta_time; // charge is measured in joules
     std::ofstream b_info_file;
-    b_info_file.open("cpprevolve/revolve/gazebo/battery/data/babyC/battery_info_" + this->time_init + ".txt", std::ios_base::app);
+    // CHANGETHIS
+    b_info_file.open("cpprevolve/revolve/gazebo/battery/data/babyA/battery_info_" + this->time_init + ".txt", std::ios_base::app);
 
     b_info_file << global_time << " " << sum << " " << current_charge << std::endl;
 //    std::cout << this->time_init<< std::endl;

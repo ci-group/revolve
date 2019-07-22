@@ -283,14 +283,17 @@ DifferentialCPG::DifferentialCPG(
   }
 
   // Create directory for output.
-  this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
+//  this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
   if(this->directory_name.empty())
   {
-    this->directory_name = "output/cpg_bo/";
-    this->directory_name += std::to_string(time(0)) + "/";
+      std::cout << "§yes§\n";
+    this->directory_name = "output/cpg_bo/babyA/"; // CHANGETHIS
+    this->directory_name += this->battery_->time_init + "/";
   }
+  else
+      std::cout << "§no§\n";
 
-  std::system(("mkdir -p " + this->directory_name).c_str());
+    std::system(("mkdir -p " + this->directory_name).c_str());
 
   // Initialise array of neuron states for Update() method
   this->next_state = new double[this->neurons.size()];
@@ -375,8 +378,17 @@ DifferentialCPG::~DifferentialCPG()
  */
 struct DifferentialCPG::evaluation_function{
   // Number of input dimension (samples.size())
-  //spider9:18,spider13:26,spider17:34,gecko7:13,gecko12:23,gecko17:33,babyA:16,babyB:22,babyC:32,one+:12
-  BO_PARAM(size_t, dim_in, 32); // STEP 2
+  // spider9:18,
+  // spider13:26,
+  // spider17:34,
+  // gecko7:13,
+  // gecko12:23,
+  // gecko17:33,
+  // babyA:16,
+  // babyB:22,
+  // babyC:32,
+  // one+:12
+  BO_PARAM(size_t, dim_in, 16); // CHANGETHIS
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -413,6 +425,9 @@ void DifferentialCPG::bo_init_sampling(){
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all weights
+        srand((unsigned)time(NULL));
+        // trash first one, because it could be the same and I do not know why
+        auto trash_first = rand();
       for (size_t j = 0; j < this->n_weights; j++)
       {
         // Generate a random number in [0, 1]. Transform later
@@ -460,6 +475,9 @@ void DifferentialCPG::bo_init_sampling(){
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all dimensions
+        srand((unsigned)time(NULL));
+        // trash first one, because it could be the same and I do not know why
+        auto trash_first = rand();
       for (size_t j = 0; j < this->n_weights; j++)
       {
         // Take a LHS

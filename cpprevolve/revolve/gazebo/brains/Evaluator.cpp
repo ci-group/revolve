@@ -35,7 +35,6 @@ double Evaluator::measure_distance(
   return std::sqrt(std::pow(_pose1.Pos().X() - _pose2.Pos().X(), 2) +
                    std::pow(_pose1.Pos().Y() - _pose2.Pos().Y(), 2));
 }
-
 /////////////////////////////////////////////////
 Evaluator::Evaluator(std::shared_ptr<::revolve::gazebo::Battery> battery,
                      const double _evaluationRate,
@@ -72,6 +71,7 @@ void Evaluator::Reset()
 double Evaluator::Fitness()
 {
   double fitness_value = 0.0;
+  double speed;
   if(this->locomotion_type == "gait")
   {
     double dS;
@@ -100,8 +100,13 @@ double Evaluator::Fitness()
       }
       coordinates << std::fixed << pose_i.Pos().X() << " " << pose_i.Pos().Y() << std::endl;
     }
+    // save the speed to speed.txt
+    std::ofstream speeds;
+    speeds.open(this->directory_name + "/speed.txt",std::ios::app);
+    speed = this->path_length / evaluation_rate_;
+    speeds << speed << std::endl;
 
-    ////********** directed locomotion fitness function **********////
+      ////********** directed locomotion fitness function **********////
     //directions(forward) of heads are the orientation(+x axis) - 1.570796
     double beta0 = this->start_position_.Rot().Yaw()- M_PI/2.0;
     if (beta0 < - M_PI) //always less than pi (beta0 + max(40degree) < pi)
