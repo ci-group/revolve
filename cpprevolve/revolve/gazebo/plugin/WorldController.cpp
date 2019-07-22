@@ -360,7 +360,6 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
 void WorldController::OnModel(ConstModelPtr &msg)
 {
     auto name = msg->name();
-    std::cout << "WorldController::OnModel(" << name << ')' << std::endl;
 
     int id;
     bool insert_operation_pending;

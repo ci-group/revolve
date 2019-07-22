@@ -107,7 +107,7 @@ class WorldManager(object):
 
         msg = world_control_pb2.WorldControl()
         msg.pause = pause
-        future = await (self.world_control.publish(msg))
+        future = await self.world_control.publish(msg)
         return future
 
     async def reset(

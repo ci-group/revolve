@@ -8,6 +8,7 @@ import yaml
 import enum
 import time
 import shutil
+import pickle
 
 from pyrevolve.custom_logging import logger
 from pyrevolve import parser
@@ -30,11 +31,11 @@ ROBOT_STOP = 5050
 ROBOT_SELF_COLLIDE = False
 REPRODUCE_LOCALLY = True
 REPRODUCE_LOCALLY_RADIUS = 2
-INDIVIDUAL_MAX_AGE = 60 * 2 # 2 minutes
+INDIVIDUAL_MAX_AGE = 60 * 2  # 2 minutes
 INDIVIDUAL_MAX_AGE_SIGMA = 1.0
-SEED_POPULATION_START = 40
-MIN_POP = 40
-MAX_POP = 70
+SEED_POPULATION_START = 50
+MIN_POP = 20
+MAX_POP = 50
 Z_SPAWN_DISTANCE = 0.2
 LIMIT_X = 3
 LIMIT_Y = 3
@@ -43,8 +44,12 @@ MATE_DISTANCE = 0.6
 MATING_COOLDOWN = 0.1
 COUPLE_MATING_LIMIT = 1
 MATING_INCREASE_RATE = 1.0
+SNAPSHOT_TIME = 60 * 10  # 10 minutes
+RECENT_CHILDREN_DELTA_TIME = 30
 
-PLASTICODING_CONF = PlasticodingConfig()
+PLASTICODING_CONF = PlasticodingConfig(
+    max_structural_modules=20
+)
 CROSSOVER_CONF = CrossoverConfig(crossover_prob=1.0)
 MUTATION_CONF = MutationConfig(mutation_prob=0.8, genotype_conf=PLASTICODING_CONF)
 
@@ -214,11 +219,11 @@ class OnlineIndividual(Individual):
 
     def export_life_data(self, folder):
         life_measures = {
-            'distance': measures.displacement(self.manager)[0],
-            'distance_magnitude': measures.displacement(self.manager)[0].magnitude(),
-            'velocity': measures.velocity(self.manager),
-            'displacement_velocity': measures.displacement_velocity(self.manager),
-            'path_length': measures.path_length(self.manager),
+            'distance': str(measures.displacement(self.manager)[0]),
+            'distance_magnitude': str(measures.displacement(self.manager)[0].magnitude()),
+            'velocity': str(measures.velocity(self.manager)),
+            'displacement_velocity': str(measures.displacement_velocity(self.manager)),
+            'path_length': str(measures.path_length(self.manager)),
         }
 
         life = {
@@ -239,6 +244,17 @@ class OnlineIndividual(Individual):
 
         with open(os.path.join(folder, f'life_{self.id}.yaml'), 'w') as f:
             f.write(str(yaml.dump(life)))
+
+    def snapshot_data(self):
+        return {
+            'genotype': self.genotype,
+            'parents': self.parents,
+            'children': self.children,
+            'birth': self.birth_type,
+            'last_mate': self.manager.last_mate,
+            'start_pos': self.starting_position(),
+            'starting_time': self.manager.starting_time
+        }
 
     def export(self, folder):
         self.export_genotype(folder)
@@ -280,7 +296,7 @@ class Population(object):
         self._mating_increase_rate = MATING_INCREASE_RATE
         self._recent_children = []
         self._recent_children_start_time = -1.0
-        self._recent_children_delta_time = 30.0
+        self._recent_children_delta_time = RECENT_CHILDREN_DELTA_TIME
 
     def __len__(self):
         return len(self._robots)
@@ -448,20 +464,47 @@ class Population(object):
                         else:
                             pos3 = self._free_random_spawn_pos()
                         self._log.debug(
-                            f'Attempting mate between {individual1} and {individual2} generated {individual3}')
+                            f'Attempting mate between {individual1} and {individual2} generated {individual3} POP({len(self._robots)})')
                         await self._insert_individual(individual3, pos3)
                         self._log.info(
-                            f'MATE!!!! between {individual1} and {individual2} generated {individual3}')
+                            f'MATE!!!! between {individual1} and {individual2} generated {individual3} POP({len(self._robots)})')
                     except Population.NoPositionFound:
                         self._log.info('Space is too crowded! Cannot insert the new individual, giving up.')
                     except asyncio.TimeoutError:
                         self._log.info(
-                            f'MATE failed!!!! between {individual1} and {individual2} generated {individual3}')
+                            f'MATE failed!!!! between {individual1} and {individual2} generated {individual3} POP({len(self._robots)})')
                     else:
                         self._robots.append(individual3)
 
         except BreakIt:
             pass
+
+    async def create_snapshot(self):
+        await self._connection.pause(True)
+        await asyncio.sleep(0.05)
+        snapshot_folder = await self._connection.create_snapshot(pause_when_saving=False)
+
+        population_snapshot_data = {
+            # 'log': self._log,
+            'data_folder': self._data_folder,
+            # 'connection': self._connection,
+            'robots': [],
+            'robot_id_counter': self._robot_id_counter,
+            'mating_multiplier': self._mating_multiplier,
+            'mating_increase_rate': self._mating_increase_rate,
+            'recent_children': [r.name for r in self._recent_children],
+            'recent_children_start_time': self._recent_children_start_time,
+            'recent_children_delta_time': self._recent_children_delta_time,
+        }
+
+        for robot in self._robots:
+            population_snapshot_data['robots'].append(robot.snapshot_data())
+
+        sys.setrecursionlimit(10000)
+        with open(os.path.join(snapshot_folder, 'online_population.pickle'), 'wb') as f:
+            pickle.dump(population_snapshot_data, f, protocol=-1)
+
+        await self._connection.pause(False)
 
 
 async def run():
@@ -502,7 +545,9 @@ async def run():
         'MATING_COOLDOWN': MATING_COOLDOWN,
         'COUPLE_MATING_LIMIT': COUPLE_MATING_LIMIT,
         'MATING_INCREASE_RATE': MATING_INCREASE_RATE,
+        'RECENT_CHILDREN_DELTA_TIME': RECENT_CHILDREN_DELTA_TIME,
 
+        'PLASTICODING_CONF.max_structural_modules': PLASTICODING_CONF.max_structural_modules,
         'CROSSOVER_PROBABILITY': CROSSOVER_CONF.crossover_prob,
         'MUTATION_PROBABILITY': MUTATION_CONF.mutation_prob,
 
@@ -530,6 +575,7 @@ async def run():
 
     # Connect to the simulator and pause
     connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start))
+    connection.output_directory = os.path.join(data_folder, 'snapshots')
     await asyncio.sleep(1)
 
     robot_population = Population(log, data_folder, connection)
@@ -540,7 +586,17 @@ async def run():
 
     # Start the main life loop
     try:
+        last_snapshot = connection.last_time
+
+        log.info("creating initial snapshot")
+        success = await robot_population.create_snapshot()
+
         while True:
+            world_time = connection.last_time
+            if float(world_time - last_snapshot) > SNAPSHOT_TIME:
+                log.info(f"Creating snapshot at {world_time}")
+                last_snapshot = world_time
+                success = await robot_population.create_snapshot()
             await robot_population.death_season()
             await robot_population.mating_season()
             await robot_population.immigration_season()

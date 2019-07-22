@@ -242,18 +242,19 @@ class WorldManager(manage.WorldManager):
         await self.contact_subscriber.remove()
         await self.battery_handler.stop()
 
-    async def create_snapshot(self):
+    async def create_snapshot(self, pause_when_saving=True):
         """
         Creates a snapshot of the world in the output directory.
         This pauses the world.
-        :return:
+        :return: the folder of the snapshot
         """
         if not self.output_directory:
             logger.warning("No output directory - no snapshot will be created.")
-            return False
+            return None
 
         # Pause the world
-        await (self.pause())
+        if pause_when_saving:
+            await self.pause(True)
 
         # Obtain a copy of the current world SDF from Gazebo and write it to
         # file
@@ -263,28 +264,38 @@ class WorldManager(manage.WorldManager):
         if response.response == "error":
             logger.warning("WARNING: requesting world state resulted in "
                            "error. Snapshot failed.")
-            return False
+            await self.pause(False)
+            return None
 
-        msg = gz_string_pb2.GzString()
-        msg.ParseFromString(response.serialized_data)
-        with open(self.world_snapshot_filename, 'wb') as f:
-            f.write(msg.data)
+        try:
+            snapshot_folder = os.path.join(self.output_directory, str(self.last_time))
+            os.makedirs(snapshot_folder)
 
-        # Get the snapshot data and pickle to file
-        data = await (self.get_snapshot_data())
+            msg = gz_string_pb2.GzString()
+            msg.ParseFromString(response.serialized_data)
+            with open(os.path.join(snapshot_folder, 'snapshot.sdf'), 'wb') as f:
+                f.write(msg.data.encode())
 
-        # It seems pickling causes some issues with the default recursion
-        # limit, up it
-        sys.setrecursionlimit(10000)
-        with open(self.snapshot_filename, 'wb') as f:
-            pickle.dump(data, f, protocol=-1)
+            # Get the snapshot data and pickle to file
+            data = self.get_snapshot_data()
 
-        # Flush statistic files and copy them
-        self.poses_file.flush()
-        self.robots_file.flush()
-        shutil.copy(self.poses_filename, self.poses_filename+'.snapshot')
-        shutil.copy(self.robots_filename, self.robots_filename+'.snapshot')
-        return True
+            # It seems pickling causes some issues with the default recursion
+            # limit, up it
+            sys.setrecursionlimit(10000)
+            with open(os.path.join(snapshot_folder, 'snapshot.pickle'), 'wb') as f:
+                pickle.dump(data, f, protocol=-1)
+
+            # # WHAT IS THIS?
+            # # Flush statistic files and copy them
+            # self.poses_file.flush()
+            # self.robots_file.flush()
+            # shutil.copy(self.poses_filename, self.poses_filename+'.snapshot')
+            # shutil.copy(self.robots_filename, self.robots_filename+'.snapshot')
+        finally:
+            if pause_when_saving:
+                await self.pause(False)
+
+        return snapshot_folder
 
     async def restore_snapshot(self, data):
         """
@@ -299,7 +310,7 @@ class WorldManager(manage.WorldManager):
         self.start_time = data['start_time']
         self.last_time = data['last_time']
 
-    async def get_snapshot_data(self):
+    def get_snapshot_data(self):
         """
         Returns a data object to be pickled into a snapshot file.
         This should contain
@@ -429,13 +440,13 @@ class WorldManager(manage.WorldManager):
 
         sdf_bot = revolve_bot.to_sdf(pose)
 
-        if self.output_directory:
-            robot_file_path = os.path.join(
-                self.output_directory,
-                'robot_{}.sdf'.format(revolve_bot.id)
-            )
-            with open(robot_file_path, 'w') as f:
-                f.write(sdf_bot)
+        # if self.output_directory:
+        #     robot_file_path = os.path.join(
+        #         self.output_directory,
+        #         'robot_{}.sdf'.format(revolve_bot.id)
+        #     )
+        #     with open(robot_file_path, 'w') as f:
+        #         f.write(sdf_bot)
 
         response = await self.insert_model(sdf_bot, life_timeout)
         robot_manager = self._robot_inserted(
