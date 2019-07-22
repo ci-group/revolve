@@ -295,7 +295,7 @@ DifferentialCPG::DifferentialCPG(
 
     std::system(("mkdir -p " + this->directory_name).c_str());
 
-  // Initialise array of neuron states for Update() method
+  // Initialise array of neuron states for Update() methodc
   this->next_state = new double[this->neurons.size()];
   this->n_weights = (int)(this->connections.size()/2) + this->n_motors;
 
