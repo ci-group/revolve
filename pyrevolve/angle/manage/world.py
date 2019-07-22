@@ -619,10 +619,16 @@ class WorldManager(manage.WorldManager):
             # we should copy.
             self.start_time = t
 
+        # mark all as dead and make alive only the robots that received data
+        for _name, robot_manager in self.robot_managers.items():
+            robot_manager.dead = True
+
+        # mark robots alive and receive their states
         for state in states.robot_state:
             robot_manager = self.robot_managers.get(state.name, None)
             if not robot_manager:
                 continue
+            robot_manager.dead = False
             robot_manager.update_state(self, t, state, self.write_poses)
 
         self.call_update_triggers()
