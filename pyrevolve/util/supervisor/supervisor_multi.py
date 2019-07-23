@@ -59,7 +59,8 @@ class DynamicSimSupervisor(object):
                  restore_directory=None,
                  plugins_dir_path=None,
                  models_dir_path=None,
-                 simulator_name='simulator'
+                 simulator_name='simulator',
+                 process_terminated_callback=None,
                  ):
         """
 
@@ -82,6 +83,8 @@ class DynamicSimSupervisor(object):
         :param models_dir_path: Full path (or relative to cwd) to the simulator
                                 models directory (setting env variable
                                 GAZEBO_MODEL_PATH).
+        :param process_terminated_callback: Callback to execute when a process dies
+        :type process_terminated_callback: lambda (process, ret_code) -> None
         """
         if mswindows:
             text = "Starting the simulator with WINDOWS may cause issues! BEWARE!!!"
@@ -107,6 +110,8 @@ class DynamicSimSupervisor(object):
         self.streams = {}
         self.procs = {}
         self._logger = create_logger(simulator_name)
+        self._process_terminated_callback = process_terminated_callback
+        self._process_terminated_futures = []
 
         # Terminate all processes when the supervisor exits
         atexit.register(lambda:
@@ -148,6 +153,7 @@ class DynamicSimSupervisor(object):
         :param port:
         """
         await self._launch_simulator(output_tag=self._simulator_name, address=address, port=port)
+        self._enable_process_terminate_callbacks()
 
     async def relaunch(self, sleep_time=1, address='localhost', port=11345):
         """
@@ -164,6 +170,7 @@ class DynamicSimSupervisor(object):
         """
         Stops the simulator and all other process (companion and children processes)
         """
+        self._disable_process_terminate_callbacks()
         await self._terminate_all()
 
     async def _terminate_all(self):
@@ -239,11 +246,28 @@ class DynamicSimSupervisor(object):
         self.procs[output_tag] = await self._launch_with_ready_str(
             cmd=gz_args,
             ready_str=ready_str,
-            env=env,
-            output_tag=output_tag)
+            env=env)
         self._add_output_stream(output_tag)
 
-    async def _launch_with_ready_str(self, cmd, ready_str, env, output_tag="simulator"):
+    def _enable_process_terminate_callbacks(self):
+        for proc in self.procs.values():
+            dead_process_future = asyncio.ensure_future(proc.wait())
+
+            def create_callback(_process):
+                def _callback(ret_code):
+                    if self._process_terminated_callback is not None:
+                        self._process_terminated_callback(_process, ret_code)
+                return _callback
+
+            dead_process_future.add_done_callback(create_callback(proc))
+            self._process_terminated_futures.append(dead_process_future)
+
+    def _disable_process_terminate_callbacks(self):
+        for dead_process_future in self._process_terminated_futures:
+            dead_process_future.cancel()
+        self._process_terminated_futures.clear()
+
+    async def _launch_with_ready_str(self, cmd, ready_str, env):
 
         process = await asyncio.create_subprocess_exec(
             cmd[0],

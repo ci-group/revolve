@@ -366,11 +366,11 @@ class Population(object):
         Seed a new population
         """
         if pause_while_inserting:
-            await self._connection.pause(True)
+            await self.pause(True)
         await self._connection.reset(rall=True, time_only=True, model_only=False)
         await self.immigration_season(SEED_POPULATION_START)
         if pause_while_inserting:
-            await self._connection.pause(False)
+            await self.pause(False)
 
     def print_population(self):
         for individual in self._robots:
@@ -479,8 +479,19 @@ class Population(object):
         except BreakIt:
             pass
 
+    async def pause(self, pause, how_many_times=20):
+        counter = 0
+        while True:
+            try:
+                await asyncio.wait_for(self._connection.pause(pause), 0.2)
+                return
+            except asyncio.TimeoutError:
+                counter += 1
+                if counter > how_many_times:
+                    raise
+
     async def create_snapshot(self):
-        await self._connection.pause(True)
+        await self.pause(True)
         await asyncio.sleep(0.05)
         snapshot_folder = await self._connection.create_snapshot(pause_when_saving=False)
 
@@ -504,7 +515,7 @@ class Population(object):
         with open(os.path.join(snapshot_folder, 'online_population.pickle'), 'wb') as f:
             pickle.dump(population_snapshot_data, f, protocol=-1)
 
-        await self._connection.pause(False)
+        await self.pause(False)
 
 
 async def run():
@@ -561,13 +572,18 @@ async def run():
 
     # Start Simulator
     if settings.simulator_cmd != 'debug':
+        def simulator_dead(_process, ret_code):
+            log.error("SIMULATOR DIED BEFORE THE END OF THE EXPERIMENT")
+            sys.exit(ret_code)
+
         simulator_supervisor = DynamicSimSupervisor(
             world_file=settings.world,
             simulator_cmd=settings.simulator_cmd,
             simulator_args=["--verbose"],
             plugins_dir_path=os.path.join('.', 'build', 'lib'),
             models_dir_path=os.path.join('.', 'models'),
-            simulator_name='gazebo'
+            simulator_name='gazebo',
+            process_terminated_callback=simulator_dead,
         )
         await simulator_supervisor.launch_simulator(port=settings.port_start)
         # let there be some time to sync all initial output of the simulator
@@ -604,4 +620,7 @@ async def run():
 
             await asyncio.sleep(0.05)
     except Finish:
+        await asyncio.wait_for(connection.disconnect(), 10)
+        if settings.simulator_cmd != 'debug':
+            await asyncio.wait_for(simulator_supervisor.stop(), 10)
         log.info("EVOLUTION finished successfully")
