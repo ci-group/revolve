@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu:18.04
 
 # Dependencies
 RUN apt-get update && \
@@ -18,6 +18,7 @@ RUN apt-get update && \
                        xsltproc             \
                        libcairo2-dev        \
                        graphviz             \
+                       libeigen3-dev        \
                        libgazebo9-dev       \
                        gazebo9           && \
     apt-get clean  && \
