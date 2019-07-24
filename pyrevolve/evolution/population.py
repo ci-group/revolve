@@ -28,6 +28,9 @@ class PopulationConfig:
                  experiment_management,
                  measure_individuals,
                  offspring_size=None,
+                 perform_learning=False,
+                 max_learn_evals=None,
+                 learn_lamarckian=False,
                  next_robot_id=1):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
@@ -65,6 +68,9 @@ class PopulationConfig:
         self.experiment_management = experiment_management
         self.measure_individuals = measure_individuals
         self.offspring_size = offspring_size
+        self.perform_learning = perform_learning
+        self.max_learn_evals=max_learn_evals
+        self.learn_lamarckian=learn_lamarckian
         self.next_robot_id = next_robot_id
 
 
@@ -197,6 +203,7 @@ class Population:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
         new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
         new_population.individuals = new_individuals
+        logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
         return new_population
 
@@ -212,7 +219,7 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(await self.evaluate_single_robot(individual))
+            robot_futures.append(await self.evaluate_single_robot(individual, gen_num))
 
         await asyncio.sleep(1)
 
@@ -223,8 +230,21 @@ class Population:
             logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             self.conf.experiment_management.export_fitness(individual)
 
-    async def evaluate_single_robot(self, individual):
+    async def evaluate_single_robot(self, individual, gen_num):
         if individual.phenotype is None:
                 individual.develop()
 
+        #perform learning
+        if self.conf.perform_learning:
+            individual = await self.learn(individual, gen_num)
+
         return self.simulator_connection.test_robot(individual, self.conf)
+
+    async def learn(self, individual, gen_num):
+        # check if individual has not been learned before or has unfinished learning
+        if not self.conf.experiment_management.has_finished_learning(individual.phenotype.id):
+            learn_brain = Learning(individual, gen_num, self.simulator_connection, self.conf)
+            learn_brain.learn_counter = self.conf.experiment_management.learning_iterations_performed(individual.phenotype.id, gen_num) + 1
+            individual = await learn_brain.learn_brain_through_cma_es()
+            self.conf.experiment_management.finished_learning(individual.phenotype.id)
+        return individual

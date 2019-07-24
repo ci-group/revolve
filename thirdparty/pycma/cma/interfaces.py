@@ -110,7 +110,9 @@ class OOOptimizer(object):
                  maxfun=None, iterations=None, min_iterations=1,
                  args=(),
                  verb_disp=None,
-                 callback=None):
+                 callback=None,
+                 recovery_vec_fit=False,
+                 recovery_previous_gens=False):
         """find minimizer of ``objective_fct``.
 
         CAVEAT: the return value for `optimize` has changed to ``self``,
@@ -132,6 +134,10 @@ class OOOptimizer(object):
             it can be useful to conduct only one iteration at a time.
         ``min_iterations``: number
             minimal number of iterations, even if ``not self.stop()``
+        ``recovery_vec_fit``: list
+            list of list of vector values and list of fitness values recovered from previous run
+        ``recover_previous_gens``: list
+            list of list of vector values and list of fitness values recovered from previous generations
         ``args``: sequence_like
             arguments passed to ``objective_fct``
         ``verb_disp``: number
@@ -170,15 +176,29 @@ class OOOptimizer(object):
 
         callback = self._prepare_callback_list(callback)
 
+
         citer, cevals = 0, 0
+        if recovery_vec_fit:
+            vectors = recovery_vec_fit[0]
+            fitness_vals = recovery_vec_fit[1]
+            maxfun = maxfun - len(fitness_vals)
+
         while not self.stop() or citer < min_iterations:
-            if (maxfun and cevals >= maxfun) or (
-                  iterations and citer >= iterations):
+            if (maxfun and cevals >= maxfun) or (iterations and citer >= iterations):
                 return self
             citer += 1
 
-            X = self.ask()  # deliver candidate solutions
+            X = self.ask() # deliver candidate solutions
             fitvals = [await objective_fct(x, *args) for x in X]
+
+            if recovery_vec_fit:
+                X += recovery_vec_fit[0]
+                fitvals += recovery_vec_fit[1]        
+
+            if recovery_previous_gens:
+                X += recovery_previous_gens[0]
+                fitvals += recovery_previous_gens[1]
+
             cevals += len(fitvals)
             self.tell(X, fitvals)  # all the work is done here
             for f in callback:

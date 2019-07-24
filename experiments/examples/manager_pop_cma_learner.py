@@ -27,9 +27,7 @@ async def run():
     # experiment params #
     num_generations = 5
     population_size = 5
-    offspring_size = 5
-
-    max_learning_evaluations = 10
+    offspring_size = 2
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -78,6 +76,8 @@ async def run():
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         measure_individuals=settings.measure_individuals,
+        perform_learning=True,
+        max_learn_evals=10
     )
 
     settings = parser.parse_args()
@@ -97,62 +97,19 @@ async def run():
 
             if gen_num == 0:
                 await population.init_pop(individuals)
-
-                for i in range(len(population.individuals)):
-                    learned_ind = await learn(population.individuals[i], simulator_queue, population_conf, max_learning_evaluations)
-                    population.individuals[i] = learned_ind                
-
             else:
                 population = await population.next_gen(gen_num, individuals)
-
-                for i in range(len(population.individuals)):
-                    learned_ind = await learn(population.individuals[i], simulator_queue, population_conf, max_learning_evaluations)
-                    population.individuals[i] = learned_ind                 
 
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
         await population.init_pop()
-
-        for i in range(len(population.individuals)):
-            learned_ind = await learn(population.individuals[i], simulator_queue, population_conf, max_learning_evaluations)
-            population.individuals[i] = learned_ind 
-
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     while gen_num < num_generations-1:
         gen_num += 1
         population = await population.next_gen(gen_num)
-
-        for i in range(len(population.individuals)):
-            learned_ind = await learn(population.individuals[i], simulator_queue, population_conf, max_learning_evaluations)
-            population.individuals[i] = learned_ind 
-
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     # output result after completing all generations...
-
-async def learn(individual, simulator, conf, max_learning_evaluations):
-    #individual.develop()
-
-    learn_brain = Learning(individual, simulator, conf, max_learning_evaluations)
-    individual_1 = await learn_brain.learn_brain_through_cma_es()
-    one_ = learn_brain.vectors_fitnessess
-
-    learn_brain = Learning(individual, simulator, conf, max_learning_evaluations)
-    individual_2 = await learn_brain.learn_brain_through_cma_es()
-    two_ = learn_brain.vectors_fitnessess
-    print(12345)
-    print(one_)    
-    print(two_)
-            
-    #original_fitness = learn_brain.vectors_fitnessess[f'{learn_brain.robot_id}_0'][0]
-    #learned_fitness, vector = learn_brain.best_vector_fitness()
-
-    # write stats to file
-    #file = open(f'/home/vm/Downloads/learned_fitnessess.csv', 'a')
-    #file.write(f'{learn_brain.robot_id}, {original_fitness}, {learned_fitness}\n')
-    #file.close()
-
-    return individual

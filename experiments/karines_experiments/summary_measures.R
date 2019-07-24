@@ -4,7 +4,7 @@ library(plyr)
 library(dplyr)
 library(trend)
 
-base_directory <- paste('/Users/kdo210/projects/revolve-simulator/l-system/experiments/journal1', sep='')
+base_directory <- paste('projects/revolve/experiments/karines_experiments/data', sep='')
 
 output_directory = base_directory
 
@@ -22,14 +22,14 @@ gens = 100
 pop = 100
 sig = 0.05
 line_size = 30
-show_markers = TRUE # FALSE
-show_legends = FALSE # TRUE
-methods_colors = c( '#009900',  '#FF8000', '#BA1616', '#000099')  # DARK:green, orange, red,  blue 
+show_markers = TRUE
+show_legends = TRUE 
+experiments_type_colors = c( '#009900',  '#FF8000', '#BA1616', '#000099')  # DARK:green, orange, red,  blue 
 
 measures_names = c(
                    'displacement_velocity_hill',
                    'head_balance',
-                   'sum_of_contacts', #contacts
+                   'contacts', 
                    'displacement_velocity',
                    'branching',
                    'branching_modules_count',
@@ -103,7 +103,8 @@ measures_labels = c(
   'Fitness' 
 )
 
-measures_snapshots_all = c()
+
+measures_snapshots_all = NULL
 
 for (exp in 1:length(experiments_type))
 {
@@ -111,19 +112,27 @@ for (exp in 1:length(experiments_type))
   {
     input_directory  <-  paste(base_directory, '/', experiments_type[exp], '_', run, sep='')
     measures   = read.table(paste(input_directory,"/all_measures.tsv", sep=''), header = TRUE)
+    for( m in 1:length(measures_names))
+      { 
+      measures[measures_names[m]] = as.numeric(as.character(measures[[measures_names[m]]]))
+    }
+    
     snapshots   = read.table(paste(input_directory,"/snapshots_ids.tsv", sep=''), header = TRUE)
-    measures_snapshots = sqldf('select * from snapshots inner join measures using(robot_id) order by generation, robot_id')
+    measures_snapshots = sqldf('select * from snapshots inner join measures using(robot_id) order by generation')
 
     measures_snapshots$run = run
     measures_snapshots$run = as.factor(measures_snapshots$run)
     measures_snapshots$method = experiments_type[exp]
     
-    measures_snapshots_all = rbind(measures_snapshots_all, measures_snapshots)
+    if ( is.null(measures_snapshots_all)){
+      measures_snapshots_all = measures_snapshots
+    }else{
+      measures_snapshots_all = rbind(measures_snapshots_all, measures_snapshots)
+    }
   }
 }
 
-measures_snapshots_all = sqldf('select * from measures_snapshots_all where fitness<>0') # change 0 to None later!
-
+measures_snapshots_all = sqldf("select * from measures_snapshots_all where fitness IS NOT NULL") 
 
 # prepares data
 
@@ -178,6 +187,7 @@ for (exp in 1:length(experiments_type))
 }
 
 
+
 file <-file(paste(output_directory,'/trends.txt',sep=''), open="w")
 
 #tests trends in curves and difference between ini and fin generations
@@ -224,17 +234,19 @@ for (m in 1:length(experiments_type))
     array_mann[[m]][[i]] =  mk.test(c(array(measures_averages_gens_2[[m]][paste(experiments_type[m],"_",measures_names[i],'_median',sep='')]) )[[1]],
                                     continuity = TRUE)
     
+    
     writeLines(c(
       paste(experiments_type[m],measures_names[i], ' Mann-Kendall median p', as.character(round(array_mann[[m]][[i]]$p.value,4)),sep=' '),
       paste(experiments_type[m],measures_names[i], ' Mann-Kendall median s', as.character(round(array_mann[[m]][[i]]$statistic,4)),sep=' ')
     ), file)
     
   }
+  
 }
 
 
 
-# tests final generation among methods
+# tests final generation among experiments_type
 
 aux_m = length(experiments_type)-1
 count_pairs = 0
@@ -267,6 +279,10 @@ for(m in 1:aux_m)
       ), file)
       
     }
+    
+
+      array_wilcoxon2[[2]][[count_pairs]] = paste(initials[m],initials[m2],sep='')
+    
   }
 }
 close(file)
@@ -286,7 +302,7 @@ for (i in 1:length(measures_names))
   {
     graph = graph + geom_errorbar(aes_string(ymin=paste(experiments_type[m],'_',measures_names[i],'_avg','-',experiments_type[m],'_',measures_names[i],'_stdev',sep=''), 
                                              ymax=paste(experiments_type[m],'_',measures_names[i],'_avg','+',experiments_type[m],'_',measures_names[i],'_stdev',sep='') ), 
-                                  color=methods_colors[m], 
+                                  color=experiments_type_colors[m], 
                                   alpha=0.35,size=0.5,width=0.001)
   }
   
@@ -295,7 +311,7 @@ for (i in 1:length(measures_names))
     if(show_legends == TRUE){
       graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_avg',sep=''), colour=shQuote(experiments_labels[m]) ), size=2)
     }else{
-      graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_avg',sep='')   ),size=2, color = methods_colors[m])
+      graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_avg',sep='')   ),size=2, color = experiments_type_colors[m])
     }
     # graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_median',sep='')   ),size=2, color = colors_median[m])
     
@@ -346,6 +362,5 @@ for (i in 1:length(measures_names))
   
   ggsave(paste( output_directory,'/' ,measures_names[i],'_generations.pdf',  sep=''), graph , device='pdf', height = 8, width = 8)
 }
- 
 
 

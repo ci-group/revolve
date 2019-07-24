@@ -8,20 +8,22 @@ import threading
 from pyrevolve.gazebo.manage import WorldManager as World
 from pyrevolve.SDF.math import Vector3
 
-
 class Learning:
-    def __init__(self, individual, simulator_connection, population_conf, max_func_evals=100):
+    def __init__(self, individual, generation, simulator_connection, population_conf):
         """
         :param individual: individual to perform learning on brain
         """
         self.individual = individual
         self.robot_id = None
+        self.generation = generation
         self.vector_values = None
         self.param_references = None
         self.simulator_connection = simulator_connection
         self.population_conf = population_conf
-        self.max_func_evals = max_func_evals
+        self.original = None
+        self.best = None
         self.learn_counter = 0
+        self.started_evals = False
         self.vectors_fitnessess = {}
 
     def vectorize_brain(self):
@@ -88,6 +90,7 @@ class Learning:
         """
         best_vector_key = max(self.vectors_fitnessess, key=self.vectors_fitnessess.get)
         best = self.vectors_fitnessess[best_vector_key]
+        self.best = best
         return best[0], best[1]
 
     async def cma_es_evaluate_vector(self, vector, np_array=True):
@@ -103,11 +106,11 @@ class Learning:
 
         self.vector_values = vector
 
-        if self.robot_id is None:
+        if self.robot_id is None and self.started_evals is False:
             self.robot_id = self.individual.phenotype.id
 
         # set unique robot id
-        self.individual.phenotype._id = f'{self.robot_id}_{self.learn_counter}'
+        self.individual.phenotype._id = f'{self.robot_id}_gen_{self.generation}_li_{self.learn_counter}'
 
         # set vector in brain to collect fitness of robot
         self.devectorize_brain(vector)
@@ -115,14 +118,17 @@ class Learning:
         # parameter values must be in range <-10, 10>
         self.ensure_bounds_parameters()
 
-        #self.individual.phenotype.save_file(f'/home/vm/Downloads/robots_sdf/{self.individual.phenotype._id}.sdf', 'sdf')
-
+        # put robot in simulator and retrieve fitness
         future = self.simulator_connection.test_robot(self.individual, self.population_conf)
         self.individual.fitness = await future
+
+        # store fitness to be restored in case of crash
+        self.population_conf.experiment_management.export_cma_learning_fitness(self.robot_id, self.generation, vector, self.individual.fitness)
 
         self.vectors_fitnessess[self.individual.phenotype._id] = [self.individual.fitness, vector]
 
         self.learn_counter += 1
+        self.started_evals = True
 
         # return negative fitness, as cma lib makes use of base fitness function
         return -self.individual.fitness
@@ -132,9 +138,22 @@ class Learning:
         Covariance matrix adaptation evolution strategy
         :return: best vector result
         """
-        # cma evolution strategy with sigma set to 0.5
+        recovered_learning = False
+        recovered_learning_previous_gens = False
+        
+        # check if learning has crashed in previous run and get fitness values
+        if self.population_conf.experiment_management.cma_learning_is_recoverable(self.robot_id, self.generation):
+            recovered_learning = self.population_conf.experiment_management.recover_cma_learning_fitnesses(self.robot_id, self.generation)
+            recovered_learning = False if len(recovered_learning[0]) == 1 else recovered_learning
+        
+        # recover learning from previous generations
+        if self.population_conf.learn_lamarckian:
+            if self.population_conf.experiment_management.cma_learning_is_recoverable(self.robot_id, self.generation-1):
+                recovered_learning_previous_gens = self.population_conf.experiment_management.recover_previous_gens(self.robot_id, self.generation)
+
+        # cma evolution strategy with sigma set to 0.5 (initial std)
         cma_strategy = cma.CMAEvolutionStrategy(self.vector_values, 0.5)
-        await cma_strategy.optimize(self.cma_es_evaluate_vector, maxfun=self.max_func_evals)
+        await cma_strategy.optimize(self.cma_es_evaluate_vector, maxfun=self.population_conf.max_learn_evals, recovery_vec_fit=recovered_learning, recovery_previous_gens=recovered_learning_previous_gens)
 
         # return best vector
         best_vector = cma_strategy.result.xbest
@@ -152,14 +171,21 @@ class Learning:
         self.vectorize_brain()
 
         # set original fitness of robot as first index of list fitnesses_aqcuired
-        await self.cma_es_evaluate_vector(self.vector_values, False)
+        original_fitness = await self.cma_es_evaluate_vector(self.vector_values, False)
+        self.original = [original_fitness, self.vector_values]
 
         # algorithm does not work for empty vectors
         if len(self.vector_values) > 0:
             best_vector = await self.vector_cma_es()
             self.devectorize_brain(best_vector)
+        else:
+            return self.individual
 
         # set correct fitness for best vector in individual
-        await self.cma_es_evaluate_vector(best_vector, False)
+        await self.cma_es_evaluate_vector(self.vector_values, False)
+
+        self.best_vector_fitness()
+
+        self.individual.phenotype._id = self.robot_id
 
         return self.individual
