@@ -17,7 +17,7 @@ from .measure.measure_body import MeasureBody
 from .measure.measure_brain import MeasureBrain
 
 from ..custom_logging.logger import logger
-
+import os
 
 class RevolveBot:
     """
@@ -283,6 +283,7 @@ class RevolveBot:
                 brain_graph = BrainGraph(self._brain, img_path)
                 brain_graph.brain_to_graph(True)
                 brain_graph.save_graph()
+                brain_graph.remove_dot_files(os.path.dirname(img_path))
             except Exception as e:
                 logger.exception('Failed rendering brain. Exception:')
         else:

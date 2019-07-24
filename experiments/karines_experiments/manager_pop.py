@@ -88,7 +88,8 @@ async def run():
     if do_recovery:
         # loading a previous state of the experiment
         await population.load_snapshot(gen_num)
-        logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
+        if gen_num >= 0:
+            logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
         if has_offspring:
             individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1

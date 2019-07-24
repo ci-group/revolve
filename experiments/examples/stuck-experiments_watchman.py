@@ -22,7 +22,7 @@ while 1:
 
             path = dir_path + "/" + exp +'_'+str(run+1) + "/data_fullevolution/fitness"
             time_now = datetime.now()
-            time_ago = time_now - timedelta(minutes=limit_of_minutes)   
+            time_ago = time_now - timedelta(minutes=limit_of_minutes)
 
             if os.path.isdir(path):
                 files = []

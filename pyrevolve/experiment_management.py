@@ -80,11 +80,16 @@ class ExperimentManagement:
 
     def read_recovery_state(self, population_size, offspring_size):
         snapshots = []
+
         for r, d, f in os.walk(self.dirpath):
             for dir in d:
                 if 'selectedpop' in dir:
-                    snapshots.append(int(dir.split('_')[1]))
+                    exported_files = len([name for name in os.listdir(self.dirpath+'/'+dir) if os.path.isfile(self.dirpath+'/'+dir+'/'+name)])
+                    if exported_files == (population_size * 2): # body and brain files
+                        snapshots.append(int(dir.split('_')[1]))
+
         if len(snapshots) > 0:
+            # the latest complete snapshot
             last_snapshot = np.sort(snapshots)[-1]
             # number of robots expected until the snapshot
             n_robots = population_size + last_snapshot * offspring_size

@@ -132,9 +132,12 @@ for (exp in 1:length(experiments_type))
   }
 }
 
+
+
 measures_snapshots_all = sqldf("select * from measures_snapshots_all where fitness IS NOT NULL") 
 
-# prepares data
+test = sqldf("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 order by 1,2,3 ")
+
 
 measures_averages_gens_1 = list()
 measures_averages_gens_2 = list()

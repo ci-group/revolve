@@ -62,7 +62,7 @@ async def run():
     )
 
     settings = parser.parse_args()
-    simulator_queue = SimulatorSimpleQueue(settings, settings.port_start)
+    simulator_queue = SimulatorSimpleQueue(settings.n_cores,settings, settings.port_start)
     await simulator_queue.start()
 
     population = Population(population_conf, simulator_queue, 0)
