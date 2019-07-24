@@ -1,27 +1,17 @@
-FROM ubuntu:18.04
+FROM cigroup/gazebo:gazebo10-revolve
 
 # Dependencies
-RUN apt-get update && \
-    apt-get install -y build-essential      \
-                       libboost-all-dev     \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+                       build-essential      \
                        cmake                \
-                       curl                 \
-                       cppcheck             \
-                       doxygen              \
                        git                  \
-                       gsl-bin libgsl0-dev  \
-                       mercurial            \
-                       pkg-config           \
-                       python               \
+                       libgsl0-dev          \
                        python3-pip          \
                        libyaml-cpp-dev      \
-                       xsltproc             \
                        libcairo2-dev        \
                        graphviz             \
                        libeigen3-dev        \
-                       libnlopt-dev         \
-                       libgazebo9-dev       \
-                       gazebo9           && \
+                       libnlopt-dev      && \
     apt-get clean  && \
     rm -rf /var/lib/apt/lists/*
 
