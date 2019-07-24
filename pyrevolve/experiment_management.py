@@ -2,7 +2,7 @@ import os
 import shutil
 import numpy as np
 from pyrevolve.custom_logging.logger import logger
-
+import sys
 class ExperimentManagement:
 
     # ids of robots in the name of all types of files are always phenotype ids, and the standard for id is 'robot_ID'

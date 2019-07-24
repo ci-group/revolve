@@ -4,6 +4,7 @@ from collections import deque
 from pyrevolve.SDF.math import Vector3, Quaternion
 from pyrevolve.util import Time
 import math
+import sys
 
 def velocity(robot_manager):
     """
@@ -70,6 +71,9 @@ def contacts(robot_manager, robot):
     avg_contacts = 0
     for c in robot_manager._contacts:
         avg_contacts += c
+    if avg_contacts == 0:
+        print('zero contactsssSSsSss!')
+        sys.exit()
     avg_contacts = avg_contacts / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']
     return avg_contacts
 
