@@ -19,6 +19,7 @@ RUN apt-get update && \
                        libcairo2-dev        \
                        graphviz             \
                        libeigen3-dev        \
+                       libnlopt-dev         \
                        libgazebo9-dev       \
                        gazebo9           && \
     apt-get clean  && \
