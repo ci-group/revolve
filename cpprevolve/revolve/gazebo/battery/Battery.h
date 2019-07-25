@@ -30,12 +30,12 @@ protected:
     /// \brief current charge of the battery in joules
     double current_charge;
 
-    /// \brief amount of watts used for all servos at a time
-    double watts_used;
-
     /// \brief the time of initiation (for creating data files of battery delete later)
     std::string time_init;
 
+    std::string robot_name;
+
+    friend class RobotController;
     friend class Evaluator;
     friend class DifferentialCPG;
 };

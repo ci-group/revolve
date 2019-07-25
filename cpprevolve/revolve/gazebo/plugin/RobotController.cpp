@@ -229,7 +229,6 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
 //  {
 //      std::exit(0);
 //  }
-
   this->brain_->Update(motors_, sensors_, currentTime, actuationTime_);
   this->battery_->Update(currentTime, actuationTime_);
 }
@@ -252,6 +251,8 @@ void RobotController::LoadBattery(const sdf::ElementPtr _sdf)
     this->battery_.reset(new ::revolve::gazebo::Battery(battery_initial_charge)); // set initial battery (joules)
     this->battery_->UpdateParameters(batteryElem);
     this->battery_->ResetVoltage();
+    this->battery_->robot_name = this->model_->GetName();
+
 //    this->battery_->SetUpdateFunc([](const ::gazebo::common::BatteryPtr &battery) -> double {
 //    });
   }

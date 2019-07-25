@@ -19,12 +19,12 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-min_lines = 110
+min_lines = 1490
 run_gazebo = False
-n_runs = 10 # Naar 20
+n_runs = 15 # Naar 20
 n_jobs = 4
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "babyA.yaml" # CHANGETHIS !
+yaml_model = "spider9.yaml" # CHANGETHIS !
 manager = "experiments/bo_learner/manager.py"
 python_interpreter = "~/projects/revolve/.venv/bin/python3"
 search_space = {
@@ -34,8 +34,8 @@ search_space = {
     'verbose': [1],
     'kernel_l': [0.1],
     'acqui_ucb_alpha': [1.0],
-    'n_learning_iterations': [100],
-    'n_init_samples': [20],
+    'n_learning_iterations': [1450],
+    'n_init_samples': [50],
     # 'kernel_l': [0.2],
     # 'acqui_ucb_alpha': [3.0],
     # 'n_learning_iterations': [950],
@@ -134,14 +134,16 @@ def run(i, sub_directory, model, params):
                      " ./revolve.py" + \
                      " --manager " + manager + \
                      " --world-address " + world_address + \
-                     " --robot-yaml " + yaml_model
+                     " --robot-yaml " + yaml_model + \
+                     " --port-start " + str(start_port + i)
     else:
         py_command = python_interpreter + \
                      " ./revolve.py" + \
                      " --manager " + manager + \
                      " --world-address " + world_address + \
                      " --robot-yaml " + yaml_model + \
-                     " --simulator-cmd gazebo"
+                     " --simulator-cmd gazebo" + \
+                     " --port-start " + str(start_port + i)
 
     return_code = os.system(py_command)
     if return_code == 32512:

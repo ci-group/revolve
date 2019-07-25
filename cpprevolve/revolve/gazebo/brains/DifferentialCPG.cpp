@@ -64,6 +64,9 @@ using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Kernel_t = limbo::kernel::MaternFiveHalves<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 
+
+
+
 /**
  * Constructor for DifferentialCPG class.
  *
@@ -282,16 +285,20 @@ DifferentialCPG::DifferentialCPG(
     }
   }
 
+
+
   // Create directory for output.
 //  this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
   if(this->directory_name.empty())
   {
-      std::cout << "§yes§\n";
-    this->directory_name = "output/cpg_bo/babyA/"; // CHANGETHIS
+      std::cout << "§yes§";
+    this->directory_name = "output/cpg_bo/" + this->robot->GetName() + "/"; // CHANGETHIS
     this->directory_name += this->battery_->time_init + "/";
   }
   else
       std::cout << "§no§\n";
+
+
 
     std::system(("mkdir -p " + this->directory_name).c_str());
 
@@ -376,6 +383,8 @@ DifferentialCPG::~DifferentialCPG()
 /**
  * Dummy function for limbo
  */
+
+
 struct DifferentialCPG::evaluation_function{
   // Number of input dimension (samples.size())
   // spider9:18,
@@ -388,7 +397,7 @@ struct DifferentialCPG::evaluation_function{
   // babyB:22,
   // babyC:32,
   // one+:12
-  BO_PARAM(size_t, dim_in, 16); // CHANGETHIS
+  BO_PARAM(size_t, dim_in, 0); // CHANGETHIS
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -658,6 +667,26 @@ void DifferentialCPG::bo_step(){
           limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
       // Optimize. Pass dummy evaluation function and observations .
+
+        if (this->robot->GetName() == "example_spider")
+            const int DIM_IN = 18;
+        else if (this->robot->GetName() == "example_spider13")
+            const int DIM_IN = 26;
+        else if (this->robot->GetName() == "example_spider17")
+            const int DIM_IN = 34;
+        else if (this->robot->GetName() == "example_gecko7")
+            const int DIM_IN = 13;
+        else if (this->robot->GetName() == "example_gecko12")
+            const int DIM_IN = 23;
+        else if (this->robot->GetName() == "example_gecko17")
+            const int DIM_IN = 33;
+        else if (this->robot->GetName() == "example_babyA")
+            const int DIM_IN = 16;
+        else if (this->robot->GetName() == "example_babyB")
+            const int DIM_IN = 22;
+        else if (this->robot->GetName() == "example_babyC")
+            const int DIM_IN = 32;
+
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
                           this->samples,
                           this->observations);

@@ -7,7 +7,7 @@
 using namespace revolve::gazebo;
 
 Battery::Battery(double initial_charge)
-    : initial_charge(initial_charge), current_charge(initial_charge), watts_used(0), time_init(std::to_string(time(0)))
+    : initial_charge(initial_charge), current_charge(initial_charge), time_init(std::to_string(time(0))), robot_name("")
     {}
 
 void Battery::Update(double global_time, double delta_time)
@@ -20,9 +20,9 @@ void Battery::Update(double global_time, double delta_time)
     }
     this->current_charge += sum * delta_time; // charge is measured in joules
     std::ofstream b_info_file;
-    // CHANGETHIS
-    b_info_file.open("cpprevolve/revolve/gazebo/battery/data/babyA/battery_info_" + this->time_init + ".txt", std::ios_base::app);
-
+    b_info_file.open("output/cpg_bo/" + this->robot_name + "/" + this->time_init + "/battery.txt", std::ios_base::app);
+    if (b_info_file.fail())
+        std::cout << "Failed to open: " << b_info_file.fail() << std::endl;
     b_info_file << global_time << " " << sum << " " << current_charge << std::endl;
 //    std::cout << this->time_init<< std::endl;
 }

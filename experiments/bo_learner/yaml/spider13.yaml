@@ -231,11 +231,11 @@ brain:
     signal_factor_all: 4.0
     signal_factor_mid: 2.5
     signal_factor_left_right: 2.5
-    range_lb: -1.0
+    range_lb: -1.5
     range_ub: 1.5
     init_neuron_state: 0.707
   learner:
-    n_init_samples: 20
+    n_init_samples: 50
     init_method: "LHS"
     kernel_noise: 0.00000001
     kernel_optimize_noise: "false"
@@ -249,7 +249,7 @@ brain:
   meta:
     robot_size: 26
     run_analytics: "true"
-    n_learning_iterations: 100
+    n_learning_iterations: 1450
     n_cooldown_iterations: 1
     reset_robot_position: "false"
     evaluation_rate: 60

@@ -9,65 +9,6 @@ from os.path import isfile, join
 from scipy.ndimage.filters import gaussian_filter1d
 
 
-def nice_chart(col_name, do_log=False, do_exp=False, axs=None, col_normalize=None):
-    n = 3
-    viridis = matplotlib.cm.get_cmap('viridis', n)
-    colormap = viridis(np.linspace(0, 1, n))
-    if axs is None:
-        fig, axs = plt.subplots(1,1, figsize=(8,8))
-
-    title = col_name
-    if col_normalize is not None:
-        title = col_name + ' / ' + col_normalize
-    if do_log:
-        title = title + " (log)"
-    elif do_exp:
-        title = title + " (exp)"
-
-
-    axs.set_title(title)
-
-    for_list = [
-        (0, 'direct',  direct,  axs, colormap[0]),
-        (1, 'lsystem', lsystem, axs, colormap[1]),
-        (2, 'cppn',    cppn,    axs, colormap[2]),
-    ]
-
-    for i, title, data, ax, color in for_list:
-        values = []
-        for name,group in data.groupby('gen'):
-            line_values = group[col_name]
-            if col_normalize is not None:
-                line_values = line_values / group[col_normalize]
-                ax.set_ylim((0,1))
-            if do_log:
-                line_values = np.log(line_values)
-            elif do_exp:
-                line_values = np.exp(line_values)
-
-            values.append([np.average(line_values)] + np.percentile(line_values, [0, 25, 50, 75, 100]).tolist())
-        values = pd.DataFrame(data=values, columns=['avg','0','25','50','75','100'])
-
-        x = np.arange(600)
-        #ax.set_title(title)
-        ax.plot(values['avg'], linewidth=2, color=color, label=title)
-        ax.fill_between(x, values['25'], values['75'], alpha=0.4, color=color)
-
-        offset= i*10
-        x = np.arange(offset, 599, 60)
-        yerr_top = []
-        yerr_bottom = []
-        yerr_interval = []
-        for i in range(len(x)):
-            yerr_top.append(values['avg'][x[i]] - values['100'][x[i]])
-            yerr_bottom.append(values['0'][x[i]] - values['avg'][x[i]])
-            yerr_interval.append(values['avg'][x[i]])
-        ax.errorbar(x, yerr_interval, yerr=[yerr_top, yerr_bottom], alpha=0.4, capsize=2, color=color);
-
-    axs.legend(fontsize=12, loc="lower right", bbox_to_anchor=[1, 0],
-               ncol=2, shadow=True, fancybox=True)
-
-
 def average(n, lst):
     res = []
     for i in range(len(lst)//n):
