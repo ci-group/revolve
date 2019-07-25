@@ -14,6 +14,7 @@ from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_simple_queue import SimulatorSimpleQueue
 from pyrevolve.custom_logging.logger import logger
 
@@ -59,11 +60,16 @@ async def run():
         gen_num = 0
         next_robot_id = 1
 
+    def fitness_function(robot_manager, robot):
+        contacts = measures.contacts(robot_manager, robot)
+        assert(contacts != 0)
+        return fitness.floor_is_lava(robot_manager, robot)
+
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.floor_is_lava,
+        fitness_function=fitness_function,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,

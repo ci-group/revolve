@@ -219,13 +219,16 @@ class Population:
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness = await future
+            individual.fitness, behavioural_measurements = await future
+            self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, behavioural_measurements)
             logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             self.conf.experiment_management.export_fitness(individual)
 
     def evaluate_single_robot(self, individual):
+        """
+        :param individual: individual
+        :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
+        """
         if individual.phenotype is None:
             individual.develop()
         return self.simulator_connection.test_robot(individual, self.conf)
-
-

@@ -6,6 +6,33 @@ from pyrevolve.util import Time
 import math
 import sys
 
+
+class BehaviouralMeasurements:
+    """
+        Calculates all the measurements and saves them in one object
+    """
+    def __init__(self, robot_manager, robot):
+        """
+        :param robot_manager: Revolve Manager that holds the life of the robot
+        :param robot: Revolve Bot for measurements relative to the robot morphology and brain
+        :type robot: RevolveBot
+        """
+        self.velocity = velocity(robot_manager)
+        self.displacement = displacement(robot_manager)
+        self.displacement_velocity = displacement_velocity(robot_manager)
+        self.displacement_velocity_hill = displacement_velocity_hill(robot_manager)
+        self.head_balance = head_balance(robot_manager)
+        self.contacts = contacts(robot_manager, robot)
+
+    def items(self):
+        return {
+            'displacement_velocity_hill': self.displacement_velocity_hill,
+            'head_balance': self.head_balance,
+            'contacts': self.contacts,
+            'displacement_velocity': self.displacement_velocity,
+        }.items()
+
+
 def velocity(robot_manager):
     """
     Returns the velocity over the maintained window
@@ -68,12 +95,19 @@ def head_balance(robot_manager):
 
 
 def contacts(robot_manager, robot):
+    """
+    Measures the average number of contacts with the floor relative to the body size
+
+    WARN: this measurement could be faulty, several robots were
+    found to have 0 contacts if simulation is too fast
+
+    :param robot_manager: reference to the robot in simulation
+    :param robot: reference to the robot for size measurement
+    :return: average number of contacts per block in the lifetime
+    """
     avg_contacts = 0
     for c in robot_manager._contacts:
         avg_contacts += c
-    if avg_contacts == 0:
-        print('zero contactsssSSsSss!')
-        sys.exit()
     avg_contacts = avg_contacts / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']
     return avg_contacts
 

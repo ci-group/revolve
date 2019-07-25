@@ -100,8 +100,8 @@ class SimulatorSimpleQueue:
             logger.exception(f"Exception running robot {robot.phenotype}", exc_info=exception)
             return False
 
-        robot_fitness = await evaluation_future
-        future.set_result(robot_fitness)
+        robot_fitness, measurements = await evaluation_future
+        future.set_result((robot_fitness, measurements))
 
         return True
 
@@ -148,20 +148,12 @@ class SimulatorSimpleQueue:
 
             robot_fitness = conf.fitness_function(robot_manager, robot)
 
-            measures_list = {'displacement_velocity_hill': measures.displacement_velocity_hill(robot_manager),
-                             'head_balance': measures.head_balance(robot_manager),
-                             'contacts': measures.contacts(robot_manager, robot),
-                             'displacement_velocity': measures.displacement_velocity(robot_manager)
-                             }
-            conf.experiment_management.export_behavior_measures(robot.phenotype.id, measures_list)
-
             delete_future = await simulator_connection.delete_all_robots()
-        # delete_future = await simulator_connection.delete_robot(robot_manager)
+            # delete_future = await simulator_connection.delete_robot(robot_manager)
             await delete_future
             await simulator_connection.pause(True)
             await simulator_connection.reset(rall=True, time_only=True, model_only=False)
-        return robot_fitness
-
+        return robot_fitness, measures.BehaviouralMeasurements(robot_manager, robot)
 
     async def _joint(self):
         await self._robot_queue.join()

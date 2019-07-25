@@ -9,8 +9,8 @@
         <physics type="ode">
             <max_step_size>0.005</max_step_size>
 
-            <!-- Run as fast as possible -->
-            <real_time_update_rate>0</real_time_update_rate>
+            <!-- Do not run as fast as possible because this cause contact points to be missed -->
+            <real_time_update_rate>2000</real_time_update_rate>
 
             <ode>
                 <constraints>
