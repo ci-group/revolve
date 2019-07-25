@@ -9,8 +9,9 @@ def tournament_selection(population, k=2):
     best_individual = None
     for _ in range(k):
         individual = population[randint(0, len(population) - 1)]
-        if (best_individual is None) or (individual.fitness > best_individual.fitness):
-            best_individual = individual
+        if individual.fitness is not None:
+            if (best_individual is None) or (individual.fitness > best_individual.fitness):
+                best_individual = individual
     return best_individual
 
 

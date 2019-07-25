@@ -386,8 +386,14 @@ parser.add_argument(
 )
 parser.add_argument(
         '--experiment_name',
-        default='default_experiment', type=str,
+        default='default_experiment_1', type=str,
         help="Name of current experiment. A folder with this name will be created."
+)
+
+parser.add_argument(
+    '--run',
+    default='1', type=str,
+    help="Run of repetition of an experiment."
 )
 
 parser.add_argument(

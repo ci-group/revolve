@@ -104,7 +104,7 @@ class MeasureBrain:
             return self.avg_period
         if self.periods is None:
             self.collect_sets_of_params()
-        median = np.median(self.periods)
+        median = np.median(self.periods) if self.periods else 0
         if median == 0 or self.max_param == 0:
             self.avg_period = 0
         else:
@@ -120,7 +120,7 @@ class MeasureBrain:
             return self.dev_period
         if self.periods is None:
             self.collect_sets_of_params()
-        self.dev_period = self.sigmoid(np.std(self.periods))
+        self.dev_period = self.sigmoid(np.std(self.periods)) if self.periods else 0
         return self.dev_period
 
     def measure_avg_phase_offset(self):
@@ -132,7 +132,7 @@ class MeasureBrain:
             return self.avg_phase_offset
         if self.phase_offsets is None:
             self.collect_sets_of_params()
-        median = np.median(self.phase_offsets)
+        median = np.median(self.phase_offsets) if self.phase_offsets else 0
         if median == 0 or self.max_param == 0:
             self.avg_phase_offset = 0
         else:
@@ -148,7 +148,7 @@ class MeasureBrain:
             return self.dev_phase_offset
         if self.phase_offsets is None:
             self.collect_sets_of_params()
-        self.dev_phase_offset = self.sigmoid(np.std(self.phase_offsets))
+        self.dev_phase_offset = self.sigmoid(np.std(self.phase_offsets)) if self.phase_offsets else 0
         return self.dev_phase_offset
 
     def measure_avg_amplitude(self):
@@ -160,7 +160,7 @@ class MeasureBrain:
             return self.avg_amplitude
         if self.amplitudes is None:
             self.collect_sets_of_params()
-        median = np.median(self.amplitudes)
+        median = np.median(self.amplitudes) if self.amplitudes else 0
         if median == 0 or self.max_param == 0:
             self.avg_amplitude = 0
         else:
@@ -176,7 +176,7 @@ class MeasureBrain:
             return self.dev_amplitude
         if self.amplitudes is None:
             self.collect_sets_of_params()
-        self.dev_amplitude = self.sigmoid(np.std(self.amplitudes))
+        self.dev_amplitude = self.sigmoid(np.std(self.amplitudes)) if self.amplitudes else 0
         return self.dev_amplitude
 
     def measure_avg_intra_dev_params(self):
@@ -187,8 +187,8 @@ class MeasureBrain:
             self.avg_intra_dev_params = 0
             return self.avg_intra_dev_params
         params = self.params
-        dt = [np.std([params[param].period, params[param].phase_offset, params[param].amplitude]) for param in params]
-        self.avg_intra_dev_params = self.sigmoid(np.median(dt))
+        dt = [np.std([params[param].period, params[param].phase_offset, params[param].amplitude]) for param in params] if params else 0
+        self.avg_intra_dev_params = self.sigmoid(np.median(dt)) if dt else 0
         return self.avg_intra_dev_params
 
     def measure_avg_inter_dev_params(self):
@@ -200,7 +200,10 @@ class MeasureBrain:
             return self.avg_inter_dev_params
         if self.periods is None or self.phase_offsets is None or self.amplitudes is None:
             self.collect_sets_of_params()
-        self.avg_inter_dev_params = self.sigmoid((np.std(self.periods) + np.std(self.phase_offsets) + np.std(self.amplitudes)) / 3)
+        periods_std = np.std(self.periods) if self.periods else 0
+        p_offset_std = np.std(self.phase_offsets) if self.phase_offsets else 0
+        amplitude_std = np.std(self.amplitudes) if self.amplitudes else 0
+        self.avg_inter_dev_params = self.sigmoid((periods_std + p_offset_std + amplitude_std) / 3)
         return self.avg_inter_dev_params
 
     def measure_sensors_reach(self):
@@ -230,7 +233,7 @@ class MeasureBrain:
         if not connections:
             self.sensors_reach = 0
             return self.sensors_reach
-        self.sensors_reach = np.median(connections)
+        self.sensors_reach = np.median(connections) if connections else 0
         return self.sensors_reach
 
     def measure_recurrence(self):
@@ -277,15 +280,15 @@ class MeasureBrain:
                             inhibitory.append(abs(connection.weight))
                         if connection.weight > 0:
                             excitatory.append(connection.weight)
-                inhibitory_sum = np.sum(inhibitory)
-                excitatory_sum = np.sum(excitatory)
+                inhibitory_sum = np.sum(inhibitory) if inhibitory else 0
+                excitatory_sum = np.sum(excitatory) if excitatory else 0
                 min_value = min(inhibitory_sum, excitatory_sum)
                 max_value = max(inhibitory_sum, excitatory_sum)
                 if min_value == 0 or max_value == 0:
                     balance_set.append(0)
                 else:
                     balance_set.append(min_value / max_value)
-        self.synaptic_reception = np.median(balance_set)
+        self.synaptic_reception = np.median(balance_set) if balance_set else 0
         return self.synaptic_reception
 
     def measure_all(self):
@@ -307,6 +310,19 @@ class MeasureBrain:
         self.measure_sensors_reach()
         self.measure_recurrence()
         self.measure_synaptic_reception()
+
+    def set_all_zero(self):
+        self.avg_period = 0
+        self.dev_period = 0
+        self.avg_phase_offset = 0
+        self.dev_phase_offset = 0
+        self.avg_amplitude = 0
+        self.dev_amplitude = 0
+        self.avg_intra_dev_params = 0
+        self.avg_inter_dev_params = 0
+        self.sensors_reach = 0
+        self.recurrence = 0
+        self.synaptic_reception = 0
 
     def measurements_to_dict(self):
         """

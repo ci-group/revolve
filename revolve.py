@@ -15,7 +15,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 async def run():
     arguments = parser.parse_args()
     if arguments.test_robot is not None:
-        return await test_robot_run(arguments.test_robot)
+        manager = importlib.import_module(arguments.manager).run
+        return await manager()
 
     if arguments.manager is not None:
         # this split will give errors on windows

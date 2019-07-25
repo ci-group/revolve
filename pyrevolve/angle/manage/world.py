@@ -644,10 +644,9 @@ class WorldManager(manage.WorldManager):
         """
         contacts = Contacts()
         contacts.ParseFromString(msg)
-
         # if there was any contact in that instant
         if contacts.contact:
-            # fetches one or more contact poitns for each module that has contacts
+            # fetches one or more contact points for each module that has contacts
             for module_contacts in contacts.contact:
                 robot_name = module_contacts.collision1.split('::')[0]
                 robot_manager = self.robot_managers.get(robot_name, None)

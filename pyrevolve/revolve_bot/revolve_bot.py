@@ -17,7 +17,7 @@ from .measure.measure_body import MeasureBody
 from .measure.measure_brain import MeasureBrain
 
 from ..custom_logging.logger import logger
-
+import os
 
 class RevolveBot:
     """
@@ -70,7 +70,6 @@ class RevolveBot:
         self._morphological_measurements = self.measure_body()
         self._brain_measurements = self.measure_brain()
         logger.info('Robot ' + str(self.id) + ' was measured.')
-        self.export_phenotype_measurements(experiment_name)
 
     def measure_body(self):
         """
@@ -100,7 +99,12 @@ class RevolveBot:
         """
         try:
             measure = MeasureBrain(self._brain, 10)
-            measure.measure_all()
+            measure_b = MeasureBody(self._body)
+            measure_b.count_active_hinges()
+            if measure_b.active_hinges_count > 0:
+                measure.measure_all()
+            else:
+                measure.set_all_zero()
             return measure
         except Exception as e:
             logger.exception('Failed measuring brain')
@@ -279,6 +283,7 @@ class RevolveBot:
                 brain_graph = BrainGraph(self._brain, img_path)
                 brain_graph.brain_to_graph(True)
                 brain_graph.save_graph()
+                brain_graph.remove_dot_files(os.path.dirname(img_path))
             except Exception as e:
                 logger.exception('Failed rendering brain. Exception:')
         else:

@@ -15,18 +15,15 @@ from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.simulator_simple_queue import SimulatorSimpleQueue
-from pyrevolve.custom_logging.logger import logger
+import numpy as np
 
 
 async def run():
     """
     The main coroutine, which is started below.
     """
+    # Parse command line / file input arguments
 
-    # experiment params #
-    num_generations = 100
-    population_size = 100
-    offspring_size = 50
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -40,27 +37,12 @@ async def run():
     crossover_conf = CrossoverConfig(
         crossover_prob=0.8,
     )
-    # experiment params #
 
-    # Parse command line / file input arguments
     settings = parser.parse_args()
     experiment_management = ExperimentManagement(settings)
-    do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
-
-    logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
-
-    if do_recovery:
-        gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size, offspring_size)
-
-        if gen_num == num_generations-1:
-            logger.info('Experiment is already complete.')
-            return
-    else:
-        gen_num = 0
-        next_robot_id = 1
 
     population_conf = PopulationConfig(
-        population_size=population_size,
+        population_size=100,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
         fitness_function=fitness.displacement_velocity_hill,
@@ -73,7 +55,7 @@ async def run():
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=settings.evaluation_time,
-        offspring_size=offspring_size,
+        offspring_size=50,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         measure_individuals=settings.measure_individuals,
@@ -83,33 +65,21 @@ async def run():
     simulator_queue = SimulatorSimpleQueue(settings.n_cores, settings, settings.port_start)
     await simulator_queue.start()
 
-    population = Population(population_conf, simulator_queue, next_robot_id)
+    population = Population(population_conf, simulator_queue, 0)
 
-    if do_recovery:
-        # loading a previous state of the experiment
-        await population.load_snapshot(gen_num)
-        if gen_num >= 0:
-            logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
-        if has_offspring:
-            individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
-            gen_num += 1
-            logger.info('Recovered unfinished offspring '+str(gen_num))
+    # choose a snapshot here. and the maximum best individuals you wish to watch
+    generation = 99
+    max_best = 10
+    await population.load_snapshot(generation)
 
-            if gen_num == 0:
-                await population.init_pop(individuals)
-            else:
-                population = await population.next_gen(gen_num, individuals)
+    fitnesses = []
+    for ind in population.individuals:
+        fitnesses.append(ind.fitness)
+    fitnesses = np.array(fitnesses)
 
-            experiment_management.export_snapshots(population.individuals, gen_num)
-    else:
-        # starting a new experiment
-        experiment_management.create_exp_folders()
-        await population.init_pop()
-        experiment_management.export_snapshots(population.individuals, gen_num)
+    ini = len(population.individuals)-max_best
+    fin = len(population.individuals)
+    population.individuals = np.array(population.individuals)
+    population.individuals = population.individuals[np.argsort(fitnesses)[ini:fin]]
 
-    while gen_num < num_generations-1:
-        gen_num += 1
-        population = await population.next_gen(gen_num)
-        experiment_management.export_snapshots(population.individuals, gen_num)
-
-    # output result after completing all generations...
+    await population.evaluate(population.individuals, generation)

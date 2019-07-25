@@ -212,7 +212,7 @@ class Plasticoding(Genotype):
     def late_development(self):
 
         self.phenotype = RevolveBot()
-        self.phenotype._id = "robot_{}".format(self.id)
+        self.phenotype._id = self.id if type(self.id) == str and self.id.startswith("robot") else "robot_{}".format(self.id)
         self.phenotype._brain = BrainNN()
 
         for symbol in self.intermediate_phenotype:
@@ -255,7 +255,8 @@ class Plasticoding(Genotype):
                 self.decode_brain_moving(symbol)
 
         self.add_imu_nodes()
-        # logger.info('Robot ' + str(self.id) + ' was late-developed.')
+        logger.info('Robot ' + str(self.id) + ' was late-developed.')
+
         return self.phenotype
 
     def move_in_body(self, symbol):
