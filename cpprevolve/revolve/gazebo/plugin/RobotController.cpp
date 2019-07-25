@@ -211,7 +211,9 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
   else if ("rlpower" == learner and "spline" == controller)
   {
-    brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
+    if (not motors_.empty()) {
+        brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
+    }
   }
   else if ("bo" == learner and "cpg" == controller)
   {
@@ -251,7 +253,8 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
 {
   auto currentTime = _info.simTime.Double() - initTime_;
 
-  brain_->Update(motors_, sensors_, currentTime, actuationTime_);
+  if (brain_)
+    brain_->Update(motors_, sensors_, currentTime, actuationTime_);
 }
 
 /////////////////////////////////////////////////

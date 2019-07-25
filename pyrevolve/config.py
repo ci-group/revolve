@@ -79,12 +79,6 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    '--visualize-sensors',
-    default=False, type=bool,
-    help='Visualize sensors (helpful for debugging purposes)'
-)
-
-parser.add_argument(
     '--pose-update-frequency',
     default=5, type=int,
     help="The frequency at which the world is requested to send robot pose"
@@ -228,7 +222,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--manager',
-    default='experiments/examples/manager_pop.py',
+    default=None,
     type=str,
     help="Determine which manager to use."
 )
@@ -385,8 +379,8 @@ parser.add_argument(
              "than to convert it from SDF."
 )
 parser.add_argument(
-        '--experiment_name',
-        default='default_experiment_1', type=str,
+        '--experiment-name',
+        default='default_experiment', type=str,
         help="Name of current experiment. A folder with this name will be created."
 )
 

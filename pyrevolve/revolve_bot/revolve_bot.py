@@ -4,6 +4,7 @@ Revolve body generator based on RoboGen framework
 import yaml
 import traceback
 from collections import OrderedDict
+from collections import deque
 
 from pyrevolve import SDF
 
@@ -26,14 +27,15 @@ class RevolveBot:
     a robot's sdf mode
     """
 
-    def __init__(self, _id=None):
+    def __init__(self, _id=None, self_collide=True):
         self._id = _id
         self._body = None
         self._brain = None
         self._morphological_measurements = None
         self._brain_measurements = None
         self._behavioural_measurements = None
-        # self._battery_level = None
+        self.self_collide = self_collide
+        self.battery_level = 0.0
 
     @property
     def id(self):
@@ -109,7 +111,6 @@ class RevolveBot:
         except Exception as e:
             logger.exception('Failed measuring brain')
 
-
     def load(self, text, conf_type):
         """
         Load robot's description from a string and parse it to Python structure
@@ -159,7 +160,7 @@ class RevolveBot:
     def to_sdf(self, pose=SDF.math.Vector3(0, 0, 0.25), nice_format=None):
         if type(nice_format) is bool:
             nice_format = '\t' if nice_format else None
-        return SDF.revolve_bot_to_sdf(self, pose, nice_format)
+        return SDF.revolve_bot_to_sdf(self, pose, nice_format, self_collide=self.self_collide)
 
     def to_yaml(self):
         """
@@ -270,6 +271,15 @@ class RevolveBot:
                                    module,
                                    new_direction,
                                    substrate_coordinates_map)
+
+    def _iter_all_elements(self):
+        to_process = deque([self._body])
+        while len(to_process) > 0:
+            elem = to_process.popleft()
+            for _i, child in elem.iter_children():
+                if child is not None:
+                    to_process.append(child)
+            yield elem
 
     def render_brain(self, img_path):
         """

@@ -75,85 +75,82 @@ class SimulatorSimpleQueue:
         address = 'localhost'
         port = self._port_start+i
         logger.error("Restarting simulator")
-        self._connections[i].disconnect()
-        await (await self._supervisors[i].relaunch(10, address=address, port=port))
-        await asyncio.sleep(5)
+        await self._connections[i].disconnect()
+        await self._supervisors[i].relaunch(10, address=address, port=port)
+        await asyncio.sleep(10)
         self._connections[i] = await World.create(self._settings, world_address=(address, port))
 
     async def _worker_evaluate_robot(self, connection, robot, future, conf):
         await asyncio.sleep(0.01)
         start = time.time()
-        evaluation_future = asyncio.ensure_future(self._evaluate_robot(connection, robot, conf))
-        while not evaluation_future.done():
-            elapsed = time.time()-start
+        try:
+            timeout = 120  # seconds
+            robot_fitness, measurements = await asyncio.wait_for(self._evaluate_robot(connection, robot, conf), timeout=timeout)
+        except asyncio.TimeoutError:
             # WAITED TO MUCH, RESTART SIMULATOR
-            if elapsed > 120:
-                logger.error(f"Simulator restarted after {elapsed}")
-                return False
-            await asyncio.sleep(0.2)
+            elapsed = time.time()-start
+            logger.error(f"Simulator restarted after {elapsed}")
+            return False
+        except Exception:
+            logger.exception(f"Exception running robot {robot.phenotype}")
+            return False
 
         elapsed = time.time()-start
         logger.info(f"time taken to do a simulation {elapsed}")
 
-        exception = evaluation_future.exception()
-        if exception is not None:
-            logger.exception(f"Exception running robot {robot.phenotype}", exc_info=exception)
-            return False
-
-        robot_fitness, measurements = await evaluation_future
         future.set_result((robot_fitness, measurements))
-
         return True
 
     async def _simulator_queue_worker(self, i):
-        self._free_simulator[i] = True
-        while True:
-            logger.info(f"simulator {i} waiting for robot")
-            (robot, future, conf) = await self._robot_queue.get()
-            self._free_simulator[i] = False
-            logger.info(f"Picking up robot {robot.phenotype.id} into simulator {i}")
-            success = await self._worker_evaluate_robot(self._connections[i], robot, future, conf)
-            if success:
-                if robot.failed_eval_attempt_count == 3:
-                    logger.info("Robot failed to be evaluated 3 times. Saving robot to failed_eval file")
-                    conf.experiment_management.export_failed_eval_robot(robot)
-                robot.failed_eval_attempt_count = 0
-                logger.info(f"simulator {i} finished robot {robot.phenotype.id}")
-            else:
-                # restart of the simulator happened
-                robot.failed_eval_attempt_count += 1
-                logger.info(f"Robot {robot.phenotype.id} current failed attempt: {robot.failed_eval_attempt_count}")
-                await self._robot_queue.put((robot, future, conf))
-                await self._restart_simulator(i)
-            self._robot_queue.task_done()
+        try:
             self._free_simulator[i] = True
+            while True:
+                logger.info(f"simulator {i} waiting for robot")
+                (robot, future, conf) = await self._robot_queue.get()
+                self._free_simulator[i] = False
+                logger.info(f"Picking up robot {robot.phenotype.id} into simulator {i}")
+                success = await self._worker_evaluate_robot(self._connections[i], robot, future, conf)
+                if success:
+                    if robot.failed_eval_attempt_count == 3:
+                        logger.info("Robot failed to be evaluated 3 times. Saving robot to failed_eval file")
+                        conf.experiment_management.export_failed_eval_robot(robot)
+                    robot.failed_eval_attempt_count = 0
+                    logger.info(f"simulator {i} finished robot {robot.phenotype.id}")
+                else:
+                    # restart of the simulator happened
+                    robot.failed_eval_attempt_count += 1
+                    logger.info(f"Robot {robot.phenotype.id} current failed attempt: {robot.failed_eval_attempt_count}")
+                    await self._robot_queue.put((robot, future, conf))
+                    await self._restart_simulator(i)
+                self._robot_queue.task_done()
+                self._free_simulator[i] = True
+        except Exception:
+            logger.exception(f"Exception occourred for Simulator worker {i}")
 
     async def _evaluate_robot(self, simulator_connection, robot, conf):
         if robot.failed_eval_attempt_count == 3:
             logger.info(f'Robot {robot.phenotype.id} evaluation failed (reached max attempt of 3), fitness set to None.')
             robot_fitness = None
+            return robot_fitness, None
         else:
-            await simulator_connection.pause(True)
-            insert_future = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, self._settings.z_start))
-            robot_manager = await insert_future
-            await simulator_connection.pause(False)
+            max_age = conf.evaluation_time
+            robot_manager = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, self._settings.z_start), max_age)
             start = time.time()
             # Start a run loop to do some stuff
-            max_age = conf.evaluation_time
-            while robot_manager.age() < max_age:
-                await asyncio.sleep(1.0 / 5)  # 5= state_update_frequency
+            while not robot_manager.dead:  # robot_manager.age() < max_age:
+                await asyncio.sleep(1.0 / 2)  # 5= state_update_frequency
             end = time.time()
             elapsed = end-start
             logger.info(f'Time taken: {elapsed}')
 
             robot_fitness = conf.fitness_function(robot_manager, robot)
 
-            delete_future = await simulator_connection.delete_all_robots()
-            # delete_future = await simulator_connection.delete_robot(robot_manager)
-            await delete_future
-            await simulator_connection.pause(True)
+            simulator_connection.unregister_robot(robot_manager)
+            # await simulator_connection.delete_all_robots()
+            # await simulator_connection.delete_robot(robot_manager)
+            # await simulator_connection.pause(True)
             await simulator_connection.reset(rall=True, time_only=True, model_only=False)
-        return robot_fitness, measures.BehaviouralMeasurements(robot_manager, robot)
+            return robot_fitness, measures.BehaviouralMeasurements(robot_manager, robot)
 
     async def _joint(self):
         await self._robot_queue.join()

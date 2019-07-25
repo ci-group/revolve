@@ -168,11 +168,11 @@ class Population:
             # Crossover
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
-                child = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
+                child_genotype = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
+                child = Individual(child_genotype)
             else:
                 child = self.conf.selection(self.individuals)
 
-            child.id = self.next_robot_id
             child.genotype.id = self.next_robot_id
             self.next_robot_id += 1
 
@@ -220,7 +220,12 @@ class Population:
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
             individual.fitness, behavioural_measurements = await future
-            self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, behavioural_measurements)
+
+            if behavioural_measurements is None:
+                assert (individual.fitness is None)
+            else:
+                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, behavioural_measurements)
+
             logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             self.conf.experiment_management.export_fitness(individual)
 

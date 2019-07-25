@@ -1,7 +1,6 @@
 import numpy as np
-from collections import deque
 
-from pyrevolve.SDF.math import Vector3, Quaternion
+from pyrevolve.SDF.math import Vector3
 from pyrevolve.util import Time
 import math
 import sys
@@ -33,12 +32,14 @@ class BehaviouralMeasurements:
         }.items()
 
 
+
 def velocity(robot_manager):
     """
     Returns the velocity over the maintained window
     :return:
     """
     return robot_manager._dist / robot_manager._time if robot_manager._time > 0 else 0
+
 
 def displacement(robot_manager):
     """
@@ -48,13 +49,18 @@ def displacement(robot_manager):
     :return: Tuple where the first item is a displacement vector
              and the second a `Time` instance.
     :rtype: tuple(Vector3, Time)
-    """ 
-    if robot_manager.last_position is None:
-        return Vector3(0, 0, 0), Time()   
+    """
+    if len(robot_manager._positions) == 0:
+        return Vector3(0, 0, 0), Time()
     return (
         robot_manager._positions[-1] - robot_manager._positions[0],
         robot_manager._times[-1] - robot_manager._times[0]
     )
+
+
+def path_length(robot_manager):
+    return robot_manager._dist
+
 
 def displacement_velocity(robot_manager):
     """
@@ -67,13 +73,15 @@ def displacement_velocity(robot_manager):
     dist, time = displacement(robot_manager)
     if time.is_zero():
         return 0.0
-    return np.sqrt(dist.x**2 + dist.y**2) / float(time)
+    return np.sqrt(dist.x ** 2 + dist.y ** 2) / float(time)
+
 
 def displacement_velocity_hill(robot_manager):
     dist, time = displacement(robot_manager)
     if time.is_zero():
         return 0.0
     return dist.y / float(time)
+
 
 def head_balance(robot_manager):
     """
@@ -88,9 +96,12 @@ def head_balance(robot_manager):
         pitch = pitch + abs(o[1]) * 180 / math.pi
     #  accumulated angles for each type of rotation
     #  divided by iterations * maximum angle * each type of rotation
-    balance = (roll + pitch) / (instants * 180 * 2)
-    # turns imbalance to balance
-    balance = 1 - balance
+    if instants == 0:
+        balance = None
+    else:
+        balance = (roll + pitch) / (instants * 180 * 2)
+        # turns imbalance to balance
+        balance = 1 - balance
     return balance
 
 
@@ -111,10 +122,9 @@ def contacts(robot_manager, robot):
     avg_contacts = avg_contacts / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']
     return avg_contacts
 
+
 def logs_position_orientation(robot_manager, o, evaluation_time, robotid, path):
-
-    with open(path+'/data_fullevolution/descriptors/positions_'+robotid+'.txt', "a+") as f:
-
+    with open(path + '/data_fullevolution/descriptors/positions_' + robotid + '.txt', "a+") as f:
         if robot_manager.second <= evaluation_time:
             robot_manager.avg_roll += robot_manager._orientations[o][0]
             robot_manager.avg_pitch += robot_manager._orientations[o][1]
@@ -122,12 +132,12 @@ def logs_position_orientation(robot_manager, o, evaluation_time, robotid, path):
             robot_manager.avg_x += robot_manager._positions[o].x
             robot_manager.avg_y += robot_manager._positions[o].y
             robot_manager.avg_z += robot_manager._positions[o].z
-            robot_manager.avg_roll = robot_manager.avg_roll/robot_manager.count_group
-            robot_manager.avg_pitch = robot_manager.avg_pitch/robot_manager.count_group
-            robot_manager.avg_yaw = robot_manager.avg_yaw/robot_manager.count_group
-            robot_manager.avg_x = robot_manager.avg_x/robot_manager.count_group
-            robot_manager.avg_y = robot_manager.avg_y/robot_manager.count_group
-            robot_manager.avg_z = robot_manager.avg_z/robot_manager.count_group
+            robot_manager.avg_roll = robot_manager.avg_roll / robot_manager.count_group
+            robot_manager.avg_pitch = robot_manager.avg_pitch / robot_manager.count_group
+            robot_manager.avg_yaw = robot_manager.avg_yaw / robot_manager.count_group
+            robot_manager.avg_x = robot_manager.avg_x / robot_manager.count_group
+            robot_manager.avg_y = robot_manager.avg_y / robot_manager.count_group
+            robot_manager.avg_z = robot_manager.avg_z / robot_manager.count_group
             robot_manager.avg_roll = robot_manager.avg_roll * 180 / math.pi
             robot_manager.avg_pitch = robot_manager.avg_pitch * 180 / math.pi
             robot_manager.avg_yaw = robot_manager.avg_yaw * 180 / math.pi

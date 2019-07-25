@@ -149,10 +149,7 @@ class BodyAnalyzer(object):
         msg = None
         rh = self.request_handler
         for _ in range(max_attempts):
-            future = await (rh.do_gazebo_request("analyze_body", str(sdf)))
-            await future
-
-            response = future.result()
+            response = await rh.do_gazebo_request("analyze_body", str(sdf))
             if response.response == "success":
                 msg = BodyAnalysisResponse()
                 msg.ParseFromString(response.serialized_data)

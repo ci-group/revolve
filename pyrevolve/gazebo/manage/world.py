@@ -65,9 +65,9 @@ class WorldManager(object):
         await self._init()
         return self
 
-    def disconnect(self):
-        self.manager.stop()
-        self.request_handler.stop()
+    async def disconnect(self):
+        await self.manager.stop()
+        await self.request_handler.stop()
 
     async def _init(self):
         """
@@ -79,20 +79,20 @@ class WorldManager(object):
 
         # Initialize the manager connections as well as the general request
         # handler
-        self.manager = await (connect(self.world_address))
+        self.manager = await connect(self.world_address[0], self.world_address[1])
 
-        self.world_control = await (self.manager.advertise(
+        self.world_control = await self.manager.advertise(
             topic_name='/gazebo/default/world_control',
             msg_type='gazebo.msgs.WorldControl'
-        ))
+        )
 
-        self.request_handler = await (RequestHandler.create(
+        self.request_handler = await RequestHandler.create(
             manager=self.manager,
             msg_id_base=MSG_BASE
-        ))
+        )
 
         # Wait for connections
-        await (self.world_control.wait_for_listener())
+        await self.world_control.wait_for_listener()
 
     async def pause(self, pause=True):
         """
@@ -107,7 +107,7 @@ class WorldManager(object):
 
         msg = world_control_pb2.WorldControl()
         msg.pause = pause
-        future = await (self.world_control.publish(msg))
+        future = await self.world_control.publish(msg)
         return future
 
     async def reset(
@@ -122,17 +122,15 @@ class WorldManager(object):
         :param model_only:
         :param time_only:
         :param rall:
-        :return:
         """
         logger.info("Resetting the world state.")
         msg = world_control_pb2.WorldControl()
         msg.reset.all = rall
         msg.reset.model_only = model_only
         msg.reset.time_only = time_only
-        future = await (self.world_control.publish(msg))
-        return future
+        await self.world_control.publish(msg)
 
-    async def insert_model(self, sdf):
+    async def insert_model(self, sdf, timeout=None):
         """
         Insert a model wrapped in an SDF tag into the world. Make
         sure it has a unique name, as it will be literally inserted into the
@@ -144,13 +142,15 @@ class WorldManager(object):
 
         :param sdf:
         :type sdf: SDF
+        :param timeout: Life span of the model
+        :type timeout: float|None
         :return:
         """
-        future = await (self.request_handler.do_gazebo_request(
+        return await self.request_handler.do_gazebo_request(
             request="insert_sdf",
-            data=str(sdf)
-        ))
-        return future
+            data=str(sdf),
+            dbl_data=timeout,
+        )
 
     async def delete_model(
             self,
@@ -165,8 +165,7 @@ class WorldManager(object):
         occurring from deleting sensors.
         :return:
         """
-        future = await (self.request_handler.do_gazebo_request(
+        return await self.request_handler.do_gazebo_request(
             request=req,
             data=name
-        ))
-        return future
+        )

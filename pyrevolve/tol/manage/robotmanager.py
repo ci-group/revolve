@@ -9,6 +9,7 @@ from pyrevolve.util import Time
 from pyrevolve.tol.manage import measures as ms
 from pyrevolve.evolution import fitness
 
+
 class RobotManager(RvRobotManager):
     """
     Class to manage a single robot
@@ -20,7 +21,8 @@ class RobotManager(RvRobotManager):
             robot,
             position,
             time,
-            battery_level=0.0
+            battery_level=0.0,
+            position_log_size=None,
     ):
         """
         :param conf:
@@ -33,7 +35,9 @@ class RobotManager(RvRobotManager):
         :type battery_level: float
         :return:
         """
-        speed_window = int(conf.evaluation_time * conf.pose_update_frequency)
+        time = conf.evaluation_time if time is None else time
+        speed_window = int(float(time) * conf.pose_update_frequency) + 1 if position_log_size is None \
+            else position_log_size
         super(RobotManager, self).__init__(
                 robot=robot,
                 position=position,
@@ -88,21 +92,6 @@ class RobotManager(RvRobotManager):
             my_fitness == 0 or
             (other_fitness / my_fitness) >= self.conf.mating_fitness_threshold
         )
-
-    def distance_to(self, vec, planar=True):
-        """
-        Calculates the Euclidean distance from this robot to
-        the given vector position.
-        :param vec:
-        :type vec: Vector3
-        :param planar: If true, only x/y coordinates are considered.
-        :return:
-        """
-        diff = self.last_position - vec
-        if planar:
-            diff.z = 0
-
-        return diff.norm()
 
     @staticmethod
     def header():
@@ -163,6 +152,13 @@ class RobotManager(RvRobotManager):
         :return:
         """
         return self.initial_charge - (float(self.age()) * self.size)
+
+    def inverse_charge(self):
+        """
+        Returns the remaining battery charge of this robot.
+        :return:
+        """
+        return self.initial_charge - (float(self.age()) / self.size)
 
     def did_mate_with(self, other):
         """
