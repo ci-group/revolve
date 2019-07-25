@@ -146,6 +146,12 @@ class Learning:
             recovered_learning = self.population_conf.experiment_management.recover_cma_learning_fitnesses(self.robot_id, self.generation)
             recovered_learning = False if len(recovered_learning[0]) == 1 else recovered_learning
         
+        if recovered_learning:
+            i = 1
+            for vector, fitness in zip(recovered_learning[0], recovered_learning[1]):
+                self.vectors_fitnessess[f'recovered_{i}'] = [fitness, vector]
+                i+=1
+        
         # recover learning from previous generations
         if self.population_conf.learn_lamarckian:
             if self.population_conf.experiment_management.cma_learning_is_recoverable(self.robot_id, self.generation-1):
@@ -179,6 +185,7 @@ class Learning:
             best_vector = await self.vector_cma_es()
             self.devectorize_brain(best_vector)
         else:
+            self.individual.phenotype._id = self.robot_id
             return self.individual
 
         # set correct fitness for best vector in individual

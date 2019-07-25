@@ -222,13 +222,14 @@ class Population:
             robot_futures.append(await self.evaluate_single_robot(individual, gen_num))
 
         await asyncio.sleep(1)
-
-        for i, future in enumerate(robot_futures):
-            individual = new_individuals[i]
-            logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness = await future
-            logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
-            self.conf.experiment_management.export_fitness(individual)
+        
+        if not self.conf.perform_learning:
+            for i, future in enumerate(robot_futures):
+                individual = new_individuals[i]
+                logger.info(f'Evaluation of Individual {individual.phenotype.id}')
+                individual.fitness = await future
+                logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+                self.conf.experiment_management.export_fitness(individual)
 
     async def evaluate_single_robot(self, individual, gen_num):
         if individual.phenotype is None:
@@ -241,10 +242,16 @@ class Population:
         return self.simulator_connection.test_robot(individual, self.conf)
 
     async def learn(self, individual, gen_num):
+        """
+        Learn individual by cma
+        :param individual:
+        :param gen_num:
+        """
         # check if individual has not been learned before or has unfinished learning
         if not self.conf.experiment_management.has_finished_learning(individual.phenotype.id):
             learn_brain = Learning(individual, gen_num, self.simulator_connection, self.conf)
             learn_brain.learn_counter = self.conf.experiment_management.learning_iterations_performed(individual.phenotype.id, gen_num) + 1
             individual = await learn_brain.learn_brain_through_cma_es()
+            self.conf.experiment_management.export_fitness(individual)
             self.conf.experiment_management.finished_learning(individual.phenotype.id)
         return individual

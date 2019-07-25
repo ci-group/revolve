@@ -1,4 +1,5 @@
 import os
+import glob
 import ast
 import shutil
 import numpy as np
@@ -181,6 +182,23 @@ class ExperimentManagement:
                 for file in f:
                     if int(file.split('.')[0].split('_')[-1]) > last_id:
                         os.remove(self.dirpath +'/data_fullevolution/'+ folder + '/' + file)
+
+    def delete_robot_learn_files(self, robot_id):
+        robot_ids = []
+        for r, d, f in os.walk(f'{self.dirpath}/data_fullevolution/phenotypes'):
+            for file in f:
+                robot_ids.append(int(file.split('.')[0].split('_')[-1]))
+        last_id = np.sort(robot_ids)[-1]     
+        
+        robot_ids = np.arange(robot_id, last_id+1)
+
+        for r_id in robot_ids:
+            files = glob.glob(f'{self.dirpath}/data_fullevolution/descriptors/behavior_desc_robot_{r_id}.txt')
+            files += glob.glob(f'{self.dirpath}/data_fullevolution/descriptors/behavior_desc_robot_{r_id}_*.txt')
+            files += glob.glob(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_robot_{r_id}_*.txt')
+            files += glob.glob(f'{self.dirpath}/data_fullevolution/finished_learning/robot_{r_id}.txt')
+            for file in files:
+                os.remove(file)
 
     def read_recovery_state(self, population_size, offspring_size):
         snapshots = []

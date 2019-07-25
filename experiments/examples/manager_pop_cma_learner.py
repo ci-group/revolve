@@ -25,12 +25,12 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 5
-    population_size = 5
-    offspring_size = 2
+    num_generations = 2
+    population_size = 3
+    offspring_size = 1
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=100,
+        max_structural_modules=25,
     )
 
     mutation_conf = MutationConfig(
@@ -94,6 +94,9 @@ async def run():
             individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
             logger.info('Recovered unfinished offspring '+str(gen_num))
+
+            # delete existing files for unevaluated robots
+            experiment_management.delete_robot_learn_files(next_robot_id)
 
             if gen_num == 0:
                 await population.init_pop(individuals)
