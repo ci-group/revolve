@@ -189,7 +189,9 @@ class OOOptimizer(object):
             citer += 1
 
             X = self.ask() # deliver candidate solutions
-            fitvals = [await objective_fct(x, *args) for x in X]
+
+            fitvals = await objective_fct(X, *args)
+            #fitvals = [await objective_fct(x, *args) for x in X]
 
             if recovery_vec_fit:
                 X += recovery_vec_fit[0]

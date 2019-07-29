@@ -25,12 +25,12 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 2
-    population_size = 3
-    offspring_size = 1
+    num_generations = 100
+    population_size = 100
+    offspring_size = 50
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=25,
+        max_structural_modules=100,
     )
 
     mutation_conf = MutationConfig(
@@ -77,7 +77,7 @@ async def run():
         experiment_management=experiment_management,
         measure_individuals=settings.measure_individuals,
         perform_learning=True,
-        max_learn_evals=10
+        max_learn_evals=500
     )
 
     settings = parser.parse_args()

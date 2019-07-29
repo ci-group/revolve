@@ -207,7 +207,7 @@ class Population:
 
         return new_population
 
-    async def evaluate(self, new_individuals, gen_num):
+    async def evaluate(self, new_individuals, gen_num, learn_eval=False):
         """
         Evaluates each individual in the new gen population
 
@@ -219,24 +219,25 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(await self.evaluate_single_robot(individual, gen_num))
+            robot_futures.append(await self.evaluate_single_robot(individual, gen_num, learn_eval))
 
         await asyncio.sleep(1)
         
-        if not self.conf.perform_learning:
+        if not self.conf.perform_learning or learn_eval:
             for i, future in enumerate(robot_futures):
                 individual = new_individuals[i]
                 logger.info(f'Evaluation of Individual {individual.phenotype.id}')
                 individual.fitness = await future
                 logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
-                self.conf.experiment_management.export_fitness(individual)
+                if not learn_eval:
+                    self.conf.experiment_management.export_fitness(individual)
 
-    async def evaluate_single_robot(self, individual, gen_num):
+    async def evaluate_single_robot(self, individual, gen_num, learn_eval=False):
         if individual.phenotype is None:
                 individual.develop()
 
         #perform learning
-        if self.conf.perform_learning:
+        if self.conf.perform_learning and not learn_eval:
             individual = await self.learn(individual, gen_num)
 
         return self.simulator_connection.test_robot(individual, self.conf)
@@ -249,7 +250,7 @@ class Population:
         """
         # check if individual has not been learned before or has unfinished learning
         if not self.conf.experiment_management.has_finished_learning(individual.phenotype.id):
-            learn_brain = Learning(individual, gen_num, self.simulator_connection, self.conf)
+            learn_brain = Learning(individual, gen_num, self.simulator_connection, self.conf, population=self)
             learn_brain.learn_counter = self.conf.experiment_management.learning_iterations_performed(individual.phenotype.id, gen_num) + 1
             individual = await learn_brain.learn_brain_through_cma_es()
             self.conf.experiment_management.export_fitness(individual)

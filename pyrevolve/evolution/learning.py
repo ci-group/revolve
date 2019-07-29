@@ -1,18 +1,17 @@
+import time
+import copy
 import asyncio
-import os
-import sys
 import numpy as np
 from thirdparty.pycma import cma
-import time
-import threading
-from pyrevolve.gazebo.manage import WorldManager as World
-from pyrevolve.SDF.math import Vector3
 
 class Learning:
-    def __init__(self, individual, generation, simulator_connection, population_conf):
+    def __init__(self, individual, generation, simulator_connection, population_conf, population=None):
         """
         :param individual: individual to perform learning on brain
         """
+        #DELETE#####################
+        self.times_over_10s = 0
+        ############################
         self.individual = individual
         self.robot_id = None
         self.generation = generation
@@ -20,6 +19,7 @@ class Learning:
         self.param_references = None
         self.simulator_connection = simulator_connection
         self.population_conf = population_conf
+        self.population = population
         self.original = None
         self.best = None
         self.learn_counter = 0
@@ -93,6 +93,49 @@ class Learning:
         self.best = best
         return best[0], best[1]
 
+    async def cma_es_evaluate_multiple_vectors(self, vectors):
+        """
+        :param vector: list of list of vector values to evaluate
+        :return: list of fitnesses of vectors
+        """
+        individuals = []
+        fitness_vals = []
+
+        vectors = [vector.tolist() if isinstance(vector, np.ndarray) else vector for vector in vectors]
+
+        for vector in vectors:
+            self.vector_values = vector
+
+            if self.robot_id is None and self.started_evals is False:
+                self.robot_id = self.individual.phenotype.id
+
+            # set unique robot id
+            self.individual.phenotype._id = f'{self.robot_id}_gen_{self.generation}_li_{self.learn_counter}'
+
+            # set vector in brain to collect fitness of robot
+            self.devectorize_brain(vector)
+
+            # parameter values must be in range <-10, 10>
+            self.ensure_bounds_parameters()
+
+            new_individual = self.individual
+            individuals.append(copy.deepcopy(new_individual))
+
+            self.learn_counter += 1
+            self.started_evals = True
+
+
+        await self.population.evaluate(individuals, self.generation, learn_eval=True)
+
+        for individual in individuals:
+            fitness_vals.append(-individual.fitness)
+
+        for individual, vector in zip(individuals, vectors):
+            self.population_conf.experiment_management.export_cma_learning_fitness(self.robot_id, self.generation, vector, individual.fitness)
+            self.vectors_fitnessess[individual.phenotype._id] = [individual.fitness, vector]
+
+        return fitness_vals
+
     async def cma_es_evaluate_vector(self, vector, np_array=True):
         """
         :param vector: list of vector values to evaluate in individual
@@ -159,7 +202,7 @@ class Learning:
 
         # cma evolution strategy with sigma set to 0.5 (initial std)
         cma_strategy = cma.CMAEvolutionStrategy(self.vector_values, 0.5)
-        await cma_strategy.optimize(self.cma_es_evaluate_vector, maxfun=self.population_conf.max_learn_evals, recovery_vec_fit=recovered_learning, recovery_previous_gens=recovered_learning_previous_gens)
+        await cma_strategy.optimize(self.cma_es_evaluate_multiple_vectors, maxfun=self.population_conf.max_learn_evals, recovery_vec_fit=recovered_learning, recovery_previous_gens=recovered_learning_previous_gens)
 
         # return best vector
         best_vector = cma_strategy.result.xbest
