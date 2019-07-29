@@ -21,9 +21,6 @@ class SimulatorSimpleQueue:
         self._robot_queue = asyncio.Queue()
         self._free_simulator = [True for _ in range(n_cores)]
         self._workers = []
-        ### DELETE LATER ###
-        self.eval_times = []
-        ####################
 
     async def _start_debug(self):
         connection = await World.create(self._settings, world_address=("127.0.0.1", self._port_start))
@@ -97,15 +94,6 @@ class SimulatorSimpleQueue:
 
         elapsed = time.time()-start
         logger.info(f"time taken to do a simulation {elapsed}")
-        
-        ### DELETE LATER ###
-        if len(self.eval_times==20):
-            del self.eval_times[0]
-        self.eval_times.append(elapsed)
-        if all(e_time > 5 for e_time in self.eval_times):
-            exit()
-        ####################
-
         exception = evaluation_future.exception()
         if exception is not None:
             logger.exception(f"Exception running robot {robot.phenotype}", exc_info=exception)
