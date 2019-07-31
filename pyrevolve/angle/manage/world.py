@@ -13,6 +13,8 @@ from datetime import datetime
 from pygazebo.msg import gz_string_pb2
 from pygazebo.msg.contacts_pb2 import Contacts
 
+from pyrevolve.spec import BodyAnalysisResponse
+
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.spec.msgs import BoundingBox
 from pyrevolve.spec.msgs import ModelInserted
@@ -681,3 +683,25 @@ class WorldManager(manage.WorldManager):
         """
         for callback in self.update_triggers:
             callback(self)
+
+    async def analyze_robot_collisions(self, revolve_bot, pose):
+        """
+        Analyze robot collisions
+        """
+        future = await (self.request_handler.do_gazebo_request(
+            request="analyze_body",
+            data=str(revolve_bot.to_sdf(pose))
+        ))
+
+        return future
+
+        # msg = None
+        # if response.response == "success":
+        #     msg = BodyAnalysisResponse()
+        #     msg.ParseFromString(response.serialized_data)
+
+        # if not msg:
+        #     return None
+
+        # internal_collisions = len(msg.contact)
+        # return internal_collisions

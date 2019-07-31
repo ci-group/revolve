@@ -9,9 +9,6 @@ class Learning:
         """
         :param individual: individual to perform learning on brain
         """
-        #DELETE#####################
-        self.times_over_10s = 0
-        ############################
         self.individual = individual
         self.robot_id = None
         self.generation = generation

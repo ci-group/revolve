@@ -104,6 +104,10 @@ class SimulatorSimpleQueue:
 
         return True
 
+    async def eval_colls_robot(self, simulator_connection, robot):
+        collisions = await simulator_connection.analyze_robot_collisions(robot.phenotype, Vector3(0, 0, self._settings.z_start))
+        return collisions
+
     async def _simulator_queue_worker(self, i):
         self._free_simulator[i] = True
         while True:
