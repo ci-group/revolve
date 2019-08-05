@@ -13,22 +13,22 @@ from pyrevolve.tol.manage import measures
 class SimulatorQueue:
     EVALUATION_TIMEOUT = 120  # seconds
 
-    def __init__(self, n_cores: int, settings, port_start=11345):
+    def __init__(self, n_cores: int, settings, port_start=11345, simulator_cmd=None):
         assert (n_cores > 0)
         self._n_cores = n_cores
         self._settings = settings
         self._port_start = port_start
+        self._simulator_cmd = settings.simulator_cmd if simulator_cmd is None else simulator_cmd
         self._supervisors = []
         self._connections = []
         self._robot_queue = asyncio.Queue()
         self._free_simulator = [True for _ in range(n_cores)]
         self._workers = []
 
-    @staticmethod
-    def _simulator_supervisor(world, simulator_cmd, simulator_name_postfix):
+    def _simulator_supervisor(self, simulator_name_postfix):
         return DynamicSimSupervisor(
-            world_file=world,
-            simulator_cmd=simulator_cmd,
+            world_file=self._settings.world,
+            simulator_cmd=self._simulator_cmd,
             simulator_args=["--verbose"],
             plugins_dir_path=os.path.join('.', 'build', 'lib'),
             models_dir_path=os.path.join('.', 'models'),
@@ -51,8 +51,6 @@ class SimulatorQueue:
         future_connections = []
         for i in range(self._n_cores):
             simulator_supervisor = self._simulator_supervisor(
-                world=self._settings.world,
-                simulator_cmd=self._settings.simulator_cmd,
                 simulator_name_postfix=i
             )
             simulator_future_launch = simulator_supervisor.launch_simulator(port=self._port_start+i)

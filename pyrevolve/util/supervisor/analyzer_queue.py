@@ -9,14 +9,13 @@ from pyrevolve.util.supervisor.supervisor_collision import CollisionSimSuperviso
 class AnalyzerQueue(SimulatorQueue):
     EVALUATION_TIMEOUT = 30  # seconds
 
-    def __init__(self, n_cores: int, settings, port_start=11345):
-        super(AnalyzerQueue, self).__init__(n_cores, settings, port_start)
+    def __init__(self, n_cores: int, settings, port_start=11345, simulator_cmd='gzserver'):
+        super(AnalyzerQueue, self).__init__(n_cores, settings, port_start, simulator_cmd)
 
-    @staticmethod
-    def _simulator_supervisor(world, simulator_cmd, simulator_name_postfix):
+    def _simulator_supervisor(self, simulator_name_postfix):
         return CollisionSimSupervisor(
             world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
-            simulator_cmd=simulator_cmd,
+            simulator_cmd=self._simulator_cmd,
             simulator_args=["--verbose"],
             plugins_dir_path=os.path.join('.', 'build', 'lib'),
             models_dir_path=os.path.join('.', 'models'),
