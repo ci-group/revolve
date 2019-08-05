@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import asyncio
-from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
@@ -72,14 +71,21 @@ async def run():
     max_best = 10
     await population.load_snapshot(generation)
 
-    fitnesses = []
+    values = []
     for ind in population.individuals:
-        fitnesses.append(ind.fitness)
-    fitnesses = np.array(fitnesses)
+        # define a criteria here
+        #values.append(ind.fitness)
+        values.append(ind.phenotype._behavioural_measurements.contacts)
+    values = np.array(values)
 
     ini = len(population.individuals)-max_best
     fin = len(population.individuals)
-    population.individuals = np.array(population.individuals)
-    population.individuals = population.individuals[np.argsort(fitnesses)[ini:fin]]
 
-    await population.evaluate(population.individuals, generation)
+    population.individuals = np.array(population.individuals)
+    population.individuals = population.individuals[np.argsort(values)[ini:fin]]
+
+    for ind in population.individuals:
+        print(ind.phenotype.id)
+        print('contacts', ind.phenotype._behavioural_measurements.contacts)
+
+    await population.evaluate(population.individuals, generation, 'watch')

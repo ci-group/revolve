@@ -17,7 +17,7 @@ initials = c('p', 'l')
 
 experiments_labels = c('Plane', 'Floor is lava')
 
-runs = 10
+runs = c(1,2,3,4,5,6,7,8,9,10)
 gens = 100
 pop = 100
 sig = 0.05
@@ -108,7 +108,7 @@ measures_snapshots_all = NULL
 
 for (exp in 1:length(experiments_type))
 {
-  for(run in 1:runs)
+  for(run in runs)
   {
     input_directory  <-  paste(base_directory, '/', experiments_type[exp], '_', run, sep='')
     measures   = read.table(paste(input_directory,"/all_measures.tsv", sep=''), header = TRUE)
