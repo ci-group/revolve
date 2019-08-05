@@ -16,7 +16,7 @@ class BehaviouralMeasurements:
         :param robot: Revolve Bot for measurements relative to the robot morphology and brain
         :type robot: RevolveBot
         """
-        if robot_manager is None and robot is not None:
+        if robot_manager is not None and robot is not None:
             self.velocity = velocity(robot_manager)
             self.displacement = displacement(robot_manager)
             self.displacement_velocity = displacement_velocity(robot_manager)
@@ -34,7 +34,7 @@ class BehaviouralMeasurements:
     def items(self):
         return {
             'velocity': self.velocity,
-            'displacement': self.displacement,
+            #'displacement': self.displacement,
             'displacement_velocity': self.displacement_velocity,
             'displacement_velocity_hill': self.displacement_velocity_hill,
             'head_balance': self.head_balance,

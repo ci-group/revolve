@@ -115,8 +115,8 @@ class Population:
         for line in lines:
             if line.split(' ')[0] == 'velocity':
                 individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-            if line.split(' ')[0] == 'displacement':
-                individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+            #if line.split(' ')[0] == 'displacement':
+             #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
             if line.split(' ')[0] == 'displacement_velocity':
                 individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
             if line.split(' ')[0] == 'displacement_velocity_hill':
