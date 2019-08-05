@@ -136,7 +136,7 @@ for (exp in 1:length(experiments_type))
 
 measures_snapshots_all = sqldf("select * from measures_snapshots_all where fitness IS NOT NULL") 
 
-test = sqldf("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 order by 4")
+fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
 
 
 measures_averages_gens_1 = list()
@@ -199,9 +199,7 @@ file <-file(paste(output_directory,'/trends.txt',sep=''), open="w")
 # ini VS fin
 array_wilcoxon = list()
 array_wilcoxon2 = list()
-# fins
-array_wilcoxon2[[1]] = list()
-array_wilcoxon2[[2]] = list()
+
 # curve
 array_mann = list()
 
@@ -251,7 +249,16 @@ for (m in 1:length(experiments_type))
 
 # tests final generation among experiments_type
 
-aux_m = length(experiments_type)-1
+aux_m = length(experiments_type)
+
+if (aux_m>1)
+{
+  
+  # fins
+  array_wilcoxon2[[1]] = list()
+  array_wilcoxon2[[2]] = list()
+
+aux_m = aux_m -1
 count_pairs = 0
 for(m in 1:aux_m)
 {
@@ -288,8 +295,10 @@ for(m in 1:aux_m)
     
   }
 }
-close(file)
 
+}
+
+close(file)
 
 # plots measures 
 
@@ -338,19 +347,24 @@ for (i in 1:length(measures_names))
     }
   }
   
-  for(p in 1:length(array_wilcoxon2[[1]]))
-  {
-    if(!is.na(array_wilcoxon2[[1]][[p]][[i]]$p.value))
+  if (length(array_wilcoxon2)>0)
     {
-      if(array_wilcoxon2[[1]][[p]][[i]]$p.value<=sig)
+      
+      for(p in 1:length(array_wilcoxon2[[1]]))
       {
-        if(nchar(tests3)>line_size && break_aux == 0){
-          tests3 = paste(tests3, '\n')
-          break_aux = 1
+        if(!is.na(array_wilcoxon2[[1]][[p]][[i]]$p.value))
+        {
+          if(array_wilcoxon2[[1]][[p]][[i]]$p.value<=sig)
+          {
+            if(nchar(tests3)>line_size && break_aux == 0){
+              tests3 = paste(tests3, '\n')
+              break_aux = 1
+            }
+            tests3 = paste(tests3, array_wilcoxon2[[2]][[p]],'D  ',sep='')
+          }
         }
-        tests3 = paste(tests3, array_wilcoxon2[[2]][[p]],'D  ',sep='')
+        
       }
-    }
     
   }
   

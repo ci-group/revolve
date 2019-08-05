@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import asyncio
-from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
