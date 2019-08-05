@@ -46,7 +46,7 @@ async def test_robot_run(robot_file_path: str):
     robot.load_file(robot_file_path, conf_type='yaml')
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
 
-    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.25), 10)
+    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.25), life_timeout=None)
     await connection.pause(False)
     await asyncio.sleep(1.0)
 
@@ -56,6 +56,6 @@ async def test_robot_run(robot_file_path: str):
         status = 'dead' if robot_manager.dead else 'alive'
         print(f"Robot fitness ({status}) is \n"
               f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
-              f" DISPLAC: {fitness.displacement(robot_manager)}\n"
-              f" DIS_VEL: {fitness.displacement_velocity(robot_manager)}")
+              f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
+              f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
         await asyncio.sleep(1.0)
