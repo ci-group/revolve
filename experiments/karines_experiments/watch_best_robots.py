@@ -14,7 +14,7 @@ from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
-from pyrevolve.util.supervisor.simulator_simple_queue import SimulatorSimpleQueue
+from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 import numpy as np
 
 
@@ -62,7 +62,7 @@ async def run():
     )
 
     settings = parser.parse_args()
-    simulator_queue = SimulatorSimpleQueue(settings.n_cores, settings, settings.port_start)
+    simulator_queue = SimulatorQueue(settings.n_cores, settings, settings.port_start)
     await simulator_queue.start()
 
     population = Population(population_conf, simulator_queue, 0)

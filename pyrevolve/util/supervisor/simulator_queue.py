@@ -10,7 +10,9 @@ from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
 
 
-class SimulatorSimpleQueue:
+class SimulatorQueue:
+    EVALUATION_TIMEOUT = 120  # seconds
+
     def __init__(self, n_cores: int, settings, port_start=11345):
         assert (n_cores > 0)
         self._n_cores = n_cores
@@ -22,8 +24,22 @@ class SimulatorSimpleQueue:
         self._free_simulator = [True for _ in range(n_cores)]
         self._workers = []
 
+    @staticmethod
+    def _simulator_supervisor(world, simulator_cmd, simulator_name_postfix):
+        return DynamicSimSupervisor(
+            world_file=world,
+            simulator_cmd=simulator_cmd,
+            simulator_args=["--verbose"],
+            plugins_dir_path=os.path.join('.', 'build', 'lib'),
+            models_dir_path=os.path.join('.', 'models'),
+            simulator_name=f'gazebo_{simulator_name_postfix}'
+        )
+
+    async def _connect_to_simulator(self, settings, address, port):
+        return await World.create(settings, world_address=(address, port))
+
     async def _start_debug(self):
-        connection = await World.create(self._settings, world_address=("127.0.0.1", self._port_start))
+        connection = await self._connect_to_simulator(self._settings, "127.0.0.1", self._port_start)
         self._connections.append(connection)
         self._workers.append(asyncio.ensure_future(self._simulator_queue_worker(0)))
 
@@ -34,13 +50,10 @@ class SimulatorSimpleQueue:
         future_launches = []
         future_connections = []
         for i in range(self._n_cores):
-            simulator_supervisor = DynamicSimSupervisor(
-                world_file=self._settings.world,
+            simulator_supervisor = self._simulator_supervisor(
+                world=self._settings.world,
                 simulator_cmd=self._settings.simulator_cmd,
-                simulator_args=["--verbose"],
-                plugins_dir_path=os.path.join('.', 'build', 'lib'),
-                models_dir_path=os.path.join('.', 'models'),
-                simulator_name='gazebo_{}'.format(i)
+                simulator_name_postfix=i
             )
             simulator_future_launch = simulator_supervisor.launch_simulator(port=self._port_start+i)
 
@@ -51,7 +64,7 @@ class SimulatorSimpleQueue:
 
         for i, future_launch in enumerate(future_launches):
             await future_launch
-            connection_future = World.create(self._settings, world_address=("127.0.0.1", self._port_start+i))
+            connection_future = self._connect_to_simulator(self._settings, "127.0.0.1", self._port_start+i)
             future_connections.append(connection_future)
 
         for i, future_conn in enumerate(future_connections):
@@ -72,20 +85,22 @@ class SimulatorSimpleQueue:
 
     async def _restart_simulator(self, i):
         # restart simulator
-        address = 'localhost'
+        address = '127.0.0.1'
         port = self._port_start+i
         logger.error("Restarting simulator")
         await self._connections[i].disconnect()
         await self._supervisors[i].relaunch(10, address=address, port=port)
         await asyncio.sleep(10)
-        self._connections[i] = await World.create(self._settings, world_address=(address, port))
+        logger.debug("Restarting simulator done... connecting")
+        self._connections[i] = await self._connect_to_simulator(self._settings, address, port)
+        logger.debug("Restarting simulator done... connection done")
 
     async def _worker_evaluate_robot(self, connection, robot, future, conf):
         await asyncio.sleep(0.01)
         start = time.time()
         try:
-            timeout = 120  # seconds
-            robot_fitness, measurements = await asyncio.wait_for(self._evaluate_robot(connection, robot, conf), timeout=timeout)
+            timeout = self.EVALUATION_TIMEOUT  # seconds
+            result = await asyncio.wait_for(self._evaluate_robot(connection, robot, conf), timeout=timeout)
         except asyncio.TimeoutError:
             # WAITED TO MUCH, RESTART SIMULATOR
             elapsed = time.time()-start
@@ -98,7 +113,8 @@ class SimulatorSimpleQueue:
         elapsed = time.time()-start
         logger.info(f"time taken to do a simulation {elapsed}")
 
-        future.set_result((robot_fitness, measurements))
+        robot.failed_eval_attempt_count = 0
+        future.set_result(result)
         return True
 
     async def _simulator_queue_worker(self, i):
@@ -125,7 +141,7 @@ class SimulatorSimpleQueue:
                 self._robot_queue.task_done()
                 self._free_simulator[i] = True
         except Exception:
-            logger.exception(f"Exception occourred for Simulator worker {i}")
+            logger.exception(f"Exception occurred for Simulator worker {i}")
 
     async def _evaluate_robot(self, simulator_connection, robot, conf):
         if robot.failed_eval_attempt_count == 3:
