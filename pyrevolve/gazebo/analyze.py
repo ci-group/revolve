@@ -56,7 +56,7 @@ class BodyAnalyzer(object):
         BodyAnalyzer initialization coroutine
         :return:
         """
-        self.manager = await connect(self.address)
+        self.manager = await connect(self.address, self.port)
         self.request_handler = await (
             RequestHandler.create(self.manager, msg_id_base=_msg_id()))
 

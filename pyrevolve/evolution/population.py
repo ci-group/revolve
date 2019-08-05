@@ -68,7 +68,7 @@ class PopulationConfig:
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig, simulator_connection, next_robot_id):
+    def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -76,12 +76,14 @@ class Population:
         conf variable.
 
         :param conf: configuration of the system
-        :param simulator_connection: connection to the simulator
+        :param simulator_queue: connection to the simulator queue
+        :param analyzer_queue: connection to the analyzer simulator queue
         :param next_robot_id: (sequential) id of the next individual to be created
         """
         self.conf = conf
         self.individuals = []
-        self.simulator_connection = simulator_connection
+        self.analyzer_queue = analyzer_queue
+        self.simulator_queue = simulator_queue
         self.next_robot_id = next_robot_id
 
     def _new_individual(self, genotype):
@@ -194,7 +196,7 @@ class Population:
                                                               self.conf.population_management_selector)
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
-        new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
+        new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
         new_population.individuals = new_individuals
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
@@ -212,7 +214,7 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(self.evaluate_single_robot(individual))
+            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
 
         await asyncio.sleep(1)
 
@@ -226,14 +228,21 @@ class Population:
             else:
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, behavioural_measurements)
 
-            logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+            logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             self.conf.experiment_management.export_fitness(individual)
 
-    def evaluate_single_robot(self, individual):
+    async def evaluate_single_robot(self, individual):
         """
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
         """
         if individual.phenotype is None:
             individual.develop()
-        return self.simulator_connection.test_robot(individual, self.conf)
+
+        if self.analyzer_queue is not None:
+            collisions, _bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
+            if collisions > 0:
+                logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
+                return None, None
+
+        return await self.simulator_queue.test_robot(individual, self.conf)

@@ -7,13 +7,13 @@ from pyrevolve.util.supervisor.supervisor_collision import CollisionSimSuperviso
 
 
 class AnalyzerQueue(SimulatorQueue):
-    EVALUATION_TIMEOUT = 10  # seconds
+    EVALUATION_TIMEOUT = 30  # seconds
 
     def __init__(self, n_cores: int, settings, port_start=11345):
         super(AnalyzerQueue, self).__init__(n_cores, settings, port_start)
 
     @staticmethod
-    def _simulator_supervisor(_world, simulator_cmd, simulator_name_postfix):
+    def _simulator_supervisor(world, simulator_cmd, simulator_name_postfix):
         return CollisionSimSupervisor(
             world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
             simulator_cmd=simulator_cmd,

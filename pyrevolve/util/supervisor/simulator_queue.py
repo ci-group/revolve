@@ -88,7 +88,12 @@ class SimulatorQueue:
         address = '127.0.0.1'
         port = self._port_start+i
         logger.error("Restarting simulator")
-        await self._connections[i].disconnect()
+        logger.error("Restarting simulator... disconnecting")
+        try:
+            await asyncio.wait_for(self._connections[i].disconnect(), 10)
+        except asyncio.TimeoutError:
+            pass
+        logger.error("Restarting simulator... restarting")
         await self._supervisors[i].relaunch(10, address=address, port=port)
         await asyncio.sleep(10)
         logger.debug("Restarting simulator done... connecting")
