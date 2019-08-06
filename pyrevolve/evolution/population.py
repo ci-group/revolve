@@ -76,7 +76,7 @@ class PopulationConfig:
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig, simulator_connection, analyzer_queue=None, next_robot_id=1):
+    def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -84,13 +84,13 @@ class Population:
         conf variable.
 
         :param conf: configuration of the system
-        :param simulator_connection: connection to the simulator
+        :param simulator_queue: connection to the simulator queue
         :param analyzer_queue: connection to the analyzer simulator queue        
         :param next_robot_id: (sequential) id of the next individual to be created
         """
         self.conf = conf
         self.individuals = []
-        self.simulator_connection = simulator_connection
+        self.simulator_queue = simulator_queue
         self.analyzer_queue = analyzer_queue
         self.next_robot_id = next_robot_id
 
@@ -222,7 +222,7 @@ class Population:
                                                               self.conf.population_management_selector)
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
-        new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
+        new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
         new_population.individuals = new_individuals
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
@@ -240,15 +240,14 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(await self.evaluate_single_robot(individual, gen_num, learn_eval))
+            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, gen_num, learn_eval)))
 
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = future if isinstance(future, tuple) else await future
-            logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+            individual.fitness, individual.phenotype._behavioural_measurements = await future
             
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
@@ -257,6 +256,8 @@ class Population:
 
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_fitness(individual)
+                logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+                
                         
     async def evaluate_single_robot(self, individual, gen_num, learn_eval=False):
         if individual.phenotype is None:
@@ -272,7 +273,7 @@ class Population:
         if self.conf.perform_learning and not learn_eval:
             individual = await self.learn(individual, gen_num)
 
-        return self.simulator_connection.test_robot(individual, self.conf)
+        return self.simulator_queue.test_robot(individual, self.conf)
 
     async def learn(self, individual, gen_num):
         """
@@ -282,7 +283,7 @@ class Population:
         """
         # check if individual has not been learned before or has unfinished learning
         if not self.conf.experiment_management.has_finished_learning(individual.phenotype.id):
-            learn_brain = Learning(individual, gen_num, self.simulator_connection, self.conf, population=self)
+            learn_brain = Learning(individual, gen_num, self.simulator_queue, self.conf, population=self)
             learn_brain.learn_counter = self.conf.experiment_management.learning_iterations_performed(individual.phenotype.id, gen_num) + 1
             individual = await learn_brain.learn_brain_through_cma_es()
             
