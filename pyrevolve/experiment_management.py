@@ -44,7 +44,7 @@ class ExperimentManagement:
             individual.export_fitness(folder)
 
     def export_fitness(self, individual):
-        folder = self._data_folder()
+        folder = os.path.join(self._data_folder(),'fitness')
         individual.export_fitness(folder)
 
     def export_behavior_measures(self, _id, measures):

@@ -2,6 +2,7 @@
 
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
+from pyrevolve.tol.manage import measures
 from ..custom_logging.logger import logger
 import time
 import asyncio
@@ -68,7 +69,7 @@ class PopulationConfig:
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig, simulator_connection, next_robot_id):
+    def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -76,12 +77,14 @@ class Population:
         conf variable.
 
         :param conf: configuration of the system
-        :param simulator_connection: connection to the simulator
+        :param simulator_queue: connection to the simulator queue
+        :param analyzer_queue: connection to the analyzer simulator queue
         :param next_robot_id: (sequential) id of the next individual to be created
         """
         self.conf = conf
         self.individuals = []
-        self.simulator_connection = simulator_connection
+        self.analyzer_queue = analyzer_queue
+        self.simulator_queue = simulator_queue
         self.next_robot_id = next_robot_id
 
     def _new_individual(self, genotype):
@@ -107,6 +110,24 @@ class Population:
         with open(path+'/data_fullevolution/fitness/fitness_'+id+'.txt') as f:
             lines = f.readlines()
             individual.fitness = float(lines[0])
+
+        with open(path+'/data_fullevolution/descriptors/behavior_desc_'+id+'.txt') as f:
+            lines = f.readlines()
+        individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+        for line in lines:
+            if line.split(' ')[0] == 'velocity':
+                individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
+            #if line.split(' ')[0] == 'displacement':
+             #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'displacement_velocity':
+                individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'displacement_velocity_hill':
+                individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'head_balance':
+                individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'contacts':
+                individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+
         return individual
 
     async def load_snapshot(self, gen_num):
@@ -194,13 +215,13 @@ class Population:
                                                               self.conf.population_management_selector)
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals)
-        new_population = Population(self.conf, self.simulator_connection, self.next_robot_id)
+        new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
         new_population.individuals = new_individuals
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
         return new_population
 
-    async def evaluate(self, new_individuals, gen_num):
+    async def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve'):
         """
         Evaluates each individual in the new gen population
 
@@ -212,28 +233,37 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(self.evaluate_single_robot(individual))
+            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
 
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, behavioural_measurements = await future
+            individual.fitness, individual.phenotype._behavioural_measurements = await future
 
-            if behavioural_measurements is None:
+            if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
             else:
-                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, behavioural_measurements)
+                if type_simulation == 'evolve':
+                    self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
 
-            logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
-            self.conf.experiment_management.export_fitness(individual)
+            logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+            if type_simulation == 'evolve':
+                self.conf.experiment_management.export_fitness(individual)
 
-    def evaluate_single_robot(self, individual):
+    async def evaluate_single_robot(self, individual):
         """
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
         """
         if individual.phenotype is None:
             individual.develop()
-        return self.simulator_connection.test_robot(individual, self.conf)
+
+        if self.analyzer_queue is not None:
+            collisions, _bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
+            if collisions > 0:
+                logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
+                return None, None
+
+        return await self.simulator_queue.test_robot(individual, self.conf)

@@ -10,7 +10,7 @@
             <max_step_size>0.001</max_step_size>
 
             <!-- Simulation == real time -->
-            <real_time_update_rate>500</real_time_update_rate>
+            <real_time_update_rate>800</real_time_update_rate>
 
             <ode>
                 <constraints>

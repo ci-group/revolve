@@ -1,5 +1,13 @@
 from random import randint
 
+_neg_inf = -float('Inf')
+
+
+def _compare_maj_fitness(indiv_1, indiv_2):
+    fit_1 = _neg_inf if indiv_1.fitness is None else indiv_1.fitness
+    fit_2 = _neg_inf if indiv_2.fitness is None else indiv_2.fitness
+    return fit_1 > fit_2
+
 
 def tournament_selection(population, k=2):
     """
@@ -9,9 +17,8 @@ def tournament_selection(population, k=2):
     best_individual = None
     for _ in range(k):
         individual = population[randint(0, len(population) - 1)]
-        if individual.fitness is not None:
-            if (best_individual is None) or (individual.fitness > best_individual.fitness):
-                best_individual = individual
+        if (best_individual is None) or (_compare_maj_fitness(individual, best_individual)):
+            best_individual = individual
     return best_individual
 
 
