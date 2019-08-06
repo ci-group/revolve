@@ -5,6 +5,7 @@ import asyncio
 import importlib
 
 from pyrevolve.data_analisys.visualize_robot import test_robot_run
+from pyrevolve.data_analisys.check_robot_collision import test_collision_robot
 from pyrevolve import parser
 from experiments.examples import only_gazebo
 
@@ -16,6 +17,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 def run(loop, arguments):
     if arguments.test_robot is not None:
         return loop.run_until_complete(test_robot_run(arguments.test_robot))
+
+    if arguments.test_robot_collision is not None:
+        return loop.run_until_complete(test_collision_robot(arguments.test_robot_collision))
 
     if arguments.manager is not None:
         # this split will give errors on windows

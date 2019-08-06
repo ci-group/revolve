@@ -50,8 +50,11 @@ class ExperimentManagement:
     def export_behavior_measures(self, _id, measures):
         filename = os.path.join(self._data_folder(), 'descriptors', f'behavior_desc_{_id}.txt')
         with open(filename, "w") as f:
-            for key, val in measures.items():
-                f.write(f"{key} {val}\n")
+            if measures is None:
+                f.write(str(None))
+            else:
+                for key, val in measures.items():
+                    f.write(f"{key} {val}\n")
 
     def export_phenotype_images(self, dirpath, individual):
         individual.phenotype.render_body(self._experiment_folder() +'/'+dirpath+f'/body_{individual.phenotype.id}.png')

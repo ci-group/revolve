@@ -393,7 +393,13 @@ parser.add_argument(
 parser.add_argument(
         '--test-robot',
         default=None, type=str,
-        help="Start a simulation with a single robot instead of running evolution. Loads yaml robots."
+        help="Start a simulation with a single robot instead of running evolution. Loads a yaml robot."
+)
+
+parser.add_argument(
+        '--test-robot-collision',
+        default=None, type=str,
+        help="Tests the collision of a single robot. Loads a yaml robot."
 )
 
 parser.add_argument(
