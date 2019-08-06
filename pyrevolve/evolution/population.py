@@ -76,7 +76,7 @@ class PopulationConfig:
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig, simulator_connection, next_robot_id):
+    def __init__(self, conf: PopulationConfig, simulator_connection, analyzer_queue=None, next_robot_id=1):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -85,11 +85,13 @@ class Population:
 
         :param conf: configuration of the system
         :param simulator_connection: connection to the simulator
+        :param analyzer_queue: connection to the analyzer simulator queue        
         :param next_robot_id: (sequential) id of the next individual to be created
         """
         self.conf = conf
         self.individuals = []
         self.simulator_connection = simulator_connection
+        self.analyzer_queue = analyzer_queue
         self.next_robot_id = next_robot_id
 
     def _new_individual(self, genotype):
@@ -245,7 +247,7 @@ class Population:
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
+            individual.fitness, individual.phenotype._behavioural_measurements = future if isinstance(future, tuple) else await future
             logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             
             if individual.phenotype._behavioural_measurements is None:
@@ -259,6 +261,12 @@ class Population:
     async def evaluate_single_robot(self, individual, gen_num, learn_eval=False):
         if individual.phenotype is None:
                 individual.develop()
+
+        if self.analyzer_queue is not None and not learn_eval:
+            collisions, _bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
+            if collisions > 0:
+                logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
+                return None, None
 
         #perform learning
         if self.conf.perform_learning and not learn_eval:

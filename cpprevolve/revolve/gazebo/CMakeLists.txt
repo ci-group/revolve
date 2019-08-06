@@ -234,8 +234,8 @@ add_library(
 )
 target_link_libraries(
         AnalyzerPlugin
-#        revolve-gazebo
-#        revolve-proto
+        revolve-gazebo
+        revolve-proto
         ${GAZEBO_LIBRARIES}
 )
 

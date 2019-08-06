@@ -202,7 +202,9 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg)
 
 void BodyAnalyzer::AnalyzeRequest(ConstRequestPtr &request)
 {
-    if (request->request() not_eq " ")
+    auto request_title = request->request();
+
+    if (request_title not_eq "analyze_body")
     {
         // Request is not meant for us
         return;
