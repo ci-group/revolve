@@ -249,7 +249,11 @@ class DynamicSimSupervisor(object):
         process.check_returncode()
         gazebo_libraries_path = process.stdout.decode()
         gazebo_libraries_path = os.path.dirname(gazebo_libraries_path)
-        gazebo_libraries_path = os.path.join(gazebo_libraries_path, '..', 'lib')
+        for lib_f in ['lib', 'lib64']:
+            _gazebo_libraries_path = os.path.join(gazebo_libraries_path, '..', lib_f)
+            if os.path.isfile(os.path.join(_gazebo_libraries_path, 'libgazebo_common.so')):
+                gazebo_libraries_path = _gazebo_libraries_path
+                break
 
         if platform.system() == 'Darwin':
             env['DYLD_LIBRARY_PATH'] = gazebo_libraries_path
