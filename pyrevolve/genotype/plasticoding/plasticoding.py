@@ -513,8 +513,12 @@ class Plasticoding(Genotype):
                 if not intersection:
                     self.mounting_reference.children[slot] = module
                     self.morph_mounting_container = None
-                    self.mounting_reference_stack.append(self.mounting_reference)
-                    self.mounting_reference = module
+
+                    # moves turtle to new module
+                    if self.conf.move_to_new:
+                        self.mounting_reference_stack.append(self.mounting_reference)
+                        self.mounting_reference = module
+
                     if new_module_type == Alphabet.JOINT_HORIZONTAL \
                             or new_module_type == Alphabet.JOINT_VERTICAL:
                         self.decode_brain_node(symbol, module.id)
@@ -676,7 +680,7 @@ from pyrevolve.genotype.plasticoding import initialization
 class PlasticodingConfig:
     def __init__(self,
                  initialization_genome=initialization.random_initialization,
-                 e_max_groups=3,
+                 e_max_groups=4,
                  oscillator_param_min=1,
                  oscillator_param_max=10,
                  weight_param_min=-1,
@@ -686,7 +690,8 @@ class PlasticodingConfig:
                  axiom_w=Alphabet.CORE_COMPONENT,
                  i_iterations=3,
                  max_structural_modules=100,
-                 robot_id=0
+                 robot_id=0,
+                 move_to_new=False
                  ):
         self.initialization_genome = initialization_genome
         self.e_max_groups = e_max_groups
@@ -700,3 +705,4 @@ class PlasticodingConfig:
         self.i_iterations = i_iterations
         self.max_structural_modules = max_structural_modules
         self.robot_id = robot_id
+        self.move_to_new = move_to_new

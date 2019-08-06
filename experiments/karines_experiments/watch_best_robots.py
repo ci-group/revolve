@@ -76,13 +76,15 @@ async def run():
         # define a criteria here
         #values.append(ind.fitness)
         values.append(ind.phenotype._behavioural_measurements.contacts)
+       # values.append(ind.phenotype._behavioural_measurements.displacement_velocity_hill)
     values = np.array(values)
 
     ini = len(population.individuals)-max_best
     fin = len(population.individuals)
 
     population.individuals = np.array(population.individuals)
-    population.individuals = population.individuals[np.argsort(values)[ini:fin]]
+    #population.individuals = population.individuals[np.argsort(values)[ini:fin]]
+    population.individuals = population.individuals[np.argsort(values)[0:max_best]]
 
     for ind in population.individuals:
         print(ind.phenotype.id)
