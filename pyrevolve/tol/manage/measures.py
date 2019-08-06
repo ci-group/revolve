@@ -10,25 +10,35 @@ class BehaviouralMeasurements:
     """
         Calculates all the measurements and saves them in one object
     """
-    def __init__(self, robot_manager, robot):
+    def __init__(self, robot_manager = None, robot = None):
         """
         :param robot_manager: Revolve Manager that holds the life of the robot
         :param robot: Revolve Bot for measurements relative to the robot morphology and brain
         :type robot: RevolveBot
         """
-        self.velocity = velocity(robot_manager)
-        self.displacement = displacement(robot_manager)
-        self.displacement_velocity = displacement_velocity(robot_manager)
-        self.displacement_velocity_hill = displacement_velocity_hill(robot_manager)
-        self.head_balance = head_balance(robot_manager)
-        self.contacts = contacts(robot_manager, robot)
+        if robot_manager is not None and robot is not None:
+            self.velocity = velocity(robot_manager)
+            self.displacement = displacement(robot_manager)
+            self.displacement_velocity = displacement_velocity(robot_manager)
+            self.displacement_velocity_hill = displacement_velocity_hill(robot_manager)
+            self.head_balance = head_balance(robot_manager)
+            self.contacts = contacts(robot_manager, robot)
+        else:
+            self.velocity = None
+            self.displacement = None
+            self.displacement_velocity = None
+            self.displacement_velocity_hill = None
+            self.head_balance = None
+            self.contacts = None
 
     def items(self):
         return {
+            'velocity': self.velocity,
+            #'displacement': self.displacement,
+            'displacement_velocity': self.displacement_velocity,
             'displacement_velocity_hill': self.displacement_velocity_hill,
             'head_balance': self.head_balance,
-            'contacts': self.contacts,
-            'displacement_velocity': self.displacement_velocity,
+            'contacts': self.contacts
         }.items()
 
 

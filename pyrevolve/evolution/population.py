@@ -2,6 +2,7 @@
 
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
+from pyrevolve.tol.manage import measures
 from ..custom_logging.logger import logger
 import time
 import asyncio
@@ -109,6 +110,24 @@ class Population:
         with open(path+'/data_fullevolution/fitness/fitness_'+id+'.txt') as f:
             lines = f.readlines()
             individual.fitness = float(lines[0])
+
+        with open(path+'/data_fullevolution/descriptors/behavior_desc_'+id+'.txt') as f:
+            lines = f.readlines()
+        individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+        for line in lines:
+            if line.split(' ')[0] == 'velocity':
+                individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
+            #if line.split(' ')[0] == 'displacement':
+             #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'displacement_velocity':
+                individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'displacement_velocity_hill':
+                individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'head_balance':
+                individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'contacts':
+                individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+
         return individual
 
     async def load_snapshot(self, gen_num):
@@ -202,7 +221,7 @@ class Population:
 
         return new_population
 
-    async def evaluate(self, new_individuals, gen_num):
+    async def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve'):
         """
         Evaluates each individual in the new gen population
 
@@ -221,15 +240,17 @@ class Population:
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, behavioural_measurements = await future
+            individual.fitness, individual.phenotype._behavioural_measurements = await future
 
-            if behavioural_measurements is None:
+            if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
             else:
-                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, behavioural_measurements)
+                if type_simulation == 'evolve':
+                    self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
 
             logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
-            self.conf.experiment_management.export_fitness(individual)
+            if type_simulation == 'evolve':
+                self.conf.experiment_management.export_fitness(individual)
 
     async def evaluate_single_robot(self, individual):
         """
