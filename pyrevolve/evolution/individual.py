@@ -40,9 +40,12 @@ class Individual:
             self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}.yaml', conf_type='yaml')
 
     def export_fitness(self, folder):
-        if self.fitness is not None:
-            with open(f'{folder}/fitness_{self.id}.txt', 'w') as f:
-                f.write(str(self.fitness))
+        """
+        It's saving the fitness into a file. The fitness can be a floating point number or None
+        :param folder: folder where to save the fitness
+        """
+        with open(f'{folder}/fitness_{self.id}.txt', 'w') as f:
+            f.write(str(self.fitness))
 
     def export(self, folder):
         self.export_genotype(folder)

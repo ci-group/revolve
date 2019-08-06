@@ -107,26 +107,29 @@ class Population:
         individual.develop()
         individual.phenotype.measure_phenotype(self.conf.experiment_name)
 
-        with open(path+'/data_fullevolution/fitness/fitness_'+id+'.txt') as f:
-            lines = f.readlines()
-            individual.fitness = float(lines[0])
+        with open(os.path.join(path, 'data_fullevolution', 'fitness', f'fitness_{id}.txt')) as f:
+            data = f.readlines()[0]
+            individual.fitness = None if data == 'None' else float(data)
 
-        with open(path+'/data_fullevolution/descriptors/behavior_desc_'+id+'.txt') as f:
+        with open(os.path.join(path, 'data_fullevolution', 'descriptors', f'behavior_desc_{id}.txt')) as f:
             lines = f.readlines()
-        individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
-        for line in lines:
-            if line.split(' ')[0] == 'velocity':
-                individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-            #if line.split(' ')[0] == 'displacement':
-             #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
-            if line.split(' ')[0] == 'displacement_velocity':
-                individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
-            if line.split(' ')[0] == 'displacement_velocity_hill':
-                individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
-            if line.split(' ')[0] == 'head_balance':
-                individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
-            if line.split(' ')[0] == 'contacts':
-                individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+            if lines[0] == 'None':
+                individual.phenotype._behavioural_measurements = None
+            else:
+                individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+                for line in lines:
+                    if line.split(' ')[0] == 'velocity':
+                        individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
+                    #if line.split(' ')[0] == 'displacement':
+                     #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+                    if line.split(' ')[0] == 'displacement_velocity':
+                        individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
+                    if line.split(' ')[0] == 'displacement_velocity_hill':
+                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
+                    if line.split(' ')[0] == 'head_balance':
+                        individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+                    if line.split(' ')[0] == 'contacts':
+                        individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
 
         return individual
 
@@ -244,9 +247,9 @@ class Population:
 
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
-            else:
-                if type_simulation == 'evolve':
-                    self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
+
+            if type_simulation == 'evolve':
+                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
 
             logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             if type_simulation == 'evolve':
