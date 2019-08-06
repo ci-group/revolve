@@ -35,6 +35,7 @@ class RobotManager(object):
         :type battery_level: float
         :return:
         """
+        self.dead = False
         self.warmup_time = warmup_time
         self.speed_window = speed_window
         self.robot = robot
@@ -84,6 +85,9 @@ class RobotManager(object):
         :type poses_file: csv.writer
         :return:
         """
+        dead = state.dead if state.dead is not None else False
+        self.dead = dead or self.dead
+
         pos = state.pose.position
         position = Vector3(pos.x, pos.y, pos.z)
 

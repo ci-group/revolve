@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import asyncio
-from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
@@ -25,9 +24,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 100
-    population_size = 100
-    offspring_size = 50
+    num_generations = 5
+    population_size = 5
+    offspring_size = 2
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -77,7 +76,7 @@ async def run():
         experiment_management=experiment_management,
         measure_individuals=settings.measure_individuals,
         perform_learning=True,
-        max_learn_evals=500
+        max_learn_evals=10
     )
 
     settings = parser.parse_args()

@@ -11,8 +11,9 @@ import asyncio
 from datetime import datetime
 
 from ...custom_logging.logger import create_logger
+from ...custom_logging.logger import logger as revolve_logger
 
-from .nbsr import NonBlockingStreamReader as NBSR
+from .stream import PrettyStreamReader
 
 mswindows = (sys.platform == "win32")
 
@@ -58,7 +59,8 @@ class DynamicSimSupervisor(object):
                  restore_directory=None,
                  plugins_dir_path=None,
                  models_dir_path=None,
-                 simulator_name='simulator'
+                 simulator_name='simulator',
+                 process_terminated_callback=None,
                  ):
         """
 
@@ -81,7 +83,14 @@ class DynamicSimSupervisor(object):
         :param models_dir_path: Full path (or relative to cwd) to the simulator
                                 models directory (setting env variable
                                 GAZEBO_MODEL_PATH).
+        :param process_terminated_callback: Callback to execute when a process dies
+        :type process_terminated_callback: lambda (process, ret_code) -> None
         """
+        if mswindows:
+            text = "Starting the simulator with WINDOWS may cause issues! BEWARE!!!"
+            revolve_logger.error(text)
+            print(text, file=sys.stderr)
+
         self.restore_directory = datetime.now().strftime('%Y%m%d%H%M%S') \
             if restore_directory is None else restore_directory
         self.output_directory = 'output' \
@@ -100,11 +109,14 @@ class DynamicSimSupervisor(object):
 
         self.streams = {}
         self.procs = {}
-        self.stream_future = None
         self._logger = create_logger(simulator_name)
+        self._process_terminated_callback = process_terminated_callback
+        self._process_terminated_futures = []
 
         # Terminate all processes when the supervisor exits
-        atexit.register(self._terminate_all)
+        atexit.register(lambda:
+                        asyncio.get_event_loop().run_until_complete(self._terminate_all())
+                        )
 
         # Set plugins dir path for Gazebo
         if plugins_dir_path is not None:
@@ -129,228 +141,183 @@ class DynamicSimSupervisor(object):
             os.environ['GAZEBO_MODEL_PATH'] = new_env_var
 
         self._logger.info("Created Supervisor with:"
-                          "\n\t- simulator command: {} {}"
-                          "\n\t- world file: {}"
-                          "\n\t- simulator plugin dir: {}"
-                          "\n\t- simulator models dir: {}"
-                          .format(simulator_cmd,
-                                  simulator_args,
-                                  world_file,
-                                  plugins_dir_path,
-                                  models_dir_path)
-                          )
+                          f"\n\t- simulator command: {simulator_cmd} {simulator_args}"
+                          f"\n\t- world file: {world_file}"
+                          f"\n\t- GAZEBO_PLUGIN_PATH: {plugins_dir_path}"
+                          f"\n\t- GAZEBO_MODEL_PATH: {models_dir_path}")
 
-    def launch_simulator(self, address='localhost', port=11345):
-        f = self._launch_simulator(output_tag=self._simulator_name, address=address, port=port)
-
-        def start_output_listening(_future):
-            self.stream_future = asyncio.ensure_future(self._poll_simulator())
-
-        f.add_done_callback(start_output_listening)
-        return f
+    async def launch_simulator(self, address='localhost', port=11345):
+        """
+        Launches the simulator process
+        :param address:
+        :param port:
+        """
+        await self._launch_simulator(output_tag=self._simulator_name, address=address, port=port)
+        self._enable_process_terminate_callbacks()
 
     async def relaunch(self, sleep_time=1, address='localhost', port=11345):
-        self.stop()
+        """
+        Stops and restarts the process, waiting `sleep_time` in between
+        :param sleep_time:
+        :param address:
+        :param port:
+        """
+        await self.stop()
         await asyncio.sleep(sleep_time)
-        return self.launch_simulator(address=address, port=port)
+        await self.launch_simulator(address=address, port=port)
 
-    def stop(self):
-        if self.stream_future is not None:
-            self.stream_future.cancel()
-        self._terminate_all()
-
-    async def _poll_simulator(self, sleep_interval=0.1):
-        self._pass_through_stdout()
-        for proc_name in self.procs:
-            ret = self.procs[proc_name].poll()
-            if ret is not None:
-                if ret == 0:
-                    self._logger.info("Program {} exited normally"
-                                      .format(proc_name))
-                else:
-                    self._logger.error("Program {} exited with code {}"
-                                       .format(proc_name, ret))
-
-                return ret
-        await asyncio.sleep(sleep_interval)
-        self._task = asyncio.ensure_future(self._poll_simulator(sleep_interval))
-
-    def _pass_through_stdout(self):
+    async def stop(self):
         """
-        Passes process piped standard out through to normal stdout
-        :return:
+        Stops the simulator and all other process (companion and children processes)
         """
-        for NBSRout, NBSRerr in list(self.streams.values()):
-            try:
-                for _ in range(1000):
-                    out = NBSRout.readline(0.005)
-                    err = NBSRerr.readline(0.005)
+        self._disable_process_terminate_callbacks()
+        await self._terminate_all()
 
-                    if not out and not err:
-                        break
-
-                    if out:
-                        self.write_stdout(out)
-
-                    if err:
-                        self.write_stderr(err)
-            except Exception as e:
-                self._logger.exception("Exception while handling file reading")
-
-    def write_stdout(self, data):
+    async def _terminate_all(self):
         """
-        Overridable method to write to stdout, useful if you
-        want to apply some kind of filter, or write to a file
-        instead.
-        :param self:
-        :param data:
-        :return:
-        """
-        data = str(data).strip()
-        if len(data) > 0:
-            self._logger.info(data)
-        # sys.stdout.write(data)
-
-    def write_stderr(self, data):
-        """
-        Overridable method to write to stderr, useful if you
-        want to apply some kind of filter, or write to a file
-        instead.
-        :param data:
-        :return:
-        """
-        data = str(data).strip()
-        if len(data) > 0:
-            self._logger.error(data)
-        # sys.stderr.write(data)
-
-    def _terminate_all(self):
-        """
-        Terminates all running processes
-        :return:
+        Terminates all running processes and sub-processes
         """
         self._logger.info("Terminating processes...")
         for proc in list(self.procs.values()):
-            if proc.poll() is None:
-                terminate_process(proc)
+            try:
+                if proc.returncode is None:
+                    terminate_process(proc)
+            except psutil.NoSuchProcess:
+                self._logger.debug(f'Cannot terminate already dead process "{proc}"')
 
         # flush output of all processes
-        # TODO: fix this better
-        self._pass_through_stdout()
+        await self._flush_output_streams()
+
+        for proc in self.procs.values():
+            retcode = await proc.wait()
+            self._logger.info(f'Process exited with code {retcode}')
 
         self.procs = {}
 
+    async def _flush_output_streams(self):
+        """
+        Waits until all streams in this supervisor are at EOF
+        """
+        for out, err in self.streams.values():
+            await out
+            await err
+
     def _add_output_stream(self, name):
         """
-        Creates a non blocking stream reader for the process with
+        Creates an async stream reader for the process with
         the given name, and adds it to the streams that are passed
         through.
         :param name:
-        :return:
         """
-        # self.streams[name] = (NBSR(self.procs[name].stdout, name),
-        #                       NBSR(self.procs[name].stderr, name))
-        self.streams[name] = (NBSR(self.procs[name].stdout, prefix=None),
-                              NBSR(self.procs[name].stderr, prefix=None))
+        process = self.procs[name]
 
-    def _launch_simulator(self, ready_str="World plugin loaded", output_tag="simulator", address='localhost',
+        stdout = PrettyStreamReader(process.stdout)
+        stderr = PrettyStreamReader(process.stderr)
+
+        async def poll_output(stream, logger):
+            while not stream.at_eof():
+                line = await stream.readline()
+                logger(line)
+
+        self.streams[name] = (
+            asyncio.ensure_future(poll_output(stdout, self._logger.info)),
+            asyncio.ensure_future(poll_output(stderr, self._logger.error)),
+        )
+
+    async def _launch_simulator(self, ready_str="World plugin loaded", output_tag="simulator", address='localhost',
                           port=11345):
         """
         Launches the simulator
-        :return:
         """
 
-        async def start_process(_ready_str, _output_tag, _address, _port):
-            self._logger.info("Launching the simulator...")
-            gz_args = self.simulator_cmd + self.simulator_args
-            snapshot_world = os.path.join(
-                self.snapshot_directory,
-                self.snapshot_world_file)
-            world = snapshot_world \
-                if os.path.exists(snapshot_world) else self.world_file
-            gz_args.append(world)
+        self._logger.info("Launching the simulator...")
+        gz_args = self.simulator_cmd + self.simulator_args
+        snapshot_world = os.path.join(
+            self.snapshot_directory,
+            self.snapshot_world_file)
+        world = snapshot_world \
+            if os.path.exists(snapshot_world) else self.world_file
+        gz_args.append(world)
 
-            env = {}
-            for key, value in os.environ.items():
-                env[key] = value
-            env['GAZEBO_MASTER_URI'] = 'http://{}:{}'.format(_address, _port)
-            self.procs[_output_tag] = await self._launch_with_ready_str(
-                cmd=gz_args,
-                ready_str=_ready_str,
-                env=env,
-                output_tag=_output_tag)
-            self._add_output_stream(_output_tag)
+        env = {}
+        for key, value in os.environ.items():
+            env[key] = value
+        env['GAZEBO_MASTER_URI'] = 'http://{}:{}'.format(address, port)
+        self.procs[output_tag] = await self._launch_with_ready_str(
+            cmd=gz_args,
+            ready_str=ready_str,
+            env=env)
+        self._add_output_stream(output_tag)
 
-        simulator_started = asyncio.ensure_future(start_process(ready_str, output_tag, address, port))
-        return simulator_started
+    def _enable_process_terminate_callbacks(self):
+        for proc in self.procs.values():
+            dead_process_future = asyncio.ensure_future(proc.wait())
 
-    async def _launch_with_ready_str(self, cmd, ready_str, env, output_tag="simulator"):
-        """
-        :param cmd:
-        :param ready_str:
-        :return:
-        """
-        process = subprocess.Popen(
-            cmd,
-            bufsize=1,
+            def create_callback(_process):
+                def _callback(ret_code):
+                    if self._process_terminated_callback is not None:
+                        self._process_terminated_callback(_process, ret_code)
+                return _callback
+
+            dead_process_future.add_done_callback(create_callback(proc))
+            self._process_terminated_futures.append(dead_process_future)
+
+    def _disable_process_terminate_callbacks(self):
+        for dead_process_future in self._process_terminated_futures:
+            dead_process_future.cancel()
+        self._process_terminated_futures.clear()
+
+    async def _launch_with_ready_str(self, cmd, ready_str, env):
+
+        process = await asyncio.create_subprocess_exec(
+            cmd[0],
+            *cmd[1:],
             env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
 
-        # make out and err non-blocking pipes
-        if not mswindows:
-            import fcntl
-            for pipe in [process.stdout, process.stderr]:
-                fd = pipe.fileno()
-                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-                fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
-        else:
-            # hint on how to fix it here:
-            # https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
-            self._logger.error("Windows may not give the optimal experience")
+        stdout = PrettyStreamReader(process.stdout)
+        stderr = PrettyStreamReader(process.stderr)
 
-        ready = False
-        await asyncio.sleep(0.1)
-        while not ready:
-            exit_code = process.poll()
-            if exit_code is not None:
-                # flush out all stdout and stderr
-                out, err = process.communicate()
-                if out is not None:
-                    self._logger.info("{}".format(out.decode('utf-8')))
-                if err is not None:
-                    self._logger.error("{}".format(err.decode('utf-8')))
-                raise RuntimeError("Error launching {}, exit with code {}"
-                                   .format(cmd, exit_code))
+        ready_str_found = asyncio.Future()
 
-            try:
-                out = process.stdout.readline().decode('utf-8')
-                if len(out) > 0:
-                    self._logger.info("[launch] {}".format(out.strip()))
+        class SimulatorEnded(Exception):
+            pass
+
+        async def read_stdout():
+            while not ready_str_found.done():
+                if process.returncode is None:
+                    ready_str_found.set_exception(SimulatorEnded())
+                out = await stdout.readline()
+                self._logger.info(f'[starting] {out}')
                 if ready_str in out:
-                    ready = True
-            except IOError:
-                pass
+                    ready_str_found.set_result(None)
 
-            if not mswindows:
-                try:
-                    err = process.stderr.readline().decode('utf-8')
-                    if len(err) > 0:
-                        self._logger.error("[launch] {}".format(err.strip()))
-                except IOError:
-                    pass
+        async def read_stderr():
+            while not ready_str_found.done() and process.returncode is None:
+                err = await stderr.readline()
+                if err:
+                    self._logger.error(f'[starting] {err}')
 
-            await asyncio.sleep(0.2)
-        # make out and err blocking pipes again
-        if not mswindows:
-            import fcntl
-            for pipe in [process.stdout, process.stderr]:
-                fd = pipe.fileno()
-                fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-                fcntl.fcntl(fd, fcntl.F_SETFL, fl & (~ os.O_NONBLOCK))
-        else:
-            # hint on how to fix it here:
-            # https://github.com/cs01/gdbgui/issues/18#issuecomment-284263708
-            self._logger.error("Windows may not give the optimal experience")
+        stdout_async = asyncio.ensure_future(read_stdout())
+        stderr_async = asyncio.ensure_future(read_stderr())
+
+        try:
+            await ready_str_found
+        except SimulatorEnded:
+            pass
+        finally:
+            await stdout_async
+            await stderr_async
+
+        if process.returncode is not None:
+            await process.wait()
+            while not process.stdout.at_eof():
+                self._logger.info(await stdout.readline())
+            while not process.stderr.at_eof():
+                self._logger.error(await stderr.readline())
+            await asyncio.sleep(0.1)
+            raise RuntimeError(f'Process "{cmd[0]}" exited before it was ready. Exit code {process.returncode}')
 
         return process

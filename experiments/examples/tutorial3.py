@@ -32,8 +32,7 @@ async def run():
     await world.pause(True)
 
     # Insert the robot in the simulator
-    insert_future = await world.insert_robot(robot, Vector3(0, 0, 0.05))
-    robot_manager = await insert_future
+    robot_manager = await world.insert_robot(robot, Vector3(0, 0, 0.05))
 
     # Resume simulation
     await world.pause(False)

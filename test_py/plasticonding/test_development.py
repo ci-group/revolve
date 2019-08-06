@@ -10,7 +10,7 @@ LOCAL_FOLDER = os.path.dirname(__file__)
 class TestPlastiCoding(unittest.TestCase):
     def setUp(self):
         self.conf = pyrevolve.genotype.plasticoding.plasticoding.PlasticodingConfig()
-        self.genotype = pyrevolve.genotype.plasticoding.plasticoding.initialization.random_initialization(self.conf)
+        self.genotype = pyrevolve.genotype.plasticoding.plasticoding.initialization.random_initialization(self.conf, 176)
 
     def test_development(self):
         robot = self.genotype.develop()
@@ -33,7 +33,7 @@ class TestPlastiCoding(unittest.TestCase):
 
         self.genotype.export_genotype(file1)
 
-        genotype2 = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf)
+        genotype2 = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf, self.genotype.id)
         genotype2.id = self.genotype.id
         genotype2.load_genotype(file1)
         genotype2.export_genotype(file2)
@@ -47,8 +47,7 @@ class TestPlastiCoding(unittest.TestCase):
         file2_txt.close()
 
     def test_collision(self):
-        genotype_180 = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf)
-        genotype_180.id = "genotype{}".format(180)
+        genotype_180 = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf, 180)
         genotype_180.load_genotype(os.path.join(LOCAL_FOLDER, 'genotype_180.txt'))
         robot = genotype_180.develop()
         robot.update_substrate(raise_for_intersections=True)
@@ -58,8 +57,8 @@ class Test176(unittest.TestCase):
     def setUp(self):
         self.conf = pyrevolve.genotype.plasticoding.plasticoding.PlasticodingConfig()
 
-        self.genotype = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf)
-        self.genotype.id = "genotype{}".format(176)
+        _id = 176
+        self.genotype = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf, _id)
         self.genotype.load_genotype(os.path.join(LOCAL_FOLDER, 'genotype_176.txt'))
 
         self.robot = self.genotype.develop()
@@ -81,8 +80,8 @@ class Test176(unittest.TestCase):
         total_components = 0.11
         total_components_abs = 11
 
-        self.robot.render_body('/tmp/robot.png')
-        self.genotype.export_genotype('/tmp/cacca.txt')
+        self.robot.render_body('/tmp/robot_body.png')
+        self.genotype.export_genotype('/tmp/genotype.txt')
 
         m = self.robot.measure_body()
         self.assertAlmostEqual(branching, m.branching, 3)
@@ -115,6 +114,34 @@ class Test176(unittest.TestCase):
         synaptic_reception = 0
 
         self.robot.render_brain('/tmp/robot_brain.png')
+
+        m = self.robot.measure_brain()
+        self.assertAlmostEqual(amplitude_average, m.avg_amplitude, 3)
+        self.assertAlmostEqual(amplitude_deviation, m.dev_amplitude, 3)
+        self.assertAlmostEqual(inputs_reach, m.sensors_reach, 3)
+        self.assertAlmostEqual(inter_params_dev_average, m.avg_inter_dev_params, 3)
+        self.assertAlmostEqual(intra_params_dev_average, m.avg_intra_dev_params, 3)
+        self.assertAlmostEqual(offset_average, m.avg_phase_offset, 3)
+        self.assertAlmostEqual(offset_deviation, m.dev_phase_offset, 3)
+        self.assertAlmostEqual(period_average, m.avg_period, 3)
+        self.assertAlmostEqual(period_deviation, m.dev_period, 3)
+        self.assertAlmostEqual(recurrence, m.recurrence, 3)
+        self.assertAlmostEqual(synaptic_reception, m.synaptic_reception, 3)
+
+    def test_measurements_brain_pdf(self):
+        amplitude_average = 0.551664
+        amplitude_deviation = 0.915769767
+        inputs_reach = 0.583333
+        inter_params_dev_average = 0.8811009266695952
+        intra_params_dev_average = 0.8187877255612809
+        offset_average = 0.37370865000000003
+        offset_deviation = 0.857319047568582
+        period_average = 0.25102035
+        period_deviation = 0.8616760913682427
+        recurrence = 0.5
+        synaptic_reception = 0
+
+        self.robot.render_brain('/tmp/robot_brain.pdf')
 
         m = self.robot.measure_brain()
         self.assertAlmostEqual(amplitude_average, m.avg_amplitude, 3)

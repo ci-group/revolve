@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import asyncio
-from pygazebo.pygazebo import DisconnectError
 
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
@@ -25,8 +24,8 @@ async def run():
 
     # experiment params #
     num_generations = 100
-    population_size = 100
-    offspring_size = 50
+    population_size = 5
+    offspring_size = 2
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -63,7 +62,7 @@ async def run():
         population_size=population_size,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.displacement_velocity_hill,
+        fitness_function=fitness.displacement_velocity,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
@@ -88,7 +87,8 @@ async def run():
     if do_recovery:
         # loading a previous state of the experiment
         await population.load_snapshot(gen_num)
-        logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
+        if gen_num >= 0:
+            logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
         if has_offspring:
             individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1

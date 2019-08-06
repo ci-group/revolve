@@ -1,6 +1,4 @@
-import time
 import copy
-import asyncio
 import numpy as np
 from thirdparty.pycma import cma
 
@@ -121,14 +119,10 @@ class Learning:
             self.learn_counter += 1
             self.started_evals = True
 
-
         await self.population.evaluate(individuals, self.generation, learn_eval=True)
 
-        for individual in individuals:
-            fitness_vals.append(-individual.fitness)
-
         for individual, vector in zip(individuals, vectors):
-            self.population_conf.experiment_management.export_cma_learning_fitness(self.robot_id, self.generation, vector, individual.fitness)
+            fitness_vals.append(-individual.fitness)
             self.vectors_fitnessess[individual.phenotype._id] = [individual.fitness, vector]
 
         return fitness_vals
@@ -160,7 +154,10 @@ class Learning:
 
         # put robot in simulator and retrieve fitness
         future = self.simulator_connection.test_robot(self.individual, self.population_conf)
-        self.individual.fitness = await future
+        self.individual.fitness, self.individual.phenotype._behavioural_measurements = await future
+
+        self.population_conf.experiment_management.export_fitness(self.individual)
+        self.population_conf.experiment_management.export_behavior_measures(self.individual.phenotype.id, self.individual.phenotype._behavioural_measurements)
 
         # store fitness to be restored in case of crash
         self.population_conf.experiment_management.export_cma_learning_fitness(self.robot_id, self.generation, vector, self.individual.fitness)

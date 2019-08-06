@@ -2,6 +2,7 @@
 
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
+from pyrevolve.tol.manage import measures
 from ..custom_logging.logger import logger
 from pyrevolve.evolution.learning import Learning
 import time
@@ -105,7 +106,7 @@ class Population:
     async def load_individual(self, id):
         path = 'experiments/'+self.conf.experiment_name
         genotype = self.conf.genotype_constructor(self.conf.genotype_conf, id)
-        genotype.load_genotype(f'{path}/data_fullevolution/genotypes/genotype_{id}.txt')
+        genotype.load_genotype(f'{path}/data_fullevolution/genotypes/genotype_{id}')
 
         individual = Individual(genotype)
         individual.develop()
@@ -114,6 +115,24 @@ class Population:
         with open(path+'/data_fullevolution/fitness/fitness_'+id+'.txt') as f:
             lines = f.readlines()
             individual.fitness = float(lines[0])
+
+        with open(path+'/data_fullevolution/descriptors/behavior_desc_'+id+'.txt') as f:
+            lines = f.readlines()
+        individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+        for line in lines:
+            if line.split(' ')[0] == 'velocity':
+                individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
+            #if line.split(' ')[0] == 'displacement':
+             #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'displacement_velocity':
+                individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'displacement_velocity_hill':
+                individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'head_balance':
+                individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+            if line.split(' ')[0] == 'contacts':
+                individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+
         return individual
 
     async def load_snapshot(self, gen_num):
@@ -175,11 +194,11 @@ class Population:
             # Crossover
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
-                child = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
+                child_genotype = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
+                child = Individual(child_genotype)
             else:
                 child = self.conf.selection(self.individuals)
 
-            child.id = self.next_robot_id
             child.genotype.id = self.next_robot_id
             self.next_robot_id += 1
 
@@ -207,7 +226,7 @@ class Population:
 
         return new_population
 
-    async def evaluate(self, new_individuals, gen_num, learn_eval=False):
+    async def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve', learn_eval=False):
         """
         Evaluates each individual in the new gen population
 
@@ -222,16 +241,21 @@ class Population:
             robot_futures.append(await self.evaluate_single_robot(individual, gen_num, learn_eval))
 
         await asyncio.sleep(1)
-        
-        if not self.conf.perform_learning or learn_eval:
-            for i, future in enumerate(robot_futures):
-                individual = new_individuals[i]
-                logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-                individual.fitness = await future
-                logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
-                if not learn_eval:
-                    self.conf.experiment_management.export_fitness(individual)
 
+        for i, future in enumerate(robot_futures):
+            individual = new_individuals[i]
+            logger.info(f'Evaluation of Individual {individual.phenotype.id}')
+            individual.fitness, individual.phenotype._behavioural_measurements = await future
+            logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+            
+            if individual.phenotype._behavioural_measurements is None:
+                assert (individual.fitness is None)
+            elif type_simulation == 'evolve':
+                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
+
+            if type_simulation == 'evolve':
+                self.conf.experiment_management.export_fitness(individual)
+                        
     async def evaluate_single_robot(self, individual, gen_num, learn_eval=False):
         if individual.phenotype is None:
                 individual.develop()
@@ -253,6 +277,9 @@ class Population:
             learn_brain = Learning(individual, gen_num, self.simulator_connection, self.conf, population=self)
             learn_brain.learn_counter = self.conf.experiment_management.learning_iterations_performed(individual.phenotype.id, gen_num) + 1
             individual = await learn_brain.learn_brain_through_cma_es()
+            
             self.conf.experiment_management.export_fitness(individual)
+            self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
             self.conf.experiment_management.finished_learning(individual.phenotype.id)
+        
         return individual

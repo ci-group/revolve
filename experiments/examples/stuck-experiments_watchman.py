@@ -21,6 +21,9 @@ while 1:
         for run in range(0, runs):
 
             path = dir_path + "/" + exp +'_'+str(run+1) + "/data_fullevolution/fitness"
+            time_now = datetime.now()
+            time_ago = time_now - timedelta(minutes=limit_of_minutes)
+
             if os.path.isdir(path):
                 files = []
                 for r, d, f in os.walk(path):
@@ -29,8 +32,6 @@ while 1:
                         files.append(filetime)
                 files.sort()
                 youngest.append(files[-1])
-                time_now = datetime.now()
-                time_ago = time_now - timedelta(minutes=limit_of_minutes)
 
                 if files[-1] > time_ago:
                     some_has_been_updated = True

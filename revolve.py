@@ -4,26 +4,29 @@ import sys
 import asyncio
 import importlib
 
-from pygazebo.pygazebo import DisconnectError
+from pyrevolve.data_analisys.visualize_robot import test_robot_run
 from pyrevolve import parser
+from experiments.examples import only_gazebo
 
 here = os.path.dirname(os.path.abspath(__file__))
 rvpath = os.path.abspath(os.path.join(here, '..', 'revolve'))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
-async def run():
-    arguments = parser.parse_args()
+def run(loop, arguments):
     if arguments.test_robot is not None:
-        manager = importlib.import_module(arguments.manager).run
-        return await manager()
+        return loop.run_until_complete(test_robot_run(arguments.test_robot))
 
     if arguments.manager is not None:
         # this split will give errors on windows
         manager_lib = os.path.splitext(arguments.manager)[0]
         manager_lib = '.'.join(manager_lib.split('/'))
         manager = importlib.import_module(manager_lib).run
-        return await manager()
+        return loop.run_until_complete(manager())
+    else:
+        # no test robot, no manager -> just run gazebo
+        loop.run_until_complete(only_gazebo.run())
+        loop.run_forever()
 
 
 def main():
@@ -36,8 +39,7 @@ def main():
             print(context['message'])
             return
 
-        if isinstance(exc, DisconnectError) \
-                or isinstance(exc, ConnectionResetError):
+        if isinstance(exc, ConnectionResetError):
             print("Got disconnect / connection reset - shutting down.")
             sys.exit(0)
 
@@ -46,13 +48,14 @@ def main():
             traceback.print_exc()
             return
 
-        traceback.print_exc()
+        # traceback.print_exc()
         raise exc
 
     try:
+        arguments = parser.parse_args()
         loop = asyncio.get_event_loop()
         loop.set_exception_handler(handler)
-        loop.run_until_complete(run())
+        run(loop, arguments)
     except KeyboardInterrupt:
         print("Got CtrlC, shutting down.")
 

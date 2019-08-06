@@ -399,7 +399,7 @@ void NeuralNetwork::Update(
     const double _time,
     const double _step)
 {
-  boost::mutex::scoped_lock lock(this->networkMutex_);
+//  boost::mutex::scoped_lock lock(this->networkMutex_);
 
   // Read sensor data and feed the neural network
   unsigned int p = 0;
