@@ -173,9 +173,6 @@ file(GLOB_RECURSE
         motors/*.cpp
         sensors/*.cpp
         util/*.cpp
-        plugin/BodyAnalyzer.cpp
-        plugin/RobotController.cpp
-        plugin/WorldController.cpp
 )
 
 # Generate
@@ -218,6 +215,7 @@ target_compile_definitions(
 # Create World plugin
 add_library(
         WorldControlPlugin SHARED
+        plugin/WorldController.cpp
         plugin/register_world_plugin.cpp
 )
 target_link_libraries(
@@ -230,6 +228,7 @@ target_link_libraries(
 # Create Analyzer plugin
 add_library(
         AnalyzerPlugin SHARED
+        plugin/BodyAnalyzer.cpp
         plugin/register_analyzer_plugin.cpp
 )
 target_link_libraries(
@@ -241,6 +240,7 @@ target_link_libraries(
 
 # Create Torus World plugin
 add_library(TorusWorldPlugin SHARED
+        plugin/TorusWorld.cpp
         plugin/register_torus_world_plugin.cpp
 )
 target_link_libraries(TorusWorldPlugin
@@ -251,6 +251,7 @@ target_link_libraries(TorusWorldPlugin
 # Create Robot plugin
 add_library(
         RobotControlPlugin SHARED
+        plugin/RobotController.cpp
         plugin/register_robot_plugin.cpp
 )
 target_link_libraries(
