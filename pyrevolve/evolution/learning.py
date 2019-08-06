@@ -122,6 +122,7 @@ class Learning:
         await self.population.evaluate(individuals, self.generation, learn_eval=True)
 
         for individual, vector in zip(individuals, vectors):
+            self.population_conf.experiment_management.export_cma_learning_fitness(individual.phenotype._id, self.generation, vector, individual.fitness)
             fitness_vals.append(-individual.fitness)
             self.vectors_fitnessess[individual.phenotype._id] = [individual.fitness, vector]
 

@@ -273,7 +273,7 @@ class Population:
         if self.conf.perform_learning and not learn_eval:
             individual = await self.learn(individual, gen_num)
 
-        return self.simulator_queue.test_robot(individual, self.conf)
+        return await self.simulator_queue.test_robot(individual, self.conf)
 
     async def learn(self, individual, gen_num):
         """
