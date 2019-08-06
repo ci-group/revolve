@@ -46,8 +46,8 @@ async def test_robot_run(robot_file_path: str):
     robot.load_file(robot_file_path, conf_type='yaml')
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
 
+    await connection.pause(True)
     robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.25), life_timeout=None)
-    await connection.pause(False)
     await asyncio.sleep(1.0)
 
     # Start the main life loop

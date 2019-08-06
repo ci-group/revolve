@@ -5,6 +5,6 @@
       <gravity>0 0 0</gravity>
     </physics>
 
-  <plugin name="body-analyzer" filename="librevolve-body-analyzer.so" />
+  <plugin name="body-analyzer" filename="libAnalyzerPlugin.so" />
   </world>
 </sdf>
