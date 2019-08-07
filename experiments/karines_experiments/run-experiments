@@ -3,7 +3,7 @@
 while true
 	do
          for i in {1..10}; do
-                ./revolve.py --experiment-name karines_experiments/data/plane_$i --run $i --manager experiments/karines_experiments/manager_pop.py --n-cores 3 --port-start 11400 --world worlds/plane.world;
+                ./revolve.py --experiment-name karines_experiments/data/plane_$i --run $i --manager experiments/karines_experiments/manager_pop.py --n-cores 3 --port-start 11400 --world worlds/plane.world --evaluation-time 50;
                 sleep 5s
 	   done
 done
@@ -15,7 +15,7 @@ done
 while true
 	do
          for i in {1..10}; do
-                ./revolve.py --experiment-name karines_experiments/data/lava_$i --run $i --manager experiments/karines_experiments/manager_pop_lava.py --n-cores 3 --port-start 11700 --world worlds/plane.world;
+                ./revolve.py --experiment-name karines_experiments/data/lava_$i --run $i --manager experiments/karines_experiments/manager_pop_lava.py --n-cores 3 --port-start 11700 --world worlds/plane.world  --evaluation-time 50;
                 sleep 5s
 	   done
 done
@@ -23,7 +23,7 @@ done
 while true
 	do
          for i in {1..10}; do
-	./revolve.py --experiment-name karines_experiments/data/tilted_$i --run $i --manager experiments/karines_experiments/manager_pop.py --n-cores 3 --port-start 11800 --world worlds/tilted15.world --z-start 0.18;
+	./revolve.py --experiment-name karines_experiments/data/tilted_$i --run $i --manager experiments/karines_experiments/manager_pop.py --n-cores 3 --port-start 11800 --world worlds/tilted15.world --z-start 0.18 --evaluation-time 50;
                 sleep 5s
 	   done
 done
@@ -31,7 +31,7 @@ done
 while true
 	do
          for i in {1..10}; do
-	./revolve.py --experiment-name karines_experiments/data/obstacles_$i --run $i --manager experiments/karines_experiments/manager_pop.py --n-cores 3 --port-start 11900 --world worlds/planeobstacles.world --z-start 0.05;
+	./revolve.py --experiment-name karines_experiments/data/obstacles_$i --run $i --manager experiments/karines_experiments/manager_pop.py --n-cores 3 --port-start 11900 --world worlds/planeobstacles.world --z-start 0.05 --evaluation-time 50;
                 sleep 5s
 	   done
 done
