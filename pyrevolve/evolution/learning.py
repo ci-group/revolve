@@ -123,7 +123,10 @@ class Learning:
 
         for individual, vector in zip(individuals, vectors):
             #self.population_conf.experiment_management.export_cma_learning_fitness(individual.phenotype._id, self.generation, vector, individual.fitness)
-            fitness_vals.append(-individual.fitness)
+            if individual.fitness is not None:
+                fitness_vals.append(-individual.fitness)
+            else:
+                fitness_vals.append(1)
             self.vectors_fitnessess[individual.phenotype._id] = [individual.fitness, vector]
 
         return fitness_vals
@@ -171,6 +174,8 @@ class Learning:
         self.started_evals = True
 
         # return negative fitness, as cma lib makes use of base fitness function
+        if self.individual.fitness is None:
+            return 1
         return -self.individual.fitness
 
     async def vector_cma_es(self):
