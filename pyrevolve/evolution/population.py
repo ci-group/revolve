@@ -253,9 +253,11 @@ class Population:
                 assert (individual.fitness is None)
             elif type_simulation == 'evolve':
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
+                self.conf.experiment_management.write_to_speed_file(individual.phenotype.id, individual.phenotype._behavioural_measurements)
 
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_fitness(individual)
+                self.conf.experiment_management.write_to_fitness_file(individual.phenotype.id, individual.fitness)
                 logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
                 
                         

@@ -122,7 +122,7 @@ class Learning:
         await self.population.evaluate(individuals, self.generation, learn_eval=True)
 
         for individual, vector in zip(individuals, vectors):
-            self.population_conf.experiment_management.export_cma_learning_fitness(individual.phenotype._id, self.generation, vector, individual.fitness)
+            #self.population_conf.experiment_management.export_cma_learning_fitness(individual.phenotype._id, self.generation, vector, individual.fitness)
             fitness_vals.append(-individual.fitness)
             self.vectors_fitnessess[individual.phenotype._id] = [individual.fitness, vector]
 
@@ -158,10 +158,12 @@ class Learning:
         self.individual.fitness, self.individual.phenotype._behavioural_measurements = await future
 
         self.population_conf.experiment_management.export_fitness(self.individual)
+        self.population_conf.experiment_management.write_to_fitness_file(self.individual.phenotype.id, self.individual.fitness)
         self.population_conf.experiment_management.export_behavior_measures(self.individual.phenotype.id, self.individual.phenotype._behavioural_measurements)
+        self.population_conf.experiment_management.write_to_speed_file(self.individual.phenotype.id, self.individual.phenotype._behavioural_measurements)
 
         # store fitness to be restored in case of crash
-        self.population_conf.experiment_management.export_cma_learning_fitness(self.robot_id, self.generation, vector, self.individual.fitness)
+        #self.population_conf.experiment_management.export_cma_learning_fitness(self.robot_id, self.generation, vector, self.individual.fitness)
 
         self.vectors_fitnessess[self.individual.phenotype._id] = [self.individual.fitness, vector]
 

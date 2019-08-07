@@ -54,8 +54,11 @@ class ExperimentManagement:
         :param vector:
         :param fitness:
         """
-        f = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_gen_{generation}.txt', "a")
-        f.write(f'{vector} - {fitness}\n')
+        f = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_fitness.txt', 'a')
+        f.write(f'{fitness}\n')
+        f.close()        
+        f = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_vectors.txt', "a")
+        f.write(f'{vector}\n')
         f.close()
 
     def export_fitness(self, individual):
@@ -124,7 +127,9 @@ class ExperimentManagement:
         :param robot_id:
         :param generation:
         """
-        return os.path.isfile(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_gen_{generation}.txt')
+        vector_exists = os.path.isfile(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_vectors.txt')
+        fitness_exists = os.path.isfile(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_fitness.txt')
+        return vector_exists and fitness_exists
 
     def recover_cma_learning_fitnesses(self, robot_id, generation):
         """
@@ -135,17 +140,22 @@ class ExperimentManagement:
         vectors = []
         fitness_vals = []
 
-        file = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_gen_{generation}.txt', 'r')
-
+        file = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_vectors.txt', 'r')
         list_lines = file.read().splitlines()
-
         for line in list_lines:
             if line:
-                list_el = line.split(" - ")
-                vector = ast.literal_eval(list_el[0])
-                fitness = ast.literal_eval(list_el[1])
+                vector = ast.literal_eval(line)
+                vectors.append(vector)
+        file.close()
+
+        file = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_fitness.txt', 'r')
+        list_lines = file.read().splitlines()
+        for line in list_lines:
+            if line:
+                fitness = ast.literal_eval(line)
                 vectors.append(vector)
                 fitness_vals.append(fitness)
+        file.close()
 
         return [vectors, fitness_vals]
 
@@ -238,3 +248,26 @@ class ExperimentManagement:
             has_offspring = False
 
         return last_snapshot, has_offspring, last_id+1
+
+    def write_to_fitness_file(self, robot_id, fitness):
+        exists = os.path.isfile(f'{self.dirpath}/data_fullevolution/all_fitness.csv')
+
+        f = open(f'{self.dirpath}/data_fullevolution/all_fitness.csv', 'a')
+
+        if not exists:
+            f.write(f'id, fitness\n')
+
+        f.write(f'{robot_id}, {fitness}\n')
+        f.close()  
+
+    def write_to_speed_file(self, robot_id, measures):
+        exists = os.path.isfile(f'{self.dirpath}/data_fullevolution/all_behavior.csv')
+
+        f = open(f'{self.dirpath}/data_fullevolution/all_behavior.csv', 'a')
+
+        if not exists:
+            f.write(f'id, displacement\n')
+        
+        speed = measures.displacement_velocity
+        f.write(f'{robot_id}, {speed}\n')
+        f.close()  
