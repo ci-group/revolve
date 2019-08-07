@@ -21,7 +21,7 @@ while 1:
     for exp in experiments_names:
         for run in range(0, runs):
 
-            path = dir_path + "/" + exp +'_'+str(run+1) + "/data_fullevolution/fitness"
+            path = os.path.join(dir_path, exp, str(run+1), 'data_fullevolution', 'fitness')
             time_now = datetime.now()
             time_ago = time_now - timedelta(minutes=limit_of_minutes)
 
