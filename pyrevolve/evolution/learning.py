@@ -83,6 +83,7 @@ class Learning:
         Get vector with best aqcuired fitness
         :return: fitness, vector
         """
+        self.vectors_fitnessess = [fitness if fitness is not None else -1 for fitness in self.vectors_fitnessess]
         best_vector_key = max(self.vectors_fitnessess, key=self.vectors_fitnessess.get)
         best = self.vectors_fitnessess[best_vector_key]
         self.best = best
