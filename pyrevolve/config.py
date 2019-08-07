@@ -153,13 +153,6 @@ parser.add_argument(
     help="Exports yamls with the phenotypes. Default \"True\"."
 )
 
-# TODO check is this argument actually used?
-parser.add_argument(
-    '--measure-individuals',
-    default=True, type=str_to_bool,
-    help="Derives descriptors from phenotypes. Default \"True\"."
-)
-
 # Directory where robot information will be written. The system writes
 # two main CSV files:
 # - The `robots.csv` file containing all the basic robot information, one line
