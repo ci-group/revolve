@@ -221,13 +221,12 @@ class Learning:
 
         # turn brain into vector for cma
         self.vectorize_brain()
-
-        # set original fitness of robot as first index of list fitnesses_aqcuired
-        original_fitness = await self.cma_es_evaluate_vector(self.vector_values, False)
-        self.original = [original_fitness, self.vector_values]
-
-        # algorithm does not work for empty vectors
+        
+        # cannot learn controllers without parameters
         if len(self.vector_values) > 0:
+            # set original fitness of robot as first index of list fitnesses_aqcuired
+            original_fitness = await self.cma_es_evaluate_vector(self.vector_values, False)
+            self.original = [original_fitness, self.vector_values]        
             best_vector = await self.vector_cma_es()
             self.devectorize_brain(best_vector)
         else:

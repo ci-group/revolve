@@ -25,9 +25,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 5
-    population_size = 5
-    offspring_size = 2
+    num_generations = 100
+    population_size = 100
+    offspring_size = 50
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -76,7 +76,7 @@ async def run():
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         perform_learning=True,
-        max_learn_evals=10
+        max_learn_evals=200
     )
 
     n_cores = settings.n_cores
