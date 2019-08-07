@@ -113,27 +113,29 @@ class Population:
         individual = Individual(genotype)
         individual.develop()
         individual.phenotype.measure_phenotype(self.conf.experiment_name)
+        
+        if os.path.isfile(path+'/data_fullevolution/fitness/fitness_'+id+'.txt'):
+            with open(path+'/data_fullevolution/fitness/fitness_'+id+'.txt') as f:
+                lines = f.readlines()
+                individual.fitness = float(lines[0])
 
-        with open(path+'/data_fullevolution/fitness/fitness_'+id+'.txt') as f:
-            lines = f.readlines()
-            individual.fitness = float(lines[0])
-
-        with open(path+'/data_fullevolution/descriptors/behavior_desc_'+id+'.txt') as f:
-            lines = f.readlines()
-        individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
-        for line in lines:
-            if line.split(' ')[0] == 'velocity':
-                individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-            #if line.split(' ')[0] == 'displacement':
-             #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
-            if line.split(' ')[0] == 'displacement_velocity':
-                individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
-            if line.split(' ')[0] == 'displacement_velocity_hill':
-                individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
-            if line.split(' ')[0] == 'head_balance':
-                individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
-            if line.split(' ')[0] == 'contacts':
-                individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+        if os.path.isfile(path+'/data_fullevolution/descriptors/behavior_desc_'+id+'.txt'):
+            with open(path+'/data_fullevolution/descriptors/behavior_desc_'+id+'.txt') as f:
+                lines = f.readlines()
+            individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+            for line in lines:
+                if line.split(' ')[0] == 'velocity':
+                    individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
+                #if line.split(' ')[0] == 'displacement':
+                #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+                if line.split(' ')[0] == 'displacement_velocity':
+                    individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
+                if line.split(' ')[0] == 'displacement_velocity_hill':
+                    individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
+                if line.split(' ')[0] == 'head_balance':
+                    individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+                if line.split(' ')[0] == 'contacts':
+                    individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
 
         return individual
 
@@ -240,7 +242,10 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, gen_num, learn_eval)))
+            if learn_eval or not self.conf.perform_learning:
+                robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, gen_num, learn_eval)))
+            else:
+                robot_futures.append(self.evaluate_single_robot(individual, gen_num, learn_eval))
 
         await asyncio.sleep(1)
 
