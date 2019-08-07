@@ -26,7 +26,6 @@ class PopulationConfig:
                  evaluation_time,
                  experiment_name,
                  experiment_management,
-                 measure_individuals,
                  offspring_size=None,
                  next_robot_id=1):
         """
@@ -45,7 +44,6 @@ class PopulationConfig:
         :param evaluation_time: duration of an experiment
         :param experiment_name: name for the folder of the current experiment
         :param experiment_management: object with methods for managing the current experiment
-        :param measure_individuals: weather or not to perform  phenotypic measurements
         :param offspring_size (optional): size of offspring (for steady state)
         """
         self.population_size = population_size
@@ -63,7 +61,6 @@ class PopulationConfig:
         self.evaluation_time = evaluation_time
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
-        self.measure_individuals = measure_individuals
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
 

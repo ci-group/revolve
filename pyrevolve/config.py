@@ -207,8 +207,5 @@ def make_revolve_config(conf):
     """
     conf.enable_wheel_parts = False
 
-    conf.brain_conf = {
-        'learner': conf.learner,
-        'genome': conf.genome,
-    }
+    conf.brain_conf = {}
     return conf
