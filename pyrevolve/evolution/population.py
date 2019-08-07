@@ -242,10 +242,8 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            if learn_eval or not self.conf.perform_learning:
-                robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, gen_num, learn_eval)))
-            else:
-                robot_futures.append(self.evaluate_single_robot(individual, gen_num, learn_eval))
+            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, gen_num, learn_eval)))
+
 
         await asyncio.sleep(1)
 
