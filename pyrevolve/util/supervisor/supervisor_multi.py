@@ -7,6 +7,7 @@ import os
 import psutil
 import sys
 import asyncio
+import platform
 
 from datetime import datetime
 
@@ -242,7 +243,18 @@ class DynamicSimSupervisor(object):
         env = {}
         for key, value in os.environ.items():
             env[key] = value
-        env['GAZEBO_MASTER_URI'] = 'http://{}:{}'.format(address, port)
+        env['GAZEBO_MASTER_URI'] = f'http://{address}:{port}'
+
+        process = subprocess.run(['which', self.simulator_cmd[0]], stdout=subprocess.PIPE)
+        process.check_returncode()
+        gazebo_libraries_path = process.stdout.decode()
+        gazebo_libraries_path = os.path.dirname(gazebo_libraries_path)
+        gazebo_libraries_path = os.path.join(gazebo_libraries_path, '..', 'lib')
+
+        if platform.system() == 'Darwin':
+            env['DYLD_LIBRARY_PATH'] = gazebo_libraries_path
+        else:  # linux
+            env['LD_LIBRARY_PATH'] = gazebo_libraries_path
         self.procs[output_tag] = await self._launch_with_ready_str(
             cmd=gz_args,
             ready_str=ready_str,
