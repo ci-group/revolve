@@ -62,7 +62,7 @@ async def run():
         population_size=population_size,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.displacement_velocity_hill,
+        fitness_function=fitness.displacement_velocity,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
@@ -75,7 +75,6 @@ async def run():
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
-        measure_individuals=settings.measure_individuals,
         perform_learning=True,
         max_learn_evals=10
     )

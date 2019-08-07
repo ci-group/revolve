@@ -58,10 +58,10 @@ class ExperimentManagement:
         :param vector:
         :param fitness:
         """
-        f = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_fitness.txt', 'a')
+        f = open(f'{self.data_folder}/fitness/fitness_learning_{robot_id}_fitness.txt', 'a')
         f.write(f'{fitness}\n')
         f.close()        
-        f = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_vectors.txt', "a")
+        f = open(f'{self.data_folder}/fitness/fitness_learning_{robot_id}_vectors.txt', "a")
         f.write(f'{vector}\n')
         f.close()
 
@@ -107,20 +107,20 @@ class ExperimentManagement:
             return False
 
     def finished_learning(self, robot_id):
-        f = open(f'{self.dirpath}/data_fullevolution/finished_learning/{robot_id}.txt', "w")
+        f = open(f'{self.data_folder}/finished_learning/{robot_id}.txt', "w")
         f.write('finished')
         f.close()
 
     def finished_generation(self, gen_num):
-        f = open(f'{self.dirpath}/data_fullevolution/finished_generation/finished_gen_{gen_num}.txt', "w")
+        f = open(f'{self.data_folder}/finished_generation/finished_gen_{gen_num}.txt', "w")
         f.write('finished')
         f.close()
 
     def generation_has_finished(self, gen_num):
-        return os.path.isfile(f'{self.dirpath}/data_fullevolution/finished_generation/finished_gen_{gen_num}.txt')
+        return os.path.isfile(f'{self.data_folder}/finished_generation/finished_gen_{gen_num}.txt')
 
     def has_finished_learning(self, robot_id):
-        return os.path.isfile(f'{self.dirpath}/data_fullevolution/finished_learning/{robot_id}.txt')
+        return os.path.isfile(f'{self.data_folder}/finished_learning/{robot_id}.txt')
     
     def learning_iterations_performed(self, robot_id, generation):
         if self.cma_learning_is_recoverable(robot_id, generation):
@@ -134,8 +134,8 @@ class ExperimentManagement:
         :param robot_id:
         :param generation:
         """
-        vector_exists = os.path.isfile(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_vectors.txt')
-        fitness_exists = os.path.isfile(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_fitness.txt')
+        vector_exists = os.path.isfile(f'{self.data_folder}/fitness/fitness_learning_{robot_id}_vectors.txt')
+        fitness_exists = os.path.isfile(f'{self.data_folder}/fitness/fitness_learning_{robot_id}_fitness.txt')
         return vector_exists and fitness_exists
 
     def recover_cma_learning_fitnesses(self, robot_id, generation):
@@ -147,7 +147,7 @@ class ExperimentManagement:
         vectors = []
         fitness_vals = []
 
-        file = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_vectors.txt', 'r')
+        file = open(f'{self.data_folder}/fitness/fitness_learning_{robot_id}_vectors.txt', 'r')
         list_lines = file.read().splitlines()
         for line in list_lines:
             if line:
@@ -155,7 +155,7 @@ class ExperimentManagement:
                 vectors.append(vector)
         file.close()
 
-        file = open(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_{robot_id}_fitness.txt', 'r')
+        file = open(f'{self.data_folder}/fitness/fitness_learning_{robot_id}_fitness.txt', 'r')
         list_lines = file.read().splitlines()
         for line in list_lines:
             if line:
@@ -187,27 +187,27 @@ class ExperimentManagement:
         Delete all files from generation
         :param gen_num:
         """
-        shutil.rmtree(f'{self.dirpath}/selectedpop_{gen_num}')
+        shutil.rmtree(f'{self.data_folder}/selectedpop_{gen_num}')
 
         robot_ids = []
         last_id = 0
         if gen_num > 0:
-            for r, d, f in os.walk(f'{self.dirpath}/selectedpop_{gen_num-1}'):
+            for r, d, f in os.walk(f'{self.data_folder}/selectedpop_{gen_num-1}'):
                 for file in f:
                     robot_ids.append(int(file.split('.')[0].split('_')[-1]))
             last_id = np.sort(robot_ids)[-1]
 
-        os.remove(f'{self.dirpath}/data_fullevolution/finished_generation/finished_gen_{gen_num}.txt')
+        os.remove(f'{self.data_folder}/finished_generation/finished_gen_{gen_num}.txt')
 
         for folder in ['descriptors', 'failed_eval_robots', 'finished_learning', 'fitness', 'genotypes', 'phenotype_images', 'phenotypes']:
-            for r, d, f in os.walk(self.dirpath +'/data_fullevolution/'+ folder):
+            for r, d, f in os.walk(f'{self.data_folder}/{folder}'):
                 for file in f:
                     if int(file.split('.')[0].split('_')[-1]) > last_id:
-                        os.remove(self.dirpath +'/data_fullevolution/'+ folder + '/' + file)
+                        os.remove(f'{self.data_folder}/{folder}/{file}')
 
     def delete_robot_learn_files(self, robot_id):
         robot_ids = []
-        for r, d, f in os.walk(f'{self.dirpath}/data_fullevolution/phenotypes'):
+        for r, d, f in os.walk(f'{self.data_folder}/phenotypes'):
             for file in f:
                 robot_ids.append(int(file.split('.')[0].split('_')[-1]))
         last_id = np.sort(robot_ids)[-1]     
@@ -215,10 +215,10 @@ class ExperimentManagement:
         robot_ids = np.arange(robot_id, last_id+1)
 
         for r_id in robot_ids:
-            files = glob.glob(f'{self.dirpath}/data_fullevolution/descriptors/behavior_desc_robot_{r_id}.txt')
-            files += glob.glob(f'{self.dirpath}/data_fullevolution/descriptors/behavior_desc_robot_{r_id}_*.txt')
-            files += glob.glob(f'{self.dirpath}/data_fullevolution/fitness/fitness_learning_robot_{r_id}_*.txt')
-            files += glob.glob(f'{self.dirpath}/data_fullevolution/finished_learning/robot_{r_id}.txt')
+            files = glob.glob(f'{self.data_folder}/descriptors/behavior_desc_robot_{r_id}.txt')
+            files += glob.glob(f'{self.data_folder}/descriptors/behavior_desc_robot_{r_id}_*.txt')
+            files += glob.glob(f'{self.data_folder}/fitness/fitness_learning_robot_{r_id}_*.txt')
+            files += glob.glob(f'{self.data_folder}/finished_learning/robot_{r_id}.txt')
             for file in files:
                 os.remove(file)
 
@@ -243,7 +243,7 @@ class ExperimentManagement:
 
         robot_ids = []
 
-        for r, d, f in os.walk(os.path.join(self._data_folder(), 'finished_learning')):
+        for r, d, f in os.walk(os.path.join(self._data_folder, 'fitness')):
             for file in f:
                 robot_ids.append(int(file.split('.')[0].split('_')[-1]))
         last_id = np.sort(robot_ids)[-1]
@@ -258,9 +258,9 @@ class ExperimentManagement:
         return last_snapshot, has_offspring, last_id+1
 
     def write_to_fitness_file(self, robot_id, fitness):
-        exists = os.path.isfile(f'{self.dirpath}/data_fullevolution/all_fitness.csv')
+        exists = os.path.isfile(f'{self.data_folder}/all_fitness.csv')
 
-        f = open(f'{self.dirpath}/data_fullevolution/all_fitness.csv', 'a')
+        f = open(f'{self.data_folder}/all_fitness.csv', 'a')
 
         if not exists:
             f.write(f'id, fitness\n')
@@ -269,13 +269,13 @@ class ExperimentManagement:
         f.close()  
 
     def write_to_speed_file(self, robot_id, measures):
-        exists = os.path.isfile(f'{self.dirpath}/data_fullevolution/all_behavior.csv')
+        exists = os.path.isfile(f'{self.data_folder}/all_behavior.csv')
 
-        f = open(f'{self.dirpath}/data_fullevolution/all_behavior.csv', 'a')
+        f = open(f'{self.data_folder}/all_behavior.csv', 'a')
 
         if not exists:
             f.write(f'id, displacement\n')
         
-        speed = measures.displacement_velocity
+        speed = None if measures is None else measures.displacement_velocity
         f.write(f'{robot_id}, {speed}\n')
         f.close()  
