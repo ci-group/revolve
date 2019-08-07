@@ -208,7 +208,7 @@ class OnlineIndividual(Individual):
         else:
             self.manager.mated_with[other.manager.name] = 1
 
-        genotype = standard_crossover([self.genotype, other.genotype], PLASTICODING_CONF, CROSSOVER_CONF)
+        genotype = standard_crossover([self, other], PLASTICODING_CONF, CROSSOVER_CONF)
         genotype = standard_mutation(genotype, MUTATION_CONF)
 
         child = OnlineIndividual(genotype)
