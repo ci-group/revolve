@@ -27,7 +27,6 @@ class PopulationConfig:
                  evaluation_time,
                  experiment_name,
                  experiment_management,
-                 measure_individuals,
                  offspring_size=None,
                  perform_learning=False,
                  max_learn_evals=None,
@@ -49,7 +48,6 @@ class PopulationConfig:
         :param evaluation_time: duration of an experiment
         :param experiment_name: name for the folder of the current experiment
         :param experiment_management: object with methods for managing the current experiment
-        :param measure_individuals: weather or not to perform  phenotypic measurements
         :param offspring_size (optional): size of offspring (for steady state)
         """
         self.population_size = population_size
@@ -67,7 +65,6 @@ class PopulationConfig:
         self.evaluation_time = evaluation_time
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
-        self.measure_individuals = measure_individuals
         self.offspring_size = offspring_size
         self.perform_learning = perform_learning
         self.max_learn_evals=max_learn_evals
@@ -99,43 +96,44 @@ class Population:
         individual.develop()
         self.conf.experiment_management.export_genotype(individual)
         self.conf.experiment_management.export_phenotype(individual)
-        self.conf.experiment_management.export_phenotype_images('data_fullevolution/phenotype_images', individual)
-        individual.phenotype.measure_phenotype(self.conf.experiment_name)
-        individual.phenotype.export_phenotype_measurements(self.conf.experiment_name)
+        self.conf.experiment_management.export_phenotype_images(os.path.join('data_fullevolution', 'phenotype_images'), individual)
+        individual.phenotype.measure_phenotype()
+        individual.phenotype.export_phenotype_measurements(self.conf.experiment_management.data_folder)
 
         return individual
 
     async def load_individual(self, id):
-        path = 'experiments/'+self.conf.experiment_name
+        data_path = self.conf.experiment_management.data_folder
         genotype = self.conf.genotype_constructor(self.conf.genotype_conf, id)
-        genotype.load_genotype(f'{path}/data_fullevolution/genotypes/genotype_{id}')
+        genotype.load_genotype(os.path.join(data_path, 'genotypes', f'genotype_{id}.txt'))
 
         individual = Individual(genotype)
         individual.develop()
-        individual.phenotype.measure_phenotype(self.conf.experiment_name)
-        
-        if os.path.isfile(path+'/data_fullevolution/fitness/fitness_'+id+'.txt'):
-            with open(path+'/data_fullevolution/fitness/fitness_'+id+'.txt') as f:
-                lines = f.readlines()
-                individual.fitness = float(lines[0])
+        individual.phenotype.measure_phenotype()
 
-        if os.path.isfile(path+'/data_fullevolution/descriptors/behavior_desc_'+id+'.txt'):
-            with open(path+'/data_fullevolution/descriptors/behavior_desc_'+id+'.txt') as f:
-                lines = f.readlines()
-            individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
-            for line in lines:
-                if line.split(' ')[0] == 'velocity':
-                    individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-                #if line.split(' ')[0] == 'displacement':
-                #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
-                if line.split(' ')[0] == 'displacement_velocity':
-                    individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
-                if line.split(' ')[0] == 'displacement_velocity_hill':
-                    individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
-                if line.split(' ')[0] == 'head_balance':
-                    individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
-                if line.split(' ')[0] == 'contacts':
-                    individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+        with open(os.path.join(data_path, 'fitness', f'fitness_{id}.txt')) as f:
+            data = f.readlines()[0]
+            individual.fitness = None if data == 'None' else float(data)
+
+        with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')) as f:
+            lines = f.readlines()
+            if lines[0] == 'None':
+                individual.phenotype._behavioural_measurements = None
+            else:
+                individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+                for line in lines:
+                    if line.split(' ')[0] == 'velocity':
+                        individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
+                    #if line.split(' ')[0] == 'displacement':
+                     #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+                    if line.split(' ')[0] == 'displacement_velocity':
+                        individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
+                    if line.split(' ')[0] == 'displacement_velocity_hill':
+                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
+                    if line.split(' ')[0] == 'head_balance':
+                        individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+                    if line.split(' ')[0] == 'contacts':
+                        individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
 
         return individual
 
@@ -144,8 +142,8 @@ class Population:
         Recovers all genotypes and fitnesses of robots in the lastest selected population
         :param gen_num: number of the generation snapshot to recover
         """
-        path = 'experiments/'+self.conf.experiment_name
-        for r, d, f in os.walk(path +'/selectedpop_'+str(gen_num)):
+        data_path = self.conf.experiment_management.experiment_folder
+        for r, d, f in os.walk(data_path +'/selectedpop_'+str(gen_num)):
             for file in f:
                 if 'body' in file:
                     id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
@@ -254,11 +252,10 @@ class Population:
             
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
-            elif type_simulation == 'evolve':
+            
+            if type_simulation == 'evolve':
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
                 self.conf.experiment_management.write_to_speed_file(individual.phenotype.id, individual.phenotype._behavioural_measurements)
-
-            if type_simulation == 'evolve':
                 self.conf.experiment_management.export_fitness(individual)
                 self.conf.experiment_management.write_to_fitness_file(individual.phenotype.id, individual.fitness)
                 logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')

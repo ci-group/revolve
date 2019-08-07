@@ -69,7 +69,7 @@ class RevolveBot:
         """
         pass
 
-    def measure_phenotype(self, experiment_name):
+    def measure_phenotype(self):
         self._morphological_measurements = self.measure_body()
         self._brain_measurements = self.measure_brain()
         logger.info('Robot ' + str(self.id) + ' was measured.')
@@ -87,14 +87,13 @@ class RevolveBot:
         except Exception as e:
             logger.exception('Failed measuring body')
 
-    def export_phenotype_measurements(self, path):
-        with open('experiments/' + path + '/data_fullevolution/descriptors/'
-                  + 'phenotype_desc_' + str(self.id) + '.txt', 'w+') as file:
-            # TODO this crashes
+    def export_phenotype_measurements(self, data_path):
+        filepath = os.path.join(data_path, 'descriptors', f'phenotype_desc_{self.id}.txt')
+        with open(filepath, 'w+') as file:
             for key, value in self._morphological_measurements.measurements_to_dict().items():
-                file.write('{} {}\n'.format(key, value))
+                file.write(f'{key} {value}\n')
             for key, value in self._brain_measurements.measurements_to_dict().items():
-                file.write('{} {}\n'.format(key, value))
+                file.write(f'{key} {value}\n')
 
     def measure_brain(self):
         """

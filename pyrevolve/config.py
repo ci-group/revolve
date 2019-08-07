@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import argparse
 
 
@@ -8,6 +6,7 @@ class CustomParser(argparse.ArgumentParser):
     Extends argument parser to add some simple file reading / writing
     functionality.
     """
+
     def convert_arg_line_to_args(self, arg_line):
         """
         Simple arg line converter that returns `--my-argument value` from
@@ -23,7 +22,7 @@ class CustomParser(argparse.ArgumentParser):
         if split < 0:
             return [arg_line]
 
-        k, v = "--"+arg_line[:split].replace("_", "-"), arg_line[1+split:]
+        k, v = "--" + arg_line[:split].replace("_", "-"), arg_line[1 + split:]
 
         # Try to determine if this key is a store constant action, if so
         # return only the key.
@@ -63,192 +62,95 @@ def str_to_address(v):
     host, port = v.split(":", 1)
     return host, int(port)
 
-#TODO remove obsolete params
 
 parser = CustomParser(fromfile_prefix_chars='@')
-parser.add_argument(
-    '--sensor-update-rate',
-    default=8, type=int,
-    help='The rate at which Gazebo sensors are set to update their values.'
-)
-
-parser.add_argument(
-    '--controller-update-rate',
-    default=8, type=int,
-    help='The rate at which the `RobotController` is requested to update.'
-)
-
-parser.add_argument(
-    '--pose-update-frequency',
-    default=5, type=int,
-    help="The frequency at which the world is requested to send robot pose"
-         " updates (in number of times per *simulation* second)."
-)
-
-parser.add_argument(
-    '--evaluation-time',
-    default=30, type=float,
-    help="The size of the `speed window` for each robot, i.e. the number of "
-         "past (simulation) seconds over which its speed is evaluated. In "
-         "offline evolution, this determines the length of the experiment run."
-)
-
-parser.add_argument(
-    '--min-parts',
-    default=3, type=int,
-    help="Minimum number of parts in a robot."
-)
-
-parser.add_argument(
-    '--max-parts',
-    default=30, type=int,
-    help="Maximum number of parts in a robot."
-)
-
-parser.add_argument(
-    '--initial-parts-mu',
-    default=12, type=int,
-    help="Mean part count of generated robots."
-)
-
-parser.add_argument(
-    '--initial-parts-sigma',
-    default=5, type=int,
-    help="Standard deviation of part count in generated robots."
-)
-
-parser.add_argument(
-    '--max-inputs',
-    default=10, type=int,
-    help="Maximum number of inputs (i.e. sensors) in a robot."
-)
-
-parser.add_argument(
-    '--max-outputs',
-    default=10, type=int,
-    help="Maximum number of outputs (i.e. motors) in a robot."
-)
-
-parser.add_argument(
-    '--enforce-planarity',
-    default=True, type=str_to_bool,
-    help="Force bricks to be in default orientation and disable parametric "
-         "bar joint rotation."
-)
-
-parser.add_argument(
-    '--recovery-enabled',
-    default=True, type=str_to_bool,
-    help="Wheather recovery is enabled."
-)
-
-parser.add_argument(
-    '--export-phenotype',
-    default=True, type=str_to_bool,
-    help="Exports yamls with the phenotypes."
-)
-
-parser.add_argument(
-    '--measure-individuals',
-    default=True, type=str_to_bool,
-    help="Derives descriptors from phenotypes."
-)
-
-parser.add_argument(
-    '--body-mutation-epsilon',
-    default=0.05, type=float,
-    help="Mutation epsilon for robot body parameters."
-)
-
-parser.add_argument(
-    '--brain-mutation-epsilon',
-    default=0.1, type=float,
-    help="Mutation epsilon for robot neural net parameters."
-)
-
-parser.add_argument(
-    '--p-duplicate-subtree',
-    default=0.1, type=float,
-    help="Probability of duplicating a subtree."
-)
-
-parser.add_argument(
-    '--p-connect-neurons',
-    default=0.1, type=float,
-    help="Initial connection probability."
-)
-
-parser.add_argument(
-    '--p-swap-subtree',
-    default=0.05, type=float,
-    help="Probability of swapping two subtrees."
-)
-
-parser.add_argument(
-    '--p-delete-subtree',
-    default=0.05, type=float,
-    help="Probability of deleting a subtree."
-)
-
-parser.add_argument(
-    '--p-remove-brain-connection',
-    default=0.05, type=float,
-    help="Probability of removing a neural network connection."
-)
-
-parser.add_argument(
-    '--p-delete-hidden-neuron',
-    default=0.05, type=float,
-    help="Probability of deleting a random hidden neuron."
-)
-
-parser.add_argument(
-    '--world-address',
-    default="127.0.0.1:11345", type=str,
-    help="Host:port of the simulator."
-)
-
-parser.add_argument(
-    '--simulator-cmd',
-    default='gzserver', type=str,
-    help="Determine wether to use gzserver or gazebo."
-)
-
-parser.add_argument(
-    '--world',
-    default='worlds/plane.world', type=str,
-    help="Determine which world to use."
-)
 
 parser.add_argument(
     '--manager',
     default=None,
     type=str,
-    help="Determine which manager to use."
+    help="Determine which manager to use. Defaults to no manager."
 )
 
 parser.add_argument(
-    '--robot-name',
-    default="spider", type=str,
-    help="Name of robot."
+    '--experiment-name',
+    default='default_experiment', type=str,
+    help="Name of current experiment. A folder with this name will be created. Default to \"default_experiment\"."
 )
 
 parser.add_argument(
-    '--experiment-round',
-    default="1", type=str,
-    help="Round of robot experiment."
+    '--run',
+    default='1', type=str,
+    help="Run of repetition of an experiment. Default to \"1\"."
 )
 
 parser.add_argument(
-    '--brain-conf-path',
-    default="rlpower.cfg", type=str,
-    help="Path to brain configuration."
-)
-
-parser.add_argument(
-    '--load-controller',
+    '--test-robot',
     default=None, type=str,
-    help="Path to controller data."
+    help="Alternative to --manager. Start a simulation with a single robot instead of running evolution."
+         "Loads a yaml robot."
+)
+
+parser.add_argument(
+    '--test-robot-collision',
+    default=None, type=str,
+    help="Alternative to --manager. Tests the collision of a single robot. "
+         "Loads a yaml robot."
+)
+
+parser.add_argument(
+    '--simulator-cmd',
+    default='gzserver', type=str,
+    help="Determine whether to use gzserver or gazebo. Default to \"gzserver\"."
+)
+
+parser.add_argument(
+    '--n-cores',
+    default=1, type=int,
+    help="Number of simulators to use at the same time. Default to \"1\"."
+)
+
+parser.add_argument(
+    '--port-start',
+    default=11345, type=int,
+    help="Gazebo ports [start_port, start_port + n_cores + n_analyzers]. Default to \"11345\"."
+)
+
+parser.add_argument(
+    '--world',
+    default='worlds/plane.world', type=str,
+    help="Determine which world gazebo should use."
+         "Usefull not only to change the environment, but also the physical properties of the world "
+         "and the simulation/real time ratio (you can use the dedicated real time worlds). "
+         "Defaults to \"worlds/plane.world\"."
+)
+
+parser.add_argument(
+    '--z-start',
+    default=0.03, type=float,
+    help="Position in the z axis where the robot is placed at the beginning of the simulation. "
+         "Default \"0.03\"."
+)
+
+parser.add_argument(
+    '--evaluation-time',
+    default=30, type=float,
+    help="In offline evolution, this determines the length of the experiment run."
+    # For old_online_fitness:
+    #   "The size of the `speed window` for each robot, i.e. the number of "
+    #   "past (simulation) seconds over which its speed is evaluated."
+)
+
+parser.add_argument(
+    '--recovery-enabled',
+    default=True, type=str_to_bool,
+    help="Whether the recovery is enabled (save and load the recovery both). Default \"True\"."
+)
+
+parser.add_argument(
+    '--export-phenotype',
+    default=True, type=str_to_bool,
+    help="Exports yamls with the phenotypes. Default \"True\"."
 )
 
 # Directory where robot information will be written. The system writes
@@ -268,162 +170,33 @@ parser.add_argument(
 parser.add_argument(
     '--output-directory',
     default="output", type=str,
-    help="Directory where robot statistics are written."
+    help="OLD. Directory where robot statistics are written. Default \"output\"."
 )
 
 parser.add_argument(
     '--restore-directory',
     default="restore", type=str,
-    help="Explicit subdirectory of the output directory, if a world "
-         "state is present in this directory it will be restored."
+    help="OLD. Explicit subdirectory of the output directory, if a world "
+         "state is present in this directory it will be restored. Default \"restore\"."
 )
 
 parser.add_argument(
-    '--disable-sensors',
-    default=False, type=str_to_bool,
-    help="Disables all sensors - overriding specific sensor settings."
-         "In practice this means that the core component is created without "
-         "an IMU sensor, whereas the other sensor parts are not enabled at all."
+    '--sensor-update-rate',
+    default=8, type=int,
+    help='The rate at which Gazebo sensors are set to update their values. Default \"8\".'
 )
 
 parser.add_argument(
-    '--enable-touch-sensor',
-    default=True, type=str_to_bool,
-    help="Enable / disable the touch sensor in robots."
+    '--controller-update-rate',
+    default=8, type=int,
+    help='The rate at which the `RobotController` is requested to update. Default \"8\".'
 )
 
 parser.add_argument(
-    '--enable-light-sensor',
-    default=False, type=str_to_bool,
-    help="Enable / disable the light sensor in robots."
-)
-
-parser.add_argument(
-    '--warmup-time',
-    default=0, type=float,
-    help="The number of seconds the robot is initially ignored, allows it to "
-         "e.g. topple over when put down without that being counted as "
-         "movement. Especially helps when dropping robots from the sky at "
-         "the start."
-)
-
-parser.add_argument(
-    '--fitness-size-factor',
-    default=0, type=float,
-    help="Multiplication factor of robot size in the fitness function. Note "
-         "that this needs to be negative to discount size."
-)
-
-parser.add_argument(
-    '--fitness-velocity-factor',
-    default=1.0, type=float,
-    help="Multiplication factor of robot velocity in the fitness function."
-)
-
-parser.add_argument(
-    '--fitness-displacement-factor',
-    default=5.0, type=float,
-    help="Multiplication factor of robot displacement velocity (= velocity in "
-         "a straight line in the fitness function."
-)
-
-parser.add_argument(
-    '--fitness-size-discount',
-    default=0, type=float,
-    help="Another possible way of discounting robot size, multiplies the "
-         "previously calculated fitness by (1 - d * size) where `d` is this "
-         "discount factor."
-)
-
-parser.add_argument(
-    '--fitness-limit',
-    default=1.0, type=float,
-    help="Minimum fitness value that is considered unrealistic and should "
-         "probably be attributed  to a simulator instability. A fitness of "
-         "zero is returned in this case."
-)
-
-parser.add_argument(
-    '--tournament-size',
-    default=4, type=int,
-    help="The size of the random tournament used for parent selection, if"
-         " selection is enabled. When individuals are chosen for reproduction,"
-         " this number of possible parents is randomly sampled from the "
-         "population, and out of these the best is chosen. A larger number "
-         "here means higher selection pressure but less selection variance "
-         "and vice versa."
-)
-
-parser.add_argument(
-    '--max-mating-attempts',
+    '--pose-update-frequency',
     default=5, type=int,
-    help="Maximum number of mating attempts between two parents."
-)
-
-
-parser.add_argument(
-    '--world-step-size',
-    default=0.003, type=float,
-    help="The physics step size configured in the simulation world file."
-         "This needs to match in order to configure some physics parameters."
-)
-parser.add_argument(
-        '--learner',
-        default='ann', type=str,
-        help="The learner used for robot's gait learning."
-)
-parser.add_argument(
-        '--genome',
-        default=None, type=str,
-        help="A robot's genome in YAML format. It is easier to transfer it "
-             "than to convert it from SDF."
-)
-parser.add_argument(
-        '--experiment-name',
-        default='default_experiment', type=str,
-        help="Name of current experiment. A folder with this name will be created."
-)
-
-parser.add_argument(
-    '--run',
-    default='1', type=str,
-    help="Run of repetition of an experiment."
-)
-
-parser.add_argument(
-        '--test-robot',
-        default=None, type=str,
-        help="Start a simulation with a single robot instead of running evolution. Loads a yaml robot."
-)
-
-parser.add_argument(
-        '--test-robot-collision',
-        default=None, type=str,
-        help="Tests the collision of a single robot. Loads a yaml robot."
-)
-
-parser.add_argument(
-        '--n-cores',
-        default=1, type=int,
-        help="Number of simulators to use at the same time"
-)
-
-parser.add_argument(
-    '--z-start',
-    default=0.03, type=float,
-    help="Position in the z axis where the robot is placed at the beginning of the simulation."
-)
-
-parser.add_argument(
-    '--port-start',
-    default=11345, type=int,
-    help="Gazebo port to connect to"
-)
-
-parser.add_argument(
-        '--robot-yaml',
-        default=None, type=str,
-        help="The path to a robot's yaml file"
+    help="The frequency at which the world is requested to send robot pose"
+         " updates (in number of times per *simulation* second). Default \"5\"."
 )
 
 
@@ -434,8 +207,5 @@ def make_revolve_config(conf):
     """
     conf.enable_wheel_parts = False
 
-    conf.brain_conf = {
-        'learner': conf.learner,
-        'genome': conf.genome,
-    }
+    conf.brain_conf = {}
     return conf

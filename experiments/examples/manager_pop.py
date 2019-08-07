@@ -76,7 +76,6 @@ async def run():
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
-        measure_individuals=settings.measure_individuals,
     )
 
     n_cores = settings.n_cores

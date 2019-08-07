@@ -23,6 +23,7 @@ class RobotManager(RvRobotManager):
             time,
             battery_level=0.0,
             position_log_size=None,
+            warmup_time=0.0,
     ):
         """
         :param conf:
@@ -44,7 +45,7 @@ class RobotManager(RvRobotManager):
                 time=time,
                 battery_level=battery_level,
                 speed_window=speed_window,
-                warmup_time=conf.warmup_time,
+                warmup_time=warmup_time,
         )
 
         # Set of robots this bot has mated with
@@ -63,7 +64,7 @@ class RobotManager(RvRobotManager):
         :type other: RobotManager
         :return:
         """
-        if self.age() < self.conf.warmup_time:
+        if self.age() < self.warmup_time:
             # Don't mate within the warmup time
             return False
 
@@ -144,7 +145,7 @@ class RobotManager(RvRobotManager):
         Returns true if this robot is at least one full evaluation time old.
         :return:
         """
-        return self.age() >= (self.conf.warmup_time + self.conf.evaluation_time)
+        return self.age() >= (self.warmup_time + self.conf.evaluation_time)
 
     def charge(self):
         """
