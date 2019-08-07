@@ -25,7 +25,7 @@ async def run():
 
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=100,
+        max_structural_modules=15,
     )
 
     mutation_conf = MutationConfig(
@@ -64,7 +64,10 @@ async def run():
     simulator_queue = SimulatorQueue(settings.n_cores, settings, settings.port_start)
     await simulator_queue.start()
 
-    population = Population(population_conf, simulator_queue, 0)
+    # analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+settings.n_cores)
+    # await analyzer_queue.start()
+
+    population = Population(population_conf, simulator_queue)
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
     generation = 99
@@ -74,17 +77,19 @@ async def run():
     values = []
     for ind in population.individuals:
         # define a criteria here
-        #values.append(ind.fitness)
-        values.append(ind.phenotype._behavioural_measurements.contacts)
-       # values.append(ind.phenotype._behavioural_measurements.displacement_velocity_hill)
+        values.append(ind.fitness)
+      # values.append(ind.phenotype._behavioural_measurements.contacts)
+       #values.append(ind.phenotype._behavioural_measurements.displacement_velocity_hill)
     values = np.array(values)
 
     ini = len(population.individuals)-max_best
     fin = len(population.individuals)
 
     population.individuals = np.array(population.individuals)
-    #population.individuals = population.individuals[np.argsort(values)[ini:fin]]
-    population.individuals = population.individuals[np.argsort(values)[0:max_best]]
+    # best
+    population.individuals = population.individuals[np.argsort(values)[ini:fin]]
+    #worst
+    #population.individuals = population.individuals[np.argsort(values)[0:max_best]]
 
     for ind in population.individuals:
         print(ind.phenotype.id)

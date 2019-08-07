@@ -133,10 +133,11 @@ for (exp in 1:length(experiments_type))
 }
 
 
+fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
+
 
 measures_snapshots_all = sqldf("select * from measures_snapshots_all where fitness IS NOT NULL") 
 
-fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
 
 
 measures_averages_gens_1 = list()
@@ -189,8 +190,6 @@ for (exp in 1:length(experiments_type))
   }
 }
 
-
-
 file <-file(paste(output_directory,'/trends.txt',sep=''), open="w")
 
 #tests trends in curves and difference between ini and fin generations
@@ -206,7 +205,7 @@ array_mann = list()
 
 for (m in 1:length(experiments_type))
 {
-  
+
   array_wilcoxon[[m]] = list()
   array_mann[[m]] = list()
   
@@ -327,45 +326,55 @@ for (i in 1:length(measures_names))
     }
     # graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_median',sep='')   ),size=2, color = colors_median[m])
     
-    if(!is.na(array_mann[[m]][[i]]$p.value))
+    if (length(array_mann)>0)
     {
-      if(array_mann[[m]][[i]]$p.value<=sig)
+      if (length(array_mann[[m]])>0)
       {
-        if(array_mann[[m]][[i]]$statistic>0){ direction = "/  "} else { direction = "\\  "}
-        tests1 = paste(tests1, initials[m],direction,sep="") 
+        if(!is.na(array_mann[[m]][[i]]$p.value))
+        {
+          if(array_mann[[m]][[i]]$p.value<=sig)
+          {
+            if(array_mann[[m]][[i]]$statistic>0){ direction = "/  "} else { direction = "\\  "}
+            tests1 = paste(tests1, initials[m],direction,sep="") 
+          }
+        }
       }
     }
   }
-  for(m in 1:length(experiments_type))
+  
+  if (length(array_wilcoxon[[m]])>0)
   {
-    if(!is.na(array_wilcoxon[[m]][[i]]$p.value))
+    for(m in 1:length(experiments_type))
     {
-      if(array_wilcoxon[[m]][[i]]$p.value<=sig)
+      if(!is.na(array_wilcoxon[[m]][[i]]$p.value))
       {
-        tests2 = paste(tests2, initials[m],'C  ', sep='') 
+        if(array_wilcoxon[[m]][[i]]$p.value<=sig)
+        {
+          tests2 = paste(tests2, initials[m],'C  ', sep='') 
+        }
       }
     }
   }
   
   if (length(array_wilcoxon2)>0)
     {
-      
       for(p in 1:length(array_wilcoxon2[[1]]))
       {
-        if(!is.na(array_wilcoxon2[[1]][[p]][[i]]$p.value))
+        if (length(array_wilcoxon2[[1]][[p]])>0)
         {
-          if(array_wilcoxon2[[1]][[p]][[i]]$p.value<=sig)
+          if(!is.na(array_wilcoxon2[[1]][[p]][[i]]$p.value))
           {
-            if(nchar(tests3)>line_size && break_aux == 0){
-              tests3 = paste(tests3, '\n')
-              break_aux = 1
+            if(array_wilcoxon2[[1]][[p]][[i]]$p.value<=sig)
+            {
+              if(nchar(tests3)>line_size && break_aux == 0){
+                tests3 = paste(tests3, '\n')
+                break_aux = 1
+              }
+              tests3 = paste(tests3, array_wilcoxon2[[2]][[p]],'D  ',sep='')
             }
-            tests3 = paste(tests3, array_wilcoxon2[[2]][[p]],'D  ',sep='')
           }
         }
-        
       }
-    
   }
   
   graph = graph  + 
@@ -377,7 +386,7 @@ for (i in 1:length(measures_names))
   graph = graph  + theme(legend.position="bottom" ,  legend.text=element_text(size=20), axis.text=element_text(size=30),axis.title=element_text(size=39),
                          plot.subtitle=element_text(size=25 )) 
   
-  ggsave(paste( output_directory,'/' ,measures_names[i],'_generations.pdf',  sep=''), graph , device='pdf', height = 8, width = 8)
+  ggsave(paste( output_directory,'/' ,measures_names[i],'_generations.pdf',  sep=''), graph , device='pdf', height = 8, width = 10)
 }
 
 

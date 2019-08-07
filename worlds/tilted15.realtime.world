@@ -6,7 +6,7 @@
         <grid>0</grid>
     </scene>
     <physics type="ode">
-      <max_step_size>0.003</max_step_size>
+      <max_step_size>0.001</max_step_size>
 
            <!-- real time -->
            <real_time_update_rate>1000</real_time_update_rate>
@@ -35,7 +35,6 @@
     <include>
       <uri>model://tilted15</uri>
     </include>
-
-    <plugin name="tol-control" filename="libtolworldcontrol.so" />
+    <plugin name="revolve-world" filename="libWorldControlPlugin.so" />
   </world>
 </sdf>

@@ -15,6 +15,7 @@ from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
+from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 
 
@@ -28,7 +29,9 @@ async def run():
     population_size = 100
     offspring_size = 50
 
-    genotype_conf = PlasticodingConfig()
+    genotype_conf = PlasticodingConfig(
+        max_structural_modules=15,
+    )
 
     mutation_conf = MutationConfig(
         mutation_prob=0.8,
@@ -86,7 +89,10 @@ async def run():
     simulator_queue = SimulatorQueue(settings.n_cores, settings, settings.port_start)
     await simulator_queue.start()
 
-    population = Population(population_conf, simulator_queue, next_robot_id)
+    analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+settings.n_cores)
+    await analyzer_queue.start()
+
+    population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
     if do_recovery:
         # loading a previous state of the experiment

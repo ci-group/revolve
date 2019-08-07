@@ -53,20 +53,29 @@ def online_old_revolve(robot_manager):
 
 
 def displacement_velocity_hill(robot_manager, robot):
-    _displacement_velocity_hill = measures.displacement_velocity_hill(robot_manager)
-    if _displacement_velocity_hill < 0:
-        _displacement_velocity_hill /= 10
-    elif _displacement_velocity_hill == 0:
-        _displacement_velocity_hill = -0.1
-    # temp elif
-   # elif _displacement_velocity_hill > 0:
-    #    _displacement_velocity_hill *= _displacement_velocity_hill
+    fitness = measures.displacement_velocity_hill(robot_manager)
 
-    return _displacement_velocity_hill
+    if fitness < 0:
+        fitness /= 10
+
+    elif fitness == 0:
+        fitness = -0.1
+
+    # if fitness >= 0:
+    #     fitness = fitness * size_penalty
+    # else:
+    #     fitness = fitness / size_penalty
+
+    return fitness
+
+def size_penalty(robot_manager, robot):
+    _size_penalty = 1 / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']
+
+    return _size_penalty
 
 
 def floor_is_lava(robot_manager, robot):
-    _displacement_velocity_hill = measures.displacement_velocity_hill(robot_manager)
+    _displacement_velocity_hill = displacement_velocity_hill(robot_manager, robot)
     _contacts = measures.contacts(robot_manager, robot)
 
     _contacts = max(_contacts, 0.0001)
