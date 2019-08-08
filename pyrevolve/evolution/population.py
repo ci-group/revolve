@@ -258,7 +258,7 @@ class Population:
                 self.conf.experiment_management.write_to_speed_file(individual.phenotype.id, individual.phenotype._behavioural_measurements)
                 self.conf.experiment_management.export_fitness(individual)
                 self.conf.experiment_management.write_to_fitness_file(individual.phenotype.id, individual.fitness)
-                logger.info(f' Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+                logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
                 
     async def evaluate_single_robot(self, individual, gen_num, learn_eval=False):
         """

@@ -217,7 +217,7 @@ class Learning:
         :return: individual with learned brain parameters
         """
         if self.individual.phenotype._brain is None:
-            return
+            return self.individual
 
         # turn brain into vector for cma
         self.vectorize_brain()
@@ -230,7 +230,6 @@ class Learning:
             best_vector = await self.vector_cma_es()
             self.devectorize_brain(best_vector)
         else:
-            self.individual.phenotype._id = self.robot_id
             return self.individual
 
         # set correct fitness for best vector in individual

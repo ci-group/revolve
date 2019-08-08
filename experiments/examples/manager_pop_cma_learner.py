@@ -76,7 +76,7 @@ async def run():
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         perform_learning=True,
-        max_learn_evals=200
+        max_learn_evals=100
     )
 
     n_cores = settings.n_cores
