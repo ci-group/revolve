@@ -28,7 +28,7 @@ class NonBlockingStreamReader(object):
 
             while True:
                 line = stream.readline()
-                if line and line != '\n':
+                if line and line != '\n' and 'ODE Message 3' not in line.decode():
                     queue.put(line)
                 else:
                     # This used to throw an exception, but we cannot

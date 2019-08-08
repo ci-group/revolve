@@ -1,17 +1,18 @@
 from __future__ import absolute_import
 
-from asyncio import Future
+import asyncio
 
 import pygazebo
 from pygazebo.msg import request_pb2, response_pb2
 
 # Default connection address to keep things DRY. This is an array rather than
 #  a tuple, so it is writeable as long as you change the separate elements.
-default_address = ["127.0.0.1", 11345]
+DEFAULT_ADDRESS = "127.0.0.1"
+DEFAULT_PORT = 11345
 
 
-async def connect(address=default_address):
-    manager = await pygazebo.connect(address=tuple(address))
+async def connect(address=DEFAULT_ADDRESS, port=DEFAULT_PORT):
+    manager = await pygazebo.connect(address=address, port=port)
     return manager
 
 
@@ -121,19 +122,22 @@ class RequestHandler(object):
         if self.publisher is not None:
             return
 
-        self.subscriber = self.manager.subscribe(
+        self.subscriber = await self.manager.subscribe(
             self.subscribe,
             self.response_type,
             self._callback
         )
-        self.publisher = await (self.manager.advertise(
-            self.advertise, self.request_type))
+        self.publisher = await self.manager.advertise(
+            self.advertise, self.request_type)
 
         if self.wait_for_publisher:
-            await (self.subscriber.wait_for_connection())
+            await self.subscriber.wait_for_connection()
 
         if self.wait_for_subscriber:
-            await (self.publisher.wait_for_listener())
+            await self.publisher.wait_for_listener()
+
+    async def stop(self):
+        await self.subscriber.remove()
 
     def _callback(self, data):
         """
@@ -151,6 +155,8 @@ class RequestHandler(object):
             # Message was not requested here, ignore it
             return
 
+        #TODO why you save this here if you are about to delete this?
+        # deletion happens in self._handled()
         req[msg_id] = msg
 
         # Call the future's set_result
@@ -213,7 +219,7 @@ class RequestHandler(object):
         :param msg_id: Force the message to use this ID. Sequencer is used if no
                        message ID is specified.
         :type msg_id: int
-        :return:
+        :return: Response to the request
         """
         if msg_id is None:
             msg_id = self.get_msg_id()
@@ -228,8 +234,7 @@ class RequestHandler(object):
         if dbl_data is not None:
             req.dbl_data = dbl_data
 
-        future = await (self.do_request(req))
-        return future
+        return await self.do_request(req)
 
     def _get_response_map(self, request_type):
         """
@@ -253,7 +258,7 @@ class RequestHandler(object):
         from going over the same pipe. The returned future is for the response.
 
         :param msg: Message object to publish
-        :return:
+        :return: Response to the request
         """
         msg_id = str(self.get_id_from_msg(msg))
         request_type = str(self.get_request_type_from_msg(msg))
@@ -264,8 +269,13 @@ class RequestHandler(object):
                     "Duplicate request ID: `{}` for type `{}`".format(
                             msg_id, request_type))
 
-        future = Future()
+        future = asyncio.Future()
         req[msg_id] = None
         cb[msg_id] = future
+
+        # Ensures the message is sent, but don't wait for it.
+        # it sends to multiple listeners, some of them stop responding after a while, making this function stop for no
+        # real reason
         await self.publisher.publish(msg)
-        return future
+        await future
+        return future.result()

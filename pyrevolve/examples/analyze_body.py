@@ -15,6 +15,7 @@ import random
 from pyrevolve.sdfbuilder.math import Vector3
 from .generated_sdf import generate_robot, builder, robot_to_sdf
 from ..gazebo import get_analysis_robot, BodyAnalyzer
+from ..custom_logging.logger import logger
 
 import asyncio
 
@@ -25,7 +26,7 @@ else:
     seed = random.randint(0, 10000)
 
 random.seed(seed)
-print("Seed: {}".format(seed), file=sys.stderr)
+logger.info("Seed: {}".format(seed))
 
 
 async def analysis_func():
@@ -40,27 +41,27 @@ async def analysis_func():
 
         # Find out its intersections and bounding box
         intersections, bbox = await (
-                analyzer.analyze_robot(robot, builder=builder))
+            analyzer.analyze_robot(robot, builder=builder))
 
         if intersections:
-            print("Invalid model - intersections detected.", file=sys.stderr)
+            logger.info("Invalid model - intersections detected.", file=sys.stderr)
         else:
-            print("No model intersections detected!", file=sys.stderr)
+            logger.info("No model intersections detected!", file=sys.stderr)
             if bbox:
                 # Translate the model in z direction so it stands directly on
                 # the ground
-                print("Model bounding box: ({}, {}, {}), ({}, {}, {})".format(
-                        bbox.min.x,
-                        bbox.min.y,
-                        bbox.min.z,
-                        bbox.max.x,
-                        bbox.max.y,
-                        bbox.max.z
+                logger.info("Model bounding box: ({}, {}, {}), ({}, {}, {})".format(
+                    bbox.min.x,
+                    bbox.min.y,
+                    bbox.min.z,
+                    bbox.max.x,
+                    bbox.max.y,
+                    bbox.max.z
                 ), file=sys.stderr)
                 model = sdf.elements[0]
                 model.translate(Vector3(0, 0, -bbox.min.z))
 
-            print(str(robot_to_sdf(robot, "test_bot", "controllerplugin.so")))
+            logger.info(str(robot_to_sdf(robot, "test_bot", "controllerplugin.so")))
             break
 
 loop = asyncio.get_event_loop()

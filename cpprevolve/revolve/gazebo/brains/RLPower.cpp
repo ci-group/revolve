@@ -39,25 +39,25 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 RLPower::RLPower(
     const ::gazebo::physics::ModelPtr &_model,
-    const sdf::ElementPtr &_node,
+    const sdf::ElementPtr &_settings,
     const std::vector< MotorPtr > &_motors,
     const std::vector< SensorPtr > &_sensors)
     : generationCounter_(0)
     , cycleStartTime_(-1)
     , startTime_(-1)
+    , evaluationRate_(30.0) // default
 {
   // Create transport node
   this->node_.reset(new gz::transport::Node());
   this->node_->Init();
 
-//  // Listen to network modification requests
-//  this->alterSub_ = this->node_->Subscribe(
-//      "~/" + _modelName + "/modify_spline_policy", &RLPower::Modify,
-//      this);
+  auto learner_settings = _settings->GetElement("rv:learner");
 
   this->robot_ = _model;
   this->algorithmType_ = "D";
-  this->evaluationRate_ = 30.0;
+  try {
+      this->evaluationRate_ = std::stod(learner_settings->GetAttribute("evaluation_rate")->GetAsString());
+  } catch (const std::exception &e) {}
   this->numInterpolationPoints_ = 100;
   this->maxEvaluations_ = 1000;
   this->maxRankedPolicies_ = 10;
@@ -119,7 +119,7 @@ void RLPower::Update(
   }
 
   auto currPosition = this->robot_->WorldPose();
-  this->evaluator_->Update(currPosition);
+  this->evaluator_->Update(currPosition, _time, _step);
   delete[] output;
 }
 
@@ -260,7 +260,7 @@ void RLPower::UpdatePolicy(const size_t _numSplines)
   }
 
   // Increase spline points if it is a time
-  if (this->generationCounter_ % this->stepRate_ == 0)
+  if (this->sourceYSize_ <= 5 and this->generationCounter_ % this->stepRate_ == 0)
   {
     this->IncreaseSplinePoints(_numSplines);
   }
