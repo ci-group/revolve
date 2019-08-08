@@ -83,11 +83,10 @@ class Learning:
         Get vector with best aqcuired fitness
         :return: fitness, vector
         """
-        self.vectors_fitnessess = [fitness if fitness is not None else -1 for fitness in self.vectors_fitnessess]
+        for key in self.vectors_fitnessess:
+            self.vectors_fitnessess[key] = -1 if self.vectors_fitnessess[key] is None else self.vectors_fitnessess[key]
         best_vector_key = max(self.vectors_fitnessess, key=self.vectors_fitnessess.get)
-        best = self.vectors_fitnessess[best_vector_key]
-        self.best = best
-        return best[0], best[1]
+        self.best = self.vectors_fitnessess[best_vector_key]
 
     async def cma_es_evaluate_multiple_vectors(self, vectors):
         """
@@ -234,8 +233,6 @@ class Learning:
 
         # set correct fitness for best vector in individual
         await self.cma_es_evaluate_vector(self.vector_values, False)
-
-        self.best_vector_fitness()
 
         self.individual.phenotype._id = self.robot_id
 
