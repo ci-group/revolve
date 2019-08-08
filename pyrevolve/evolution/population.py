@@ -238,9 +238,16 @@ class Population:
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
         robot_futures = []
+        parallel_eval = learn_eval
+
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, gen_num, learn_eval)))
+            if parallel_eval:
+                # do things parallely
+                robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, gen_num, learn_eval)))
+            else:
+                # do things sequentially
+                robot_futures.append(await self.evaluate_single_robot(individual, gen_num, learn_eval))
 
 
         await asyncio.sleep(1)
@@ -248,7 +255,9 @@ class Population:
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
+            if parallel_eval:
+                future = await future
+            individual.fitness, individual.phenotype._behavioural_measurements = future
             
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
