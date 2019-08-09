@@ -93,6 +93,9 @@ class Learning:
         :param vector: list of list of vector values to evaluate
         :return: list of fitnesses of vectors
         """
+        if (len(self.simulator_connection._recent_eval_times) > 25 and np.mean(self.simulator_connection._recent_eval_times[-25:]) > 15 and self.learn_counter > 70):
+            exit()
+
         individuals = []
         fitness_vals = []
 
