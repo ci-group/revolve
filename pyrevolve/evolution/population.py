@@ -111,29 +111,37 @@ class Population:
         individual.develop()
         individual.phenotype.measure_phenotype()
 
-        with open(os.path.join(data_path, 'fitness', f'fitness_{id}.txt')) as f:
-            data = f.readlines()[0]
-            individual.fitness = None if data == 'None' else float(data)
+        fitness_path = os.path.join(data_path, 'fitness', f'fitness_{id}.txt')
+        if os.path.isfile(fitness_path):
+            with open(fitness_path) as f:
+                data = f.readlines()[0]
+                individual.fitness = None if data == 'None' else float(data)
+        else:
+            individual.fitness = None
 
-        with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')) as f:
-            lines = f.readlines()
-            if lines[0] == 'None':
-                individual.phenotype._behavioural_measurements = None
-            else:
-                individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
-                for line in lines:
-                    if line.split(' ')[0] == 'velocity':
-                        individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-                    #if line.split(' ')[0] == 'displacement':
-                     #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity':
-                        individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity_hill':
-                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'head_balance':
-                        individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'contacts':
-                        individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+        behaviour_path = os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')
+        if os.path.isfile(behaviour_path):
+            with open(behaviour_path) as f:
+                lines = f.readlines()
+                if lines[0] == 'None':
+                    individual.phenotype._behavioural_measurements = None
+                else:
+                    individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+                    for line in lines:
+                        if line.split(' ')[0] == 'velocity':
+                            individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
+                        #if line.split(' ')[0] == 'displacement':
+                        #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'displacement_velocity':
+                            individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'displacement_velocity_hill':
+                            individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'head_balance':
+                            individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'contacts':
+                            individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+        else:
+            individual.phenotype._behavioural_measurements = None
 
         return individual
 

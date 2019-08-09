@@ -245,7 +245,8 @@ class ExperimentManagement:
 
         for r, d, f in os.walk(os.path.join(self._data_folder, 'fitness')):
             for file in f:
-                robot_ids.append(int(file.split('.')[0].split('_')[-1]))
+                if not '_gen_' in file:
+                    robot_ids.append(int(file.split('.')[0].split('_')[-1]))
         last_id = np.sort(robot_ids)[-1]
 
         # if there are more robots to recover than the number expected in this snapshot
