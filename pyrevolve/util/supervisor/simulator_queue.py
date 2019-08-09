@@ -117,7 +117,7 @@ class SimulatorQueue:
         elapsed = time.time()-start
 
         max_size_eval_list = 1000
-        eval_time_size = len(self._eval_times)
+        eval_time_size = len(self._recent_eval_times)
         if eval_time_size > max_size_eval_list:
             self._recent_eval_times = self._recent_eval_times[eval_time_size-max_size_eval_list:]
         self._recent_eval_times.append(self._recent_eval_times)
