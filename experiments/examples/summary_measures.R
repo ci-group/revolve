@@ -5,18 +5,18 @@ library(dplyr)
 library(trend)
 
 base_directory <- paste('../', sep='')
-
 output_directory = base_directory
+
+
+#### CHANGE THE PARAMETERS HERE ####
 
 experiments_type = c(
                 'default_experiment'
                 )
 
-
 initials = c('d')
 
 experiments_labels = c('default_experiment')
-
 
 runs = c(1,2,3,4,5,6,7,8,9,10)
 gens = 100
@@ -26,6 +26,10 @@ line_size = 30
 show_markers = TRUE
 show_legends = TRUE
 experiments_type_colors = c( '#009900',  '#FF8000', '#BA1616', '#000099')  # DARK:green, orange, red,  blue
+
+#### CHANGE THE PARAMETERS HERE ####
+
+
 
 measures_names = c(
                    'displacement_velocity_hill',

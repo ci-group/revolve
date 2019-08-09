@@ -33,8 +33,9 @@ while 1:
                 files.sort()
                 youngest.append(files[-1])
 
-                if files[-1] > time_ago:
-                    some_has_been_updated = True
+                if len(files)>0:
+                    if files[-1] > time_ago:
+                        some_has_been_updated = True
 
     if not some_has_been_updated:
         youngest.sort()

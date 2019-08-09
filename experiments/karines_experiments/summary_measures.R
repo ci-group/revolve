@@ -8,6 +8,9 @@ base_directory <- paste('projects/revolve/experiments/karines_experiments/data',
 
 output_directory = base_directory
 
+#### CHANGE THE PARAMETERS HERE ####
+
+
 experiments_type = c(
                 'plane',
                 'lava'
@@ -20,6 +23,9 @@ experiments_labels = c('Plane', 'Floor is lava')
 runs = c(1,2,3,4,5,6,7,8,9,10)
 gens = 100
 pop = 100
+
+#### CHANGE THE PARAMETERS HERE ####
+
 sig = 0.05
 line_size = 30
 show_markers = TRUE
