@@ -24,7 +24,6 @@ class SimulatorQueue:
         self._robot_queue = asyncio.Queue()
         self._free_simulator = [True for _ in range(n_cores)]
         self._workers = []
-        self._recent_eval_times = []
 
     def _simulator_supervisor(self, simulator_name_postfix):
         return DynamicSimSupervisor(
@@ -115,12 +114,6 @@ class SimulatorQueue:
             return False
 
         elapsed = time.time()-start
-
-        max_size_eval_list = 1000
-        eval_time_size = len(self._recent_eval_times)
-        if eval_time_size > max_size_eval_list:
-            self._recent_eval_times = self._recent_eval_times[eval_time_size-max_size_eval_list:]
-        self._recent_eval_times.append(self._recent_eval_times)
 
         logger.info(f"time taken to do a simulation {elapsed}")
 
