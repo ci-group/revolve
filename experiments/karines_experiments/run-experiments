@@ -35,3 +35,14 @@ while true
                 sleep 5s
 	   done
 done
+
+
+
+
+
+while true
+	do
+    sleep 1800s;
+    kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
+    kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');
+done

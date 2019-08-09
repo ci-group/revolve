@@ -86,9 +86,9 @@ async def run():
     fin = len(population.individuals)
 
     population.individuals = np.array(population.individuals)
-    # best
+    # highest
     population.individuals = population.individuals[np.argsort(values)[ini:fin]]
-    #worst
+    # lowest
     #population.individuals = population.individuals[np.argsort(values)[0:max_best]]
 
     for ind in population.individuals:
