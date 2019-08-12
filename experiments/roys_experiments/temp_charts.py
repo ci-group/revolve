@@ -45,9 +45,13 @@ def main():
     battery_path = 'data/'
     output_path = '../../../../output/cpg_bo/'
 
+    all_robot_battery_avg = None
+    all_robot_speed_avg = None
+
     for robot in robots:
 
-
+        robot_battery_avg = None
+        robot_speed_avg = None
 
         battery_info = [f for f in listdir(battery_path + robot) if f.endswith('.txt')]
 
@@ -75,9 +79,18 @@ def main():
                         temp_c.clear()
                         temp_w.clear()
 
-            df = pd.DataFrame({'global time':global_time, 'watts used':watts_used, 'current charge':current_charge})
-            print(df.quantile([.1, .25, .5, .75], axis = 1))
-            quit(0)
+                # draw_graph('energy used per iteration for ' + robot + '\n iteration: ' + file_name,
+                #            'iteration', range(1, 121), 'total energy used', temp_diff)
+
+                if robot_battery_avg is None:
+                    robot_battery_avg = np.array(temp_diff)
+                else:
+                    robot_battery_avg += np.array(temp_diff)
+
+        robot_battery_avg /= 10
+        # draw_graph('energy used per iteration for ' + robot + '\n average of all iterations ',
+        #            'iteration', range(1, 121), 'total energy used', robot_battery_avg)
+
 
 
         num_info = listdir(output_path + robot)
@@ -88,6 +101,44 @@ def main():
                 for line in file:
                     data = line.strip('\n')
                     speed.append(float(data))
+
+                # draw_graph('speed for ' + robot + '\n iteration: ' + num, 'iteration', range(1,121), 'speed', speed)
+
+                if robot_speed_avg is None:
+                    robot_speed_avg = np.array(speed)
+                else:
+                    robot_speed_avg += np.array(speed)
+
+        robot_speed_avg /= 10
+        # draw_graph('speed for ' + robot + '\n average of all iterations ', 'iteration', range(1,121), 'speed', robot_speed_avg)
+
+        # draw_both_gaussian(robot_battery_avg, robot_speed_avg, 'Robot: ' + robot)
+
+        if all_robot_battery_avg is None:
+            all_robot_battery_avg = np.array(robot_battery_avg)
+        else:
+            all_robot_battery_avg += np.array(robot_battery_avg)
+
+        if all_robot_speed_avg is None:
+            all_robot_speed_avg = np.array(robot_speed_avg)
+        else:
+            all_robot_speed_avg += np.array(robot_speed_avg)
+
+    all_robot_speed_avg /= 10
+    all_robot_battery_avg /= 10
+
+    draw_graph('average speed for all robots per iteration', 'iterations', range(1, 121), 'average speed', all_robot_speed_avg, True)
+
+    draw_graph('average energy used for all robots per iteration', 'iteration', range(1, 121), 'average energy used', all_robot_battery_avg, True)
+
+    draw_both_gaussian(all_robot_battery_avg, all_robot_speed_avg)
+
+    ratio = []
+    for i in range(len(all_robot_speed_avg)):
+        ratio.append(all_robot_speed_avg[i]/all_robot_battery_avg[i])
+
+    draw_graph('ratio of average of all speed / average of all energy', 'iteration', range(1, 121), 'speed/energy', ratio, True)
+
 
 
 

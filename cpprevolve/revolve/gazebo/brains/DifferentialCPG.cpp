@@ -397,7 +397,7 @@ struct DifferentialCPG::evaluation_function{
   // babyB:22,
   // babyC:32,
   // one+:12
-  BO_PARAM(size_t, dim_in, 0); // CHANGETHIS
+  BO_PARAM(size_t, dim_in, 13); // CHANGETHIS
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -668,25 +668,6 @@ void DifferentialCPG::bo_step(){
 
       // Optimize. Pass dummy evaluation function and observations .
 
-        if (this->robot->GetName() == "example_spider")
-            const int DIM_IN = 18;
-        else if (this->robot->GetName() == "example_spider13")
-            const int DIM_IN = 26;
-        else if (this->robot->GetName() == "example_spider17")
-            const int DIM_IN = 34;
-        else if (this->robot->GetName() == "example_gecko7")
-            const int DIM_IN = 13;
-        else if (this->robot->GetName() == "example_gecko12")
-            const int DIM_IN = 23;
-        else if (this->robot->GetName() == "example_gecko17")
-            const int DIM_IN = 33;
-        else if (this->robot->GetName() == "example_babyA")
-            const int DIM_IN = 16;
-        else if (this->robot->GetName() == "example_babyB")
-            const int DIM_IN = 22;
-        else if (this->robot->GetName() == "example_babyC")
-            const int DIM_IN = 32;
-
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
                           this->samples,
                           this->observations);
@@ -864,7 +845,7 @@ void DifferentialCPG::Update(
       {
         std::cout << std::endl << "I am finished " << std::endl;
       }
-      std::exit(0);
+//      std::exit(0);
     }
 
     // Evaluation policy here

@@ -51,7 +51,7 @@ Evaluator::Evaluator(std::shared_ptr<::revolve::gazebo::Battery> battery,
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "battery"; // {directed, gait, battery} // STEP 3
+  this->locomotion_type = "directed"; // {directed, gait, battery} // STEP 3
   this->path_length = 0.0;
 }
 
@@ -364,10 +364,10 @@ double Evaluator::Fitness()
       // ************************
 
 
+      //
+      //
+      // f = P_initial
 
-      //f = (D_p/D) * b -[ (1 - (D_p/D) ) * (b_t + (len * size(13-34) * P) ) ]
-      fitness_value = (distance_projection/shortest_distance) * initial_battery -
-              ((1 - (distance_projection/shortest_distance) ) * (battery_time + (this->path_length * robot_size * -power_used)));
 
 //      std::cout << "b: " << initial_battery <<  "\n";
 //      std::cout << "size: " << robot_size <<  "\n";
@@ -384,6 +384,7 @@ double Evaluator::Fitness()
       std::cout << "fitness: " << fitness_value <<  "\n";
       this->battery_->current_charge = 0; /// changing its charge to 0 to simulate the reseting of the robot
   }
+    exit(0);
   return fitness_value;
 }
 

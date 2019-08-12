@@ -184,8 +184,8 @@ brain:
   meta:
     robot_size: 26
     run_analytics: "true"
-    n_learning_iterations: 1450
-    n_cooldown_iterations: 1
+    n_learning_iterations: 0
+    n_cooldown_iterations: 0
     reset_robot_position: "false"
     evaluation_rate: 60
     output_directory: ""

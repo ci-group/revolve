@@ -253,7 +253,5 @@ void RobotController::LoadBattery(const sdf::ElementPtr _sdf)
     this->battery_->ResetVoltage();
     this->battery_->robot_name = this->model_->GetName();
 
-//    this->battery_->SetUpdateFunc([](const ::gazebo::common::BatteryPtr &battery) -> double {
-//    });
   }
 }
