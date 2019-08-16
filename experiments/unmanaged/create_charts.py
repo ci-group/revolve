@@ -89,7 +89,7 @@ def read_data(folder_name: str):
 
     robots = read_robots(folder_name)
     anno_0 = robots['robot_1'].life['starting_time']
-    print(f"this is anno_0")
+    print(f"this is anno_0: {anno_0}")
     for _id, robot in robots.items():
         robot.life['starting_time'] -= anno_0
         if robot.life['death'] is not None:
@@ -193,16 +193,16 @@ def calculate_min_max_len(data):
     return _min, _max, _len
 
 
-def robot_density(robots, label='start_pos', sigma=1.0):
+def robot_density(robots, label='start_pos', time=None, sigma=1.0):
     positions = []
     # sizes:
     min_x = -10
     max_x = 10
     min_y = -10
     max_y = 20
+    time = (-Inf, Inf) if time is None else time
     for key, robot in robots.items():
         pos = parse_vec3(robot.life[label])
-        positions.append(pos)
         x = pos[0]
         y = pos[1]
 
@@ -215,6 +215,9 @@ def robot_density(robots, label='start_pos', sigma=1.0):
             min_y = y
         elif y > max_y:
             max_y = y
+
+        if time[0] <= robot.life['starting_time'] <= time[1]:
+            positions.append(pos)
 
     min_x = int(min_x)
     max_x = int(max_x + 3.5)
@@ -253,13 +256,13 @@ def robot_density(robots, label='start_pos', sigma=1.0):
 
 
 def countour_plot(robots, label='start_pos', time=None, sigma=1.0, ax=None):
-    X, Y, Z = robot_density(robots, label, sigma=sigma)
+    X, Y, Z = robot_density(robots, label, time=time, sigma=sigma)
 
     if ax is None:
         _fig, ax = plt.subplots()
     CS = ax.contour(X, Y, Z)
     ax.clabel(CS, inline=1, fontsize=10)
-    ax.set_title(f'{label} - sigma={sigma}')
+    ax.set_title(f'{label} Time={time} - sigma={sigma}')
 
 
 if __name__ == '__main__':
@@ -302,10 +305,13 @@ if __name__ == '__main__':
         plt.savefig(os.path.join(folder_name, 'population-speed.png'), bbox_inches='tight')
 
     countour_plot(data['robots'], 'start_pos', sigma=0.6)
-    fig, axs = plt.subplots(nrows=1, ncols=2)
+    countour_plot(data['robots'], 'last_pos', sigma=0.6)
 
-    countour_plot(data['robots'], 'start_pos', time=(0, 1), sigma=0.6, ax=axs[0])
-    countour_plot(data['robots'], 'last_pos', sigma=0.6, ax=axs[1])
+    fig, axs = plt.subplots(nrows=2, ncols=2)
+    countour_plot(data['robots'], 'start_pos', time=(0.0,       10.0*60.0), sigma=0.6, ax=axs[0][0])
+    countour_plot(data['robots'], 'start_pos', time=(10.0*60.0, 20.0*60.0), sigma=0.6, ax=axs[0][1])
+    countour_plot(data['robots'], 'start_pos', time=(20.0*60.0, 30.0*60.0), sigma=0.6, ax=axs[1][0])
+    countour_plot(data['robots'], 'start_pos', time=(30.0*60.0, 40.0*60.0), sigma=0.6, ax=axs[1][1])
     if save_png:
         plt.savefig(os.path.join(folder_name, 'population-contour.png'), bbox_inches='tight')
 
