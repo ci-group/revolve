@@ -5,6 +5,7 @@ import dateutil.parser
 import yaml
 import matplotlib
 import matplotlib.pyplot as plt
+import platform
 import numpy as np
 from scipy.ndimage import gaussian_filter
 
@@ -86,9 +87,17 @@ def read_data(folder_name: str):
     assert(os.path.isdir(folder_name))
     assert(os.path.exists(os.path.join(folder_name, 'experiment_manager.log')))
 
+    robots = read_robots(folder_name)
+    anno_0 = robots['robot_1'].life['starting_time']
+    print(f"this is anno_0")
+    for _id, robot in robots.items():
+        robot.life['starting_time'] -= anno_0
+        if robot.life['death'] is not None:
+            robot.life['death'] -= anno_0
+
     return {
         'log': read_log(os.path.join(folder_name, 'experiment_manager.log')),
-        'robots': read_robots(folder_name),
+        'robots': robots,
     }
 
 
@@ -243,10 +252,11 @@ def robot_density(robots, label='start_pos', sigma=1.0):
     # return X, Y, Z
 
 
-def countour_plot(robots, label='start_pos', sigma=1.0):
+def countour_plot(robots, label='start_pos', time=None, sigma=1.0, ax=None):
     X, Y, Z = robot_density(robots, label, sigma=sigma)
 
-    fig, ax = plt.subplots()
+    if ax is None:
+        _fig, ax = plt.subplots()
     CS = ax.contour(X, Y, Z)
     ax.clabel(CS, inline=1, fontsize=10)
     ax.set_title(f'{label} - sigma={sigma}')
@@ -266,9 +276,10 @@ if __name__ == '__main__':
             sys.exit(1)
 
     if not save_png:
-        matplotlib.use('Qt5Agg')
-        # matplotlib.use('GTK3Cairo') # live update is bugged
-        # matplotlib.use('GTK3Agg')
+        if platform.system() == 'Linux':
+            matplotlib.use('Qt5Agg')
+            # matplotlib.use('GTK3Cairo') # live update is bugged
+            # matplotlib.use('GTK3Agg')
     fig, ax = plt.subplots()
     if live_update:
         plt.ion()
@@ -291,11 +302,12 @@ if __name__ == '__main__':
         plt.savefig(os.path.join(folder_name, 'population-speed.png'), bbox_inches='tight')
 
     countour_plot(data['robots'], 'start_pos', sigma=0.6)
+    fig, axs = plt.subplots(nrows=1, ncols=2)
+
+    countour_plot(data['robots'], 'start_pos', time=(0, 1), sigma=0.6, ax=axs[0])
+    countour_plot(data['robots'], 'last_pos', sigma=0.6, ax=axs[1])
     if save_png:
-        plt.savefig(os.path.join(folder_name, 'population-start_pos-contour.png'), bbox_inches='tight')
-    countour_plot(data['robots'], 'last_pos', sigma=0.6)
-    if save_png:
-        plt.savefig(os.path.join(folder_name, 'population-last_pos-contour.png'), bbox_inches='tight')
+        plt.savefig(os.path.join(folder_name, 'population-contour.png'), bbox_inches='tight')
 
     if not live_update and not save_png:
         plt.show()
