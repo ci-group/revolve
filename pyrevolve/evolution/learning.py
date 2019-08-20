@@ -225,7 +225,8 @@ class Learning:
         if len(self.vector_values) > 0:
             # set original fitness of robot as first index of list fitnesses_aqcuired
             original_fitness = await self.cma_es_evaluate_vector(self.vector_values, False)
-            self.original = [original_fitness, self.vector_values]        
+            self.original = [original_fitness, self.vector_values]
+            self.individual.export_learned_phenotype(self.population_conf.experiment_management.data_folder, 'original')
             best_vector = await self.vector_cma_es()
             self.devectorize_brain(best_vector)
         else:
@@ -235,5 +236,7 @@ class Learning:
         await self.cma_es_evaluate_vector(self.vector_values, False)
 
         self.individual.phenotype._id = self.robot_id
+
+        self.individual.export_learned_phenotype(self.population_conf.experiment_management.data_folder, 'learned')
 
         return self.individual
