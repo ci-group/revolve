@@ -1,3 +1,6 @@
 [submodule "thirdparty/limbo"]
 	path = thirdparty/limbo
 	url = https://github.com/resibots/limbo.git
+[submodule "thirdparty/MultiNEAT"]
+	path = thirdparty/MultiNEAT
+	url = https://github.com/peter-ch/MultiNEAT.git
