@@ -209,7 +209,7 @@ class ExperimentManagement:
         robot_ids = []
         for r, d, f in os.walk(f'{self.data_folder}/phenotypes'):
             for file in f:
-                if 'learned' not in file or 'original' not in file:
+                if 'learned' not in file and 'original' not in file:
                     robot_ids.append(int(file.split('.')[0].split('_')[-1]))
         last_id = np.sort(robot_ids)[-1]     
         
