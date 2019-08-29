@@ -139,8 +139,8 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
       // TODO find which axis to use local or global
       // TODO check the watt if it should be positive or negative
       // TODO change this for now im using the absolute value of the watt so it always decreases from the joint movements
-      double watt = -abs(cmd * jointWrench.body1Torque.Length()); // TODO check which torque to use 1 or 2
-      this->battery_->SetPowerLoad(this->consumerId_ , watt);
+      double power = -abs(cmd * jointWrench.body1Torque.Length()); // TODO check which torque to use 1 or 2
+      this->battery_->SetPowerLoad(this->consumerId_ , power);
 
   }
   this->joint_->SetParam("vel", 0, cmd);
