@@ -130,7 +130,7 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
 
 
   auto error = position - this->positionTarget_;
-  auto cmd = this->pid_.Update(error, stepTime); // angular velocity TODO this is targeted velocisty
+  auto cmd = this->pid_.Update(error, stepTime); // angular velocity TODO this is targeted velocity
 
   if (this->battery_)
   {
