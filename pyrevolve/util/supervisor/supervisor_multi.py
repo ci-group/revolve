@@ -251,7 +251,8 @@ class DynamicSimSupervisor(object):
         gazebo_libraries_path = os.path.dirname(gazebo_libraries_path)
         for lib_f in ['lib', 'lib64']:
             _gazebo_libraries_path = os.path.join(gazebo_libraries_path, '..', lib_f)
-            if os.path.isfile(os.path.join(_gazebo_libraries_path, 'libgazebo_common.so')):
+            lib_postfix = 'dylib' if platform.system() == 'Darwin' else 'so'
+            if os.path.isfile(os.path.join(_gazebo_libraries_path, f'libgazebo_common.{lib_postfix}')):
                 gazebo_libraries_path = _gazebo_libraries_path
                 break
 
