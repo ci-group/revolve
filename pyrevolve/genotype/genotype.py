@@ -1,9 +1,12 @@
+import copy
+
+
 class Genotype:
     def clone(self):
         """
         Create an returns deep copy of the genotype
         """
-        raise NotImplementedError("Method must be implemented by genome")
+        return copy.deepcopy(self)
 
     def develop(self):
         """
