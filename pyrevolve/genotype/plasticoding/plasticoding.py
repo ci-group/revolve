@@ -26,6 +26,7 @@ class Alphabet(Enum):
     JOINT_HORIZONTAL = 'AJ1'
     JOINT_VERTICAL = 'AJ2'
     BLOCK = 'B'
+    BLOCK_VERTICAL = 'BV'
     SENSOR = 'ST'
 
     # MorphologyMountingCommands
@@ -58,8 +59,13 @@ class Alphabet(Enum):
             [Alphabet.JOINT_HORIZONTAL, []],
             [Alphabet.JOINT_VERTICAL, []],
             [Alphabet.BLOCK, []],
+            [Alphabet.BLOCK_VERTICAL, []],
             [Alphabet.SENSOR, []],
         ]
+
+    def is_vertical_module(self):
+        return self is Alphabet.JOINT_VERTICAL \
+            or self is Alphabet.BLOCK_VERTICAL
 
     @staticmethod
     def morphology_mounting_commands():
@@ -400,13 +406,17 @@ class Plasticoding(Genotype):
 
         rgb = []
         if new_module_type == Alphabet.BLOCK:
-            rgb = [0, 0, 1]
-        if new_module_type == Alphabet.JOINT_HORIZONTAL:
-            rgb = [1, 0.08, 0.58]
-        if new_module_type == Alphabet.JOINT_VERTICAL:
-            rgb = [0.7, 0, 0]
-        if new_module_type == Alphabet.SENSOR:
+            rgb = [0.0, 0.0, 1.0]
+        elif new_module_type == Alphabet.BLOCK_VERTICAL:
+            rgb = [0.5, 0.5, 1.0]
+        elif new_module_type == Alphabet.JOINT_HORIZONTAL:
+            rgb = [1.0, 0.08, 0.58]
+        elif new_module_type == Alphabet.JOINT_VERTICAL:
+            rgb = [0.7, 0.0, 0.0]
+        elif new_module_type == Alphabet.SENSOR:
             rgb = [0.7, 0.7, 0.7]
+        else:
+            rgb = [1.0, 1.0, 1.0]
         return rgb
 
     def get_slot(self, morph_mounting_container):
@@ -422,14 +432,12 @@ class Plasticoding(Genotype):
 
     def get_angle(self, new_module_type, parent):
         angle = 0
-        if new_module_type == Alphabet.JOINT_VERTICAL:
-            if parent.info['new_module_type'] is Alphabet.JOINT_VERTICAL:
-                angle = 0
-            else:
-                angle = 90
-        else:
-            if parent.info['new_module_type'] is Alphabet.JOINT_VERTICAL:
-                angle = 270
+        vertical_new_module = new_module_type.is_vertical_module()
+        vertical_parent = parent.info['new_module_type'].is_vertical_module()
+        if vertical_new_module and not vertical_parent:
+            angle = 90
+        elif vertical_parent and not vertical_new_module:
+            angle = 270
         return angle
 
     def check_intersection(self, parent, slot, module):
@@ -491,13 +499,16 @@ class Plasticoding(Genotype):
             mount = True
 
         if mount:
-            if new_module_type == Alphabet.BLOCK:
+            if new_module_type == Alphabet.BLOCK \
+                    or new_module_type == Alphabet.BLOCK_VERTICAL:
                 module = BrickModule()
-            if new_module_type == Alphabet.JOINT_VERTICAL \
+            elif new_module_type == Alphabet.JOINT_VERTICAL \
                     or new_module_type == Alphabet.JOINT_HORIZONTAL:
                 module = ActiveHingeModule()
-            if new_module_type == Alphabet.SENSOR:
+            elif new_module_type == Alphabet.SENSOR:
                 module = TouchSensorModule()
+            else:
+                raise NotImplementedError(f'{new_module_type}')
 
             module.info = {}
             module.info['new_module_type'] = new_module_type
