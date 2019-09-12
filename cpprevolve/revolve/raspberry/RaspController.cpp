@@ -61,6 +61,39 @@ void RaspController::set_new_controller(const YAML::Node &conf)
             params.weights.emplace_back(weight.as<double>());
         }
 
+        if (conf["reset_neuron_random"].IsDefined()) {
+            params.reset_neuron_random = conf["reset_neuron_random"].as<bool>();
+            std::cout << "Setting reset_neuron_random to: " << params.reset_neuron_random << std::endl;
+        }
+        if (conf["use_frame_of_reference"].IsDefined()) {
+            params.use_frame_of_reference = conf["use_frame_of_reference"].as<bool>();
+            std::cout << "Setting use_frame_of_reference to: " << params.use_frame_of_reference << std::endl;
+        }
+        if (conf["init_neuron_state"].IsDefined()) {
+            params.init_neuron_state = conf["init_neuron_state"].as<double>();
+            std::cout << "Setting init_neuron_state to: " << params.init_neuron_state << std::endl;
+        }
+        if (conf["range_ub"].IsDefined()) {
+            params.range_ub = conf["range_ub"].as<double>();
+            std::cout << "Setting range_ub to: " << params.range_ub << std::endl;
+        }
+        if (conf["signal_factor_all"].IsDefined()) {
+            params.signal_factor_all = conf["signal_factor_all"].as<double>();
+            std::cout << "Setting signal factor all to: " << params.signal_factor_all << std::endl;
+        }
+        if (conf["signal_factor_mid"].IsDefined()) {
+            params.signal_factor_mid = conf["signal_factor_mid"].as<double>();
+            std::cout << "Setting signal_factor_mid to: " << params.signal_factor_mid << std::endl;
+        }
+        if (conf["signal_factor_left_right"].IsDefined()) {
+            params.signal_factor_all = conf["signal_factor_left_right"].as<double>();
+            std::cout << "Setting signal_factor_left_right to: " << params.signal_factor_left_right << std::endl;
+        }
+        if (conf["abs_output_bound"].IsDefined()) {
+            params.abs_output_bound = conf["abs_output_bound"].as<double>();
+            std::cout << "Setting abs_output_bound to: " << params.abs_output_bound << std::endl;
+        }
+
         revolve_controller.reset(
                 new DifferentialCPG(params,this->actuators)
         );
