@@ -36,6 +36,7 @@ class RevolveBot:
         self._behavioural_measurements = None
         self.self_collide = self_collide
         self.battery_level = 0.0
+        self.simulation_boundaries = None
 
     @property
     def id(self):
