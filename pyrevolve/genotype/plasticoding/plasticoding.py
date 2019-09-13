@@ -53,15 +53,17 @@ class Alphabet(Enum):
     MOVE_REF_O = 'brainmoveTTS'
 
     @staticmethod
-    def modules():
-        return [
+    def modules(allow_vertical_brick):
+        modules = [
             [Alphabet.CORE_COMPONENT, []],
             [Alphabet.JOINT_HORIZONTAL, []],
             [Alphabet.JOINT_VERTICAL, []],
             [Alphabet.BLOCK, []],
-            [Alphabet.BLOCK_VERTICAL, []],
             [Alphabet.SENSOR, []],
         ]
+        if allow_vertical_brick:
+            modules.append([Alphabet.BLOCK_VERTICAL, []])
+        return modules
 
     def is_vertical_module(self):
         return self is Alphabet.JOINT_VERTICAL \
@@ -203,7 +205,7 @@ class Plasticoding(Genotype):
             for aux_index in range(0, len(self.intermediate_phenotype)):
 
                 symbol = self.intermediate_phenotype[position]
-                if [symbol[self.index_symbol], []] in Alphabet.modules():
+                if [symbol[self.index_symbol], []] in Alphabet.modules(self.conf.allow_vertical_brick):
                     # removes symbol
                     self.intermediate_phenotype.pop(position)
                     # replaces by its production rule
@@ -236,7 +238,7 @@ class Plasticoding(Genotype):
             if [symbol[self.index_symbol], []] in Alphabet.morphology_mounting_commands():
                 self.morph_mounting_container = symbol[self.index_symbol]
 
-            if [symbol[self.index_symbol], []] in Alphabet.modules() \
+            if [symbol[self.index_symbol], []] in Alphabet.modules(self.conf.allow_vertical_brick) \
                     and symbol[self.index_symbol] is not Alphabet.CORE_COMPONENT \
                     and self.morph_mounting_container is not None:
 
@@ -697,7 +699,8 @@ class PlasticodingConfig:
                  axiom_w=Alphabet.CORE_COMPONENT,
                  i_iterations=3,
                  max_structural_modules=100,
-                 robot_id=0
+                 robot_id=0,
+                 allow_vertical_brick=True,
                  ):
         self.initialization_genome = initialization_genome
         self.e_max_groups = e_max_groups
@@ -711,3 +714,4 @@ class PlasticodingConfig:
         self.i_iterations = i_iterations
         self.max_structural_modules = max_structural_modules
         self.robot_id = robot_id
+        self.allow_vertical_brick = allow_vertical_brick

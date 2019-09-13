@@ -17,7 +17,7 @@ def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
     if crossover_attempt > crossover_conf.crossover_prob:
         grammar = parent_genotypes[0].grammar
     else:
-        for letter in Alphabet.modules():
+        for letter in Alphabet.modules(genotype_conf.allow_vertical_brick):
             parent = random.randint(0, 1)
             # gets the production rule for the respective letter
             grammar[letter[0]] = parent_genotypes[parent].grammar[letter[0]]
