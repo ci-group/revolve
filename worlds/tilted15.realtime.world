@@ -9,7 +9,7 @@
       <max_step_size>0.001</max_step_size>
 
            <!-- real time -->
-           <real_time_update_rate>1000</real_time_update_rate>
+           <real_time_update_rate>5000</real_time_update_rate>
 
       <ode>
         <constraints>

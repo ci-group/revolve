@@ -60,7 +60,7 @@ def size_penalty(robot_manager, robot):
 def displacement_velocity_hill2(robot_manager, robot, cost=False):
     fitness = measures.displacement_velocity_hill(robot_manager)
 
-     if fitness == 0:
+    if fitness == 0:
         fitness = -0.1
 
     elif fitness < 0:

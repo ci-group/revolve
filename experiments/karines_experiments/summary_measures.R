@@ -3,10 +3,12 @@ library(sqldf)
 library(plyr)
 library(dplyr)
 library(trend)
+library(purrr)
 
 base_directory <- paste('projects/revolve/experiments/karines_experiments/data', sep='')
 
-output_directory = base_directory
+analysis = 'test'
+output_directory = paste(base_directory,'/',analysis ,sep='')
 
 #### CHANGE THE PARAMETERS HERE ####
 
@@ -155,6 +157,7 @@ measures_fin = list()
 for (exp in 1:length(experiments_type))
 {
   
+  measures_aux = c()
   query ='select run, generation'
   for (i in 1:length(measures_names))
   {
@@ -168,22 +171,36 @@ for (exp in 1:length(experiments_type))
   
   temp = measures_averages_gens_1[[exp]] 
   
+  temp$generation = as.numeric(temp$generation)
+  
   measures_ini[[exp]] = sqldf(paste("select * from temp where generation=1"))
   measures_fin[[exp]] = sqldf(paste("select * from temp where generation=",gens-1))
   query = 'select generation'
   for (i in 1:length(measures_names))
   {
+      # later renames vars _avg_SUMMARY, just to make it in the same style as the quantile variables
     query = paste(query,', avg(',experiments_type[exp],'_',measures_names[i],'_avg) as ',experiments_type[exp],'_',measures_names[i],'_avg', sep='') 
     query = paste(query,', max(',experiments_type[exp],'_',measures_names[i],'_avg) as ',experiments_type[exp],'_',measures_names[i],'_max', sep='') 
     query = paste(query,', stdev(',experiments_type[exp],'_',measures_names[i],'_avg) as ',experiments_type[exp],'_',measures_names[i],'_stdev', sep='')
     query = paste(query,', median(',experiments_type[exp],'_',measures_names[i],'_avg) as ',experiments_type[exp],'_',measures_names[i],'_median', sep='')
+    
+    measures_aux = c(measures_aux, paste(experiments_type[exp],'_',measures_names[i],'_avg', sep='') )
   }
   query = paste(query,' from temp group by generation', sep="")
   
-  measures_averages_gens_2[[exp]] = sqldf(query)
+  temp2 = sqldf(query)
+
+  p <- c(0.25, 0.75)
+  p_names <- map_chr(p, ~paste0('Q',.x*100, sep=""))
+  p_funs <- map(p, ~partial(quantile, probs = .x, na.rm = TRUE)) %>% 
+    set_names(nm = p_names)
   
-  measures_averages_gens_2[[exp]]$generation = as.numeric(measures_averages_gens_2[[exp]]$generation)
+  quantiles = data.frame(temp %>% 
+                  group_by(generation) %>% 
+                  summarize_at(vars(measures_aux), funs(!!!p_funs)) )
   
+  measures_averages_gens_2[[exp]] = sqldf('select * from temp2 inner join quantiles using (generation)')
+
 }
 
 
@@ -307,92 +324,115 @@ close(file)
 
 # plots measures 
 
-for (i in 1:length(measures_names)) 
+for (type_summary in c('means','quants'))
 {
-  tests1 = ''
-  tests2 = ''
-  tests3 = ''
-  break_aux = 0
-  
-  graph <- ggplot(data=measures_averages_gens, aes(x=generation))
-  for(m in 1:length(experiments_type))
-  {
-    graph = graph + geom_errorbar(aes_string(ymin=paste(experiments_type[m],'_',measures_names[i],'_avg','-',experiments_type[m],'_',measures_names[i],'_stdev',sep=''), 
-                                             ymax=paste(experiments_type[m],'_',measures_names[i],'_avg','+',experiments_type[m],'_',measures_names[i],'_stdev',sep='') ), 
-                                  color=experiments_type_colors[m], 
-                                  alpha=0.35,size=0.5,width=0.001)
-  }
-  
-  for(m in 1:length(experiments_type))
-  {
-    if(show_legends == TRUE){
-      graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_avg',sep=''), colour=shQuote(experiments_labels[m]) ), size=2)
-    }else{
-      graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_avg',sep='')   ),size=2, color = experiments_type_colors[m])
-    }
-    # graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_median',sep='')   ),size=2, color = colors_median[m])
     
-    if (length(array_mann)>0)
-    {
-      if (length(array_mann[[m]])>0)
-      {
-        if(!is.na(array_mann[[m]][[i]]$p.value))
-        {
-          if(array_mann[[m]][[i]]$p.value<=sig)
-          {
-            if(array_mann[[m]][[i]]$statistic>0){ direction = "/  "} else { direction = "\\  "}
-            tests1 = paste(tests1, initials[m],direction,sep="") 
-          }
-        }
-      }
-    }
-  }
   
-  if (length(array_wilcoxon[[m]])>0)
+  for (i in 1:length(measures_names)) 
   {
+    tests1 = ''
+    tests2 = ''
+    tests3 = ''
+    break_aux = 0
+    
+    graph <- ggplot(data=measures_averages_gens, aes(x=generation))
+
     for(m in 1:length(experiments_type))
     {
-      if(!is.na(array_wilcoxon[[m]][[i]]$p.value))
+     if(type_summary == 'means')
+     {
+      graph = graph + geom_errorbar(aes_string(ymin=paste(experiments_type[m],'_',measures_names[i],'_avg','-',experiments_type[m],'_',measures_names[i],'_stdev',sep=''), 
+                                                 ymax=paste(experiments_type[m],'_',measures_names[i],'_avg','+',experiments_type[m],'_',measures_names[i],'_stdev',sep='') ), 
+                                      color=experiments_type_colors[m], 
+                                      alpha=0.35,size=0.5,width=0.001)
+     }else
+     {
+       graph = graph + geom_errorbar(aes_string(ymin=paste(experiments_type[m],'_',measures_names[i],'_avg_Q25',sep=''), 
+                                                ymax=paste(experiments_type[m],'_',measures_names[i],'_avg_Q75',sep='') ), 
+                                     color=experiments_type_colors[m], 
+                                     alpha=0.35,size=0.5,width=0.001) 
+     }
+    }
+    
+    for(m in 1:length(experiments_type))
+    {
+      if(type_summary == 'means')
       {
-        if(array_wilcoxon[[m]][[i]]$p.value<=sig)
-        {
-          tests2 = paste(tests2, initials[m],'C  ', sep='') 
+      if(show_legends == TRUE){
+        graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_avg',sep=''), colour=shQuote(experiments_labels[m]) ), size=2)
+      }else{
+        graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_avg',sep='')   ),size=2, color = experiments_type_colors[m])
+      }
+       
+      }else{
+        if(show_legends == TRUE){
+         graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_median',sep='') , colour=shQuote(experiments_labels[m])   ),size=2 )
+        }else{
+          graph = graph + geom_line(aes_string(y=paste(experiments_type[m],'_',measures_names[i],'_median',sep='')  ),size=2, color = experiments_type_colors[m] )
         }
       }
-    }
-  }
-  
-  if (length(array_wilcoxon2)>0)
-    {
-      for(p in 1:length(array_wilcoxon2[[1]]))
+      
+      if (length(array_mann)>0)
       {
-        if (length(array_wilcoxon2[[1]][[p]])>0)
+        if (length(array_mann[[m]])>0)
         {
-          if(!is.na(array_wilcoxon2[[1]][[p]][[i]]$p.value))
+          if(!is.na(array_mann[[m]][[i]]$p.value))
           {
-            if(array_wilcoxon2[[1]][[p]][[i]]$p.value<=sig)
+            if(array_mann[[m]][[i]]$p.value<=sig)
             {
-              if(nchar(tests3)>line_size && break_aux == 0){
-                tests3 = paste(tests3, '\n')
-                break_aux = 1
-              }
-              tests3 = paste(tests3, array_wilcoxon2[[2]][[p]],'D  ',sep='')
+              if(array_mann[[m]][[i]]$statistic>0){ direction = "/  "} else { direction = "\\  "}
+              tests1 = paste(tests1, initials[m],direction,sep="") 
             }
           }
         }
       }
+    }
+    
+    if (length(array_wilcoxon[[m]])>0)
+    {
+      for(m in 1:length(experiments_type))
+      {
+        if(!is.na(array_wilcoxon[[m]][[i]]$p.value))
+        {
+          if(array_wilcoxon[[m]][[i]]$p.value<=sig)
+          {
+            tests2 = paste(tests2, initials[m],'C  ', sep='') 
+          }
+        }
+      }
+    }
+    
+    if (length(array_wilcoxon2)>0)
+      {
+        for(p in 1:length(array_wilcoxon2[[1]]))
+        {
+          if (length(array_wilcoxon2[[1]][[p]])>0)
+          {
+            if(!is.na(array_wilcoxon2[[1]][[p]][[i]]$p.value))
+            {
+              if(array_wilcoxon2[[1]][[p]][[i]]$p.value<=sig)
+              {
+                if(nchar(tests3)>line_size && break_aux == 0){
+                  tests3 = paste(tests3, '\n')
+                  break_aux = 1
+                }
+                tests3 = paste(tests3, array_wilcoxon2[[2]][[p]],'D  ',sep='')
+              }
+            }
+          }
+        }
+    }
+    
+    graph = graph  + 
+      #coord_cartesian(ylim = c(0, 1))+
+      labs( y=measures_labels[i], x="Generation") 
+    if(show_markers == TRUE){
+      graph = graph  + labs( y=measures_labels[i], x="Generation", subtitle = paste(tests1,'\n', tests2, '\n', tests3, sep='')) 
+    }
+    graph = graph  + theme(legend.position="bottom" ,  legend.text=element_text(size=20), axis.text=element_text(size=30),axis.title=element_text(size=39),
+                           plot.subtitle=element_text(size=25 )) 
+    
+    ggsave(paste( output_directory,'/',type_summary,'_' ,measures_names[i],'_generations.pdf',  sep=''), graph , device='pdf', height = 8, width = 10)
   }
-  
-  graph = graph  + 
-    #coord_cartesian(ylim = c(0, 1))+
-    labs( y=measures_labels[i], x="Generation") 
-  if(show_markers == TRUE){
-    graph = graph  + labs( y=measures_labels[i], x="Generation", subtitle = paste(tests1,'\n', tests2, '\n', tests3, sep='')) 
-  }
-  graph = graph  + theme(legend.position="bottom" ,  legend.text=element_text(size=20), axis.text=element_text(size=30),axis.title=element_text(size=39),
-                         plot.subtitle=element_text(size=25 )) 
-  
-  ggsave(paste( output_directory,'/' ,measures_names[i],'_generations.pdf',  sep=''), graph , device='pdf', height = 8, width = 10)
+
 }
-
-
