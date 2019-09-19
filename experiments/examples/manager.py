@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
 """
-This script loads a robot.yaml file and creates the corresponding SDF and robot_config.yaml for the robot
-This is useful to create the hardware configuration for the robot, starting from the yaml description of the robot.
+This script loads a robot.yaml file and inserts it into the simulator.
 """
 
 import os
 import sys
 import asyncio
-
-# Add `..` folder in search path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-newpath = os.path.join(current_dir, '..', '..')
-sys.path.append(newpath)
-
 from pyrevolve.SDF.math import Vector3
 from pyrevolve import revolve_bot, parser
 from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
+from pyrevolve.evolution import fitness
 
 
 async def run():
@@ -60,6 +54,9 @@ async def run():
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
-        print("Robot fitness is {fitness}".format(
-            fitness=robot_manager.fitness()))
+        status = 'dead' if robot_manager.dead else 'alive'
+        print(f"Robot fitness ({status}) is \n"
+              f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
+              f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
+              f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
         await asyncio.sleep(1.0)
