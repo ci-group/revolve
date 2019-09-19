@@ -26,7 +26,7 @@ def _generate_random_grammar(conf):
             symbol_mounting = random.randint(
                 0, len(Alphabet.morphology_mounting_commands()) - 1)
             symbol_morph_moving = random.randint(
-                0, len(Alphabet.morphology_moving_commands()) - 1)
+                0, len(Alphabet.morphology_moving_commands(conf.use_rotation_commands)) - 1)
             symbol_contr_moving = random.randint(
                 0, len(Alphabet.controller_moving_commands()) - 1)
             symbol_changing = random.randint(
@@ -42,7 +42,7 @@ def _generate_random_grammar(conf):
                 Plasticoding.build_symbol(
                     Alphabet.modules(conf.allow_vertical_brick)[symbol_module], conf),
                 Plasticoding.build_symbol(
-                    Alphabet.morphology_moving_commands()[symbol_morph_moving], conf),
+                    Alphabet.morphology_moving_commands(conf.use_rotation_commands)[symbol_morph_moving], conf),
             ])
     return grammar
 

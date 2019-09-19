@@ -39,6 +39,8 @@ class Alphabet(Enum):
     MOVE_FRONT = 'movef'
     MOVE_LEFT = 'movel'
     MOVE_BACK = 'moveb'
+    ROTATE_90 = 'rotate90'
+    ROTATE_N90 = 'rotaten90'
 
     # ControllerChangingCommands
     ADD_EDGE = 'brainedge'
@@ -53,7 +55,7 @@ class Alphabet(Enum):
     MOVE_REF_O = 'brainmoveTTS'
 
     @staticmethod
-    def modules(allow_vertical_brick):
+    def modules(allow_vertical_brick: bool):
         modules = [
             [Alphabet.CORE_COMPONENT, []],
             [Alphabet.JOINT_HORIZONTAL, []],
@@ -78,13 +80,17 @@ class Alphabet(Enum):
         ]
 
     @staticmethod
-    def morphology_moving_commands():
-        return [
+    def morphology_moving_commands(use_rotation_commands: bool):
+        commands = [
             [Alphabet.MOVE_RIGHT, []],
             [Alphabet.MOVE_FRONT, []],
             [Alphabet.MOVE_LEFT, []],
-            [Alphabet.MOVE_BACK, []]
+            [Alphabet.MOVE_BACK, []],
         ]
+        if use_rotation_commands:
+            commands.append([Alphabet.ROTATE_90, []])
+            commands.append([Alphabet.ROTATE_N90, []])
+        return commands
 
     @staticmethod
     def controller_changing_commands():
@@ -253,7 +259,7 @@ class Plasticoding(Genotype):
                                     symbol[self.index_symbol],
                                     symbol)
 
-            if [symbol[self.index_symbol], []] in Alphabet.morphology_moving_commands():
+            if [symbol[self.index_symbol], []] in Alphabet.morphology_moving_commands(self.conf.use_rotation_commands):
                 self.move_in_body(symbol)
 
             if [symbol[self.index_symbol], []] in Alphabet.controller_changing_commands():
@@ -304,6 +310,12 @@ class Plasticoding(Genotype):
             self.mounting_reference_stack.append(self.mounting_reference)
             self.mounting_reference = \
                 self.mounting_reference.children[Orientation.NORTH.value]
+
+        elif symbol[self.index_symbol] is Alphabet.ROTATE_90 \
+                or symbol[self.index_symbol] is Alphabet.ROTATE_N90:
+            rotation = self.mounting_reference.info.get('pending_rotation') or 0
+            rotation += 90 if symbol[self.index_symbol] is Alphabet.ROTATE_90 else -90
+            self.mounting_reference.info['pending_rotation'] = rotation
 
     def decode_brain_changing(self, symbol):
 
@@ -405,8 +417,6 @@ class Plasticoding(Genotype):
                 self.outputs_stack[-1] = self.outputs_stack[-1].input_nodes[intermediate].output_nodes[sibling]
 
     def get_color(self, new_module_type):
-
-        rgb = []
         if new_module_type == Alphabet.BLOCK:
             rgb = [0.0, 0.0, 1.0]
         elif new_module_type == Alphabet.BLOCK_VERTICAL:
@@ -422,7 +432,6 @@ class Plasticoding(Genotype):
         return rgb
 
     def get_slot(self, morph_mounting_container):
-
         slot = None
         if morph_mounting_container == Alphabet.ADD_FRONT:
             slot = Orientation.NORTH
@@ -433,14 +442,18 @@ class Plasticoding(Genotype):
         return slot
 
     def get_angle(self, new_module_type, parent):
-        angle = 0
-        vertical_new_module = new_module_type.is_vertical_module()
-        vertical_parent = parent.info['new_module_type'].is_vertical_module()
-        if vertical_new_module and not vertical_parent:
-            angle = 90
-        elif vertical_parent and not vertical_new_module:
-            angle = 270
-        return angle
+        if self.conf.use_rotation_commands:
+            pending_rotation = parent.info.get('pending_rotation') or 0
+            return parent.orientation + pending_rotation
+        else:
+            angle = 0
+            vertical_new_module = new_module_type.is_vertical_module()
+            vertical_parent = parent.info['new_module_type'].is_vertical_module()
+            if vertical_new_module and not vertical_parent:
+                angle = 90
+            elif vertical_parent and not vertical_new_module:
+                angle = 270
+            return angle
 
     def check_intersection(self, parent, slot, module):
         """
@@ -465,15 +478,17 @@ class Plasticoding(Genotype):
         if new_direction == Orientation.WEST:
             coordinates = [parent.substrate_coordinates[0],
                            parent.substrate_coordinates[1] - 1]
-        if new_direction == Orientation.EAST:
+        elif new_direction == Orientation.EAST:
             coordinates = [parent.substrate_coordinates[0],
                            parent.substrate_coordinates[1] + 1]
-        if new_direction == Orientation.NORTH:
+        elif new_direction == Orientation.NORTH:
             coordinates = [parent.substrate_coordinates[0] + 1,
                            parent.substrate_coordinates[1]]
-        if new_direction == Orientation.SOUTH:
+        elif new_direction == Orientation.SOUTH:
             coordinates = [parent.substrate_coordinates[0] - 1,
                            parent.substrate_coordinates[1]]
+        else:
+            raise NotImplemented()
 
         module.substrate_coordinates = coordinates
         module.info['orientation'] = new_direction
@@ -701,6 +716,7 @@ class PlasticodingConfig:
                  max_structural_modules=100,
                  robot_id=0,
                  allow_vertical_brick=True,
+                 use_rotation_commands=True,
                  ):
         self.initialization_genome = initialization_genome
         self.e_max_groups = e_max_groups
@@ -715,3 +731,4 @@ class PlasticodingConfig:
         self.max_structural_modules = max_structural_modules
         self.robot_id = robot_id
         self.allow_vertical_brick = allow_vertical_brick
+        self.use_rotation_commands = use_rotation_commands
