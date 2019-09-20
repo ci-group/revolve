@@ -45,13 +45,8 @@ async def run():
     connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start))
     await asyncio.sleep(1)
 
-<<<<<<< HEAD
     # Starts the simulation
     await connection.pause(False)
-=======
-    # Insert the robot in the simulator
-    robot_manager = await world.insert_robot(robot, Vector3(0, 0, 0.05))
->>>>>>> upstream/master
 
     # Insert the robot in the simulator
     robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start))
