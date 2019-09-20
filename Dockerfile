@@ -1,24 +1,19 @@
-FROM ubuntu:bionic
+FROM cigroup/gazebo:gazebo10-revolve
 
 # Dependencies
-RUN apt-get update
-RUN apt-get install -y build-essential      \
-                       libboost-all-dev     \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+                       build-essential      \
                        cmake                \
-                       curl                 \
-                       cppcheck             \
-                       doxygen              \
                        git                  \
-                       gsl-bin libgsl0-dev  \
-                       mercurial            \
-                       pkg-config           \
-                       python               \
+                       libgsl0-dev          \
                        python3-pip          \
                        libyaml-cpp-dev      \
-                       xsltproc             \
-                       libcairo2-dev
-RUN apt-get install -y libgazebo9-dev gazebo9
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+                       libcairo2-dev        \
+                       graphviz             \
+                       libeigen3-dev        \
+                       libnlopt-dev      && \
+    apt-get clean  && \
+    rm -rf /var/lib/apt/lists/*
 
 ADD . /revolve
 RUN /revolve/docker/build_revolve.sh

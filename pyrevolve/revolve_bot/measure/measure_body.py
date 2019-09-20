@@ -2,32 +2,56 @@ import math
 from ..render.render import Render
 from ..render.grid import Grid
 from ..revolve_module import ActiveHingeModule, BrickModule, TouchSensorModule, BrickSensorModule, CoreModule
+from ...custom_logging.logger import logger
 
 
 class MeasureBody:
     def __init__(self, body):
         self.body = body
+
+        # Absolute branching
         self.branching_modules_count = None
+        # Relative branching
         self.branching = None
+        # Absolute number of limbs
         self.extremities = None
+        # Relative number of limbs
         self.limbs = None
+        # Absolute length of limbs
         self.extensiveness = None
+        # Relative length of limbs
         self.length_of_limbs = None
+        # Coverage
         self.coverage = None
+        # Relative number of effective active joints
         self.joints = None
-        self.proportion = None
-        self.width = None
-        self.height = None
-        self.absolute_size = None
-        self.size = None
-        self.sensors = None
-        self.symmetry = None
-        self.hinge_count = None
+        # Absolute number of effective active joints
         self.active_hinges_count = None
+        # Proportion
+        self.proportion = None
+        # Width
+        self.width = None
+        # Height
+        self.height = None
+        # Absolute size
+        self.absolute_size = None
+        # Relative size in respect of the max body size `self.max_permitted_modules`
+        self.size = None
+        # Proportion of sensor vs empty slots
+        self.sensors = None
+        # Body symmetry
+        self.symmetry = None
+        # Number of active joints
+        self.hinge_count = None
+        # Number of bricks
         self.brick_count = None
+        # Number of brick sensors
         self.brick_sensor_count = None
+        # Number of touch sensors
         self.touch_sensor_count = None
+        # Number of free slots
         self.free_slots = None
+        # Maximum number of modules allowed (sensors excluded)
         self.max_permitted_modules = None
 
     def count_branching_bricks(self, module=None, init=True):
@@ -51,8 +75,7 @@ class MeasureBody:
                 if (isinstance(module, BrickModule) and children_count == 3) or (isinstance(module, CoreModule) and children_count == 4):
                     self.branching_modules_count += 1
         except Exception as e:
-            print('Failed counting branching bricks')
-            print('Exception: {}'.format(e))
+            logger.exception(f'Exception: {e}. \nFailed counting branching bricks')
 
     def measure_branching(self):
         """
@@ -60,14 +83,11 @@ class MeasureBody:
         """
         if self.absolute_size is None:
             self.measure_absolute_size()
-        if self.absolute_size < 5:
-            self.branching = 0
-            return self.branching
         if self.branching_modules_count is None:
             self.count_branching_bricks()
-        if self.branching_modules_count == 0:
+        if self.branching_modules_count == 0 or self.absolute_size < 5:
             self.branching = 0
-            return 0
+            return self.branching
         practical_limit_branching_bricks = math.floor((self.absolute_size-2)/3)
         self.branching = self.branching_modules_count / practical_limit_branching_bricks
         return self.branching
@@ -98,8 +118,7 @@ class MeasureBody:
             if children_count == 1 and not (isinstance(module, CoreModule) or isinstance(module, TouchSensorModule)) and extensiveness:
                 self.extensiveness += 1
         except Exception as e:
-            print('Failed calculating extremities or extensiveness')
-            print('Exception: {}'.format(e))
+            logger.exception(f'Exception: {e}. \nFailed calculating extremities or extensiveness')
 
     def measure_limbs(self):
         """
@@ -113,7 +132,7 @@ class MeasureBody:
             practical_limit_limbs = self.absolute_size - 1
         else:
             practical_limit_limbs = 2 * math.floor((self.absolute_size - 6) / 3) + ((self.absolute_size - 6) % 3) + 4
-        
+
         if self.extremities is None:
             self.calculate_extremities_extensiveness(None, True, False)
         if self.extremities == 0:
@@ -129,11 +148,11 @@ class MeasureBody:
         """
         if self.absolute_size is None:
             self.measure_absolute_size()
-        if self.absolute_size < 3:
-            self.length_of_limbs = 0
-            return 0
         if self.extensiveness is None:
             self.calculate_extremities_extensiveness(None, False, True)
+        if self.absolute_size < 3:
+            self.length_of_limbs = 0
+            return self.length_of_limbs
         practical_limit_extensiveness = self.absolute_size - 2
         self.length_of_limbs = self.extensiveness / practical_limit_extensiveness
         return self.length_of_limbs
@@ -169,8 +188,7 @@ class MeasureBody:
             return self.symmetry
 
         except Exception as e:
-            print('Failed measuring symmetry')
-            print('Exception: {}'.format(e))
+            logger.exception(f'Exception: {e}. \nFailed measuring symmetry')
 
     def measure_coverage(self):
         """
@@ -202,8 +220,7 @@ class MeasureBody:
                         continue
                     self.count_active_hinges(child_module, False)
         except Exception as e:
-            print('Failed calculating count')
-            print('Exception: {}'.format(e))
+            logger.exception(f'Exception: {e}. \nFailed calculating count')
 
     def measure_joints(self):
         """
@@ -212,15 +229,12 @@ class MeasureBody:
         """
         if self.absolute_size is None:
             self.measure_absolute_size()
-        if self.absolute_size < 3:
-            self.joints = 0
-            return 0
         if self.active_hinges_count is None:
             self.count_active_hinges()
-        practical_limit_active_hinges = self.absolute_size - 2
-        if self.active_hinges_count == 0:
+        if self.active_hinges_count == 0 or self.absolute_size < 3:
             self.joints = 0
-            return 0
+            return self.joints
+        practical_limit_active_hinges = self.absolute_size - 2
         self.joints = self.active_hinges_count / practical_limit_active_hinges
         return self.joints
 
@@ -263,6 +277,8 @@ class MeasureBody:
         """
         if self.free_slots is None:
             self.count_free_slots()
+        if self.free_slots == 0:
+            self.free_slots = 0.0001
         self.sensors = self.touch_sensor_count / self.free_slots
         return self.sensors
 
@@ -277,8 +293,7 @@ class MeasureBody:
                 self.absolute_size = self.brick_count + self.hinge_count + 1
             return self.absolute_size
         except Exception as e:
-            print('Failed measuring absolute size')
-            print('Exception: {}'.format(e))
+            logger.exception(f'Exception: {e}. \nFailed measuring absolute size')
 
     def calculate_count(self, module=None, init=True):
         """
@@ -289,7 +304,7 @@ class MeasureBody:
                 self.hinge_count = 0
                 self.brick_count = 0
                 self.brick_sensor_count = 0
-                self.touch_sensor_count = 0            
+                self.touch_sensor_count = 0
             if module is None:
                 module = self.body
             elif isinstance(module, ActiveHingeModule):
@@ -307,8 +322,7 @@ class MeasureBody:
                         continue
                     self.calculate_count(child_module, False)
         except Exception as e:
-            print('Failed calculating count')
-            print('Exception: {}'.format(e))
+            logger.exception(f'Exception: {e}. \nFailed calculating count')
 
     def measure_width_height(self):
         """
@@ -321,19 +335,7 @@ class MeasureBody:
             self.width = render.grid.width
             self.height = render.grid.height
         except Exception as e:
-            print('Failed measuring width and height')
-            print('Exception: {}'.format(e))
-
-    def measure_size(self):
-        """
-        Measure size of robot, specified by the amount of modules divided by the limit
-        :return: False if max_permitted_modules is None
-        """
-        if self.max_permitted_modules is None:
-            return False
-        if self.absolute_size is None:
-            self.measure_absolute_size()
-        self.size = self.absolute_size / self.max_permitted_modules
+            logger.exception(f'Exception: {e}. \nFailed measuring width and height')
 
     def measure_all(self):
         """
@@ -350,9 +352,9 @@ class MeasureBody:
         self.measure_symmetry()
         self.measure_branching()
         self.measure_sensors()
-        return self.measurement_to_dict()
+        return self.measurements_to_dict()
 
-    def measurement_to_dict(self):
+    def measurements_to_dict(self):
         """
         Return dict of all measurements
         :return:
@@ -361,7 +363,7 @@ class MeasureBody:
             'branching': self.branching,
             'branching_modules_count': self.branching_modules_count,
             'limbs': self.limbs,
-            'extremeties': self.extremities,
+            'extremities': self.extremities,
             'length_of_limbs': self.length_of_limbs,
             'extensiveness': self.extensiveness,
             'coverage': self.coverage,
@@ -375,7 +377,9 @@ class MeasureBody:
             'width': self.width,
             'height': self.height,
             'absolute_size': self.absolute_size,
-            'size': self.size,
             'sensors': self.sensors,
             'symmetry': self.symmetry
         }
+
+    def __repr__(self):
+        return self.measurements_to_dict().__repr__()

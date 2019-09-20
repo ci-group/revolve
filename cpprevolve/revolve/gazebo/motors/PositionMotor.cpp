@@ -77,7 +77,7 @@ PositionMotor::~PositionMotor() = default;
 
 /////////////////////////////////////////////////
 void PositionMotor::Update(
-    double *outputs,
+    const double *outputs,
     double /*step*/)
 {
   // Just one network output, which is the first

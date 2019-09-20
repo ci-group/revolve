@@ -11,6 +11,7 @@ import traceback
 from asyncio import Future
 from datetime import datetime
 from pygazebo.msg import gz_string_pb2
+from pygazebo.msg.contacts_pb2 import Contacts
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.spec.msgs import BoundingBox
@@ -19,9 +20,9 @@ from pyrevolve.spec.msgs import RobotStates
 from .robotmanager import RobotManager
 from ...gazebo import manage
 from ...gazebo import RequestHandler
-from ...logging import logger
 from ...util import multi_future
 from ...util import Time
+from ...custom_logging.logger import logger
 
 
 class WorldManager(manage.WorldManager):
@@ -54,8 +55,8 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         super(WorldManager, self).__init__(
-                _private=_private,
-                world_address=world_address,
+            _private=_private,
+            world_address=world_address,
         )
 
         self.battery_handler = None
@@ -86,15 +87,16 @@ class WorldManager(manage.WorldManager):
 
         self.do_restore = None
 
-        if output_directory:
+        # Sorry Matteo
+        if False: #output_directory:
             if not restore:
-                restore = datetime.now()\
+                restore = datetime.now() \
                     .strftime(datetime.now().strftime('%Y%m%d%H%M%S'))
 
             self.output_directory = os.path.join(output_directory, restore)
 
             if not os.path.exists(self.output_directory):
-                os.mkdir(self.output_directory)
+                os.makedirs(self.output_directory)
 
             self.snapshot_filename = \
                 os.path.join(self.output_directory, 'snapshot.pickle')
@@ -105,8 +107,7 @@ class WorldManager(manage.WorldManager):
                         self.do_restore = pickle.load(snapshot_file)
                     except Exception as e:
                         traceback.print_exc()
-                        print("Cannot restore snapshot, shutting down. "
-                              "Exception: {}.".format(str(e)))
+                        logger.exception("Cannot restore snapshot, shutting down.")
                         sys.exit(23)
 
             self.world_snapshot_filename = \
@@ -174,9 +175,9 @@ class WorldManager(manage.WorldManager):
         :return:
         """
         self = cls(
-                _private=cls._PRIVATE,
-                world_address=world_address,
-                state_update_frequency=pose_update_frequency
+            _private=cls._PRIVATE,
+            world_address=world_address,
+            state_update_frequency=pose_update_frequency
         )
         await self._init(builder=None, generator=None)
         return self
@@ -201,74 +202,100 @@ class WorldManager(manage.WorldManager):
         await (super(WorldManager, self)._init())
 
         # Subscribe to pose updates
-        self.pose_subscriber = self.manager.subscribe(
+        self.pose_subscriber = await self.manager.subscribe(
             '/gazebo/default/revolve/robot_states',
             'revolve.msgs.RobotStates',
             self._update_states
         )
 
-        await (self.set_state_update_frequency(
-                freq=self.state_update_frequency
-        ))
+        self.contact_subscriber = await self.manager.subscribe(
+            '/gazebo/default/physics/contacts',
+            'gazebo.msgs.Contacts',
+            self._update_contacts
+        )
 
-        self.battery_handler = await (RequestHandler.create(
-                manager=self.manager,
-                advertise='/gazebo/default/battery_level/request',
-                subscribe='/gazebo/default/battery_level/response',
-                # There will not be robots yet, so don't wait for this
-                wait_for_publisher=False,
-                wait_for_subscriber=False
-        ))
+        # Awaiting this immediately will lock the program
+        update_state_future = self.set_state_update_frequency(
+            freq=self.state_update_frequency
+        )
+
+        self.battery_handler = await RequestHandler.create(
+            manager=self.manager,
+            advertise='/gazebo/default/battery_level/request',
+            subscribe='/gazebo/default/battery_level/response',
+            # There will not be robots yet, so don't wait for this
+            wait_for_publisher=False,
+            wait_for_subscriber=False
+        )
 
         # Wait for connections
-        await (self.pose_subscriber.wait_for_connection())
+        await self.pose_subscriber.wait_for_connection()
+        await self.contact_subscriber.wait_for_connection()
+        await update_state_future
 
         if self.do_restore:
             await (self.restore_snapshot(self.do_restore))
 
-    async def create_snapshot(self):
+    async def disconnect(self):
+        await super().disconnect()
+        await self.pose_subscriber.remove()
+        await self.contact_subscriber.remove()
+        await self.battery_handler.stop()
+
+    async def create_snapshot(self, pause_when_saving=True):
         """
         Creates a snapshot of the world in the output directory.
         This pauses the world.
-        :return:
+        :return: the folder of the snapshot
         """
         if not self.output_directory:
             logger.warning("No output directory - no snapshot will be created.")
-            return False
+            return None
 
         # Pause the world
-        await (self.pause())
+        if pause_when_saving:
+            await self.pause(True)
 
         # Obtain a copy of the current world SDF from Gazebo and write it to
         # file
-        response = await (self.request_handler.do_gazebo_request(
-                request="world_sdf"
-        ))
+        response = await self.request_handler.do_gazebo_request(
+            request="world_sdf"
+        )
         if response.response == "error":
             logger.warning("WARNING: requesting world state resulted in "
                            "error. Snapshot failed.")
-            return False
+            await self.pause(False)
+            return None
 
-        msg = gz_string_pb2.GzString()
-        msg.ParseFromString(response.serialized_data)
-        with open(self.world_snapshot_filename, 'wb') as f:
-            f.write(msg.data)
+        try:
+            snapshot_folder = os.path.join(self.output_directory, str(self.last_time))
+            os.makedirs(snapshot_folder)
 
-        # Get the snapshot data and pickle to file
-        data = await (self.get_snapshot_data())
+            msg = gz_string_pb2.GzString()
+            msg.ParseFromString(response.serialized_data)
+            with open(os.path.join(snapshot_folder, 'snapshot.sdf'), 'wb') as f:
+                f.write(msg.data.encode())
 
-        # It seems pickling causes some issues with the default recursion
-        # limit, up it
-        sys.setrecursionlimit(10000)
-        with open(self.snapshot_filename, 'wb') as f:
-            pickle.dump(data, f, protocol=-1)
+            # Get the snapshot data and pickle to file
+            data = self.get_snapshot_data()
 
-        # Flush statistic files and copy them
-        self.poses_file.flush()
-        self.robots_file.flush()
-        shutil.copy(self.poses_filename, self.poses_filename+'.snapshot')
-        shutil.copy(self.robots_filename, self.robots_filename+'.snapshot')
-        return True
+            # It seems pickling causes some issues with the default recursion
+            # limit, up it
+            sys.setrecursionlimit(10000)
+            with open(os.path.join(snapshot_folder, 'snapshot.pickle'), 'wb') as f:
+                pickle.dump(data, f, protocol=-1)
+
+            # # WHAT IS THIS?
+            # # Flush statistic files and copy them
+            # self.poses_file.flush()
+            # self.robots_file.flush()
+            # shutil.copy(self.poses_filename, self.poses_filename+'.snapshot')
+            # shutil.copy(self.robots_filename, self.robots_filename+'.snapshot')
+        finally:
+            if pause_when_saving:
+                await self.pause(False)
+
+        return snapshot_folder
 
     async def restore_snapshot(self, data):
         """
@@ -283,7 +310,7 @@ class WorldManager(manage.WorldManager):
         self.start_time = data['start_time']
         self.last_time = data['last_time']
 
-    async def get_snapshot_data(self):
+    def get_snapshot_data(self):
         """
         Returns a data object to be pickled into a snapshot file.
         This should contain
@@ -303,12 +330,12 @@ class WorldManager(manage.WorldManager):
         :type freq: int
         :return:
         """
-        future = await (self.request_handler.do_gazebo_request(
-                request="set_robot_state_update_frequency",
-                data=str(freq)
-        ))
+        result = await self.request_handler.do_gazebo_request(
+            request="set_robot_state_update_frequency",
+            data=str(freq)
+        )
         self.state_update_frequency = freq
-        return future
+        return result
 
     def get_robot_id(self):
         """
@@ -384,6 +411,7 @@ class WorldManager(manage.WorldManager):
             self,
             revolve_bot,
             pose=Vector3(0, 0, 0.05),
+            life_timeout=None,
     ):
         """
         Inserts a robot into the world. This consists of two steps:
@@ -401,27 +429,31 @@ class WorldManager(manage.WorldManager):
         :type revolve_bot: RevolveBot
         :param pose: Insertion pose of a robot
         :type pose: Pose|Vector3
+        :param life_timeout: Life span of the robot
+        :type life_timeout: float|None
         :return: A future that resolves with the created `Robot` object.
         """
+
+        # if the ID is digit, when removing the robot, the simulation will try to remove random stuff from the
+        # environment and give weird crash errors
+        assert(not str(revolve_bot.id).isdigit())
+
         sdf_bot = revolve_bot.to_sdf(pose)
 
-        if self.output_directory:
-            robot_file_path = os.path.join(
-                    self.output_directory,
-                    'robot_{}.sdf'.format(revolve_bot.id)
-            )
-            with open(robot_file_path, 'w') as f:
-                f.write(sdf_bot)
+        # if self.output_directory:
+        #     robot_file_path = os.path.join(
+        #         self.output_directory,
+        #         'robot_{}.sdf'.format(revolve_bot.id)
+        #     )
+        #     with open(robot_file_path, 'w') as f:
+        #         f.write(sdf_bot)
 
-        future = Future()
-        insert_future = await self.insert_model(sdf_bot)
-        # TODO: Unhandled error in exception handler. Fix this.
-        insert_future.add_done_callback(lambda fut: self._robot_inserted(
+        response = await self.insert_model(sdf_bot, life_timeout)
+        robot_manager = self._robot_inserted(
                 robot=revolve_bot,
-                msg=fut.result(),
-                return_future=future
-        ))
-        return future
+                msg=response
+        )
+        return robot_manager
 
     def to_sdfbot(
             self,
@@ -439,7 +471,7 @@ class WorldManager(manage.WorldManager):
         :rtype: SDF
         """
         raise NotImplementedError(
-                "Implement in subclass if you want to use this method.")
+            "Implement in subclass if you want to use this method.")
 
     async def delete_robot(self, robot):
         """
@@ -450,8 +482,7 @@ class WorldManager(manage.WorldManager):
         # Immediately unregister the robot so no it won't be used
         # for anything else while it is being deleted.
         self.unregister_robot(robot)
-        future = await (self.delete_model(robot.name, req="delete_robot"))
-        return future
+        return await self.delete_model(robot.name, req="delete_robot")
 
     async def delete_all_robots(self):
         """
@@ -461,7 +492,7 @@ class WorldManager(manage.WorldManager):
         """
         futures = []
         for bot in list(self.robot_managers.values()):
-            future = await (self.delete_robot(bot))
+            future = self.delete_robot(bot)
             futures.append(future)
 
         return multi_future(futures)
@@ -469,8 +500,7 @@ class WorldManager(manage.WorldManager):
     def _robot_inserted(
             self,
             robot,
-            msg,
-            return_future
+            msg
     ):
         """
         Registers a newly inserted robot and marks the insertion
@@ -479,8 +509,6 @@ class WorldManager(manage.WorldManager):
         :param robot: RevolveBot
         :param msg:
         :type msg: pygazebo.msgs.response_pb2.Response
-        :param return_future: Future to resolve with the created robot object.
-        :type return_future: Future
         :return:
         """
         inserted = ModelInserted()
@@ -491,12 +519,12 @@ class WorldManager(manage.WorldManager):
         position = Vector3(p.x, p.y, p.z)
 
         robot_manager = self.create_robot_manager(
-                robot,
-                position,
-                time
+            robot,
+            position,
+            time
         )
         self.register_robot(robot_manager)
-        return_future.set_result(robot_manager)
+        return robot_manager
 
     def create_robot_manager(
             self,
@@ -512,9 +540,9 @@ class WorldManager(manage.WorldManager):
         :rtype: RobotManager
         """
         return RobotManager(
-                robot=robot,
-                position=position,
-                time=time,
+            robot=robot,
+            position=position,
+            time=time,
         )
 
     def register_robot(self, robot_manager):
@@ -522,9 +550,8 @@ class WorldManager(manage.WorldManager):
         Registers a robot with its Gazebo ID in the local array.
         :param robot_manager:
         :type robot_manager: RobotManager
-        :return:
         """
-        logger.debug("Registering robot {}.".format(robot_manager.name))
+        logger.info("Registering robot {}.".format(robot_manager.name))
 
         if robot_manager.name in self.robot_managers:
             raise ValueError("Duplicate robot: {}".format(robot_manager.name))
@@ -537,9 +564,8 @@ class WorldManager(manage.WorldManager):
         it is deleted.
         :param robot_manager:
         :type robot_manager: RobotManager
-        :return:
         """
-        logger.debug("Unregistering robot {}.".format(robot_manager.name))
+        logger.info("Unregistering robot {}.".format(robot_manager.name))
         del self.robot_managers[robot_manager.name]
 
     async def reset(self, **kwargs):
@@ -559,12 +585,11 @@ class WorldManager(manage.WorldManager):
         :param robot:
         :return:
         """
-        future = await (self.battery_handler.do_gazebo_request(
-                request="set_battery_level",
-                data=robot.name,
-                dbl_data=robot.get_battery_level()
-        ))
-        return future
+        return await self.battery_handler.do_gazebo_request(
+            request="set_battery_level",
+            data=robot.name,
+            dbl_data=robot.get_battery_level()
+        )
 
     async def update_battery_levels(self):
         """
@@ -573,7 +598,7 @@ class WorldManager(manage.WorldManager):
         """
         futures = []
         for robot in self.robot_list():
-            fut = await (self.update_battery_level(robot))
+            fut = self.update_battery_level(robot)
             futures.append(fut)
 
         if futures:
@@ -599,21 +624,48 @@ class WorldManager(manage.WorldManager):
         """
         states = RobotStates()
         states.ParseFromString(msg)
-
         self.last_time = t = Time(msg=states.time)
         if self.start_time is None or t < self.start_time:
             # A lower start time may indicate a world reset, which
             # we should copy.
             self.start_time = t
 
+        touched = {}
+        # mark all as dead and make alive only the robots that received data
+        for _name, robot_manager in self.robot_managers.items():
+            touched[robot_manager] = False
+
+        # mark robots alive and receive their states
         for state in states.robot_state:
             robot_manager = self.robot_managers.get(state.name, None)
             if not robot_manager:
                 continue
-
+            touched[robot_manager] = True
             robot_manager.update_state(self, t, state, self.write_poses)
 
+        for robot_manager, touch in touched.items():
+            if not touch:
+                robot_manager.dead = True
+
         self.call_update_triggers()
+
+    def _update_contacts(self, msg):
+        """
+        Handles the contacts with the ground info message by updating robot contacts.
+        :param msg:
+        :return:
+        """
+        contacts = Contacts()
+        contacts.ParseFromString(msg)
+        # if there was any contact in that instant
+        if contacts.contact:
+            # fetches one or more contact points for each module that has contacts
+            for module_contacts in contacts.contact:
+                robot_name = module_contacts.collision1.split('::')[0]
+                robot_manager = self.robot_managers.get(robot_name, None)
+                if not robot_manager:
+                    continue
+                robot_manager.update_contacts(self, module_contacts)
 
     def add_update_trigger(self, callback):
         """

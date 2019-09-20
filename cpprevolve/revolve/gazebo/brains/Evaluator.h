@@ -31,7 +31,8 @@ namespace revolve
     class Evaluator
     {
       /// \brief Constructor
-      public: Evaluator(const double _evaluationRate);
+      public: Evaluator(const double _evaluationRate,
+                        const double step_saving_rate = 0.1);
 
       /// \brief Destructor
       public: ~Evaluator();
@@ -43,18 +44,38 @@ namespace revolve
       /// \return A fitness value according to a given formula
       public: double Fitness();
 
+      public: double measure_distance(
+          const ignition::math::Pose3d &_pose1,
+          const ignition::math::Pose3d &_pose2);
+
+      /// brief Specifies locomotion type
+      public: std::string locomotion_type;
+
       /// \brief Update the position
       /// \param[in] _pose Current position of a robot
-      public: void Update(const ignition::math::Pose3d &_pose);
+      public: void Update(const ignition::math::Pose3d &_pose,
+                          const double time,
+                          const double step);
+
+      /// \brief start position of a robot
+      protected: ignition::math::Pose3d start_position_;
 
       /// \brief Previous position of a robot
-      private: ignition::math::Pose3d previousPosition_;
+      protected: ignition::math::Pose3d previous_position_;
 
       /// \brief Current position of a robot
-      private: ignition::math::Pose3d currentPosition_;
+      protected: ignition::math::Pose3d current_position_;
 
       /// \brief
-      private: double evaluationRate_;
+      protected: double evaluation_rate_;
+
+      protected: double path_length = 0.0;
+
+      protected: double last_step_time;
+      protected: double step_saving_rate;
+      protected: std::vector<ignition::math::Pose3d> step_poses;
+      //      public: double current_dist_pro = 0.0;
+    public: std::string directory_name = "";
     };
   }
 }

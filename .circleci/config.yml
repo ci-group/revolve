@@ -5,19 +5,83 @@ jobs:
       - image: circleci/python:3-stretch-node
     steps:
       - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
 
       - setup_remote_docker:
           docker_layer_caching: true
 
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+            - v1-
+          paths:
+            - ~/caches/revolve.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i ~/caches/revolve.tar | true
       - run:
           name: "Build Docker image"
-          command: docker build -t cigroup/revolve:$CIRCLE_BRANCH .
+          command: docker build --cache-from=app -t cigroup/revolve:${CIRCLE_BRANCH//\//_} .
+#      - run:
+#          name: "Build documentation"
+#          command: |
+#            DOXY_BUILD=/revolve/docker/make_dosc.sh
+#            docker run -it cigroup/revolve:${CIRCLE_BRANCH//\//_} ${DOXY_BUILD}
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p ~/caches
+            docker save -o ~/caches/revolve.tar cigroup/revolve:${CIRCLE_BRANCH//\//_}
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - ~/caches/revolve.tar
+  test:
+    docker:
+      - image: circleci/python:3-stretch-node
 
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - ~/caches/revolve.tar
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i ~/caches/revolve.tar | true
       - run:
           name: "Run Python tests"
           command: |
             PY_TESTS=/revolve/docker/test_python.sh
-            docker run -it cigroup/revolve:$CIRCLE_BRANCH ${PY_TESTS}
+            docker run -it cigroup/revolve:${CIRCLE_BRANCH//\//_} ${PY_TESTS}
+
+  deploy:
+    docker:
+      - image: circleci/python:3-stretch-node
+
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+          paths:
+            - ~/caches/revolve.tar
+
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i ~/caches/revolve.tar | true
 
       - run:
           name: "Save Docker image"
@@ -25,10 +89,22 @@ jobs:
             set -e
             TAG=0.1.$CIRCLE_BUILD_NUM
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker push cigroup/revolve:$CIRCLE_BRANCH
+            docker push cigroup/revolve:${CIRCLE_BRANCH//\//_}
 
-#      - run:
-#          name: "Build documentation"
-#          command: |
-#            DOXY_BUILD=/revolve/docker/make_dosc.sh
-#            docker run -it cigroup/revolve:$CIRCLE_BRANCH ${DOXY_BUILD}
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - deploy:
+          requires:
+            - build
+            - test
+          filters:
+            branches:
+              only:
+                - master
+                - development
