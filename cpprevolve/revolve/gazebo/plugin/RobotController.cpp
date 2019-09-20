@@ -1,4 +1,6 @@
-/*
+/* export PATH=~/installed/gazebo_debug/bin:$PATH
+export LD_LIBRARY_PATH=~/installed/gazebo_debug/lib
+
 * Copyright (C) 2017 Vrije Universiteit Amsterdam
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +26,7 @@
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
 #include <revolve/gazebo/brains/Brains.h>
+#include <revolve/gazebo/brains/DifferentialCPGClean.h>
 
 #include "RobotController.h"
 
@@ -218,6 +221,24 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   else if ("bo" == learner and "cpg" == controller)
   {
     brain_.reset(new DifferentialCPG(this->model_, _sdf, motors_, sensors_));
+  }
+  else if ("offline" == learner and "cpg" == controller)
+  {
+      // Dummy params for testing. Actual parameters should come from sdf in the end.
+      // Attention with dummy weights: have to be as many as actual weights in the robot
+      revolve::DifferentialCPG::ControllerParams params;
+      params.reset_neuron_random = false;
+      params.use_frame_of_reference = false;
+      params.init_neuron_state = 0.707;
+      params.range_ub = 1.0;
+      params.signal_factor_all = 1.0;
+      params.signal_factor_mid = 2.5;
+      params.signal_factor_left_right = 2.5;
+      params.abs_output_bound = 1.0;
+      // Specific weights for spider running forward.
+      params.weights = {0.482167, 0.560357, 0.753772, 0.221536, 0.44513, 0.667353, 0.580933, 0.246228, 0.111797,
+      0.110425, 0.667353, 0.519204, 0.11134, 0.667353, 0.70439, 0.000228624, 0.444673, 0.287837}
+      brain_.reset(new DifferentialCPGClean(params, motors_))
   }
   else
   {
