@@ -237,8 +237,8 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
       params.abs_output_bound = 1.0;
       // Specific weights for spider running forward.
       params.weights = {0.482167, 0.560357, 0.753772, 0.221536, 0.44513, 0.667353, 0.580933, 0.246228, 0.111797,
-      0.110425, 0.667353, 0.519204, 0.11134, 0.667353, 0.70439, 0.000228624, 0.444673, 0.287837}
-      brain_.reset(new DifferentialCPGClean(params, motors_))
+      0.110425, 0.667353, 0.519204, 0.11134, 0.667353, 0.70439, 0.000228624, 0.444673, 0.287837};
+      brain_.reset(new DifferentialCPGClean(params, motors_));
   }
   else
   {

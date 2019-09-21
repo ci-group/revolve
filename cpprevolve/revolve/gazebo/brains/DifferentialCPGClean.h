@@ -26,7 +26,7 @@ namespace revolve
                 for (auto &motor: _motors) {
                     actuators.push_back(std::make_unique<ActuatorWrapper>(motor.get(), 0, 0, 0));
                 }
-                revolve::DifferentialCPG(&params, &_motors)
+                revolve::DifferentialCPG(&params, &actuators)
             }
 
             void Update(const std::vector<MotorPtr> &_motors,

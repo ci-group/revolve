@@ -525,7 +525,7 @@ void DifferentialCPG::save_fitness(){
  * Struct that holds the parameters on which BO is called. This is required
  * by limbo.
  */
-struct DifferentialCPG::
+struct DifferentialCPG::Params
         {
 
     struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
