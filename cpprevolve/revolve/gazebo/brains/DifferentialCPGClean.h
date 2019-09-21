@@ -16,17 +16,28 @@ namespace revolve
 
         class DifferentialCPGClean: public Brain, private revolve::DifferentialCPG
         {
-        public:
-            explicit DifferentialCPGClean(const revolve::DifferentialCPG::ControllerParams &params,
-                                          const std::vector< MotorPtr > &_motors)
-                    : Brain()
+        private:
+            std::vector<std::unique_ptr<Actuator>> convertMotorToActuator(&_motors)
             {
                 std::vector<std::unique_ptr<revolve::Actuator>> actuators;
                 actuators.reserve(_motors.size());
                 for (auto &motor: _motors) {
                     actuators.push_back(std::make_unique<ActuatorWrapper>(motor.get(), 0, 0, 0));
                 }
-                revolve::DifferentialCPG(&params, &actuators)
+                return actuators;
+            }
+        public:
+            explicit DifferentialCPGClean(const revolve::DifferentialCPG::ControllerParams &params,
+                                          const std::vector< MotorPtr > &_motors)
+                    : Brain()
+                    , revolve::DifferentialCPG(&params, convertMotorToActuator(&_motors));
+            {
+                /*std::vector<std::unique_ptr<revolve::Actuator>> actuators;
+                actuators.reserve(_motors.size());
+                for (auto &motor: _motors) {
+                    actuators.push_back(std::make_unique<ActuatorWrapper>(motor.get(), 0, 0, 0));
+                }
+                revolve::DifferentialCPG(params, actuators);*/
             }
 
             void Update(const std::vector<MotorPtr> &_motors,
@@ -43,7 +54,6 @@ namespace revolve
                 revolve::DifferentialCPG::update(actuators, sensors, _time, _step);
             }
         };
-
     }
 }
 

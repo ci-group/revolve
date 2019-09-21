@@ -33,10 +33,8 @@ public:
     };
 
     /// \brief Constructor
-    /// \param[in] _modelName Name of the robot
-    /// \param[in] _node The brain node
-    /// \param[in] _motors Reference to a motor list, it be reordered
-    /// \param[in] _sensors Reference to a sensor list, it might be reordered
+    /// \param[in] params Parameters for the controller
+    /// \param[in] _actuators Reference to a actuator list
     DifferentialCPG(
             const ControllerParams &params,
             const std::vector< std::unique_ptr < Actuator > > &_actuators);
@@ -45,7 +43,7 @@ public:
     virtual ~DifferentialCPG();
 
     /// \brief The default update method for the controller
-    /// \param[in] _motors Motor list
+    /// \param[in] _actuators Actuator list
     /// \param[in] _sensors Sensor list
     /// \param[in] _time Current world time
     /// \param[in] _step Current time step
