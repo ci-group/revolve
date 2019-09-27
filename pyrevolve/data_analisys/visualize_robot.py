@@ -44,6 +44,7 @@ async def test_robot_run(robot_file_path: str):
 
     robot = RevolveBot(_id=settings.test_robot)
     robot.load_file(robot_file_path, conf_type='yaml')
+    robot.update_substrate()
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
 
     await connection.pause(True)

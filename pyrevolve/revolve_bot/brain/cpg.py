@@ -6,11 +6,6 @@ parameters.
 
 import xml.etree.ElementTree
 from .base import Brain
-import time
-
-
-class _WeightCoordinatesIter():
-    pass
 
 
 class BrainCPG(Brain):
@@ -55,15 +50,7 @@ class BrainCPG(Brain):
         self.evaluation_rate = None
 
         #TODO weights
-        self.weights = {}
-
-    def weights_coordinates(self):
-        raise NotImplementedError("TODO")
-        return _WeightCoordinatesIter()
-
-    def set_weight(self, coordinates, value: float):
-        raise NotImplementedError("TODO")
-        self.weights[coordinates] = value
+        self.weights = []
 
     @staticmethod
     def from_yaml(yaml_object):
@@ -110,4 +97,5 @@ class BrainCPG(Brain):
             'signal_factor_mid': str(self.signal_factor_mid),
             'signal_factor_left_right': str(self.signal_factor_left_right),
             'startup_time': str(self.startup_time),
+            'weights': ';'.join(str(x) for x in self.weights),
         })
