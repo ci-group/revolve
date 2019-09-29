@@ -204,40 +204,50 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
 
   auto brain = _sdf->GetElement("rv:brain");
-  auto controller = brain->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
+  auto controller_sdf = brain->GetElement("rv:controller");
+  auto controller_type = controller_sdf->GetAttribute("type")->GetAsString();
   auto learner = brain->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
-  std::cout << "Loading controller " << controller << " and learner " << learner << std::endl;
+  std::cout << "Loading controller " << controller_type << " and learner " << learner << std::endl;
 
-  if ("offline" == learner and "ann" == controller)
+  if ("offline" == learner and "ann" == controller_type)
   {
     brain_.reset(new NeuralNetwork(this->model_, brain, motors_, sensors_));
   }
-  else if ("rlpower" == learner and "spline" == controller)
+  else if ("rlpower" == learner and "spline" == controller_type)
   {
     if (not motors_.empty()) {
         brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
     }
   }
-  else if ("bo" == learner and "cpg" == controller)
+  else if ("bo" == learner and "cpg" == controller_type)
   {
     brain_.reset(new DifferentialCPG(this->model_, _sdf, motors_, sensors_));
   }
-  else if ("offline" == learner and "cpg" == controller)
+  else if ("offline" == learner and "cpg" == controller_type)
   {
-      // Dummy params for testing. Actual parameters should come from sdf in the end.
-      // Attention with dummy weights: have to be as many as actual weights in the robot
+      // TODO: make sure that it does not crash when attributes are 'None'
       revolve::DifferentialCPG::ControllerParams params;
-      params.reset_neuron_random = false;
-      params.use_frame_of_reference = false;
-      params.init_neuron_state = 0.707;
-      params.range_ub = 1.0;
-      params.signal_factor_all = 1.0;
-      params.signal_factor_mid = 2.5;
-      params.signal_factor_left_right = 2.5;
-      params.abs_output_bound = 1.0;
-      // Specific weights for spider running forward.
-      params.weights = {0.482167, 0.560357, 0.753772, 0.221536, 0.44513, 0.667353, 0.580933, 0.246228, 0.111797,
-      0.110425, 0.667353, 0.519204, 0.11134, 0.667353, 0.70439, 0.000228624, 0.444673, 0.287837};
+      params.reset_neuron_random = (controller_sdf->GetAttribute("reset_neuron_random")->GetAsString() == "true");
+      params.use_frame_of_reference = (controller_sdf->GetAttribute("use_frame_of_reference")->GetAsString() == "true");
+      params.init_neuron_state = stod(controller_sdf->GetAttribute("init_neuron_state")->GetAsString());
+      params.range_ub = stod(controller_sdf->GetAttribute("range_ub")->GetAsString());;
+      params.signal_factor_all = stod(controller_sdf->GetAttribute("signal_factor_all")->GetAsString());;
+      params.signal_factor_mid = stod(controller_sdf->GetAttribute("signal_factor_mid")->GetAsString());;
+      params.signal_factor_left_right = stod(controller_sdf->GetAttribute("signal_factor_left_right")->GetAsString());;
+      params.abs_output_bound = stod(controller_sdf->GetAttribute("abs_output_bound")->GetAsString());;
+
+      // Get the weights from the sdf:
+      std::string sdf_weights = controller_sdf->GetAttribute("weights")->GetAsString();
+      std::string delimiter = ";";
+
+      size_t pos = 0;
+      std::string token;
+      while ((pos = sdf_weights.find(delimiter)) != std::string::npos) {
+          token = sdf_weights.substr(0, pos);
+          params.weights.push_back(stod(token));
+          sdf_weights.erase(0, pos + delimiter.length());
+      }
+
       brain_.reset(new DifferentialCPGClean(params, motors_));
   }
   else
