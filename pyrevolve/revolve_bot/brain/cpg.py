@@ -21,20 +21,6 @@ class BrainCPG(Brain):
         self.range_lb = None
         self.range_ub = None
         self.init_neuron_state = None
-
-        # BO hyper-parameters
-        self.init_method = None  # {RS, LHS}
-        self.acquisition_function = None
-        self.kernel_noise = None
-        self.kernel_optimize_noise = None
-        self.kernel_sigma_sq = None
-        self.kernel_l = None
-        self.kernel_squared_exp_ard_k = None
-        self.acqui_gpucb_delta = None
-        self.acqui_ucb_alpha = None
-        self.acqui_ei_jitter = None
-        self.n_init_samples = None
-
         # Various
         self.robot_size = None
         self.n_learning_iterations = None
@@ -49,25 +35,25 @@ class BrainCPG(Brain):
         self.startup_time = None
         self.evaluation_rate = None
 
-        #TODO weights
+        #TODO weights. For now they are directly passed in the .yaml - file
         self.weights = []
 
     @staticmethod
     def from_yaml(yaml_object):
-        BCPG = BrainCPG()
+         BCPG = BrainCPG()
 
-        for my_type in ["controller", "learner", "meta"]:
-            try:
-                my_object = yaml_object[my_type]
-                for key, value in my_object.items():
-                    try:
-                        setattr(BCPG, key, value)
-                    except:
-                        print("Couldn't set {}, {}", format(key, value))
-            except:
-                print("Didn't load {} parameters".format(my_type))
+         for my_type in ["controller", "learner"]:  #, "meta"]:
+             try:
+                 my_object = yaml_object[my_type]
+                 for key, value in my_object.items():
+                     try:
+                         setattr(BCPG, key, value)
+                     except:
+                         print("Couldn't set {}, {}", format(key, value))
+             except:
+                 print("Didn't load {} parameters".format(my_type))
 
-        return BCPG
+         return BCPG
 
     def to_yaml(self):
         return {
@@ -82,10 +68,10 @@ class BrainCPG(Brain):
     def controller_sdf(self):
         return xml.etree.ElementTree.Element('rv:controller', {
             'type': 'cpg',
-            'reset_robot_position': self.reset_robot_position,
+            'reset_robot_position': str(self.reset_robot_position),
             'reset_neuron_state_bool': str(self.reset_neuron_state_bool),
             'reset_neuron_random': str(self.reset_neuron_random),
-            'load_brain': self.load_brain,
+            'load_brain': str(self.load_brain),
             'use_frame_of_reference': str(self.use_frame_of_reference),
             'run_analytics': str(self.run_analytics),
             'init_neuron_state': str(self.init_neuron_state),
