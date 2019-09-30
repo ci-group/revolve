@@ -23,7 +23,6 @@ paths = c(
 )
 
 
-
 base_directory <- paste('projects/revolve/experiments/karines_experiments/data/', sep='')
 
 experiments = 30
@@ -31,11 +30,11 @@ gens = 100
 pop = 100
 num_top = 3
 
-analysis = '1images'
+analysis = 'images'
 
 ##### change paths/labels/params here #####
 
-output_directory = paste(base_directory, '/',analysis, sep='')
+output_directory = paste(base_directory,analysis, sep='')
 
 
 file <-file(paste(output_directory,'/best.txt',sep=''), open="w")
@@ -73,7 +72,8 @@ for(m in 1:length(paths))
          
          body <- list.files(patha, paste("body_robot_",phenotype,".png$",sep=""), full.names = TRUE)
          body = image_read(body)
-         body = image_border(image_background(body, "white"), "white", "20x33")
+         body = image_scale(body, "100x100")
+         body = image_border(image_background(body, "white"), "white", "5x5")
          
     
         if(b == 1)
@@ -85,7 +85,7 @@ for(m in 1:length(paths))
       }
         
       side_by_side = image_append(bodies, stack=F)
-      image_write(side_by_side, path = paste(output_directory,"/",paths[m],"_bodies_best_",exp,".pdf",sep=''), format = "pdf")
+      image_write(side_by_side, path = paste(output_directory,"/",methods[m],"_bodies_best_",exp,".png",sep=''), format = "png")
       
     }
 }
