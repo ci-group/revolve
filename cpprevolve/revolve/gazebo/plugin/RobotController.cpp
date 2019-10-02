@@ -26,7 +26,6 @@ export LD_LIBRARY_PATH=~/installed/gazebo_debug/lib
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
 #include <revolve/gazebo/brains/Brains.h>
-#include <revolve/gazebo/brains/DifferentialCPGClean.h>
 
 #include "RobotController.h"
 
@@ -225,41 +224,12 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
   else if ("offline" == learner and "cpg" == controller_type)
   {
-      revolve::DifferentialCPG::ControllerParams params = LoadParamsFromSDF(controller_sdf);
-      brain_.reset(new DifferentialCPGClean(params, motors_));
+      brain_.reset(new DifferentialCPGClean(controller_sdf, motors_));
   }
   else
   {
     throw std::runtime_error("Robot brain is not defined.");
   }
-}
-
-revolve::DifferentialCPG::ControllerParams LoadParamsFromSDF(sdf::ElementPtr controller_sdf)
-{
-    // TODO: make sure that it does not crash when attributes are 'None'
-    revolve::DifferentialCPG::ControllerParams params;
-    params.reset_neuron_random = (controller_sdf->GetAttribute("reset_neuron_random")->GetAsString() == "true");
-    params.use_frame_of_reference = (controller_sdf->GetAttribute("use_frame_of_reference")->GetAsString() == "true");
-    params.init_neuron_state = stod(controller_sdf->GetAttribute("init_neuron_state")->GetAsString());
-    params.range_ub = stod(controller_sdf->GetAttribute("range_ub")->GetAsString());
-    params.signal_factor_all = stod(controller_sdf->GetAttribute("signal_factor_all")->GetAsString());
-    params.signal_factor_mid = stod(controller_sdf->GetAttribute("signal_factor_mid")->GetAsString());
-    params.signal_factor_left_right = stod(controller_sdf->GetAttribute("signal_factor_left_right")->GetAsString());
-    params.abs_output_bound = stod(controller_sdf->GetAttribute("abs_output_bound")->GetAsString());
-
-    // Get the weights from the sdf:
-    std::string sdf_weights = controller_sdf->GetAttribute("weights")->GetAsString();
-    std::string delimiter = ";";
-
-    size_t pos = 0;
-    std::string token;
-    while ((pos = sdf_weights.find(delimiter)) != std::string::npos) {
-        token = sdf_weights.substr(0, pos);
-        params.weights.push_back(stod(token));
-        sdf_weights.erase(0, pos + delimiter.length());
-    }
-
-    return params;
 }
 
 /////////////////////////////////////////////////

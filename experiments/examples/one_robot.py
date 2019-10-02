@@ -41,16 +41,14 @@ async def run():
     robot.update_substrate()
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
 
+    # insert robot
     await connection.pause(True)
-    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.25), life_timeout=None)
+    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 2.0), life_timeout=None)
     await asyncio.sleep(1.0)
+
+    # restart simulation
+    await connection.pause(False)
 
     # Start the main life loop
     while True:
-        # Print robot fitness every second
-        status = 'dead' if robot_manager.dead else 'alive'
-        print(f"Robot fitness ({status}) is \n"
-              f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
-              f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
-              f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
         await asyncio.sleep(1.0)

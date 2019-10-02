@@ -27,10 +27,11 @@ namespace revolve
         class DifferentialCPGClean: public Brain, private revolve::DifferentialCPG
         {
         public:
-            explicit DifferentialCPGClean(const revolve::DifferentialCPG::ControllerParams &params,
+            explicit DifferentialCPGClean(const sdf::ElementPtr cpgParams_sdf,
                                           const std::vector< MotorPtr > &_motors)
                     : Brain()
-                    , revolve::DifferentialCPG(params, revolve::gazebo::convertMotorsToActuators(_motors))
+                    , revolve::DifferentialCPG(DifferentialCPGClean::LoadParamsFromSDF(cpgParams_sdf),
+                                                revolve::gazebo::convertMotorsToActuators(_motors))
             {}
 
             void Update(const std::vector<MotorPtr> &_motors,
@@ -43,6 +44,36 @@ namespace revolve
 
                 revolve::DifferentialCPG::update(actuators, sensors, _time, _step);
             }
+
+        private:
+            static revolve::DifferentialCPG::ControllerParams LoadParamsFromSDF(sdf::ElementPtr controller_sdf)
+            {
+                // TODO: Add exception handling
+                revolve::DifferentialCPG::ControllerParams params;
+                params.reset_neuron_random = (controller_sdf->GetAttribute("reset_neuron_random")->GetAsString() == "true");
+                params.use_frame_of_reference = (controller_sdf->GetAttribute("use_frame_of_reference")->GetAsString() == "true");
+                params.init_neuron_state = stod(controller_sdf->GetAttribute("init_neuron_state")->GetAsString());
+                params.range_ub = stod(controller_sdf->GetAttribute("range_ub")->GetAsString());
+                params.signal_factor_all = stod(controller_sdf->GetAttribute("signal_factor_all")->GetAsString());
+                params.signal_factor_mid = stod(controller_sdf->GetAttribute("signal_factor_mid")->GetAsString());
+                params.signal_factor_left_right = stod(controller_sdf->GetAttribute("signal_factor_left_right")->GetAsString());
+                params.abs_output_bound = stod(controller_sdf->GetAttribute("abs_output_bound")->GetAsString());
+
+                // Get the weights from the sdf:
+                std::string sdf_weights = controller_sdf->GetAttribute("weights")->GetAsString();
+                std::string delimiter = ";";
+
+                size_t pos = 0;
+                std::string token;
+                while ((pos = sdf_weights.find(delimiter)) != std::string::npos) {
+                    token = sdf_weights.substr(0, pos);
+                    params.weights.push_back(stod(token));
+                    sdf_weights.erase(0, pos + delimiter.length());
+                }
+
+                return params;
+            }
+
         };
     }
 }

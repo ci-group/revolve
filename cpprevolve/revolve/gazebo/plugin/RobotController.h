@@ -29,7 +29,6 @@
 #include <gazebo/msgs/msgs.hh>
 
 #include <revolve/gazebo/Types.h>
-#include <revolve/brains/controller/DifferentialCPG.h>
 
 namespace revolve
 {
@@ -83,8 +82,6 @@ namespace revolve
       /// \brief Loads the brain from the `rv:brain` element.
       /// \details By default this tries to construct a `StandardNeuralNetwork`.
       protected: virtual void LoadBrain(const sdf::ElementPtr _sdf);
-
-      protected: revolve::DifferentialCPG::ControllerParams LoadParamsFromSDF(sdf::ElementPtr controllerSdf);
 
       /// \brief Loads / initializes the robot battery
       protected: virtual void LoadBattery(const sdf::ElementPtr _sdf);
