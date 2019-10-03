@@ -335,7 +335,7 @@ class PlasticodingDecoder:
             return False
 
     def decode_brain_node(self, symbol, part_id):
-        from genotype.plasticoding.plasticoding import NodeExtended
+        from pyrevolve.genotype.plasticoding.plasticoding import NodeExtended
 
         self.quantity_nodes += 1
         node = NodeExtended()
