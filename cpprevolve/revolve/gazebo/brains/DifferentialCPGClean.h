@@ -13,25 +13,13 @@ namespace revolve
 {
     namespace gazebo
     {
-        std::vector<std::unique_ptr<revolve::Actuator>> convertMotorsToActuators(const std::vector<MotorPtr> &_motors)
-        {
-            std::vector<std::unique_ptr<revolve::Actuator>> actuators;
-            actuators.reserve(_motors.size());
-            for (auto &motor: _motors) {
-                actuators.push_back(std::make_unique<ActuatorWrapper>(motor.get(), 0, 0, 0));
-            }
-
-            return actuators;
-        }
-
         class DifferentialCPGClean: public Brain, private revolve::DifferentialCPG
         {
         public:
             explicit DifferentialCPGClean(const sdf::ElementPtr cpgParams_sdf,
                                           const std::vector< MotorPtr > &_motors)
                     : Brain()
-                    , revolve::DifferentialCPG(DifferentialCPGClean::LoadParamsFromSDF(cpgParams_sdf),
-                                                revolve::gazebo::convertMotorsToActuators(_motors))
+                    , revolve::DifferentialCPG(DifferentialCPGClean::LoadParamsFromSDF(cpgParams_sdf), _motors)
             {}
 
             void Update(const std::vector<MotorPtr> &_motors,
@@ -39,10 +27,10 @@ namespace revolve
                         const double _time,
                         const double _step) override
             {
-                std::vector<std::unique_ptr<revolve::Actuator>> actuators = revolve::gazebo::convertMotorsToActuators(_motors);
-                std::vector<std::unique_ptr<revolve::Sensor>> sensors;  // CPG does not actually have any sensors.
+//                std::vector<std::shared_ptr<revolve::Actuator>> &actuators = ActuatorWrapper::ConvertMotorsToActuators(_motors);
+//                std::vector<std::shared_ptr<revolve::Sensor>> &sensors;  // CPG does not actually have any sensors.
 
-                revolve::DifferentialCPG::update(actuators, sensors, _time, _step);
+                revolve::DifferentialCPG::update(_motors, _sensors, _time, _step);
             }
 
         private:

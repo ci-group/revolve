@@ -31,8 +31,9 @@ JointMotor::JointMotor(
     const std::string &_partId,
     const std::string &_motorId,
     sdf::ElementPtr _motor,
-    const unsigned int _outputs)
-    : Motor(_model, _partId, _motorId, _outputs)
+    const unsigned int _outputs,
+    const std::string &_coordinates)
+    : Motor(_model, _partId, _motorId, _outputs, _coordinates)
 {
   if (not _motor->HasAttribute("joint"))
   {

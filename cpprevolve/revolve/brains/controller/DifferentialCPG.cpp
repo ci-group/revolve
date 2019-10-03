@@ -51,7 +51,7 @@ using namespace revolve;
  */
 DifferentialCPG::DifferentialCPG(
         const DifferentialCPG::ControllerParams &params,
-        const std::vector< std::unique_ptr< Actuator > > &actuators)
+        const std::vector<std::shared_ptr<Actuator>> &actuators)
         : next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()])
@@ -68,7 +68,7 @@ DifferentialCPG::DifferentialCPG(
     this->abs_output_bound = params.abs_output_bound;
 
     size_t j=0;
-    for (const std::unique_ptr<Actuator> &actuator: actuators)
+    for (const std::shared_ptr<Actuator> &actuator: actuators)
     {
         // Pass coordinates
         auto coord_x = actuator->coordinate_x();
@@ -96,7 +96,7 @@ DifferentialCPG::DifferentialCPG(
 
     // Add connections between neighbouring neurons
     int i = 0;
-    for (const std::unique_ptr<Actuator> &actuator: actuators)
+    for (const std::shared_ptr<Actuator> &actuator: actuators)
     {
         // Get name and x,y-coordinates of all neurons.
         double x = actuator->coordinate_x();
@@ -116,7 +116,7 @@ DifferentialCPG::DifferentialCPG(
         }
 
         // Loop over all positions. We call it neighbours, but we still need to check if they are a neighbour.
-        for (const std::unique_ptr<Actuator> &neighbour: actuators)
+        for (const std::shared_ptr<Actuator> &neighbour: actuators)
         {
             // Get information of this neuron (that we call neighbour).
             double near_x = neighbour->coordinate_x();
@@ -180,8 +180,8 @@ DifferentialCPG::~DifferentialCPG()
  * @param _step
  */
 void DifferentialCPG::update(
-        const std::vector< std::unique_ptr < Actuator > > &actuators,
-        const std::vector< std::unique_ptr < Sensor > > &sensors,
+        const std::vector<std::shared_ptr<Actuator>> &actuators,
+        const std::vector<std::shared_ptr<Sensor>> &sensors,
         const double time,
         const double step)
 {

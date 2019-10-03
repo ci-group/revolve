@@ -37,7 +37,7 @@ public:
     /// \param[in] _actuators Reference to a actuator list
     DifferentialCPG(
             const ControllerParams &params,
-            const std::vector< std::unique_ptr < Actuator > > &_actuators);
+            const std::vector<std::shared_ptr<Actuator>> &_actuators);
 
     /// \brief Destructor
     virtual ~DifferentialCPG();
@@ -48,8 +48,8 @@ public:
     /// \param[in] _time Current world time
     /// \param[in] _step Current time step
     virtual void update(
-            const std::vector< std::unique_ptr < Actuator > > &actuators,
-            const std::vector< std::unique_ptr < Sensor > > &sensors,
+            const std::vector<std::shared_ptr<Actuator>> &actuators,
+            const std::vector<std::shared_ptr<Sensor>> &sensors,
             const double _time,
             const double _step) override;
 
