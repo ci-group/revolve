@@ -30,8 +30,9 @@ VelocityMotor::VelocityMotor(
       ::gazebo::physics::ModelPtr _model,
       const std::string &_partId,
       const std::string &_motorId,
-      sdf::ElementPtr _motor)
-    : JointMotor(_model, _partId, _motorId, _motor, 1)
+      sdf::ElementPtr _motor,
+      const std::string &_coordinates)
+    : JointMotor(_model, _partId, _motorId, _motor, 1, _coordinates)
     , velocityTarget_(0)
     , noise_(0)
 {

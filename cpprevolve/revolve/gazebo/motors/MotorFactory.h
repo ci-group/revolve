@@ -51,7 +51,8 @@ namespace revolve
         sdf::ElementPtr _motorSdf,
         const std::string &_type,
         const std::string &_partId,
-        const std::string &_motorId);
+        const std::string &_motorId,
+        const std::string &_coordinates);
 
       /// \brief Creates a motor for the given model for the given SDF element.
       public: virtual MotorPtr Create(sdf::ElementPtr _motorSdf);
