@@ -67,7 +67,7 @@ VelocityMotor::~VelocityMotor()
 {
 }
 
-void VelocityMotor::Update(
+void VelocityMotor::write(
     const double *outputs,
     double /*step*/)
 {

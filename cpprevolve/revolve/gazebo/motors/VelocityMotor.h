@@ -56,7 +56,7 @@ namespace revolve
       /// maximum velocity set by the motor.
       /// \param[in,out] outputs
       /// \param[in] step
-      virtual void Update(
+      virtual void write(
           const double *outputs,
           double step);
 
@@ -86,9 +86,7 @@ namespace revolve
 
       /// \brief PID for this velocity motor
       protected: ::gazebo::common::PID pid_;
-
-      public: void write(const double *output, double step){throw std::logic_error("write() not implemented");}
-    };
+};
   }  // namespace gazebo
 }  // namespace revolve
 

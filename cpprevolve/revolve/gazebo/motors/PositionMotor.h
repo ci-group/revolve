@@ -51,7 +51,7 @@ namespace revolve
       public: virtual ~PositionMotor() override;
 
       /// \brief
-      public: virtual void Update(
+      public: virtual void write(
           const double *_outputs,
           double _step) override;
 

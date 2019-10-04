@@ -77,7 +77,7 @@ PositionMotor::~PositionMotor() = default;
 // }
 
 /////////////////////////////////////////////////
-void PositionMotor::Update(
+void PositionMotor::write(
     const double *outputs,
     double /*step*/)
 {

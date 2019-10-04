@@ -62,12 +62,13 @@ class BrainCPG(Brain):
 
     def learner_sdf(self):
         return xml.etree.ElementTree.Element('rv:learner', {
-            'type': 'None',
+            'type': 'offline',
         })
 
     def controller_sdf(self):
         return xml.etree.ElementTree.Element('rv:controller', {
             'type': 'cpg',
+            'abs_output_bound': str(self.abs_output_bound),
             'reset_robot_position': str(self.reset_robot_position),
             'reset_neuron_state_bool': str(self.reset_neuron_state_bool),
             'reset_neuron_random': str(self.reset_neuron_random),

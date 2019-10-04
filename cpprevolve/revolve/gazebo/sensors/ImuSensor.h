@@ -22,6 +22,7 @@
 #define REVOLVE_GAZEBO_SENSORS_IMUSENSOR_H_
 
 #include <string>
+#include <gazebo/common/CommonTypes.hh>
 
 #include "Sensor.h"
 
@@ -49,7 +50,7 @@ namespace revolve
       /// \brief Read the value of this IMU sensor into the
       /// \param[in] _input: array.
       /// \brief[in,out] _input Input value to write on
-      public: virtual void Read(double *_input);
+      public: void read(double *_input) override;
 
       /// \brief  Called when the IMU sensor is updated
       public: void OnUpdate();

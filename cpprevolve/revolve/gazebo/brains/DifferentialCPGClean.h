@@ -4,9 +4,9 @@
 
 #ifndef REVOLVE_DIFFERENTIALCPGCLEAN_H
 #define REVOLVE_DIFFERENTIALCPGCLEAN_H
+
 #include <revolve/brains/controller/actuators/Actuator.h>
 #include <revolve/brains/controller/DifferentialCPG.h>
-#include <revolve/gazebo/motors/ActuatorWrapper.h>
 #include "Brain.h"
 
 namespace revolve
@@ -27,14 +27,12 @@ namespace revolve
                         const double _time,
                         const double _step) override
             {
-//                std::vector<std::shared_ptr<revolve::Actuator>> &actuators = ActuatorWrapper::ConvertMotorsToActuators(_motors);
-//                std::vector<std::shared_ptr<revolve::Sensor>> &sensors;  // CPG does not actually have any sensors.
+                this->update(_motors, _sensors, _time, _step);
+            };
 
-                revolve::DifferentialCPG::update(_motors, _sensors, _time, _step);
-            }
 
         private:
-            static revolve::DifferentialCPG::ControllerParams LoadParamsFromSDF(sdf::ElementPtr controller_sdf)
+            static const revolve::DifferentialCPG::ControllerParams LoadParamsFromSDF(sdf::ElementPtr controller_sdf)
             {
                 // TODO: Add exception handling
                 revolve::DifferentialCPG::ControllerParams params;
@@ -58,8 +56,10 @@ namespace revolve
                     params.weights.push_back(stod(token));
                     sdf_weights.erase(0, pos + delimiter.length());
                 }
+                // push the last element that does not end with the delimiter
+                params.weights.push_back(stod(sdf_weights));
 
-                return params;
+                return std::move(params);
             }
 
         };

@@ -56,7 +56,7 @@ namespace revolve
       /// array of values, out of which the motor should read the first `n`
       /// values if it specifies `n` outputs.
       /// \param[in] step Actuation time in seconds
-      public: virtual void Update(
+      public: void write(
           const double *_output,
           double _step) = 0;
 

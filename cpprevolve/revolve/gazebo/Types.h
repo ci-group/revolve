@@ -22,6 +22,9 @@
 
 #include <memory>
 #include <vector>
+#include <revolve/brains/controller/actuators/Actuator.h>
+#include <revolve/brains/controller/sensors/Sensor.h>
+
 
 namespace revolve
 {
@@ -41,9 +44,9 @@ namespace revolve
 
     typedef std::shared_ptr< Brain > BrainPtr;
 
-    typedef std::shared_ptr< Motor > MotorPtr;
+    typedef std::shared_ptr< revolve::Actuator > MotorPtr;
 
-    typedef std::shared_ptr< VirtualSensor > SensorPtr;
+    typedef std::shared_ptr< revolve::Sensor > SensorPtr;
 
     typedef std::shared_ptr< MotorFactory > MotorFactoryPtr;
 

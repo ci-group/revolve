@@ -42,7 +42,7 @@ async def run():
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
 
     # insert robot
-    await connection.pause(True)
+    await connection.pause(False)
     robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 2.0), life_timeout=None)
     await asyncio.sleep(1.0)
 

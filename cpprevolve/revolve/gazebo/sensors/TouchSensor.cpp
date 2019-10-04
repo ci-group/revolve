@@ -21,6 +21,7 @@
 #include <string>
 
 #include <revolve/gazebo/sensors/TouchSensor.h>
+#include <gazebo/sensors/ContactSensor.hh>
 
 namespace gz = gazebo;
 
@@ -64,7 +65,7 @@ void TouchSensor::OnUpdate()
 }
 
 /////////////////////////////////////////////////
-void TouchSensor::Read(double *_input)
+void TouchSensor::read(double *_input)
 {
   _input[0] = this->lastValue_ ? 1 : 0;
 }
