@@ -76,3 +76,5 @@ Pipfile.lock
 # Revolve related
 *.sdf
 *.urdf
+
+thirdparty/

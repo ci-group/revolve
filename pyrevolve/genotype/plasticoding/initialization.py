@@ -58,3 +58,16 @@ def random_initialization(conf, next_robot_id):
     genotype.grammar = _generate_random_grammar(conf)
        
     return genotype
+
+def random_gramar_initialization (conf):
+    """
+    Generates the grammar for the lsystem_neat_genotype._body_genome object.
+    Brain symbols are still included
+    :param conf: PlasticodingConfig objec
+    :return: Grammar
+    """
+    grammar = _generate_random_grammar(conf)
+
+    return grammar
+
+

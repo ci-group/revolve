@@ -5,7 +5,7 @@ from ..plasticoding.mutation.mutation import MutationConfig as PlasticodingMutat
 from ..neat_brain_genome import NeatBrainGenomeConfig
 
 
-class LSystemNeatCrossoverConf:
+class LSystemNeatMutationConf:
     def __init__(self,
                  plasticoding_crossover_conf: PlasticodingMutationConf,
                  neat_crossover_conf: NeatBrainGenomeConfig):
@@ -20,7 +20,7 @@ def composite_mutation(genotype, body_mutation, brain_mutation):
     return new_genome
 
 
-def standard_mutation(genotype, mutation_conf: LSystemNeatCrossoverConf):
+def standard_mutation(genotype, mutation_conf: LSystemNeatMutationConf):
     return composite_mutation(
         genotype,
         lambda g: plasticondig_mutation(g, mutation_conf.plasticoding),

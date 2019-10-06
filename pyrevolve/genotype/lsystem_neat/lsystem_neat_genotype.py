@@ -33,5 +33,5 @@ class LSystemCPGHyperNEATGenotype(Genotype):
         :rtype: RevolveBot
         """
         phenotype = self._body_genome.develop()
-        phenotype._brain = self._brain_genome.develop()
+        phenotype._brain = None #self._brain_genome.develop()  #Change : Function not yet defined
         return phenotype

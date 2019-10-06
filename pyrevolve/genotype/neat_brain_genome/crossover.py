@@ -14,11 +14,13 @@ def standard_crossover(parent_individuals, genotype_conf, crossover_conf):
     :return: genotype result of the crossover
     """
     assert len(parent_individuals) == 2
-    mother = parent_individuals[0].genotype
-    father = parent_individuals[1].genotype
-    child_genotype = mother.Mate(father,
-                                 crossover_conf.mate_average,
-                                 crossover_conf.interspecies_crossover,
-                                 genotype_conf.rng,
-                                 genotype_conf.multineat_params)
+    child_genotype = parent_individuals[0]
+
+    mother = parent_individuals[0]
+    father = parent_individuals[1]
+    #child_genotype = mother.Mate(father,
+                                 #crossover_conf.mate_average,
+                                 #crossover_conf.interspecies_crossover,
+                                 #genotype_conf.rng,
+                                 #genotype_conf.multineat_params)
     return child_genotype

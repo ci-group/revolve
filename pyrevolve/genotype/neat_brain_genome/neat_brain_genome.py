@@ -134,7 +134,7 @@ class NeatBrainGenome(Genotype):
             self._neat_genome = None
             return
 
-        self.id = int(robot_id)
+        #self.id = int(robot_id)
         self._brain_type = conf.brain_type
         is_cppn = conf.is_brain_cppn()
 
@@ -180,6 +180,8 @@ class NeatBrainGenome(Genotype):
                 0,  # number of hidden layers
             )
 
+        self.id = int(robot_id)
+
     # override
     def clone(self):
         clone = NeatBrainGenome()
@@ -188,19 +190,19 @@ class NeatBrainGenome(Genotype):
 
     @property
     def id(self):
-        return f"{self._neat_genome.GedID()}"
+        return f"{self._neat_genome.GetID()}"  #Change
 
     @id.setter
     def id(self, value: int):
         self._neat_genome.SetID(value)
 
     def develop(self):
-        if self.brain_type is BrainType.CPG:
+        if self._brain_type is BrainType.CPG:   #Change
             # basically, HyperNEAT
             brain = BrainCPG()
             self._neat_genome.BuildPhenotype(self._net)
             for coord in brain.weights_coordinates():
-                # TODO check this
+                # TODO no weights_coordinates attribute yet defined on BrainGPG()
                 _input = coord
                 self._net.Flush()
                 self._net.Input(_input)
