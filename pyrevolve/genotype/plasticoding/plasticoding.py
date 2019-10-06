@@ -15,8 +15,6 @@ from pyrevolve.revolve_bot.brain.brain_nn import Params
 from ...custom_logging.logger import logger
 import random
 import math
-import copy
-import itertools
 
 
 class Alphabet(Enum):
@@ -127,9 +125,6 @@ class Plasticoding(Genotype):
         self.inputs_stack = []
         self.outputs_stack = []
         self.edges = {}
-
-    def clone(self):
-        return copy.deepcopy(self)
 
     def load_genotype(self, genotype_file):
         with open(genotype_file) as f:

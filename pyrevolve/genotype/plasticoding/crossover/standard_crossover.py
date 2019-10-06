@@ -31,7 +31,7 @@ def standard_crossover(parent_individuals, genotype_conf, crossover_conf):
     """
     Creates an child (individual) through crossover with two parents
 
-    :param parent_genotypes: genotypes of the parents to be used for crossover
+    :param parent_individuals: parent individuals to be used for crossover
     :return: genotype result of the crossover
     """
     parent_genotypes = [p.genotype for p in parent_individuals]

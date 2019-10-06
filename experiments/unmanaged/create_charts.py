@@ -6,10 +6,13 @@ import yaml
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.ndimage import gaussian_filter
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.revolve_bot import RevolveBot
 
+
+Inf = float('Inf')
 
 def parse_vec3(source: str):
     # example source: Vector3(2.394427e+00, 3.195821e-01, 2.244915e-02)
@@ -153,7 +156,8 @@ def draw_chart(folder_name: str, ax):
         else:
             raise RuntimeError("WAT?")
 
-    return robot_points_new, robot_points_new_pop, \
+    return data, \
+           robot_points_new, robot_points_new_pop, \
            robot_points_mate, robot_points_mate_pop, \
            robot_points_death, robot_points_death_pop, \
            robot_speed
@@ -180,6 +184,74 @@ def calculate_min_max_len(data):
     return _min, _max, _len
 
 
+def robot_density(robots, label='start_pos', sigma=1.0):
+    positions = []
+    # sizes:
+    min_x = -10
+    max_x = 10
+    min_y = -10
+    max_y = 20
+    for key, robot in robots.items():
+        pos = parse_vec3(robot.life[label])
+        positions.append(pos)
+        x = pos[0]
+        y = pos[1]
+
+        if min_x > x:
+            min_x = x
+        elif x > max_x:
+            max_x = x
+
+        if min_y > y:
+            min_y = y
+        elif y > max_y:
+            max_y = y
+
+    min_x = int(min_x)
+    max_x = int(max_x + 3.5)
+    min_y = int(min_y)
+    max_y = int(max_y + 3.5)
+
+    # creating meshgrid
+    delta = 1
+    x = np.arange(min_x, max_x, delta)
+    y = np.arange(min_y, max_y, delta)
+    X, Y = np.meshgrid(x, y)
+
+    # densities calculation:
+    Z = np.zeros_like(X, dtype=int)
+    for pos in positions:
+        if not (min_x < pos[0] < max_x-1):
+            print(f"WARNING, X = {pos[0]}")
+            continue
+        if not (min_y < pos[1] < max_y-1):
+            print(f"WARNING, Y = {pos[1]}")
+            continue
+        x_round = round(pos[0] + 0.5)
+        y_round = round(pos[1] + 0.5)
+
+        x = int(x_round - min_x)
+        y = int(y_round - min_y)
+        #TODO multiply for delta != 1
+
+        try:
+            Z[x][y] += 1
+        except IndexError:
+            print(f"DIOCANE Z[{x}][{y}] += 1")
+
+    return X, Y, gaussian_filter(Z, sigma=sigma)
+    # return X, Y, Z
+
+
+def countour_plot(robots, label='start_pos', sigma=1.0):
+    X, Y, Z = robot_density(robots, label, sigma=sigma)
+
+    fig, ax = plt.subplots()
+    CS = ax.contour(X, Y, Z)
+    ax.clabel(CS, inline=1, fontsize=10)
+    ax.set_title(f'{label} - sigma={sigma}')
+
+
 if __name__ == '__main__':
     folder_name = sys.argv[1]
     live_update = False
@@ -201,7 +273,7 @@ if __name__ == '__main__':
     if live_update:
         plt.ion()
 
-    robot_points_new, robot_points_new_pop, \
+    data, robot_points_new, robot_points_new_pop, \
     robot_points_mate, robot_points_mate_pop, \
     robot_points_death, robot_points_death_pop, \
     robot_speed = draw_chart(folder_name, ax)
@@ -217,6 +289,13 @@ if __name__ == '__main__':
     speed_scatter, = ax2.plot(robot_points_death, robot_speed, label='speed', ms=10, marker='.', ls='')
     if save_png:
         plt.savefig(os.path.join(folder_name, 'population-speed.png'), bbox_inches='tight')
+
+    countour_plot(data['robots'], 'start_pos', sigma=0.6)
+    if save_png:
+        plt.savefig(os.path.join(folder_name, 'population-start_pos-contour.png'), bbox_inches='tight')
+    countour_plot(data['robots'], 'last_pos', sigma=0.6)
+    if save_png:
+        plt.savefig(os.path.join(folder_name, 'population-last_pos-contour.png'), bbox_inches='tight')
 
     if not live_update and not save_png:
         plt.show()
@@ -234,7 +313,7 @@ if __name__ == '__main__':
             return min(X), max(X), min(Y), max(Y)
 
         while True:
-            robot_points_new, robot_points_new_pop, \
+            data, robot_points_new, robot_points_new_pop, \
             robot_points_mate, robot_points_mate_pop, \
             robot_points_death, robot_points_death_pop, \
             robot_speed = draw_chart(folder_name, ax)
