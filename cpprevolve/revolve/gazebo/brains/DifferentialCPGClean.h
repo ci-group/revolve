@@ -5,6 +5,8 @@
 #ifndef REVOLVE_DIFFERENTIALCPGCLEAN_H
 #define REVOLVE_DIFFERENTIALCPGCLEAN_H
 
+#include <thirdparty/MultiNEAT/src/Genome.h>
+
 #include <revolve/brains/controller/actuators/Actuator.h>
 #include <revolve/brains/controller/DifferentialCPG.h>
 #include "Brain.h"
@@ -13,59 +15,45 @@ namespace revolve
 {
     namespace gazebo
     {
+        /// \brief connection between gazebo and revolve CPG
+        /// \details gets the sdf - model data and passes them to revolve
         class DifferentialCPGClean: public Brain, private revolve::DifferentialCPG
         {
         public:
-            explicit DifferentialCPGClean(const sdf::ElementPtr cpgParams_sdf,
-                                          const std::vector< MotorPtr > &_motors)
-                    : Brain()
-                    , revolve::DifferentialCPG(DifferentialCPGClean::LoadParamsFromSDF(cpgParams_sdf), _motors)
-            {}
+            /// \brief Constructor
+            /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf
+            /// \param[in] _motors vector<MotorPtr> list of motors
+            /// \details Extracts controller parameters and CPPN genome
+            ///  from brain_sdf and calls revolve::DifferentialCPG's contructor.
+            explicit DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
+                                          const std::vector< MotorPtr > &_motors);
 
+            /// \brief updates the motor signals
+            /// \param[in] _motors vector<MotorPtr> list of motors
+            /// \param[in] _sensors vector<SensorPtr> list of sensors
+            /// \param[in] _time double
+            /// \param[in] _step double
             void Update(const std::vector<MotorPtr> &_motors,
-                        const std::vector<SensorPtr> &_sensors,
-                        const double _time,
-                        const double _step) override
-            {
-                this->update(_motors, _sensors, _time, _step);
-            };
-
+                   const std::vector<SensorPtr> &_sensors,
+                   const double _time,
+                   const double _step) override;
 
         private:
-            static const revolve::DifferentialCPG::ControllerParams LoadParamsFromSDF(sdf::ElementPtr controller_sdf)
-            {
-                // TODO: Add exception handling
-                revolve::DifferentialCPG::ControllerParams params;
-                params.reset_neuron_random = (controller_sdf->GetAttribute("reset_neuron_random")->GetAsString() == "true");
-                params.use_frame_of_reference = (controller_sdf->GetAttribute("use_frame_of_reference")->GetAsString() == "true");
-                params.init_neuron_state = stod(controller_sdf->GetAttribute("init_neuron_state")->GetAsString());
-                params.range_ub = stod(controller_sdf->GetAttribute("range_ub")->GetAsString());
-                params.signal_factor_all = stod(controller_sdf->GetAttribute("signal_factor_all")->GetAsString());
-                params.signal_factor_mid = stod(controller_sdf->GetAttribute("signal_factor_mid")->GetAsString());
-                params.signal_factor_left_right = stod(controller_sdf->GetAttribute("signal_factor_left_right")->GetAsString());
-                params.abs_output_bound = stod(controller_sdf->GetAttribute("abs_output_bound")->GetAsString());
+            /// \brief extracts CPG controller parameters from brain_sdf
+            /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf
+            /// \return parameters of the CPG controller
+            /// \details get the strings of the controller parameters and convert them to the
+            /// appropriate datatype. Store them in a revolve::DifferentialCPG::ControllerParams
+            /// struct and return them.
+            static const revolve::DifferentialCPG::ControllerParams load_params_from_sdf(sdf::ElementPtr brain_sdf);
 
-                // Get the weights from the sdf:
-                std::string sdf_weights = controller_sdf->GetAttribute("weights")->GetAsString();
-                std::string delimiter = ";";
-
-                size_t pos = 0;
-                std::string token;
-                while ((pos = sdf_weights.find(delimiter)) != std::string::npos) {
-                    token = sdf_weights.substr(0, pos);
-                    params.weights.push_back(stod(token));
-                    sdf_weights.erase(0, pos + delimiter.length());
-                }
-                // push the last element that does not end with the delimiter
-                params.weights.push_back(stod(sdf_weights));
-
-                return std::move(params);
-            }
-
+            /// \brief extracts CPPN genome from brain_sdf
+            /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf
+            /// \return the NEAT genome
+            /// \details TODO
+            static NEAT::Genome load_cppn_genome_from_sdf(const sdf::ElementPtr brain_sdf);
         };
     }
 }
-
-
 
 #endif //REVOLVE_DIFFERENTIALCPGCLEAN_H

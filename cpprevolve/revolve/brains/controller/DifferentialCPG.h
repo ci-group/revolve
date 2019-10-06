@@ -8,9 +8,13 @@
 #include "Controller.h"
 #include "actuators/Actuator.h"
 #include "sensors/Sensor.h"
+
 #include <map>
 #include <boost/numeric/odeint.hpp>
 #include <Eigen/Geometry>
+#include "../../../../thirdparty/MultiNEAT/src/Genome.h"
+#include "../../../../thirdparty/MultiNEAT/src/NeuralNetwork.h"
+#include "../../../../thirdparty/MultiNEAT/src/Genes.h"
 
 typedef std::vector< double > state_type;
 
@@ -35,9 +39,11 @@ public:
     /// \brief Constructor
     /// \param[in] params Parameters for the controller
     /// \param[in] _actuators Reference to a actuator list
+    /// \param[in] config_cppn_genome Reference to the genome for configuring the weights in CPG
     DifferentialCPG(
-            const ControllerParams &params,
-            const std::vector<std::shared_ptr<Actuator>> &_actuators);
+            const DifferentialCPG::ControllerParams &params,
+            const std::vector<std::shared_ptr<Actuator>> &_actuators,
+            NEAT::Genome config_cppn_genome);
 
     /// \brief Destructor
     virtual ~DifferentialCPG();

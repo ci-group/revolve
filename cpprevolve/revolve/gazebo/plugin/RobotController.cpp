@@ -202,20 +202,19 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
     return;
   }
 
-  auto brain = _sdf->GetElement("rv:brain");
-  auto controller_sdf = brain->GetElement("rv:controller");
-  auto controller_type = controller_sdf->GetAttribute("type")->GetAsString();
-  auto learner = brain->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
+  auto brain_sdf = _sdf->GetElement("rv:brain");
+  auto controller_type = brain_sdf->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
+  auto learner = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
   std::cout << "Loading controller " << controller_type << " and learner " << learner << std::endl;
 
   if ("offline" == learner and "ann" == controller_type)
   {
-    brain_.reset(new NeuralNetwork(this->model_, brain, motors_, sensors_));
+    brain_.reset(new NeuralNetwork(this->model_, brain_sdf, motors_, sensors_));
   }
   else if ("rlpower" == learner and "spline" == controller_type)
   {
     if (not motors_.empty()) {
-        brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
+        brain_.reset(new RLPower(this->model_, brain_sdf, motors_, sensors_));
     }
   }
   else if ("bo" == learner and "cpg" == controller_type)
@@ -224,7 +223,7 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
   else if ("offline" == learner and "cpg" == controller_type)
   {
-      brain_.reset(new DifferentialCPGClean(controller_sdf, motors_));
+      brain_.reset(new DifferentialCPGClean(brain_sdf, motors_));
   }
   else
   {

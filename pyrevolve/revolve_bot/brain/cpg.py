@@ -37,6 +37,7 @@ class BrainCPG(Brain):
 
         #TODO weights. For now they are directly passed in the .yaml - file
         self.weights = []
+        self.genome = None
 
     @staticmethod
     def from_yaml(yaml_object):
@@ -85,4 +86,11 @@ class BrainCPG(Brain):
             'signal_factor_left_right': str(self.signal_factor_left_right),
             'startup_time': str(self.startup_time),
             'weights': ';'.join(str(x) for x in self.weights),
+            'genome': self.genome_sdf(),
+        })
+
+    def genome_sdf(self):
+        # TODO Build a sdf that contains the genome of the brain
+        return xml.etree.ElementTree.Element('rv:genome', {
+            'none':'none'
         })
