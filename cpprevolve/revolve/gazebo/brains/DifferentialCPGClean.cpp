@@ -20,7 +20,7 @@ void DifferentialCPGClean::Update(const std::vector<MotorPtr> &_motors,
     this->update(_motors, _sensors, _time, _step);
 }
 
-const revolve::DifferentialCPG::ControllerParams DifferentialCPGClean::load_params_from_sdf(sdf::ElementPtr brain_sdf) {
+revolve::DifferentialCPG::ControllerParams& DifferentialCPGClean::load_params_from_sdf(sdf::ElementPtr brain_sdf) {
     // Get all params from the sdf
     // TODO: Add exception handling
     sdf::ElementPtr controller_sdf = brain_sdf->GetElement("rv:controller");
@@ -48,7 +48,7 @@ const revolve::DifferentialCPG::ControllerParams DifferentialCPGClean::load_para
     // push the last element that does not end with the delimiter
     params.weights.push_back(stod(sdf_weights));
 
-    return std::move(params);
+    return params;
 }
 
 NEAT::Genome DifferentialCPGClean::load_cppn_genome_from_sdf(const sdf::ElementPtr brain_sdf) {

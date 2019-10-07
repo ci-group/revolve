@@ -51,7 +51,7 @@ using namespace revolve;
  * @param config_cppn_genome
  */
 DifferentialCPG::DifferentialCPG(
-        const DifferentialCPG::ControllerParams &params,
+        DifferentialCPG::ControllerParams &params,
         const std::vector<std::shared_ptr<Actuator>> &actuators,
         NEAT::Genome config_cppn_genome)
         : next_state(nullptr), n_motors(actuators.size()), output(new double[actuators.size()]) {
@@ -147,7 +147,7 @@ DifferentialCPG::DifferentialCPG(
     const NEAT::Parameters par;
     // init a genome. (Example. Later cppn loaded from sdf)
     NEAT::Genome gen(1, // id
-                     4, // inputs
+                     6, // inputs
                      2, // hidden
                      1, // outputs
                      true,
@@ -161,14 +161,17 @@ DifferentialCPG::DifferentialCPG(
     // build the NN according to the genome
     gen.BuildPhenotype(net);
 
-    // initialize weights for dummy-inputs of the "cppn"
-    std::vector<double> inputs(4, 0.5);
-    std::vector<double> outputs;
-    for (int j = 0; j < params.weights.size(); j++){
-        inputs[j] += 0.2;  // just to make inputs more diverse
+    // get weights for each connection
+    // assuming that connections are distinct for each direction
+    int k = 0;
+    for(std::pair<std::tuple< int, int, int, int, int, int >, std::tuple<int, int >> con : this->connections) {
+        std::vector<double> inputs(6);
+        // convert tuple to vector
+        std::tie(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5]) = con.first;
         net.Input(inputs);
         net.Activate();
-        params.weights[j] = net.Output().at(0);  //TODO: why error?!?
+        params.weights[k] = net.Output()[0];  // order of weights corresponds to order of connections.
+        k++;
     }
 
     // make sure to have right amount of weights

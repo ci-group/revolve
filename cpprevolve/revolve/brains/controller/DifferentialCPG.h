@@ -41,7 +41,7 @@ public:
     /// \param[in] _actuators Reference to a actuator list
     /// \param[in] config_cppn_genome Reference to the genome for configuring the weights in CPG
     DifferentialCPG(
-            const DifferentialCPG::ControllerParams &params,
+            DifferentialCPG::ControllerParams &params,
             const std::vector<std::shared_ptr<Actuator>> &_actuators,
             NEAT::Genome config_cppn_genome);
 

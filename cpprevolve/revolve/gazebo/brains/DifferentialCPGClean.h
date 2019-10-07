@@ -45,7 +45,7 @@ namespace revolve
             /// \details get the strings of the controller parameters and convert them to the
             /// appropriate datatype. Store them in a revolve::DifferentialCPG::ControllerParams
             /// struct and return them.
-            static const revolve::DifferentialCPG::ControllerParams load_params_from_sdf(sdf::ElementPtr brain_sdf);
+            static revolve::DifferentialCPG::ControllerParams& load_params_from_sdf(sdf::ElementPtr brain_sdf);
 
             /// \brief extracts CPPN genome from brain_sdf
             /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf
