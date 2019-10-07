@@ -30,23 +30,27 @@ async def run():
     """
 ​
     # experiment params #
-    num_generations = 2
-    population_size = 3
-    offspring_size = 5
+body_conf = PlasticodingConfig()
+brain_conf = NeatBrainGenomeConfig()
+lsystem_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)  # genotype_conf
 
-    genotype_conf = PlasticodingConfig(
-        max_structural_modules=100,
-    )
-​
-    mutation_conf = MutationConfig(
-        mutation_prob=0.8,
-        genotype_conf=genotype_conf,
-    )
-​
-    crossover_conf = CrossoverConfig(
-        crossover_prob=0.8,
-    )
-    # experiment params #
+robot_id = 105
+population_size = 4
+offspring_size = 2
+individuals = []  # Population.individuals
+
+crossover_operator = Lcrossover
+crossover_conf = LCrossoverConfig(0.8)
+
+plasticoding_mutation = MutationConfig(
+    mutation_prob=0.8,
+    genotype_conf=body_conf,
+)
+
+mutation_operator = LMutation
+mutation_conf = LMutationConfig(plasticoding_mutation, brain_conf)
+
+# experiment params #
 ​
     # Parse command line / file input arguments
     settings = parser.parse_args()
@@ -65,23 +69,23 @@ async def run():
         gen_num = 0
         next_robot_id = 1
 ​
-    population_conf = PopulationConfig(
+population_conf = PopulationConfig(
         population_size=population_size,
-        genotype_constructor=random_initialization,
-        genotype_conf=genotype_conf,
+        genotype_constructor=random_gramar_initialization,
+        genotype_conf=lsystem_conf,
         fitness_function=fitness.displacement_velocity,
-        mutation_operator=standard_mutation,
+        mutation_operator=LMutation,
         mutation_conf=mutation_conf,
-        crossover_operator=standard_crossover,
+        crossover_operator=Lcrossover,
         crossover_conf=crossover_conf,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
-        evaluation_time=0.5,
+        evaluation_time=settings.evaluation_time,
         offspring_size=offspring_size,
-        experiment_name="marga",
-        experiment_management=8,
+        experiment_name=settings.experiment_name,
+        experiment_management=experiment_management,
     )
 ​
     n_cores = settings.n_cores
@@ -117,9 +121,5 @@ async def run():
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
 ​
-    while gen_num < num_generations-1:
-        gen_num += 1
-        population = await population.next_gen(gen_num)
-        experiment_management.export_snapshots(population.individuals, gen_num)
-​
+
     # output result after completing all generations...

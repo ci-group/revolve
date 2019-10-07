@@ -85,7 +85,7 @@ class Population:
         self.next_robot_id = next_robot_id
 
     def _new_individual(self, genotype):
-        individual = Individual(genotype)
+        individual = Individual2(genotype)
         individual.develop()
         self.conf.experiment_management.export_genotype(individual)
         self.conf.experiment_management.export_phenotype(individual)
@@ -190,7 +190,7 @@ class Population:
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
                 child_genotype = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
-                child = Individual(child_genotype)
+                child = Individual2(child_genotype)
             else:
                 child = self.conf.selection(self.individuals)
 
