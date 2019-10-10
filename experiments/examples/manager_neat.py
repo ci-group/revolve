@@ -117,3 +117,8 @@ async def run():
         experiment_management.create_exp_folders()
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
+
+    while gen_num < num_generations-1:
+        gen_num += 1
+        population = await population.next_gen(gen_num)
+        experiment_management.export_snapshots(population.individuals, gen_num)
