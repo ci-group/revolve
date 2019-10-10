@@ -1,4 +1,4 @@
-from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet, PlasticodingConfig
+from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet
 from pyrevolve.genotype.lsystem_neat.lsystem_neat_genotype import LSystemCPGHyperNEATGenotype
 from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
 from pyrevolve.genotype.neat_brain_genome.crossover import standard_crossover as NEATBrainCrossover
@@ -18,25 +18,25 @@ class CrossoverConfig:
 
 
 
-def standard_crossover(parent_individuals, Lsystem_conf, cross_conf):
+def standard_crossover(parents, lsystem_conf, crossover_conf):
     """
     Creates an child (individual) through crossover with two parents
 
-    :param parent_individuals: Parents type Individual2
-    :param genotype_conf: LSystemCPGHyperNEATGenotypeConfig type
-    :param cross_conf: Lsystem-CrossoverConfig type
+    :param parents: Parents type Individual
+    :param lsystem_conf: LSystemCPGHyperNEATGenotypeConfig type with config for NEAT and Plasticoding
+    :param crossover_conf: CrossoverConfig for lsystem crossover type
     :return: brain and body crossover (Only body right now)
     """
-    assert len(parent_individuals) == 2
+    assert len(parents) == 2
 
-    parents_body_genotype = [p.body_genotype for p in parent_individuals]
-    parents_brain_genotype = [p.brain_genotype for p in parent_individuals]
+    parents_body_genotype = [p.genotype._body_genome for p in parents]
+    parents_brain_genotype = [p.genotype._brain_genome for p in parents]
 
     child_genotype = LSystemCPGHyperNEATGenotype()
     Neatconf = NEATCrossoverConf()
 
-    new_body = new_child_body(parents_body_genotype, Lsystem_conf, cross_conf)
-    new_brain = NEATBrainCrossover(parents_brain_genotype, Neatconf, cross_conf)
+    new_body = new_child_body(parents_body_genotype, lsystem_conf, crossover_conf)
+    new_brain = NEATBrainCrossover(parents_brain_genotype, Neatconf, crossover_conf, lsystem_conf)
 
     child_genotype._body_genome = new_body
     child_genotype._brain_genome = new_brain
@@ -44,20 +44,21 @@ def standard_crossover(parent_individuals, Lsystem_conf, cross_conf):
     return child_genotype
 
 
-def new_child_body(parents, Lsystem_conf, cross_conf):
+def new_child_body(parents, lsystem_conf, crossover_conf):
 
         grammar = {}
         crossover_attempt = random.uniform(0.0, 1.0)
-        if crossover_attempt > cross_conf.crossover_prob:
+        if crossover_attempt > crossover_conf.crossover_prob:
             grammar = parents[0].grammar
         else:
             for letter in Alphabet.modules():
                 sel_parent = random.randint(0, 1)
                 grammar[letter[0]] = parents[sel_parent].grammar[letter[0]]
 
-        new_genotype = Plasticoding(Lsystem_conf.plasticoding, 'tmp')
+        new_genotype = Plasticoding(lsystem_conf.plasticoding, 'tmp')
         new_genotype.grammar = grammar
         return new_genotype
+
 
 
     #mother_body = parent_individuals[0].genotype._body_genome

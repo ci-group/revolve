@@ -78,3 +78,4 @@ Pipfile.lock
 *.urdf
 
 thirdparty/
+*.DS_Store

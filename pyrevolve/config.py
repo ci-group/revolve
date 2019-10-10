@@ -67,7 +67,7 @@ parser = CustomParser(fromfile_prefix_chars='@')
 
 parser.add_argument(
     '--manager',
-    default=None,
+    default="experiments/examples/manager_neat.py",
     type=str,
     help="Determine which manager to use. Defaults to no manager."
 )

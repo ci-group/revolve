@@ -2,7 +2,7 @@ import multineat
 
 
 def _mutation(genotype, baby_is_clone: bool, search_mode: multineat.SearchMode, genotype_conf):
-    new_genotype = genotype.clone()
+    new_genotype = genotype.genotype._brain_genome.clone()
     new_genotype._neat_genome.Mutate(
         baby_is_clone,
         search_mode,

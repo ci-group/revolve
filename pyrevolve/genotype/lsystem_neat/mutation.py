@@ -7,10 +7,10 @@ from ..neat_brain_genome import NeatBrainGenomeConfig
 
 class LSystemNeatMutationConf:
     def __init__(self,
-                 plasticoding_crossover_conf: PlasticodingMutationConf,
-                 neat_crossover_conf: NeatBrainGenomeConfig):
-        self.plasticoding = plasticoding_crossover_conf
-        self.neat = neat_crossover_conf
+                 plasticoding_mutation_conf: PlasticodingMutationConf,
+                 neat_conf: NeatBrainGenomeConfig):
+        self.plasticoding = plasticoding_mutation_conf
+        self.neat = neat_conf
 
 
 def composite_mutation(genotype, body_mutation, brain_mutation):

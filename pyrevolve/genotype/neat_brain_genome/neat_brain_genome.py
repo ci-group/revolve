@@ -126,7 +126,7 @@ class NeatBrainGenomeConfig:
 
 
 class NeatBrainGenome(Genotype):
-    def __init__(self, conf: NeatBrainGenomeConfig = None, robot_id: int = None):
+    def __init__(self, conf: NeatBrainGenomeConfig = None, robot_id = None): #Change
         self._net = multineat.NeuralNetwork()
 
         if conf is None:
@@ -181,6 +181,7 @@ class NeatBrainGenome(Genotype):
             )
 
         self.id = int(robot_id)
+        self.phenotype = None
 
     # override
     def clone(self):
@@ -196,7 +197,7 @@ class NeatBrainGenome(Genotype):
     def id(self, value: int):
         self._neat_genome.SetID(value)
 
-    def develop(self):
+    def develop(self):  ##Not working!
         if self._brain_type is BrainType.CPG:   #Change
             # basically, HyperNEAT
             brain = BrainCPG()
