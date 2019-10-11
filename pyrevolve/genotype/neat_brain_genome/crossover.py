@@ -30,16 +30,3 @@ def standard_crossover(parents, NeatCrossoverConf, crossover_conf, lsystem_conf)
                                    lsystem_conf.neat.multineat_params
                                    )
     return new_genotype
-
-
-
-
-
-    #mother = parent_individuals[0]
-    #father = parent_individuals[1]
-    #child_genotype = mother.Mate(father,
-                                 #crossover_conf.mate_average,
-                                 #crossover_conf.interspecies_crossover,
-                                 #genotype_conf.rng,
-                                 #genotype_conf.multineat_params)
-    return child_genotype

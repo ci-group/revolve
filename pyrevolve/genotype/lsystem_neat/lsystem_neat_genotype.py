@@ -43,3 +43,13 @@ class LSystemCPGHyperNEATGenotype(Genotype):
         phenotype = self._body_genome.develop()
         #phenotype._brain = None  #self._brain_genome.develop()  #Change : Function not yet defined
         return phenotype
+
+    def export_genotype (self, filepath):
+        """
+        Connects to plasticoding expor_genotype function
+        :param filepath: file to save the genotype file to
+        :return:
+        """
+
+        self._body_genome.export_genotype(filepath)
+

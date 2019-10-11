@@ -77,5 +77,4 @@ Pipfile.lock
 *.sdf
 *.urdf
 
-thirdparty/
-*.DS_Store
+.DS_Store

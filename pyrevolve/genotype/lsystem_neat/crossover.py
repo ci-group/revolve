@@ -60,12 +60,3 @@ def new_child_body(parents, lsystem_conf, crossover_conf):
         return new_genotype
 
 
-
-    #mother_body = parent_individuals[0].genotype._body_genome
-    #father_body = parent_individuals[1].genotype._body_genome
-    #mother_brain = parent_individuals[0].genotype._brain_genome
-    #father_brain = parent_individuals[1].genotype._brain_genome
-    #child_genotype = LSystemCPGHyperNEATGenotype()
-    #child_genotype._body_genome = standard_crossover_lsystem([mother_body, father_body])
-    #child_genotype._brain_genome = standard_crossover_neat([mother_brain, father_brain])
-    #return child_genotype
