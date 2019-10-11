@@ -1,6 +1,4 @@
-/* export PATH=~/installed/gazebo_debug/bin:$PATH
-export LD_LIBRARY_PATH=~/installed/gazebo_debug/lib
-
+/*
 * Copyright (C) 2017 Vrije Universiteit Amsterdam
 *
 * Licensed under the Apache License, Version 2.0 (the "License");

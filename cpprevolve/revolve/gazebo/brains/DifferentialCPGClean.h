@@ -15,7 +15,7 @@ namespace revolve
     {
         /// \brief connection between gazebo and revolve CPG
         /// \details gets the sdf - model data and passes them to revolve
-        class DifferentialCPGClean: public Brain, private revolve::DifferentialCPG
+        class DifferentialCPGClean: public Brain//, private revolve::DifferentialCPG
         {
         public:
             /// \brief Constructor

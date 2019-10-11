@@ -25,7 +25,6 @@ pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
 
 # Find Limbo - LIbrary for Model-Based Optimization
 set(LIMBO_DIR ${CMAKE_SOURCE_DIR}/thirdparty/limbo)
-set(MULTINEAT_DIR ${CMAKE_SOURCE_DIR}/thirdparty/MultiNEAT)
 set(LIMBO_DEFINES USE_NLOPT)
 
 add_library(revolve-controllers SHARED ${CONTROLLER_SRCS})
@@ -33,8 +32,7 @@ add_library(revolve-learners SHARED ${LEARNER_SRCS})
 
 target_include_directories(revolve-controllers
         PUBLIC ${EIGEN3_INCLUDE_DIR}
-        PUBLIC ${Boost_INCLUDE_DIRS}
-        PUBLIC ${MULTINEAT_DIR}/src)
+        PUBLIC ${Boost_INCLUDE_DIRS})
 
 target_include_directories(revolve-learners
         PUBLIC ${Boost_INCLUDE_DIRS}
@@ -43,6 +41,9 @@ target_include_directories(revolve-learners
 
 target_include_directories(revolve-learners
         PUBLIC ${NLOpt_LIBRARY_DIRS})
+
+target_link_libraries(revolve-controllers
+        MultiNEAT::MultiNEAT)
 
 install(TARGETS revolve-controllers revolve-learners
         RUNTIME DESTINATION bin

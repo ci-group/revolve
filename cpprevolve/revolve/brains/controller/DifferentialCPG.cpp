@@ -35,7 +35,7 @@
 // Project headers
 #include "actuators/Actuator.h"
 #include "sensors/Sensor.h"
-#include "../../../../thirdparty/MultiNEAT/src/Genome.h"
+#include <multineat/Genome.h>
 
 // TODO: Resolve odd behaviour at the end of the validation procedure
 // This behaviour is not present if you directly load a trained controller

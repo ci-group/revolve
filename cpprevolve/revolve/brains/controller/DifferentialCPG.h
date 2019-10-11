@@ -12,9 +12,7 @@
 #include <map>
 #include <boost/numeric/odeint.hpp>
 #include <Eigen/Geometry>
-#include "../../../../thirdparty/MultiNEAT/src/Genome.h"
-#include "../../../../thirdparty/MultiNEAT/src/NeuralNetwork.h"
-#include "../../../../thirdparty/MultiNEAT/src/Genes.h"
+#include <multineat/Genome.h>
 
 typedef std::vector< double > state_type;
 

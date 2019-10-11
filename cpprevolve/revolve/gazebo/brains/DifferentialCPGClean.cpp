@@ -15,8 +15,9 @@ DifferentialCPGClean::DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
 void DifferentialCPGClean::Update(const std::vector<MotorPtr> &_motors,
                                   const std::vector<SensorPtr> &_sensors,
                                   const double _time,
-                                  const double _step) {
-    this->update(_motors, _sensors, _time, _step);
+                                  const double _step)
+{
+    this->Update(_motors, _sensors, _time, _step);
 }
 
 revolve::DifferentialCPG::ControllerParams& DifferentialCPGClean::load_params_from_sdf(sdf::ElementPtr brain_sdf) {

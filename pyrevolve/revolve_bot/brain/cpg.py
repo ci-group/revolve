@@ -34,26 +34,23 @@ class BrainCPG(Brain):
         self.verbose = None
         self.startup_time = None
         self.evaluation_rate = None
-
-        #TODO weights. For now they are directly passed in the .yaml - file
         self.weights = []
 
     @staticmethod
     def from_yaml(yaml_object):
-         BCPG = BrainCPG()
+        BCPG = BrainCPG()
+        for my_type in ["controller", "learner"]:  #, "meta"]:
+            try:
+                my_object = yaml_object[my_type]
+                for key, value in my_object.items():
+                    try:
+                        setattr(BCPG, key, value)
+                    except:
+                        print("Couldn't set {}, {}", format(key, value))
+            except:
+                print("Didn't load {} parameters".format(my_type))
 
-         for my_type in ["controller", "learner"]:  #, "meta"]:
-             try:
-                 my_object = yaml_object[my_type]
-                 for key, value in my_object.items():
-                     try:
-                         setattr(BCPG, key, value)
-                     except:
-                         print("Couldn't set {}, {}", format(key, value))
-             except:
-                 print("Didn't load {} parameters".format(my_type))
-
-         return BCPG
+        return BCPG
 
     def to_yaml(self):
         return {
@@ -84,5 +81,5 @@ class BrainCPG(Brain):
             'signal_factor_mid': str(self.signal_factor_mid),
             'signal_factor_left_right': str(self.signal_factor_left_right),
             'startup_time': str(self.startup_time),
-            'weights': ';'.join(str(x) for x in self.weights),
+            'weights': ';'.join(str(x) for x in self.weights)
         })
