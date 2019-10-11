@@ -8,9 +8,9 @@ class NEATCrossoverConf:
 
 def standard_crossover(parents, NeatCrossoverConf, crossover_conf, lsystem_conf):
     """
-    Creates an child (individual) through crossover with two parents
+    Creates an child (genotype) through crossover with two parents
 
-    :param parents: parent individuals to be used for crossover
+    :param parents: parents brain genome to be used for crossover
     :param NeatCrossoverConf: NEAT genotype configuration object
     :param crossover_conf: CrossoverConfig for lsystem
     :return: genotype result of the crossover

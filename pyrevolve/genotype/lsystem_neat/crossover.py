@@ -2,6 +2,7 @@ from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet
 from pyrevolve.genotype.lsystem_neat.lsystem_neat_genotype import LSystemCPGHyperNEATGenotype
 from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
 from pyrevolve.genotype.neat_brain_genome.crossover import standard_crossover as NEATBrainCrossover
+from pyrevolve.genotype.plasticoding.crossover import standard_crossover as PlasticodingCrossover
 
 import random
 
@@ -35,28 +36,12 @@ def standard_crossover(parents, lsystem_conf, crossover_conf):
     child_genotype = LSystemCPGHyperNEATGenotype()
     Neatconf = NEATCrossoverConf()
 
-    new_body = new_child_body(parents_body_genotype, lsystem_conf, crossover_conf)
+    new_body = PlasticodingCrossover(parents_body_genotype, lsystem_conf.plasticoding, crossover_conf)
     new_brain = NEATBrainCrossover(parents_brain_genotype, Neatconf, crossover_conf, lsystem_conf)
 
     child_genotype._body_genome = new_body
     child_genotype._brain_genome = new_brain
 
     return child_genotype
-
-
-def new_child_body(parents, lsystem_conf, crossover_conf):
-
-        grammar = {}
-        crossover_attempt = random.uniform(0.0, 1.0)
-        if crossover_attempt > crossover_conf.crossover_prob:
-            grammar = parents[0].grammar
-        else:
-            for letter in Alphabet.modules():
-                sel_parent = random.randint(0, 1)
-                grammar[letter[0]] = parents[sel_parent].grammar[letter[0]]
-
-        new_genotype = Plasticoding(lsystem_conf.plasticoding, 'tmp')
-        new_genotype.grammar = grammar
-        return new_genotype
 
 
