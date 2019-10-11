@@ -5,8 +5,6 @@
 #ifndef REVOLVE_DIFFERENTIALCPGCLEAN_H
 #define REVOLVE_DIFFERENTIALCPGCLEAN_H
 
-#include <thirdparty/MultiNEAT/src/Genome.h>
-
 #include <revolve/brains/controller/actuators/Actuator.h>
 #include <revolve/brains/controller/DifferentialCPG.h>
 #include "Brain.h"
@@ -23,7 +21,7 @@ namespace revolve
             /// \brief Constructor
             /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf
             /// \param[in] _motors vector<MotorPtr> list of motors
-            /// \details Extracts controller parameters and CPPN genome
+            /// \details Extracts controller parameters
             ///  from brain_sdf and calls revolve::DifferentialCPG's contructor.
             explicit DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
                                           const std::vector< MotorPtr > &_motors);
@@ -46,12 +44,6 @@ namespace revolve
             /// appropriate datatype. Store them in a revolve::DifferentialCPG::ControllerParams
             /// struct and return them.
             static revolve::DifferentialCPG::ControllerParams& load_params_from_sdf(sdf::ElementPtr brain_sdf);
-
-            /// \brief extracts CPPN genome from brain_sdf
-            /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf
-            /// \return the NEAT genome
-            /// \details TODO
-            static NEAT::Genome load_cppn_genome_from_sdf(const sdf::ElementPtr brain_sdf);
         };
     }
 }

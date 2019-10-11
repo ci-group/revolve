@@ -26,5 +26,6 @@
 #include <revolve/gazebo/brains/NeuralNetwork.h>
 #include <revolve/gazebo/brains/RLPower.h>
 #include <revolve/gazebo/brains/DifferentialCPGClean.h>
+#include <revolve/gazebo/brains/DifferentialCPPNCPG.h>
 
 #endif // REVOLVE_GAZEBO_BRAINS_BRAINS_H_

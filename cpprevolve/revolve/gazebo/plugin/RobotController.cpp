@@ -225,6 +225,10 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   {
       brain_.reset(new DifferentialCPGClean(brain_sdf, motors_));
   }
+  else if ("offline" == learner and "cppn-cpg" == controller_type)
+  {
+      brain_.reset(new DifferentialCPPNCPG(brain_sdf, motors_));
+  }
   else
   {
     throw std::runtime_error("Robot brain is not defined.");

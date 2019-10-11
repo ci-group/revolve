@@ -44,18 +44,18 @@
 using namespace revolve;
 
 /**
- * Constructor for DifferentialCPG class.
+ * Constructor for DifferentialCPG class without cppn config.
  *
- * @param params
- * @param actuators
- * @param config_cppn_genome
+ * @param _model
+ * @param robot_config
  */
 DifferentialCPG::DifferentialCPG(
         DifferentialCPG::ControllerParams &params,
-        const std::vector<std::shared_ptr<Actuator>> &actuators,
-        NEAT::Genome config_cppn_genome)
-        : next_state(nullptr), n_motors(actuators.size()), output(new double[actuators.size()]) {
-
+        const std::vector<std::shared_ptr<Actuator>> &actuators)
+        : next_state(nullptr)
+        , n_motors(actuators.size())
+        , output(new double[actuators.size()])
+{
     // Controller parameters
     this->reset_neuron_random = params.reset_neuron_random;
     this->init_neuron_state = params.init_neuron_state;
@@ -67,8 +67,9 @@ DifferentialCPG::DifferentialCPG(
     this->signal_factor_left_right = params.signal_factor_left_right;
     this->abs_output_bound = params.abs_output_bound;
 
-    size_t j = 0;
-    for (const std::shared_ptr<Actuator> &actuator: actuators) {
+    size_t j=0;
+    for (const std::shared_ptr<Actuator> &actuator: actuators)
+    {
         // Pass coordinates
         auto coord_x = actuator->coordinate_x();
         auto coord_y = actuator->coordinate_y();
@@ -77,11 +78,13 @@ DifferentialCPG::DifferentialCPG(
         // Set frame of reference
         int frame_of_reference = 0;
         // We are a left neuron
-        if (coord_x < 0) {
+        if (coord_x < 0)
+        {
             frame_of_reference = -1;
         }
             // We are a right neuron
-        else if (coord_x > 0) {
+        else if (coord_x > 0)
+        {
             frame_of_reference = 1;
         }
 
@@ -93,7 +96,8 @@ DifferentialCPG::DifferentialCPG(
 
     // Add connections between neighbouring neurons
     int i = 0;
-    for (const std::shared_ptr<Actuator> &actuator: actuators) {
+    for (const std::shared_ptr<Actuator> &actuator: actuators)
+    {
         // Get name and x,y-coordinates of all neurons.
         double x = actuator->coordinate_x();
         double y = actuator->coordinate_y();
@@ -101,16 +105,19 @@ DifferentialCPG::DifferentialCPG(
         // Continue to next iteration in case there is already a connection between the 1 and -1 neuron.
         // These checks feel a bit redundant.
         // if A->B connection exists.
-        if (this->connections.count({x, y, 1, x, y, -1}) > 0) {
+        if (this->connections.count({x, y, 1, x, y, -1}) > 0)
+        {
             continue;
         }
         // if B->A connection exists:
-        if (this->connections.count({x, y, -1, x, y, 1}) > 0) {
+        if (this->connections.count({x, y, -1, x, y, 1}) > 0)
+        {
             continue;
         }
 
         // Loop over all positions. We call it neighbours, but we still need to check if they are a neighbour.
-        for (const std::shared_ptr<Actuator> &neighbour: actuators) {
+        for (const std::shared_ptr<Actuator> &neighbour: actuators)
+        {
             // Get information of this neuron (that we call neighbour).
             double near_x = neighbour->coordinate_x();
             double near_y = neighbour->coordinate_y();
@@ -122,9 +129,11 @@ DifferentialCPG::DifferentialCPG(
             double dist_y = std::fabs(y - near_y);
 
             // TODO: Verify for non-spiders
-            if (std::fabs(dist_x + dist_y - 2) < 0.01) {
-                if (std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
-                    std::get<0>(this->connections[{near_x, near_y, 1, x, y, 1}]) != 1) {
+            if (std::fabs(dist_x + dist_y - 2) < 0.01)
+            {
+                if(std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
+                   std::get<0>(this->connections[{near_x, near_y, 1, x, y, 1}]) != 1)
+                {
                     this->connections[{x, y, 1, near_x, near_y, 1}] = std::make_tuple(1, i);
                     this->connections[{near_x, near_y, 1, x, y, 1}] = std::make_tuple(1, i);
                     i++;
@@ -135,10 +144,38 @@ DifferentialCPG::DifferentialCPG(
 
     // Initialise array of neuron states for Update() method
     this->next_state = new double[this->neurons.size()];
-    this->n_weights = (int) (this->connections.size() / 2) + this->n_motors;
+    this->n_weights = (int)(this->connections.size()/2) + this->n_motors;
+    // Save weights for brain
+    assert(params.weights.size() == n_weights);
+    sample.resize(n_weights);
+    for(size_t j = 0; j < n_weights; j++)
+    {
+        sample(j) = params.weights.at(j);
+    }
+
+    // Set ODE matrix at initialization
+    set_ode_matrix();
+
+    std::cout << "Brain has been loaded." << std::endl;
+
+}
+
+/**
+ * Constructor for DifferentialCPG class that loads weights from CPPN.
+ *
+ * @param params
+ * @param actuators
+ * @param config_cppn_genome
+ */
+DifferentialCPG::DifferentialCPG(
+        DifferentialCPG::ControllerParams &params,
+        const std::vector<std::shared_ptr<Actuator>> &actuators,
+        NEAT::Genome config_cppn_genome)
+        : next_state(nullptr)
+        , n_motors(actuators.size())
+        , output(new double[actuators.size()]) {
 
     // Loading Brain
-
     // Save weights for brain
     // TODO load weights from cppn phenotype
     // init a neural network
@@ -151,8 +188,8 @@ DifferentialCPG::DifferentialCPG(
                      2, // hidden
                      1, // outputs
                      true,
-                     NEAT::ActivationFunction::TANH, // input activation
-                     NEAT::ActivationFunction::TANH, // output activation
+                     NEAT::TANH, // input activation
+                     NEAT::TANH, // output activation
                      0,
                      par,
                      4);
@@ -164,7 +201,7 @@ DifferentialCPG::DifferentialCPG(
     // get weights for each connection
     // assuming that connections are distinct for each direction
     int k = 0;
-    for(std::pair<std::tuple< int, int, int, int, int, int >, std::tuple<int, int >> con : this->connections) {
+    for(std::pair<std::tuple< int, int, int, int, int, int >, std::tuple<int, int >> con : connections) {
         std::vector<double> inputs(6);
         // convert tuple to vector
         std::tie(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5]) = con.first;
@@ -173,17 +210,16 @@ DifferentialCPG::DifferentialCPG(
         params.weights[k] = net.Output()[0];  // order of weights corresponds to order of connections.
         k++;
     }
-
-    // make sure to have right amount of weights
-    assert(params.weights.size() == this->n_weights);
-
-    this->sample.resize(this->n_weights);
-    for (size_t j = 0; j < this->n_weights; j++) {
-        this->sample(j) = params.weights.at(j);
+    // Save weights for brain
+    assert(params.weights.size() == n_weights);
+    sample.resize(n_weights);
+    for(size_t j = 0; j < n_weights; j++)
+    {
+        sample(j) = params.weights.at(j);
     }
 
     // Set ODE matrix at initialization
-    this->set_ode_matrix();
+    set_ode_matrix();
 
     std::cout << "Brain has been loaded." << std::endl;
 }

@@ -1,0 +1,44 @@
+//
+// Created by andi on 11-10-19.
+//
+
+#ifndef REVOLVE_DIFFERENTIALCPPNCPG_H
+#define REVOLVE_DIFFERENTIALCPPNCPG_H
+
+//
+// Created by andi on 11-10-19.
+//
+
+#ifndef REVOLVE_DIFFERENTIALCPPNCPG_H
+#define REVOLVE_DIFFERENTIALCPPNCPG_H
+
+#endif //REVOLVE_DIFFERENTIALCPPNCPG_H
+
+#include <revolve/brains/controller/actuators/Actuator.h>
+#include "Brain.h"
+
+namespace revolve {
+    namespace gazebo {
+        /// \brief connection between gazebo and revolve CPG with config CPPN
+        /// \details gets the sdf - model data and passes them to revolve
+        class DifferentialCPPNCPG : private DifferentialCPGClean {
+        public:
+            /// \brief Constructor
+            /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf
+            /// \param[in] _motors vector<MotorPtr> list of motors
+            /// \details Extracts controller parameters and Genome
+            ///  from brain_sdf and calls revolve::DifferentialCPG's contructor.
+            explicit DifferentialCPPNCPG(const sdf::ElementPtr brain_sdf,
+                                          const std::vector< MotorPtr > &_motors);
+        private:
+            /// \brief extracts CPPN genome from brain_sdf
+            /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf
+            /// \return the NEAT genome
+            /// \details TODO
+            static NEAT::Genome load_cppn_genome_from_sdf(const sdf::ElementPtr brain_sdf);
+        };
+    }
+}
+
+
+#endif //REVOLVE_DIFFERENTIALCPPNCPG_H

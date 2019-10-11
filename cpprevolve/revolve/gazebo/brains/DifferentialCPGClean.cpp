@@ -9,8 +9,7 @@ using namespace revolve::gazebo;
 DifferentialCPGClean::DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
                                            const std::vector<MotorPtr> &_motors)
         : Brain(), revolve::DifferentialCPG(load_params_from_sdf(brain_sdf),
-                                            _motors,
-                                            load_cppn_genome_from_sdf(brain_sdf)) {}
+                                            _motors) {}
 
 
 void DifferentialCPGClean::Update(const std::vector<MotorPtr> &_motors,
@@ -35,6 +34,7 @@ revolve::DifferentialCPG::ControllerParams& DifferentialCPGClean::load_params_fr
     params.abs_output_bound = stod(controller_sdf->GetAttribute("abs_output_bound")->GetAsString());
 
     // Get the weights from the sdf:
+    // TODO: This will go wrong as soon as we load the weights form the cppn
     std::string sdf_weights = controller_sdf->GetAttribute("weights")->GetAsString();
     std::string delimiter = ";";
 
@@ -51,10 +51,5 @@ revolve::DifferentialCPG::ControllerParams& DifferentialCPGClean::load_params_fr
     return params;
 }
 
-NEAT::Genome DifferentialCPGClean::load_cppn_genome_from_sdf(const sdf::ElementPtr brain_sdf) {
-    // TODO
-    NEAT::Genome gen;
-    return gen;
-}
 
 
