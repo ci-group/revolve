@@ -11,7 +11,6 @@
 
 #include <map>
 #include <boost/numeric/odeint.hpp>
-#include <Eigen/Geometry>
 #include <multineat/Genome.h>
 
 typedef std::vector< double > state_type;
@@ -70,6 +69,8 @@ protected:
             const double time,
             const double step);
 
+    void init_params_and_connections(const ControllerParams &params, const std::vector<std::shared_ptr<Actuator>> &actuators);
+
     void set_ode_matrix();
 
 private:
@@ -117,7 +118,7 @@ private:
     double range_ub;
 
     /// \brief Loaded sample
-    Eigen::VectorXd sample;
+    std::vector<double> sample;
 
     /// \brief The number of weights to optimize
     size_t n_weights;
