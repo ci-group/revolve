@@ -50,7 +50,7 @@ using namespace revolve;
  * @param robot_config
  */
 DifferentialCPG::DifferentialCPG(
-        DifferentialCPG::ControllerParams &params,
+        const DifferentialCPG::ControllerParams params,
         const std::vector<std::shared_ptr<Actuator>> &actuators)
         : next_state(nullptr)
         , n_motors(actuators.size())
@@ -168,9 +168,9 @@ DifferentialCPG::DifferentialCPG(
  * @param config_cppn_genome
  */
 DifferentialCPG::DifferentialCPG(
-        DifferentialCPG::ControllerParams &params,
+        DifferentialCPG::ControllerParams params,
         const std::vector<std::shared_ptr<Actuator>> &actuators,
-        NEAT::Genome config_cppn_genome)
+        const NEAT::Genome &gen)
         : next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()]) {
@@ -180,34 +180,38 @@ DifferentialCPG::DifferentialCPG(
     // TODO load weights from cppn phenotype
     // init a neural network
     NEAT::NeuralNetwork net;
-    // init default parameters
-    const NEAT::Parameters par;
-    // init a genome. (Example. Later cppn loaded from sdf)
-    NEAT::Genome gen(1, // id
-                     6, // inputs
-                     2, // hidden
-                     1, // outputs
-                     true,
-                     NEAT::TANH, // input activation
-                     NEAT::TANH, // output activation
-                     0,
-                     par,
-                     4);
-    NEAT::RNG rand_num_gen;
-    gen.Randomize_LinkWeights(1, rand_num_gen);
+
+//    // init default parameters
+//    const NEAT::Parameters par;
+//    // init a genome. (Example. Later cppn loaded from sdf)
+//    NEAT::Genome gen(1, // id
+//                     6, // inputs
+//                     2, // hidden
+//                     1, // outputs
+//                     true,
+//                     NEAT::TANH, // input activation
+//                     NEAT::TANH, // output activation
+//                     0,
+//                     par,
+//                     4);
+//    NEAT::RNG rand_num_gen;
+//    gen.Randomize_LinkWeights(1, rand_num_gen);
+
     // build the NN according to the genome
     gen.BuildPhenotype(net);
 
     // get weights for each connection
     // assuming that connections are distinct for each direction
     int k = 0;
+    params.weights.resize(n_weights, 0);
     for(std::pair<std::tuple< int, int, int, int, int, int >, std::tuple<int, int >> con : connections) {
         std::vector<double> inputs(6);
         // convert tuple to vector
         std::tie(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5]) = con.first;
         net.Input(inputs);
         net.Activate();
-        params.weights[k] = net.Output()[0];  // order of weights corresponds to order of connections.
+        double output = net.Output()[0];
+        params.weights[k] = output;  // order of weights corresponds to order of connections.
         k++;
     }
     // Save weights for brain

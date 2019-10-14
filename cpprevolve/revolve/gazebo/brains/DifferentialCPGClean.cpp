@@ -8,8 +8,16 @@ using namespace revolve::gazebo;
 
 DifferentialCPGClean::DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
                                            const std::vector<MotorPtr> &_motors)
-        : Brain(), revolve::DifferentialCPG(load_params_from_sdf(brain_sdf),
-                                            _motors) {}
+        : Brain()
+        , revolve::DifferentialCPG(load_params_from_sdf(brain_sdf), _motors)
+{}
+
+DifferentialCPGClean::DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
+																					 const std::vector<MotorPtr> &_motors,
+																					 const NEAT::Genome &genome)
+				: Brain()
+				, revolve::DifferentialCPG(load_params_from_sdf(brain_sdf), _motors, genome)
+{}
 
 
 void DifferentialCPGClean::Update(const std::vector<MotorPtr> &_motors,
@@ -17,10 +25,10 @@ void DifferentialCPGClean::Update(const std::vector<MotorPtr> &_motors,
                                   const double _time,
                                   const double _step)
 {
-    this->Update(_motors, _sensors, _time, _step);
+    this->::revolve::DifferentialCPG::update(_motors, _sensors, _time, _step);
 }
 
-revolve::DifferentialCPG::ControllerParams& DifferentialCPGClean::load_params_from_sdf(sdf::ElementPtr brain_sdf) {
+revolve::DifferentialCPG::ControllerParams DifferentialCPGClean::load_params_from_sdf(sdf::ElementPtr brain_sdf) {
     // Get all params from the sdf
     // TODO: Add exception handling
     sdf::ElementPtr controller_sdf = brain_sdf->GetElement("rv:controller");
@@ -35,22 +43,21 @@ revolve::DifferentialCPG::ControllerParams& DifferentialCPGClean::load_params_fr
     params.abs_output_bound = stod(controller_sdf->GetAttribute("abs_output_bound")->GetAsString());
 
     // Get the weights from the sdf:
-    // TODO: This will go wrong as soon as we load the weights form the cppn
-    std::string sdf_weights = controller_sdf->GetAttribute("weights")->GetAsString();
-    std::string delimiter = ";";
+    // If loading with CPPN, the weights attribute does not exist
+    if (controller_sdf->HasAttribute("weights")) {
+				std::string sdf_weights = controller_sdf->GetAttribute("weights")->GetAsString();
+				std::string delimiter = ";";
 
-    size_t pos = 0;
-    std::string token;
-    while ((pos = sdf_weights.find(delimiter)) != std::string::npos) {
-        token = sdf_weights.substr(0, pos);
-        params.weights.push_back(stod(token));
-        sdf_weights.erase(0, pos + delimiter.length());
-    }
-    // push the last element that does not end with the delimiter
-    params.weights.push_back(stod(sdf_weights));
+				size_t pos = 0;
+				std::string token;
+				while ((pos = sdf_weights.find(delimiter)) != std::string::npos) {
+						token = sdf_weights.substr(0, pos);
+						params.weights.push_back(stod(token));
+						sdf_weights.erase(0, pos + delimiter.length());
+				}
+				// push the last element that does not end with the delimiter
+				params.weights.push_back(stod(sdf_weights));
+		}
 
     return params;
 }
-
-
-

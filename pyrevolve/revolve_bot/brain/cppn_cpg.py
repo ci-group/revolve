@@ -10,8 +10,24 @@ class BrainCPPNCPG(BrainCPG):
         super().__init__()
         self.genome = None
 
+    @staticmethod
+    def from_yaml(yaml_object):
+        BCPG = BrainCPPNCPG()
+        for my_type in ["controller", "learner"]:  #, "meta"]:
+            try:
+                my_object = yaml_object[my_type]
+                for key, value in my_object.items():
+                    try:
+                        setattr(BCPG, key, value)
+                    except:
+                        print("Couldn't set {}, {}", format(key, value))
+            except:
+                print("Didn't load {} parameters".format(my_type))
+
+        return BCPG
+
     def controller_sdf(self):
-        return xml.etree.ElementTree.Element('rv:controller', {
+        controller = xml.etree.ElementTree.Element('rv:controller', {
             'type': 'cppn-cpg',
             'abs_output_bound': str(self.abs_output_bound),
             'reset_robot_position': str(self.reset_robot_position),
@@ -29,11 +45,84 @@ class BrainCPPNCPG(BrainCPG):
             'signal_factor_mid': str(self.signal_factor_mid),
             'signal_factor_left_right': str(self.signal_factor_left_right),
             'startup_time': str(self.startup_time),
-            'weight_genome': self.genome_sdf(),
         })
+        controller.append(self.genome_sdf())
+        return controller
 
     def genome_sdf(self):
-        # TODO Build a sdf that contains the genome of the brain
+        import multineat
+
+        params = multineat.Parameters()
+        params.PopulationSize = 100
+        params.DynamicCompatibility = True
+        params.NormalizeGenomeSize = True
+        params.WeightDiffCoeff = 0.1
+        params.CompatTreshold = 2.0
+        params.YoungAgeTreshold = 15
+        params.SpeciesMaxStagnation = 15
+        params.OldAgeTreshold = 35
+        params.MinSpecies = 2
+        params.MaxSpecies = 10
+        params.RouletteWheelSelection = False
+        params.RecurrentProb = 0.0
+        params.OverallMutationRate = 1.0
+
+        params.ArchiveEnforcement = False
+
+        params.MutateWeightsProb = 0.05
+
+        params.WeightMutationMaxPower = 0.5
+        params.WeightReplacementMaxPower = 8.0
+        params.MutateWeightsSevereProb = 0.0
+        params.WeightMutationRate = 0.25
+        params.WeightReplacementRate = 0.9
+
+        params.MaxWeight = 8
+
+        params.MutateAddNeuronProb = 0.001
+        params.MutateAddLinkProb = 0.3
+        params.MutateRemLinkProb = 0.0
+
+        params.MinActivationA = 4.9
+        params.MaxActivationA = 4.9
+
+        params.ActivationFunction_SignedSigmoid_Prob = 0.0
+        params.ActivationFunction_UnsignedSigmoid_Prob = 1.0
+        params.ActivationFunction_Tanh_Prob = 0.0
+        params.ActivationFunction_SignedStep_Prob = 0.0
+
+        params.CrossoverRate = 0.0
+        params.MultipointCrossoverRate = 0.0
+        params.SurvivalRate = 0.2
+
+        params.MutateNeuronTraitsProb = 0
+        params.MutateLinkTraitsProb = 0
+
+        params.AllowLoops = True
+        params.AllowClones = True
+
+        params.ClearNeuronTraitParameters()
+        params.ClearLinkTraitParameters()
+        params.ClearGenomeTraitParameters()
+
+        genome = multineat.Genome(1,  # id
+                                  6,  # inputs
+                                  2,  # hidden
+                                  1,  # outputs
+                                  True,
+                                  multineat.ActivationFunction.TANH,  # input activation
+                                  multineat.ActivationFunction.TANH,  # output activation
+                                  0,
+                                  multineat.Parameters(),
+                                  4)
+
+        rng = multineat.RNG()
+        innov_db = multineat.InnovationDatabase()
+        for i in range(100):
+            genome.Mutate(False, multineat.SearchMode.COMPLEXIFYING, innov_db, params, rng)
+
+        serialized_genome = genome.Serialize()
+
         return xml.etree.ElementTree.Element('rv:genome', {
-            'none':'none'
+            'serial_genome': serialized_genome
         })

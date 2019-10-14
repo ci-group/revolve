@@ -15,7 +15,7 @@ namespace revolve
     {
         /// \brief connection between gazebo and revolve CPG
         /// \details gets the sdf - model data and passes them to revolve
-        class DifferentialCPGClean: public Brain//, private revolve::DifferentialCPG
+        class DifferentialCPGClean: public Brain, private revolve::DifferentialCPG
         {
         public:
             /// \brief Constructor
@@ -36,14 +36,18 @@ namespace revolve
                    const double _time,
                    const double _step) override;
 
-        private:
+        protected:
+						explicit DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
+																 const std::vector<MotorPtr> &_motors,
+																 const NEAT::Genome &genome);
+
             /// \brief extracts CPG controller parameters from brain_sdf
             /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf
             /// \return parameters of the CPG controller
             /// \details get the strings of the controller parameters and convert them to the
             /// appropriate datatype. Store them in a revolve::DifferentialCPG::ControllerParams
             /// struct and return them.
-            static revolve::DifferentialCPG::ControllerParams& load_params_from_sdf(sdf::ElementPtr brain_sdf);
+            static revolve::DifferentialCPG::ControllerParams load_params_from_sdf(sdf::ElementPtr brain_sdf);
         };
     }
 }

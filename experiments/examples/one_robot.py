@@ -34,7 +34,6 @@ async def run():
     await asyncio.sleep(1)
 
     # init finished
-
     robot_file_path = 'experiments/examples/yaml/spider.yaml'
     robot = RevolveBot()
     robot.load_file(robot_file_path, conf_type='yaml')
