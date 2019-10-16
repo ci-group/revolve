@@ -117,22 +117,19 @@ DifferentialCPG::DifferentialCPG(
     // assuming that connections are distinct for each direction
     sample.resize(n_weights, 0);
     std::clog << "Weights: (" << std::endl;
-    for(std::pair<std::tuple<int, int, int, int, int, int>, std::tuple<int, int >> con : connections)
+    for(std::pair<std::tuple<int, int, int, int, int, int>, int > con : connections)
     {
         std::vector<double> inputs(6);
-        int present = std::get<0>(con.second);
-        if (present == 1) {
-            int k = std::get<1>(con.second);
-            // convert tuple to vector
-            std::tie(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5]) = con.first;
-            net.Input(inputs);
-            net.Activate();
-            double output = net.Output()[0];
-            std::clog << '['
-                    <<  inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << ';' << inputs[4] << ';' << inputs[5]
-                    << "] -> sample(" << k << ") = " << output << std::endl;
-            sample.at(k) = output;  // order of weights corresponds to order of connections.
-        }
+        int k = con.second;
+        // convert tuple to vector
+        std::tie(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5]) = con.first;
+        net.Input(inputs);
+        net.Activate();
+        double output = net.Output()[0];
+        std::clog << '['
+                <<  inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << ';' << inputs[4] << ';' << inputs[5]
+                << "] -> sample(" << k << ") = " << output << std::endl;
+        sample.at(k) = output;  // order of weights corresponds to order of connections.
     }
     std::clog << ")" << std::endl;
 
@@ -219,11 +216,11 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
             // TODO: Verify for non-spiders
             if (std::fabs(dist_x + dist_y - 2) < 0.01)
             {
-                if(std::get<0>(this->connections[{x, y, 1, near_x, near_y, 1}]) != 1 or
-                   std::get<0>(this->connections[{near_x, near_y, 1, x, y, 1}]) != 1)
+                if(this->connections.count({x, y, 1, near_x, near_y, 1}) == 0 or
+                   this->connections.count({near_x, near_y, 1, x, y, 1}) == 0)
                 {
-                    this->connections[{x, y, 1, near_x, near_y, 1}] = std::make_tuple(1, i);
-                    this->connections[{near_x, near_y, 1, x, y, 1}] = std::make_tuple(1, i);
+                    this->connections[{x, y, 1, near_x, near_y, 1}] = i;
+                    this->connections[{near_x, near_y, 1, x, y, 1}] = i;
                     i++;
                 }
             }

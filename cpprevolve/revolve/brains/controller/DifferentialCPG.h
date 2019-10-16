@@ -93,9 +93,8 @@ protected:
 
     /// \brief Register of connections between neighnouring neurons
     /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
-    // define a connection. The second tuple contains 1: the connection value and
-    // 2: the weight index corresponding to this connection.
-    std::map< std::tuple< int, int, int, int, int, int >, std::tuple<int, int > >
+    ///   define a connection. The value is the weight index corresponding to this connection.
+    std::map< std::tuple< int, int, int, int, int, int >, int >
     connections;
 
     /// \brief Runge-Kutta 45 stepper
