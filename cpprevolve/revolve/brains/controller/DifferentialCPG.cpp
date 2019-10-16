@@ -88,36 +88,15 @@ DifferentialCPG::DifferentialCPG(
         , output(new double[actuators.size()])
 {
     this->init_params_and_connections(params, actuators);
-    // Loading Brain
-    // Save weights for brain
-    // TODO load weights from cppn phenotype
-    // init a neural network
-    NEAT::NeuralNetwork net;
-
-//    // init default parameters
-//    const NEAT::Parameters par;
-//    // init a genome. (Example. Later cppn loaded from sdf)
-//    NEAT::Genome gen(1, // id
-//                     6, // inputs
-//                     2, // hidden
-//                     1, // outputs
-//                     true,
-//                     NEAT::TANH, // input activation
-//                     NEAT::TANH, // output activation
-//                     0,
-//                     par,
-//                     4);
-//    NEAT::RNG rand_num_gen;
-//    gen.Randomize_LinkWeights(1, rand_num_gen);
 
     // build the NN according to the genome
+    NEAT::NeuralNetwork net;
     gen.BuildPhenotype(net);
 
     // get weights for each connection
     // assuming that connections are distinct for each direction
     sample.resize(n_weights, 0);
-    std::clog << "Weights: (" << std::endl;
-    for(std::pair<std::tuple<int, int, int, int, int, int>, int > con : connections)
+    for(const std::pair<const std::tuple<int, int, int, int, int, int>, int > &con : connections)
     {
         std::vector<double> inputs(6);
         int k = con.second;
@@ -126,17 +105,13 @@ DifferentialCPG::DifferentialCPG(
         net.Input(inputs);
         net.Activate();
         double output = net.Output()[0];
-        std::clog << '['
-                <<  inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << ';' << inputs[4] << ';' << inputs[5]
-                << "] -> sample(" << k << ") = " << output << std::endl;
         sample.at(k) = output;  // order of weights corresponds to order of connections.
     }
-    std::clog << ")" << std::endl;
 
     // Set ODE matrix at initialization
     set_ode_matrix();
 
-    std::cout << "Brain has been loaded." << std::endl;
+    std::cout << "DifferentialCPG brain with CPPN configuration has been loaded." << std::endl;
 }
 
 void DifferentialCPG::init_params_and_connections(const ControllerParams &params, const std::vector<std::shared_ptr<Actuator>> &actuators)
