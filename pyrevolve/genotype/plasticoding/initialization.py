@@ -56,5 +56,4 @@ def random_initialization(conf, next_robot_id):
     """
     genotype = Plasticoding(conf, next_robot_id)
     genotype.grammar = _generate_random_grammar(conf)
-       
     return genotype
