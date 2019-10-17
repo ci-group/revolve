@@ -106,7 +106,7 @@ class BrainCPPNCPG(BrainCPG):
         params.ClearGenomeTraitParameters()
 
         genome = multineat.Genome(1,  # id
-                                  6,  # inputs
+                                  8,  # inputs
                                   2,  # hidden
                                   1,  # outputs
                                   True,
