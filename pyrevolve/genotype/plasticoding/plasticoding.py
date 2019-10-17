@@ -129,7 +129,9 @@ class Plasticoding(Genotype):
     def load_genotype(self, genotype_file):
         with open(genotype_file) as f:
             lines = f.readlines()
+            self._load_genotype_from(lines)
 
+    def _load_genotype_from(self, lines):
         for line in lines:
             line_array = line.split(' ')
             repleceable_symbol = Alphabet(line_array[0])
@@ -145,7 +147,10 @@ class Plasticoding(Genotype):
                 self.grammar[repleceable_symbol].append([symbol, params])
 
     def export_genotype(self, filepath):
-        file = open(filepath, 'w+')
+        with open(filepath, 'w+') as file:
+            self._export_genotype_open_file(file)
+
+    def _export_genotype_open_file(self, file):
         for key, rule in self.grammar.items():
             line = key.value + ' '
             for item_rule in range(0, len(rule)):
@@ -159,7 +164,6 @@ class Plasticoding(Genotype):
                     symbol += params
                 line += symbol + ' '
             file.write(line+'\n')
-        file.close()
 
     def load_and_develop(self, load, genotype_path='', id_genotype=None):
 

@@ -89,10 +89,12 @@ class RevolveBot:
     def export_phenotype_measurements(self, data_path):
         filepath = os.path.join(data_path, 'descriptors', f'phenotype_desc_{self.id}.txt')
         with open(filepath, 'w+') as file:
-            for key, value in self._morphological_measurements.measurements_to_dict().items():
-                file.write(f'{key} {value}\n')
-            for key, value in self._brain_measurements.measurements_to_dict().items():
-                file.write(f'{key} {value}\n')
+            if self._morphological_measurements is not None:
+                for key, value in self._morphological_measurements.measurements_to_dict().items():
+                    file.write(f'{key} {value}\n')
+            if self._brain_measurements is not None:
+                for key, value in self._brain_measurements.measurements_to_dict().items():
+                    file.write(f'{key} {value}\n')
 
     def measure_brain(self):
         """
@@ -108,7 +110,7 @@ class RevolveBot:
                 measure.set_all_zero()
             return measure
         except Exception as e:
-            logger.exception('Failed measuring brain')
+            logger.error(f'Failed measuring brain: {e}')
 
     def load(self, text, conf_type):
         """

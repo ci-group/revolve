@@ -2,7 +2,7 @@ from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet
 from pyrevolve.genotype.lsystem_neat.lsystem_neat_genotype import LSystemCPGHyperNEATGenotype
 from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
 from pyrevolve.genotype.neat_brain_genome.crossover import standard_crossover as NEATBrainCrossover
-from pyrevolve.genotype.plasticoding.crossover import standard_crossover as PlasticodingCrossover
+from pyrevolve.genotype.plasticoding.crossover.standard_crossover import generate_child_genotype as PlasticodingCrossover
 
 import random
 

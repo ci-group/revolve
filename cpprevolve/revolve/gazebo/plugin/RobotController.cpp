@@ -53,56 +53,62 @@ void RobotController::Load(
     ::gazebo::physics::ModelPtr _parent,
     sdf::ElementPtr _sdf)
 {
-  // Store the pointer to the model / world
-  this->model_ = _parent;
-  this->world_ = _parent->GetWorld();
-  this->initTime_ = this->world_->SimTime().Double();
+    try {
+        // Store the pointer to the model / world
+        this->model_ = _parent;
+        this->world_ = _parent->GetWorld();
+        this->initTime_ = this->world_->SimTime().Double();
 
-  // Create transport node
-  this->node_.reset(new gz::transport::Node());
-  this->node_->Init();
+        // Create transport node
+        this->node_.reset(new gz::transport::Node());
+        this->node_->Init();
 
-  // Subscribe to robot battery state updater
-  this->batterySetSub_ = this->node_->Subscribe(
-      "~/battery_level/request",
-      &RobotController::UpdateBattery,
-      this);
-  this->batterySetPub_ = this->node_->Advertise< gz::msgs::Response >(
-      "~/battery_level/response");
+        // Subscribe to robot battery state updater
+        this->batterySetSub_ = this->node_->Subscribe(
+                "~/battery_level/request",
+                &RobotController::UpdateBattery,
+                this);
+        this->batterySetPub_ = this->node_->Advertise<gz::msgs::Response>(
+                "~/battery_level/response");
 
-  if (not _sdf->HasElement("rv:robot_config"))
-  {
-    std::cerr
-        << "No `rv:robot_config` element found, controller not initialized."
-        << std::endl;
-    return;
-  }
+        if (not _sdf->HasElement("rv:robot_config")) {
+            std::cerr
+                    << "No `rv:robot_config` element found, controller not initialized."
+                    << std::endl;
+            return;
+        }
 
-  auto robotConfiguration = _sdf->GetElement("rv:robot_config");
+        auto robotConfiguration = _sdf->GetElement("rv:robot_config");
 
-  if (robotConfiguration->HasElement("rv:update_rate"))
-  {
-    auto updateRate = robotConfiguration->GetElement("rv:update_rate")->Get< double >();
-    this->actuationTime_ = 1.0 / updateRate;
-  }
+        if (robotConfiguration->HasElement("rv:update_rate")) {
+            auto updateRate = robotConfiguration->GetElement("rv:update_rate")->Get<double>();
+            this->actuationTime_ = 1.0 / updateRate;
+        }
 
-  // Load motors
-  this->motorFactory_ = this->MotorFactory(_parent);
-  this->LoadActuators(robotConfiguration);
+        // Load motors
+        this->motorFactory_ = this->MotorFactory(_parent);
+        this->LoadActuators(robotConfiguration);
 
-  // Load sensors
-  this->sensorFactory_ = this->SensorFactory(_parent);
-  this->LoadSensors(robotConfiguration);
+        // Load sensors
+        this->sensorFactory_ = this->SensorFactory(_parent);
+        this->LoadSensors(robotConfiguration);
 
-  // Load brain, this needs to be done after the motors and sensors so they
-  // can potentially be reordered.
-  this->LoadBrain(robotConfiguration);
+        // Load brain, this needs to be done after the motors and sensors so they
+        // can potentially be reordered.
+        this->LoadBrain(robotConfiguration);
 
-  // Call the battery loader
-  this->LoadBattery(robotConfiguration);
+        // Call the battery loader
+        this->LoadBattery(robotConfiguration);
 
-  // Call startup function which decides on actuation
-  this->Startup(_parent, _sdf);
+        // Call startup function which decides on actuation
+        this->Startup(_parent, _sdf);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error Loading the Robot Controller, expcetion: " << std::endl
+                  << e.what() << std::endl;
+        throw;
+    }
 }
 
 /////////////////////////////////////////////////

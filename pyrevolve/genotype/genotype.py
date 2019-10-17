@@ -17,6 +17,12 @@ class Genotype:
         """
         raise NotImplementedError("Method must be implemented by genome")
 
+    def load_genotype(self, file_path: str):
+        raise NotImplementedError("Method must be implemented by genome")
+
+    def export_genotype(self, file_path: str):
+        raise NotImplementedError("Method must be implemented by genome")
+
 
 class GenotypeConfig:
     def __init__(self,

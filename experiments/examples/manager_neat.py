@@ -25,23 +25,24 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 2
-    population_size = 4
-    offspring_size = 2
+    num_generations = 100
+    population_size = 100
+    offspring_size = 50
 
-    body_conf = PlasticodingConfig()
+    body_conf = PlasticodingConfig(
+        max_structural_modules=20,
+    )
     brain_conf = NeatBrainGenomeConfig()
     lsystem_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)
 
-
     plasticMutation_conf = plasticMutationConfig(
         mutation_prob=0.8,
-        genotype_conf=lsystem_conf,
+        genotype_conf=body_conf
     )
 
     lmutation_conf = lMutationConfig(
-        plasticMutation_conf,
-        brain_conf,
+        plasticoding_mutation_conf=plasticMutation_conf,
+        neat_conf=brain_conf,
     )
 
     crossover_conf = lCrossoverConfig(

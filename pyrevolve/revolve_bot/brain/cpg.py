@@ -54,7 +54,26 @@ class BrainCPG(Brain):
 
     def to_yaml(self):
         return {
-            'type': self.TYPE
+            'type': self.TYPE,
+            'controller': {
+                'abs_output_bound': self.abs_output_bound,
+                'reset_robot_position': self.reset_robot_position,
+                'reset_neuron_state_bool': self.reset_neuron_state_bool,
+                'reset_neuron_random': self.reset_neuron_random,
+                'load_brain': self.load_brain,
+                'use_frame_of_reference': self.use_frame_of_reference,
+                'run_analytics': self.run_analytics,
+                'init_neuron_state': self.init_neuron_state,
+                'output_directory': self.output_directory,
+                'verbose': self.verbose,
+                'range_lb': self.range_lb,
+                'range_ub': self.range_ub,
+                'signal_factor_all': self.signal_factor_all,
+                'signal_factor_mid': self.signal_factor_mid,
+                'signal_factor_left_right': self.signal_factor_left_right,
+                'startup_time': self.startup_time,
+                'weights': self.weights,
+            }
         }
 
     def learner_sdf(self):

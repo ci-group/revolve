@@ -145,7 +145,7 @@ body:
                     blue: 0.72
                   orientation : 0
 brain:
-  type: cppn-cpg
+  type: cpg
   learner:
     type : none
   controller:

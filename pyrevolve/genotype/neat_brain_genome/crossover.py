@@ -1,5 +1,8 @@
 import random
 
+from pyrevolve.genotype.neat_brain_genome import NeatBrainGenome
+
+
 class NEATCrossoverConf:
     def __init__(self):
         self.mate_average = True
@@ -19,14 +22,17 @@ def standard_crossover(parents, NeatCrossoverConf, crossover_conf, lsystem_conf)
 
     crossover_attempt = random.uniform(0.0, 1.0)
     if crossover_attempt > crossover_conf.crossover_prob:
-         new_genotype = parents[0].genotype._brain_genome
+         new_genotype = parents[0]._neat_genome
     else:
-        mother = parents[0]
-        father = parents[1]
+        mother = parents[0]._neat_genome
+        father = parents[1]._neat_genome
         new_genotype = mother.Mate(father,
                                    NeatCrossoverConf.mate_average,
                                    NeatCrossoverConf.interspecies_crossover,
                                    lsystem_conf.neat.rng,
                                    lsystem_conf.neat.multineat_params
                                    )
-    return new_genotype
+    child_genome = NeatBrainGenome()
+    child_genome._brain_type = parents[0]._brain_type
+    child_genome._neat_genome = new_genotype
+    return child_genome
