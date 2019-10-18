@@ -83,6 +83,9 @@ class Plasticoding(Genotype):
         Adds params for alphabet symbols (when it applies).
         :return:
         """
+        if type(symbol) is Alphabet:
+            symbol = Alphabet.wordify(symbol)
+
         if symbol[INDEX_SYMBOL] is Alphabet.JOINT_HORIZONTAL \
                 or symbol[INDEX_SYMBOL] is Alphabet.JOINT_VERTICAL:
             symbol[INDEX_PARAMS].clear()

@@ -14,7 +14,7 @@ from pyrevolve.genotype.lsystem_neat.mutation import standard_mutation as lmutat
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.custom_logging.logger import logger
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+from pyrevolve.genotype.plasticoding import PlasticodingConfig
 from pyrevolve.genotype.lsystem_neat.lsystem_neat_genotype import LSystemCPGHyperNEATGenotype, LSystemCPGHyperNEATGenotypeConfig
 from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig
 

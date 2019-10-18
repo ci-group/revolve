@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from enum import Enum
 from pyrevolve.custom_logging.logger import logger
 
@@ -106,4 +107,7 @@ class Alphabet(Enum):
 
     @staticmethod
     def wordify(letters):
-        return [(a, []) for a in letters]
+        if isinstance(letters, Iterable):
+            return [(a, []) for a in letters]
+        else:
+            return (letters, [])

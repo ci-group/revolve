@@ -55,27 +55,27 @@ def generate_symbol(genotype_conf):
     symbol_category = random.randint(1, 5)
     # Modules
     if symbol_category == 1:
-        alphabet = random.randint(1, len(Alphabet.modules(genotype_conf.allow_vertical_brick)) - 1)
-        symbol = Plasticoding.build_symbol(Alphabet.modules(genotype_conf.allow_vertical_brick)[alphabet], genotype_conf)
+        words = Alphabet.modules(genotype_conf.allow_vertical_brick)
     # Morphology mounting commands
     elif symbol_category == 2:
-        alphabet = random.randint(0, len(Alphabet.morphology_mounting_commands()) - 1)
-        symbol = Plasticoding.build_symbol(Alphabet.morphology_mounting_commands()[alphabet], genotype_conf)
+        words = Alphabet.morphology_mounting_commands()
     # Morphology moving commands
     elif symbol_category == 3:
-        alphabet = random.randint(0, len(Alphabet.morphology_moving_commands(genotype_conf.use_rotation_commands)) - 1)
-        symbol = Plasticoding.build_symbol(Alphabet.morphology_moving_commands(genotype_conf.use_rotation_commands)[alphabet], genotype_conf)
+        words = Alphabet.morphology_moving_commands(genotype_conf.use_movement_commands,
+                                                    genotype_conf.use_rotation_commands,
+                                                    genotype_conf.use_movement_stack)
     # Controller moving commands
     elif symbol_category == 4:
-        alphabet = random.randint(0, len(Alphabet.controller_moving_commands()) - 1)
-        symbol = Plasticoding.build_symbol(Alphabet.controller_moving_commands()[alphabet], genotype_conf)
+        words = Alphabet.controller_moving_commands()
     # Controller changing commands
     elif symbol_category == 5:
-        alphabet = random.randint(0, len(Alphabet.controller_changing_commands()) - 1)
-        symbol = Plasticoding.build_symbol(Alphabet.controller_changing_commands()[alphabet], genotype_conf)
+        words = Alphabet.controller_changing_commands()
     else:
         raise Exception(
             'random number did not generate a number between 1 and 5. The value was: {}'.format(symbol_category))
+
+    alphabet = random.randint(1, len(words) - 1)
+    symbol = Plasticoding.build_symbol(words[alphabet], genotype_conf)
 
     return symbol
 
