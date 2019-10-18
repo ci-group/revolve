@@ -44,6 +44,7 @@ class Alphabet(Enum):
 
     @staticmethod
     def modules(allow_vertical_brick: bool):
+        # this function MUST return the core always as the first element
         modules = [
             Alphabet.CORE_COMPONENT,
             Alphabet.JOINT_HORIZONTAL,

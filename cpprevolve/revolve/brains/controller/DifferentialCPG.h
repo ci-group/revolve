@@ -32,6 +32,8 @@ public:
         double signal_factor_left_right;
         double abs_output_bound;
         std::vector< double > weights;
+        /// can be null, indicating that there is no map
+        std::unique_ptr<std::map<std::string, std::set<std::string>>> connection_map;
     };
 
     /// \brief Constructor

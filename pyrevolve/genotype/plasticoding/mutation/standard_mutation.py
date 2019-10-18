@@ -55,28 +55,28 @@ def generate_symbol(genotype_conf):
     symbol_category = random.randint(1, 5)
     # Modules
     if symbol_category == 1:
-        words = Alphabet.modules(genotype_conf.allow_vertical_brick)
+        # do not use the first symbol, the core
+        symbols = Alphabet.modules(genotype_conf.allow_vertical_brick)[1:]
     # Morphology mounting commands
     elif symbol_category == 2:
-        words = Alphabet.morphology_mounting_commands()
+        symbols = Alphabet.morphology_mounting_commands()
     # Morphology moving commands
     elif symbol_category == 3:
-        words = Alphabet.morphology_moving_commands(genotype_conf.use_movement_commands,
-                                                    genotype_conf.use_rotation_commands,
-                                                    genotype_conf.use_movement_stack)
+        symbols = Alphabet.morphology_moving_commands(genotype_conf.use_movement_commands,
+                                                      genotype_conf.use_rotation_commands,
+                                                      genotype_conf.use_movement_stack)
     # Controller moving commands
     elif symbol_category == 4:
-        words = Alphabet.controller_moving_commands()
+        symbols = Alphabet.controller_moving_commands()
     # Controller changing commands
     elif symbol_category == 5:
-        words = Alphabet.controller_changing_commands()
+        symbols = Alphabet.controller_changing_commands()
     else:
         raise Exception(
             'random number did not generate a number between 1 and 5. The value was: {}'.format(symbol_category))
 
-    alphabet = random.randint(1, len(words) - 1)
-    symbol = Plasticoding.build_symbol(words[alphabet], genotype_conf)
-
+    alphabet = random.randint(0, len(symbols) - 1)
+    symbol = Plasticoding.build_symbol(symbols[alphabet], genotype_conf)
     return symbol
 
 

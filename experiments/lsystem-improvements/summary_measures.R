@@ -7,20 +7,21 @@ library(purrr)
 
 base_directory <- paste('data', sep='')
 
-output_directory = paste(base_directory, 'fixed_ground_swimming', sep='/')
+output_directory = paste(base_directory, 'charts', sep='/')
 
 #### CHANGE THE PARAMETERS HERE ####
 
 
 experiments_type = c(
-'fixed_ground_swimming'
+  'fixed_ground_swimming',
+  'rotation_command'
 )
 
-initials = c('m')
+initials = c('c', 'r')
 
-experiments_labels = c('No Swim')
+experiments_labels = c('Cube', 'Rot')
 
-runs = c(1,3,4,5,6,11,13,14,16)
+runs = c(1,2,3,4,5,6,7,8,9,10)
 gens = 100
 pop = 100
 

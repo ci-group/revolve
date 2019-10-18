@@ -1,12 +1,15 @@
+#!/usr/bin/env python
+
 import os
 
 
 # set these variables according to your experiments #
 dirpath = 'data'
 experiments_type = [
-    'fixed-ground-swimming'
+    'fixed_ground_swimming',
+    'rotation_command'
 ]
-runs = [1, 3, 4, 5, 6, 11, 13, 14, 16]
+runs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 # set these variables according to your experiments #
 
 

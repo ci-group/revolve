@@ -53,6 +53,53 @@ class GrammarExpander:
 
 # Late Development
 class PlasticodingDecoder:
+
+    class Cursor:
+        def __init__(self, current_module, orientation):
+            self.module = current_module
+            self.orientation = orientation  # degrees
+            self.history = [current_module]
+
+        def copy(self):
+            # deepcopy is an overkill here and probably even armful
+            copy = PlasticodingDecoder.Cursor(self.module, self.orientation)
+            copy.history = self.history.copy()
+            return copy
+
+    class CursorStack:
+        def __init__(self, starting_module, orientation=0):
+            self._stack = [
+                PlasticodingDecoder.Cursor(starting_module, orientation)
+            ]
+
+        def pop(self):
+            if len(self._stack) > 1:
+                self._stack.pop()
+
+        def push(self):
+            self._stack.append(
+                self.current.copy()
+            )
+
+        @property
+        def current(self):
+            return self._stack[-1]
+
+        @property
+        def history(self):
+            return self.current.history
+
+        def save_history(self):
+            self.current.history.append(self.current.module)
+
+        def pop_history(self):
+            assert(len(self.current.history) > 0)
+            self.current.module = self.current.history[-1]
+            self.current.history.pop()
+
+        def empty(self):
+            return len(self._stack) == 0
+
     def __init__(self, id_, conf, command_sentence):
         """
         Plasticoding late development decoder
@@ -68,8 +115,7 @@ class PlasticodingDecoder:
         self.body = RevolveBot()
         self.brain = BrainNN()
 
-        self.mounting_reference = None
-        self.mounting_reference_stack = []
+        self.stack = None
         self.morph_mounting_container = None
         self.quantity_modules = 1
         self.quantity_nodes = 0
@@ -78,75 +124,55 @@ class PlasticodingDecoder:
         self.edges = {}
         self.substrate_coordinates_all = {(0, 0): '1'}
 
-    class Cursor:
-        def __init__(self, current_module):
-            self._current_module = current_module
-
-    class CursorStack:
-        def __init__(self):
-            self._stack = []
-
-        def pop(self):
-            self._stack.pop()
-
-        def push(self, cursor):
-            self._stack.append(cursor)
-
     def decode_sentence(self):
         self.body._id = self._id if type(self._id) == str and self._id.startswith('robot') \
             else f'robot_{self._id}'
 
-        for symbol in self._command_sentence:
+        core_module = CoreModule()
+        self.body._body = core_module
+        core_module.id = str(self.quantity_modules)
+        core_module.info = {
+            'orientation': Orientation.NORTH,
+            'new_module_type': Alphabet.CORE_COMPONENT
+        }
+        core_module.rgb = [1, 1, 0]
+        self.stack = PlasticodingDecoder.CursorStack(core_module, orientation=0)
 
-            if symbol[INDEX_SYMBOL] == Alphabet.CORE_COMPONENT:
-                assert(self.mounting_reference is None)
-                module = CoreModule()
-                self.body._body = module
-                module.id = str(self.quantity_modules)
-                module.info = {'orientation': Orientation.NORTH,
-                               'new_module_type': Alphabet.CORE_COMPONENT}
-                module.orientation = 0
-                module.rgb = [1, 1, 0]
-                self.mounting_reference = module
+        for word in self._command_sentence[1:]:
+            symbol = word[INDEX_SYMBOL]
 
-            elif symbol[INDEX_SYMBOL] in Alphabet.morphology_mounting_commands():
-                assert(self.mounting_reference is not None)
-                self.morph_mounting_container = symbol[INDEX_SYMBOL]
+            if symbol in Alphabet.morphology_mounting_commands():
+                self.morph_mounting_container = symbol
 
-            elif symbol[INDEX_SYMBOL] in Alphabet.modules(self._conf.allow_vertical_brick) \
-                    and symbol[INDEX_SYMBOL] is not Alphabet.CORE_COMPONENT:
-                if self.morph_mounting_container is not None:
-                    assert(self.mounting_reference is not None)
+            elif symbol in Alphabet.modules(self._conf.allow_vertical_brick):
+                if self.morph_mounting_container is not None \
+                        and symbol is not Alphabet.CORE_COMPONENT:
 
-                    if type(self.mounting_reference) == CoreModule \
-                            or type(self.mounting_reference) == BrickModule:
+                    if type(self.stack.current.module) == CoreModule \
+                            or type(self.stack.current.module) == BrickModule:
                         slot = self.get_slot(self.morph_mounting_container).value
-                    elif type(self.mounting_reference) == ActiveHingeModule:
+                    elif type(self.stack.current.module) == ActiveHingeModule:
                         slot = Orientation.NORTH.value
                     else:
-                        raise RuntimeError(f'Mounting reference {type(self.mounting_reference)} does not support a mount')
+                        raise RuntimeError(
+                            f'Mounting reference {type(self.stack.current.module)} does not support a mount')
 
                     if self.quantity_modules < self._conf.max_structural_modules:
-                        self.new_module(slot,
-                                        symbol[INDEX_SYMBOL],
-                                        symbol)
+                        self.new_module(slot, symbol, word)
 
-            elif symbol[INDEX_SYMBOL] in Alphabet.morphology_moving_commands(self._conf.use_movement_commands,
-                                                                             self._conf.use_rotation_commands,
-                                                                             self._conf.use_movement_stack):
-                assert(self.mounting_reference is not None)
-                self.move_in_body(symbol)
+            elif symbol in Alphabet.morphology_moving_commands(self._conf.use_movement_commands,
+                                                               self._conf.use_rotation_commands,
+                                                               self._conf.use_movement_stack):
+                self.move_in_body(word)
 
-            elif symbol[INDEX_SYMBOL] in Alphabet.controller_changing_commands():
-                assert(self.mounting_reference is not None)
-                self.decode_brain_changing(symbol)
+            elif symbol in Alphabet.controller_changing_commands():
+                self.decode_brain_changing(word)
 
-            elif symbol[INDEX_SYMBOL] in Alphabet.controller_moving_commands():
-                assert(self.mounting_reference is not None)
-                self.decode_brain_moving(symbol)
+            elif symbol in Alphabet.controller_moving_commands():
+                self.decode_brain_moving(word)
 
             else:
-                raise RuntimeError(f'Unrecognized symbol: {symbol[INDEX_SYMBOL]}')
+                raise RuntimeError(f'Unrecognized symbol: {symbol}')
 
         self.add_imu_nodes()
 
@@ -166,8 +192,9 @@ class PlasticodingDecoder:
 
     def get_angle(self, new_module_type, parent):
         if self._conf.use_rotation_commands:
-            pending_rotation = parent.info.get('pending_rotation') or 0
-            return parent.orientation + pending_rotation
+            pending_rotation = self.stack.current.orientation
+            parent_orientation = parent.orientation if parent.orientation is not None else 0
+            return parent_orientation + pending_rotation
         else:
             angle = 0
             vertical_new_module = new_module_type.is_vertical_module()
@@ -194,61 +221,60 @@ class PlasticodingDecoder:
             rgb = [1.0, 1.0, 1.0]
         return rgb
 
-    def move_in_body(self, symbol):
-        if symbol[INDEX_SYMBOL] == Alphabet.MOVE_BACK \
-                and len(self.mounting_reference_stack) > 0:
-            self.mounting_reference = self.mounting_reference_stack[-1]
-            self.mounting_reference_stack.pop()
+    def move_in_body(self, word):
+        symbol = word[INDEX_SYMBOL]
+        if symbol == Alphabet.PUSH_MOV_STACK:
+            self.stack.push()
 
-        elif symbol[INDEX_SYMBOL] == Alphabet.MOVE_FRONT \
-                and self.mounting_reference.children[Orientation.NORTH.value] is not None:
-            if type(self.mounting_reference.children[Orientation.NORTH.value]) is not TouchSensorModule:
-                self.mounting_reference_stack.append(self.mounting_reference)
-                self.mounting_reference = \
-                    self.mounting_reference.children[Orientation.NORTH.value]
+        elif symbol == Alphabet.POP_MOV_STACK:
+            self.stack.pop()
 
-        elif symbol[INDEX_SYMBOL] == Alphabet.MOVE_LEFT \
-                and type(self.mounting_reference) is not ActiveHingeModule:
-            if self.mounting_reference.children[Orientation.WEST.value] is not None:
-                if type(self.mounting_reference.children[Orientation.WEST.value]) is not TouchSensorModule:
-                    self.mounting_reference_stack.append(self.mounting_reference)
-                    self.mounting_reference = \
-                        self.mounting_reference.children[Orientation.WEST.value]
+        elif symbol == Alphabet.MOVE_BACK:
+            if len(self.stack.history) > 0:
+                self.stack.pop_history()
 
-        elif symbol[INDEX_SYMBOL] == Alphabet.MOVE_RIGHT \
-                and type(self.mounting_reference) is not ActiveHingeModule:
-            if self.mounting_reference.children[Orientation.EAST.value] is not None:
-                if type(self.mounting_reference.children[Orientation.EAST.value]) is not TouchSensorModule:
-                    self.mounting_reference_stack.append(self.mounting_reference)
-                    self.mounting_reference = \
-                        self.mounting_reference.children[Orientation.EAST.value]
+        elif symbol == Alphabet.MOVE_FRONT:
+            if self.stack.current.module.children[Orientation.NORTH.value] is not None \
+                    and type(self.stack.current.module.children[Orientation.NORTH.value]) is not TouchSensorModule:
+                self.stack.save_history()
+                self.stack.current.module = self.stack.current.module.children[Orientation.NORTH.value]
 
-        elif (symbol[INDEX_SYMBOL] == Alphabet.MOVE_RIGHT \
-              or symbol[INDEX_SYMBOL] == Alphabet.MOVE_LEFT) \
-                and type(self.mounting_reference) is ActiveHingeModule \
-                and self.mounting_reference.children[Orientation.NORTH.value] is not None:
-            self.mounting_reference_stack.append(self.mounting_reference)
-            self.mounting_reference = \
-                self.mounting_reference.children[Orientation.NORTH.value]
+        elif symbol == Alphabet.MOVE_RIGHT or symbol == Alphabet.MOVE_LEFT:
 
-        elif symbol[INDEX_SYMBOL] is Alphabet.ROTATE_90 \
-                or symbol[INDEX_SYMBOL] is Alphabet.ROTATE_N90:
-            rotation = self.mounting_reference.info.get('pending_rotation') or 0
-            rotation += 90 if symbol[INDEX_SYMBOL] is Alphabet.ROTATE_90 else -90
-            self.mounting_reference.info['pending_rotation'] = rotation
+            if symbol == Alphabet.MOVE_LEFT and type(self.stack.current.module) is not ActiveHingeModule \
+                    and self.stack.current.module.children[Orientation.WEST.value] is not None \
+                    and type(self.stack.current.module.children[Orientation.WEST.value]) is not TouchSensorModule:
+                self.stack.save_history()
+                self.stack.current.module = self.stack.current.module.children[Orientation.WEST.value]
 
-    def new_module(self, slot, new_module_type, symbol):
+            elif symbol == Alphabet.MOVE_RIGHT and type(self.stack.current.module) is not ActiveHingeModule \
+                    and self.stack.current.module.children[Orientation.EAST.value] is not None \
+                    and type(self.stack.current.module.children[Orientation.EAST.value]) is not TouchSensorModule:
+                self.stack.save_history()
+                self.stack.current.module = self.stack.current.module.children[Orientation.EAST.value]
+
+            if type(self.stack.current.module) is ActiveHingeModule \
+                    and self.stack.current.module.children[Orientation.NORTH.value] is not None:
+                self.stack.save_history()
+                self.stack.current.module = self.stack.current.module.children[Orientation.NORTH.value]
+
+        elif symbol is Alphabet.ROTATE_90 or symbol is Alphabet.ROTATE_N90:
+            self.stack.current.orientation += 90 if symbol is Alphabet.ROTATE_90 else -90
+
+        else:
+            raise RuntimeError(f'movement command not recognized {symbol}')
+
+    def new_module(self, slot, new_module_type, word):
         mount = False
-        if self.mounting_reference.children[slot] is None \
-                and not (new_module_type == Alphabet.SENSOR
-                         and type(self.mounting_reference) is ActiveHingeModule):
+        if self.stack.current.module.children[slot] is None \
+                and not (new_module_type == Alphabet.SENSOR and type(self.stack.current.module) is ActiveHingeModule):
             mount = True
 
-        if type(self.mounting_reference) is CoreModule \
-                and self.mounting_reference.children[1] is not None \
-                and self.mounting_reference.children[2] is not None \
-                and self.mounting_reference.children[3] is not None \
-                and self.mounting_reference.children[0] is None:
+        if type(self.stack.current.module) is CoreModule \
+                and self.stack.current.module.children[1] is not None \
+                and self.stack.current.module.children[2] is not None \
+                and self.stack.current.module.children[3] is not None \
+                and self.stack.current.module.children[0] is None:
             slot = 0
             mount = True
 
@@ -265,30 +291,29 @@ class PlasticodingDecoder:
                 raise NotImplementedError(f'{new_module_type}')
 
             module.info = {'new_module_type': new_module_type}
-            module.orientation = self.get_angle(new_module_type,
-                                                self.mounting_reference)
+            module.orientation = self.get_angle(new_module_type, self.stack.current.module)
             module.rgb = self.get_color(new_module_type)
 
             if new_module_type != Alphabet.SENSOR:
                 self.quantity_modules += 1
                 module.id = str(self.quantity_modules)
-                intersection = self.check_intersection(self.mounting_reference, slot, module)
+                intersection = self.check_intersection(self.stack.current.module, slot, module)
 
                 if not intersection:
-                    self.mounting_reference.children[slot] = module
+                    self.stack.current.module.children[slot] = module
                     self.morph_mounting_container = None
-                    self.mounting_reference_stack.append(self.mounting_reference)
-                    self.mounting_reference = module
+                    self.stack.save_history()
+                    self.stack.current.module = module
                     if new_module_type == Alphabet.JOINT_HORIZONTAL \
                             or new_module_type == Alphabet.JOINT_VERTICAL:
-                        self.decode_brain_node(symbol, module.id)
+                        self.decode_brain_node(word, module.id)
                 else:
                     self.quantity_modules -= 1
             else:
-                self.mounting_reference.children[slot] = module
+                self.stack.current.module.children[slot] = module
                 self.morph_mounting_container = None
-                module.id = self.mounting_reference.id + 's' + str(slot)
-                self.decode_brain_node(symbol, module.id)
+                module.id = self.stack.current.module.id + 's' + str(slot)
+                self.decode_brain_node(word, module.id)
 
     def check_intersection(self, parent, slot, module):
         """
@@ -426,15 +451,16 @@ class PlasticodingDecoder:
             node.id = _id
             self.brain.nodes[_id] = node
 
-    def decode_brain_moving(self, symbol):
+    def decode_brain_moving(self, word):
+        symbol = word[INDEX_SYMBOL]
 
         # if there is at least both one sensor and one oscillator
         if len(self.outputs_stack) > 0 and len(self.inputs_stack) > 0:
 
-            intermediate = int(float(symbol[INDEX_PARAMS][0]))
-            sibling = int(float(symbol[INDEX_PARAMS][1]))
+            intermediate = int(float(word[INDEX_PARAMS][0]))
+            sibling = int(float(word[INDEX_PARAMS][1]))
 
-            if symbol[INDEX_SYMBOL] == Alphabet.MOVE_REF_S:
+            if symbol == Alphabet.MOVE_REF_S:
 
                 if len(self.inputs_stack[-1].output_nodes) < intermediate:
                     intermediate = len(self.inputs_stack[-1].output_nodes) - 1
@@ -448,7 +474,7 @@ class PlasticodingDecoder:
 
                 self.inputs_stack[-1] = self.inputs_stack[-1].output_nodes[intermediate].input_nodes[sibling]
 
-            if symbol[INDEX_SYMBOL] == Alphabet.MOVE_REF_O:
+            if symbol == Alphabet.MOVE_REF_O:
 
                 if len(self.outputs_stack[-1].input_nodes) < intermediate:
                     intermediate = len(self.outputs_stack[-1].input_nodes) - 1
@@ -462,38 +488,39 @@ class PlasticodingDecoder:
 
                 self.outputs_stack[-1] = self.outputs_stack[-1].input_nodes[intermediate].output_nodes[sibling]
 
-    def decode_brain_changing(self, symbol):
+    def decode_brain_changing(self, word):
+        symbol = word[INDEX_SYMBOL]
         conf = self._conf
 
         # if there is at least both one oscillator
         if len(self.outputs_stack) > 0:
 
-            if symbol[INDEX_SYMBOL] == Alphabet.MUTATE_PER:
-                self.outputs_stack[-1].params.period += float(symbol[INDEX_PARAMS][0])
+            if symbol == Alphabet.MUTATE_PER:
+                self.outputs_stack[-1].params.period += float(word[INDEX_PARAMS][0])
                 if self.outputs_stack[-1].params.period > conf.oscillator_param_max:
                     self.outputs_stack[-1].params.period = conf.oscillator_param_max
                 if self.outputs_stack[-1].params.period < conf.oscillator_param_min:
                     self.outputs_stack[-1].params.period = conf.oscillator_param_min
 
-            if symbol[INDEX_SYMBOL] == Alphabet.MUTATE_AMP:
-                self.outputs_stack[-1].params.amplitude += float(symbol[INDEX_PARAMS][0])
+            if symbol == Alphabet.MUTATE_AMP:
+                self.outputs_stack[-1].params.amplitude += float(word[INDEX_PARAMS][0])
                 if self.outputs_stack[-1].params.amplitude > conf.oscillator_param_max:
                     self.outputs_stack[-1].params.amplitude = conf.oscillator_param_max
                 if self.outputs_stack[-1].params.amplitude < conf.oscillator_param_min:
                     self.outputs_stack[-1].params.amplitude = conf.oscillator_param_min
 
-            if symbol[INDEX_SYMBOL] == Alphabet.MUTATE_OFF:
-                self.outputs_stack[-1].params.phase_offset += float(symbol[INDEX_PARAMS][0])
+            if symbol == Alphabet.MUTATE_OFF:
+                self.outputs_stack[-1].params.phase_offset += float(word[INDEX_PARAMS][0])
                 if self.outputs_stack[-1].params.phase_offset > conf.oscillator_param_max:
                     self.outputs_stack[-1].params.phase_offset = conf.oscillator_param_max
                 if self.outputs_stack[-1].params.phase_offset < conf.oscillator_param_min:
                     self.outputs_stack[-1].params.phase_offset = conf.oscillator_param_min
 
-        if symbol[INDEX_SYMBOL] == Alphabet.MUTATE_EDGE:
+        if symbol == Alphabet.MUTATE_EDGE:
             if len(self.edges) > 0:
                 if (self.inputs_stack[-1].id, self.outputs_stack[-1].id) in self.edges.keys():
                     self.edges[self.inputs_stack[-1].id, self.outputs_stack[-1].id].weight \
-                        += float(symbol[INDEX_PARAMS][0])
+                        += float(word[INDEX_PARAMS][0])
                     if self.edges[self.inputs_stack[-1].id, self.outputs_stack[-1].id].weight \
                             > conf.weight_param_max:
                         self.edges[self.inputs_stack[-1].id, self.outputs_stack[-1].id].weight \
@@ -505,22 +532,22 @@ class PlasticodingDecoder:
 
         # if there is at least both one sensor and one oscillator
         if len(self.outputs_stack) > 0 and len(self.inputs_stack) > 0:
-            if symbol[INDEX_SYMBOL] == Alphabet.LOOP:
+            if symbol == Alphabet.LOOP:
 
                 if (self.outputs_stack[-1].id, self.outputs_stack[-1].id) not in self.edges.keys():
                     connection = Connection()
                     connection.src = self.outputs_stack[-1].id
                     connection.dst = connection.src
-                    connection.weight = float(symbol[INDEX_PARAMS][0])
+                    connection.weight = float(word[INDEX_PARAMS][0])
                     self.edges[connection.src, connection.src] = connection
                     self.brain.connections.append(connection)
 
-            if symbol[INDEX_SYMBOL] == Alphabet.ADD_EDGE:
+            if symbol == Alphabet.ADD_EDGE:
                 if (self.inputs_stack[-1].id, self.outputs_stack[-1].id) not in self.edges.keys():
                     connection = Connection()
                     connection.src = self.inputs_stack[-1].id
                     connection.dst = self.outputs_stack[-1].id
-                    connection.weight = float(symbol[INDEX_PARAMS][0])
+                    connection.weight = float(word[INDEX_PARAMS][0])
                     self.edges[connection.src, connection.dst] = connection
                     self.brain.connections.append(connection)
                     self.inputs_stack[-1].output_nodes.append(self.outputs_stack[-1])
