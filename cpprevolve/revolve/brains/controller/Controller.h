@@ -23,8 +23,8 @@ public:
     virtual ~Controller() {}
 
     virtual void update(
-            const std::vector< std::unique_ptr< Actuator > > &_actuators,
-            const std::vector< std::unique_ptr< Sensor > > &_sensors,
+            const std::vector<std::shared_ptr<Actuator>> &_actuators,
+            const std::vector<std::shared_ptr<Sensor>> &_sensors,
             const double _time,
             const double _step
     ) = 0;

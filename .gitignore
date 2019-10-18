@@ -76,3 +76,8 @@ Pipfile.lock
 # Revolve related
 *.sdf
 *.urdf
+src/
+
+# OS crap
+.DS_Store
+.directory

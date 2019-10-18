@@ -114,8 +114,8 @@ void RLPower::Update(
   auto p = 0;
   for (const auto &motor: _motors)
   {
-    motor->Update(&output[p], _step);
-    p += motor->Outputs();
+    motor->write(&output[p], _step);
+    p += motor->n_outputs();
   }
 
   auto currPosition = this->robot_->WorldPose();

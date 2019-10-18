@@ -47,11 +47,12 @@ namespace revolve
       /// ID and type. This is the convenience wrapper over `create` that has
       /// required attributes already checked, usually you should override
       /// this when adding new motor types.
-      public: virtual MotorPtr Motor(
+    public: virtual std::shared_ptr<revolve::Actuator> Motor(
         sdf::ElementPtr _motorSdf,
         const std::string &_type,
         const std::string &_partId,
-        const std::string &_motorId);
+        const std::string &_motorId,
+        const std::string &_coordinates);
 
       /// \brief Creates a motor for the given model for the given SDF element.
       public: virtual MotorPtr Create(sdf::ElementPtr _motorSdf);
