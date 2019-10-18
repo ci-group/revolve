@@ -55,16 +55,16 @@ def generate_symbol(genotype_conf):
     symbol_category = random.randint(1, 5)
     # Modules
     if symbol_category == 1:
-        alphabet = random.randint(1, len(Alphabet.modules()) - 1)
-        symbol = Plasticoding.build_symbol(Alphabet.modules()[alphabet], genotype_conf)
+        alphabet = random.randint(1, len(Alphabet.modules(genotype_conf.allow_vertical_brick)) - 1)
+        symbol = Plasticoding.build_symbol(Alphabet.modules(genotype_conf.allow_vertical_brick)[alphabet], genotype_conf)
     # Morphology mounting commands
     elif symbol_category == 2:
         alphabet = random.randint(0, len(Alphabet.morphology_mounting_commands()) - 1)
         symbol = Plasticoding.build_symbol(Alphabet.morphology_mounting_commands()[alphabet], genotype_conf)
     # Morphology moving commands
     elif symbol_category == 3:
-        alphabet = random.randint(0, len(Alphabet.morphology_moving_commands()) - 1)
-        symbol = Plasticoding.build_symbol(Alphabet.morphology_moving_commands()[alphabet], genotype_conf)
+        alphabet = random.randint(0, len(Alphabet.morphology_moving_commands(genotype_conf.use_rotation_commands)) - 1)
+        symbol = Plasticoding.build_symbol(Alphabet.morphology_moving_commands(genotype_conf.use_rotation_commands)[alphabet], genotype_conf)
     # Controller moving commands
     elif symbol_category == 4:
         alphabet = random.randint(0, len(Alphabet.controller_moving_commands()) - 1)

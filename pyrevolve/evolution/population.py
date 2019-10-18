@@ -261,9 +261,11 @@ class Population:
             individual.develop()
 
         if self.analyzer_queue is not None:
-            collisions, _bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
+            collisions, bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
+            else:
+                individual.phenotype.simulation_boundaries = bounding_box
 
         return await self.simulator_queue.test_robot(individual, self.conf)

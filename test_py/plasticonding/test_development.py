@@ -2,15 +2,20 @@ import unittest
 import os
 
 import pyrevolve.revolve_bot
-import pyrevolve.genotype.plasticoding.plasticoding
+import pyrevolve.genotype.plasticoding
 
 LOCAL_FOLDER = os.path.dirname(__file__)
 
 
 class TestPlastiCoding(unittest.TestCase):
     def setUp(self):
-        self.conf = pyrevolve.genotype.plasticoding.plasticoding.PlasticodingConfig()
-        self.genotype = pyrevolve.genotype.plasticoding.plasticoding.initialization.random_initialization(self.conf, 176)
+        self.conf = pyrevolve.genotype.plasticoding.PlasticodingConfig(
+            allow_vertical_brick=False,
+            use_movement_commands=True,
+            use_rotation_commands=False,
+            use_movement_stack=False,
+        )
+        self.genotype = pyrevolve.genotype.plasticoding.initialization.random_initialization(self.conf, 176)
 
     def test_development(self):
         robot = self.genotype.develop()
@@ -33,7 +38,7 @@ class TestPlastiCoding(unittest.TestCase):
 
         self.genotype.export_genotype(file1)
 
-        genotype2 = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf, self.genotype.id)
+        genotype2 = pyrevolve.genotype.plasticoding.Plasticoding(self.conf, self.genotype.id)
         genotype2.id = self.genotype.id
         genotype2.load_genotype(file1)
         genotype2.export_genotype(file2)
@@ -47,7 +52,7 @@ class TestPlastiCoding(unittest.TestCase):
         file2_txt.close()
 
     def test_collision(self):
-        genotype_180 = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf, 180)
+        genotype_180 = pyrevolve.genotype.plasticoding.Plasticoding(self.conf, 180)
         genotype_180.load_genotype(os.path.join(LOCAL_FOLDER, 'genotype_180.txt'))
         robot = genotype_180.develop()
         robot.update_substrate(raise_for_intersections=True)
@@ -55,10 +60,15 @@ class TestPlastiCoding(unittest.TestCase):
 
 class Test176(unittest.TestCase):
     def setUp(self):
-        self.conf = pyrevolve.genotype.plasticoding.plasticoding.PlasticodingConfig()
+        self.conf = pyrevolve.genotype.plasticoding.PlasticodingConfig(
+            allow_vertical_brick=False,
+            use_movement_commands=True,
+            use_rotation_commands=False,
+            use_movement_stack=False,
+        )
 
         _id = 176
-        self.genotype = pyrevolve.genotype.plasticoding.plasticoding.Plasticoding(self.conf, _id)
+        self.genotype = pyrevolve.genotype.plasticoding.Plasticoding(self.conf, _id)
         self.genotype.load_genotype(os.path.join(LOCAL_FOLDER, 'genotype_176.txt'))
 
         self.robot = self.genotype.develop()
