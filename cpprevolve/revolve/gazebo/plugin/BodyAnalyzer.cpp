@@ -184,6 +184,14 @@ void BodyAnalyzer::OnContacts(ConstContactsPtr &msg)
     // My suggested fixes are present in the gazebo6-revolve branch
     auto bbox = model->BoundingBox();
     auto box = response.mutable_boundingbox();
+
+    for (const auto &link: model->GetLinks())
+    {
+        ignition::math::Vector3d pos = link->WorldPose().Pos();
+        bbox.Min().Min(pos);
+        bbox.Max().Max(pos);
+    }
+    
     gz::msgs::Set(box->mutable_min(), bbox.Min());
     gz::msgs::Set(box->mutable_max(), bbox.Max());
 

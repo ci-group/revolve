@@ -10,6 +10,7 @@
 #include "sensors/Sensor.h"
 
 #include <map>
+#include <memory>
 #include <boost/numeric/odeint.hpp>
 #include <multineat/Genome.h>
 
@@ -31,6 +32,8 @@ public:
         double signal_factor_left_right;
         double abs_output_bound;
         std::vector< double > weights;
+        /// can be null, indicating that there is no map
+        std::unique_ptr<std::map<std::string, std::set<std::string>>> connection_map;
     };
 
     /// \brief Constructor
@@ -78,23 +81,28 @@ private:
     void reset_neuron_state();
 
 public:
-    std::map< std::tuple< double, double >, size_t > motor_coordinates;
+    std::map< std::tuple< int, int, int >, size_t > motor_coordinates;
 
 protected:
     /// \brief Register of motor IDs and their x,y-coordinates
 //    std::map< std::string, std::tuple< int, int > > positions;
 
-    /// \brief Register of individual neurons in x,y,z-coordinates
-    /// \details x,y-coordinates define position of a robot's module and
-    // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
+    struct Neuron {
+        int x, y, z, w;
+        double bias, gain, state;
+        int frame;
+    };
+
+    /// \brief Register of individual neurons in x,y,z,w-coordinates
+    /// \details x,y,z-coordinates define position of a robot's module and
+    // w-coordinate define A or B neuron (w=1 or -1 respectively). Stored
     // values are a bias, gain, state and frame of reference of each neuron.
-    std::map< std::tuple< int, int, int >, std::tuple< double, double, double, int > >
-    neurons;
+    std::vector< Neuron > neurons;
 
     /// \brief Register of connections between neighnouring neurons
-    /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
+    /// \details Coordinate set of two neurons (x1, y1, z1, w1) and (x2, y2, z2, w2)
     ///   define a connection. The value is the weight index corresponding to this connection.
-    std::map< std::tuple< int, int, int, int, int, int >, int >
+    std::map< std::tuple< int, int, int, int, int, int, int, int>, int >
     connections;
 
     /// \brief Runge-Kutta 45 stepper

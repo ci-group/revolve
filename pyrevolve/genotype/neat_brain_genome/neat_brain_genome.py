@@ -1,7 +1,10 @@
-from pyrevolve.genotype import Genotype
-from pyrevolve.revolve_bot.brain.cpg import BrainCPG
 import enum
 import multineat
+import re
+import sys
+
+from pyrevolve.genotype import Genotype
+from pyrevolve.revolve_bot.brain import BrainCPG, BrainCPPNCPG
 
 
 class BrainType(enum.Enum):
@@ -25,11 +28,18 @@ class NeatBrainGenomeConfig:
         self.n_inputs = 1
         self.n_outputs = 1
 
-        # HyperNEAT-CPG section
-        self.hyperneat_with_distance_input = False
-
         # generate multineat params object
         self.multineat_params = self._generate_multineat_params(brain_type)
+
+        # CPG parameters
+        self.reset_neuron_random = False
+        self.use_frame_of_reference = False
+        self.init_neuron_state = 0.707
+        self.range_ub = 1.0
+        self.signal_factor_all = 4.0
+        self.signal_factor_mid = 2.5
+        self.signal_factor_left_right = 2.5
+        self.abs_output_bound = 1.0
 
     @property
     def brain_type(self):
@@ -126,15 +136,13 @@ class NeatBrainGenomeConfig:
 
 
 class NeatBrainGenome(Genotype):
-    def __init__(self, conf: NeatBrainGenomeConfig = None, robot_id: int = None):
-        self._net = multineat.NeuralNetwork()
-
+    def __init__(self, conf: NeatBrainGenomeConfig = None, robot_id=None):  # Change
         if conf is None:
             self._brain_type = None
             self._neat_genome = None
             return
 
-        self.id = int(robot_id)
+        # self.id = int(robot_id)
         self._brain_type = conf.brain_type
         is_cppn = conf.is_brain_cppn()
 
@@ -143,12 +151,8 @@ class NeatBrainGenome(Genotype):
             # if HyperNEAT
             if conf.brain_type is BrainType.CPG:
                 # calculate number of inputs
-                n_coordinates = 3
+                n_coordinates = 4
                 conf.n_inputs = n_coordinates * 2
-                if conf.hyperneat_with_distance_input:
-                    conf.n_inputs += 1
-                # Always count the bias
-                conf.n_inputs += 1
 
                 # calculate number of outputs
                 conf.n_outputs = 1  # connection weight
@@ -180,35 +184,57 @@ class NeatBrainGenome(Genotype):
                 0,  # number of hidden layers
             )
 
+        if type(robot_id) is int:
+            self.id = robot_id
+        else:
+            self.id = int(re.search('\d+', str(robot_id))[0])
+        self.phenotype = None
+
+    def load_genotype(self, file_path: str):
+        with open(file_path) as f:
+            lines = f.readlines()
+            self._load_genotype_from(lines[0])
+
+    def _load_genotype_from(self, text):
+        text = text.strip()
+        self._neat_genome.Deserialize(text.replace('inf', str(sys.float_info.max)).strip('\n'))
+
+    def export_genotype(self, file_path: str):
+        with open(file_path, 'w+') as file:
+            self._export_genotype_open_file(file)
+
+    def _export_genotype_open_file(self, file):
+        text = self._neat_genome.Serialize()
+        file.write(text + '\n')
+
     # override
     def clone(self):
         clone = NeatBrainGenome()
         clone._brain_type = self._brain_type  # the conf must not be deep copied
         clone._neat_genome = multineat.Genome(self._neat_genome)
+        return clone
 
     @property
     def id(self):
-        return f"{self._neat_genome.GedID()}"
+        return str(self._neat_genome.GetID())
 
     @id.setter
     def id(self, value: int):
-        self._neat_genome.SetID(value)
+        self._neat_genome.SetID(int(value))
 
     def develop(self):
-        if self.brain_type is BrainType.CPG:
+        if self._brain_type is BrainType.CPG:
             # basically, HyperNEAT
-            brain = BrainCPG()
-            self._neat_genome.BuildPhenotype(self._net)
-            for coord in brain.weights_coordinates():
-                # TODO check this
-                _input = coord
-                self._net.Flush()
-                self._net.Input(_input)
-                self._net.Activate()
-                output = self._net.Output()[0]
-                brain.set_weight(coord, output)
-            raise NotImplementedError("CPG brain implementation not finished yet")
+            brain = BrainCPPNCPG(self._neat_genome)
+            brain.reset_neuron_random = False
+            brain.use_frame_of_reference = False
+            brain.init_neuron_state = 0.707
+            brain.range_ub = 1.0
+            brain.signal_factor_all = 4.0
+            brain.signal_factor_mid = 2.5
+            brain.signal_factor_left_right = 2.5
+            brain.abs_output_bound = 1.0
         else:
-            raise NotImplementedError(f"{self.brain_type} brain not implemented yet")
+            raise NotImplementedError(f"{self._brain_type} brain not implemented yet")
 
         return brain

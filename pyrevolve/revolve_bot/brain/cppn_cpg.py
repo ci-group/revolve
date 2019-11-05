@@ -1,18 +1,31 @@
-from .cpg import BrainCPG
+import sys
+import multineat
 import xml.etree.ElementTree
+
+from .cpg import BrainCPG
 
 
 # Extends BrainCPG by including a Genome
 class BrainCPPNCPG(BrainCPG):
     TYPE = 'cppn-cpg'
 
-    def __init__(self):
+    def __init__(self, neat_genome):
         super().__init__()
-        self.genome = None
+        self.genome = neat_genome
+        self.weights = None
+
+    def to_yaml(self):
+        obj = super().to_yaml()
+        obj['controller']['cppn'] = self.genome.Serialize()
+        return obj
 
     @staticmethod
     def from_yaml(yaml_object):
-        BCPG = BrainCPPNCPG()
+        cppn_genome = multineat.Genome()
+        cppn_genome.Deserialize(yaml_object['controller']['cppn'].replace('inf', str(sys.float_info.max)))
+        del yaml_object['controller']['cppn']
+
+        BCPG = BrainCPPNCPG(cppn_genome)
         for my_type in ["controller", "learner"]:  #, "meta"]:
             try:
                 my_object = yaml_object[my_type]
@@ -105,24 +118,12 @@ class BrainCPPNCPG(BrainCPG):
         params.ClearLinkTraitParameters()
         params.ClearGenomeTraitParameters()
 
-        genome = multineat.Genome(1,  # id
-                                  6,  # inputs
-                                  2,  # hidden
-                                  1,  # outputs
-                                  True,
-                                  multineat.ActivationFunction.TANH,  # input activation
-                                  multineat.ActivationFunction.TANH,  # output activation
-                                  0,
-                                  multineat.Parameters(),
-                                  4)
+        assert(self.genome is not None)
+        serialized_genome = self.genome.Serialize()
 
-        rng = multineat.RNG()
-        innov_db = multineat.InnovationDatabase()
-        for i in range(100):
-            genome.Mutate(False, multineat.SearchMode.COMPLEXIFYING, innov_db, params, rng)
-
-        serialized_genome = genome.Serialize()
-
-        return xml.etree.ElementTree.Element('rv:genome', {
-            'serial_genome': serialized_genome
+        element = xml.etree.ElementTree.Element('rv:genome', {
+            'type': 'CPPN'
         })
+        element.text = serialized_genome
+
+        return element
