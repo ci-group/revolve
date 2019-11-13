@@ -1,6 +1,7 @@
 """
 Revolve body generator based on RoboGen framework
 """
+import os
 import yaml
 import traceback
 from collections import OrderedDict
@@ -292,6 +293,7 @@ class RevolveBot:
                 brain_graph = BrainGraph(self._brain, img_path)
                 brain_graph.brain_to_graph(True)
                 brain_graph.save_graph()
+                brain_graph.remove_dot_files(os.path.dirname(img_path))
             except Exception as e:
                 logger.exception('Failed rendering brain. Exception:')
         else:

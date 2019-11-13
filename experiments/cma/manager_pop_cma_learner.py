@@ -5,6 +5,7 @@ from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.population import Population, PopulationConfig
+from pyrevolve.evolution.learning import Learning
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
@@ -24,9 +25,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 5
-    population_size = 5
-    offspring_size = 2
+    num_generations = 100
+    population_size = 100
+    offspring_size = 50
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -46,8 +47,6 @@ async def run():
     settings = parser.parse_args()
     experiment_management = ExperimentManagement(settings)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
-
-    logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
 
     if do_recovery:
         gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size, offspring_size)
@@ -76,6 +75,8 @@ async def run():
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
+        perform_learning=True,
+        max_learn_evals=100
     )
 
     n_cores = settings.n_cores
@@ -92,13 +93,15 @@ async def run():
     if do_recovery:
         # loading a previous state of the experiment
         await population.load_snapshot(gen_num)
-        if gen_num >= 0:
-            logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
+        logger.info('Recovered snapshot '+str(gen_num))
+        
+        # delete existing files for unevaluated robots        
+        experiment_management.delete_robot_learn_files(next_robot_id)
+        
         if has_offspring:
             individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
             logger.info('Recovered unfinished offspring '+str(gen_num))
-
             if gen_num == 0:
                 await population.init_pop(individuals)
             else:

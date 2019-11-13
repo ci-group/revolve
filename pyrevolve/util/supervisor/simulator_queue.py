@@ -114,6 +114,7 @@ class SimulatorQueue:
             return False
 
         elapsed = time.time()-start
+
         logger.info(f"time taken to do a simulation {elapsed}")
 
         robot.failed_eval_attempt_count = 0

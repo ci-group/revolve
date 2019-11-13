@@ -35,6 +35,11 @@ class Individual:
     def export_genotype(self, folder):
         self.genotype.export_genotype(f'{folder}/genotypes/genotype_{self.phenotype.id}.txt')
 
+
+    def export_learned_phenotype(self, folder, extension=''):
+         if self.phenotype is not None:
+                self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}_{extension}.yaml', conf_type='yaml')       
+
     def export_phenotype(self, folder):
         if self.phenotype is not None:
             self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}.yaml', conf_type='yaml')

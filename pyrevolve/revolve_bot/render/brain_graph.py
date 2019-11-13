@@ -88,3 +88,9 @@ class BrainGraph:
                 self.add_edge(connection.src, connection.dst, round(float(connection.weight), decimals))
             else:
                 self.add_edge(connection.src, connection.dst, float(connection.weight))
+
+    def remove_dot_files(self, path):
+        dir_dot_files = os.listdir(path)
+        for file in dir_dot_files:
+            if not file.endswith('.png'):
+                os.remove(os.path.join(path, file))

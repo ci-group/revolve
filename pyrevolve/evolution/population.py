@@ -4,6 +4,7 @@ from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
 from ..custom_logging.logger import logger
+from pyrevolve.evolution.learning import Learning
 import time
 import asyncio
 import os
@@ -27,6 +28,9 @@ class PopulationConfig:
                  experiment_name,
                  experiment_management,
                  offspring_size=None,
+                 perform_learning=False,
+                 max_learn_evals=None,
+                 learn_lamarckian=False,
                  next_robot_id=1):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
@@ -62,6 +66,9 @@ class PopulationConfig:
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
         self.offspring_size = offspring_size
+        self.perform_learning = perform_learning
+        self.max_learn_evals=max_learn_evals
+        self.learn_lamarckian=learn_lamarckian
         self.next_robot_id = next_robot_id
 
 
@@ -75,13 +82,13 @@ class Population:
 
         :param conf: configuration of the system
         :param simulator_queue: connection to the simulator queue
-        :param analyzer_queue: connection to the analyzer simulator queue
+        :param analyzer_queue: connection to the analyzer simulator queue        
         :param next_robot_id: (sequential) id of the next individual to be created
         """
         self.conf = conf
         self.individuals = []
-        self.analyzer_queue = analyzer_queue
         self.simulator_queue = simulator_queue
+        self.analyzer_queue = analyzer_queue
         self.next_robot_id = next_robot_id
 
     def _new_individual(self, genotype):
@@ -104,29 +111,37 @@ class Population:
         individual.develop()
         individual.phenotype.measure_phenotype()
 
-        with open(os.path.join(data_path, 'fitness', f'fitness_{id}.txt')) as f:
-            data = f.readlines()[0]
-            individual.fitness = None if data == 'None' else float(data)
+        fitness_path = os.path.join(data_path, 'fitness', f'fitness_{id}.txt')
+        if os.path.isfile(fitness_path):
+            with open(fitness_path) as f:
+                data = f.readlines()[0]
+                individual.fitness = None if data == 'None' else float(data)
+        else:
+            individual.fitness = None
 
-        with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')) as f:
-            lines = f.readlines()
-            if lines[0] == 'None':
-                individual.phenotype._behavioural_measurements = None
-            else:
-                individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
-                for line in lines:
-                    if line.split(' ')[0] == 'velocity':
-                        individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-                    #if line.split(' ')[0] == 'displacement':
-                     #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity':
-                        individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity_hill':
-                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'head_balance':
-                        individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'contacts':
-                        individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+        behaviour_path = os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')
+        if os.path.isfile(behaviour_path):
+            with open(behaviour_path) as f:
+                lines = f.readlines()
+                if lines[0] == 'None':
+                    individual.phenotype._behavioural_measurements = None
+                else:
+                    individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+                    for line in lines:
+                        if line.split(' ')[0] == 'velocity':
+                            individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
+                        #if line.split(' ')[0] == 'displacement':
+                        #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'displacement_velocity':
+                            individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'displacement_velocity_hill':
+                            individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'head_balance':
+                            individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'contacts':
+                            individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+        else:
+            individual.phenotype._behavioural_measurements = None
 
         return individual
 
@@ -221,7 +236,7 @@ class Population:
 
         return new_population
 
-    async def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve'):
+    async def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve', learn_eval=False):
         """
         Evaluates each individual in the new gen population
 
@@ -231,39 +246,71 @@ class Population:
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
         robot_futures = []
+        parallel_eval = learn_eval
+
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
+            if parallel_eval:
+                # do things parallely
+                robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, gen_num, learn_eval)))
+            else:
+                # do things sequentially
+                robot_futures.append(await self.evaluate_single_robot(individual, gen_num, learn_eval))
+
 
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
-
+            if parallel_eval:
+                future = await future
+            individual.fitness, individual.phenotype._behavioural_measurements = future
+            
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
-
+            
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
-
-            logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
-            if type_simulation == 'evolve':
+                self.conf.experiment_management.write_to_speed_file(individual.phenotype.id, individual.phenotype._behavioural_measurements)
                 self.conf.experiment_management.export_fitness(individual)
-
-    async def evaluate_single_robot(self, individual):
+                self.conf.experiment_management.write_to_fitness_file(individual.phenotype.id, individual.fitness)
+                logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+                
+    async def evaluate_single_robot(self, individual, gen_num, learn_eval=False):
         """
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
         """
         if individual.phenotype is None:
-            individual.develop()
+                individual.develop()
 
-        if self.analyzer_queue is not None:
+        if self.analyzer_queue is not None and not learn_eval:
             collisions, _bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
 
+        #perform learning
+        if self.conf.perform_learning and not learn_eval:
+            individual = await self.learn(individual, gen_num)
+
         return await self.simulator_queue.test_robot(individual, self.conf)
+
+    async def learn(self, individual, gen_num):
+        """
+        Learn individual by cma
+        :param individual:
+        :param gen_num:
+        """
+        # check if individual has not been learned before or has unfinished learning
+        if not self.conf.experiment_management.has_finished_learning(individual.phenotype.id):
+            learn_brain = Learning(individual, gen_num, self.simulator_queue, self.conf, population=self)
+            learn_brain.learn_counter = self.conf.experiment_management.learning_iterations_performed(individual.phenotype.id, gen_num) + 1
+            individual = await learn_brain.learn_brain_through_cma_es()
+            
+            self.conf.experiment_management.export_fitness(individual)
+            self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
+            self.conf.experiment_management.finished_learning(individual.phenotype.id)
+        
+        return individual
