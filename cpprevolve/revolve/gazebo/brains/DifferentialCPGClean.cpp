@@ -13,8 +13,8 @@ DifferentialCPGClean::DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
 {}
 
 DifferentialCPGClean::DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
-																					 const std::vector<MotorPtr> &_motors,
-																					 const NEAT::Genome &genome)
+				 const std::vector<MotorPtr> &_motors,
+			 	 NEAT::Genome genome)
 				: Brain()
 				, revolve::DifferentialCPG(load_params_from_sdf(brain_sdf), _motors, genome)
 {}

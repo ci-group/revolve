@@ -29,11 +29,11 @@ async def run():
     offspring_size = 50
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=100,
-        allow_vertical_brick=False,
+        max_structural_modules=20,
+        allow_vertical_brick=True,
         use_movement_commands=False,
-        use_rotation_commands=True,
-        use_movement_stack=True,
+        use_rotation_commands=False,
+        use_movement_stack=True
     )
 
     mutation_conf = MutationConfig(
