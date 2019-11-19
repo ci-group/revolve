@@ -22,7 +22,9 @@ class BrainCPPNCPG(BrainCPG):
     @staticmethod
     def from_yaml(yaml_object):
         cppn_genome = multineat.Genome()
-        cppn_genome.Deserialize(yaml_object['controller']['cppn'].replace('inf', str(sys.float_info.max)))
+        cppn_genome_str = yaml_object['controller']['cppn']
+        cppn_genome_str_fixed = cppn_genome_str.replace('inf', str(sys.float_info.max))
+        cppn_genome.Deserialize(cppn_genome_str_fixed)
         del yaml_object['controller']['cppn']
 
         BCPG = BrainCPPNCPG(cppn_genome)
