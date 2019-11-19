@@ -7,7 +7,6 @@ protobuf>=3.0.0
 psutil==3.4.2
 matplotlib
 pycairo>=1.18.0
-cma>=2.7.0
 graphviz>=0.10.1
 joblib
 pandas
