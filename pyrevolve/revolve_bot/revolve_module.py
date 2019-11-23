@@ -1,6 +1,7 @@
 """
 Class containing the body parts to compose a Robogen robot
 """
+import math
 from collections import OrderedDict
 from enum import Enum
 import numpy as np
@@ -42,13 +43,13 @@ class Orientation(Enum):
 
     def get_slot_rotation_matrix(self):
         if self == self.BACK:
-            return rotate_matrix_z_axis(180)
+            return rotate_matrix_z_axis(math.pi) # 180
         elif self == self.FORWARD:
-            return rotate_matrix_z_axis(0)
+            return rotate_matrix_z_axis(0.0)
         elif self == self.LEFT:
-            return rotate_matrix_z_axis(90)
+            return rotate_matrix_z_axis(math.pi / 2.0) # 90
         elif self == self.RIGHT:
-            return rotate_matrix_z_axis(270)
+            return rotate_matrix_z_axis(math.pi / -2.0) # -90
 
 
 def rotate_matrix_z_axis(angle):

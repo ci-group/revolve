@@ -1,6 +1,7 @@
 """
 Revolve body generator based on RoboGen framework
 """
+import math
 import yaml
 import traceback
 from collections import OrderedDict
@@ -204,12 +205,6 @@ class RevolveBot:
         """
         substrate_coordinates_map = {(0, 0, 0): self._body.id}
         self._body.substrate_coordinates = (0, 0, 0)
-        #self._update_substrate(raise_for_intersections, self._body, Orientation.FORWARD, substrate_coordinates_map, {
-        #    Orientation.FORWARD: (1, 0, 0),
-        #    Orientation.RIGHT:  (0, -1, 0),
-        #    Orientation.BACK: (-1, 0, 0),
-        #    Orientation.LEFT:  (0, 1, 0),
-        #})
         self._update_substrate(raise_for_intersections, self._body, np.identity(3), substrate_coordinates_map)
 
     class ItersectionCollisionException(Exception):
@@ -234,7 +229,7 @@ class RevolveBot:
         # rotation of parent
         # parent.orientation != of type Orientation but is an angle
         rot = round(parent.orientation)
-        vertical_rotation_matrix = rotate_matrix_x_axis(rot)
+        vertical_rotation_matrix = rotate_matrix_x_axis(rot * math.pi / 180.0 )
         global_rotation_matrix = np.matmul(global_rotation_matrix, vertical_rotation_matrix)
 
         for slot, module in parent.iter_children():
@@ -266,88 +261,6 @@ class RevolveBot:
                 substrate_coordinates_map[coordinates] = module.id
 
             self._update_substrate(raise_for_intersections, module, slot_rotation, substrate_coordinates_map)
-
-    def _update_substrate_old(self,
-                          raise_for_intersections,
-                          parent,
-                          parent_direction,
-                          substrate_coordinates_map,
-                          movement_table):
-        """
-        Internal recursive function for self.update_substrate()
-        :param raise_for_intersections: same as in self.update_substrate
-        :param parent: updates the children of this parent
-        :param parent_direction: the "absolute" orientation of this parent
-        :param substrate_coordinates_map: map for all already explored coordinates(useful for coordinates conflict checks)
-        :param movement_table: Coordinate alterations for the current plane
-        """
-        # This two dicts are used to get the right value for the corresponding orientations
-        dic = {Orientation.FORWARD: 0,
-               Orientation.RIGHT:  1,
-               Orientation.BACK: 2,
-               Orientation.LEFT:  3}
-        inverse_dic = {0: Orientation.FORWARD,
-                       1: Orientation.RIGHT,
-                       2: Orientation.BACK,
-                       3: Orientation.LEFT}
-
-        # movement in the x-y axis
-        movement_table_horizontal = {
-            Orientation.FORWARD: ( 1,  0, 0),
-            Orientation.RIGHT:   ( 0, -1, 0),
-            Orientation.BACK:    (-1,  0, 0),
-            Orientation.LEFT:    ( 0,  1, 0),
-        }
-
-        # movement in the x-z axis
-        movement_table_vertical ={
-            Orientation.FORWARD: (1, 0, 0),
-            Orientation.RIGHT:  (0, 0, 1),
-            Orientation.BACK: (-1, 0, 0),
-            Orientation.LEFT:  (0, 0, -1),
-        }
-
-        for slot, module in parent.iter_children():
-            if module is None:
-                continue
-
-            slot = Orientation(slot)
-
-            # calculate new direction
-            direction = dic[parent_direction] + dic[slot]
-            if direction >= len(dic):
-                direction = direction - len(dic)
-            new_direction = Orientation(inverse_dic[direction])
-
-            # calculate new coordinate
-            movement = movement_table[new_direction]
-            coordinates = (
-                parent.substrate_coordinates[0] + movement[0],
-                parent.substrate_coordinates[1] + movement[1],
-                parent.substrate_coordinates[2] + movement[2]
-            )
-            module.substrate_coordinates = coordinates
-
-            # For Karine: If you need to validate old robots, remember to add this condition to this if:
-            # if raise_for_intersections and coordinates in substrate_coordinates_map and type(module) is not TouchSensorModule:
-            if raise_for_intersections:
-                if coordinates in substrate_coordinates_map:
-                    raise self.ItersectionCollisionException(substrate_coordinates_map)
-                substrate_coordinates_map[coordinates] = module.id
-
-            # change the plane in which the bricks are placed.
-            if parent.is_vertical:
-                self._update_substrate(raise_for_intersections,
-                                       module,
-                                       new_direction,
-                                       substrate_coordinates_map,
-                                       movement_table_vertical)
-            else:
-                self._update_substrate(raise_for_intersections,
-                                       module,
-                                       new_direction,
-                                       substrate_coordinates_map,
-                                       movement_table_horizontal)
 
     def _iter_all_elements(self):
         to_process = deque([self._body])
