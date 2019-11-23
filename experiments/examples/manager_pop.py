@@ -31,7 +31,7 @@ async def run():
     genotype_conf = PlasticodingConfig(
         max_structural_modules=20,
         allow_vertical_brick=True,
-        use_movement_commands=False,
+        use_movement_commands=True,
         use_rotation_commands=False,
         use_movement_stack=True
     )
@@ -82,7 +82,7 @@ async def run():
         experiment_management=experiment_management,
     )
 
-    n_cores = settings.n_cores
+    n_cores =  settings.n_cores
 
     settings = parser.parse_args()
     simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)

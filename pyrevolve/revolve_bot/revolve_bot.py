@@ -228,7 +228,11 @@ class RevolveBot:
 
         # rotation of parent
         # parent.orientation != of type Orientation but is an angle
-        rot = round(parent.orientation)
+        # Orientation of coreBlock is null!
+        if parent.orientation != None:
+            rot = round(parent.orientation)
+        else:
+            rot = 0
         vertical_rotation_matrix = rotate_matrix_x_axis(rot * math.pi / 180.0 )
         global_rotation_matrix = np.matmul(global_rotation_matrix, vertical_rotation_matrix)
 
