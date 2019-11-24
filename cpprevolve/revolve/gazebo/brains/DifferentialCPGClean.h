@@ -39,7 +39,7 @@ namespace revolve
         protected:
 						explicit DifferentialCPGClean(const sdf::ElementPtr brain_sdf,
 																 const std::vector<MotorPtr> &_motors,
-																 const NEAT::Genome &genome);
+																 NEAT::Genome genome);
 
             /// \brief extracts CPG controller parameters from brain_sdf
             /// \param[in] brain_sdf ElementPtr containing the "brain" - tag of the model sdf

@@ -1,6 +1,6 @@
 import sys
-import multineat
 import xml.etree.ElementTree
+import multineat
 
 from .cpg import BrainCPG
 
