@@ -31,14 +31,17 @@ namespace revolve {
         std::unique_ptr<revolve::DifferentialCPG> OptimizeCPG();
 
         // BO Learner parameters
-    private: double kernel_noise_;
-    private: bool kernel_optimize_noise_;
-    public: double kernel_sigma_sq_;
-    public: double kernel_l_;
-    private: int kernel_squared_exp_ard_k_;
-    private: double acqui_gpucb_delta_ ;
-    public: double acqui_ucb_alpha_;
-    private: double acqui_ei_jitter_;
+    private: double kernel_noise;
+    private: bool kernel_optimize_noise;
+    public: double kernel_sigma_sq;
+    public: double kernel_l;
+    private: int kernel_squared_exp_ard_k;
+    private: double acqui_gpucb_delta;
+    public: double acqui_ucb_alpha;
+    private: double acqui_ei_jitter;
+
+        /// \brief Specifies the acquisition function used
+    public: std::string acquisition_function;
 
         /// \brief Max number of iterations learning is allowed
     private: size_t n_learning_iterations;

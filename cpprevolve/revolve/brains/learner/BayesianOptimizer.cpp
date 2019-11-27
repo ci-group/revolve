@@ -13,17 +13,17 @@ using namespace revolve;
 revolve::BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::DifferentialCPG> controller)
 : Learner()
 , controller(std::move(controller)){
-    /*n_init_samples: 50
-    init_method: "LHS"
-    kernel_noise: 0.00000001
-    kernel_optimize_noise: "false"
-    kernel_sigma_sq: 0.222
-    kernel_l: 0.55
-    kernel_squared_exp_ard_k: 4
-    acqui_gpucb_delta: 0.5
-    acqui_ucb_alpha: 0.44
-    acqui_ei_jitter: 0
-    acquisition_function: "UCB"*/
+    this->n_init_samples = 50;
+    this->init_method = "LHS";
+    this->kernel_noise = 0.00000001;
+    this->kernel_optimize_noise = "false";
+    this->kernel_sigma_sq = 0.222;
+    this->kernel_l = 0.55;
+    this->kernel_squared_exp_ard_k = 4;
+    this->acqui_gpucb_delta = 0.5;
+    this->acqui_ucb_alpha = 0.44;
+    this->acqui_ei_jitter = 0;
+    this->acquisition_function = "UCB";
 }
 
 BayesianOptimizer::~BayesianOptimizer() {}
