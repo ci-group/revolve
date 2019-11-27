@@ -37,12 +37,13 @@ double Evaluator::measure_distance(
 /////////////////////////////////////////////////
 Evaluator::Evaluator(const double _evaluationRate,
                      const double step_saving_rate)
-    : last_step_time(-1)
-    , step_saving_rate(step_saving_rate)
+    : revolve::RevEvaluator(_evaluationRate, step_saving_rate)
+    , last_step_time(-1)
     , step_poses(0)
 {
-  assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
-  this->evaluation_rate_ = _evaluationRate;
+    // moved to RevEvaluator
+  // assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
+  // this->evaluation_rate_ = _evaluationRate;
 
   this->current_position_.Reset();
   this->previous_position_.Reset();

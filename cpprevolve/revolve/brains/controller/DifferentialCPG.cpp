@@ -158,6 +158,7 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
     this->signal_factor_mid = params.signal_factor_mid;
     this->signal_factor_left_right = params.signal_factor_left_right;
     this->abs_output_bound = params.abs_output_bound;
+    this->loadedWeights = params.weights;
 
     size_t j=0;
     for (const std::shared_ptr<Actuator> &actuator: actuators)

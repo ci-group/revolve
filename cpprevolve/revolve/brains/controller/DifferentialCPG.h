@@ -83,6 +83,9 @@ private:
 public:
     std::map< std::tuple< int, int, int >, size_t > motor_coordinates;
 
+    /// \brief weights loaded from the contstructor
+    std::vector<double> loadedWeights;
+
 protected:
     /// \brief Register of motor IDs and their x,y-coordinates
 //    std::map< std::string, std::tuple< int, int > > positions;
@@ -152,6 +155,7 @@ private:
     bool use_frame_of_reference;
 
     double abs_output_bound;
+
     };
 
 }
