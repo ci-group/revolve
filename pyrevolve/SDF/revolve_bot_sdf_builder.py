@@ -150,13 +150,13 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
         joint = module.to_sdf('{}'.format(slot_chain), parent_link, child_link)
 
         # parent_slot = parent_module.boxslot(parent_slot)
-        module_slot = module.boxslot_frame(Orientation.SOUTH)
+        module_slot = module.boxslot_frame(Orientation.BACK)
         _sdf_attach_module(module_slot, module.orientation,
                            visual_frame, collisions_frame[0],
                            parent_slot, parent_collision)
 
-        parent_slot = module.boxslot_frame(Orientation.NORTH)
-        module_slot = module.boxslot_servo(Orientation.SOUTH)
+        parent_slot = module.boxslot_frame(Orientation.FORWARD)
+        module_slot = module.boxslot_servo(Orientation.BACK)
         _sdf_attach_module(module_slot, None,
                            visual_servo, collisions_servo[0],
                            parent_slot, collisions_frame[0])
@@ -201,7 +201,7 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
     else:
         visual, collision, sensor = module.to_sdf(slot_chain, my_link)
 
-        module_slot = module.boxslot(Orientation.SOUTH)
+        module_slot = module.boxslot(Orientation.BACK)
         _sdf_attach_module(module_slot, module.orientation,
                            visual, collision,
                            parent_slot, parent_collision)

@@ -50,7 +50,7 @@ public:
     DifferentialCPG(
             DifferentialCPG::ControllerParams params,
             const std::vector<std::shared_ptr<Actuator>> &_actuators,
-						const NEAT::Genome &config_cppn_genome);
+            const NEAT::Genome &config_cppn_genome);
 
     /// \brief Destructor
     virtual ~DifferentialCPG();

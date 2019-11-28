@@ -132,7 +132,7 @@ class PlasticodingDecoder:
         self.body._body = core_module
         core_module.id = str(self.quantity_modules)
         core_module.info = {
-            'orientation': Orientation.NORTH,
+            'orientation': Orientation.FORWARD,
             'new_module_type': Alphabet.CORE_COMPONENT
         }
         core_module.rgb = [1, 1, 0]
@@ -152,7 +152,7 @@ class PlasticodingDecoder:
                             or type(self.stack.current.module) == BrickModule:
                         slot = self.get_slot(self.morph_mounting_container).value
                     elif type(self.stack.current.module) == ActiveHingeModule:
-                        slot = Orientation.NORTH.value
+                        slot = Orientation.FORWARD.value
                     else:
                         raise RuntimeError(
                             f'Mounting reference {type(self.stack.current.module)} does not support a mount')
@@ -183,11 +183,11 @@ class PlasticodingDecoder:
     def get_slot(morph_mounting_container):
         slot = None
         if morph_mounting_container == Alphabet.ADD_FRONT:
-            slot = Orientation.NORTH
+            slot = Orientation.FORWARD
         elif morph_mounting_container == Alphabet.ADD_LEFT:
-            slot = Orientation.WEST
+            slot = Orientation.LEFT
         elif morph_mounting_container == Alphabet.ADD_RIGHT:
-            slot = Orientation.EAST
+            slot = Orientation.RIGHT
         return slot
 
     def get_angle(self, new_module_type, parent):
@@ -234,29 +234,29 @@ class PlasticodingDecoder:
                 self.stack.pop_history()
 
         elif symbol == Alphabet.MOVE_FRONT:
-            if self.stack.current.module.children[Orientation.NORTH.value] is not None \
-                    and type(self.stack.current.module.children[Orientation.NORTH.value]) is not TouchSensorModule:
+            if self.stack.current.module.children[Orientation.FORWARD.value] is not None \
+                    and type(self.stack.current.module.children[Orientation.FORWARD.value]) is not TouchSensorModule:
                 self.stack.save_history()
-                self.stack.current.module = self.stack.current.module.children[Orientation.NORTH.value]
+                self.stack.current.module = self.stack.current.module.children[Orientation.FORWARD.value]
 
         elif symbol == Alphabet.MOVE_RIGHT or symbol == Alphabet.MOVE_LEFT:
 
             if symbol == Alphabet.MOVE_LEFT and type(self.stack.current.module) is not ActiveHingeModule \
-                    and self.stack.current.module.children[Orientation.WEST.value] is not None \
-                    and type(self.stack.current.module.children[Orientation.WEST.value]) is not TouchSensorModule:
+                    and self.stack.current.module.children[Orientation.LEFT.value] is not None \
+                    and type(self.stack.current.module.children[Orientation.LEFT.value]) is not TouchSensorModule:
                 self.stack.save_history()
-                self.stack.current.module = self.stack.current.module.children[Orientation.WEST.value]
+                self.stack.current.module = self.stack.current.module.children[Orientation.LEFT.value]
 
             elif symbol == Alphabet.MOVE_RIGHT and type(self.stack.current.module) is not ActiveHingeModule \
-                    and self.stack.current.module.children[Orientation.EAST.value] is not None \
-                    and type(self.stack.current.module.children[Orientation.EAST.value]) is not TouchSensorModule:
+                    and self.stack.current.module.children[Orientation.RIGHT.value] is not None \
+                    and type(self.stack.current.module.children[Orientation.RIGHT.value]) is not TouchSensorModule:
                 self.stack.save_history()
-                self.stack.current.module = self.stack.current.module.children[Orientation.EAST.value]
+                self.stack.current.module = self.stack.current.module.children[Orientation.RIGHT.value]
 
             if type(self.stack.current.module) is ActiveHingeModule \
-                    and self.stack.current.module.children[Orientation.NORTH.value] is not None:
+                    and self.stack.current.module.children[Orientation.FORWARD.value] is not None:
                 self.stack.save_history()
-                self.stack.current.module = self.stack.current.module.children[Orientation.NORTH.value]
+                self.stack.current.module = self.stack.current.module.children[Orientation.FORWARD.value]
 
         elif symbol is Alphabet.ROTATE_90 or symbol is Alphabet.ROTATE_N90:
             self.stack.current.orientation += 90 if symbol is Alphabet.ROTATE_90 else -90
@@ -320,31 +320,31 @@ class PlasticodingDecoder:
         Update coordinates of module
         :return:
         """
-        dic = {Orientation.NORTH.value: 0,
-               Orientation.WEST.value: 1,
-               Orientation.SOUTH.value: 2,
-               Orientation.EAST.value: 3}
+        dic = {Orientation.FORWARD.value: 0,
+               Orientation.LEFT.value: 1,
+               Orientation.BACK.value: 2,
+               Orientation.RIGHT.value: 3}
 
-        inverse_dic = {0: Orientation.NORTH.value,
-                       1: Orientation.WEST.value,
-                       2: Orientation.SOUTH.value,
-                       3: Orientation.EAST.value}
+        inverse_dic = {0: Orientation.FORWARD.value,
+                       1: Orientation.LEFT.value,
+                       2: Orientation.BACK.value,
+                       3: Orientation.RIGHT.value}
 
         direction = dic[parent.info['orientation'].value] + dic[slot]
         if direction >= len(dic):
             direction = direction - len(dic)
 
         new_direction = Orientation(inverse_dic[direction])
-        if new_direction == Orientation.WEST:
+        if new_direction == Orientation.LEFT:
             coordinates = [parent.substrate_coordinates[0],
                            parent.substrate_coordinates[1] - 1]
-        elif new_direction == Orientation.EAST:
+        elif new_direction == Orientation.RIGHT:
             coordinates = [parent.substrate_coordinates[0],
                            parent.substrate_coordinates[1] + 1]
-        elif new_direction == Orientation.NORTH:
+        elif new_direction == Orientation.FORWARD:
             coordinates = [parent.substrate_coordinates[0] + 1,
                            parent.substrate_coordinates[1]]
-        elif new_direction == Orientation.SOUTH:
+        elif new_direction == Orientation.BACK:
             coordinates = [parent.substrate_coordinates[0] - 1,
                            parent.substrate_coordinates[1]]
         else:
