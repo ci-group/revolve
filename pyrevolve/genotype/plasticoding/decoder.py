@@ -185,9 +185,9 @@ class PlasticodingDecoder:
         if morph_mounting_container == Alphabet.ADD_FRONT:
             slot = Orientation.FORWARD
         elif morph_mounting_container == Alphabet.ADD_LEFT:
-            slot = Orientation.RIGHT
-        elif morph_mounting_container == Alphabet.ADD_RIGHT:
             slot = Orientation.LEFT
+        elif morph_mounting_container == Alphabet.ADD_RIGHT:
+            slot = Orientation.RIGHT
         return slot
 
     def get_angle(self, new_module_type, parent):
@@ -242,16 +242,16 @@ class PlasticodingDecoder:
         elif symbol == Alphabet.MOVE_RIGHT or symbol == Alphabet.MOVE_LEFT:
 
             if symbol == Alphabet.MOVE_LEFT and type(self.stack.current.module) is not ActiveHingeModule \
-                    and self.stack.current.module.children[Orientation.RIGHT.value] is not None \
-                    and type(self.stack.current.module.children[Orientation.RIGHT.value]) is not TouchSensorModule:
-                self.stack.save_history()
-                self.stack.current.module = self.stack.current.module.children[Orientation.RIGHT.value]
-
-            elif symbol == Alphabet.MOVE_RIGHT and type(self.stack.current.module) is not ActiveHingeModule \
                     and self.stack.current.module.children[Orientation.LEFT.value] is not None \
                     and type(self.stack.current.module.children[Orientation.LEFT.value]) is not TouchSensorModule:
                 self.stack.save_history()
                 self.stack.current.module = self.stack.current.module.children[Orientation.LEFT.value]
+
+            elif symbol == Alphabet.MOVE_RIGHT and type(self.stack.current.module) is not ActiveHingeModule \
+                    and self.stack.current.module.children[Orientation.RIGHT.value] is not None \
+                    and type(self.stack.current.module.children[Orientation.RIGHT.value]) is not TouchSensorModule:
+                self.stack.save_history()
+                self.stack.current.module = self.stack.current.module.children[Orientation.RIGHT.value]
 
             if type(self.stack.current.module) is ActiveHingeModule \
                     and self.stack.current.module.children[Orientation.FORWARD.value] is not None:
@@ -321,24 +321,24 @@ class PlasticodingDecoder:
         :return:
         """
         dic = {Orientation.FORWARD.value: 0,
-               Orientation.RIGHT.value: 1,
+               Orientation.LEFT.value: 1,
                Orientation.BACK.value: 2,
-               Orientation.LEFT.value: 3}
+               Orientation.RIGHT.value: 3}
 
         inverse_dic = {0: Orientation.FORWARD.value,
-                       1: Orientation.RIGHT.value,
+                       1: Orientation.LEFT.value,
                        2: Orientation.BACK.value,
-                       3: Orientation.LEFT.value}
+                       3: Orientation.RIGHT.value}
 
         direction = dic[parent.info['orientation'].value] + dic[slot]
         if direction >= len(dic):
             direction = direction - len(dic)
 
         new_direction = Orientation(inverse_dic[direction])
-        if new_direction == Orientation.RIGHT:
+        if new_direction == Orientation.LEFT:
             coordinates = [parent.substrate_coordinates[0],
                            parent.substrate_coordinates[1] - 1]
-        elif new_direction == Orientation.LEFT:
+        elif new_direction == Orientation.RIGHT:
             coordinates = [parent.substrate_coordinates[0],
                            parent.substrate_coordinates[1] + 1]
         elif new_direction == Orientation.FORWARD:
