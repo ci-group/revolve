@@ -26,18 +26,18 @@ def grams(x):
 class Orientation(Enum):
     BACK = 0
     FORWARD = 1
-    LEFT = 2
-    RIGHT = 3
+    RIGHT = 2
+    LEFT = 3
 
     def short_repr(self):
         if self == self.BACK:
             return 'B'
         elif self == self.FORWARD:
             return 'F'
-        elif self == self.LEFT:
-            return 'L'
         elif self == self.RIGHT:
             return 'R'
+        elif self == self.LEFT:
+            return 'L'
         else:
             assert False
 
@@ -46,9 +46,9 @@ class Orientation(Enum):
             return rotate_matrix_z_axis(math.pi) # 180
         elif self == self.FORWARD:
             return rotate_matrix_z_axis(0.0)
-        elif self == self.LEFT:
-            return rotate_matrix_z_axis(math.pi / 2.0) # 90
         elif self == self.RIGHT:
+            return rotate_matrix_z_axis(math.pi / 2.0) # 90
+        elif self == self.LEFT:
             return rotate_matrix_z_axis(math.pi / -2.0) # -90
 
 
@@ -480,9 +480,9 @@ class BoxSlot:
             return SDF.math.Vector3(0, boundaries[1][0], 0)
         elif slot == Orientation.FORWARD:
             return SDF.math.Vector3(0, boundaries[1][1], 0)
-        elif slot == Orientation.LEFT:
-            return SDF.math.Vector3(boundaries[0][1], 0, 0)
         elif slot == Orientation.RIGHT:
+            return SDF.math.Vector3(boundaries[0][1], 0, 0)
+        elif slot == Orientation.LEFT:
             return SDF.math.Vector3(boundaries[0][0], 0, 0)
         else:
             raise RuntimeError('invalid module orientation: {}'.format(slot))
@@ -496,9 +496,9 @@ class BoxSlot:
             return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.FORWARD:
             return SDF.math.Vector3(0, 0, 1)
-        elif slot == Orientation.LEFT:
-            return SDF.math.Vector3(0, 0, 1)
         elif slot == Orientation.RIGHT:
+            return SDF.math.Vector3(0, 0, 1)
+        elif slot == Orientation.LEFT:
             return SDF.math.Vector3(0, 0, 1)
         # elif slot == 4:
         #     # Right face tangent: back face

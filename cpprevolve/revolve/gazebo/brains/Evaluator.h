@@ -23,12 +23,13 @@
 #include <boost/shared_ptr.hpp>
 
 #include <gazebo/common/common.hh>
+#include <revolve/brains/learner/RevEvaluator.h>
 
 namespace revolve
 {
   namespace gazebo
   {
-    class Evaluator
+    class Evaluator : public revolve::RevEvaluator
     {
       /// \brief Constructor
       public: Evaluator(const double _evaluationRate,
