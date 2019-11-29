@@ -5,7 +5,6 @@
 #ifndef REVOLVE_EVALUATOR_H
 #define REVOLVE_EVALUATOR_H
 
-#endif //REVOLVE_EVALUATOR_H
 namespace revolve {
 class Evaluator
 {
@@ -30,3 +29,5 @@ public:
     //                    const double step) = 0;
 };
 }
+
+#endif //REVOLVE_EVALUATOR_H

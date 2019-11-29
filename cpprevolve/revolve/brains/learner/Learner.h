@@ -25,6 +25,11 @@ public:
     /// \brief performes the optimization of the controller
     virtual void optimize(double time, double dt) = 0;
 
+    /// \brief resets the controller of the learner
+    void reset(std::unique_ptr<Learner> learner){
+        this->evaluator = move(learner->evaluator);
+    }
+
 protected:
     std::unique_ptr <revolve::Evaluator> evaluator;
 };

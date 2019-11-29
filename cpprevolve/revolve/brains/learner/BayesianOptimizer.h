@@ -32,6 +32,11 @@ public:
     /// \param optimized CPG brain
     void optimizeCPG(double time, double dt);
 
+    virtual void reset(std::unique_ptr<::revolve::BayesianOptimizer> bo_learner);
+
+    /// \brief controller subject to optimization
+public: std::unique_ptr <revolve::Controller> controller;
+
 protected:
     const double evaluation_time;
     double evaluation_end_time;
@@ -61,8 +66,6 @@ protected:
     /// \brief BO attributes
     size_t current_iteration = 0;
 
-    /// \brief controller subject to optimization
-    std::unique_ptr <revolve::Controller> controller;
 
     std::function<Eigen::VectorXd()> vectorize_controller;
     std::function<void(Eigen::VectorXd)> devectorize_controller;

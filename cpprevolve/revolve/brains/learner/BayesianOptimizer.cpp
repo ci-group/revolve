@@ -92,3 +92,8 @@ void BayesianOptimizer::optimize(double current_time, double dt)
     // Reset Evaluator
     this->evaluator->reset();
 }
+
+void BayesianOptimizer::reset(std::unique_ptr<::revolve::BayesianOptimizer> bo_learner){
+    this->evaluator = move(bo_learner->evaluator);
+    this->controller = move(bo_learner->controller);
+}

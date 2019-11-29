@@ -24,6 +24,7 @@
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
 #include <revolve/gazebo/brains/Brains.h>
+#include <revolve/brains/learner/NoLearner.h>
 
 #include "RobotController.h"
 
@@ -208,28 +209,28 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
   auto brain_sdf = _sdf->GetElement("rv:brain");
   auto controller_type = brain_sdf->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
-  auto learner = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
-  std::cout << "Loading controller " << controller_type << " and learner " << learner << std::endl;
+  auto learner_type = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
+  std::cout << "Loading controller " << controller_type << " and learner " << learner_type << std::endl;
 
-  if ("offline" == learner and "ann" == controller_type)
+  if ("offline" == learner_type and "ann" == controller_type)
   {
-    learner.reset(new NoLearner<NeuralNetwork>(this->model_, brain_sdf, motors_, sensors_));
+       learner.reset(new NoLearner<NeuralNetwork>(this->model_, brain_sdf, motors_, sensors_));
   }
-  else if ("rlpower" == learner and "spline" == controller_type)
+  else if ("rlpower" == learner_type and "spline" == controller_type)
   {
     if (not motors_.empty()) {
         learner.reset(new NoLearner<RLPower>(this->model_, brain_sdf, motors_, sensors_));
     }
   }
-  else if ("bo" == learner and "cpg" == controller_type)
+  else if ("bo" == learner_type and "cpg" == controller_type)
   {
     learner.reset(new NoLearner<DifferentialCPG>(this->model_, _sdf, motors_, sensors_));
   }
-  else if ("offline" == learner and "cpg" == controller_type)
+  else if ("offline" == learner_type and "cpg" == controller_type)
   {
       learner.reset(new NoLearner<DifferentialCPGClean>(brain_sdf, motors_));
   }
-  else if ("offline" == learner and "cppn-cpg" == controller_type)
+  else if ("offline" == learner_type and "cppn-cpg" == controller_type)
   {
       learner.reset(new NoLearner<DifferentialCPPNCPG>(brain_sdf, motors_));
   }
