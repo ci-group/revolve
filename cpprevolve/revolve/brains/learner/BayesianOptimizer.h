@@ -10,66 +10,63 @@
 #include "../controller/DifferentialCPG.h"
 
 namespace revolve {
-    class BayesianOptimizer : public Learner {
-    public:
-        /// \brief Constructor
-        BayesianOptimizer(std::unique_ptr<revolve::DifferentialCPG> controller) ;
+class BayesianOptimizer : public Learner
+{
+public:
+    /// \brief Constructor
+    BayesianOptimizer(std::unique_ptr <revolve::DifferentialCPG> controller, std::unique_ptr<Evaluator> evaluator);
 
-        /// \brief Destructor
-        ~BayesianOptimizer();
+    /// \brief Destructor
+    ~BayesianOptimizer();
 
-        /// \brief performes the optimization of the controller. Used as a proxy to call the right optimization method
-        void Optimize() override;
+    /// \brief performes the optimization of the controller. Used as a proxy to call the right optimization method
+    void optimize(double time, double dt) override;
 
 
-        virtual revolve::Controller* getController() {
-            return this->controller.get();
-        }
+    virtual revolve::Controller *getController()
+    {
+        return this->controller.get();
+    }
 
-        /// \brief Do the optimization for a CPG controller
-        /// \param optimized CPG brain
-        std::unique_ptr<revolve::DifferentialCPG> OptimizeCPG();
+    /// \brief Do the optimization for a CPG controller
+    /// \param optimized CPG brain
+    void optimizeCPG(double time, double dt);
 
-        // BO Learner parameters
-    private: double kernel_noise;
-    private: bool kernel_optimize_noise;
-    public: double kernel_sigma_sq;
-    public: double kernel_l;
-    private: int kernel_squared_exp_ard_k;
-    private: double acqui_gpucb_delta;
-    public: double acqui_ucb_alpha;
-    private: double acqui_ei_jitter;
+protected:
+    const double evaluation_time;
+    double evaluation_end_time;
 
-        /// \brief Specifies the acquisition function used
-    public: std::string acquisition_function;
+    // BO Learner parameters
+    double kernel_noise;
+    bool kernel_optimize_noise;
+    double kernel_sigma_sq;
+    double kernel_l;
+    int kernel_squared_exp_ard_k;
+    double acqui_gpucb_delta;
+    double acqui_ucb_alpha;
+    double acqui_ei_jitter;
 
-        /// \brief Max number of iterations learning is allowed
-    private: size_t n_learning_iterations;
+    /// \brief Specifies the acquisition function used
+    std::string acquisition_function;
 
-        /// \brief Number of initial samples
-    private: size_t n_init_samples;
+    /// \brief Max number of iterations learning is allowed
+    size_t n_learning_iterations;
 
-        /// \brief Cool down period
-    private: size_t n_cooldown_iterations;
+    /// \brief Number of initial samples
+    size_t n_init_samples;
 
-        /// \brief How to take initial random samples
-    private: std::string init_method;
+    /// \brief All samples seen so far.
+    std::vector <Eigen::VectorXd> samples;
 
-        /// \brief All samples seen so far.
-    private: std::vector< Eigen::VectorXd > samples;
+    /// \brief BO attributes
+    size_t current_iteration = 0;
 
-        /// \brief BO attributes
-    private: size_t current_iteration = 0;
+    /// \brief controller subject to optimization
+    std::unique_ptr <revolve::Controller> controller;
 
-        /// \brief controller subject to optimization
-    protected: std::unique_ptr<revolve::Controller> controller;
-
-    private: std::string directory_name;
-
-        /// \brief evaluation rate
-    private: double evaluation_rate;
-
-    };
+    std::function<Eigen::VectorXd()> vectorize_controller;
+    std::function<void(Eigen::VectorXd)> devectorize_controller;
+};
 }
 
 #endif //REVOLVE_BAYESIANOPTIMIZER_H

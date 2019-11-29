@@ -213,25 +213,25 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
   if ("offline" == learner and "ann" == controller_type)
   {
-    brain_.reset(new NeuralNetwork(this->model_, brain_sdf, motors_, sensors_));
+    learner.reset(new NoLearner<NeuralNetwork>(this->model_, brain_sdf, motors_, sensors_));
   }
   else if ("rlpower" == learner and "spline" == controller_type)
   {
     if (not motors_.empty()) {
-        brain_.reset(new RLPower(this->model_, brain_sdf, motors_, sensors_));
+        learner.reset(new NoLearner<RLPower>(this->model_, brain_sdf, motors_, sensors_));
     }
   }
   else if ("bo" == learner and "cpg" == controller_type)
   {
-    brain_.reset(new DifferentialCPG(this->model_, _sdf, motors_, sensors_));
+    learner.reset(new NoLearner<DifferentialCPG>(this->model_, _sdf, motors_, sensors_));
   }
   else if ("offline" == learner and "cpg" == controller_type)
   {
-      brain_.reset(new DifferentialCPGClean(brain_sdf, motors_));
+      learner.reset(new NoLearner<DifferentialCPGClean>(brain_sdf, motors_));
   }
   else if ("offline" == learner and "cppn-cpg" == controller_type)
   {
-      brain_.reset(new DifferentialCPPNCPG(brain_sdf, motors_));
+      learner.reset(new NoLearner<DifferentialCPPNCPG>(brain_sdf, motors_));
   }
   else
   {
@@ -267,8 +267,18 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
 {
   auto currentTime = _info.simTime.Double() - initTime_;
 
-  if (brain_)
-    brain_->Update(motors_, sensors_, currentTime, actuationTime_);
+  if (evaluator)
+      evaluator->update(...);
+
+  if (learner) {
+      learner->optimize(motors_, sensors_, currentTime, actuationTime_);
+      ::revolve::Controller *controller = learner->getController();
+      if (controller) {
+          controller->update(motors_, sensors_, currentTime, (_info.simTime - lastActuationTime_).Double());
+      }
+  }
+
+
 }
 
 /////////////////////////////////////////////////

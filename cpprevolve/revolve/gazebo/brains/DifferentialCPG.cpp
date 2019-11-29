@@ -354,7 +354,7 @@ DifferentialCPG::DifferentialCPG(
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
-  this->evaluator->directory_name = this->directory_name;
+  //this->evaluator->directory_name = this->directory_name;
 }
 
 /**
@@ -490,7 +490,7 @@ void DifferentialCPG::bo_init_sampling(){
  */
 void DifferentialCPG::save_fitness(){
   // Get fitness
-  double fitness = this->evaluator->Fitness();
+  double fitness = this->evaluator->fitness();
 
   // Save sample if it is the best seen so far
   if(fitness >this->best_fitness)
@@ -715,7 +715,8 @@ void DifferentialCPG::Update(
     p += sensor->n_inputs();
   }
 
-  this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+  //TODO remove
+  this->evaluator->update(this->robot->WorldPose(), _time, _step);
 
   // Only start recording the fitness after the startup time each iteration
   double elapsed_evaluation_time = _time - this->start_time;
@@ -819,7 +820,7 @@ void DifferentialCPG::Update(
 
     // Evaluation policy here
     this->start_time = _time;
-    this->evaluator->Reset();
+    this->evaluator->reset();
     this->current_iteration += 1;
   }
 

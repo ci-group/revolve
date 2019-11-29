@@ -72,7 +72,7 @@ YamlBodyParser::YamlBodyParser(const std::string &_genome)
   }
 
   this->Init(yaml_genome);
-};
+}
 
 ///////////////////////////////////////////////////
 void YamlBodyParser::ParseFile(const std::string &_file_path)

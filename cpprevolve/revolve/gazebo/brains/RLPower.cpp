@@ -103,7 +103,7 @@ void RLPower::Update(
   {
     this->UpdatePolicy(numMotors);
     this->startTime_ = _time;
-    this->evaluator_->Reset();
+    this->evaluator_->reset();
   }
 
   // generate outputs
@@ -119,7 +119,7 @@ void RLPower::Update(
   }
 
   auto currPosition = this->robot_->WorldPose();
-  this->evaluator_->Update(currPosition, _time, _step);
+  this->evaluator_->update(currPosition, _time, _step);
   delete[] output;
 }
 
@@ -476,7 +476,7 @@ const double RLPower::SIGMA = 0.98;
 
 double RLPower::Fitness()
 {
-  return this->evaluator_->Fitness();
+  return this->evaluator_->fitness();
 }
 
 void RLPower::Modify(ConstModifyPolicyPtr &/* _request */)

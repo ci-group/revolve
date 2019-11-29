@@ -10,11 +10,15 @@
 
 using namespace revolve;
 
-revolve::BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::DifferentialCPG> controller)
-: Learner()
-, controller(std::move(controller)){
-    this->n_init_samples = 50;
-    this->init_method = "LHS";
+revolve::BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::DifferentialCPG> controller, std::unique_ptr<Evaluator> evaluator)
+        : Learner(std::move(evaluator))
+        , evaluation_time(15)
+        , evaluation_end_time(-1)
+        , n_learning_iterations(50)
+        , controller(std::move(controller))
+{
+    this->n_init_samples = 1;
+    //this->init_method = "LHS";
     this->kernel_noise = 0.00000001;
     this->kernel_optimize_noise = "false";
     this->kernel_sigma_sq = 0.222;
@@ -24,39 +28,67 @@ revolve::BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::Different
     this->acqui_ucb_alpha = 0.44;
     this->acqui_ei_jitter = 0;
     this->acquisition_function = "UCB";
-}
 
-BayesianOptimizer::~BayesianOptimizer() {}
+    if (typeid(this->controller) == typeid(std::unique_ptr<revolve::DifferentialCPG>)) {
+        devectorize_controller = [this](Eigen::VectorXd weights) {
+            //revolve::DifferentialCPG *controller = dynamic_cast<::revolve::DifferentialCPG *>( this->getController());
+            //std::vector<double> &controller_weights = controller->loadedWeights;
+            //
+            //Eigen::VectorXd eigen_weights(weights.size());
+            //for (size_t j = 0; j < controller_weights.size(); j++) {
+            //    controller_weights.at(j) = weights(j);
+            //}
 
-void BayesianOptimizer::Optimize()
-{
-    // if (not time pass 15 seconds) return;
+            //TODO controller->load_weights()
+        };
 
-    if(typeid(this->controller) == typeid(std::unique_ptr<revolve::DifferentialCPG>))
-    {
-        this->controller = BayesianOptimizer::OptimizeCPG();
+        vectorize_controller = [this]() {
+            revolve::DifferentialCPG *controller = dynamic_cast<::revolve::DifferentialCPG *>( this->getController());
+            const std::vector<double> &weights = controller->loadedWeights;
+
+            // std::vector -> Eigen::Vector
+            Eigen::VectorXd eigen_weights(weights.size());
+            for (size_t j = 0; j < weights.size(); j++) {
+                eigen_weights(j) = weights.at(j);
+            }
+
+            return eigen_weights;
+        };
+    } else {
+        throw std::runtime_error("Controller not supported");
     }
 }
 
-std::unique_ptr<revolve::DifferentialCPG> BayesianOptimizer::OptimizeCPG()
-{
-    revolve::DifferentialCPG* controller = dynamic_cast<revolve::DifferentialCPG*>( this->getController() );
-    std::vector< double > weights = controller->loadedWeights;
+BayesianOptimizer::~BayesianOptimizer()
+{}
 
-    // Save weights for brain
-    Eigen::VectorXd loaded_brain(weights.size());
-    for(size_t j = 0; j < weights.size(); j++)
+void BayesianOptimizer::optimize(double current_time, double dt)
+{
+    if (current_time < evaluation_end_time) return;
+
+    if (samples.empty())
     {
-        loaded_brain(j) = weights.at(j);
+        assert(n_init_samples == 1 and "INIT SAMPLES > 1 not supported");
+
+        // Save these weights
+        this->samples.push_back(this->vectorize_controller());
+        this->current_iteration = 0;
+    }
+    else // next eval
+    {
+        //TODO DifferentialCPG::bo_step()
+        /*boptimizer.optimize(DifferentialCPG::evaluation_function(18),
+                            this->samples,
+                            this->observations);
+        Eigen::VectorXd x = boptimizer.last_sample();
+        this->samples.push_back(x);
+
+        this->devectorize_controller(x);*/
+        
     }
 
-    // Save these weights
-    this->samples.push_back(loaded_brain);
-
-    // Go directly into cooldown phase: Note we do require that best_sample is filled. Check this
-    this->current_iteration = this->n_init_samples + this->n_learning_iterations;
-
-    // Initiate the cpp Evaluator
-    this->evaluator.reset(new revolve::RevEvaluator(this->evaluation_rate));
-    this->evaluator->directory_name = this->directory_name;
+    // wait for next evaluation
+    this->evaluation_end_time = current_time + evaluation_time;
+    // Reset Evaluator
+    this->evaluator->reset();
 }

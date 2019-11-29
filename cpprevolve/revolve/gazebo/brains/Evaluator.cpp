@@ -35,11 +35,13 @@ double Evaluator::measure_distance(
 }
 
 /////////////////////////////////////////////////
-Evaluator::Evaluator(const double _evaluationRate,
+Evaluator::Evaluator(const double evaluation_rate,
                      const double step_saving_rate)
-    : revolve::RevEvaluator(_evaluationRate, step_saving_rate)
-    , last_step_time(-1)
-    , step_poses(0)
+        : ::revolve::Evaluator()
+        , evaluation_rate_(evaluation_rate)
+        , last_step_time(-1)
+        , step_saving_rate(step_saving_rate)
+        , step_poses(0)
 {
     // moved to RevEvaluator
   // assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
@@ -56,7 +58,7 @@ Evaluator::Evaluator(const double _evaluationRate,
 Evaluator::~Evaluator() = default;
 
 /////////////////////////////////////////////////
-void Evaluator::Reset()
+void Evaluator::reset()
 {
   this->step_poses.clear(); //cleared to null
   this->path_length = 0.0;
@@ -65,7 +67,7 @@ void Evaluator::Reset()
 }
 
 /////////////////////////////////////////////////
-double Evaluator::Fitness()
+double Evaluator::fitness()
 {
   double fitness_value = 0.0;
   if(this->locomotion_type == "gait")
@@ -82,20 +84,11 @@ double Evaluator::Fitness()
 
     this->step_poses.push_back(this->current_position_);
     //step_poses: x y z roll pitch yaw
-    for (int i=1; i < this->step_poses.size(); i++)
+    for (size_t i=1; i < this->step_poses.size(); i++)
     {
       const auto &pose_i_1 = this->step_poses[i-1];
       const auto &pose_i = this->step_poses[i];
       this->path_length += Evaluator::measure_distance(pose_i_1, pose_i);
-      //save coordinations to coordinates.txt
-      std::ofstream coordinates;
-      coordinates.open(this->directory_name + "/coordinates.txt",std::ios::app);
-
-      if(i == 1)
-      {
-          coordinates << std::fixed << start_position_.Pos().X() << " " << start_position_.Pos().Y() << std::endl;
-      }
-      coordinates << std::fixed << pose_i.Pos().X() << " " << pose_i.Pos().Y() << std::endl;
     }
 
     ////********** directed locomotion fitness function **********////
@@ -105,11 +98,6 @@ double Evaluator::Fitness()
     {
       beta0 = 2 * M_PI - std::abs(beta0);
     }
-
-    //save direction to coordinates.txt: This is used to make Figure 8
-    std::ofstream coordinates;
-    coordinates.open(this->directory_name + "/coordinates.txt",std::ios::app);
-    coordinates << std::fixed << beta0 << std::endl;
 
     double beta1 = std::atan2(
         this->current_position_.Pos().Y() - this->start_position_.Pos().Y(),
@@ -168,31 +156,31 @@ double Evaluator::Fitness()
 }
 
 // update is always running in the loop
-void Evaluator::Update(const ignition::math::Pose3d &_pose,
+void Evaluator::update(const ignition::math::Pose3d &pose,
                        const double time,
                        const double step)
 {
-  //  this->path_length += measure_distance(current_position_, _pose);
+  //  this->path_length += measure_distance(current_position_, pose);
   this->previous_position_ = current_position_;
-  this->current_position_ = _pose;
+  this->current_position_ = pose;
 
   //If `last_step_time` is not initialized, do the initialization now
   if (this->last_step_time < 0)
   {
     this->last_step_time = time; // 0.005
-    this->step_poses.push_back(_pose);
+    this->step_poses.push_back(pose);
   }
 
   //save the startPosition in the beginning of each iteration
   if (this->last_step_time < 0.001) // 0.001 < 0.005
   {
-    this->step_poses.push_back(_pose);
+    this->step_poses.push_back(pose);
     this->last_step_time = time;
   }
   //update information each step
   if ((time - this->last_step_time) > this->evaluation_rate_ * this->step_saving_rate)
   {
-    this->step_poses.push_back(_pose);
+    this->step_poses.push_back(pose);
     this->last_step_time = time;
   };
 }
