@@ -66,6 +66,13 @@ public:
             const double _time,
             const double _step) override;
 
+    /// \brief Set the connection weights of the Controller and make sure the matrix is set appropriately
+    /// \param[in] The weights to be set
+    void set_connection_weights(std::vector<double> weights);
+
+    /// \brief Return the weights of the connections
+    std::vector<double> get_connection_weights();
+
 protected:
 
     void step(
@@ -83,8 +90,6 @@ private:
 public:
     std::map< std::tuple< int, int, int >, size_t > motor_coordinates;
 
-    /// \brief weights loaded from the contstructor
-    std::vector<double> loadedWeights;
 
 protected:
     /// \brief Register of motor IDs and their x,y-coordinates
@@ -127,8 +132,8 @@ private:
     /// \brief Limbo optimizes in [0,1]
     double range_ub;
 
-    /// \brief Loaded sample
-    std::vector<double> sample;
+    /// \brief Loaded weights
+    std::vector<double> connection_weights;
 
     /// \brief The number of weights to optimize
     size_t n_weights;

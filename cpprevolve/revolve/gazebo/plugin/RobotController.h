@@ -116,7 +116,7 @@ namespace revolve
       /// \brief Holds an instance of the sensor factory
       protected: SensorFactoryPtr sensorFactory_;
 
-      /// \brief Brain controlling this model
+      /// \brief Learner for the brain controlling this model
       protected: std::unique_ptr<::revolve::Learner> learner;
 
       /// \brief Actuation time, in seconds

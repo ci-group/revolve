@@ -31,20 +31,21 @@ revolve::BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::Different
 
     if (typeid(this->controller) == typeid(std::unique_ptr<revolve::DifferentialCPG>)) {
         devectorize_controller = [this](Eigen::VectorXd weights) {
-            //revolve::DifferentialCPG *controller = dynamic_cast<::revolve::DifferentialCPG *>( this->getController());
-            //std::vector<double> &controller_weights = controller->loadedWeights;
-            //
-            //Eigen::VectorXd eigen_weights(weights.size());
-            //for (size_t j = 0; j < controller_weights.size(); j++) {
-            //    controller_weights.at(j) = weights(j);
-            //}
+            // Eigen::vector -> std::vector
+            std::vector<double> std_weights(weights.size());
+            for (size_t j = 0; j < weights.size(); j++) {
+                std_weights[j] = weights(j);
+            }
 
-            //TODO controller->load_weights()
+            revolve::DifferentialCPG *temp_controller = dynamic_cast<::revolve::DifferentialCPG *>( this->getController());
+            temp_controller->set_connection_weights(std_weights);
+
+            this->controller.reset(temp_controller);
         };
 
         vectorize_controller = [this]() {
             revolve::DifferentialCPG *controller = dynamic_cast<::revolve::DifferentialCPG *>( this->getController());
-            const std::vector<double> &weights = controller->loadedWeights;
+            const std::vector<double> &weights = controller->get_connection_weights();
 
             // std::vector -> Eigen::Vector
             Eigen::VectorXd eigen_weights(weights.size());
