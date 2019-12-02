@@ -17,7 +17,7 @@ public:
     BayesianOptimizer(std::unique_ptr <revolve::DifferentialCPG> controller, std::unique_ptr<Evaluator> evaluator);
 
     /// \brief Destructor
-    ~BayesianOptimizer();
+    ~BayesianOptimizer() = default;
 
     /// \brief performes the optimization of the controller. Used as a proxy to call the right optimization method
     void optimize(double time, double dt) override;
@@ -28,14 +28,37 @@ public:
         return this->controller.get();
     }
 
-    /// \brief Do the optimization for a CPG controller
-    /// \param optimized CPG brain
-    void optimizeCPG(double time, double dt);
-
     virtual void reset(std::unique_ptr<::revolve::BayesianOptimizer> bo_learner);
 
+    /// \brief bookeeping of the fitnensses
+    void save_fitness();
+
+
+public:
     /// \brief controller subject to optimization
-public: std::unique_ptr <revolve::Controller> controller;
+    std::unique_ptr <revolve::Controller> controller;
+
+    /// \brief parameters for optimization
+    struct params;
+
+    /// \brief Dummy function for limbo
+    class evaluation_function{
+    public:
+        evaluation_function(size_t dim_in)
+                : _dim_in(dim_in)
+        {}    // Number of input dimension (samples.size())
+        size_t dim_in() const
+        { return _dim_in; }    // number of dimensions of the fitness
+        BO_PARAM(size_t, dim_out, 1);
+
+        Eigen::VectorXd operator()(const Eigen::VectorXd &x) const
+        {
+            return limbo::tools::make_vector(0);
+        };
+
+    private:
+        const size_t _dim_in;
+    };
 
 protected:
     const double evaluation_time;
@@ -66,9 +89,20 @@ protected:
     /// \brief BO attributes
     size_t current_iteration = 0;
 
-
+    /// \brief function to turn the controller into a sample
     std::function<Eigen::VectorXd()> vectorize_controller;
+
+    /// \brief function to turn a sample into a controller
     std::function<void(Eigen::VectorXd)> devectorize_controller;
+
+    /// \brief All fitnesses seen so far. Called observations in limbo context
+    std::vector< Eigen::VectorXd > observations;
+
+    /// \brief Best fitness seen so far
+    double best_fitness = -10.0;
+
+    /// \brief Sample corresponding to best fitness
+    Eigen::VectorXd best_sample;
 };
 }
 

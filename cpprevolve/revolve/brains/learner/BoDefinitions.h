@@ -97,7 +97,7 @@ namespace limbo {
                 }
                 else {
                     std::cout << "OBSERVATION SET IS EMPTY \n";
-                    _model = model_t(StateFunction::dim_in(), StateFunction::dim_out());
+                    _model = model_t(sfun.dim_in(), StateFunction::dim_out());
                 }
                 acqui_optimizer_t acqui_optimizer;
 
@@ -112,7 +112,7 @@ namespace limbo {
 
                     auto acqui_optimization =
                             [&](const Eigen::VectorXd& x, bool g) { return acqui(x, afun, g); };
-                    Eigen::VectorXd starting_point = tools::random_vector(StateFunction::dim_in(), Params::bayes_opt_bobase::bounded());
+                    Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_bobase::bounded());
 
                     // new samples are from the acquisition optimizer
                     Eigen::VectorXd new_sample = acqui_optimizer(acqui_optimization, starting_point, Params::bayes_opt_bobase::bounded());
