@@ -13,11 +13,11 @@ namespace revolve {
 class Learner
 {
 public:
-
     /// \brief Constructor
-    explicit Learner(std::unique_ptr <Evaluator> evaluator)
+    explicit Learner(std::unique_ptr <Evaluator> evaluator, std::unique_ptr<Controller> controller)
         : evaluator(std::move(evaluator))
-    {}
+        , controller(std::move(controller))
+        {}
 
     /// \brief Deconstructor
     virtual ~Learner() = default;
@@ -28,10 +28,18 @@ public:
     /// \brief resets the controller of the learner
     void reset(std::unique_ptr<Learner> learner){
         this->evaluator = move(learner->evaluator);
+        this->controller = move(learner->controller);
     }
 
-protected:
+    virtual revolve::Controller *getController()
+    {
+        return this->controller.get();
+    }
+
     std::unique_ptr <revolve::Evaluator> evaluator;
+
+    /// \brief controller subject to optimization
+    std::unique_ptr <revolve::Controller> controller;
 };
 
 }

@@ -43,10 +43,6 @@ Evaluator::Evaluator(const double evaluation_rate,
         , step_saving_rate(step_saving_rate)
         , step_poses(0)
 {
-    // moved to RevEvaluator
-  // assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
-  // this->evaluation_rate_ = _evaluationRate;
-
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();

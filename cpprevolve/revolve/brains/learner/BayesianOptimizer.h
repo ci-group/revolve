@@ -14,19 +14,13 @@ class BayesianOptimizer : public Learner
 {
 public:
     /// \brief Constructor
-    BayesianOptimizer(std::unique_ptr <revolve::DifferentialCPG> controller, std::unique_ptr<Evaluator> evaluator);
+    BayesianOptimizer(std::unique_ptr <revolve::Controller> controller, std::unique_ptr<revolve::Evaluator> evaluator);
 
     /// \brief Destructor
     ~BayesianOptimizer() = default;
 
     /// \brief performes the optimization of the controller. Used as a proxy to call the right optimization method
     void optimize(double time, double dt) override;
-
-
-    virtual revolve::Controller *getController()
-    {
-        return this->controller.get();
-    }
 
     virtual void reset(std::unique_ptr<::revolve::BayesianOptimizer> bo_learner);
 
@@ -35,8 +29,6 @@ public:
 
 
 public:
-    /// \brief controller subject to optimization
-    std::unique_ptr <revolve::Controller> controller;
 
     /// \brief parameters for optimization
     struct params;
@@ -53,7 +45,9 @@ public:
 
         Eigen::VectorXd operator()(const Eigen::VectorXd &x) const
         {
-            return limbo::tools::make_vector(0);
+            Eigen::VectorXd res(1);
+            res(0) = 0;
+            return res;
         };
 
     private:

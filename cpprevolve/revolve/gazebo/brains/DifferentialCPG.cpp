@@ -602,9 +602,9 @@ struct DifferentialCPG::Params
     };
 };
 
-BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::acqui_ucb, alpha);
-BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, sigma_sq);
-BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, l);
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::acqui_ucb, alpha)
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, sigma_sq)
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, l)
 
 /**
  * Wrapper function that makes calls to limbo to solve the current BO

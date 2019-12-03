@@ -20,13 +20,11 @@ using Init_t = limbo::init::LHS<BayesianOptimizer::params>;
 using Kernel_t = limbo::kernel::MaternFiveHalves<BayesianOptimizer::params>;
 using GP_t = limbo::model::GP<BayesianOptimizer::params, Kernel_t, Mean_t>;
 
-revolve::BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::DifferentialCPG> controller,
-                                              std::unique_ptr<Evaluator> evaluator)
-        : Learner(std::move(evaluator))
+BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::Controller> controller, std::unique_ptr<revolve::Evaluator> evaluator)
+        : Learner(std::move(evaluator), std::move(controller))
         , evaluation_time(15)
         , evaluation_end_time(-1)
         , n_learning_iterations(50)
-        , controller(std::move(controller))
 {
     this->n_init_samples = 1;
     //this->init_method = "LHS";
@@ -89,8 +87,6 @@ struct BayesianOptimizer::params
 #elif defined(USE_LIBCMAES)
     struct opt_cmaes : public lm::defaults::opt_cmaes {
     };
-#else
-#error(NO SOLVER IS DEFINED)
 #endif
 
     struct kernel : public limbo::defaults::kernel
@@ -175,6 +171,7 @@ void BayesianOptimizer::optimize(double current_time, double dt)
 {
     if (current_time < evaluation_end_time) return;
 
+    // init
     if (samples.empty()) {
         assert(n_init_samples == 1 and "INIT SAMPLES > 1 not supported");
 
@@ -203,6 +200,8 @@ void BayesianOptimizer::optimize(double current_time, double dt)
                             this->observations);
         x = boptimizer.last_sample();
         this->samples.push_back(x);
+
+        this->save_fitness();
     }
 
     // wait for next evaluation

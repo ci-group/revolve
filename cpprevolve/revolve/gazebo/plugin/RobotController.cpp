@@ -25,6 +25,7 @@
 #include <revolve/gazebo/sensors/SensorFactory.h>
 #include <revolve/gazebo/brains/Brains.h>
 #include <revolve/brains/learner/NoLearner.h>
+#include <revolve/brains/learner/BayesianOptimizer.h>
 
 #include "RobotController.h"
 
@@ -212,6 +213,7 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   auto learner_type = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
   std::cout << "Loading controller " << controller_type << " and learner " << learner_type << std::endl;
 
+  // TODO: Clean this if-else mess
   if ("offline" == learner_type and "ann" == controller_type)
   {
        learner.reset(new NoLearner<NeuralNetwork>(this->model_, brain_sdf, motors_, sensors_));
@@ -233,6 +235,14 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   else if ("offline" == learner_type and "cppn-cpg" == controller_type)
   {
       learner.reset(new NoLearner<DifferentialCPPNCPG>(brain_sdf, motors_));
+  }
+  else if ("bo" == learner_type and "cpg" == controller_type){
+      std::unique_ptr<::revolve::DifferentialCPG> controller;
+      controller.reset(new DifferentialCPGClean(brain_sdf, motors_));
+      
+      std::unique_ptr<::revolve::Evaluator> evaluator;
+      evaluator.reset(new ::revolve::gazebo::Evaluator(15.0));
+      learner.reset(new BayesianOptimizer(move(controller), move(evaluator))); // TODO: evaluation_rate??
   }
   else
   {
@@ -268,14 +278,13 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
 {
   auto currentTime = _info.simTime.Double() - initTime_;
 
-  if (evaluator)
-      evaluator->update(...);
+  // if (learner->evaluator){
+  //    learner->evaluator->update();
 
   if (learner) {
-      learner->optimize(motors_, sensors_, currentTime, actuationTime_);
-      ::revolve::Controller *controller = learner->getController();
-      if (controller) {
-          controller->update(motors_, sensors_, currentTime, (_info.simTime - lastActuationTime_).Double());
+      learner->optimize(currentTime, actuationTime_);
+      if (learner->controller) {
+          learner->controller->update(motors_, sensors_, currentTime, (_info.simTime - lastActuationTime_).Double());
       }
   }
 
