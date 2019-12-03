@@ -6,27 +6,41 @@
 #define REVOLVE_LEARNER_H
 
 #include "../controller/Controller.h"
-#include "RevEvaluator.h"
+#include "Evaluator.h"
 
-namespace revolve
+namespace revolve {
+
+class Learner
 {
+public:
+    /// \brief Constructor
+    explicit Learner(std::unique_ptr <Evaluator> evaluator, std::unique_ptr<Controller> controller)
+        : evaluator(std::move(evaluator))
+        , controller(std::move(controller))
+        {}
 
-    class Learner
+    /// \brief Deconstructor
+    virtual ~Learner() = default;
+
+    /// \brief performes the optimization of the controller
+    virtual void optimize(double time, double dt) = 0;
+
+    /// \brief resets the controller of the learner
+    void reset(std::unique_ptr<Learner> learner){
+        this->evaluator = move(learner->evaluator);
+        this->controller = move(learner->controller);
+    }
+
+    virtual revolve::Controller *getController()
     {
-    protected: std::unique_ptr<revolve::RevEvaluator> evaluator;
+        return this->controller.get();
+    }
 
-    public:
+    std::unique_ptr <revolve::Evaluator> evaluator;
 
-        /// \brief Constructor
-        explicit Learner(){}
-
-        /// \brief Deconstructor
-        virtual ~Learner() {}
-
-        /// \brief performes the optimization of the controller
-        virtual void Optimize() = 0;
-
-    };
+    /// \brief controller subject to optimization
+    std::unique_ptr <revolve::Controller> controller;
+};
 
 }
 

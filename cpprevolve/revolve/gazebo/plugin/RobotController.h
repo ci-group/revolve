@@ -29,6 +29,7 @@
 #include <gazebo/msgs/msgs.hh>
 
 #include <revolve/gazebo/Types.h>
+#include <revolve/brains/learner/Learner.h>
 #include "revolve/brains/controller/sensors/Sensor.h"
 #include "revolve/brains/controller/actuators/Actuator.h"
 
@@ -115,8 +116,8 @@ namespace revolve
       /// \brief Holds an instance of the sensor factory
       protected: SensorFactoryPtr sensorFactory_;
 
-      /// \brief Brain controlling this model
-      protected: BrainPtr brain_;
+      /// \brief Learner for the brain controlling this model
+      protected: std::unique_ptr<::revolve::Learner> learner;
 
       /// \brief Actuation time, in seconds
       protected: double actuationTime_;

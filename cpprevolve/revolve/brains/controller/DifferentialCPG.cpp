@@ -57,15 +57,15 @@ DifferentialCPG::DifferentialCPG(
         : next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()])
-        , sample(actuators.size(), 0)
+        , connection_weights(actuators.size(), 0)
 {
     this->init_params_and_connections(params, actuators);
     // Save weights for brain
     assert(params.weights.size() == n_weights);
-    sample.resize(n_weights, 0);
+    connection_weights.resize(n_weights, 0);
     for(size_t j = 0; j < n_weights; j++)
     {
-        sample.at(j) = params.weights.at(j);
+        connection_weights.at(j) = params.weights.at(j);
     }
 
     // Set ODE matrix at initialization
@@ -88,7 +88,7 @@ DifferentialCPG::DifferentialCPG(
         : next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()])
-        , sample(actuators.size(), 0)
+        , connection_weights(actuators.size(), 0)
 {
     this->init_params_and_connections(params, actuators);
 
@@ -98,7 +98,7 @@ DifferentialCPG::DifferentialCPG(
 
     // get weights for each connection
     // assuming that connections are distinct for each direction
-    sample.resize(n_weights, 0);
+    connection_weights.resize(n_weights, 0);
     std::vector<double> inputs(8);
 
     for(const std::pair< const std::tuple< int, int, int>, size_t > &motor: motor_coordinates)
@@ -118,9 +118,9 @@ DifferentialCPG::DifferentialCPG(
         std::cout << "Creating weight ["
                   << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
                   << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
-                  << "] to sample[" << k << "]\t-> " << weight << std::endl;
+                  << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
 #endif
-        sample.at(k) = weight;  // order of weights corresponds to order of connections.
+        connection_weights.at(k) = weight;  // order of weights corresponds to order of connections.
     }
 
     for(const std::pair<const std::tuple<int, int, int, int, int, int, int, int>, int > &con : connections)
@@ -135,9 +135,9 @@ DifferentialCPG::DifferentialCPG(
         std::cout << "Creating weight ["
                   << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
                   << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
-                  << "] to sample[" << k << "]\t-> " << weight << std::endl;
+                  << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
 #endif
-        sample.at(k) = weight;  // order of weights corresponds to order of connections.
+        connection_weights.at(k) = weight;  // order of weights corresponds to order of connections.
     }
 
     // Set ODE matrix at initialization
@@ -158,7 +158,7 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
     this->signal_factor_mid = params.signal_factor_mid;
     this->signal_factor_left_right = params.signal_factor_left_right;
     this->abs_output_bound = params.abs_output_bound;
-    this->loadedWeights = params.weights;
+    this->connection_weights = params.weights;
 
     size_t j=0;
     for (const std::shared_ptr<Actuator> &actuator: actuators)
@@ -238,7 +238,7 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
                     std::cout << "Creating connnection ["
                               << x << ';' << y << ';' << z << ';' << 1 << '-'
                               << near_x << ';' << near_y << ';' << near_z << ';' << 1
-                              << "] to sample[" << i << ']' << std::endl;
+                              << "] to connection_weights[" << i << ']' << std::endl;
 #endif
                     this->connections[{x, y, z, 1, near_x, near_y, near_z, 1}] = i;
                     //this->connections[{near_x, near_y, near_z, 1, x, y, z, 1}] = i;
@@ -262,6 +262,15 @@ DifferentialCPG::~DifferentialCPG()
 {
     delete[] this->next_state;
     delete[] this->output;
+}
+
+void DifferentialCPG::set_connection_weights(std::vector<double> weights){
+    this->connection_weights = weights;
+    this->set_ode_matrix();
+}
+
+std::vector<double> DifferentialCPG::get_connection_weights(){
+    return this->connection_weights;
 }
 
 /**
@@ -322,10 +331,10 @@ void DifferentialCPG::set_ode_matrix()
         std::cout << "Setting connection ["
                   << x << ';' << y << ';' << z << ';' << 1 << '-'
                   << x << ';' << y << ';' << z << ';' << -1
-                  << "] to sample[" << k << "]\t-> " << this->sample.at(k) << std::endl;
+                  << "] to connection_weights[" << k << "]\t-> " << this->connection_weights.at(k) << std::endl;
 #endif
-        auto weight = this->sample.at(k) *
-                 (this->range_ub - this->range_lb) + this->range_lb;
+        auto weight = this->connection_weights.at(k) *
+                      (this->range_ub - this->range_lb) + this->range_lb;
         size_t i = index;
         size_t c = index + 1;
         matrix.at(i).at(c) = weight;
@@ -395,11 +404,11 @@ void DifferentialCPG::set_ode_matrix()
         std::cout << "Setting connection ["
                   << x1 << ';' << y1 << ';' << z1 << ';' << w1 << '-'
                   << x2 << ';' << y2 << ';' << z2 << ';' << w2
-                  << "] to sample[" << sample_index << "]\t-> " << this->sample.at(sample_index) << std::endl;
+                  << "] to connection_weights[" << sample_index << "]\t-> " << this->connection_weights.at(sample_index) << std::endl;
 #endif
 
         // Get weight
-        const auto w  = this->sample.at(sample_index) *
+        const auto w  = this->connection_weights.at(sample_index) *
                         (this->range_ub - this->range_lb) + this->range_lb;
 
         // Set connection in weight matrix

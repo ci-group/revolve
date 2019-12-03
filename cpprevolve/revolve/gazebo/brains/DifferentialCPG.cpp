@@ -354,7 +354,7 @@ DifferentialCPG::DifferentialCPG(
 
   // Initiate the cpp Evaluator
   this->evaluator.reset(new Evaluator(this->evaluation_rate));
-  this->evaluator->directory_name = this->directory_name;
+  //this->evaluator->directory_name = this->directory_name;
 }
 
 /**
@@ -462,7 +462,7 @@ void DifferentialCPG::bo_init_sampling(){
         init_sample(j) = all_dimensions.at(j).at(i)*my_range + ((double) rand() / (RAND_MAX))*my_range;
       }
 
-      // Append sample to samples
+      // Append connection_weights to samples
       this->samples.push_back(init_sample);
     }
   }
@@ -490,9 +490,9 @@ void DifferentialCPG::bo_init_sampling(){
  */
 void DifferentialCPG::save_fitness(){
   // Get fitness
-  double fitness = this->evaluator->Fitness();
+  double fitness = this->evaluator->fitness();
 
-  // Save sample if it is the best seen so far
+  // Save connection_weights if it is the best seen so far
   if(fitness >this->best_fitness)
   {
     this->best_fitness = fitness;
@@ -602,9 +602,9 @@ struct DifferentialCPG::Params
     };
 };
 
-BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::acqui_ucb, alpha);
-BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, sigma_sq);
-BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, l);
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::acqui_ucb, alpha)
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, sigma_sq)
+BO_DECLARE_DYN_PARAM(double, DifferentialCPG::Params::kernel_maternfivehalves, l)
 
 /**
  * Wrapper function that makes calls to limbo to solve the current BO
@@ -715,7 +715,8 @@ void DifferentialCPG::Update(
     p += sensor->n_inputs();
   }
 
-  this->evaluator->Update(this->robot->WorldPose(), _time, _step);
+  //TODO remove
+  this->evaluator->update(this->robot->WorldPose(), _time, _step);
 
   // Only start recording the fitness after the startup time each iteration
   double elapsed_evaluation_time = _time - this->start_time;
@@ -762,14 +763,14 @@ void DifferentialCPG::Update(
       {
         if (this->current_iteration < this->n_init_samples)
         {
-          std::cout << std::endl << "Evaluating initial random sample" << std::endl;
+          std::cout << std::endl << "Evaluating initial random connection_weights" << std::endl;
         }
         else
         {
           std::cout << std::endl << "I am learning " << std::endl;
         }
       }
-      // Get new sample (weights) and add sample
+      // Get new connection_weights (weights) and add connection_weights
       this->bo_step();
 
       // Set new weights
@@ -793,7 +794,7 @@ void DifferentialCPG::Update(
       // Update robot position
 //      this->evaluator->Update(this->robot->WorldPose(), _time, _step);
 
-      // Use best sample in next iteration
+      // Use best connection_weights in next iteration
       this->samples.push_back(this->best_sample);
 
       // Set ODE matrix
@@ -819,7 +820,7 @@ void DifferentialCPG::Update(
 
     // Evaluation policy here
     this->start_time = _time;
-    this->evaluator->Reset();
+    this->evaluator->reset();
     this->current_iteration += 1;
   }
 
@@ -940,7 +941,7 @@ void DifferentialCPG::set_ode_matrix(){
   // Reset neuron state
   this->reset_neuron_state();
 
-  // Save this sample to file
+  // Save this connection_weights to file
   std::ofstream samples_file;
   samples_file.open(this->directory_name  + "samples.txt", std::ios::app);
   auto sample = this->samples.at(this->current_iteration);
