@@ -2,8 +2,7 @@
 // Created by maarten on 03/02/19.
 //
 
-#ifndef REVOLVE_BOPTIMIZER_CPG_H
-#define REVOLVE_BOPTIMIZER_CPG_H
+#pragma once
 
 // Standard libraries
 #include <algorithm>
@@ -191,5 +190,3 @@ namespace limbo {
         using BOptimizerHPOpt = BOptimizer<Params, modelfun<_default_hp::model_t<Params>>, acquifun<_default_hp::acqui_t<Params>>, A1, A2, A3, A4>;
     }
 }
-
-#endif //REVOLVE_BOPTIMIZER_CPG_H

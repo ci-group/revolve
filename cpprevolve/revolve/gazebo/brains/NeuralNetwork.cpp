@@ -395,7 +395,7 @@ void NeuralNetwork::Step(const double _time)
 }
 
 /////////////////////////////////////////////////
-void NeuralNetwork::Update(
+void NeuralNetwork::update(
     const std::vector< MotorPtr > &_motors,
     const std::vector< SensorPtr > &_sensors,
     const double _time,

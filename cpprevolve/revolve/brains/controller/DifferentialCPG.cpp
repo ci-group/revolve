@@ -26,12 +26,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include <iomanip>
-#include <map>
 #include <memory>
 #include <random>
 #include <tuple>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <multineat/Genome.h>
 
@@ -52,7 +49,7 @@ using namespace revolve;
  * @param robot_config
  */
 DifferentialCPG::DifferentialCPG(
-        const DifferentialCPG::ControllerParams params,
+        const DifferentialCPG::ControllerParams &params,
         const std::vector<std::shared_ptr<Actuator>> &actuators)
         : next_state(nullptr)
         , n_motors(actuators.size())
@@ -82,7 +79,7 @@ DifferentialCPG::DifferentialCPG(
  * @param config_cppn_genome
  */
 DifferentialCPG::DifferentialCPG(
-        DifferentialCPG::ControllerParams params,
+        const DifferentialCPG::ControllerParams &params,
         const std::vector<std::shared_ptr<Actuator>> &actuators,
         const NEAT::Genome &gen)
         : next_state(nullptr)
@@ -562,7 +559,12 @@ void DifferentialCPG::step(
             // Don't use frame of reference
             else
             {
-                this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound)) - 1);
+                this->output[j] = this->signal_factor_all_
+                        * this->abs_output_bound
+                        * (
+                                (2.0) / (1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound))
+                                - 1
+                          );
             }
         }
         i++;

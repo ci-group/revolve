@@ -14,7 +14,11 @@ class BayesianOptimizer : public Learner
 {
 public:
     /// \brief Constructor
-    BayesianOptimizer(std::unique_ptr <revolve::Controller> controller, std::unique_ptr<revolve::Evaluator> evaluator);
+    explicit BayesianOptimizer(
+            std::unique_ptr <::revolve::Controller> controller,
+            std::unique_ptr<::revolve::Evaluator> evaluator,
+            double evaluation_time,
+            size_t n_learning_evalutions);
 
     /// \brief Destructor
     ~BayesianOptimizer() = default;
@@ -22,7 +26,8 @@ public:
     /// \brief performes the optimization of the controller. Used as a proxy to call the right optimization method
     void optimize(double time, double dt) override;
 
-    virtual void reset(std::unique_ptr<::revolve::BayesianOptimizer> bo_learner);
+    Controller *controller() override
+    { return this->_controller.get(); }
 
     /// \brief bookeeping of the fitnensses
     void save_fitness();
@@ -34,14 +39,16 @@ public:
     struct params;
 
     /// \brief Dummy function for limbo
-    class evaluation_function{
+    class evaluation_function {
     public:
-        evaluation_function(size_t dim_in)
+        explicit evaluation_function(size_t dim_in)
                 : _dim_in(dim_in)
         {}    // Number of input dimension (samples.size())
         size_t dim_in() const
         { return _dim_in; }    // number of dimensions of the fitness
-        BO_PARAM(size_t, dim_out, 1);
+
+        static size_t dim_out()
+        { return 1; }
 
         Eigen::VectorXd operator()(const Eigen::VectorXd &x) const
         {
@@ -55,6 +62,7 @@ public:
     };
 
 protected:
+    std::unique_ptr<::revolve::Controller> _controller;
     const double evaluation_time;
     double evaluation_end_time;
 
