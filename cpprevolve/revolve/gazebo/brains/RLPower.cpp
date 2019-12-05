@@ -47,10 +47,6 @@ RLPower::RLPower(
     , startTime_(-1)
     , evaluationRate_(30.0) // default
 {
-  // Create transport node
-  this->node_.reset(new gz::transport::Node());
-  this->node_->Init();
-
   auto learner_settings = _settings->GetElement("rv:learner");
 
   this->robot_ = _model;
@@ -82,7 +78,7 @@ RLPower::RLPower(
 RLPower::~RLPower() = default;
 
 /////////////////////////////////////////////////
-void RLPower::Update(
+void RLPower::update(
     const std::vector< MotorPtr > &_motors,
     const std::vector< SensorPtr > &/* _sensors */,
     double _time,

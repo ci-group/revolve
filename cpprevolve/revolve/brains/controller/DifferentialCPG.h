@@ -40,7 +40,7 @@ public:
     /// \param[in] params Parameters for the controller
     /// \param[in] _actuators Reference to a actuator list
     DifferentialCPG(
-            DifferentialCPG::ControllerParams params,
+            const DifferentialCPG::ControllerParams &params,
             const std::vector<std::shared_ptr<Actuator>> &_actuators);
 
     /// \brief Constructor for Controller with config CPPN
@@ -48,7 +48,7 @@ public:
     /// \param[in] _actuators Reference to a actuator list
     /// \param[in] config_cppn_genome Reference to the genome for configuring the weights in CPG
     DifferentialCPG(
-            DifferentialCPG::ControllerParams params,
+            const DifferentialCPG::ControllerParams &params,
             const std::vector<std::shared_ptr<Actuator>> &_actuators,
             const NEAT::Genome &config_cppn_genome);
 

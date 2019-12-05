@@ -16,15 +16,20 @@ using namespace revolve;
 
 // Copied from the limbo tutorial the BO implementation is based on
 using Mean_t = limbo::mean::Data<BayesianOptimizer::params>;
-using Init_t = limbo::init::LHS<BayesianOptimizer::params>;
+using Init_t = limbo::init::FlexibleLHS<BayesianOptimizer::params>;
 using Kernel_t = limbo::kernel::MaternFiveHalves<BayesianOptimizer::params>;
 using GP_t = limbo::model::GP<BayesianOptimizer::params, Kernel_t, Mean_t>;
 
-BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::Controller> controller, std::unique_ptr<revolve::Evaluator> evaluator)
-        : Learner(std::move(evaluator), std::move(controller))
-        , evaluation_time(15)
+BayesianOptimizer::BayesianOptimizer(
+        std::unique_ptr<revolve::Controller> controller,
+        std::unique_ptr<revolve::Evaluator> evaluator,
+        const double evaluation_time,
+        const size_t n_learning_evalutions)
+        : Learner(std::move(evaluator))
+        , _controller(std::move(controller))
+        , evaluation_time(evaluation_time)
         , evaluation_end_time(-1)
-        , n_learning_iterations(50)
+        , n_learning_iterations(n_learning_evalutions)
 {
     this->n_init_samples = 1;
     //this->init_method = "LHS";
@@ -38,7 +43,7 @@ BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::Controller> contro
     this->acqui_ei_jitter = 0;
     this->acquisition_function = "UCB";
 
-    if (typeid(this->controller) == typeid(std::unique_ptr<revolve::DifferentialCPG>)) {
+    if (typeid(this->_controller) == typeid(std::unique_ptr<revolve::DifferentialCPG>)) {
         devectorize_controller = [this](Eigen::VectorXd weights) {
             // Eigen::vector -> std::vector
             std::vector<double> std_weights(weights.size());
@@ -46,14 +51,12 @@ BayesianOptimizer::BayesianOptimizer(std::unique_ptr<revolve::Controller> contro
                 std_weights[j] = weights(j);
             }
 
-            auto *temp_controller = dynamic_cast<::revolve::DifferentialCPG *>( this->getController());
+            auto *temp_controller = dynamic_cast<::revolve::DifferentialCPG *>(this->controller());
             temp_controller->set_connection_weights(std_weights);
-
-            this->controller.reset(temp_controller);
         };
 
         vectorize_controller = [this]() {
-            auto *controller = dynamic_cast<::revolve::DifferentialCPG *>( this->getController());
+            auto *controller = dynamic_cast<::revolve::DifferentialCPG *>( this->controller());
             const std::vector<double> &weights = controller->get_connection_weights();
 
             // std::vector -> Eigen::Vector
@@ -213,7 +216,8 @@ void BayesianOptimizer::optimize(double current_time, double dt)
 /**
  * Function that obtains the current fitness by calling the evaluator and stores it
  */
-void BayesianOptimizer::save_fitness(){
+void BayesianOptimizer::save_fitness()
+{
     // Get fitness
     double fitness = this->evaluator->fitness();
 
@@ -230,10 +234,4 @@ void BayesianOptimizer::save_fitness(){
 
     // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
     this->observations.push_back(observation);
-}
-
-void BayesianOptimizer::reset(std::unique_ptr<::revolve::BayesianOptimizer> bo_learner)
-{
-    this->evaluator = move(bo_learner->evaluator);
-    this->controller = move(bo_learner->controller);
 }

@@ -224,10 +224,10 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
         learner.reset(new NoLearner<RLPower>(this->model_, brain_sdf, motors_, sensors_));
     }
   }
-  else if ("bo" == learner_type and "cpg" == controller_type)
-  {
-    learner.reset(new NoLearner<DifferentialCPG>(this->model_, _sdf, motors_, sensors_));
-  }
+//  else if ("bo" == learner_type and "cpg" == controller_type)
+//  {
+//    learner.reset(new NoLearner<DifferentialCPG>(this->model_, _sdf, motors_, sensors_));
+//  }
   else if ("offline" == learner_type and "cpg" == controller_type)
   {
       learner.reset(new NoLearner<DifferentialCPGClean>(brain_sdf, motors_));
@@ -236,13 +236,14 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   {
       learner.reset(new NoLearner<DifferentialCPPNCPG>(brain_sdf, motors_));
   }
-  else if ("bo" == learner_type and "cpg" == controller_type){
+  else if ("bo" == learner_type and "cpg" == controller_type)
+  {
       std::unique_ptr<::revolve::DifferentialCPG> controller;
       controller.reset(new DifferentialCPGClean(brain_sdf, motors_));
       
       std::unique_ptr<::revolve::Evaluator> evaluator;
       evaluator.reset(new ::revolve::gazebo::Evaluator(15.0));
-      learner.reset(new BayesianOptimizer(move(controller), move(evaluator))); // TODO: evaluation_rate??
+      learner.reset(new BayesianOptimizer(move(controller), move(evaluator), 15.0, 50)); // TODO: evaluation_rate??
   }
   else
   {
@@ -283,8 +284,9 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
 
   if (learner) {
       learner->optimize(currentTime, actuationTime_);
-      if (learner->controller) {
-          learner->controller->update(motors_, sensors_, currentTime, (_info.simTime - lastActuationTime_).Double());
+      revolve::Controller *controller = learner->controller();
+      if (controller) {
+          controller->update(motors_, sensors_, currentTime, (_info.simTime - lastActuationTime_).Double());
       }
   }
 

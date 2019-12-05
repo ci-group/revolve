@@ -17,8 +17,7 @@
 *
 */
 
-#ifndef REVOLVEBRAIN_BRAIN_EVALUATOR_H
-#define REVOLVEBRAIN_BRAIN_EVALUATOR_H
+#pragma once
 
 #include <boost/shared_ptr.hpp>
 
@@ -78,5 +77,3 @@ protected:
 };
 }
 }
-
-#endif  // REVOLVEBRAIN_BRAIN_EVALUATOR_H

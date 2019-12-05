@@ -35,14 +35,18 @@ target_include_directories(revolve-controllers
         PUBLIC ${Boost_INCLUDE_DIRS})
 
 target_include_directories(revolve-learners
+        PUBLIC ${EIGEN3_INCLUDE_DIR}
         PUBLIC ${Boost_INCLUDE_DIRS}
         PUBLIC ${LIMBO_DIR}/src
         PUBLIC ${NLOpt_INCLUDE_DIRS})
 
-target_include_directories(revolve-learners
-        PUBLIC ${NLOpt_LIBRARY_DIRS})
+target_compile_definitions(revolve-learners
+        PUBLIC USE_NLOPT=1)
 
 target_link_libraries(revolve-controllers
+        MultiNEAT::MultiNEAT)
+
+target_link_libraries(revolve-learners
         MultiNEAT::MultiNEAT)
 
 install(TARGETS revolve-controllers revolve-learners

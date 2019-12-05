@@ -2,8 +2,7 @@
 // Created by andi on 25-11-19.
 //
 
-#ifndef REVOLVE_LEARNER_H
-#define REVOLVE_LEARNER_H
+#pragma once
 
 #include "../controller/Controller.h"
 #include "Evaluator.h"
@@ -14,9 +13,8 @@ class Learner
 {
 public:
     /// \brief Constructor
-    explicit Learner(std::unique_ptr <Evaluator> evaluator, std::unique_ptr<Controller> controller)
+    explicit Learner(std::unique_ptr <Evaluator> evaluator)
         : evaluator(std::move(evaluator))
-        , controller(std::move(controller))
         {}
 
     /// \brief Deconstructor
@@ -25,24 +23,10 @@ public:
     /// \brief performes the optimization of the controller
     virtual void optimize(double time, double dt) = 0;
 
-    /// \brief resets the controller of the learner
-    void reset(std::unique_ptr<Learner> learner){
-        this->evaluator = move(learner->evaluator);
-        this->controller = move(learner->controller);
-    }
+    virtual revolve::Controller *controller() = 0;
 
-    virtual revolve::Controller *getController()
-    {
-        return this->controller.get();
-    }
-
+protected:
     std::unique_ptr <revolve::Evaluator> evaluator;
-
-    /// \brief controller subject to optimization
-    std::unique_ptr <revolve::Controller> controller;
 };
 
 }
-
-
-#endif //REVOLVE_LEARNER_H
