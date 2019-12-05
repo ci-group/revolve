@@ -20,6 +20,8 @@
  */
 
 #include <cmath>
+#include <revolve/brains/learner/Evaluator.h>
+
 
 #include "Evaluator.h"
 
@@ -148,7 +150,41 @@ double Evaluator::fitness()
                         (dist_projection / (alpha + ksi) - penalty);
     fitness_value = fitness_direction;
   }
-  return fitness_value;
+  else if(this->locomotion_type == "turing_left") //anticlockwise
+  {
+      double orientations = 0.0;
+      double delta_orientations = 0.0;
+      double dS = 0.0;
+      for(int i = 1; i < this->step_poses.size(); i++)
+      {
+          const auto &pose_i_1 = this->step_poses[i-1];
+          const auto &pose_i = this->step_poses[i];
+
+          dS = dS + Evaluator::measure_distance(pose_i_1, pose_i);
+
+          double angle_i = pose_i.Rot().Yaw();
+          double angle_i_1 = pose_i_1.Rot().Yaw();
+          if(angle_i_1 > M_PI_2 and angle_i < - M_PI_2 ) // rotating left
+          {
+              delta_orientations = 2.0 * M_PI + angle_i - angle_i_1;
+          }
+          else if((angle_i_1 < - M_PI_2) and (angle_i > M_PI_2))
+          {
+              delta_orientations = - (2.0 * M_PI - angle_i + angle_i_1);
+          }
+          else
+          {
+              delta_orientations = angle_i - angle_i_1;
+          }
+          orientations += delta_orientations;
+
+      }
+      std::cout << "orientations: " << orientations << " dS: " << dS << std::endl;
+      double factor_orien_ds = 3.0; //TODO param
+      fitness_value = orientations - factor_orien_ds * dS; //dS in (0, 1.5) in 30s
+    }
+
+    return fitness_value;
 }
 
 // update is always running in the loop

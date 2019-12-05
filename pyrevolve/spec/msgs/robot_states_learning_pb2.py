@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='robot_states_learning.proto',
   package='revolve.msgs',
   syntax='proto2',
-  serialized_pb=_b('\n\x1brobot_states_learning.proto\x12\x0crevolve.msgs\x1a\npose.proto\"0\n\rbehaviourData\x12\x1f\n\x04path\x18\x01 \x03(\x0b\x32\x11.gazebo.msgs.Pose\"~\n\x13LearningRobotStates\x12\n\n\x02id\x18\x01 \x02(\r\x12\x0c\n\x04\x65val\x18\x02 \x02(\r\x12\x0c\n\x04\x64\x65\x61\x64\x18\x03 \x01(\x08\x12\x0f\n\x07\x66itness\x18\x04 \x02(\x02\x12.\n\tbehaviour\x18\x05 \x01(\x0b\x32\x1b.revolve.msgs.behaviourData')
+  serialized_pb=_b('\n\x1brobot_states_learning.proto\x12\x0crevolve.msgs\x1a\npose.proto\"0\n\rbehaviourData\x12\x1f\n\x04path\x18\x01 \x03(\x0b\x32\x11.gazebo.msgs.Pose\"~\n\x13LearningRobotStates\x12\n\n\x02id\x18\x01 \x02(\r\x12\x0c\n\x04\x65val\x18\x02 \x02(\r\x12\x0c\n\x04\x64\x65\x61\x64\x18\x03 \x01(\x08\x12\x0f\n\x07\x66itness\x18\x04 \x02(\x01\x12.\n\tbehaviour\x18\x05 \x01(\x0b\x32\x1b.revolve.msgs.behaviourData')
   ,
   dependencies=[pose__pb2.DESCRIPTOR,])
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -89,7 +89,7 @@ _LEARNINGROBOTSTATES = _descriptor.Descriptor(
       options=None),
     _descriptor.FieldDescriptor(
       name='fitness', full_name='revolve.msgs.LearningRobotStates.fitness', index=3,
-      number=4, type=2, cpp_type=6, label=2,
+      number=4, type=1, cpp_type=5, label=2,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,

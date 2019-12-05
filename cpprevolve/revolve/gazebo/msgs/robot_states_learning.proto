@@ -12,6 +12,6 @@ message LearningRobotStates {
     required uint32 id = 1;
     required uint32 eval = 2;
     optional bool dead = 3;
-    required float fitness = 4;
+    required double fitness = 4;
     optional behaviourData behaviour = 5;
 }

@@ -16,6 +16,7 @@ public:
     explicit GazeboReporter(::gazebo::transport::NodePtr &node);
     virtual ~GazeboReporter() = default;
 
+    /// \brief Sends proto message to python in gazebo
     void report(unsigned int id, unsigned int eval, bool dead, float fitness) override;
 
 private:
