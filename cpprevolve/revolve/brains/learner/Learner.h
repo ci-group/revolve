@@ -6,6 +6,7 @@
 
 #include "../controller/Controller.h"
 #include "Evaluator.h"
+#include "EvaluationReporter.h"
 
 namespace revolve {
 
@@ -27,6 +28,7 @@ public:
 
 protected:
     std::unique_ptr <revolve::Evaluator> evaluator;
+    std::unique_ptr <revolve::EvaluationReporter> evaluation_reporter;
 };
 
 }
