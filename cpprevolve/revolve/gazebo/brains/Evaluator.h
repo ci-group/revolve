@@ -52,9 +52,9 @@ public:
 
     /// \brief Update the position
     /// \param[in] pose Current position of a robot
-    void update(const ignition::math::Pose3d &pose,
-                const double time,
-                const double step);
+    void simulation_update(const ignition::math::Pose3d &pose,
+                           double time,
+                           double step);
 
 protected:
     /// \brief start position of a robot
@@ -75,5 +75,6 @@ protected:
     double step_saving_rate;
     std::vector <ignition::math::Pose3d> step_poses;
 };
+
 }
 }

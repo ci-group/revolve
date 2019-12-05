@@ -16,8 +16,8 @@ class HyperNEAT: public Learner
 public:
     explicit HyperNEAT(
             std::unique_ptr<Controller> controller,
-            std::unique_ptr<Evaluator> evaluator,
-            std::unique_ptr<EvaluationReporter> reporter,
+            Evaluator *evaluator,
+            EvaluationReporter *reporter,
             const NEAT::Parameters &params,
             int seed,
             double evaluation_time,

@@ -115,7 +115,7 @@ void RLPower::update(
   }
 
   auto currPosition = this->robot_->WorldPose();
-  this->evaluator_->update(currPosition, _time, _step);
+//  this->evaluator_->update(currPosition, _time, _step);
   delete[] output;
 }
 

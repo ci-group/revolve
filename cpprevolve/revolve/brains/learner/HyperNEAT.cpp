@@ -8,13 +8,13 @@ using namespace revolve;
 
 HyperNEAT::HyperNEAT(
             std::unique_ptr<Controller> controller,
-            std::unique_ptr<Evaluator> evaluator,
-            std::unique_ptr<EvaluationReporter> reporter,
+            Evaluator *evaluator,
+            EvaluationReporter *reporter,
             const NEAT::Parameters &params,
             const int seed,
             const double evaluation_time,
             unsigned int n_evaluations)
-        : Learner(std::move(evaluator), std::move(reporter))
+        : Learner(evaluator, reporter)
         , evaluation_time(evaluation_time)
         , end_controller_time(-1)
         , _controller(std::move(controller))
@@ -56,7 +56,7 @@ void HyperNEAT::optimize(const double time, const double dt)
     //TODO check if you finished the budget of generations
     bool finished = evaluation_counter >= n_evaluations;
 
-    evaluation_reporter->report(0, evaluation_counter, finished, fitness);
+    evaluation_reporter->report(evaluation_counter, finished, fitness);
     current_genome_evaluating->SetFitness(fitness);
 
     // load next genome

@@ -22,10 +22,11 @@ using GP_t = limbo::model::GP<BayesianOptimizer::params, Kernel_t, Mean_t>;
 
 BayesianOptimizer::BayesianOptimizer(
         std::unique_ptr<revolve::Controller> controller,
-        std::unique_ptr<revolve::Evaluator> evaluator,
+        Evaluator *evaluator,
+        EvaluationReporter *reporter,
         const double evaluation_time,
         const size_t n_learning_evalutions)
-        : Learner(std::move(evaluator))
+        : Learner(evaluator, reporter)
         , _controller(std::move(controller))
         , evaluation_time(evaluation_time)
         , evaluation_end_time(-1)
@@ -182,9 +183,8 @@ void BayesianOptimizer::optimize(double current_time, double dt)
         this->samples.push_back(this->vectorize_controller());
         this->current_iteration = 0;
     }
-
-    // optimization step
-    else {
+    else // optimization step
+    {
         params::acqui_ucb::set_alpha(this->acqui_ucb_alpha);
         params::kernel_maternfivehalves::set_l(this->kernel_l);
         params::kernel_maternfivehalves::set_sigma_sq(this->kernel_sigma_sq);

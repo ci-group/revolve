@@ -4,7 +4,10 @@
 
 #pragma once
 
+#include <cassert>
 #include <iostream>
+#include <memory>
+#include <vector>
 
 namespace revolve {
 
@@ -13,13 +16,18 @@ namespace revolve {
 class EvaluationReporter
 {
 public:
+    explicit EvaluationReporter(const std::string id)
+        : robot_id(std::move(id))
+    {}
+
     virtual ~EvaluationReporter() = default;
 
     virtual void report(
-            unsigned int id,
             unsigned int eval,
             bool dead,
-            float fitness) = 0;
+            double fitness) = 0;
+
+    const std::string robot_id;
 };
 
 // --------------------------------------------------------
@@ -27,15 +35,17 @@ public:
 class PrintReporter : public EvaluationReporter
 {
 public:
-    PrintReporter() = default;
-    virtual ~PrintReporter() = default;
+    explicit PrintReporter(const std::string id)
+        : EvaluationReporter(std::move(id))
+    {}
 
-    void report(unsigned int id,
-                unsigned int eval,
+    ~PrintReporter() override = default;
+
+    void report(unsigned int eval,
                 bool dead,
-                float fitness) override
+                double fitness) override
     {
-        std::cout << "Evaluation Report: robot id("<< id
+        std::cout << "Evaluation Report: robot id("<< robot_id
                    << ") eval(" << eval
                    << ") dead(" << dead
                    << ") fitness(" << fitness
@@ -45,27 +55,39 @@ public:
 
 // --------------------------------------------------------
 /// Aggregated Reporter
-template<typename EvaluatorList>
 class AggregatedReporter : public EvaluationReporter
 {
 public:
-    explicit AggregatedReporter(EvaluatorList list)
-            : list(std::move(list))
+    explicit AggregatedReporter(const std::string robot_id)
+            : EvaluationReporter(std::move(robot_id))
     {}
-    virtual ~AggregatedReporter() = default;
+    ~AggregatedReporter() override = default;
 
-    void report(unsigned int id,
-                unsigned int eval,
+    void report(unsigned int eval,
                 bool dead,
-                float fitness) override
+                double fitness) override
     {
-        for (EvaluationReporter &reporter: list) {
-            reporter.report(id, eval, dead, fitness);
+        for (std::shared_ptr<EvaluationReporter> &reporter: reporters)
+        {
+            reporter->report(eval, dead, fitness);
         }
     }
 
+    /// Create a new Reporter in place
+    template<typename ReporterType, typename... Args>
+    void create(Args &&... args)
+    {
+        reporters.emplace_back(new ReporterType(robot_id, std::forward<Args>(args)...));
+    }
+
+    void append(std::shared_ptr<EvaluationReporter> reporter)
+    {
+        assert(reporter->robot_id == this->robot_id);
+        reporters.emplace_back(std::move(reporter));
+    }
+
 private:
-    EvaluatorList list;
+    std::vector<std::shared_ptr<EvaluationReporter>> reporters;
 };
 
 }

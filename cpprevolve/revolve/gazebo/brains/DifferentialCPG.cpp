@@ -715,8 +715,8 @@ void DifferentialCPG::Update(
     p += sensor->n_inputs();
   }
 
-  //TODO remove
-  this->evaluator->update(this->robot->WorldPose(), _time, _step);
+  //removed, this should be done in the robot controller
+  //this->evaluator->update(this->robot->WorldPose(), _time, _step);
 
   // Only start recording the fitness after the startup time each iteration
   double elapsed_evaluation_time = _time - this->start_time;

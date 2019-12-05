@@ -24,6 +24,7 @@
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
 #include <revolve/gazebo/brains/Brains.h>
+#include <revolve/gazebo/brains/GazeboReporter.h>
 #include <revolve/brains/learner/NoLearner.h>
 #include <revolve/brains/learner/BayesianOptimizer.h>
 
@@ -201,54 +202,61 @@ SensorFactoryPtr RobotController::SensorFactory(
 /////////////////////////////////////////////////
 void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 {
-  if (not _sdf->HasElement("rv:brain"))
-  {
-    std::cerr << "No robot brain detected, this is probably an error."
-              << std::endl;
-    return;
-  }
-
-  auto brain_sdf = _sdf->GetElement("rv:brain");
-  auto controller_type = brain_sdf->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
-  auto learner_type = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
-  std::cout << "Loading controller " << controller_type << " and learner " << learner_type << std::endl;
-
-  // TODO: Clean this if-else mess
-  if ("offline" == learner_type and "ann" == controller_type)
-  {
-       learner.reset(new NoLearner<NeuralNetwork>(this->model_, brain_sdf, motors_, sensors_));
-  }
-  else if ("rlpower" == learner_type and "spline" == controller_type)
-  {
-    if (not motors_.empty()) {
-        learner.reset(new NoLearner<RLPower>(this->model_, brain_sdf, motors_, sensors_));
+    if (not _sdf->HasElement("rv:brain")) {
+        std::cerr << "No robot brain detected, this is probably an error."
+                  << std::endl;
+        return;
     }
-  }
-//  else if ("bo" == learner_type and "cpg" == controller_type)
-//  {
-//    learner.reset(new NoLearner<DifferentialCPG>(this->model_, _sdf, motors_, sensors_));
-//  }
-  else if ("offline" == learner_type and "cpg" == controller_type)
-  {
-      learner.reset(new NoLearner<DifferentialCPGClean>(brain_sdf, motors_));
-  }
-  else if ("offline" == learner_type and "cppn-cpg" == controller_type)
-  {
-      learner.reset(new NoLearner<DifferentialCPPNCPG>(brain_sdf, motors_));
-  }
-  else if ("bo" == learner_type and "cpg" == controller_type)
-  {
-      std::unique_ptr<::revolve::DifferentialCPG> controller;
-      controller.reset(new DifferentialCPGClean(brain_sdf, motors_));
-      
-      std::unique_ptr<::revolve::Evaluator> evaluator;
-      evaluator.reset(new ::revolve::gazebo::Evaluator(15.0));
-      learner.reset(new BayesianOptimizer(move(controller), move(evaluator), 15.0, 50)); // TODO: evaluation_rate??
-  }
-  else
-  {
-    throw std::runtime_error("Robot brain is not defined.");
-  }
+
+    auto brain_sdf = _sdf->GetElement("rv:brain");
+    auto controller_type = brain_sdf->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
+    auto learner_type = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
+    std::cout << "Loading controller " << controller_type << " and learner " << learner_type << std::endl;
+
+
+    //TODO parameters from SDF
+    double evaluation_rate = 15.0;
+    size_t n_learning_evaluations = 50;
+
+    this->evaluator.reset(new ::revolve::gazebo::Evaluator(evaluation_rate));
+
+    // aggregated reporter
+    std::unique_ptr<AggregatedReporter> aggregated_reporter(new AggregatedReporter(this->model_->GetName()));
+    // std::cout reporter
+    aggregated_reporter->create<::revolve::PrintReporter>();
+    // gazebo network publisher reporter
+    this->gazebo_reporter.reset(new GazeboReporter(aggregated_reporter->robot_id, this->node_));
+    aggregated_reporter->append(this->gazebo_reporter);
+
+    this->reporter = std::move(aggregated_reporter);
+
+
+    // TODO: Clean this if-else mess
+    if ("offline" == learner_type and "ann" == controller_type) {
+        learner.reset(new NoLearner<NeuralNetwork>(this->model_, brain_sdf, motors_, sensors_));
+    } else if ("rlpower" == learner_type and "spline" == controller_type) {
+        if (not motors_.empty()) {
+            learner.reset(new NoLearner<RLPower>(this->model_, brain_sdf, motors_, sensors_));
+        }
+//    } else if ("bo" == learner_type and "cpg" == controller_type) {
+//        learner.reset(new NoLearner<DifferentialCPG>(this->model_, _sdf, motors_, sensors_));
+    } else if ("offline" == learner_type and "cpg" == controller_type) {
+        learner.reset(new NoLearner<DifferentialCPGClean>(brain_sdf, motors_));
+    } else if ("offline" == learner_type and "cppn-cpg" == controller_type) {
+        learner.reset(new NoLearner<DifferentialCPPNCPG>(brain_sdf, motors_));
+    } else if ("bo" == learner_type and "cpg" == controller_type) {
+        std::unique_ptr<::revolve::DifferentialCPG> controller;
+        controller.reset(new DifferentialCPGClean(brain_sdf, motors_));
+
+        learner.reset(new BayesianOptimizer(
+                std::move(controller),
+                this->evaluator.get(),
+                this->reporter.get(),
+                evaluation_rate,
+                n_learning_evaluations));
+    } else {
+        throw std::runtime_error("Robot brain is not defined.");
+    }
 }
 
 /////////////////////////////////////////////////
@@ -277,20 +285,27 @@ void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo _info)
 /// Default update function simply tells the brain to perform an update
 void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
 {
-  auto currentTime = _info.simTime.Double() - initTime_;
+    const auto current_time = _info.simTime.Double() - initTime_;
+    const auto delta_time = (_info.simTime - lastActuationTime_).Double();
 
-  // if (learner->evaluator){
-  //    learner->evaluator->update();
+    //const ::ignition::math::Pose3d &relative_pose = model_->RelativePose();
+    const ::ignition::math::Pose3d &world_pose = model_->WorldPose();
 
-  if (learner) {
-      learner->optimize(currentTime, actuationTime_);
-      revolve::Controller *controller = learner->controller();
-      if (controller) {
-          controller->update(motors_, sensors_, currentTime, (_info.simTime - lastActuationTime_).Double());
-      }
-  }
+    if (evaluator) {
+        evaluator->simulation_update(world_pose, current_time, delta_time);
+    }
 
+    if (gazebo_reporter) {
+        gazebo_reporter->simulation_update(world_pose, current_time, delta_time);
+    }
 
+    if (learner) {
+        learner->optimize(current_time, delta_time);
+        revolve::Controller *controller = learner->controller();
+        if (controller) {
+            controller->update(motors_, sensors_, current_time, delta_time);
+        }
+    }
 }
 
 /////////////////////////////////////////////////

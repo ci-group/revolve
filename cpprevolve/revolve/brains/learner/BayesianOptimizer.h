@@ -16,7 +16,8 @@ public:
     /// \brief Constructor
     explicit BayesianOptimizer(
             std::unique_ptr <::revolve::Controller> controller,
-            std::unique_ptr<::revolve::Evaluator> evaluator,
+            Evaluator *evaluator,
+            EvaluationReporter *reporter,
             double evaluation_time,
             size_t n_learning_evalutions);
 

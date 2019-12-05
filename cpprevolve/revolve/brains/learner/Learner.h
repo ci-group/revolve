@@ -14,9 +14,9 @@ class Learner
 {
 public:
     /// \brief Constructor
-    explicit Learner(std::unique_ptr <Evaluator> evaluator, std::unique_ptr<EvaluationReporter> reporter)
-        : evaluator(std::move(evaluator))
-        , evaluation_reporter(std::move(reporter))
+    explicit Learner(Evaluator *evaluator, EvaluationReporter *reporter)
+        : evaluator(evaluator)
+        , evaluation_reporter(reporter)
         {}
 
     /// \brief Deconstructor
@@ -28,8 +28,8 @@ public:
     virtual revolve::Controller *controller() = 0;
 
 protected:
-    std::unique_ptr <revolve::Evaluator> evaluator;
-    std::unique_ptr <revolve::EvaluationReporter> evaluation_reporter;
+    revolve::Evaluator *evaluator;
+    revolve::EvaluationReporter *evaluation_reporter;
 };
 
 }

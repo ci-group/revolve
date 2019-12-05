@@ -188,9 +188,9 @@ double Evaluator::fitness()
 }
 
 // update is always running in the loop
-void Evaluator::update(const ignition::math::Pose3d &pose,
-                       const double time,
-                       const double step)
+void Evaluator::simulation_update(const ignition::math::Pose3d &pose,
+                                  const double time,
+                                  const double step)
 {
   //  this->path_length += measure_distance(current_position_, pose);
   this->previous_position_ = current_position_;
