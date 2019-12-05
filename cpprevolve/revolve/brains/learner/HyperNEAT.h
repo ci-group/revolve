@@ -14,7 +14,15 @@ namespace revolve {
 class HyperNEAT: public Learner
 {
 public:
-    HyperNEAT(std::unique_ptr<Controller> controller, std::unique_ptr<Evaluator> evaluator, const NEAT::Parameters &params, int seed);
+    explicit HyperNEAT(
+            std::unique_ptr<Controller> controller,
+            std::unique_ptr<Evaluator> evaluator,
+            std::unique_ptr<EvaluationReporter> reporter,
+            const NEAT::Parameters &params,
+            int seed,
+            double evaluation_time,
+            unsigned int n_evaluations);
+
     virtual ~HyperNEAT() = default;
 
     Controller *controller() override
@@ -23,11 +31,14 @@ public:
     void optimize(double time, double dt) override;
 
 private:
-    float end_controller_time;
+    double evaluation_time;
+    double end_controller_time;
     std::unique_ptr<Controller> _controller;
 
     const NEAT::Parameters params;
     std::unique_ptr<NEAT::Population> population;
+    unsigned int evaluation_counter;
+    unsigned int n_evaluations;
     std::vector<NEAT::Species>::iterator current_specie_evaluating;
     std::vector<NEAT::Genome>::iterator current_genome_evaluating;
 };

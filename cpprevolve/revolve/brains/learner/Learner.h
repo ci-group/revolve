@@ -14,8 +14,9 @@ class Learner
 {
 public:
     /// \brief Constructor
-    explicit Learner(std::unique_ptr <Evaluator> evaluator)
+    explicit Learner(std::unique_ptr <Evaluator> evaluator, std::unique_ptr<EvaluationReporter> reporter)
         : evaluator(std::move(evaluator))
+        , evaluation_reporter(std::move(reporter))
         {}
 
     /// \brief Deconstructor
