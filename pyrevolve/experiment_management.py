@@ -12,17 +12,20 @@ class ExperimentManagement:
         self.settings = settings
         self.dirpath = os.path.join('experiments', self.settings.experiment_name)
 
-    def create_exp_folders(self):
+    def create_exp_folders(self, environments):
         if os.path.exists(self.dirpath):
             shutil.rmtree(self.dirpath)
         os.mkdir(self.dirpath)
         os.mkdir(self.dirpath+'/data_fullevolution')
         os.mkdir(self.dirpath+'/data_fullevolution/genotypes')
-        os.mkdir(self.dirpath+'/data_fullevolution/phenotypes')
-        os.mkdir(self.dirpath+'/data_fullevolution/descriptors')
-        os.mkdir(self.dirpath+'/data_fullevolution/fitness')
-        os.mkdir(self.dirpath+'/data_fullevolution/phenotype_images')
         os.mkdir(self.dirpath+'/data_fullevolution/failed_eval_robots')
+        for environment in environments:
+            os.mkdir(self.dirpath+'/selectedpop_'+environment)
+            os.mkdir(self.dirpath+'/data_fullevolution/'+environment)
+            os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/phenotypes')
+            os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/descriptors')
+            os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/fitness')
+            os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/phenotype_images')
 
     def _experiment_folder(self):
         return self.dirpath
@@ -34,21 +37,21 @@ class ExperimentManagement:
         if self.settings.recovery_enabled:
             individual.export_genotype(self._data_folder())
 
-    def export_phenotype(self, individual):
+    def export_phenotype(self, individual, environment):
         if self.settings.export_phenotype:
-            individual.export_phenotype(self._data_folder())
+            individual.export_phenotype(self._data_folder()+'/'+environment)
 
-    def export_fitnesses(self, individuals):
+    def export_fitnesses(self, individuals, environment):
         folder = self._data_folder()
         for individual in individuals:
-            individual.export_fitness(folder)
+            individual.export_fitness(folder+'/'+environment)
 
-    def export_fitness(self, individual):
-        folder = os.path.join(self._data_folder(),'fitness')
+    def export_fitness(self, individual, environment):
+        folder = os.path.join(self._data_folder()+'/'+environment, 'fitness')
         individual.export_fitness(folder)
 
-    def export_behavior_measures(self, _id, measures):
-        filename = os.path.join(self._data_folder(), 'descriptors', f'behavior_desc_{_id}.txt')
+    def export_behavior_measures(self, _id, measures, environment):
+        filename = os.path.join(self._data_folder()+'/'+environment, 'descriptors', f'behavior_desc_{_id}.txt')
         with open(filename, "w") as f:
             if measures is None:
                 f.write(str(None))
@@ -57,22 +60,23 @@ class ExperimentManagement:
                     f.write(f"{key} {val}\n")
 
     def export_phenotype_images(self, dirpath, individual):
-        individual.phenotype.render_body(self._experiment_folder() +'/'+dirpath+f'/body_{individual.phenotype.id}.png')
-        individual.phenotype.render_brain(self._experiment_folder() +'/'+dirpath+f'/brain_{individual.phenotype.id}')
+        individual.phenotype.render_body(self._experiment_folder()+'/'+dirpath+f'/body_{individual.phenotype.id}.png')
+        individual.phenotype.render_brain(self._experiment_folder()+'/'+dirpath+f'/brain_{individual.phenotype.id}')
 
     def export_failed_eval_robot(self, individual):
         individual.genotype.export_genotype(f'{self._data_folder()}/failed_eval_robots/genotype_{str(individual.phenotype.id)}.txt')
         individual.phenotype.save_file(f'{self._data_folder()}/failed_eval_robots/phenotype_{str(individual.phenotype.id)}.yaml')
         individual.phenotype.save_file(f'{self._data_folder()}/failed_eval_robots/phenotype_{str(individual.phenotype.id)}.sdf', conf_type='sdf')
 
-    def export_snapshots(self, individuals, gen_num):
+    def export_snapshots(self, individuals, gen_num, environment):
         if self.settings.recovery_enabled:
-            path = os.path.join(self._experiment_folder(), f'selectedpop_{gen_num}')
+            path = os.path.join(self._experiment_folder()+'/selectedpop_'+environment, f'selectedpop_{gen_num}')
             if os.path.exists(path):
                 shutil.rmtree(path)
             os.mkdir(path)
+
             for ind in individuals:
-                self.export_phenotype_images(f'selectedpop_{str(gen_num)}', ind)
+                self.export_phenotype_images('selectedpop_'+environment+'/'+f'selectedpop_{str(gen_num)}', ind)
             logger.info(f'Exported snapshot {str(gen_num)} with {str(len(individuals))} individuals')
 
     def experiment_is_new(self):
@@ -90,7 +94,8 @@ class ExperimentManagement:
         for r, d, f in os.walk(self._experiment_folder()):
             for dir in d:
                 if 'selectedpop' in dir:
-                    exported_files = len([name for name in os.listdir(os.path.join(self._experiment_folder(), dir)) if os.path.isfile(os.path.join(self._experiment_folder(), dir, name))])
+                    exported_files = len([name for name in os.listdir(os.path.join(self._experiment_folder(), dir))
+                                          if os.path.isfile(os.path.join(self._experiment_folder(), dir, name))])
                     if exported_files == (population_size * 2): # body and brain files
                         snapshots.append(int(dir.split('_')[1]))
 

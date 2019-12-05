@@ -17,6 +17,8 @@ import random
 import math
 import copy
 import itertools
+import pprint
+import sys
 
 
 class Alphabet(Enum):
@@ -182,15 +184,55 @@ class Plasticoding(Genotype):
         if self.phenotype._morphological_measurements.measurement_to_dict()['hinge_count'] > 0:
             self.valid = True
 
-    def develop(self):
-        self.early_development()
+    def develop(self, environment):
+        self.early_development(environment)
         phenotype = self.late_development()
         return phenotype
 
-    def early_development(self):
+    def early_development(self, environment):
+
+        if conf.plastic:
+
+            # simulates sensing of environmental conditions 
+            if environment == 'plane':
+                hill = False
+                hot = False
+            if environment == 'tilted5':
+                hill = True
+                hot = False
+            if environment == 'lava':
+                hill = False
+                hot = True
+            if environment == 'lavatilted5':
+                hill = True
+                hot = True
+
+            print(' ###############im in the '+environment)
+
+            pp = pprint.PrettyPrinter(indent=4)
+            pp.pprint(self.grammar)
+
+            grammar = {}
+            for letter in self.grammar:
+
+                true_rules = 0
+                for flavor in range(0, len(self.grammar[letter])):
+                    print( self.grammar[letter][flavor][0])
+                    clause = 'True if '
+                    for item in self.grammar[letter][flavor][0]:
+                        for subitem in item:
+                            clause += str(subitem) + ' '
+                   # grammar[letter] = self.grammar[letter][flavor][0]
+                    clause += 'else False'
+                    print(clause)
+                    print(exec(clause))
+            pp = pprint.PrettyPrinter(indent=4)
+            pp.pprint(grammar)
+            sys.exit()
+        else:
+            grammar = self.grammar
 
         self.intermediate_phenotype = [[self.conf.axiom_w, []]]
-
         for i in range(0, self.conf.i_iterations):
 
             position = 0
@@ -201,13 +243,16 @@ class Plasticoding(Genotype):
                     # removes symbol
                     self.intermediate_phenotype.pop(position)
                     # replaces by its production rule
-                    for ii in range(0, len(self.grammar[symbol[self.index_symbol]])):
+                    for ii in range(0, len(grammar[symbol[self.index_symbol]])):
                         self.intermediate_phenotype.insert(position+ii,
-                                                           self.grammar[symbol[self.index_symbol]][ii])
+                                                           grammar[symbol[self.index_symbol]][ii])
                     position = position+ii+1
                 else:
                     position = position + 1
-        # logger.info('Robot ' + str(self.id) + ' was early-developed.')
+
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(self.intermediate_phenotype)
+        logger.info('Robot ' + str(self.id) + ' was early-developed.')
 
     def late_development(self):
 
@@ -680,7 +725,7 @@ from pyrevolve.genotype.plasticoding import initialization
 class PlasticodingConfig:
     def __init__(self,
                  initialization_genome=initialization.random_initialization,
-                 e_max_groups=4,
+                 e_max_groups=1,#4,
                  oscillator_param_min=1,
                  oscillator_param_max=10,
                  weight_param_min=-1,
@@ -688,10 +733,15 @@ class PlasticodingConfig:
                  weight_min=-1,
                  weight_max=1,
                  axiom_w=Alphabet.CORE_COMPONENT,
-                 i_iterations=3,
+                 i_iterations=2,#3,
                  max_structural_modules=100,
                  robot_id=0,
-                 move_to_new=False
+                 move_to_new=False,
+                 max_clauses=2,
+                 max_terms_clause=1,
+                 plastic=False,
+                 environmental_conditions=['hill'],
+                 logic_operators=['and', 'or']
                  ):
         self.initialization_genome = initialization_genome
         self.e_max_groups = e_max_groups
@@ -706,3 +756,8 @@ class PlasticodingConfig:
         self.max_structural_modules = max_structural_modules
         self.robot_id = robot_id
         self.move_to_new = move_to_new
+        self.max_clauses = max_clauses
+        self.max_terms_clause = max_terms_clause
+        self.plastic = plastic
+        self.environmental_conditions = environmental_conditions
+        self.logic_operators = logic_operators

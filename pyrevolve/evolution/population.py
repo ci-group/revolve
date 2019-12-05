@@ -7,7 +7,7 @@ from ..custom_logging.logger import logger
 import time
 import asyncio
 import os
-
+import sys
 
 class PopulationConfig:
     def __init__(self,
@@ -27,6 +27,7 @@ class PopulationConfig:
                  experiment_name,
                  experiment_management,
                  measure_individuals,
+                 environments,
                  offspring_size=None,
                  next_robot_id=1):
         """
@@ -66,6 +67,7 @@ class PopulationConfig:
         self.measure_individuals = measure_individuals
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
+        self.environments = environments
 
 
 class Population:
@@ -88,13 +90,15 @@ class Population:
         self.next_robot_id = next_robot_id
 
     def _new_individual(self, genotype):
+        environment = 'plane' #TEMP!!!
         individual = Individual(genotype)
-        individual.develop()
+        individual.develop(environment)
         self.conf.experiment_management.export_genotype(individual)
-        self.conf.experiment_management.export_phenotype(individual)
-        self.conf.experiment_management.export_phenotype_images('data_fullevolution/phenotype_images', individual)
+        self.conf.experiment_management.export_phenotype(individual, environment)
+        self.conf.experiment_management.export_phenotype_images('data_fullevolution/'
+                                                                +environment+'/phenotype_images', individual)
         individual.phenotype.measure_phenotype(self.conf.experiment_name)
-        individual.phenotype.export_phenotype_measurements(self.conf.experiment_name)
+        individual.phenotype.export_phenotype_measurements(self.conf.experiment_name, environment)
 
         return individual
 
@@ -127,7 +131,7 @@ class Population:
                     if line.split(' ')[0] == 'displacement_velocity_hill':
                         individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
                     if line.split(' ')[0] == 'head_balance':
-                        individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+                        individual.phenotype._behavioural_measurements.head_balance =  None if line.split(' ')[1] == 'None\n' else float(line.split(' ')[1])
                     if line.split(' ')[0] == 'contacts':
                         individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
 
@@ -169,11 +173,12 @@ class Population:
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
         for i in range(self.conf.population_size-len(recovered_individuals)):
-            individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+            individual = self._new_individual(
+                self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
             self.individuals.append(individual)
             self.next_robot_id += 1
 
-        await self.evaluate(self.individuals, 0)
+       # await self.evaluate(self.individuals, 0)
         self.individuals = recovered_individuals + self.individuals
 
     async def next_gen(self, gen_num, recovered_individuals=[]):
