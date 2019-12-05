@@ -16,7 +16,7 @@ using namespace revolve;
 
 // Copied from the limbo tutorial the BO implementation is based on
 using Mean_t = limbo::mean::Data<BayesianOptimizer::params>;
-using Init_t = limbo::init::LHS<BayesianOptimizer::params>;
+using Init_t = limbo::init::FlexibleLHS<BayesianOptimizer::params>;
 using Kernel_t = limbo::kernel::MaternFiveHalves<BayesianOptimizer::params>;
 using GP_t = limbo::model::GP<BayesianOptimizer::params, Kernel_t, Mean_t>;
 

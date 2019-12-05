@@ -24,16 +24,35 @@ namespace limbo {
             BO_PARAM(int, hp_period, -1);
         };
     }
+    namespace init {
+        template<typename Params>
+        struct FlexibleLHS
+        {
+            template<typename StateFunction, typename AggregatorFunction, typename Opt>
+            void operator()(const StateFunction &seval, const AggregatorFunction &, Opt &opt) const
+            {
+                assert(Params::bayes_opt_bobase::bounded());
+
+                Eigen::MatrixXd H = tools::random_lhs(seval.dim_in(), Params::init_lhs::samples());
+
+                for (int i = 0; i < Params::init_lhs::samples(); i++) {
+                    opt.eval_and_add(seval, H.row(i));
+                }
+            }
+        };
+    }
     BOOST_PARAMETER_TEMPLATE_KEYWORD(acquiopt)
 
     namespace bayes_opt {
 
-        using boptimizer_signature = boost::parameter::parameters<boost::parameter::optional<tag::acquiopt>,
+        using boptimizer_signature = boost::parameter::parameters<
+                boost::parameter::optional<tag::acquiopt>,
                 boost::parameter::optional<tag::statsfun>,
                 boost::parameter::optional<tag::initfun>,
                 boost::parameter::optional<tag::acquifun>,
                 boost::parameter::optional<tag::stopcrit>,
-                boost::parameter::optional<tag::modelfun>>;
+                boost::parameter::optional<tag::modelfun>
+        >;
 
         // clang-format off
         /**
