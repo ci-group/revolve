@@ -152,21 +152,22 @@ class Plasticoding(Genotype):
                 self.grammar[repleceable_symbol].append([symbol, params])
 
     def export_genotype(self, filepath):
-        file = open(filepath, 'w+')
-        for key, rule in self.grammar.items():
-            line = key.value + ' '
-            for item_rule in range(0, len(rule)):
-                symbol = rule[item_rule][self.index_symbol].value
-                if len(rule[item_rule][self.index_params]) > 0:
-                    params = '_'
-                    for param in range(0, len(rule[item_rule][self.index_params])):
-                        params += str(rule[item_rule][self.index_params][param])
-                        if param < len(rule[item_rule][self.index_params])-1:
-                            params += '|'
-                    symbol += params
-                line += symbol + ' '
-            file.write(line+'\n')
-        file.close()
+        pass
+        # file = open(filepath, 'w+')
+        # for key, rule in self.grammar.items():
+        #     line = key.value + ' '
+        #     for item_rule in range(0, len(rule)):
+        #         symbol = rule[item_rule][self.index_symbol].value
+        #         if len(rule[item_rule][self.index_params]) > 0:
+        #             params = '_'
+        #             for param in range(0, len(rule[item_rule][self.index_params])):
+        #                 params += str(rule[item_rule][self.index_params][param])
+        #                 if param < len(rule[item_rule][self.index_params])-1:
+        #                     params += '|'
+        #             symbol += params
+        #         line += symbol + ' '
+        #     file.write(line+'\n')
+        # file.close()
 
     def load_and_develop(self, load, genotype_path='', id_genotype=None):
 
@@ -191,9 +192,11 @@ class Plasticoding(Genotype):
 
     def early_development(self, environment):
 
-        if conf.plastic:
+        if self.conf.plastic:
 
-            # simulates sensing of environmental conditions 
+            # simulates sensing of environmental conditions
+            # ( it is a shortcut to save computational time,
+            # but imu sensors could for sure tell if it is hill or not)
             if environment == 'plane':
                 hill = False
                 hot = False
@@ -207,30 +210,34 @@ class Plasticoding(Genotype):
                 hill = True
                 hot = True
 
-            print(' ###############im in the '+environment)
-
-            pp = pprint.PrettyPrinter(indent=4)
-            pp.pprint(self.grammar)
-
             grammar = {}
             for letter in self.grammar:
 
                 true_rules = 0
+                clause_is_true = None
                 for flavor in range(0, len(self.grammar[letter])):
-                    print( self.grammar[letter][flavor][0])
-                    clause = 'True if '
+                    clause = ''
                     for item in self.grammar[letter][flavor][0]:
                         for subitem in item:
                             clause += str(subitem) + ' '
-                   # grammar[letter] = self.grammar[letter][flavor][0]
-                    clause += 'else False'
-                    print(clause)
-                    print(exec(clause))
-            pp = pprint.PrettyPrinter(indent=4)
-            pp.pprint(grammar)
-            sys.exit()
+
+                    clause_is_true = eval(clause)
+                    if clause_is_true:
+                        grammar[letter] = self.grammar[letter][flavor][1]
+                        true_rules += 1
+
+                # one and only one rule should be true, otherwise letter doesnt get expressed
+                if true_rules == 0 or true_rules > 1:
+                    grammar[letter] = []
+
         else:
+
             grammar = self.grammar
+
+        print('gramarrrrrrrr')
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(grammar)
+
 
         self.intermediate_phenotype = [[self.conf.axiom_w, []]]
         for i in range(0, self.conf.i_iterations):
@@ -240,18 +247,21 @@ class Plasticoding(Genotype):
 
                 symbol = self.intermediate_phenotype[position]
                 if [symbol[self.index_symbol], []] in Alphabet.modules():
-                    # removes symbol
-                    self.intermediate_phenotype.pop(position)
-                    # replaces by its production rule
-                    for ii in range(0, len(grammar[symbol[self.index_symbol]])):
-                        self.intermediate_phenotype.insert(position+ii,
-                                                           grammar[symbol[self.index_symbol]][ii])
+
+                    ii = 0
+                    if len(grammar[symbol[self.index_symbol]]) > 0:
+                        # removes symbol
+                        self.intermediate_phenotype.pop(position)
+                        # replaces it by its production rule
+                        for ii in range(0, len(grammar[symbol[self.index_symbol]])):
+                            self.intermediate_phenotype.insert(position+ii,
+                                                               grammar[symbol[self.index_symbol]][ii])
                     position = position+ii+1
                 else:
                     position = position + 1
 
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(self.intermediate_phenotype)
+
+            pp.pprint(self.intermediate_phenotype)
         logger.info('Robot ' + str(self.id) + ' was early-developed.')
 
     def late_development(self):

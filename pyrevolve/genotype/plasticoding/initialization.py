@@ -124,9 +124,9 @@ def build_clause(environmental_conditions, logic_operators, max_terms_clause):
                            if environmental_conditions[t] not in used_terms]
         term = random.choice(available_terms)
         used_terms.append(term)
-        value = random.choice([True, False])
+        state = random.choice([True, False])
 
-        clause.append([term, '==', value])
+        clause.append([term, '==', state])
 
         # adds logical operators if there are multiple terms
         if term_idx < num_terms_clause:
