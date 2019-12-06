@@ -14,19 +14,21 @@ class NoLearner : public Learner
 {
 public:
     explicit NoLearner(std::unique_ptr<Controller> controller)
-            : Learner(nullptr, nullptr) //TODO add report
+            : Learner(nullptr, nullptr, 0, 0) //TODO add report
             , _controller(std::move(controller))
     {}
 
     // This is inspired from the GNU `std::make_unique` source code
     template<typename... _Args>
-    NoLearner(_Args &&... args)
-            : Learner(nullptr, nullptr) //TODO add report
+    explicit NoLearner(_Args &&... args)
+            : Learner(nullptr, nullptr, 0, 0) //TODO add report
             , _controller(new ControllerType(std::forward<_Args>(args)...))
     {}
 
-    void optimize(double time, double dt) override
-    {}
+    void optimize(double /*time*/, double /*dt*/) override {}
+    void init_first_controller() override {}
+    void init_next_controller() override {}
+    void finalize_current_controller(double /*fitness*/) override {}
 
     Controller *controller() override
     { return this->_controller.get(); }

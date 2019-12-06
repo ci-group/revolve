@@ -23,22 +23,20 @@ public:
             double evaluation_time,
             unsigned int n_evaluations);
 
-    virtual ~HyperNEAT() = default;
+    ~HyperNEAT() override = default;
 
     Controller *controller() override
     { return _controller.get(); }
 
-    void optimize(double time, double dt) override;
+    void init_first_controller() override;
+    void init_next_controller() override;
+    void finalize_current_controller(double fitness) override;
 
 private:
-    double evaluation_time;
-    double end_controller_time;
     std::unique_ptr<Controller> _controller;
 
     const NEAT::Parameters params;
     std::unique_ptr<NEAT::Population> population;
-    unsigned int evaluation_counter;
-    unsigned int n_evaluations;
     std::vector<NEAT::Species>::iterator current_specie_evaluating;
     std::vector<NEAT::Genome>::iterator current_genome_evaluating;
 };
