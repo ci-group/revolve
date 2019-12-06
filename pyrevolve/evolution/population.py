@@ -27,7 +27,6 @@ class PopulationConfig:
                  experiment_name,
                  experiment_management,
                  measure_individuals,
-                 environments,
                  offspring_size=None,
                  next_robot_id=1):
         """
@@ -67,11 +66,11 @@ class PopulationConfig:
         self.measure_individuals = measure_individuals
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
-        self.environments = environments
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
+
+    def __init__(self, conf: PopulationConfig, simulator_queue_envs, analyzer_queue_envs=None, next_robot_id=1):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -83,14 +82,15 @@ class Population:
         :param analyzer_queue: connection to the analyzer simulator queue
         :param next_robot_id: (sequential) id of the next individual to be created
         """
+
         self.conf = conf
         self.individuals = []
-        self.analyzer_queue = analyzer_queue
-        self.simulator_queue = simulator_queue
+        self.analyzer_queue_envs = analyzer_queue_envs
+        self.simulator_queue_envs = simulator_queue_envs
         self.next_robot_id = next_robot_id
 
     def _new_individual(self, genotype):
-        environment = 'plane' #TEMP!!!
+        environment = 'tilted5' #TEMP!!!
         individual = Individual(genotype)
         individual.develop(environment)
         self.conf.experiment_management.export_genotype(individual)
@@ -178,7 +178,10 @@ class Population:
             self.individuals.append(individual)
             self.next_robot_id += 1
 
-       # await self.evaluate(self.individuals, 0)
+            for environment in self.simulator_queue_envs:
+                print('comecou', environment)
+                await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
+                print('terminou', environment)
         self.individuals = recovered_individuals + self.individuals
 
     async def next_gen(self, gen_num, recovered_individuals=[]):
@@ -229,7 +232,7 @@ class Population:
 
         return new_population
 
-    async def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve'):
+    async def evaluate(self, new_individuals, gen_num, environment, type_simulation = 'evolve'):
         """
         Evaluates each individual in the new gen population
 
@@ -241,7 +244,7 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
+            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, environment)))
 
         await asyncio.sleep(1)
 
@@ -254,13 +257,15 @@ class Population:
                 assert (individual.fitness is None)
 
             if type_simulation == 'evolve':
-                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
+                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id,
+                                                                         individual.phenotype._behavioural_measurements,
+                                                                         environment)
 
             logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_fitness(individual)
 
-    async def evaluate_single_robot(self, individual):
+    async def evaluate_single_robot(self, individual, environment):
         """
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
@@ -268,10 +273,10 @@ class Population:
         if individual.phenotype is None:
             individual.develop()
 
-        if self.analyzer_queue is not None:
-            collisions, _bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
+        if self.analyzer_queue_envs[environment] is not None:
+            collisions, _bounding_box = await self.analyzer_queue_envs[environment].test_robot(individual, self.conf)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
 
-        return await self.simulator_queue.test_robot(individual, self.conf)
+        return await self.simulator_queue_envs[environment].test_robot(individual, self.conf)

@@ -27,7 +27,7 @@ class SimulatorQueue:
 
     def _simulator_supervisor(self, simulator_name_postfix):
         return DynamicSimSupervisor(
-            world_file=self._settings.world,
+            world_file='worlds/'+self._settings.world+'.world',
             simulator_cmd=self._simulator_cmd,
             simulator_args=["--verbose"],
             plugins_dir_path=os.path.join('.', 'build', 'lib'),

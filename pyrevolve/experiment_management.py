@@ -22,6 +22,7 @@ class ExperimentManagement:
         for environment in environments:
             os.mkdir(self.dirpath+'/selectedpop_'+environment)
             os.mkdir(self.dirpath+'/data_fullevolution/'+environment)
+            os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/individuals')
             os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/phenotypes')
             os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/descriptors')
             os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/fitness')
@@ -49,6 +50,10 @@ class ExperimentManagement:
     def export_fitness(self, individual, environment):
         folder = os.path.join(self._data_folder()+'/'+environment, 'fitness')
         individual.export_fitness(folder)
+
+    def export_individual(self, individual, environment):
+        folder = self._data_folder()+'/'+environment
+        individual.export_individual(folder)
 
     def export_behavior_measures(self, _id, measures, environment):
         filename = os.path.join(self._data_folder()+'/'+environment, 'descriptors', f'behavior_desc_{_id}.txt')

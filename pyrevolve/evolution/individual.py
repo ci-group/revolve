@@ -1,5 +1,5 @@
 # (G,P)
-
+import pickle
 
 class Individual:
     def __init__(self, genotype, phenotype=None):
@@ -46,6 +46,11 @@ class Individual:
         """
         with open(f'{folder}/fitness_{self.id}.txt', 'w') as f:
             f.write(str(self.fitness))
+
+    def export_individual(self):
+        f = open(f'{folder}/individuals/individual_{self.id}.pkl',"wb")
+        pickle.dump(self,f)
+        f.close()
 
     def export(self, folder):
         self.export_genotype(folder)

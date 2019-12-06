@@ -152,22 +152,9 @@ class Plasticoding(Genotype):
                 self.grammar[repleceable_symbol].append([symbol, params])
 
     def export_genotype(self, filepath):
-        pass
-        # file = open(filepath, 'w+')
-        # for key, rule in self.grammar.items():
-        #     line = key.value + ' '
-        #     for item_rule in range(0, len(rule)):
-        #         symbol = rule[item_rule][self.index_symbol].value
-        #         if len(rule[item_rule][self.index_params]) > 0:
-        #             params = '_'
-        #             for param in range(0, len(rule[item_rule][self.index_params])):
-        #                 params += str(rule[item_rule][self.index_params][param])
-        #                 if param < len(rule[item_rule][self.index_params])-1:
-        #                     params += '|'
-        #             symbol += params
-        #         line += symbol + ' '
-        #     file.write(line+'\n')
-        # file.close()
+        f = open(filepath,"w")
+        f.write( str(self.grammar) )
+        f.close()
 
     def load_and_develop(self, load, genotype_path='', id_genotype=None):
 
@@ -735,7 +722,7 @@ from pyrevolve.genotype.plasticoding import initialization
 class PlasticodingConfig:
     def __init__(self,
                  initialization_genome=initialization.random_initialization,
-                 e_max_groups=1,#4,
+                 e_max_groups=4,
                  oscillator_param_min=1,
                  oscillator_param_max=10,
                  weight_param_min=-1,
@@ -743,7 +730,7 @@ class PlasticodingConfig:
                  weight_min=-1,
                  weight_max=1,
                  axiom_w=Alphabet.CORE_COMPONENT,
-                 i_iterations=2,#3,
+                 i_iterations=3,
                  max_structural_modules=100,
                  robot_id=0,
                  move_to_new=False,
