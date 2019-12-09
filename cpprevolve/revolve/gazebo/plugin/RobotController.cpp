@@ -285,14 +285,15 @@ void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo _info)
 /// Default update function simply tells the brain to perform an update
 void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
 {
-    const auto current_time = _info.simTime.Double() - initTime_;
-    const auto delta_time = (_info.simTime - lastActuationTime_).Double();
+    const gz::common::Time current_time = _info.simTime - initTime_;
+    const double current_time_d = current_time.Double();
+    const double delta_time = (_info.simTime - lastActuationTime_).Double();
 
     //const ::ignition::math::Pose3d &relative_pose = model_->RelativePose();
     const ::ignition::math::Pose3d &world_pose = model_->WorldPose();
 
     if (evaluator) {
-        evaluator->simulation_update(world_pose, current_time, delta_time);
+        evaluator->simulation_update(world_pose, current_time_d, delta_time);
     }
 
     if (gazebo_reporter) {
@@ -300,10 +301,10 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
     }
 
     if (learner) {
-        learner->optimize(current_time, delta_time);
+        learner->optimize(current_time_d, delta_time);
         revolve::Controller *controller = learner->controller();
         if (controller) {
-            controller->update(motors_, sensors_, current_time, delta_time);
+            controller->update(motors_, sensors_, current_time_d, delta_time);
         }
     }
 }

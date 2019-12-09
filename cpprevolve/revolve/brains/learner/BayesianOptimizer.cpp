@@ -41,7 +41,7 @@ BayesianOptimizer::BayesianOptimizer(
     this->kernel_squared_exp_ard_k = 4;
     this->acqui_gpucb_delta = 0.5;
     this->acqui_ucb_alpha = 0.44;
-    this->acqui_ei_jitter = 0;
+    this->acqui_ei_jitter = 0.0;
     this->acquisition_function = "UCB";
 
     if (typeid(this->_controller) == typeid(std::unique_ptr<revolve::DifferentialCPG>)) {

@@ -6,6 +6,7 @@
 
 #include <mutex>
 #include <revolve/brains/learner/EvaluationReporter.h>
+#include <gazebo/common/Time.hh>
 #include <gazebo/transport/TransportTypes.hh>
 #include <ignition/math/Pose3.hh>
 #include <revolve/msgs/robot_states_learning.pb.h>
@@ -23,7 +24,7 @@ public:
     void report(unsigned int eval, bool dead, double fitness) override;
 
     void simulation_update(const ignition::math::Pose3d &pose,
-                           double time,
+                           const ::gazebo::common::Time &time,
                            double step);
 
 private:

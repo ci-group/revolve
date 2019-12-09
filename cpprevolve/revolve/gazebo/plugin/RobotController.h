@@ -128,7 +128,7 @@ protected:
     double actuationTime_;
 
     /// \brief Time of initialisation
-    double initTime_;
+    ::gazebo::common::Time initTime_;
 
     /// \brief rv:battery element, if present
     sdf::ElementPtr batteryElem_;

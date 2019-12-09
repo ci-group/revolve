@@ -1,0 +1,159 @@
+---
+id: example_spider
+body:
+  id          : Core
+  type        : Core
+  params:
+    red: 0.04
+    green: 0.26
+    blue: 0.72
+  children    :
+    0:
+      id          : Leg00Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg00
+          type        : FixedBrick
+          params:
+            red: 0.04
+            green: 0.26
+            blue: 0.72
+          orientation : -90
+          children    :
+            1:
+              id          : Leg01Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              children    :
+                1:
+                  id          : Leg01
+                  type        : FixedBrick
+                  params:
+                    red: 0.04
+                    green: 0.26
+                    blue: 0.72
+                  orientation : 0
+    1:
+      id          : Leg10Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg10
+          type        : FixedBrick
+          params:
+            red: 0.04
+            green: 0.26
+            blue: 0.72
+          orientation : -90
+          children    :
+            1:
+              id          : Leg11Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              children    :
+                1:
+                  id          : Leg11
+                  type        : FixedBrick
+                  params:
+                    red: 0.04
+                    green: 0.26
+                    blue: 0.72
+                  orientation : 0
+    2:
+      id          : Leg20Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg20
+          type        : FixedBrick
+          params:
+            red: 0.04
+            green: 0.26
+            blue: 0.72
+          orientation : -90
+          children    :
+            1:
+              id          : Leg21Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              children    :
+                1:
+                  id          : Leg21
+                  type        : FixedBrick
+                  params:
+                    red: 0.04
+                    green: 0.26
+                    blue: 0.72
+                  orientation : 0
+    3:
+      id          : Leg30Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg30
+          type        : FixedBrick
+          params:
+            red: 0.04
+            green: 0.26
+            blue: 0.72
+          orientation : -90
+          children    :
+            1:
+              id          : Leg31Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              children    :
+                1:
+                  id          : Leg31
+                  type        : FixedBrick
+                  params:
+                    red: 0.04
+                    green: 0.26
+                    blue: 0.72
+                  orientation : 0
+brain:
+  type: cpg
+  learner:
+    type : bo
+  controller:
+    reset_neuron_random : false;
+    use_frame_of_reference : false;
+    init_neuron_state : 0.707;
+    range_ub : 1.0;
+    signal_factor_all : 4.0;
+    signal_factor_mid : 2.5;
+    signal_factor_left_right : 2.5;
+    abs_output_bound : 1.0;

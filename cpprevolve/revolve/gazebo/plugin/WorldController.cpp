@@ -30,6 +30,7 @@ WorldController::WorldController()
     : delete_robot_queue()
     , robotStatesPubFreq_(5)
     , lastRobotStatesUpdateTime_(0)
+    , robotStatesPub_(nullptr)
 {
 }
 

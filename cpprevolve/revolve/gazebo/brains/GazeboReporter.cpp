@@ -33,13 +33,7 @@ void GazeboReporter::report(const unsigned int eval, const bool dead, const doub
 
     if (last_eval != eval) {
         // Clear behaviour data
-        message.mutable_behaviour()->clear_path();
-
-        // this is removed for performance reasons
-        //message.clear_behaviour();
-        //message.clear_fitness();
-        //message.clear_dead();
-        //message.clear_eval();
+        message.clear_behaviour();
 
         last_eval = eval;
     }
@@ -47,10 +41,11 @@ void GazeboReporter::report(const unsigned int eval, const bool dead, const doub
 
 
 void GazeboReporter::simulation_update(const ignition::math::Pose3d &pose,
-                                       double time,
-                                       double _step)
+                                       const ::gazebo::common::Time &time,
+                                       double /*step*/)
 {
     const std::lock_guard<std::mutex> lock(message_mutex);
-    ::gazebo::msgs::Pose *pose_msg = message.mutable_behaviour()->add_path();
-    ::gazebo::msgs::Set(pose_msg, pose);
+    ::revolve::msgs::BehaviourData *behaviour_data = message.add_behaviour();
+    ::gazebo::msgs::Set(behaviour_data->mutable_pose(), pose);
+    ::gazebo::msgs::Set(behaviour_data->mutable_time(), time);
 }

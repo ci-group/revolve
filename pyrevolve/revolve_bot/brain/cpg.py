@@ -39,16 +39,15 @@ class BrainCPG(Brain):
     @staticmethod
     def from_yaml(yaml_object):
         BCPG = BrainCPG()
-        for my_type in ["controller", "learner"]:  #, "meta"]:
-            try:
-                my_object = yaml_object[my_type]
-                for key, value in my_object.items():
-                    try:
-                        setattr(BCPG, key, value)
-                    except:
-                        print("Couldn't set {}, {}", format(key, value))
-            except:
-                print("Didn't load {} parameters".format(my_type))
+        try:
+            my_object = yaml_object["controller"]
+            for key, value in my_object.items():
+                try:
+                    setattr(BCPG, key, value)
+                except:
+                    print(f"Couldn't set {key}, {value}")
+        except:
+            print("Didn't load \"controller\" parameters")
 
         return BCPG
 
