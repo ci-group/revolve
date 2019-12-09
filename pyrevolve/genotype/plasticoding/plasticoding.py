@@ -19,7 +19,7 @@ import copy
 import itertools
 import pprint
 import sys
-
+import json
 
 class Alphabet(Enum):
 
@@ -152,8 +152,8 @@ class Plasticoding(Genotype):
                 self.grammar[repleceable_symbol].append([symbol, params])
 
     def export_genotype(self, filepath):
-        f = open(filepath,"w")
-        f.write( str(self.grammar) )
+        f = open(filepath, "w")
+        f.write(str(self.grammar))
         f.close()
 
     def load_and_develop(self, load, genotype_path='', id_genotype=None):
@@ -215,16 +215,13 @@ class Plasticoding(Genotype):
 
                 # one and only one rule should be true, otherwise letter doesnt get expressed
                 if true_rules == 0 or true_rules > 1:
-                    grammar[letter] = []
+                    #grammar[letter] = []
+                    # orrrrr actually, uses first flavor
+                    grammar[letter] = self.grammar[letter][0][1]
 
         else:
 
             grammar = self.grammar
-
-        print('gramarrrrrrrr')
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(grammar)
-
 
         self.intermediate_phenotype = [[self.conf.axiom_w, []]]
         for i in range(0, self.conf.i_iterations):
@@ -247,8 +244,6 @@ class Plasticoding(Genotype):
                 else:
                     position = position + 1
 
-
-            pp.pprint(self.intermediate_phenotype)
         logger.info('Robot ' + str(self.id) + ' was early-developed.')
 
     def late_development(self):

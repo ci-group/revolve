@@ -6,7 +6,9 @@ from pyrevolve.tol.manage import measures
 from ..custom_logging.logger import logger
 import time
 import asyncio
+import copy
 import os
+import pickle
 import sys
 
 class PopulationConfig:
@@ -27,6 +29,7 @@ class PopulationConfig:
                  experiment_name,
                  experiment_management,
                  measure_individuals,
+                 environments,
                  offspring_size=None,
                  next_robot_id=1):
         """
@@ -64,6 +67,7 @@ class PopulationConfig:
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
         self.measure_individuals = measure_individuals
+        self.environments = environments
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
 
@@ -90,60 +94,50 @@ class Population:
         self.next_robot_id = next_robot_id
 
     def _new_individual(self, genotype):
-        environment = 'tilted5' #TEMP!!!
-        individual = Individual(genotype)
-        individual.develop(environment)
-        self.conf.experiment_management.export_genotype(individual)
-        self.conf.experiment_management.export_phenotype(individual, environment)
-        self.conf.experiment_management.export_phenotype_images('data_fullevolution/'
-                                                                +environment+'/phenotype_images', individual)
-        individual.phenotype.measure_phenotype(self.conf.experiment_name)
-        individual.phenotype.export_phenotype_measurements(self.conf.experiment_name, environment)
+
+        individual = {}
+        individual_temp = Individual(genotype)
+
+        for environment in self.conf.environments:
+
+            individual[environment] = copy.deepcopy(individual_temp)
+            individual[environment].develop(environment)
+
+            if len(individual) == 1:
+                self.conf.experiment_management.export_genotype(individual[environment])
+
+            self.conf.experiment_management.export_phenotype(individual[environment], environment)
+            self.conf.experiment_management.export_phenotype_images('data_fullevolution/'
+                                                                    +environment+'/phenotype_images',
+                                                                    individual[environment])
+            individual[environment].phenotype.measure_phenotype(self.conf.experiment_name)
+            individual[environment].phenotype.export_phenotype_measurements(self.conf.experiment_name, environment)
+            self.conf.experiment_management.export_individual(individual[environment], environment)
 
         return individual
 
     async def load_individual(self, id):
-        path = 'experiments/'+self.conf.experiment_name
-        genotype = self.conf.genotype_constructor(self.conf.genotype_conf, id)
-        genotype.load_genotype(f'{path}/data_fullevolution/genotypes/genotype_{id}.txt')
+        path = 'experiments/'+self.conf.experiment_name+'/'+'data_fullevolution/'
 
-        individual = Individual(genotype)
-        individual.develop()
-        individual.phenotype.measure_phenotype(self.conf.experiment_name)
-
-        with open(os.path.join(path, 'data_fullevolution', 'fitness', f'fitness_{id}.txt')) as f:
-            data = f.readlines()[0]
-            individual.fitness = None if data == 'None' else float(data)
-
-        with open(os.path.join(path, 'data_fullevolution', 'descriptors', f'behavior_desc_{id}.txt')) as f:
-            lines = f.readlines()
-            if lines[0] == 'None':
-                individual.phenotype._behavioural_measurements = None
+        individual = {}
+        for environment in self.conf.environments:
+            file_name = path+environment+'/individuals/individual_'+id+'.pkl'
+            if os.path.exists(file_name):
+                file = open(file_name, 'rb')
+                individual[environment] = pickle.load(file)
             else:
-                individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
-                for line in lines:
-                    if line.split(' ')[0] == 'velocity':
-                        individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-                    #if line.split(' ')[0] == 'displacement':
-                     #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity':
-                        individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity_hill':
-                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'head_balance':
-                        individual.phenotype._behavioural_measurements.head_balance =  None if line.split(' ')[1] == 'None\n' else float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'contacts':
-                        individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+                individual[environment] = copy.deepcopy(individual[list(self.conf.environments.keys())[-1]])
 
         return individual
 
     async def load_snapshot(self, gen_num):
         """
-        Recovers all genotypes and fitnesses of robots in the lastest selected population
+        Recovers all genotypes and fitnesses of robots in the latest selected population
         :param gen_num: number of the generation snapshot to recover
         """
         path = 'experiments/'+self.conf.experiment_name
-        for r, d, f in os.walk(path +'/selectedpop_'+str(gen_num)):
+        for r, d, f in os.walk(path+'/selectedpop_'+
+                               list(self.conf.environments.keys())[-1]+'/selectedpop_'+str(gen_num)):
             for file in f:
                 if 'body' in file:
                     id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
@@ -172,17 +166,17 @@ class Population:
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
+        # do recovery soon...!
         for i in range(self.conf.population_size-len(recovered_individuals)):
             individual = self._new_individual(
                 self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
             self.individuals.append(individual)
             self.next_robot_id += 1
 
-            for environment in self.simulator_queue_envs:
-                print('comecou', environment)
-                await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
-                print('terminou', environment)
         self.individuals = recovered_individuals + self.individuals
+
+        for environment in self.simulator_queue_envs:
+            await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
 
     async def next_gen(self, gen_num, recovered_individuals=[]):
         """
@@ -243,13 +237,15 @@ class Population:
         # await self.simulator_connection.pause(True)
         robot_futures = []
         for individual in new_individuals:
-            logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual, environment)))
+            if individual[environment].fitness is None:
+                logger.info(f'Evaluating individual (gen {gen_num}) {individual[environment].genotype.id} ...')
+                robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual[environment],
+                                                                                      environment)))
 
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):
-            individual = new_individuals[i]
+            individual = new_individuals[i][environment]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
             individual.fitness, individual.phenotype._behavioural_measurements = await future
 
@@ -263,18 +259,18 @@ class Population:
 
             logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             if type_simulation == 'evolve':
-                self.conf.experiment_management.export_fitness(individual)
+                self.conf.experiment_management.export_fitness(individual, environment)
+                self.conf.experiment_management.export_individual(individual, environment)
 
     async def evaluate_single_robot(self, individual, environment):
         """
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
         """
-        if individual.phenotype is None:
-            individual.develop()
 
         if self.analyzer_queue_envs[environment] is not None:
-            collisions, _bounding_box = await self.analyzer_queue_envs[environment].test_robot(individual, self.conf)
+            collisions, _bounding_box = await self.analyzer_queue_envs[environment].test_robot(individual,
+                                                                                               self.conf)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None

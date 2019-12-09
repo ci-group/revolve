@@ -47,9 +47,9 @@ class Individual:
         with open(f'{folder}/fitness_{self.id}.txt', 'w') as f:
             f.write(str(self.fitness))
 
-    def export_individual(self):
-        f = open(f'{folder}/individuals/individual_{self.id}.pkl',"wb")
-        pickle.dump(self,f)
+    def export_individual(self, folder):
+        f = open(f'{folder}/individuals/individual_{self.id}.pkl', "wb")
+        pickle.dump(self, f)
         f.close()
 
     def export(self, folder):
