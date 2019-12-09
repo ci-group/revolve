@@ -67,6 +67,9 @@ target/
 # Visual Studio Code
 /.vscode/
 
+# Qt Creator
+CMakeLists.txt.user
+
 # Virtual env
 .venv*/
 .python-version

@@ -25,24 +25,21 @@ BayesianOptimizer::BayesianOptimizer(
         Evaluator *evaluator,
         EvaluationReporter *reporter,
         const double evaluation_time,
-        const size_t n_learning_evalutions)
-        : Learner(evaluator, reporter)
+        const unsigned int n_learning_evalutions)
+        : Learner(evaluator, reporter, evaluation_time, n_learning_evalutions)
         , _controller(std::move(controller))
-        , evaluation_time(evaluation_time)
-        , evaluation_end_time(-1)
-        , n_learning_iterations(n_learning_evalutions)
+        , n_init_samples(1)
+        //, init_method("LHS")
+        , kernel_noise(0.00000001)
+        , kernel_optimize_noise("false")
+        , kernel_sigma_sq(0.222)
+        , kernel_l(0.55)
+        , kernel_squared_exp_ard_k(4)
+        , acqui_gpucb_delta(0.5)
+        , acqui_ucb_alpha(0.44)
+        , acqui_ei_jitter(0.0)
+        , acquisition_function("UCB")
 {
-    this->n_init_samples = 1;
-    //this->init_method = "LHS";
-    this->kernel_noise = 0.00000001;
-    this->kernel_optimize_noise = "false";
-    this->kernel_sigma_sq = 0.222;
-    this->kernel_l = 0.55;
-    this->kernel_squared_exp_ard_k = 4;
-    this->acqui_gpucb_delta = 0.5;
-    this->acqui_ucb_alpha = 0.44;
-    this->acqui_ei_jitter = 0.0;
-    this->acquisition_function = "UCB";
 
     if (typeid(this->_controller) == typeid(std::unique_ptr<revolve::DifferentialCPG>)) {
         devectorize_controller = [this](Eigen::VectorXd weights) {
@@ -52,12 +49,12 @@ BayesianOptimizer::BayesianOptimizer(
                 std_weights[j] = weights(j);
             }
 
-            auto *temp_controller = dynamic_cast<::revolve::DifferentialCPG *>(this->controller());
+            auto *temp_controller = dynamic_cast<::revolve::DifferentialCPG *>(this->_controller.get());
             temp_controller->set_connection_weights(std_weights);
         };
 
         vectorize_controller = [this]() {
-            auto *controller = dynamic_cast<::revolve::DifferentialCPG *>( this->controller());
+            auto *controller = dynamic_cast<::revolve::DifferentialCPG *>(this->_controller.get());
             const std::vector<double> &weights = controller->get_connection_weights();
 
             // std::vector -> Eigen::Vector
@@ -171,56 +168,41 @@ BO_DECLARE_DYN_PARAM(double, BayesianOptimizer::params::acqui_ucb, alpha);
 BO_DECLARE_DYN_PARAM(double, BayesianOptimizer::params::kernel_maternfivehalves, sigma_sq);
 BO_DECLARE_DYN_PARAM(double, BayesianOptimizer::params::kernel_maternfivehalves, l);
 
-void BayesianOptimizer::optimize(double current_time, double dt)
+void BayesianOptimizer::init_first_controller()
 {
-    if (current_time < evaluation_end_time) return;
+    assert(n_init_samples == 1 and "INIT SAMPLES > 1 not supported");
 
-    // init
-    if (samples.empty()) {
-        assert(n_init_samples == 1 and "INIT SAMPLES > 1 not supported");
-
-        // Save these weights
-        this->samples.push_back(this->vectorize_controller());
-        this->current_iteration = 0;
-    }
-    else // optimization step
-    {
-        params::acqui_ucb::set_alpha(this->acqui_ucb_alpha);
-        params::kernel_maternfivehalves::set_l(this->kernel_l);
-        params::kernel_maternfivehalves::set_sigma_sq(this->kernel_sigma_sq);
-
-        Eigen::VectorXd x;
-
-        // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
-        limbo::bayes_opt::BOptimizer<params,
-                limbo::initfun<Init_t>,
-                limbo::modelfun<GP_t>,
-                limbo::acquifun<limbo::acqui::UCB<BayesianOptimizer::params, GP_t >>> boptimizer;
-
-        // Optimize. Pass dummy evaluation function and observations .
-        boptimizer.optimize(BayesianOptimizer::evaluation_function(this->samples[0].size()),
-                            this->samples,
-                            this->observations);
-        x = boptimizer.last_sample();
-        this->samples.push_back(x);
-
-        this->save_fitness();
-    }
-
-    // wait for next evaluation
-    this->evaluation_end_time = current_time + evaluation_time;
-    // Reset Evaluator
-    this->evaluator->reset();
+    // Save the initial weights
+    this->samples.push_back(this->vectorize_controller());
 }
 
-/**
- * Function that obtains the current fitness by calling the evaluator and stores it
- */
-void BayesianOptimizer::save_fitness()
+void BayesianOptimizer::init_next_controller()
 {
-    // Get fitness
-    double fitness = this->evaluator->fitness();
+    //TODO are these global variables 😱?
+    params::acqui_ucb::set_alpha(this->acqui_ucb_alpha);
+    params::kernel_maternfivehalves::set_l(this->kernel_l);
+    params::kernel_maternfivehalves::set_sigma_sq(this->kernel_sigma_sq);
 
+    // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+    limbo::bayes_opt::BOptimizer<params,
+            limbo::initfun<Init_t>,
+            limbo::modelfun<GP_t>,
+            limbo::acquifun<limbo::acqui::UCB<BayesianOptimizer::params, GP_t >>> boptimizer;
+
+    // Optimize. Pass evaluation function and observations .
+    boptimizer.optimize(BayesianOptimizer::evaluation_function(this->samples[0].size()),
+                        this->samples,
+                        this->observations);
+
+    Eigen::VectorXd x = boptimizer.last_sample();
+    this->samples.push_back(x);
+
+    // load into controller
+    this->devectorize_controller(x);
+}
+
+void BayesianOptimizer::finalize_current_controller(double fitness)
+{
     // Save connection_weights if it is the best seen so far
     if(fitness > this->best_fitness)
     {

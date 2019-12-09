@@ -2,9 +2,9 @@
 // Created by matteo on 14/06/19.
 //
 
-#ifndef REVOLVE_BAYESIANOPTIMIZER_H
-#define REVOLVE_BAYESIANOPTIMIZER_H
+#pragma once
 
+#include <limits>
 #include "Learner.h"
 #include "../controller/Controller.h"
 #include "../controller/DifferentialCPG.h"
@@ -19,20 +19,17 @@ public:
             Evaluator *evaluator,
             EvaluationReporter *reporter,
             double evaluation_time,
-            size_t n_learning_evalutions);
+            unsigned int n_learning_evalutions);
 
     /// \brief Destructor
     ~BayesianOptimizer() = default;
 
-    /// \brief performes the optimization of the controller. Used as a proxy to call the right optimization method
-    void optimize(double time, double dt) override;
+    void init_first_controller() override;
+    void init_next_controller() override;
+    void finalize_current_controller(double fitness) override;
 
     Controller *controller() override
     { return this->_controller.get(); }
-
-    /// \brief bookeeping of the fitnensses
-    void save_fitness();
-
 
 public:
 
@@ -64,8 +61,6 @@ public:
 
 protected:
     std::unique_ptr<::revolve::Controller> _controller;
-    const double evaluation_time;
-    double evaluation_end_time;
 
     // BO Learner parameters
     double kernel_noise;
@@ -80,17 +75,14 @@ protected:
     /// \brief Specifies the acquisition function used
     std::string acquisition_function;
 
-    /// \brief Max number of iterations learning is allowed
-    size_t n_learning_iterations;
-
     /// \brief Number of initial samples
     size_t n_init_samples;
 
     /// \brief All samples seen so far.
     std::vector <Eigen::VectorXd> samples;
 
-    /// \brief BO attributes
-    size_t current_iteration = 0;
+    /// \brief All fitnesses seen so far. Called observations in limbo context
+    std::vector< Eigen::VectorXd > observations;
 
     /// \brief function to turn the controller into a sample
     std::function<Eigen::VectorXd()> vectorize_controller;
@@ -98,15 +90,10 @@ protected:
     /// \brief function to turn a sample into a controller
     std::function<void(Eigen::VectorXd)> devectorize_controller;
 
-    /// \brief All fitnesses seen so far. Called observations in limbo context
-    std::vector< Eigen::VectorXd > observations;
-
     /// \brief Best fitness seen so far
-    double best_fitness = -10.0;
+    double best_fitness = -std::numeric_limits<double>::infinity();
 
     /// \brief Sample corresponding to best fitness
     Eigen::VectorXd best_sample;
 };
 }
-
-#endif //REVOLVE_BAYESIANOPTIMIZER_H
