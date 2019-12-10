@@ -6,6 +6,7 @@
 #include <limbo/acqui/gp_ucb.hpp>
 #include <limbo/acqui/ei.hpp>
 #include <limbo/init/lhs.hpp>
+#include <typeinfo>
 
 #include "BayesianOptimizer.h"
 #include "../controller/DifferentialCPG.h"
@@ -41,7 +42,9 @@ BayesianOptimizer::BayesianOptimizer(
         , acquisition_function("UCB")
 {
 
-    if (typeid(this->_controller) == typeid(std::unique_ptr<revolve::DifferentialCPG>)) {
+    std::cout << "controller type: "<< typeid(this->_controller.get()).name() << " diffCPG type: " << typeid(revolve::DifferentialCPG*).name() <<std::endl;
+    if (typeid(this->_controller.get()).hash_code() == typeid(revolve::DifferentialCPG*).hash_code())
+    {
         devectorize_controller = [this](Eigen::VectorXd weights) {
             // Eigen::vector -> std::vector
             std::vector<double> std_weights(weights.size());

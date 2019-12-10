@@ -75,11 +75,6 @@ class BrainCPG(Brain):
             }
         }
 
-    def learner_sdf(self):
-        return xml.etree.ElementTree.Element('rv:learner', {
-            'type': 'offline',
-        })
-
     def controller_sdf(self):
         return xml.etree.ElementTree.Element('rv:controller', {
             'type': 'cpg',

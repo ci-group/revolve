@@ -55,8 +55,8 @@ async def test_robot_run(robot_file_path: str):
     while True:
         # Print robot fitness every second
         status = 'dead' if robot_manager.dead else 'alive'
-        print(f"Robot fitness ({status}) is \n"
-              f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
-              f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
-              f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
+        #print(f"Robot fitness ({status}) is \n"
+        #      f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
+         #     f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
+          #    f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
         await asyncio.sleep(1.0)

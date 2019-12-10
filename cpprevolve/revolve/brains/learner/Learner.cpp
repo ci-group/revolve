@@ -10,6 +10,7 @@ void Learner::optimize(double time, double /*dt*/)
 {
     if (time > end_controller_time) return;
 
+    std::cout << "evaluation_counter: " << evaluation_counter << std::endl;
     // first evaluation
     if (evaluation_counter < 0)
     {
@@ -25,6 +26,7 @@ void Learner::optimize(double time, double /*dt*/)
 
         evaluation_reporter->report(evaluation_counter, finished, fitness);
         this->finalize_current_controller(fitness);
+        std::cout << "Fitness: " << fitness << std::endl;
 
         if (finished) return;
 

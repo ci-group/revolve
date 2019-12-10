@@ -300,6 +300,7 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
         gazebo_reporter->simulation_update(world_pose, current_time, delta_time);
     }
 
+    std::cout << "learner: " << learner.get() << std::endl;
     if (learner) {
         learner->optimize(current_time_d, delta_time);
         revolve::Controller *controller = learner->controller();

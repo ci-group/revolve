@@ -27,6 +27,7 @@ class Brain(object):
             brain = Brain()
 
         brain.learner = Learner.from_yaml(yaml_brain['learner'])
+        return brain
 
     def to_yaml(self):
         return {
