@@ -1,8 +1,9 @@
-import pyrevolve.revolve_bot.brain as brains
+from pyrevolve.revolve_bot import brain as brains
 from pyrevolve.revolve_bot.brain.learner import Learner
 
 
 class Brain(object):
+    TYPE = 'NONE'
 
     def __init__(self):
         self.learner = None

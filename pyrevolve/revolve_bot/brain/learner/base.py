@@ -1,5 +1,5 @@
 import xml.etree.ElementTree
-import pyrevolve.revolve_bot.brain.learner as learners
+from pyrevolve.revolve_bot.brain import learner as learners
 
 
 class Learner(object):
