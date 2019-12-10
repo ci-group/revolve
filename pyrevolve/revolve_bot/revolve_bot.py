@@ -16,7 +16,7 @@ from .brain import Brain, BrainNN
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
-from .measure.measure_body import MeasureBody
+from .measure.measure_body_3d import MeasureBody3D
 from .measure.measure_brain import MeasureBrain
 
 from ..custom_logging.logger import logger
@@ -78,12 +78,12 @@ class RevolveBot:
 
     def measure_body(self):
         """
-        :return: instance of MeasureBody after performing all measurements
+        :return: instance of MeasureBody3D after performing all measurements
         """
         if self._body is None:
             raise RuntimeError('Body not initialized')
         try:
-            measure = MeasureBody(self._body)
+            measure = MeasureBody3D(self._body)
             measure.measure_all()
             return measure
         except Exception as e:
@@ -105,7 +105,7 @@ class RevolveBot:
         """
         try:
             measure = MeasureBrain(self._brain, 10)
-            measure_b = MeasureBody(self._body)
+            measure_b = MeasureBody3D(self._body)
             measure_b.count_active_hinges()
             if measure_b.active_hinges_count > 0:
                 measure.measure_all()
