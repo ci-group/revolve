@@ -200,7 +200,7 @@ class Plasticoding(Genotype):
             grammar = {}
             for letter in self.grammar:
 
-                true_rules = 0
+                true_clauses = []
                 clause_is_true = None
                 for flavor in range(0, len(self.grammar[letter])):
                     clause = ''
@@ -209,19 +209,33 @@ class Plasticoding(Genotype):
                             clause += str(subitem) + ' '
 
                     clause_is_true = eval(clause)
-                    if clause_is_true:
-                        grammar[letter] = self.grammar[letter][flavor][1]
-                        true_rules += 1
 
-                # one and only one rule should be true, otherwise letter doesnt get expressed
-                if true_rules == 0 or true_rules > 1:
-                    #grammar[letter] = []
-                    # orrrrr actually, uses first flavor
-                    grammar[letter] = self.grammar[letter][0][1]
+                    if clause_is_true:
+                        true_clauses.append(flavor)
+
+                # if no clause is true, letter doesnt get expressed
+                if len(true_clauses) == 0:
+                    grammar[letter] = []
+                else:
+                    # if multiple clauses are true, all get expressed
+                    for idx in range(0, len(true_clauses)):
+                        if idx == 0:
+                            grammar[letter] = self.grammar[letter][true_clauses[idx]][1]
+                        else:
+                            if letter == Alphabet.CORE_COMPONENT:
+                                aux_list = self.grammar[letter][true_clauses[idx]][1][1:]
+                            else:
+                                aux_list = self.grammar[letter][true_clauses[idx]][1]
+                            grammar[letter].extend(aux_list)
+
 
         else:
 
             grammar = self.grammar
+
+        print('regulated')
+        pp = pprint.PrettyPrinter(width=41, compact=True)
+        pp.pprint(grammar)
 
         self.intermediate_phenotype = [[self.conf.axiom_w, []]]
         for i in range(0, self.conf.i_iterations):
@@ -294,6 +308,7 @@ class Plasticoding(Genotype):
         self.add_imu_nodes()
         logger.info('Robot ' + str(self.id) + ' was late-developed.')
 
+        print(self.intermediate_phenotype)
         return self.phenotype
 
     def move_in_body(self, symbol):
@@ -730,7 +745,7 @@ class PlasticodingConfig:
                  robot_id=0,
                  move_to_new=False,
                  max_clauses=2,
-                 max_terms_clause=1,
+                 max_terms_clause=2,
                  plastic=False,
                  environmental_conditions=['hill'],
                  logic_operators=['and', 'or']
