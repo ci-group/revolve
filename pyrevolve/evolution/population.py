@@ -106,6 +106,8 @@ class Population:
             if len(individual) == 1:
                 self.conf.experiment_management.export_genotype(individual[environment])
 
+        for environment in self.conf.environments:
+
             self.conf.experiment_management.export_phenotype(individual[environment], environment)
             self.conf.experiment_management.export_phenotype_images('data_fullevolution/'
                                                                     +environment+'/phenotype_images',
@@ -113,7 +115,7 @@ class Population:
             individual[environment].phenotype.measure_phenotype(self.conf.experiment_name)
             individual[environment].phenotype.export_phenotype_measurements(self.conf.experiment_name, environment)
             self.conf.experiment_management.export_individual(individual[environment], environment)
-
+            print('new',individual[environment].evaluated)
         return individual
 
     async def load_individual(self, id):
@@ -122,12 +124,10 @@ class Population:
         individual = {}
         for environment in self.conf.environments:
             file_name = path+environment+'/individuals/individual_'+id+'.pkl'
-            if os.path.exists(file_name):
-                file = open(file_name, 'rb')
-                individual[environment] = pickle.load(file)
-            else:
-                individual[environment] = copy.deepcopy(individual[list(self.conf.environments.keys())[-1]])
+            file = open(file_name, 'rb')
+            individual[environment] = pickle.load(file)
 
+            print(id, individual[environment].evaluated)
         return individual
 
     async def load_snapshot(self, gen_num):
@@ -159,23 +159,24 @@ class Population:
         for robot_id in range(n_robots+1, next_robot_id):
             individuals.append(await self.load_individual('robot_'+str(robot_id)))
 
-        self.next_robot_id = next_robot_id
         return individuals
 
     async def init_pop(self, recovered_individuals=[]):
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
-        # do recovery soon...!
         for i in range(self.conf.population_size-len(recovered_individuals)):
             individual = self._new_individual(
                 self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
             self.individuals.append(individual)
             self.next_robot_id += 1
 
+        print('recovered ',len(recovered_individuals))
+        print('before individuals',len(self.individuals))
         self.individuals = recovered_individuals + self.individuals
-
-        for environment in self.simulator_queue_envs:
+        print('after individuals',len(self.individuals))
+        for environment in self.conf.environments:
+            print('cuuu', environment)
             await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
 
     async def next_gen(self, gen_num, recovered_individuals=[]):
@@ -236,18 +237,22 @@ class Population:
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
         robot_futures = []
+        to_evaluate = []
         for individual in new_individuals:
-            if individual[environment].fitness is None:
+            print(individual[environment].phenotype.id, individual[environment].evaluated)
+            if not individual[environment].evaluated:
                 logger.info(f'Evaluating individual (gen {gen_num}) {individual[environment].genotype.id} ...')
+                to_evaluate.append(individual)
                 robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual[environment],
                                                                                       environment)))
 
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):
-            individual = new_individuals[i][environment]
+            individual = to_evaluate[i][environment]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
             individual.fitness, individual.phenotype._behavioural_measurements = await future
+            individual.evaluated = True
 
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)

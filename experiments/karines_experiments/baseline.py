@@ -25,8 +25,8 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 2#100
-    population_size = 4#100
+    num_generations = 1#100
+    population_size = 3#100
     offspring_size = 1#50
 
     # environment world and z-start
@@ -37,7 +37,7 @@ async def run():
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,
         environmental_conditions=['hill'],
-        max_terms_clause=1,
+        max_terms_clause=2,
         plastic=True,
     )
 
@@ -57,7 +57,7 @@ async def run():
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
     logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
-
+    print(do_recovery)
     if do_recovery:
         gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size,
                                                                                           offspring_size)
@@ -102,31 +102,32 @@ async def run():
     analyzer_queue_envs = {}
 
     previous_port = None
-    # for environment in environments:
-    #
-    #     settings.world = environment
-    #     settings.z_start = environments[environment]
-    #
-    #     if previous_port is None:
-    #         port = settings.port_start
-    #         previous_port = port
-    #     else:
-    #         port = previous_port + settings.n_cores + 1
-    #
-    #     simulator_queue_envs[environment] = SimulatorQueue(settings.n_cores, settings, port)
-    #
-    #     await simulator_queue_envs[environment].start()
-    #
-    #     analyzer_queue_envs[environment] = AnalyzerQueue(1, settings, port+settings.n_cores)
-    #    await analyzer_queue_envs[environment].start()
+    for environment in environments:
+
+        settings.world = environment
+        settings.z_start = environments[environment]
+
+        if previous_port is None:
+            port = settings.port_start
+            previous_port = port
+        else:
+            port = previous_port + settings.n_cores + 1
+
+        simulator_queue_envs[environment] = SimulatorQueue(settings.n_cores, settings, port)
+        await simulator_queue_envs[environment].start()
+
+        analyzer_queue_envs[environment] = AnalyzerQueue(1, settings, port+settings.n_cores)
+        await analyzer_queue_envs[environment].start()
 
     population = Population(population_conf, simulator_queue_envs, analyzer_queue_envs, next_robot_id)
 
     if do_recovery:
-        # loading a previous state of the experiment
-        await population.load_snapshot(gen_num)
+
         if gen_num >= 0:
+            # loading a previous state of the experiment
+            await population.load_snapshot(gen_num)
             logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
+
         if has_offspring:
             individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
@@ -144,7 +145,7 @@ async def run():
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
-    sys.exit()
+
     while gen_num < num_generations-1:
         gen_num += 1
         population = await population.next_gen(gen_num)

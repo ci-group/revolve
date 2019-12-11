@@ -233,10 +233,6 @@ class Plasticoding(Genotype):
 
             grammar = self.grammar
 
-        print('regulated')
-        pp = pprint.PrettyPrinter(width=41, compact=True)
-        pp.pprint(grammar)
-
         self.intermediate_phenotype = [[self.conf.axiom_w, []]]
         for i in range(0, self.conf.i_iterations):
 
@@ -308,7 +304,6 @@ class Plasticoding(Genotype):
         self.add_imu_nodes()
         logger.info('Robot ' + str(self.id) + ' was late-developed.')
 
-        print(self.intermediate_phenotype)
         return self.phenotype
 
     def move_in_body(self, symbol):

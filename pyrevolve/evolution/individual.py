@@ -12,6 +12,7 @@ class Individual:
         self.genotype = genotype
         self.phenotype = phenotype
         self.fitness = None
+        self.evaluated = False
         self.parents = None
         self.failed_eval_attempt_count = 0
 

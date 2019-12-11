@@ -89,6 +89,7 @@ class ExperimentManagement:
     def experiment_is_new(self):
         if not os.path.exists(self._experiment_folder()):
             return True
+        # if any robot in any environment has been finished
         for environment in self.environments:
             path, dirs, files = next(os.walk(os.path.join(self._data_folder()+'/'+environment, 'individuals')))
             if len(files) > 0:
@@ -108,7 +109,7 @@ class ExperimentManagement:
                                                                                    dir))
                                           if os.path.isfile(os.path.join(path, dir, name))])
 
-                    # snapshot is vomplete if all body and brain files exist
+                    # snapshot is complete if all body/brain files exist
                     if exported_files == (population_size * 2):
                         snapshots.append(int(dir.split('_')[1]))
 
@@ -121,7 +122,7 @@ class ExperimentManagement:
             last_snapshot = -1
             n_robots = 0
 
-        # if robot is developed in any of the environments, the nit exists
+        # if a robot is developed in any of the environments, then it exists
         robot_ids = []
         for environment in self.environments:
             for r, d, f in os.walk(os.path.join(self._data_folder()+'/'+environment, 'individuals')):
