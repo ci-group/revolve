@@ -17,7 +17,8 @@
 *
 */
 
-#include  <stdexcept>
+#include <memory>
+#include <stdexcept>
 
 #include <gazebo/sensors/sensors.hh>
 
@@ -216,9 +217,9 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
     //TODO parameters from SDF
     const double evaluation_rate = 15.0;
-    const size_t n_learning_evaluations = 50;
+    const unsigned int n_learning_evaluations = 50;
 
-    this->evaluator.reset(new ::revolve::gazebo::Evaluator(evaluation_rate));
+    this->evaluator = std::make_unique<::revolve::gazebo::Evaluator>(evaluation_rate, true, this->model_);
 
     // aggregated reporter
     std::unique_ptr<AggregatedReporter> aggregated_reporter(new AggregatedReporter(this->model_->GetName()));
@@ -230,31 +231,41 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
     this->reporter = std::move(aggregated_reporter);
 
+    // SELECT CONTROLLER ------------------------------------------------------
+    std::unique_ptr<::revolve::Controller> controller;
 
-    // TODO: Clean this if-else mess
-    if ("offline" == learner_type and "ann" == controller_type) {
-        learner.reset(new NoLearner<NeuralNetwork>(this->model_, brain_sdf, motors_, sensors_));
-    } else if ("rlpower" == learner_type and "spline" == controller_type) {
+    if ("ann" == controller_type) {
+        controller = std::make_unique<NeuralNetwork>(this->model_, brain_sdf, motors_, sensors_);
+    } else if ("spline" == controller_type) {
         if (not motors_.empty()) {
-            learner.reset(new NoLearner<RLPower>(this->model_, brain_sdf, motors_, sensors_));
+            controller = std::make_unique<RLPower>(this->model_, brain_sdf, motors_, sensors_);
         }
-//    } else if ("bo" == learner_type and "cpg" == controller_type) {
-//        learner.reset(new NoLearner<DifferentialCPG>(this->model_, _sdf, motors_, sensors_));
-    } else if ("offline" == learner_type and "cpg" == controller_type) {
-        learner.reset(new NoLearner<DifferentialCPGClean>(brain_sdf, motors_));
-    } else if ("offline" == learner_type and "cppn-cpg" == controller_type) {
-        learner.reset(new NoLearner<DifferentialCPPNCPG>(brain_sdf, motors_));
-    } else if ("bo" == learner_type and "cpg" == controller_type) {
-        std::unique_ptr<::revolve::DifferentialCPG> controller(new DifferentialCPGClean(brain_sdf, motors_));
+    } else if ("cpg" == controller_type) {
+        controller = std::make_unique<DifferentialCPG>(brain_sdf, motors_);
+    } else if ("cppn-cpg") {
+        controller = std::make_unique<DifferentialCPPNCPG>(brain_sdf, motors_);
+    } else {
+        throw std::runtime_error("Robot brain: Controller \"" + controller_type + "\" is not supported.");
+    }
 
-        learner.reset(new BayesianOptimizer(
+    // SELECT LEARNER ---------------------------------------------------------
+    if ("offline" == learner_type) {
+        learner = std::make_unique<NoLearner<Controller>>(std::move(controller));
+    } else if ("rlpower" == learner_type) {
+        //TODO make RLPower generic
+        if ("spline" != controller_type) {
+            throw std::runtime_error("Robot brain: Learner RLPower not supported for \"" + controller_type + "\" controller.");
+        }
+        learner = std::make_unique<NoLearner<Controller>>(std::move(controller));
+    } else if ("bo" == learner_type) {
+        learner = std::make_unique<BayesianOptimizer>(
                 std::move(controller),
                 this->evaluator.get(),
                 this->reporter.get(),
                 evaluation_rate,
-                n_learning_evaluations));
+                n_learning_evaluations);
     } else {
-        throw std::runtime_error("Robot brain is not defined.");
+        throw std::runtime_error("Robot brain: Learner \"" + learner_type + "\" is not supported.");
     }
 }
 

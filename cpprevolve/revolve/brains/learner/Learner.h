@@ -36,6 +36,7 @@ public:
     virtual void init_first_controller() = 0;
     virtual void init_next_controller() = 0;
     virtual void finalize_current_controller(double fitness) = 0;
+    virtual void load_best_controller() = 0;
 
     virtual revolve::Controller *controller() = 0;
 
@@ -44,7 +45,7 @@ protected:
     double end_controller_time;
 
     /// \brief Learning iterations counter
-    int evaluation_counter;
+    long evaluation_counter;
     /// \brief Max number of learning iterations
     const unsigned int n_evaluations;
 

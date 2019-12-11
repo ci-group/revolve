@@ -20,6 +20,7 @@
  */
 
 #include <cmath>
+#include <gazebo/physics/Model.hh>
 #include <revolve/brains/learner/Evaluator.h>
 
 
@@ -38,17 +39,21 @@ double Evaluator::measure_distance(
 
 /////////////////////////////////////////////////
 Evaluator::Evaluator(const double evaluation_rate,
+                     const bool reset_robot_position,
+                     const ::gazebo::physics::ModelPtr &robot,
                      const double step_saving_rate)
         : ::revolve::Evaluator()
         , evaluation_rate_(evaluation_rate)
         , last_step_time(-1)
         , step_saving_rate(step_saving_rate)
         , step_poses(0)
+        , reset_robot_position(reset_robot_position)
+        , robot(robot)
 {
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "directed"; // {directed, gait}
+  this->locomotion_type = "turing_left"; // {directed, gait}
   this->path_length = 0.0;
 }
 
@@ -58,10 +63,21 @@ Evaluator::~Evaluator() = default;
 /////////////////////////////////////////////////
 void Evaluator::reset()
 {
-  this->step_poses.clear(); //cleared to null
-  this->path_length = 0.0;
-  this->last_step_time = 0.0;
-  this->start_position_ = this->current_position_;
+    // Reset robot if opted to do
+    if (this->reset_robot_position) {
+        //this->robot->Reset();
+        ::gazebo::physics::ModelPtr _robot = robot.lock();
+        _robot->ResetPhysicsStates();
+        auto start_pose = ::ignition::math::Pose3d();
+        start_pose.Set(0.0, 0.0, 0.05, 0.0, 0.0, 0.0);
+        _robot->SetWorldPose(start_pose);
+        _robot->Update();
+    }
+
+    this->step_poses.clear(); //cleared to null
+    this->path_length = 0.0;
+    this->last_step_time = 0.0;
+    this->start_position_ = this->current_position_;
 }
 
 /////////////////////////////////////////////////

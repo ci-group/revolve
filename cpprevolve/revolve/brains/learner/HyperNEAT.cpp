@@ -71,3 +71,8 @@ void HyperNEAT::finalize_current_controller(double fitness)
 {
     current_genome_evaluating->SetFitness(fitness);
 }
+
+void HyperNEAT::load_best_controller()
+{
+    //TODO load best genome into controller
+}

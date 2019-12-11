@@ -222,3 +222,8 @@ void BayesianOptimizer::finalize_current_controller(double fitness)
     // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
     this->observations.push_back(observation);
 }
+
+void BayesianOptimizer::load_best_controller()
+{
+    this->devectorize_controller(this->best_sample);
+}

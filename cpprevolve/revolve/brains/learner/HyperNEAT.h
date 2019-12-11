@@ -31,6 +31,7 @@ public:
     void init_first_controller() override;
     void init_next_controller() override;
     void finalize_current_controller(double fitness) override;
+    void load_best_controller() override;
 
 private:
     std::unique_ptr<Controller> _controller;

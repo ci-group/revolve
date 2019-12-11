@@ -5,6 +5,7 @@
 #pragma once
 
 #include <limits>
+#include <Eigen/Core>
 #include "Learner.h"
 #include "../controller/Controller.h"
 #include "../controller/DifferentialCPG.h"
@@ -27,6 +28,7 @@ public:
     void init_first_controller() override;
     void init_next_controller() override;
     void finalize_current_controller(double fitness) override;
+    void load_best_controller() override;
 
     Controller *controller() override
     { return this->_controller.get(); }
@@ -48,7 +50,7 @@ public:
         static size_t dim_out()
         { return 1; }
 
-        Eigen::VectorXd operator()(const Eigen::VectorXd &x) const
+        Eigen::VectorXd operator()(const Eigen::VectorXd &/*x*/) const
         {
             Eigen::VectorXd res(1);
             res(0) = 0;

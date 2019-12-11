@@ -30,8 +30,10 @@ class Evaluator : public ::revolve::Evaluator
 {
 public:
     /// \brief Constructor
-    Evaluator(const double _evaluationRate,
-              const double step_saving_rate = 0.1);
+    Evaluator(double _evaluationRate,
+              bool reset_robot_position = false,
+              const ::gazebo::physics::ModelPtr &robot = nullptr,
+              double step_saving_rate = 0.1);
 
     /// \brief Destructor
     ~Evaluator();
@@ -74,6 +76,9 @@ protected:
     double last_step_time;
     double step_saving_rate;
     std::vector <ignition::math::Pose3d> step_poses;
+
+    const bool reset_robot_position;
+    const boost::weak_ptr<::gazebo::physics::Model> robot;
 };
 
 }
