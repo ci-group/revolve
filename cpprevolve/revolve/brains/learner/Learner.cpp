@@ -8,9 +8,11 @@ using namespace revolve;
 
 void Learner::optimize(double time, double /*dt*/)
 {
-    if (time > end_controller_time) return;
+    if (time < end_controller_time) return;
+    bool finished = evaluation_counter >= n_evaluations;
+    if (finished) return;
 
-    std::cout << "evaluation_counter: " << evaluation_counter << std::endl;
+    std::cout << "Learner evaluation_counter: " << evaluation_counter+1 << std::endl;
     // first evaluation
     if (evaluation_counter < 0)
     {
@@ -22,7 +24,7 @@ void Learner::optimize(double time, double /*dt*/)
         // finalize previous run
         evaluation_counter++;
         double fitness = evaluator->fitness();
-        bool finished = evaluation_counter >= n_evaluations;
+        finished = evaluation_counter >= n_evaluations;
 
         evaluation_reporter->report(evaluation_counter, finished, fitness);
         this->finalize_current_controller(fitness);

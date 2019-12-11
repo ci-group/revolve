@@ -215,8 +215,8 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
 
     //TODO parameters from SDF
-    double evaluation_rate = 15.0;
-    size_t n_learning_evaluations = 50;
+    const double evaluation_rate = 15.0;
+    const size_t n_learning_evaluations = 50;
 
     this->evaluator.reset(new ::revolve::gazebo::Evaluator(evaluation_rate));
 
@@ -245,8 +245,7 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
     } else if ("offline" == learner_type and "cppn-cpg" == controller_type) {
         learner.reset(new NoLearner<DifferentialCPPNCPG>(brain_sdf, motors_));
     } else if ("bo" == learner_type and "cpg" == controller_type) {
-        std::unique_ptr<::revolve::DifferentialCPG> controller;
-        controller.reset(new DifferentialCPGClean(brain_sdf, motors_));
+        std::unique_ptr<::revolve::DifferentialCPG> controller(new DifferentialCPGClean(brain_sdf, motors_));
 
         learner.reset(new BayesianOptimizer(
                 std::move(controller),
@@ -300,7 +299,6 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
         gazebo_reporter->simulation_update(world_pose, current_time, delta_time);
     }
 
-    std::cout << "learner: " << learner.get() << std::endl;
     if (learner) {
         learner->optimize(current_time_d, delta_time);
         revolve::Controller *controller = learner->controller();

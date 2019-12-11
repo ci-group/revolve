@@ -1,12 +1,10 @@
-file(GLOB_RECURSE
-        CONTROLLER_SRCS
-        controller/*.cpp
-        controller/actuators/*.cpp
-        controller/sensors/*.cpp
+set(CONTROLLER_SRCS
+    controller/DifferentialCPG.cpp
 )
-file(GLOB_RECURSE
-        LEARNER_SRCS
-        learner/*.cpp
+set(LEARNER_SRCS
+    learner/Learner.cpp
+    learner/BayesianOptimizer.cpp
+    learner/HyperNEAT.cpp
 )
 
 # PKG-CONFIG

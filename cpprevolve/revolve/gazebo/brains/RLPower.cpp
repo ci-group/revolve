@@ -41,11 +41,12 @@ RLPower::RLPower(
     const ::gazebo::physics::ModelPtr &_model,
     const sdf::ElementPtr &_settings,
     const std::vector< MotorPtr > &_motors,
-    const std::vector< SensorPtr > &_sensors)
-    : generationCounter_(0)
+    const std::vector< SensorPtr > &/*_sensors*/)
+    : Controller(ControllerType::SPLINES)
+    , generationCounter_(0)
     , cycleStartTime_(-1)
-    , startTime_(-1)
     , evaluationRate_(30.0) // default
+    , startTime_(-1)
 {
   auto learner_settings = _settings->GetElement("rv:learner");
 

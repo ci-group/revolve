@@ -41,35 +41,37 @@ BayesianOptimizer::BayesianOptimizer(
         , acqui_ei_jitter(0.0)
         , acquisition_function("UCB")
 {
-
-    std::cout << "controller type: "<< typeid(this->_controller.get()).name() << " diffCPG type: " << typeid(revolve::DifferentialCPG*).name() <<std::endl;
-    if (typeid(this->_controller.get()).hash_code() == typeid(revolve::DifferentialCPG*).hash_code())
+    assert(this->_controller && "BayesianOptimizer: passed null controller");
+    switch (this->_controller->controller_type)
     {
-        devectorize_controller = [this](Eigen::VectorXd weights) {
-            // Eigen::vector -> std::vector
-            std::vector<double> std_weights(weights.size());
-            for (size_t j = 0; j < weights.size(); j++) {
-                std_weights[j] = weights(j);
-            }
+        case revolve::Controller::DIFFERENTIAL_CPG:
+            devectorize_controller = [this](Eigen::VectorXd weights) {
+                // Eigen::vector -> std::vector
+                std::vector<double> std_weights(weights.size());
+                for (size_t j = 0; j < weights.size(); j++) {
+                    std_weights[j] = weights(j);
+                }
 
-            auto *temp_controller = dynamic_cast<::revolve::DifferentialCPG *>(this->_controller.get());
-            temp_controller->set_connection_weights(std_weights);
-        };
+                auto *temp_controller = dynamic_cast<::revolve::DifferentialCPG *>(this->_controller.get());
+                temp_controller->set_connection_weights(std_weights);
+            };
 
-        vectorize_controller = [this]() {
-            auto *controller = dynamic_cast<::revolve::DifferentialCPG *>(this->_controller.get());
-            const std::vector<double> &weights = controller->get_connection_weights();
+            vectorize_controller = [this]() {
+                auto *controller = dynamic_cast<::revolve::DifferentialCPG *>(this->_controller.get());
+                const std::vector<double> &weights = controller->get_connection_weights();
 
-            // std::vector -> Eigen::Vector
-            Eigen::VectorXd eigen_weights(weights.size());
-            for (size_t j = 0; j < weights.size(); j++) {
-                eigen_weights(j) = weights.at(j);
-            }
+                // std::vector -> Eigen::Vector
+                Eigen::VectorXd eigen_weights(weights.size());
+                for (size_t j = 0; j < weights.size(); j++) {
+                    eigen_weights(j) = weights.at(j);
+                }
 
-            return eigen_weights;
-        };
-    } else {
-        throw std::runtime_error("Controller not supported");
+                return eigen_weights;
+            };
+            break;
+        default:
+            std::cerr << "Controller not supported" << std::endl;
+            throw std::runtime_error("Controller not supported");
     }
 }
 

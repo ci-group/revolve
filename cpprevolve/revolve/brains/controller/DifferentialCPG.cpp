@@ -51,7 +51,8 @@ using namespace revolve;
 DifferentialCPG::DifferentialCPG(
         const DifferentialCPG::ControllerParams &params,
         const std::vector<std::shared_ptr<Actuator>> &actuators)
-        : next_state(nullptr)
+        : Controller(ControllerType::DIFFERENTIAL_CPG)
+        , next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()])
         , connection_weights(actuators.size(), 0)
@@ -82,7 +83,8 @@ DifferentialCPG::DifferentialCPG(
         const DifferentialCPG::ControllerParams &params,
         const std::vector<std::shared_ptr<Actuator>> &actuators,
         const NEAT::Genome &gen)
-        : next_state(nullptr)
+        : Controller(ControllerType::DIFFERENTIAL_CPG)
+        , next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()])
         , connection_weights(actuators.size(), 0)
