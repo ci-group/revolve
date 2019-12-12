@@ -1,8 +1,8 @@
 import random
 from pyrevolve.genotype.plasticoding.plasticoding import Alphabet, Plasticoding
 from ....custom_logging.logger import genotype_logger
-
-
+import sys
+import pprint
 
 
 def handle_deletion(genotype):
@@ -103,6 +103,69 @@ def handle_addition(genotype, genotype_conf):
     return genotype
 
 
+def handle_clause(genotype, genotype_conf):
+
+    pp = pprint.PrettyPrinter(depth=6)
+
+    max_terms_clause = 2 # TMP!
+
+    target_letter = random.choice(list(genotype.grammar))
+    target_clause = random.choice(range(0, len(genotype.grammar[target_letter])))
+    # TEMP!
+    environmental_conditions=['hill']
+    logic_operators=['and', 'or']
+
+    print(target_letter, target_clause)
+    pp.pprint(genotype.grammar[target_letter][target_clause][0])
+
+    # defines which mutations are possible
+
+    possible_mutations = ['flipping_value']
+
+    if len(genotype.grammar[target_letter][target_clause][0]) > 1:
+        possible_mutations.append('deletion')
+        possible_mutations.append('flipping_operator')
+
+    if len(genotype.grammar[target_letter][target_clause][0]) < max_terms_clause:
+        possible_mutations.append('addition')
+
+    mutation_type = random.choice(possible_mutations)
+    print(mutation_type)
+
+
+    # deletes terms items and logic operator
+    if mutation_type == 'deletion':
+        position_delete = random.choice(range(0, len(genotype.grammar[target_letter][target_clause][0]) + 1, 2))
+        genotype.grammar[target_letter][target_clause][0].pop(position_delete)
+        if position_delete == 0:
+            genotype.grammar[target_letter][target_clause][0].pop(position_delete)
+        else:
+            genotype.grammar[target_letter][target_clause][0].pop(position_delete-1)
+
+    if mutation_type == 'addition':
+
+        term = random.choice(environmental_conditions)
+        state = random.choice([True, False])
+
+        genotype.grammar[target_letter][target_clause][0].append([random.choice(logic_operators)])
+        genotype.grammar[target_letter][target_clause][0].append([term,  '==', state])
+
+    if mutation_type == 'flipping_value':
+        position_flip = random.choice(range(0, len(genotype.grammar[target_letter][target_clause][0]) + 1, 2))
+        if genotype.grammar[target_letter][target_clause][0][position_flip][2]:
+            genotype.grammar[target_letter][target_clause][0][position_flip][2] = False
+        else:
+            genotype.grammar[target_letter][target_clause][0][position_flip][2] = True
+
+    if mutation_type == 'flipping_operator':
+        position_flip = random.choice(range(1, len(genotype.grammar[target_letter][target_clause][0]), 2))
+        if genotype.grammar[target_letter][target_clause][0][position_flip] == 'and':
+            genotype.grammar[target_letter][target_clause][0][position_flip] = ['or']
+        else:
+            genotype.grammar[target_letter][target_clause][0][position_flip] = ['and']
+
+    pp.pprint(genotype.grammar[target_letter][target_clause][0])
+
 def standard_mutation(genotype, mutation_conf):
     """
     Mutates genotype through addition/removal/swapping of symbols
@@ -118,12 +181,15 @@ def standard_mutation(genotype, mutation_conf):
         return new_genotype
     else:
         mutation_type = random.randint(1, 3)  # NTS: better way?
+        mutation_type = 4
         if mutation_type == 1:
             modified_genotype = handle_deletion(new_genotype)
         elif mutation_type == 2:
             modified_genotype = handle_swap(new_genotype)
         elif mutation_type == 3:
             modified_genotype = handle_addition(new_genotype, mutation_conf.genotype_conf)
+        elif mutation_type == 4:
+            modified_genotype = handle_clause(new_genotype, mutation_conf.genotype_conf)
         else:
             raise Exception(
                 'mutation_type value was not in the expected range (1,3). The value was: {}'.format(mutation_type))

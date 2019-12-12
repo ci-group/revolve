@@ -171,12 +171,9 @@ class Population:
             self.individuals.append(individual)
             self.next_robot_id += 1
 
-        print('recovered ',len(recovered_individuals))
-        print('before individuals',len(self.individuals))
         self.individuals = recovered_individuals + self.individuals
-        print('after individuals',len(self.individuals))
+
         for environment in self.conf.environments:
-            print('cuuu', environment)
             await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
 
     async def next_gen(self, gen_num, recovered_individuals=[]):
@@ -195,7 +192,10 @@ class Population:
             # Crossover
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
-                child_genotype = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
+                child_genotype = self.conf.crossover_operator(self.conf.environments,
+                                                              parents,
+                                                              self.conf.genotype_conf,
+                                                              self.conf.crossover_conf)
                 child = Individual(child_genotype)
             else:
                 child = self.conf.selection(self.individuals)
@@ -205,15 +205,16 @@ class Population:
 
             # Mutation operator
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
+            sys.exit()
             # Insert individual in new population
             individual = self._new_individual(child_genotype)
-
             new_individuals.append(individual)
 
-        # evaluate new individuals
-        await self.evaluate(new_individuals, gen_num)
-
         new_individuals = recovered_individuals + new_individuals
+
+        # evaluate new individuals
+        for environment in self.conf.environments:
+            await self.evaluate(new_individuals=self.individuals, gen_num=gen_num, environment=environment)
 
         # create next population
         if self.conf.population_management_selector is not None:

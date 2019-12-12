@@ -19,6 +19,7 @@ def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
     else:
         for letter in Alphabet.modules():
             parent = random.randint(0, 1)
+            print(letter, parent)
             # gets the production rule for the respective letter
             grammar[letter[0]] = parent_genotypes[parent].grammar[letter[0]]
 
@@ -27,15 +28,18 @@ def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
     return genotype.clone()
 
 
-def standard_crossover(parent_individuals, genotype_conf, crossover_conf):
+def standard_crossover(environments, parent_individuals, genotype_conf, crossover_conf):
     """
     Creates an child (individual) through crossover with two parents
 
     :param parent_genotypes: genotypes of the parents to be used for crossover
     :return: genotype result of the crossover
     """
-    parent_genotypes = [p.genotype for p in parent_individuals]
+    first_environment = list(environments.keys())[-1]
+
+    parent_genotypes = [p[first_environment].genotype for p in parent_individuals]
     new_genotype = generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf)
+
     #TODO what if you have more than 2 parents? fix log
     genotype_logger.info(
         f'crossover: for genome {new_genotype.id} - p1: {parent_genotypes[0].id} p2: {parent_genotypes[1].id}.')

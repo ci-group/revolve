@@ -38,7 +38,7 @@ async def run():
         max_structural_modules=15,
         environmental_conditions=['hill'],
         max_terms_clause=2,
-        plastic=True,
+        plastic=False,
     )
 
     mutation_conf = MutationConfig(
