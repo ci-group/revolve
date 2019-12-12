@@ -13,9 +13,13 @@
 * limitations under the License.
 *
 * Description: TODO: <Add brief description about file purpose>
-* Author: Elte Hupkes and Matteo De Carlo
+* Author: Elte Hupkes
 *
 */
+
+//
+// Created by elte on 6-6-15.
+//
 
 #pragma once
 
@@ -32,23 +36,22 @@
 
 #include <revolve/msgs/model_inserted.pb.h>
 #include <revolve/msgs/robot_states.pb.h>
-#include <revolve/msgs/robot_states_learning.pb.h>
 
 namespace revolve {
 namespace gazebo {
 
-class WorldController : public ::gazebo::WorldPlugin
+class RealtimeWorldController: public ::gazebo::WorldPlugin
 {
 public:
-    WorldController();
+    RealtimeWorldController();
 
-    ~WorldController() override;
+    virtual ~RealtimeWorldController();
 
-    void Load(
+    virtual void Load(
             ::gazebo::physics::WorldPtr _parent,
             sdf::ElementPtr _sdf) override;
 
-    void Reset() override;
+    virtual void Reset() override;
 
 protected:
     // Listener for analysis requests
@@ -64,11 +67,6 @@ protected:
     virtual void OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info);
 
     virtual void OnEndUpdate();
-
-    void OnRobotReport(const boost::shared_ptr<revolve::msgs::LearningRobotStates const> &msg);
-
-protected:
-    const bool enable_parallelization;
 
     // Maps model names to insert request IDs
     // model_name -> request_id, SDF, insert_operation_pending
@@ -104,18 +102,30 @@ protected:
     // Subscriber for actual model insertion
     ::gazebo::transport::SubscriberPtr modelSub_;
 
-    //TODO remove
     // Publisher for periodic robot poses
     ::gazebo::transport::PublisherPtr robotStatesPub_;
 
-    // Subscriber for periodic robot learning reports
-    ::gazebo::transport::SubscriberPtr robotLearningStatesSub;
+    // Frequency at which robot info is published
+    // Defaults to 0, which means no update at all
+    unsigned int robotStatesPubFreq_;
 
     // Pointer to the update event connection
     ::gazebo::event::ConnectionPtr onBeginUpdateConnection;
     ::gazebo::event::ConnectionPtr onEndUpdateConnection;
 
-    boost::mutex world_insert_remove_mutex;
+    // Last (simulation) time robot info was sent
+    double lastRobotStatesUpdateTime_;
+
+    // Death sentence list. It collects all the end time for all robots that have
+    // a death sentence
+    // NEGATIVE DEATH SENTENCES mean total lifetime, death sentence not yet initialized.
+    std::map<std::string, double> death_sentences_;
+
+    // Mutex for the deleteMap_
+    boost::mutex death_sentences_mutex_;
+
+//    boost::mutex world_insert_remove_mutex;
+
     ::gazebo::physics::Model_V models_to_remove;
 };
 

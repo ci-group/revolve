@@ -19,30 +19,18 @@
 
 #include <string>
 
-#include "WorldController.h"
+#include "RealtimeWorldController.h"
 
 namespace gz = gazebo;
 
 using namespace revolve::gazebo;
 
 /////////////////////////////////////////////////
-WorldController::WorldController()
-    : enable_parallelization(false)
-    , insertMap_()
-    , delete_robot_queue()
-    , world_(nullptr)
-    , node_(nullptr)
-    , insertMutex_()
-    , deleteMutex_()
-    , requestSub_(nullptr)
-    , requestPub_(nullptr)
-    , responseSub_(nullptr)
-    , responsePub_(nullptr)
-    , modelSub_(nullptr)
-    , robotLearningStatesSub(nullptr)
-    , onBeginUpdateConnection(nullptr)
-    , onEndUpdateConnection(nullptr)
-    , models_to_remove()
+RealtimeWorldController::RealtimeWorldController()
+    : delete_robot_queue()
+    , robotStatesPubFreq_(5)
+    , lastRobotStatesUpdateTime_(0)
+    , robotStatesPub_(nullptr)
 {
 }
 
@@ -58,95 +46,154 @@ void fini(gz::transport::PublisherPtr &publisher)
         publisher->Fini();
 }
 
-WorldController::~WorldController()
+RealtimeWorldController::~RealtimeWorldController()
 {
     unsubscribe(this->requestSub_);
     unsubscribe(this->responseSub_);
     unsubscribe(this->modelSub_);
-    unsubscribe(this->robotLearningStatesSub);
     fini(this->requestPub_);
     fini(this->responsePub_);
+    fini(this->robotStatesPub_);
 }
 
 /////////////////////////////////////////////////
-void WorldController::Load(
-        gz::physics::WorldPtr world,
-        sdf::ElementPtr /*_sdf*/)
+void RealtimeWorldController::Load(
+    gz::physics::WorldPtr world,
+    sdf::ElementPtr /*_sdf*/)
 {
     gz::physics::PhysicsEnginePtr physicsEngine = world->Physics();
-    assert(physicsEngine != nullptr && "Physics Engine is nullptr");
+    assert(physicsEngine != nullptr);
 
     // Turn on threading
-    if (this->enable_parallelization) {
-        physicsEngine->SetParam("thread_position_correction", true);
-        physicsEngine->SetParam("island_threads", 8);
-    }
+    physicsEngine->SetParam("thread_position_correction", true);
+    physicsEngine->SetParam("island_threads", 8);
 
-    // Store the world
-    this->world_ = world;
 
-    // Create transport node
-    this->node_.reset(new gz::transport::Node());
-    this->node_->Init();
+  std::cout << "World plugin loaded." << std::endl;
 
-    // Subscribe to insert request messages
-    this->requestSub_ = this->node_->Subscribe(
-            "~/request",
-            &WorldController::HandleRequest,
-            this);
+  // Store the world
+  this->world_ = world;
 
-    // Publisher for `entity_delete` requests.
-    this->requestPub_ = this->node_->Advertise<gz::msgs::Request>(
-            "~/request");
+  // Create transport node
+  this->node_.reset(new gz::transport::Node());
+  this->node_->Init();
 
-    // Publisher for inserted models
-    this->responseSub_ = this->node_->Subscribe(
-            "~/response",
-            &WorldController::HandleResponse,
-            this);
+  // Subscribe to insert request messages
+  this->requestSub_ = this->node_->Subscribe(
+      "~/request",
+      &RealtimeWorldController::HandleRequest,
+      this);
 
-    // Publisher for inserted models
-    this->responsePub_ = this->node_->Advertise<gz::msgs::Response>(
-            "~/response");
+  // Publisher for `entity_delete` requests.
+  this->requestPub_ = this->node_->Advertise< gz::msgs::Request >(
+      "~/request");
 
-    // Since models are added asynchronously, we need some way of detecting
-    // our model add. We do this using a model info subscriber.
-    this->modelSub_ = this->node_->Subscribe(
-            "~/model/info",
-            &WorldController::OnModel,
-            this);
+  // Publisher for inserted models
+  this->responseSub_ = this->node_->Subscribe(
+      "~/response",
+      &RealtimeWorldController::HandleResponse,
+      this);
 
-    // Bind to the world update event to perform some logic
-    this->onBeginUpdateConnection = gz::event::Events::ConnectWorldUpdateBegin(
-            [this](const ::gazebo::common::UpdateInfo &_info) { this->OnBeginUpdate(_info); });
+  // Publisher for inserted models
+  this->responsePub_ = this->node_->Advertise< gz::msgs::Response >(
+      "~/response");
 
-    // Bind to the world update event to perform some logic
-    this->onEndUpdateConnection = gz::event::Events::ConnectWorldUpdateEnd(
-            [this]() { this->OnEndUpdate(); });
+  // Since models are added asynchronously, we need some way of detecting
+  // our model add. We do this using a model info subscriber.
+  this->modelSub_ = this->node_->Subscribe(
+      "~/model/info",
+      &RealtimeWorldController::OnModel,
+      this);
 
-    //TODO remove
-    // Robot pose publisher
-    this->robotStatesPub_ = this->node_->Advertise<revolve::msgs::RobotStates>(
-            "~/revolve/robot_states", 500);
+  // Bind to the world update event to perform some logic
+  this->onBeginUpdateConnection = gz::event::Events::ConnectWorldUpdateBegin(
+      [this] (const ::gazebo::common::UpdateInfo &_info) {this->OnBeginUpdate(_info);});
 
-    // Robot reports subscription
-    this->robotLearningStatesSub = this->node_->Subscribe<revolve::msgs::LearningRobotStates>(
-            "~/revolve/robot_reports",
-            &WorldController::OnRobotReport,
-            this);
+  // Bind to the world update event to perform some logic
+  this->onEndUpdateConnection = gz::event::Events::ConnectWorldUpdateEnd(
+        [this] () {this->OnEndUpdate();});
 
-    std::cout << "World plugin loaded." << std::endl;
+  // Robot pose publisher
+  this->robotStatesPub_ = this->node_->Advertise< revolve::msgs::RobotStates >(
+      "~/revolve/robot_states", 500);
 }
 
-void WorldController::Reset()
-{}
+void RealtimeWorldController::Reset()
+{
+    this->lastRobotStatesUpdateTime_ = 0; //this->world_->SimTime().Double();
+}
 
 /////////////////////////////////////////////////
-void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info)
-{
-    boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+void RealtimeWorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
+    if (not this->robotStatesPubFreq_) {
+        return;
+    }
 
-    if (world_insert_remove_mutex.try_lock()) {
+    auto secs = 1.0 / this->robotStatesPubFreq_;
+    auto time = _info.simTime.Double();
+    if ((time - this->lastRobotStatesUpdateTime_) >= secs) {
+        // Send robot info update message, this only sends the
+        // main pose of the robot (which is all we need for now)
+        msgs::RobotStates msg;
+        gz::msgs::Set(msg.mutable_time(), _info.simTime);
+
+        {
+            boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+            for (const auto &model : this->world_->Models()) {
+                if (model->IsStatic()) {
+                    // Ignore static models such as the ground and obstacles
+                    continue;
+                }
+
+                revolve::msgs::RobotState *stateMsg = msg.add_robot_state();
+                const std::string scoped_name = model->GetScopedName();
+                stateMsg->set_name(scoped_name);
+                stateMsg->set_id(model->GetId());
+
+                auto poseMsg = stateMsg->mutable_pose();
+                auto relativePose = model->RelativePose();
+
+                gz::msgs::Set(poseMsg, relativePose);
+
+                // Death sentence check
+                const std::string name = model->GetName();
+                bool death_sentence = false;
+                double death_sentence_value = 0;
+                {
+                    boost::mutex::scoped_lock lock_death(death_sentences_mutex_);
+                    death_sentence = death_sentences_.count(name) > 0;
+                    if (death_sentence)
+                        death_sentence_value = death_sentences_[name];
+                }
+
+                if (death_sentence) {
+                    if (death_sentence_value < 0) {
+                        // Initialize death sentence
+                        death_sentences_[name] = time - death_sentence_value;
+                        stateMsg->set_dead(false);
+                    } else {
+                        bool alive = death_sentence_value > time;
+                        stateMsg->set_dead(not alive);
+
+                        if (not alive) {
+                            boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
+                            this->death_sentences_.erase(model->GetName());
+
+                            this->models_to_remove.emplace_back(model);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (msg.robot_state_size() > 0) {
+            this->robotStatesPub_->Publish(msg);
+            this->lastRobotStatesUpdateTime_ = time;
+        }
+    }
+
+
+//    if (world_insert_remove_mutex.try_lock()) {
         for (const auto &model: this->models_to_remove) {
             std::cout << "Removing " << model->GetScopedName() << std::endl;
 //            this->world_->RemoveModel(model);
@@ -161,11 +208,11 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info)
 
         }
         this->models_to_remove.clear();
-        this->world_insert_remove_mutex.unlock();
-    }
+//        this->world_insert_remove_mutex.unlock();
+//    }
 }
 
-void WorldController::OnEndUpdate()
+void RealtimeWorldController::OnEndUpdate()
 {
     { // check if there are robots to delete
         std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot;
@@ -216,7 +263,7 @@ void WorldController::OnEndUpdate()
 
 /////////////////////////////////////////////////
 // Process insert and delete requests
-void WorldController::HandleRequest(ConstRequestPtr &request)
+void RealtimeWorldController::HandleRequest(ConstRequestPtr &request)
 {
   if (request->request() == "delete_robot")
   {
@@ -275,33 +322,48 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
                         ->GetAsString();
 
-//    if (lifespan_timeout > 0)
-//    {
-//        boost::mutex::scoped_lock lock(death_sentences_mutex_);
-//        // Initializes the death sentence negative because I don't dare to take the
-//        // simulation time from this thread.
-//        death_sentences_[name] = -lifespan_timeout;
-//    }
+    if (lifespan_timeout > 0)
+    {
+        boost::mutex::scoped_lock lock(death_sentences_mutex_);
+        // Initializes the death sentence negative because I don't dare to take the
+        // simulation time from this thread.
+        death_sentences_[name] = -lifespan_timeout;
+    }
 
-//    {
-//      boost::mutex::scoped_lock lock(this->insertMutex_);
-//      this->insertMap_[name] = std::make_tuple(request->id(), robotSDF.ToString(), true);
-//    }
+    {
+      boost::mutex::scoped_lock lock(this->insertMutex_);
+      this->insertMap_[name] = std::make_tuple(request->id(), robotSDF.ToString(), true);
+    }
 
     //TODO insert here, it's better
-    this->world_->InsertModelString(robotSDF.ToString());
+    //this->world_->InsertModelString(robotSDF.ToString());
 
     // Don't leak memory
     // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
     robotSDF.Root()->Reset();
   }
+  else if (request->request() == "set_robot_state_update_frequency")
+  {
+    auto frequency = request->data();
+    assert(frequency.find_first_not_of( "0123456789" ) == std::string::npos);
+    this->robotStatesPubFreq_ = (unsigned int)std::stoul(frequency);
+    std::cout << "Setting robot state update frequency to "
+              << this->robotStatesPubFreq_ << "." << std::endl;
+
+    gz::msgs::Response resp;
+    resp.set_id(request->id());
+    resp.set_request("set_robot_state_update_frequency");
+    resp.set_response("success");
+
+    this->responsePub_->Publish(resp);
+  }
 }
 
 /////////////////////////////////////////////////
-void WorldController::OnModel(ConstModelPtr &msg)
+void RealtimeWorldController::OnModel(ConstModelPtr &msg)
 {
     auto name = msg->name();
-    std::cout << "WorldController::OnModel(" << name << ')' << std::endl;
+    std::cout << "RealtimeWorldController::OnModel(" << name << ')' << std::endl;
 
 
     int id;
@@ -345,9 +407,9 @@ void WorldController::OnModel(ConstModelPtr &msg)
 }
 
 /////////////////////////////////////////////////
-void WorldController::HandleResponse(ConstResponsePtr &response)
+void RealtimeWorldController::HandleResponse(ConstResponsePtr &response)
 {
-//    std::cout << "WorldController::HandleResponse(" << response->request() << ')' << std::endl;
+//    std::cout << "RealtimeWorldController::HandleResponse(" << response->request() << ')' << std::endl;
 
     if (response->request() not_eq "entity_delete")
     {
@@ -373,18 +435,4 @@ void WorldController::HandleResponse(ConstResponsePtr &response)
 //    resp.set_request("delete_robot");
 //    resp.set_response("success");
 //    this->responsePub_->Publish(resp);
-}
-
-void WorldController::OnRobotReport(const boost::shared_ptr<revolve::msgs::LearningRobotStates const> &msg)
-{
-    if (msg->dead())
-    {
-        boost::mutex::scoped_lock lock(this->world_insert_remove_mutex);
-        gz::physics::ModelPtr model = world_->ModelByName(msg->id());
-        this->models_to_remove.emplace_back(std::move(model));
-    }
-    else
-    {
-        std::cout << "DIOCANE" << msg->DebugString() << std::endl;
-    }
 }

@@ -227,6 +227,19 @@ target_link_libraries(
         ${GAZEBO_LIBRARIES}
 )
 
+# Create Realtime World plugin
+add_library(
+        RealtimeWorldControlPlugin SHARED
+        plugin/RealtimeWorldController.cpp
+        plugin/register_realtime_world_plugin.cpp
+)
+target_link_libraries(
+        RealtimeWorldControlPlugin
+        revolve-gazebo
+        revolve-proto
+        ${GAZEBO_LIBRARIES}
+)
+
 # Create Analyzer plugin
 add_library(
         AnalyzerPlugin SHARED
