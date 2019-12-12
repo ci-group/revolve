@@ -205,7 +205,7 @@ class Population:
 
             # Mutation operator
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
-            sys.exit()
+
             # Insert individual in new population
             individual = self._new_individual(child_genotype)
             new_individuals.append(individual)
