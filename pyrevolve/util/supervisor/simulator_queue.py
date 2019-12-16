@@ -174,4 +174,3 @@ class SimulatorQueue:
 
     async def _joint(self):
         await self._robot_queue.join()
-

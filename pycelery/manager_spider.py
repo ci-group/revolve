@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-This script loads a robot.yaml file and inserts it into the simulator.
+This script loads a robot.yaml file and inserts it into the simulator and
+calculate the fitness using the Celery worker. This is just a draft to
+get used to the celery instance.
 """
 
 import os
@@ -11,6 +13,8 @@ from pyrevolve import revolve_bot, parser
 from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 from pyrevolve.evolution import fitness
+
+from pycelery.tasks import random_fitness, increasing_fitness, stupid
 
 async def run():
     """
@@ -51,11 +55,15 @@ async def run():
     robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start))
 
     # Start a run loop to do some stuff
+    x=0
     while True:
         # Print robot fitness every second
         status = 'dead' if robot_manager.dead else 'alive'
+        x = increasing_fitness.delay(x).get()
+
         print(f"Robot fitness ({status}) is \n"
-              f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
-              f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
-              f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
+              f" Stupid:  {stupid.delay().get()}\n"
+              f" Random: {random_fitness.delay().get()}\n"
+              f" Increasing: {x}")
+
         await asyncio.sleep(1.0)

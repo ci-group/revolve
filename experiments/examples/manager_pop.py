@@ -17,7 +17,6 @@ from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.custom_logging.logger import logger
 
-
 async def run():
     """
     The main coroutine, which is started below.
@@ -79,6 +78,7 @@ async def run():
     )
 
     n_cores = settings.n_cores
+
 
     settings = parser.parse_args()
     simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)

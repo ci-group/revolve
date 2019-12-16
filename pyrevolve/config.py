@@ -72,6 +72,13 @@ parser.add_argument(
     help="Determine which manager to use. Defaults to no manager."
 )
 
+# added for the use of celery
+parser.add_argument(
+    '--celery',
+    default=False,
+    type=bool,
+    help="Run the experiment using Celery. Input should be true, defualt is false."
+)
 parser.add_argument(
     '--experiment-name',
     default='default_experiment', type=str,
