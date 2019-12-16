@@ -34,22 +34,27 @@ def online_old_revolve(robot_manager):
     Since we use an active speed window, we use this formula
     in context of velocities instead. The parameters a, b and c
     are modifyable through config.
-    :return:
+    :return: fitness value
     """
+    # these parameters used to be command line parameters
+    warmup_time = 0.0
+    v_fac = 1.0  # fitness_velocity_factor
+    d_fac = 5.0  # fitness_displacement_factor
+    s_fac = 0.0  # fitness_size_factor
+    fitness_size_discount = 0.0
+    fitness_limit = 1.0
+
     age = robot_manager.age()
     if age < (0.25 * robot_manager.conf.evaluation_time) \
-            or age < robot_manager.conf.warmup_time:
+            or age < warmup_time:
         # We want at least some data
         return 0.0
 
-    v_fac = robot_manager.conf.fitness_velocity_factor
-    d_fac = robot_manager.conf.fitness_displacement_factor
-    s_fac = robot_manager.conf.fitness_size_factor
-    d = 1.0 - (robot_manager.conf.fitness_size_discount * robot_manager.size)
+    d = 1.0 - (fitness_size_discount * robot_manager.size)
     v = d * (d_fac * measures.displacement_velocity(robot_manager)
              + v_fac * measures.velocity(robot_manager)
              + s_fac * robot_manager.size)
-    return v if v <= robot_manager.conf.fitness_limit else 0.0
+    return v if v <= fitness_limit else 0.0
 
 
 def size_penalty(robot_manager, robot):

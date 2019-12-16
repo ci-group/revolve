@@ -19,6 +19,7 @@ class ExperimentManagement:
         os.mkdir(self.dirpath)
         os.mkdir(self.dirpath+'/data_fullevolution')
         os.mkdir(self.dirpath+'/data_fullevolution/genotypes')
+        os.mkdir(self.dirpath+'/data_fullevolution/consolidated_fitness')
         os.mkdir(self.dirpath+'/data_fullevolution/failed_eval_robots')
         for environment in self.environments:
             os.mkdir(self.dirpath+'/selectedpop_'+environment)
@@ -43,14 +44,13 @@ class ExperimentManagement:
         if self.settings.export_phenotype:
             individual.export_phenotype(self._data_folder()+'/'+environment)
 
-    def export_fitnesses(self, individuals, environment):
-        folder = self._data_folder()
-        for individual in individuals:
-            individual.export_fitness(folder+'/'+environment)
-
     def export_fitness(self, individual, environment):
-        folder = os.path.join(self._data_folder()+'/'+environment, 'fitness')
+        folder = os.path.join(self._data_folder(), environment, 'fitness')
         individual.export_fitness(folder)
+
+    def export_consolidated_fitness(self, individual):
+        folder = os.path.join(self._data_folder(), 'consolidated_fitness')
+        individual.export_consolidated_fitness(folder)
 
     def export_individual(self, individual, environment):
         folder = self._data_folder()+'/'+environment

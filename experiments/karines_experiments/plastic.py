@@ -25,9 +25,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 2#100
-    population_size = 1#100
-    offspring_size = 1#50
+    num_generations = 1#100
+    population_size = 4#100
+    offspring_size = 2#50
 
     # environment world and z-start
     environments = {'plane': 0.03,
@@ -36,9 +36,7 @@ async def run():
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,
-        environmental_conditions=['hill'],
-        max_terms_clause=2,
-        plastic=False,
+        plastic=True,
     )
 
     mutation_conf = MutationConfig(
@@ -57,11 +55,10 @@ async def run():
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
     logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
-    print(do_recovery)
+
     if do_recovery:
         gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size,
                                                                                           offspring_size)
-        print('fdsngfkdngkfdhbgsdjgnfdsfjgnsdkjfgnsdkjgnsdkhjgbnsdkjhgbskj',gen_num, has_offspring, next_robot_id)
 
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
@@ -71,8 +68,8 @@ async def run():
         next_robot_id = 1
 
     def fitness_function(robot_manager, robot):
-        contacts = measures.contacts(robot_manager, robot)
-        assert(contacts != 0)
+        #contacts = measures.contacts(robot_manager, robot)
+        #assert(contacts != 0)
         return fitness.displacement_velocity_hill(robot_manager, robot, False)
 
     population_conf = PopulationConfig(
@@ -92,14 +89,13 @@ async def run():
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
-        measure_individuals=settings.measure_individuals,
         environments=environments,
     )
 
     settings = parser.parse_args()
 
     simulator_queue_envs = {}
-    analyzer_queue_envs = {}
+    analyzer_queue = None
 
     previous_port = None
     for environment in environments:
@@ -112,14 +108,19 @@ async def run():
             previous_port = port
         else:
             port = previous_port + settings.n_cores + 1
+            previous_port = port
 
+        print(environment,  port)
         simulator_queue_envs[environment] = SimulatorQueue(settings.n_cores, settings, port)
         await simulator_queue_envs[environment].start()
+      #  await asyncio.sleep(3)
 
-        analyzer_queue_envs[environment] = AnalyzerQueue(1, settings, port+settings.n_cores)
-        await analyzer_queue_envs[environment].start()
+    print('anal', port+ settings.n_cores+ 1)
+    analyzer_queue = AnalyzerQueue(1, settings, port+ settings.n_cores  + 1)
+    #await analyzer_queue.start()
 
-    population = Population(population_conf, simulator_queue_envs, analyzer_queue_envs, next_robot_id)
+
+    population = Population(population_conf, simulator_queue_envs, analyzer_queue, next_robot_id)
 
     if do_recovery:
 

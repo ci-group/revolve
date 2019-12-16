@@ -38,7 +38,7 @@ async def run():
         max_structural_modules=15,
         environmental_conditions=['hill'],
         max_terms_clause=2,
-        plastic=True,
+        plastic=False,
     )
 
     mutation_conf = MutationConfig(
@@ -92,7 +92,6 @@ async def run():
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
-        measure_individuals=settings.measure_individuals,
         environments=environments,
     )
 

@@ -39,11 +39,9 @@ class World(WorldManager):
 
     def __init__(self, conf, _private, world_address):
         """
-
         :param conf:
-        :return:
         """
-        world_address = str_to_address(conf.world_address) if world_address is None else world_address
+        world_address = ("127.0.0.1", 11345) if world_address is None else world_address
 
         conf = make_revolve_config(conf)
         super(World, self).__init__(

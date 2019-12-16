@@ -67,6 +67,8 @@ If you want to contribute to Revolve, be sure to review the [contribution
 guidelines](CONTRIBUTING.md). By participating, you are expected to
 uphold this code.
 
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/ci-group/revolve)
+
 We use [GitHub issues](https://github.com/ci-group/revolve/issues) for
 tracking requests and bugs.
 

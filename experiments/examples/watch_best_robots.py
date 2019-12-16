@@ -58,7 +58,6 @@ async def run():
         offspring_size=50,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
-        measure_individuals=settings.measure_individuals,
     )
 
     settings = parser.parse_args()

@@ -1,12 +1,13 @@
 import os
 
 # set these variables according to your experiments #
-dirpath = '../'
+dirpath = 'data'
 experiments_type = [
                     'default_experiment'
                     ]
 runs = 1
 # set these variables according to your experiments #
+
 
 def build_headers(path):
 
@@ -47,11 +48,12 @@ def build_headers(path):
 
     return behavior_headers, phenotype_headers
 
+
 for exp in experiments_type:
     for run in range(1, runs+1):
 
         print(exp, run)
-        path = dirpath + str(exp) + '_' + str(run)
+        path = os.path.join(dirpath, str(exp), str(run))
         behavior_headers, phenotype_headers = build_headers(path)
 
         file_summary = open(path + "/all_measures.tsv", "a")

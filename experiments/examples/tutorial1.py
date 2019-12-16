@@ -1,48 +1,34 @@
 #!/usr/bin/env python3
 import asyncio
 import os
-import sys
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-rvpath = os.path.join(current_dir, '..', '..')
-sys.path.append(rvpath)
-
-from pygazebo.pygazebo import DisconnectError
-
 from pyrevolve import parser
 from pyrevolve.gazebo.manage import WorldManager as World
+from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
+from pyrevolve.custom_logging.logger import logger
 
 
 async def run():
-    print('Hello World from `{}`'.format(rvpath))
+    logger.info('Hello World!')
     settings = parser.parse_args()
 
-    world = await World.create()
-    if world:
-        print("Connected to the simulator world.")
+    # Start Simulator
+    if settings.simulator_cmd != 'debug':
+        simulator_supervisor = DynamicSimSupervisor(
+            world_file=settings.world,
+            simulator_cmd=settings.simulator_cmd,
+            simulator_args=["--verbose"],
+            plugins_dir_path=os.path.join('.', 'build', 'lib'),
+            models_dir_path=os.path.join('.', 'models'),
+            simulator_name='gazebo'
+        )
+        await simulator_supervisor.launch_simulator(port=settings.port_start)
+        await asyncio.sleep(0.1)
 
-    await world.pause(True)
+    connection = await World.create()
+    if connection:
+        logger.info("Connected to the simulator world.")
+
+    await connection.pause(True)
 
     while True:
         await asyncio.sleep(10.0)
-
-
-def main():
-    def handler(loop, context):
-        exc = context['exception']
-        if isinstance(exc, DisconnectError) \
-                or isinstance(exc, ConnectionResetError):
-            print("Got disconnect / connection reset - shutting down.")
-            sys.exit(0)
-        raise context['exception']
-
-    try:
-        loop = asyncio.get_event_loop()
-        loop.set_exception_handler(handler)
-        loop.run_until_complete(run())
-    except KeyboardInterrupt:
-        print("Got Ctrl+C, shutting down.")
-
-
-if __name__ == "__main__":
-    main()

@@ -12,6 +12,7 @@ class Individual:
         self.genotype = genotype
         self.phenotype = phenotype
         self.fitness = None
+        self.consolidated_fitness = None
         self.evaluated = False
         self.parents = None
         self.failed_eval_attempt_count = 0
@@ -47,6 +48,10 @@ class Individual:
         """
         with open(f'{folder}/fitness_{self.id}.txt', 'w') as f:
             f.write(str(self.fitness))
+
+    def export_consolidated_fitness(self, folder):
+        with open(f'{folder}/consolidated_fitness_{self.id}.txt', 'w') as f:
+            f.write(str(self.consolidated_fitness))
 
     def export_individual(self, folder):
         f = open(f'{folder}/individuals/individual_{self.id}.pkl', "wb")

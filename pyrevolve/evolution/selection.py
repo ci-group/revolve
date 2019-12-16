@@ -1,26 +1,19 @@
 from random import randint
-import statistics
 
 _neg_inf = -float('Inf')
 
 
 def _compare_maj_fitness(indiv_1, indiv_2, environments):
 
-    indiv_1_fitness = []
-    indiv_2_fitness = []
+    fit_1 = indiv_1[list(environments.keys())[-1]].consolidated_fitness
+    fit_2 = indiv_2[list(environments.keys())[-1]].consolidated_fitness
 
-    for environment in environments:
-        indiv_1_fitness.append(indiv_1[environment].fitness)
-        indiv_2_fitness.append(indiv_2[environment].fitness)
+    print(list(environments.keys())[-1],list(environments.keys())[-1])
+    print('buceta1',  indiv_1[list(environments.keys())[-1]].phenotype.id, fit_1)
+    print('buceta2',  indiv_2[list(environments.keys())[-1]].phenotype.id, fit_2)
 
-   # indiv_1_fitness = abs(sum(indiv_1_fitness) - statistics.stdev(indiv_1_fitness))
-   # indiv_2_fitness = abs(sum(indiv_2_fitness) - statistics.stdev(indiv_2_fitness))
-
-    indiv_1_fitness = statistics.mean(indiv_1_fitness)
-    indiv_2_fitness = statistics.mean(indiv_2_fitness)
-
-    fit_1 = _neg_inf if indiv_1_fitness is None else indiv_1_fitness
-    fit_2 = _neg_inf if indiv_2_fitness is None else indiv_2_fitness
+    fit_1 = _neg_inf if fit_1 is None else fit_1
+    fit_2 = _neg_inf if fit_2 is None else fit_2
 
     return fit_1 > fit_2
 

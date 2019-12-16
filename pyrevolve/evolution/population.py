@@ -10,6 +10,7 @@ import copy
 import os
 import pickle
 import sys
+from random import random
 
 class PopulationConfig:
     def __init__(self,
@@ -28,7 +29,6 @@ class PopulationConfig:
                  evaluation_time,
                  experiment_name,
                  experiment_management,
-                 measure_individuals,
                  environments,
                  offspring_size=None,
                  next_robot_id=1):
@@ -48,7 +48,6 @@ class PopulationConfig:
         :param evaluation_time: duration of an experiment
         :param experiment_name: name for the folder of the current experiment
         :param experiment_management: object with methods for managing the current experiment
-        :param measure_individuals: weather or not to perform  phenotypic measurements
         :param offspring_size (optional): size of offspring (for steady state)
         """
         self.population_size = population_size
@@ -66,7 +65,6 @@ class PopulationConfig:
         self.evaluation_time = evaluation_time
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
-        self.measure_individuals = measure_individuals
         self.environments = environments
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
@@ -74,7 +72,7 @@ class PopulationConfig:
 
 class Population:
 
-    def __init__(self, conf: PopulationConfig, simulator_queue_envs, analyzer_queue_envs=None, next_robot_id=1):
+    def __init__(self, conf: PopulationConfig, simulator_queue_envs, analyzer_queue=None, next_robot_id=1):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -86,10 +84,9 @@ class Population:
         :param analyzer_queue: connection to the analyzer simulator queue
         :param next_robot_id: (sequential) id of the next individual to be created
         """
-
         self.conf = conf
         self.individuals = []
-        self.analyzer_queue_envs = analyzer_queue_envs
+        self.analyzer_queue = analyzer_queue
         self.simulator_queue_envs = simulator_queue_envs
         self.next_robot_id = next_robot_id
 
@@ -109,25 +106,24 @@ class Population:
         for environment in self.conf.environments:
 
             self.conf.experiment_management.export_phenotype(individual[environment], environment)
-            self.conf.experiment_management.export_phenotype_images('data_fullevolution/'
-                                                                    +environment+'/phenotype_images',
+            self.conf.experiment_management.export_phenotype_images(os.path.join('data_fullevolution',
+                                                                    environment,'phenotype_images'),
                                                                     individual[environment])
             individual[environment].phenotype.measure_phenotype(self.conf.experiment_name)
             individual[environment].phenotype.export_phenotype_measurements(self.conf.experiment_name, environment)
             self.conf.experiment_management.export_individual(individual[environment], environment)
-            print('new',individual[environment].evaluated)
+
         return individual
 
     async def load_individual(self, id):
-        path = 'experiments/'+self.conf.experiment_name+'/'+'data_fullevolution/'
+        path = 'experiments/'+self.conf.experiment_name+'/data_fullevolution'
 
         individual = {}
         for environment in self.conf.environments:
-            file_name = path+environment+'/individuals/individual_'+id+'.pkl'
+            file_name = os.path.join(path, environment,'individuals','individual_'+id+'.pkl')
             file = open(file_name, 'rb')
             individual[environment] = pickle.load(file)
 
-            print(id, individual[environment].evaluated)
         return individual
 
     async def load_snapshot(self, gen_num):
@@ -136,8 +132,8 @@ class Population:
         :param gen_num: number of the generation snapshot to recover
         """
         path = 'experiments/'+self.conf.experiment_name
-        for r, d, f in os.walk(path+'/selectedpop_'+
-                               list(self.conf.environments.keys())[-1]+'/selectedpop_'+str(gen_num)):
+        for r, d, f in os.walk(os.path.join(path,'selectedpop_'+
+                               list(self.conf.environments.keys())[-1],'selectedpop_'+str(gen_num))):
             for file in f:
                 if 'body' in file:
                     id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
@@ -161,6 +157,60 @@ class Population:
 
         return individuals
 
+    async def consolidate_fitness(self, individuals):
+
+        for individual_ref in individuals:
+            for enviroment in self.conf.environments:
+                individual_ref[enviroment].fitness = random()
+
+        if len(self.conf.environments) == 0:
+            for individual in individuals:
+                fit = individual[list(self.conf.environments.keys())[-1]]
+                individual[list(self.conf.environments.keys())[-1]].consolidated_fitness = fit
+
+        # if there are multiple seasons (environments)
+        else:
+            for individual_ref in individuals:
+                slaves = 0
+                for individual_comp in individuals:
+                    equal = 0
+                    better = 0
+                    for enviroment in self.conf.environments:
+
+                        if individual_ref[enviroment].fitness is None and individual_comp[enviroment].fitness is None:
+                            equal += 1
+
+                        if individual_ref[enviroment].fitness is None and individual_comp[enviroment].fitness is not None:
+                            equal += -1
+
+                        if individual_ref[enviroment].fitness is not None and individual_comp[enviroment].fitness is None:
+                            better += 1
+
+
+                        if individual_ref[enviroment].fitness is not None and individual_comp[enviroment].fitness is not None:
+
+                            if individual_ref[enviroment].fitness > individual_comp[enviroment].fitness:
+                                better += 1
+
+                            if individual_ref[enviroment].fitness < individual_comp[enviroment].fitness:
+                                equal += -1
+
+                            if individual_ref[enviroment].fitness == individual_comp[enviroment].fitness:
+                                equal += 1
+
+                    # if it ref is not worse in any objective, and better in at least one, tje comp becomes slave of ref
+                    if equal >= 0 and better > 0:
+                        slaves += 1
+
+                individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = slaves
+
+        for individual in individuals:
+            self.conf.experiment_management.export_consolidated_fitness(
+                                                                individual[list(self.conf.environments.keys())[-1]],)
+
+            self.conf.experiment_management.export_individual( individual[list(self.conf.environments.keys())[-1]],
+                                                               list(self.conf.environments.keys())[-1])
+
     async def init_pop(self, recovered_individuals=[]):
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
@@ -175,6 +225,8 @@ class Population:
 
         for environment in self.conf.environments:
             await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
+
+        await self.consolidate_fitness(self.individuals)
 
     async def next_gen(self, gen_num, recovered_individuals=[]):
         """
@@ -204,7 +256,8 @@ class Population:
             self.next_robot_id += 1
 
             # Mutation operator
-            child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
+            child_genotype = self.conf.mutation_operator(child.genotype,
+                                                         self.conf.mutation_conf)
 
             # Insert individual in new population
             individual = self._new_individual(child_genotype)
@@ -214,16 +267,24 @@ class Population:
 
         # evaluate new individuals
         for environment in self.conf.environments:
-            await self.evaluate(new_individuals=self.individuals, gen_num=gen_num, environment=environment)
+            await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
+
+
+        selection_pool = self.individuals + new_individuals
+
+        await self.consolidate_fitness(selection_pool)
 
         # create next population
         if self.conf.population_management_selector is not None:
-            new_individuals = self.conf.population_management(self.individuals, new_individuals,
-                                                              self.conf.population_management_selector)
+            new_individuals = self.conf.population_management(selection_pool,
+                                                              self.conf.population_management_selector,
+                                                              self.conf)
         else:
-            new_individuals = self.conf.population_management(self.individuals, new_individuals)
-        new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
+            new_individuals = self.conf.population_management(self.individuals, new_individuals, self.conf)
+
+        new_population = Population(self.conf, self.simulator_queue_envs, self.analyzer_queue, self.next_robot_id)
         new_population.individuals = new_individuals
+
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
         return new_population
@@ -240,12 +301,13 @@ class Population:
         robot_futures = []
         to_evaluate = []
         for individual in new_individuals:
-            print(individual[environment].phenotype.id, individual[environment].evaluated)
+
             if not individual[environment].evaluated:
                 logger.info(f'Evaluating individual (gen {gen_num}) {individual[environment].genotype.id} ...')
                 to_evaluate.append(individual)
                 robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual[environment],
                                                                                       environment)))
+                individual[environment].evaluated = True
 
         await asyncio.sleep(1)
 
@@ -253,7 +315,6 @@ class Population:
             individual = to_evaluate[i][environment]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
             individual.fitness, individual.phenotype._behavioural_measurements = await future
-            individual.evaluated = True
 
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
@@ -274,9 +335,9 @@ class Population:
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
         """
 
-        if self.analyzer_queue_envs[environment] is not None:
-            collisions, _bounding_box = await self.analyzer_queue_envs[environment].test_robot(individual,
-                                                                                               self.conf)
+        if self.analyzer_queue is not None:
+            collisions, _bounding_box = await self.analyzer_queue.test_robot(individual,
+                                                                             self.conf)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None

@@ -22,7 +22,7 @@ class RobotManager(object):
             time,
             battery_level=0.0,
             speed_window=60,
-            warmup_time=0,
+            warmup_time=0.0,
     ):
         """
         :param speed_window:
