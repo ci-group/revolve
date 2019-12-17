@@ -72,10 +72,6 @@ async def run(loop):
     return "Done"
 
 
-
-
-
-    
     """ METHOD 2: This part works, creates n gazebo instances and connections
     Problem: doesnt use all the workers yet, only one. And letting workers use
     these simulators is hard because then you would have to make connection serializable...
@@ -122,7 +118,7 @@ async def run(loop):
 @app.task
 async def run_gazebo(settingsDir, i):
     """Argument i: Core_ID
-        Starts a gazebo simulator """
+        Starts a gazebo simulator with name gazebo_ID """
 
     loop = asyncio.get_event_loop()
 
@@ -155,5 +151,34 @@ async def run_gazebo(settingsDir, i):
             await asyncio.sleep(1)
 
             print("SIMULATOR "+ str(i) + " STARTED")
+
+            while True:
+                print(f"Simulator_{i} getting task from queue")
+                # GET TASKS FROM QUEUE (for now this is just spider)
+                task = "experiments/examples/yaml/spider.yaml"
+                max_age = settings.evaluation_time
+
+                # Load the robot (might be different if tasks format is different)
+                robot = revolve_bot.RevolveBot()
+                robot.load_file(task)
+                robot.update_substrate()
+
+                print(f"Simulator_{i} is simulating")
+                # SIMULATE TASKS
+                robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
+
+                while not robot_manager.dead:
+                    await asyncio.sleep(1.0)
+
+                # CHECK FITNESS AND STORE IT SOMEWHERE
+                robot_fitness = fitness.displacement(robot_manager, robot)
+
+                # REMOVE ROBOT FROM SIMULATOR AND REGISTER AND RESET
+                connection.unregister_robot(robot_manager)
+                await connection.reset(rall=True, time_only=True, model_only=False)
+
+                # PRINT RESULT
+                print(f"Simulator_{i} task got fitness: {robot_fitness}")
+
 
     return "SIMULATOR " +str(i) + " ENDED SUCCESFULLY!"
