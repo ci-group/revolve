@@ -25,9 +25,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 1#100
-    population_size = 4#100
-    offspring_size = 2#50
+    num_generations = 100
+    population_size = 100
+    offspring_size = 50
 
     # environment world and z-start
     environments = {'plane': 0.03,
@@ -94,9 +94,7 @@ async def run():
 
     settings = parser.parse_args()
 
-    simulator_queue_envs = {}
-    analyzer_queue = None
-
+    simulator_queue = {}
     previous_port = None
     for environment in environments:
 
@@ -107,20 +105,16 @@ async def run():
             port = settings.port_start
             previous_port = port
         else:
-            port = previous_port + settings.n_cores + 1
+            port = previous_port+settings.n_cores
             previous_port = port
 
-        print(environment,  port)
-        simulator_queue_envs[environment] = SimulatorQueue(settings.n_cores, settings, port)
-        await simulator_queue_envs[environment].start()
-      #  await asyncio.sleep(3)
+        simulator_queue[environment] = SimulatorQueue(settings.n_cores, settings, port)
+        await simulator_queue[environment].start()
 
-    print('anal', port+ settings.n_cores+ 1)
-    analyzer_queue = AnalyzerQueue(1, settings, port+ settings.n_cores  + 1)
-    #await analyzer_queue.start()
+    analyzer_queue = AnalyzerQueue(1, settings, port+settings.n_cores)
+    await analyzer_queue.start()
 
-
-    population = Population(population_conf, simulator_queue_envs, analyzer_queue, next_robot_id)
+    population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
     if do_recovery:
 

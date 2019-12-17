@@ -11,7 +11,7 @@ import traceback
 from asyncio import Future
 from datetime import datetime
 from pygazebo.msg import gz_string_pb2
-from pygazebo.msg.contacts_pb2 import Contacts
+#from pygazebo.msg.contacts_pb2 import Contacts
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.spec.msgs import BoundingBox
@@ -208,11 +208,11 @@ class WorldManager(manage.WorldManager):
             self._update_states
         )
 
-        self.contact_subscriber = await self.manager.subscribe(
-            '/gazebo/default/physics/contacts',
-            'gazebo.msgs.Contacts',
-            self._update_contacts
-        )
+        # self.contact_subscriber = await self.manager.subscribe(
+        #     '/gazebo/default/physics/contacts',
+        #     'gazebo.msgs.Contacts',
+        #     self._update_contacts
+        # )
 
         # Awaiting this immediately will lock the program
         update_state_future = self.set_state_update_frequency(
@@ -230,7 +230,7 @@ class WorldManager(manage.WorldManager):
 
         # Wait for connections
         await self.pose_subscriber.wait_for_connection()
-        await self.contact_subscriber.wait_for_connection()
+        #await self.contact_subscriber.wait_for_connection()
         await update_state_future
 
         if self.do_restore:
@@ -239,7 +239,7 @@ class WorldManager(manage.WorldManager):
     async def disconnect(self):
         await super().disconnect()
         await self.pose_subscriber.remove()
-        await self.contact_subscriber.remove()
+        #await self.contact_subscriber.remove()
         await self.battery_handler.stop()
 
     async def create_snapshot(self, pause_when_saving=True):
@@ -648,24 +648,24 @@ class WorldManager(manage.WorldManager):
                 robot_manager.dead = True
 
         self.call_update_triggers()
-
-    def _update_contacts(self, msg):
-        """
-        Handles the contacts with the ground info message by updating robot contacts.
-        :param msg:
-        :return:
-        """
-        contacts = Contacts()
-        contacts.ParseFromString(msg)
-        # if there was any contact in that instant
-        if contacts.contact:
-            # fetches one or more contact points for each module that has contacts
-            for module_contacts in contacts.contact:
-                robot_name = module_contacts.collision1.split('::')[0]
-                robot_manager = self.robot_managers.get(robot_name, None)
-                if not robot_manager:
-                    continue
-                robot_manager.update_contacts(self, module_contacts)
+    #
+    # def _update_contacts(self, msg):
+    #     """
+    #     Handles the contacts with the ground info message by updating robot contacts.
+    #     :param msg:
+    #     :return:
+    #     """
+    #     contacts = Contacts()
+    #     contacts.ParseFromString(msg)
+    #     # if there was any contact in that instant
+    #     if contacts.contact:
+    #         # fetches one or more contact points for each module that has contacts
+    #         for module_contacts in contacts.contact:
+    #             robot_name = module_contacts.collision1.split('::')[0]
+    #             robot_manager = self.robot_managers.get(robot_name, None)
+    #             if not robot_manager:
+    #                 continue
+    #             robot_manager.update_contacts(self, module_contacts)
 
     def add_update_trigger(self, callback):
         """

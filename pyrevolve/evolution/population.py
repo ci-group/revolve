@@ -72,7 +72,7 @@ class PopulationConfig:
 
 class Population:
 
-    def __init__(self, conf: PopulationConfig, simulator_queue_envs, analyzer_queue=None, next_robot_id=1):
+    def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -87,7 +87,7 @@ class Population:
         self.conf = conf
         self.individuals = []
         self.analyzer_queue = analyzer_queue
-        self.simulator_queue_envs = simulator_queue_envs
+        self.simulator_queue = simulator_queue
         self.next_robot_id = next_robot_id
 
     def _new_individual(self, genotype):
@@ -159,10 +159,6 @@ class Population:
 
     async def consolidate_fitness(self, individuals):
 
-        for individual_ref in individuals:
-            for enviroment in self.conf.environments:
-                individual_ref[enviroment].fitness = random()
-
         if len(self.conf.environments) == 0:
             for individual in individuals:
                 fit = individual[list(self.conf.environments.keys())[-1]]
@@ -175,30 +171,32 @@ class Population:
                 for individual_comp in individuals:
                     equal = 0
                     better = 0
-                    for enviroment in self.conf.environments:
-
-                        if individual_ref[enviroment].fitness is None and individual_comp[enviroment].fitness is None:
+                    for environment in self.conf.environments:
+                        if individual_ref[environment].fitness is None \
+                                and individual_comp[environment].fitness is None:
                             equal += 1
 
-                        if individual_ref[enviroment].fitness is None and individual_comp[enviroment].fitness is not None:
+                        if individual_ref[environment].fitness is None \
+                                and individual_comp[environment].fitness is not None:
                             equal += -1
 
-                        if individual_ref[enviroment].fitness is not None and individual_comp[enviroment].fitness is None:
+                        if individual_ref[environment].fitness is not None \
+                                and individual_comp[environment].fitness is None:
                             better += 1
 
+                        if individual_ref[environment].fitness is not None \
+                                and individual_comp[environment].fitness is not None:
 
-                        if individual_ref[enviroment].fitness is not None and individual_comp[enviroment].fitness is not None:
-
-                            if individual_ref[enviroment].fitness > individual_comp[enviroment].fitness:
+                            if individual_ref[environment].fitness > individual_comp[environment].fitness:
                                 better += 1
 
-                            if individual_ref[enviroment].fitness < individual_comp[enviroment].fitness:
+                            if individual_ref[environment].fitness < individual_comp[environment].fitness:
                                 equal += -1
 
-                            if individual_ref[enviroment].fitness == individual_comp[enviroment].fitness:
+                            if individual_ref[environment].fitness == individual_comp[environment].fitness:
                                 equal += 1
 
-                    # if it ref is not worse in any objective, and better in at least one, tje comp becomes slave of ref
+                    # if it ref is not worse in any objective, and better in at least one, the comp becomes slave of ref
                     if equal >= 0 and better > 0:
                         slaves += 1
 
@@ -208,8 +206,8 @@ class Population:
             self.conf.experiment_management.export_consolidated_fitness(
                                                                 individual[list(self.conf.environments.keys())[-1]],)
 
-            self.conf.experiment_management.export_individual( individual[list(self.conf.environments.keys())[-1]],
-                                                               list(self.conf.environments.keys())[-1])
+            self.conf.experiment_management.export_individual(individual[list(self.conf.environments.keys())[-1]],
+                                                              list(self.conf.environments.keys())[-1])
 
     async def init_pop(self, recovered_individuals=[]):
         """
@@ -269,7 +267,6 @@ class Population:
         for environment in self.conf.environments:
             await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
 
-
         selection_pool = self.individuals + new_individuals
 
         await self.consolidate_fitness(selection_pool)
@@ -282,7 +279,7 @@ class Population:
         else:
             new_individuals = self.conf.population_management(self.individuals, new_individuals, self.conf)
 
-        new_population = Population(self.conf, self.simulator_queue_envs, self.analyzer_queue, self.next_robot_id)
+        new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
         new_population.individuals = new_individuals
 
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
@@ -313,6 +310,7 @@ class Population:
 
         for i, future in enumerate(robot_futures):
             individual = to_evaluate[i][environment]
+
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
             individual.fitness, individual.phenotype._behavioural_measurements = await future
 
@@ -342,4 +340,5 @@ class Population:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
 
-        return await self.simulator_queue_envs[environment].test_robot(individual, self.conf)
+        return await self.simulator_queue[environment].test_robot(individual, self.conf)
+

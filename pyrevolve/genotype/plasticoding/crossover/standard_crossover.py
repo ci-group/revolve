@@ -19,7 +19,6 @@ def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
     else:
         for letter in Alphabet.modules():
             parent = random.randint(0, 1)
-            print(letter, parent)
             # gets the production rule for the respective letter
             grammar[letter[0]] = parent_genotypes[parent].grammar[letter[0]]
 
