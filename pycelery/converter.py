@@ -57,3 +57,27 @@ def dic_to_args(Dic):
         z_start = Dic["z_start"])
 
     return args
+
+def args_default():
+
+    args = NameSpace(celery = True,
+    manager = "pycelery/tasks.py",
+    controller_update_rate = 8,
+    evaluation_time = 30,
+    experiment_name = "default_experiment",
+    export_genotype = True,
+    n_cores = 2,
+    output_directory = "output",
+    port_start = 11345,
+    recovery_enabled = True,
+    pose_update_frequency = 5,
+    restore_directory = "restore",
+    run = "1",
+    sensor_update_rate = 8,
+    simulator_cmd = "gazebo",
+    world = "worlds/plane.world",
+    z_start = 0.03,
+    test_robot = None,
+    test_collision_robot = None)
+
+    return args

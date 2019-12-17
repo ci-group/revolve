@@ -81,7 +81,7 @@ def main():
 if __name__ == '__main__':
     # Making sure celery workers are killed before restarting, because otherwise
     # bugs will show up even though they are already fixed.
-    subprocess.run("pkill -f 'celery worker'", shell = True)
+    subprocess.run("pkill -f 'celery workers'", shell = True)
 
     print("STARTING")
 
@@ -89,5 +89,6 @@ if __name__ == '__main__':
 
     print("FINISHED")
 
+    subprocess.run("pkill -f 'celery workers'", shell = True)
     # Make sure the workers are terminated, if they still exist.
     # subprocess.run("pkill -f 'celery worker'", shell = True)

@@ -27,7 +27,7 @@ from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 
-from pycelery.converter import args_to_dic, dic_to_args
+from pycelery.converter import args_to_dic, dic_to_args, args_default
 
 # ------------- Collection of tasks ------------------- #
 
@@ -45,11 +45,6 @@ async def test_worker(settingsDir, i):
 
     return True
 
-async def manager():
-
-
-    return 1.0
-
 async def run(loop):
 
     await asyncio.sleep(5)
@@ -58,10 +53,8 @@ async def run(loop):
 
     settings = parser.parse_args()
 
-    """This part gives an error:  Task pycelery.tasks.run_gazebo[5c334e90-6204-432c-b6f4-1e47b3bfbcca]
-    raised unexpected: RuntimeError('Cannot add child handler, the child watcher does not have a loop attached')
-    possible solution: Can we add a loop to the child watcher? Does not seem to work in the revolve.py,
-    maybe getting the loop inside this run function would help."""
+    """ Method 1: The run function is called by the revolve.py, and here we can distribute workers.
+    Currently we can start n-1 gazebo instances from here, all on different workers!"""
 
     settingsDir = args_to_dic(settings)
     gws = []
@@ -71,11 +64,19 @@ async def run(loop):
         gws.append(gw)
 
     # Testing the last gw.
-    gr = await gw.get()
+    for i in range(settings.n_cores - 1):
+        gr = await gws[i].get()
+        grs.append(gr)
 
-    return gr
+    print(grs[0], grs[1])
+    return "Done"
 
-    """This part works, creates n gazebo instances and connections
+
+
+
+
+    
+    """ METHOD 2: This part works, creates n gazebo instances and connections
     Problem: doesnt use all the workers yet, only one. And letting workers use
     these simulators is hard because then you would have to make connection serializable...
     Possible solution: Not yet found"""
@@ -124,6 +125,7 @@ async def run_gazebo(settingsDir, i):
         Starts a gazebo simulator """
 
     loop = asyncio.get_event_loop()
+
     try:
         asyncio.get_child_watcher().attach_loop(loop)
 
@@ -152,6 +154,6 @@ async def run_gazebo(settingsDir, i):
             connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start+i))
             await asyncio.sleep(1)
 
-            print("SIMULATOR"+ str(i) + "STARTED")
+            print("SIMULATOR "+ str(i) + " STARTED")
 
-    return 1.0
+    return "SIMULATOR " +str(i) + " ENDED SUCCESFULLY!"
