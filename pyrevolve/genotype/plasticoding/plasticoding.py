@@ -215,6 +215,10 @@ class Plasticoding(Genotype):
                 # if no clause is true, letter doesnt get expressed
                 if len(true_clauses) == 0:
                     grammar[letter] = []
+
+                    # actually...for now, it is safer to just express the first rule
+                    # because this could result in tiny robots, which could be exploited in the hill
+                    #grammar[letter] = self.grammar[letter][0][1]
                 else:
                     # if multiple clauses are true, all get expressed
                     for idx in range(0, len(true_clauses)):
@@ -226,7 +230,6 @@ class Plasticoding(Genotype):
                             else:
                                 aux_list = self.grammar[letter][true_clauses[idx]][1]
                             grammar[letter].extend(aux_list)
-
 
         else:
 

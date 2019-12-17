@@ -4,8 +4,63 @@ from ....custom_logging.logger import genotype_logger
 import sys
 
 
-
 def handle_deletion(genotype):
+    """
+    Deletes symbols from genotype
+    :param genotype: genotype to be modified
+    :return: genotype
+    """
+    target_production_rule = random.choice(list(genotype.grammar))
+    if (len(genotype.grammar[target_production_rule])) > 1:
+        symbol_to_delete = random.choice(genotype.grammar[target_production_rule])
+        if symbol_to_delete[0] != Alphabet.CORE_COMPONENT:
+            genotype.grammar[target_production_rule].remove(symbol_to_delete)
+            genotype_logger.info(
+                f'mutation: remove in {genotype.id} for {target_production_rule} at {symbol_to_delete[0]}.')
+    return genotype
+
+
+def handle_swap(genotype):
+    """
+    Swaps symbols within the genotype
+    :param genotype: genotype to be modified
+    :return: genotype
+    """
+    target_production_rule = random.choice(list(genotype.grammar))
+    if (len(genotype.grammar[target_production_rule])) > 1:
+        symbols_to_swap = random.choices(population=genotype.grammar[target_production_rule], k=2)
+        for symbol in symbols_to_swap:
+            if symbol[0] == Alphabet.CORE_COMPONENT:
+                return genotype
+        item_index_1 = genotype.grammar[target_production_rule].index(symbols_to_swap[0])
+        item_index_2 = genotype.grammar[target_production_rule].index(symbols_to_swap[1])
+        genotype.grammar[target_production_rule][item_index_2], genotype.grammar[target_production_rule][item_index_1] = \
+            genotype.grammar[target_production_rule][item_index_1], genotype.grammar[target_production_rule][item_index_2]
+        genotype_logger.info(
+            f'mutation: swap in {genotype.id} for {target_production_rule} between {symbols_to_swap[0]} and {symbols_to_swap[1]}.')
+    return genotype
+
+
+def handle_addition(genotype, genotype_conf):
+    """
+    Adds symbol to genotype
+    :param genotype: genotype to add to
+    :param genotype_conf: configuration for the genotype
+    :return: genotype
+    """
+    target_production_rule = random.choice(list(genotype.grammar))
+    if target_production_rule == Alphabet.CORE_COMPONENT:
+        addition_index = random.randint(1, len(genotype.grammar[target_production_rule]) - 1)
+    else:
+        addition_index = random.randint(0, len(genotype.grammar[target_production_rule]) - 1)
+    symbol_to_add = generate_symbol(genotype_conf)
+    genotype.grammar[target_production_rule].insert(addition_index, symbol_to_add)
+    genotype_logger.info(
+        f'mutation: add {symbol_to_add} in {genotype.id} for {target_production_rule} at {addition_index}.')
+    return genotype
+
+
+def handle_deletion_plastic(genotype):
     """
     Deletes symbols from genotype
 
@@ -26,7 +81,7 @@ def handle_deletion(genotype):
     return genotype
 
 
-def handle_swap(genotype):
+def handle_swap_plastic(genotype):
     """
     Swaps symbols within the genotype
 
@@ -49,6 +104,31 @@ def handle_swap(genotype):
             genotype.grammar[target_letter][target_clause][1][item_index_1], genotype.grammar[target_letter][target_clause][1][item_index_2]
         genotype_logger.info(
             f'mutation: swap in {genotype.id} for {target_letter} in {target_clause} between {symbols_to_swap[0]} and {symbols_to_swap[1]}.')
+    return genotype
+
+
+def handle_addition_plastic(genotype, genotype_conf):
+    """
+    Adds symbol to genotype
+
+    :param genotype: genotype to add to
+    :param genotype_conf: configuration for the genotype
+
+    :return: genotype
+    """
+
+    target_letter = random.choice(list(genotype.grammar))
+    target_clause = random.choice(range(0, len(genotype.grammar[target_letter])))
+
+    if target_letter == Alphabet.CORE_COMPONENT:
+        addition_index = random.randint(1, len(genotype.grammar[target_letter][target_clause][1]) - 1)
+    else:
+        addition_index = random.randint(0, len(genotype.grammar[target_letter][target_clause][1]) - 1)
+    symbol_to_add = generate_symbol(genotype_conf)
+    genotype.grammar[target_letter][target_clause][1].insert(addition_index, symbol_to_add)
+
+    genotype_logger.info(
+        f'mutation: add {symbol_to_add} in {genotype.id} for {target_letter} in {target_clause} at {addition_index}.')
     return genotype
 
 
@@ -88,33 +168,7 @@ def generate_symbol(genotype_conf):
     return symbol
 
 
-def handle_addition(genotype, genotype_conf):
-    """
-    Adds symbol to genotype
-
-    :param genotype: genotype to add to
-    :param genotype_conf: configuration for the genotype
-
-    :return: genotype
-    """
-
-    target_letter = random.choice(list(genotype.grammar))
-    target_clause = random.choice(range(0, len(genotype.grammar[target_letter])))
-
-    if target_letter == Alphabet.CORE_COMPONENT:
-        addition_index = random.randint(1, len(genotype.grammar[target_letter][target_clause][1]) - 1)
-    else:
-        addition_index = random.randint(0, len(genotype.grammar[target_letter][target_clause][1]) - 1)
-    symbol_to_add = generate_symbol(genotype_conf)
-    genotype.grammar[target_letter][target_clause][1].insert(addition_index, symbol_to_add)
-
-    genotype_logger.info(
-        f'mutation: add {symbol_to_add} in {genotype.id} for {target_letter} in {target_clause} at {addition_index}.')
-    return genotype
-
-
 def handle_clause(genotype, mutation_conf):
-
 
     max_terms_clause = mutation_conf.genotype_conf.max_terms_clause
 
@@ -170,6 +224,7 @@ def handle_clause(genotype, mutation_conf):
 
     return genotype
 
+
 def standard_mutation(genotype, mutation_conf):
     """
     Mutates genotype through addition/removal/swapping of symbols
@@ -183,21 +238,36 @@ def standard_mutation(genotype, mutation_conf):
     mutation_attempt = random.uniform(0.0, 1.0)
     if mutation_attempt > mutation_conf.mutation_prob:
         return new_genotype
+
     else:
+
         if mutation_conf.genotype_conf.plastic:
-            mutation_type = random.randint(1, 4)  # NTS: better way?
+
+            mutation_type = random.randint(1, 4)
+
+            if mutation_type == 1:
+                modified_genotype = handle_deletion_plastic(new_genotype)
+            elif mutation_type == 2:
+                modified_genotype = handle_swap_plastic(new_genotype)
+            elif mutation_type == 3:
+                modified_genotype = handle_addition_plastic(new_genotype, mutation_conf.genotype_conf)
+            elif mutation_type == 4:
+                modified_genotype = handle_clause(new_genotype, mutation_conf)
+            else:
+                raise Exception(
+                    'mutation_type value was not in the expected range (1,4). The value was: {}'.format(mutation_type))
         else:
+
             mutation_type = random.randint(1, 3)
 
-        if mutation_type == 1:
-            modified_genotype = handle_deletion(new_genotype)
-        elif mutation_type == 2:
-            modified_genotype = handle_swap(new_genotype)
-        elif mutation_type == 3:
-            modified_genotype = handle_addition(new_genotype, mutation_conf.genotype_conf)
-        elif mutation_type == 4:
-            modified_genotype = handle_clause(new_genotype, mutation_conf)
-        else:
-            raise Exception(
-                'mutation_type value was not in the expected range (1,3). The value was: {}'.format(mutation_type))
+            if mutation_type == 1:
+                modified_genotype = handle_deletion(new_genotype)
+            elif mutation_type == 2:
+                modified_genotype = handle_swap(new_genotype)
+            elif mutation_type == 3:
+                modified_genotype = handle_addition(new_genotype, mutation_conf.genotype_conf)
+            else:
+                raise Exception(
+                    'mutation_type value was not in the expected range (1,3). The value was: {}'.format(mutation_type))
+
         return modified_genotype

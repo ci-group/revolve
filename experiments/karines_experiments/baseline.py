@@ -95,6 +95,8 @@ async def run():
     settings = parser.parse_args()
 
     simulator_queue = {}
+    analyzer_queue = None
+
     previous_port = None
     for environment in environments:
 
