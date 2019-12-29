@@ -26,10 +26,14 @@ from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
-
+from celery.signals import celeryd_init, worker_process_init
 from pycelery.converter import args_to_dic, dic_to_args, args_default
 
 # ------------- Collection of tasks ------------------- #
+connection = None
+settings = None
+simulator_supervisor = None
+robot_queue = asyncio.Queue()
 
 @app.task
 async def stupid():
@@ -37,88 +41,12 @@ async def stupid():
     return 1.0
 
 @app.task
-async def test_worker(settingsDir, i):
-    id = i
-    loop = asyncio.get_event_loop()
-
-    gazebo_ = asyncio.run_coroutine_threadsafe(run_gazebo.delay(settingsDir, i), loop)
-
-    return True
-
-async def run(loop):
-
-    await asyncio.sleep(5)
-
-    asyncio.get_child_watcher().attach_loop(loop)
-
-    settings = parser.parse_args()
-
-    """ Method 1: The run function is called by the revolve.py, and here we can distribute workers.
-    Currently we can start n-1 gazebo instances from here, all on different workers!"""
-
-    settingsDir = args_to_dic(settings)
-    gws = []
-    grs = []
-    for i in range(settings.n_cores - 1):
-        gw = await run_gazebo.delay(settingsDir, i)
-        gws.append(gw)
-
-    # Testing the last gw.
-    for i in range(settings.n_cores - 1):
-        gr = await gws[i].get()
-        grs.append(gr)
-
-    print(grs[0], grs[1])
-    return "Done"
-
-
-    """ METHOD 2: This part works, creates n gazebo instances and connections
-    Problem: doesnt use all the workers yet, only one. And letting workers use
-    these simulators is hard because then you would have to make connection serializable...
-    Possible solution: Not yet found"""
-
-    # gazebo_connections = []
-    # gazebo_supervisor = []
-    # gazebo_launches = []
-    # workers = []
-    # for i in range(settings.n_cores):
-    #     if settings.simulator_cmd != 'debug':
-    #         simulator_supervisor = DynamicSimSupervisor(
-    #             world_file=settings.world,
-    #             simulator_cmd=settings.simulator_cmd,
-    #             simulator_args=["--verbose"],
-    #             plugins_dir_path=os.path.join('.', 'build', 'lib'),
-    #             models_dir_path=os.path.join('.', 'models'),
-    #             simulator_name=f'gazebo_{i}'
-    #         )
-    #         gazebo_launches.append(simulator_supervisor.launch_simulator(port=settings.port_start+i))
-    #         gazebo_supervisor.append(simulator_supervisor)
-    #
-    # # let there be some time to sync all initial output of the simulator
-    # await asyncio.sleep(5)
-    #
-    # for i, future_launch in enumerate(gazebo_launches):
-    #     await future_launch
-    #     connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start+i))
-    #     gazebo_connections.append(connection)
-    #
-    # for j, connection in enumerate(gazebo_connections):
-    #     gazebo_connections[j] = connection
-    #     await connection.pause(False)
-    #
-    # await asyncio.sleep(1)
-    #
-    # testje = await test.delay(connection)
-    # testjeresult = await testje.get()
-    #
-    # await asyncio.sleep(20)
-    #
-    # return results
-
-@app.task
 async def run_gazebo(settingsDir, i):
     """Argument i: Core_ID
         Starts a gazebo simulator with name gazebo_ID """
+    global settings
+    global connection
+    global simulator_supervisor
 
     loop = asyncio.get_event_loop()
 
@@ -131,6 +59,7 @@ async def run_gazebo(settingsDir, i):
     finally:
 
         # Parse command line / file input arguments
+
         settings = dic_to_args(settingsDir)
 
         if settings.simulator_cmd != 'debug':
@@ -148,37 +77,73 @@ async def run_gazebo(settingsDir, i):
 
             # Connect to the simulator and pause
             connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start+i))
+
             await asyncio.sleep(1)
 
-            print("SIMULATOR "+ str(i) + " STARTED")
 
-            while True:
-                print(f"Simulator_{i} getting task from queue")
-                # GET TASKS FROM QUEUE (for now this is just spider)
-                task = "experiments/examples/yaml/spider.yaml"
-                max_age = settings.evaluation_time
+    return "SIMULATOR "+ str(i) + " STARTED"
 
-                # Load the robot (might be different if tasks format is different)
-                robot = revolve_bot.RevolveBot()
-                robot.load_file(task)
-                robot.update_substrate()
-
-                print(f"Simulator_{i} is simulating")
-                # SIMULATE TASKS
-                robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
-
-                while not robot_manager.dead:
-                    await asyncio.sleep(1.0)
-
-                # CHECK FITNESS AND STORE IT SOMEWHERE
-                robot_fitness = fitness.displacement(robot_manager, robot)
-
-                # REMOVE ROBOT FROM SIMULATOR AND REGISTER AND RESET
-                connection.unregister_robot(robot_manager)
-                await connection.reset(rall=True, time_only=True, model_only=False)
-
-                # PRINT RESULT
-                print(f"Simulator_{i} task got fitness: {robot_fitness}")
+@app.task
+async def put_in_queue(file_location):
+    """Puts a robot in the queue of the local worker responding to this task"""
+    global robot_queue
+    robot_queue.put_nowait(file_location)
 
 
-    return "SIMULATOR " +str(i) + " ENDED SUCCESFULLY!"
+@app.task
+async def test_robots(settingsDir):
+    global connection
+    global robot_queue
+
+    settings = dic_to_args(settingsDir)
+    max_age = settings.evaluation_time
+    fitnesses = []
+
+    while not robot_queue.empty():
+
+        task = robot_queue.get_nowait()
+
+        # Load the robot (might be different if tasks format is different)
+        robot = revolve_bot.RevolveBot()
+        robot.load_file(task)
+        robot.update_substrate()
+
+        # SIMULATE TASKS
+        robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
+
+        while not robot_manager.dead:
+            await asyncio.sleep(1.0/2)
+
+        # CHECK FITNESS AND STORE IT SOMEWHERE
+        fitnesses.append(fitness.displacement(robot_manager, robot))
+
+        # REMOVE ROBOT FROM SIMULATOR AND REGISTER AND RESET
+        connection.unregister_robot(robot_manager)
+        await connection.reset(rall=True, time_only=True, model_only=False)
+
+    return fitnesses
+
+@app.task
+async def shutdown_gazebo():
+    """Shutsdown the local running gazebo if there is one.
+    Always seems so give a timeouterror when stopping gazebo."""
+
+    global simulator_supervisor
+
+    try:
+        await asyncio.wait_for(simulator_supervisor.stop(), timeout=2)
+    except:
+        print("TimeoutError: timeout error when closing gazebo instance.")
+    finally:
+        return True
+
+async def shutdown(n_cores):
+    """A function to call all workers and shut them down."""
+    # shutdown workers
+    shutdowns = []
+    for i in range(n_cores):
+        sd = await shutdown_gazebo.delay()
+        shutdowns.append(sd)
+
+    for i in range(n_cores):
+        await shutdowns[i].get()

@@ -1,5 +1,4 @@
-
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 
 # This file both starts the celery app and it does also define the tasks. These might
 # better be split in the future, if the tasks get to large.

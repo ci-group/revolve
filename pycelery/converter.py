@@ -61,7 +61,7 @@ def dic_to_args(Dic):
 def args_default():
 
     args = NameSpace(celery = True,
-    manager = "pycelery/tasks.py",
+    manager = "pycelery/manager.py",
     controller_update_rate = 8,
     evaluation_time = 30,
     experiment_name = "default_experiment",
