@@ -72,10 +72,7 @@ protected:
 
     // Maps model names to insert request IDs
     // model_name -> request_id, SDF, insert_operation_pending
-    std::map<std::string, std::tuple<int, std::string, bool> > insertMap_;
-
-    // Queue of `delete_robot` requests
-    std::queue<std::tuple<::gazebo::physics::ModelPtr, int>> delete_robot_queue;
+    std::map<std::string, int> insertMap_;
 
     // Stores the world
     ::gazebo::physics::WorldPtr world_;
@@ -85,9 +82,6 @@ protected:
 
     // Mutex for the insertMap_
     boost::mutex insertMutex_;
-
-    // Mutex for the deleteMap_
-    boost::mutex deleteMutex_;
 
     // Request subscriber
     ::gazebo::transport::SubscriberPtr requestSub_;
@@ -104,10 +98,6 @@ protected:
     // Subscriber for actual model insertion
     ::gazebo::transport::SubscriberPtr modelSub_;
 
-    //TODO remove
-    // Publisher for periodic robot poses
-    ::gazebo::transport::PublisherPtr robotStatesPub_;
-
     // Subscriber for periodic robot learning reports
     ::gazebo::transport::SubscriberPtr robotLearningStatesSub;
 
@@ -115,7 +105,7 @@ protected:
     ::gazebo::event::ConnectionPtr onBeginUpdateConnection;
     ::gazebo::event::ConnectionPtr onEndUpdateConnection;
 
-    boost::mutex world_insert_remove_mutex;
+    boost::mutex model_remove_mutex;
     ::gazebo::physics::Model_V models_to_remove;
 };
 

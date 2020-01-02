@@ -7,7 +7,6 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
-from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -21,10 +20,10 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='robot_states.proto',
   package='revolve.msgs',
   syntax='proto2',
+  serialized_options=None,
   serialized_pb=_b('\n\x12robot_states.proto\x12\x0crevolve.msgs\x1a\ntime.proto\x1a\npose.proto\"U\n\nRobotState\x12\n\n\x02id\x18\x01 \x02(\r\x12\x0c\n\x04name\x18\x02 \x02(\t\x12\x1f\n\x04pose\x18\x03 \x02(\x0b\x32\x11.gazebo.msgs.Pose\x12\x0c\n\x04\x64\x65\x61\x64\x18\x04 \x01(\x08\"]\n\x0bRobotStates\x12\x1f\n\x04time\x18\x01 \x02(\x0b\x32\x11.gazebo.msgs.Time\x12-\n\x0brobot_state\x18\x02 \x03(\x0b\x32\x18.revolve.msgs.RobotState')
   ,
   dependencies=[time__pb2.DESCRIPTOR,pose__pb2.DESCRIPTOR,])
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
@@ -42,35 +41,35 @@ _ROBOTSTATE = _descriptor.Descriptor(
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='name', full_name='revolve.msgs.RobotState.name', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='pose', full_name='revolve.msgs.RobotState.pose', index=2,
       number=3, type=11, cpp_type=10, label=2,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='dead', full_name='revolve.msgs.RobotState.dead', index=3,
       number=4, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],
@@ -94,21 +93,21 @@ _ROBOTSTATES = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
       name='robot_state', full_name='revolve.msgs.RobotStates.robot_state', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      options=None),
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  options=None,
+  serialized_options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],
@@ -123,6 +122,7 @@ _ROBOTSTATES.fields_by_name['time'].message_type = time__pb2._TIME
 _ROBOTSTATES.fields_by_name['robot_state'].message_type = _ROBOTSTATE
 DESCRIPTOR.message_types_by_name['RobotState'] = _ROBOTSTATE
 DESCRIPTOR.message_types_by_name['RobotStates'] = _ROBOTSTATES
+_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 RobotState = _reflection.GeneratedProtocolMessageType('RobotState', (_message.Message,), dict(
   DESCRIPTOR = _ROBOTSTATE,

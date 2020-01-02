@@ -7,9 +7,8 @@ from pyrevolve import parser
 from pyrevolve.custom_logging import logger
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.SDF.math import Vector3
-from pyrevolve.tol.manage import World
+from pyrevolve.tol.manage.single_robot_world import SingleRobotWorld
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
-from pyrevolve.evolution import fitness
 
 
 async def test_robot_run(robot_file_path: str):
@@ -37,8 +36,10 @@ async def test_robot_run(robot_file_path: str):
         await asyncio.sleep(0.1)
 
     # Connect to the simulator and pause
-    connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start))
+    connection = await SingleRobotWorld.create(settings, world_address=('127.0.0.1', settings.port_start))
     await asyncio.sleep(1)
+    await connection.pause(True)
+    await connection.reset(True)
 
     # init finished
 
@@ -47,16 +48,13 @@ async def test_robot_run(robot_file_path: str):
     robot.update_substrate()
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
 
-    await connection.pause(False)
     robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.25), life_timeout=None)
-    await asyncio.sleep(1.0)
+    await connection.pause(False)
 
     # Start the main life loop
     while True:
         # Print robot fitness every second
         status = 'dead' if robot_manager.dead else 'alive'
-        #print(f"Robot fitness ({status}) is \n"
-        #      f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
-         #     f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
-          #    f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
+        best_fitness = None if robot_manager.best_evaluation is None else robot_manager.best_evaluation.fitness
+        log.info(f"status: {status} - fitness: {best_fitness}")
         await asyncio.sleep(1.0)
