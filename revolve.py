@@ -23,10 +23,6 @@ def run(loop, arguments):
     if arguments.n_cores is not None:
         n_cores = arguments.n_cores
 
-    if arguments.celery:
-        print("Starting a worker at the background using " + str(n_cores) + " cores.")
-        subprocess.Popen("celery multi restart "+str(n_cores)+" -A pycelery -P celery_pool_asyncio:TaskPool --loglevel=info -c 0", shell=True) #-P celery_pool_asyncio:TaskPool --scheduler celery_pool_asyncio:PersistentScheduler
-
     if arguments.test_robot is not None:
         return loop.run_until_complete(test_robot_run(arguments.test_robot))
 
@@ -79,15 +75,9 @@ def main():
         print("Got CtrlC, shutting down.")
 
 if __name__ == '__main__':
-    # Making sure celery workers are killed before restarting, because otherwise
-    # bugs will show up even though they are already fixed.
 
     print("STARTING")
 
     main()
 
-    subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
     print("FINISHED")
-
-    # Make sure the workers are terminated, if they still exist.
-    # subprocess.run("pkill -f 'celery worker'", shell = True)

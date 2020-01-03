@@ -36,11 +36,6 @@ simulator_supervisor = None
 robot_queue = asyncio.Queue()
 
 @app.task
-async def stupid():
-    """Just returns a stupid fitness"""
-    return 1.0
-
-@app.task
 async def run_gazebo(settingsDir, i):
     """Argument i: Core_ID
         Starts a gazebo simulator with name gazebo_ID """
@@ -89,9 +84,8 @@ async def put_in_queue(file_location):
     global robot_queue
     robot_queue.put_nowait(file_location)
 
-
 @app.task
-async def test_robots(settingsDir):
+async def test_robot(settingsDir):
     global connection
     global robot_queue
 
@@ -129,21 +123,11 @@ async def shutdown_gazebo():
     Always seems so give a timeouterror when stopping gazebo."""
 
     global simulator_supervisor
-
+    global connection
     try:
+        await connection.disconnect()
         await asyncio.wait_for(simulator_supervisor.stop(), timeout=2)
     except:
         print("TimeoutError: timeout error when closing gazebo instance.")
     finally:
         return True
-
-async def shutdown(n_cores):
-    """A function to call all workers and shut them down."""
-    # shutdown workers
-    shutdowns = []
-    for i in range(n_cores):
-        sd = await shutdown_gazebo.delay()
-        shutdowns.append(sd)
-
-    for i in range(n_cores):
-        await shutdowns[i].get()

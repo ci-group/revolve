@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-This script loads a robot.yaml file and inserts it into the simulator and
-calculate the fitness using the Celery worker. This is just a draft to
-get used to the celery instance.
-"""
 
 import os
 import sys
