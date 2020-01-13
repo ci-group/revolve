@@ -122,7 +122,6 @@ class PlasticodingDecoder:
         self.inputs_stack = []
         self.outputs_stack = []
         self.edges = {}
-        self.substrate_coordinates_all = {(0, 0): '1'}
 
     def decode_sentence(self):
         self.body._id = self._id if type(self._id) == str and self._id.startswith('robot') \
@@ -158,7 +157,7 @@ class PlasticodingDecoder:
                             f'Mounting reference {type(self.stack.current.module)} does not support a mount')
 
                     if self.quantity_modules < self._conf.max_structural_modules:
-                        self.new_module(slot, symbol, word)
+                        self.new_module(slot, symbol, word, self._conf.allow_joint_joint_attachment)
 
             elif symbol in Alphabet.morphology_moving_commands(self._conf.use_movement_commands,
                                                                self._conf.use_rotation_commands,
@@ -264,11 +263,17 @@ class PlasticodingDecoder:
         else:
             raise RuntimeError(f'movement command not recognized {symbol}')
 
-    def new_module(self, slot, new_module_type, word):
+    def new_module(self, slot, new_module_type: Alphabet, word, allow_joint_joint_attachment: bool):
         mount = False
-        if self.stack.current.module.children[slot] is None \
-                and not (new_module_type == Alphabet.SENSOR and type(self.stack.current.module) is ActiveHingeModule):
+        if self.stack.current.module.children[slot] is None:
             mount = True
+            if new_module_type == Alphabet.SENSOR \
+                    and type(self.stack.current.module) is ActiveHingeModule:
+                mount = False
+            elif not allow_joint_joint_attachment \
+                    and type(self.stack.current.module) is ActiveHingeModule \
+                    and new_module_type.is_joint():
+                mount = False
 
         if type(self.stack.current.module) is CoreModule \
                 and self.stack.current.module.children[1] is not None \
@@ -278,47 +283,50 @@ class PlasticodingDecoder:
             slot = 0
             mount = True
 
-        if mount:
-            if new_module_type == Alphabet.BLOCK \
-                    or new_module_type == Alphabet.BLOCK_VERTICAL:
-                module = BrickModule()
-            elif new_module_type == Alphabet.JOINT_VERTICAL \
-                    or new_module_type == Alphabet.JOINT_HORIZONTAL:
-                module = ActiveHingeModule()
-            elif new_module_type == Alphabet.SENSOR:
-                module = TouchSensorModule()
-            else:
-                raise NotImplementedError(f'{new_module_type}')
+        if not mount:
+            return
 
-            module.info = {'new_module_type': new_module_type}
-            module.orientation = self.get_angle(new_module_type, self.stack.current.module)
-            module.rgb = self.get_color(new_module_type)
+        if new_module_type == Alphabet.BLOCK \
+                or new_module_type == Alphabet.BLOCK_VERTICAL:
+            module = BrickModule()
+        elif new_module_type == Alphabet.JOINT_VERTICAL \
+                or new_module_type == Alphabet.JOINT_HORIZONTAL:
+            module = ActiveHingeModule()
+        elif new_module_type == Alphabet.SENSOR:
+            module = TouchSensorModule()
+        else:
+            raise NotImplementedError(f'{new_module_type}')
 
-            if new_module_type != Alphabet.SENSOR:
+        module.info = {'new_module_type': new_module_type}
+        module.orientation = self.get_angle(new_module_type, self.stack.current.module)
+        module.rgb = self.get_color(new_module_type)
+
+        if new_module_type != Alphabet.SENSOR:
+            try:
                 self.quantity_modules += 1
                 module.id = str(self.quantity_modules)
-                intersection = self.check_intersection(self.stack.current.module, slot, module)
-
-                if not intersection:
-                    self.stack.current.module.children[slot] = module
-                    self.morph_mounting_container = None
-                    self.stack.save_history()
-                    self.stack.current.module = module
-                    if new_module_type == Alphabet.JOINT_HORIZONTAL \
-                            or new_module_type == Alphabet.JOINT_VERTICAL:
-                        self.decode_brain_node(word, module.id)
-                else:
-                    self.quantity_modules -= 1
-            else:
                 self.stack.current.module.children[slot] = module
+                # RevolveBot.ItersectionCollisionException can be thrown at this line
+                self.check_intersection(self.stack.current.module, slot, module)
                 self.morph_mounting_container = None
-                module.id = self.stack.current.module.id + 's' + str(slot)
-                self.decode_brain_node(word, module.id)
+                self.stack.save_history()
+                self.stack.current.module = module
+                if new_module_type == Alphabet.JOINT_HORIZONTAL \
+                        or new_module_type == Alphabet.JOINT_VERTICAL:
+                    self.decode_brain_node(word, module.id)
+            except RevolveBot.ItersectionCollisionException:
+                self.stack.current.module.children[slot] = None
+                self.quantity_modules -= 1
+        else:
+            self.stack.current.module.children[slot] = module
+            self.morph_mounting_container = None
+            module.id = self.stack.current.module.id + 's' + str(slot)
+            self.decode_brain_node(word, module.id)
 
     def check_intersection(self, parent, slot, module):
         """
-        Update coordinates of module
-        :return:
+        Update coordinates of module, raises exception if there is two blocks have the same coordinates.
+        :raises: RevolveBot.ItersectionCollisionException if there was a collision in the robot tree
         """
         dic = {Orientation.FORWARD.value: 0,
                Orientation.LEFT.value: 1,
@@ -330,34 +338,14 @@ class PlasticodingDecoder:
                        2: Orientation.BACK.value,
                        3: Orientation.RIGHT.value}
 
+        # TODO remove orientation, should be useless now
         direction = dic[parent.info['orientation'].value] + dic[slot]
-        if direction >= len(dic):
-            direction = direction - len(dic)
-
+        direction = direction % len(dic)
         new_direction = Orientation(inverse_dic[direction])
-        if new_direction == Orientation.LEFT:
-            coordinates = [parent.substrate_coordinates[0],
-                           parent.substrate_coordinates[1] - 1]
-        elif new_direction == Orientation.RIGHT:
-            coordinates = [parent.substrate_coordinates[0],
-                           parent.substrate_coordinates[1] + 1]
-        elif new_direction == Orientation.FORWARD:
-            coordinates = [parent.substrate_coordinates[0] + 1,
-                           parent.substrate_coordinates[1]]
-        elif new_direction == Orientation.BACK:
-            coordinates = [parent.substrate_coordinates[0] - 1,
-                           parent.substrate_coordinates[1]]
-        else:
-            raise NotImplemented()
-
-        module.substrate_coordinates = coordinates
         module.info['orientation'] = new_direction
-        if (coordinates[0], coordinates[1]) in self.substrate_coordinates_all:
-            return True
-        else:
-            self.substrate_coordinates_all[coordinates[0],
-                                           coordinates[1]] = module.id
-            return False
+
+        # Generate coordinate for block, could throw exception
+        self.body.update_substrate(raise_for_intersections=True)
 
     def decode_brain_node(self, symbol, part_id):
         from pyrevolve.genotype.plasticoding.plasticoding import NodeExtended

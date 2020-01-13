@@ -98,7 +98,9 @@ class ExperimentManagement:
             for dir in d:
                 if 'selectedpop' in dir:
                     exported_files = len([name for name in os.listdir(os.path.join(self.experiment_folder, dir)) if os.path.isfile(os.path.join(self.experiment_folder, dir, name))])
-                    if exported_files == (population_size * 2): # body and brain files
+                    # no brains yet so check only for body files
+                    # if exported_files == (population_size * 2): # body and brain files
+                    if exported_files == population_size: # body and brain files
                         snapshots.append(int(dir.split('_')[1]))
 
         if len(snapshots) > 0:

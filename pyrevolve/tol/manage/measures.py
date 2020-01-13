@@ -129,7 +129,10 @@ def contacts(robot_manager, robot):
     avg_contacts = 0
     for c in robot_manager._contacts:
         avg_contacts += c
-    avg_contacts = avg_contacts / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']
+    #TODO remove this IF, it's ugly as hell
+    if robot.phenotype._morphological_measurements is None:
+        robot.phenotype._morphological_measurements = robot.phenotype.measure_body()
+    avg_contacts = avg_contacts / robot.phenotype._morphological_measurements.absolute_size
     return avg_contacts
 
 

@@ -21,7 +21,9 @@ class PlasticodingConfig:
                  use_movement_commands=True,
                  use_rotation_commands=True,
                  use_movement_stack=True,
+                 allow_joint_joint_attachment=True,
                  ):
+        self.allow_joint_joint_attachment = allow_joint_joint_attachment
         self.initialization_genome = initialization_genome
         self.e_max_groups = e_max_groups
         self.oscillator_param_min = oscillator_param_min

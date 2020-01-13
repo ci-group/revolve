@@ -60,6 +60,10 @@ class Alphabet(Enum):
         return self is Alphabet.JOINT_VERTICAL \
                or self is Alphabet.BLOCK_VERTICAL
 
+    def is_joint(self):
+        return self is Alphabet.JOINT_VERTICAL \
+               or self is Alphabet.JOINT_HORIZONTAL
+
     @staticmethod
     def morphology_mounting_commands():
         return [
