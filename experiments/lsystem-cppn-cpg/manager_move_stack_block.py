@@ -32,9 +32,10 @@ async def run():
     body_conf = PlasticodingConfig(
         max_structural_modules=20,
         allow_vertical_brick=False,
-        use_movement_commands=False,
+        use_movement_commands=True,
         use_rotation_commands=False,
         use_movement_stack=True,
+        allow_joint_joint_attachment=False,
     )
     brain_conf = NeatBrainGenomeConfig()
     lsystem_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)
@@ -50,7 +51,7 @@ async def run():
     )
 
     crossover_conf = lCrossoverConfig(
-        crossover_prob=0.0,
+        crossover_prob=0.8,
     )
     # experiment params #
 

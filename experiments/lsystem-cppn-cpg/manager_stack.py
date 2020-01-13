@@ -35,6 +35,7 @@ async def run():
         use_movement_commands=False,
         use_rotation_commands=False,
         use_movement_stack=True,
+        allow_joint_joint_attachment=True,
     )
     brain_conf = NeatBrainGenomeConfig()
     lsystem_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)
@@ -50,7 +51,7 @@ async def run():
     )
 
     crossover_conf = lCrossoverConfig(
-        crossover_prob=0.0,
+        crossover_prob=0.8,
     )
     # experiment params #
 

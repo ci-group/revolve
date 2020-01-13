@@ -10,7 +10,7 @@ __pycache__/
 .Python
 env/
 /build/
-/cmake-build-*/
+cmake-build-*/
 /output*/
 develop-eggs/
 dist/
