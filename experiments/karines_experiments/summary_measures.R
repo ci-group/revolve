@@ -8,14 +8,14 @@
   
   base_directory <-paste('data', sep='') 
   
-analysis = 'analysis'
+analysis = 'analysis1'
   
 output_directory = paste(base_directory,'/',analysis ,sep='')
   
 #### CHANGE THE PARAMETERS HERE ####
   
   
-experiments_type = c( 'baseline','plastic')
+experiments_type =   c( 'baseline','plastic')
 
 environments = c( 'plane','tilted5')
 
@@ -36,8 +36,12 @@ experiments_labels = c( 'Baseline: Flat',   'Baseline: Tilted',
 experiments_labels2 = c( 'Baseline',   'Baseline',
                         'Plastic: Flat',   'Plastic: Tilted')
 
-  runs = c(1:30) 
-  gens = 100
+  #runs = c(1:30) 
+  runs = list( c(21:30), 
+               c(21:30))
+  #runs = list( c(12, 16, 15, 17, 21, 22, 23, 26, 27, 29), 
+   #         c(11, 13, 15, 16, 19, 20 ,24, 25, 26, 28))
+  gens = 50#100
   pop = 100
   
   #### CHANGE THE PARAMETERS HERE ####
@@ -83,7 +87,8 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
                      'sensors_reach',
                      'recurrence',
                      'synaptic_reception',
-                     'fitness' 
+                     'fitness',
+                     'cons_fitness'
   )
   
   # add proper labels soon...
@@ -122,7 +127,8 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
     'sensors_reach',
     'recurrence',
     'synaptic_reception',
-    'Fitness' 
+    'Fitness', 
+    'Number of slaves'
   )
   
   
@@ -130,7 +136,8 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
   
   for (exp in 1:length(experiments_type))
   {
-    for(run in runs)
+    #for(run in runs)
+    for(run in runs[[exp]])
     {
       for (env in 1:length(environments))
       {
@@ -167,7 +174,7 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
   fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
   
   
-  measures_snapshots_all = sqldf("select * from measures_snapshots_all where fitness IS NOT NULL") 
+  measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
   
   
   
@@ -449,11 +456,8 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
       }
       
       max_y = 0
-      if(measures_names[i]=='proportion' || measures_names[i]=='balance'  || measures_names[i]=='joints' ){  max_y = 1.1  }
-      if(measures_names[i]=='limbs'  ){  max_y = 0.85  }
-      if(measures_names[i]=='absolute_size'  ){  max_y = 17  }
-      if(measures_names[i]=='displacement_velocity_hill'  ){  max_y = 4  }
-      
+      #if(measures_names[i]=='proportion' || measures_names[i]=='balance'  || measures_names[i]=='joints' ){  max_y = 1.1  }
+  
       graph = graph  +  labs( y=measures_labels[i], x="Generation") 
       if (max_y>0) {
         graph = graph + coord_cartesian(ylim = c(0, max_y)) 
@@ -492,11 +496,8 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
 
  
     max_y = 0
-    if(measures_names[i]=='proportion' || measures_names[i]=='head_balance'  || measures_names[i]=='joints' ){  max_y = 1.1  }
-    if(measures_names[i]=='limbs'  ){  max_y = 0.85  }
-    if(measures_names[i]=='absolute_size'  ){  max_y = 17  }
-    if(measures_names[i]=='displacement_velocity_hill'  ){  max_y = 4  }
-  
+   # if(measures_names[i]=='proportion' || measures_names[i]=='head_balance'  || measures_names[i]=='joints' ){  max_y = 1.1  }
+    
     g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
       geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4, notch=TRUE) +
       labs( x="Environment", y=measures_labels[i], title="Final generation")
@@ -527,3 +528,5 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
     ggsave(paste(output_directory,"/",measures_names[i],"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
     
   }
+
+ 

@@ -30,6 +30,7 @@ class PopulationConfig:
                  experiment_name,
                  experiment_management,
                  environments,
+                 front,
                  offspring_size=None,
                  next_robot_id=1):
         """
@@ -66,6 +67,7 @@ class PopulationConfig:
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
         self.environments = environments
+        self.front = front
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
 
@@ -167,10 +169,16 @@ class Population:
         # if there are multiple seasons (environments)
         else:
             for individual_ref in individuals:
+
                 slaves = 0
+                total_slaves = 0
+                masters = 0
+
                 for individual_comp in individuals:
+
                     equal = 0
                     better = 0
+
                     for environment in self.conf.environments:
                         if individual_ref[environment].fitness is None \
                                 and individual_comp[environment].fitness is None:
@@ -200,7 +208,25 @@ class Population:
                     if equal >= 0 and better > 0:
                         slaves += 1
 
-                individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = slaves
+                    # if better in all objectives
+                    if better == len(self.conf.environments):
+                        total_slaves += 1
+
+                    # if it is worse
+                    if equal < 0 and better == 0:
+                        masters += 1
+
+                if self.conf.front == 'slaves':
+                    individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = slaves
+
+                if self.conf.front == 'total_slaves':
+                    individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = total_slaves
+
+                if self.conf.front == 'masters':
+                    if masters == 0:
+                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 0
+                    else:
+                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 1/masters
 
         for individual in individuals:
             self.conf.experiment_management.export_consolidated_fitness(

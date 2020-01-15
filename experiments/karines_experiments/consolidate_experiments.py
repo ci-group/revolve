@@ -4,14 +4,14 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-                    'baseline',
-                    'plastic'
+                    #'baseline',
+                    'plastic3'
                     ]
 environments = [
                 'plane',
                 'tilted5'
                ]
-runs = 30
+runs = 10#30
 
 # set these variables according to your experiments #
 
@@ -44,7 +44,7 @@ def build_headers(path1, path2):
             measure, value = line.strip().split(' ')
             phenotype_headers.append(measure)
             file_summary.write(measure+'\t')
-    file_summary.write('fitness\n')
+    file_summary.write('fitness\t cons_fitness\n')
     file_summary.close()
 
     file_summary = open(path2 + "/snapshots_ids.tsv", "w+")
@@ -59,14 +59,14 @@ for exp in experiments_type:
 
         for run in range(1, runs+1):
 
-
+            path0 = dirpath + str(exp) + '_' + str(run) + '/data_fullevolution'
             path1 = dirpath + str(exp) + '_' + str(run) + '/data_fullevolution/' + env
             path2 = dirpath + str(exp) + '_' + str(run) + '/selectedpop_' + env
 
             behavior_headers, phenotype_headers = build_headers(path1, path2)
 
             file_summary = open(path1 + "/all_measures.tsv", "a")
-            for r, d, f in os.walk(path1+'/fitness'):
+            for r, d, f in os.walk(path0+'/consolidated_fitness'):
                 for file in f:
 
                     robot_id = file.split('.')[0].split('_')[-1]
@@ -96,11 +96,25 @@ for exp in experiments_type:
                         for h in phenotype_headers:
                             file_summary.write('None'+'\t')
 
-                    file = open(path1+'/fitness/fitness_robot_'+robot_id+'.txt', 'r')
-                    fitness = file.read()
-                    file_summary.write(fitness + '\n')
+                    f_file = open(path1+'/fitness/fitness_robot_'+robot_id+'.txt', 'r')
+                    fitness = f_file.read()
+                    file_summary.write(fitness + '\t')
+
+                    cf_file = open(path0+'/consolidated_fitness/consolidated_fitness_robot_'+robot_id+'.txt', 'r')
+                    cons_fitness = cf_file.read()
+                    file_summary.write(cons_fitness + '\n')
+
+            num_files = len(f)
+            list_gens = []
+            for r, d, f in os.walk(path2):
+                for dir in d:
+                    if 'selectedpop' in dir:
+                        gen = dir.split('_')[1]
+                        list_gens.append(int(gen))
+            list_gens.sort()
+            print(exp, run, num_files, list_gens[-1], num_files-(list_gens[-1]*50+100))
+
             file_summary.close()
-            print(exp, run, len(f), round(((len(f)-100)/50),0)+1)
 
             file_summary = open(path2 + "/snapshots_ids.tsv", "a")
             for r, d, f in os.walk(path2):
@@ -112,4 +126,5 @@ for exp in experiments_type:
                                 if 'body' in file:
                                     id = file.split('.')[0].split('_')[-1]
                                     file_summary.write(gen+'\t'+id+'\n')
+
             file_summary.close()

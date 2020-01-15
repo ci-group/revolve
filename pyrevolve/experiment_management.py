@@ -122,12 +122,13 @@ class ExperimentManagement:
             last_snapshot = -1
             n_robots = 0
 
-        # if a robot is developed in any of the environments, then it exists
+        # if a robot is developed in the last environment
         robot_ids = []
-        for environment in self.environments:
-            for r, d, f in os.walk(os.path.join(self._data_folder()+'/'+environment, 'individuals')):
-                for file in f:
-                    robot_ids.append(int(file.split('.')[0].split('_')[-1]))
+        last_id = 0
+        environment = list(self.environments.keys())[-1]
+        for r, d, f in os.walk(os.path.join(self._data_folder()+'/'+environment, 'individuals')):
+            for file in f:
+                robot_ids.append(int(file.split('.')[0].split('_')[-1]))
         last_id = np.sort(robot_ids)[-1]
 
         # if there are more robots to recover than the number expected in this snapshot

@@ -61,10 +61,90 @@ done
 
 while true
 	do
-    sleep 900s;
+    sleep 1800s;
     kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
     kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');
     sleep 60s;
 done
+
+
+
+
+while true
+	do
+         for i in {1..5}; do
+                 ./revolve.py --experiment-name karines_experiments/data/plastic2_$i --run $i --manager experiments/karines_experiments/plastic2.py --n-cores 4 --port-start 11150  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+while true
+	do
+         for i in {6..10}; do
+                 ./revolve.py --experiment-name karines_experiments/data/plastic2_$i --run $i --manager experiments/karines_experiments/plastic2.py --n-cores 4 --port-start 11120  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {1..5}; do
+                 ./revolve.py --experiment-name karines_experiments/data/plastic3_$i --run $i --manager experiments/karines_experiments/plastic3.py --n-cores 4 --port-start 12150  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+while true
+	do
+         for i in {6..10}; do
+                 ./revolve.py --experiment-name karines_experiments/data/plastic3_$i --run $i --manager experiments/karines_experiments/plastic3.py --n-cores 4 --port-start 12250  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
+         for i in {1..5}; do
+                 ./revolve.py --experiment-name karines_experiments/data/baseline2_$i --run $i --manager experiments/karines_experiments/baseline2.py --n-cores 4 --port-start 12050  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+while true
+	do
+         for i in {6..10}; do
+                 ./revolve.py --experiment-name karines_experiments/data/baseline2_$i --run $i --manager experiments/karines_experiments/baseline2.py --n-cores 4 --port-start 9870  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {1..5}; do
+                 ./revolve.py --experiment-name karines_experiments/data/baseline3_$i --run $i --manager experiments/karines_experiments/baseline3.py --n-cores 4 --port-start 9890  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+while true
+	do
+         for i in {6..10}; do
+                 ./revolve.py --experiment-name karines_experiments/data/baseline3_$i --run $i --manager experiments/karines_experiments/baseline3.py --n-cores 4 --port-start 7870  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
 
 

@@ -28,7 +28,7 @@ async def run():
     num_generations = 100
     population_size = 100
     offspring_size = 50
-    front = 'slaves'
+    front = 'total_slaves'
 
     # environment world and z-start
     environments = {'plane': 0.03,

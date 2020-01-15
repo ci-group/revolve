@@ -18,6 +18,7 @@ from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 import sys
+import time
 
 async def run():
     """
@@ -28,6 +29,7 @@ async def run():
     num_generations = 100
     population_size = 100
     offspring_size = 50
+    front = 'slaves'
 
     # environment world and z-start
     environments = {'plane': 0.03,
@@ -47,7 +49,7 @@ async def run():
     crossover_conf = CrossoverConfig(
         crossover_prob=0.8,
     )
-    # experiment params #
+    # experiment params #load_individual
 
     # Parse command line / file input arguments
     settings = parser.parse_args()
@@ -90,6 +92,7 @@ async def run():
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         environments=environments,
+        front=front
     )
 
     settings = parser.parse_args()

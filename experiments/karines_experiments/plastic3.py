@@ -18,6 +18,7 @@ from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 import sys
+import time
 
 async def run():
     """
@@ -28,7 +29,7 @@ async def run():
     num_generations = 100
     population_size = 100
     offspring_size = 50
-    front = 'slaves'
+    front = 'masters'
 
     # environment world and z-start
     environments = {'plane': 0.03,
@@ -37,7 +38,7 @@ async def run():
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,
-        plastic=False,
+        plastic=True,
     )
 
     mutation_conf = MutationConfig(
