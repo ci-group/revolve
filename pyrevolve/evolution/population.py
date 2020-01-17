@@ -172,8 +172,10 @@ class Population:
 
                 slaves = 0
                 total_slaves = 0
+                total_masters = 0
                 masters = 0
 
+                # this BIZARRE logic works only for two seasons! shame on me! fix it later!
                 for individual_comp in individuals:
 
                     equal = 0
@@ -212,8 +214,12 @@ class Population:
                     if better == len(self.conf.environments):
                         total_slaves += 1
 
-                    # if it is worse
+                    # if it is totally worse
                     if equal < 0 and better == 0:
+                        total_masters += 1
+
+                    # if it is worse
+                    if equal <= 0 and better == 0:
                         masters += 1
 
                 if self.conf.front == 'slaves':
@@ -221,6 +227,12 @@ class Population:
 
                 if self.conf.front == 'total_slaves':
                     individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = total_slaves
+
+                if self.conf.front == 'total_masters':
+                    if total_masters == 0:
+                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 0
+                    else:
+                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 1/total_masters
 
                 if self.conf.front == 'masters':
                     if masters == 0:
@@ -324,7 +336,6 @@ class Population:
         robot_futures = []
         to_evaluate = []
         for individual in new_individuals:
-
             if not individual[environment].evaluated:
                 logger.info(f'Evaluating individual (gen {gen_num}) {individual[environment].genotype.id} ...')
                 to_evaluate.append(individual)

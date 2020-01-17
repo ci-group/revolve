@@ -57,7 +57,7 @@ for exp in experiments_type:
 
     for env in environments:
 
-        for run in range(1, runs+1):
+        for run in runs:
 
             path0 = dirpath + str(exp) + '_' + str(run) + '/data_fullevolution'
             path1 = dirpath + str(exp) + '_' + str(run) + '/data_fullevolution/' + env
@@ -112,7 +112,11 @@ for exp in experiments_type:
                         gen = dir.split('_')[1]
                         list_gens.append(int(gen))
             list_gens.sort()
-            print(exp, run, num_files, list_gens[-1], num_files-(list_gens[-1]*50+100))
+            if len(list_gens)>0:
+                gen = list_gens[-1]
+            else:
+                gen = -1
+            print(exp, run, num_files, gen, num_files-(gen*50+100))
 
             file_summary.close()
 
@@ -128,3 +132,4 @@ for exp in experiments_type:
                                     file_summary.write(gen+'\t'+id+'\n')
 
             file_summary.close()
+

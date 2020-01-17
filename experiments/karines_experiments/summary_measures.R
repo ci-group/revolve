@@ -15,7 +15,7 @@ output_directory = paste(base_directory,'/',analysis ,sep='')
 #### CHANGE THE PARAMETERS HERE ####
   
   
-experiments_type =   c( 'baseline','plastic')
+experiments_type = c( 'baseline','plastic') 
 
 environments = c( 'plane','tilted5')
 
