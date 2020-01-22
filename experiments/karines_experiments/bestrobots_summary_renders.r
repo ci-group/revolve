@@ -5,16 +5,16 @@ require('magick')
 ##### change paths/labels/params here #####
 
 
-paths = c( 'baseline','plastic')
+paths = c( 'baseline')
 
 environments = c( 'plane','tilted5')
 
-base_directory <- paste('data/', sep='')
+base_directory <- paste('data/old/', sep='')
 
-experiments = 30
+experiments = c(22, 23,24, 25,26,27,29)#c(1:30)
 gens = 100
 pop = 100
-num_top = 1
+num_top = 3
 
 analysis = 'images'
 
@@ -29,7 +29,7 @@ file <-file(paste(output_directory,'/best.txt',sep=''), open="w")
 for(m in 1:length(paths))
 {
     # for each repetition
-    for (exp in 1:experiments) 
+    for (exp in experiments) 
       {
   
         input_directory1  <-    paste(base_directory, paths[m],'_',exp, '/data_fullevolution/',environments[1],sep='')

@@ -28,12 +28,10 @@ async def run():
     num_generations = 100
     population_size = 100
     offspring_size = 50
-    front = 'masters'
+    front = None
 
     # environment world and z-start
-    environments = {'plane': 0.03,
-                    'tilted5': 0.1
-                    }
+    environments = {'plane': 0.03}
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,

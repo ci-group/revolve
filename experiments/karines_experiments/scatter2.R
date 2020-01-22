@@ -4,11 +4,11 @@ library(sqldf)
 
 base_directory <-paste('data', sep='') 
 
-analysis = 'analysis3'
+analysis = 'analysis1'
 
 output_directory = paste(base_directory,'/',analysis ,sep='')
 
-experiments_type = c( 'baseline3','plastic3') 
+experiments_type = c( 'baseline','plastic') 
 
 labels_type = c( 'Baseline','Plastic') 
 
@@ -17,8 +17,8 @@ environments = c( 'plane','tilted5')
 labels = c('Speed (cm/s) in Flat', 'Speed (cm/s) in Tilted')
 
 
-runs = list( c(1:10), 
-             c(1:10))
+runs = list( c(21:30), 
+             c(21:30))
 
  
 

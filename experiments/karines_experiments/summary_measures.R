@@ -8,15 +8,15 @@
   
   base_directory <-paste('data', sep='') 
   
-analysis = 'analysis1'
+analysis = 'analysis2'
   
 output_directory = paste(base_directory,'/',analysis ,sep='')
   
 #### CHANGE THE PARAMETERS HERE ####
   
   
-experiments_type = c( 'baseline','plastic') 
-
+experiments_type = c(  'baseline2', 'plastic2') 
+ 
 environments = c( 'plane','tilted5')
 
 methods = c()
@@ -36,12 +36,9 @@ experiments_labels = c( 'Baseline: Flat',   'Baseline: Tilted',
 experiments_labels2 = c( 'Baseline',   'Baseline',
                         'Plastic: Flat',   'Plastic: Tilted')
 
-  #runs = c(1:30) 
-  runs = list( c(21:30), 
-               c(21:30))
-  #runs = list( c(12, 16, 15, 17, 21, 22, 23, 26, 27, 29), 
-   #         c(11, 13, 15, 16, 19, 20 ,24, 25, 26, 28))
-  gens = 50#100
+  runs = list( c(1:10),  c(1:10) )
+ 
+  gens = 10#100
   pop = 100
   
   #### CHANGE THE PARAMETERS HERE ####
@@ -196,8 +193,9 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
       query = paste(query,' from measures_snapshots_all 
                     where method="', methods[met],'" group by run, generation', sep='')
       
-     
-      measures_averages_gens_1[[met]] = sqldf(query)
+      temp = sqldf(query)
+  
+      measures_averages_gens_1[[met]] = temp
       
       temp = measures_averages_gens_1[[met]] 
       
