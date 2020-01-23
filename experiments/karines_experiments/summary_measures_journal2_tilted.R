@@ -8,7 +8,7 @@
   
   base_directory <-paste('data', sep='') 
   
-analysis = 'analysis2'
+analysis = 'analysis_journal2_tilted'
   
 output_directory = paste(base_directory,'/',analysis ,sep='')
   
@@ -17,14 +17,14 @@ output_directory = paste(base_directory,'/',analysis ,sep='')
   
 experiments_type = c(  'baseline2', 'plastic2') 
  
-environments = c( 'plane','tilted5')
+environments = list(c( 'plane','tilted5'), c( 'plane','tilted5') )
 
 methods = c()
 for (exp in 1:length(experiments_type))
 {
-  for (env in 1:length(environments))
+  for (env in 1:length(environments[[exp]]))
   {
-    methods = c(methods, paste(experiments_type[exp], environments[env], sep='_'))
+    methods = c(methods, paste(experiments_type[exp], environments[[exp]][env], sep='_'))
   }
 }
 
@@ -36,7 +36,7 @@ experiments_labels = c( 'Baseline: Flat',   'Baseline: Tilted',
 experiments_labels2 = c( 'Baseline',   'Baseline',
                         'Plastic: Flat',   'Plastic: Tilted')
 
-  runs = list( c(1:10),  c(1:10) )
+  runs = list( c(1:20),  c(1:20) )
  
   gens = 10#100
   pop = 100
@@ -136,27 +136,27 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
     #for(run in runs)
     for(run in runs[[exp]])
     {
-      for (env in 1:length(environments))
+      for (env in 1:length(environments[[exp]]))
       {
         input_directory  <-  paste(base_directory, '/', 
                                    experiments_type[exp], '_',sep='')
         
         measures   = read.table(paste(input_directory, run, '/data_fullevolution/',
-                                      environments[env], "/all_measures.tsv", sep=''), header = TRUE)
+                                      environments[[exp]][env], "/all_measures.tsv", sep=''), header = TRUE)
         for( m in 1:length(measures_names))
         { 
           measures[measures_names[m]] = as.numeric(as.character(measures[[measures_names[m]]]))
         }
         
         snapshots   = read.table(paste(input_directory, run,'/selectedpop_',
-                                       environments[env],"/snapshots_ids.tsv", sep=''), header = TRUE)
+                                       environments[[exp]][env],"/snapshots_ids.tsv", sep=''), header = TRUE)
         
         measures_snapshots = sqldf('select * from snapshots inner join measures using(robot_id) order by generation')
     
         measures_snapshots$run = run
         measures_snapshots$displacement_velocity_hill =   measures_snapshots$displacement_velocity_hill*100
         measures_snapshots$run = as.factor(measures_snapshots$run)
-        measures_snapshots$method = paste(experiments_type[exp], environments[env],sep='_')
+        measures_snapshots$method = paste(experiments_type[exp], environments[[exp]][env],sep='_')
         
         if ( is.null(measures_snapshots_all)){
           measures_snapshots_all = measures_snapshots
@@ -479,8 +479,8 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
   {
     
     all_final_values = data.frame()
-    if (measures_names[i] == 'displacement_velocity_hill') {  ini=1 }
-    else{  ini=2 }
+    if (measures_names[i] == 'displacement_velocity_hill') {  ini=1 
+    }else{  ini=2 }
     
     for (exp in ini:length(methods))
     {
@@ -522,7 +522,7 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
     if (max_y>0) {
       g1 = g1 + coord_cartesian(ylim = c(0, max_y)) 
     }
-    
+    g1
     ggsave(paste(output_directory,"/",measures_names[i],"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
     
   }
