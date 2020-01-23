@@ -122,9 +122,14 @@ class Population:
 
         individual = {}
         for environment in self.conf.environments:
-            file_name = os.path.join(path, environment,'individuals','individual_'+id+'.pkl')
-            file = open(file_name, 'rb')
-            individual[environment] = pickle.load(file)
+            try:
+                file_name = os.path.join(path, environment,'individuals','individual_'+id+'.pkl')
+                file = open(file_name, 'rb')
+                individual[environment] = pickle.load(file)
+            except EOFError:
+                print('bad pickle for robot', id, ' was replaced for new robot with None fitness')
+                individual = self._new_individual(
+                        self.conf.genotype_constructor(self.conf.genotype_conf, id))
 
         return individual
 
@@ -161,9 +166,9 @@ class Population:
 
     async def consolidate_fitness(self, individuals):
 
-        if len(self.conf.environments) == 0:
+        if len(self.conf.environments) == 1:
             for individual in individuals:
-                fit = individual[list(self.conf.environments.keys())[-1]]
+                fit = individual[list(self.conf.environments.keys())[-1]].fitness
                 individual[list(self.conf.environments.keys())[-1]].consolidated_fitness = fit
 
         # if there are multiple seasons (environments)
@@ -241,8 +246,7 @@ class Population:
                         individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 1/masters
 
         for individual in individuals:
-            self.conf.experiment_management.export_consolidated_fitness(
-                                                                individual[list(self.conf.environments.keys())[-1]],)
+            self.conf.experiment_management.export_consolidated_fitness(individual[list(self.conf.environments.keys())[-1]])
 
             self.conf.experiment_management.export_individual(individual[list(self.conf.environments.keys())[-1]],
                                                               list(self.conf.environments.keys())[-1])
