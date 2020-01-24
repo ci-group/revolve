@@ -8,18 +8,18 @@ library(ggsignif)
 
 base_directory <-paste('data', sep='') 
 
-analysis = 'analysis_journal1_tilted'
+analysis = 'analysis_journal1_lava'
 
 output_directory = paste(base_directory,'/',analysis ,sep='')
 
 #### CHANGE THE PARAMETERS HERE ####
 
 
-experiments_type = c('flat', 'tilted','baseline2') 
+experiments_type = c('flat', 'lava','baseline2_lava') 
 
 environments = list( c( 'plane'),
-                     c('tilted5'), 
-                     c( 'plane','tilted5') )
+                     c('lava'), 
+                     c( 'plane','lava') )
 
 methods = c()
 for (exp in 1:length(experiments_type))
@@ -32,10 +32,10 @@ for (exp in 1:length(experiments_type))
 
 initials =   c( 'bp', 'bt', 'pp', 'pt')
 
-experiments_labels = c( 'Non-S: Flat',   'Non-S: Tilted',
-                        'Seasonal: Flat',   'Seasonal: Tilted')
+experiments_labels = c( 'Non-S: Flat',   'Non-S: Lava',
+                        'Seasonal: Flat',   'Seasonal: Lava')
 
-experiments_labels2 = c( 'Non-S: Flat',   'Non-S: Tilted',
+experiments_labels2 = c( 'Non-S: Flat',   'Non-S: Lava',
                          'Seasonal',   'Seasonal')
 
 runs = list(  c(1:20) ,
@@ -175,8 +175,6 @@ fail_test = sqldf(paste("select method,run,generation,count(*) as c from measure
 
 
 measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
-
-
 
 
 # densities
@@ -553,13 +551,13 @@ for (i in 1:length(measures_names))
     stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
   
   if (measures_names[i] == 'displacement_velocity_hill') {  comps = list(c("Non-S: Flat", "Seasonal: Flat"),
-                                                                         c("Non-S: Tilted", "Seasonal: Tilted"),
-                                                                         c("Non-S: Tilted", "Non-S: Flat"),
-                                                                         c("Seasonal: Tilted", "Seasonal: Flat"))  
+                                                                         c("Non-S: Lava", "Seasonal: Lava"),
+                                                                         c("Non-S: Lava", "Non-S: Flat"),
+                                                                         c("Seasonal: Lava", "Seasonal: Flat"))  
     aux_width=13
-  }else{  comps = list(c("Non-S: Flat", "Non-S: Tilted"),
+  }else{  comps = list(c("Non-S: Flat", "Non-S: Lava"),
                        c("Non-S: Flat", "Seasonal"),
-                       c("Non-S: Tilted", "Seasonal"))  
+                       c("Non-S: Lava", "Seasonal"))  
     aux_width=10
   } 
   

@@ -5,18 +5,21 @@ require('magick')
 ##### change paths/labels/params here #####
 
 
-paths = c( 'baseline')
+paths = c( 'flat', 'tilted', 'baseline2')
 
-environments = c( 'plane','tilted5')
+environments = list(c( 'plane'),
+                    c( 'tilted5'),
+                    c( 'plane')
+)
 
-base_directory <- paste('data/old/', sep='')
+base_directory <- paste('data/', sep='')
 
-experiments = c(22, 23,24, 25,26,27,29)#c(1:30)
-gens = 100
+experiments = c(1:20)
+gens = 42#100
 pop = 100
-num_top = 3
+num_top = 1
 
-analysis = 'images'
+analysis = 'analysis_journal1_tilted'
 
 ##### change paths/labels/params here #####
 
@@ -32,11 +35,11 @@ for(m in 1:length(paths))
     for (exp in experiments) 
       {
   
-        input_directory1  <-    paste(base_directory, paths[m],'_',exp, '/data_fullevolution/',environments[1],sep='')
+        input_directory1  <-    paste(base_directory, paths[m],'_',exp, '/data_fullevolution/',environments[[m]][1],sep='')
         input_directory2  <-    paste(base_directory, paths[m],'_',exp, '/selectedpop_', sep='')
         
         ids_gens = data.frame()
-        list = strsplit(list.files(paste(input_directory2, environments[1],'/selectedpop_',gens-1, sep='')), ' ')
+        list = strsplit(list.files(paste(input_directory2, environments[[m]][1],'/selectedpop_',gens-1, sep='')), ' ')
         for(geno in 1:pop)
         {
           genome =  data.frame(cbind(c(gens), c(strsplit(strsplit(list [[geno]],'_')[[1]][3],'.png')[[1]][1] )))
@@ -55,9 +58,9 @@ for(m in 1:length(paths))
    
            phenotype= bests[b,'robot_id'] 
        
-           for (env in 1:length(environments))
+           for (env in 1:length(environments[[m]]))
            {
-               patha = paste(input_directory2, environments[env], "/selectedpop_",gens-1,sep="")
+               patha = paste(input_directory2, environments[[m]][env], "/selectedpop_",gens-1,sep="")
                
                body <- list.files(patha, paste("body_robot_",phenotype,".png$",sep=""), full.names = TRUE)
                body = image_read(body)
@@ -74,7 +77,7 @@ for(m in 1:length(paths))
         }
           
         side_by_side = image_append(bodies, stack=F)
-        image_write(side_by_side, path = paste(output_directory,"/",paths[m],'_', environments[env], "_bodies_best_",exp,".png",sep=''), format = "png")
+        image_write(side_by_side, path = paste(output_directory,"/",paths[m],'_', environments[[m]][env], "_bodies_best_",exp,".png",sep=''), format = "png")
         
     }
 }

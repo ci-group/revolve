@@ -8,16 +8,16 @@
   
   base_directory <-paste('data', sep='') 
   
-analysis = 'analysis_journal2_tilted'
+analysis = 'analysis_journal2_lava'
   
 output_directory = paste(base_directory,'/',analysis ,sep='')
   
 #### CHANGE THE PARAMETERS HERE ####
   
   
-experiments_type = c(  'baseline2', 'plastic2') 
+experiments_type = c(  'baseline2_lava', 'plastic2_lava') 
  
-environments = list(c( 'plane','tilted5'), c( 'plane','tilted5') )
+environments = list(c( 'plane','lava'), c( 'plane','lava') )
 
 methods = c()
 for (exp in 1:length(experiments_type))
@@ -30,11 +30,11 @@ for (exp in 1:length(experiments_type))
 
 initials =   c( 'bp', 'bt', 'pp', 'pt')
   
-experiments_labels = c( 'Baseline: Flat',   'Baseline: Tilted',
-                        'Plastic: Flat',   'Plastic: Tilted')
+experiments_labels = c( 'Baseline: Flat',   'Baseline: Lava',
+                        'Plastic: Flat',   'Plastic: Lava')
   
 experiments_labels2 = c( 'Baseline',   'Baseline',
-                        'Plastic: Flat',   'Plastic: Tilted')
+                        'Plastic: Flat',   'Plastic: Lava')
 
   runs = list( c(1:20),  c(1:20) )
  
@@ -173,11 +173,10 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
   measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
   
   
-  
   # densities
   
   measures_snapshots_all_densities = sqldf(paste("select * from measures_snapshots_all where generation=42
-                                         and method !='", methods[1],"'",sep='' )) #99!!!!
+                                         and method !='", methods[length(methods)],"'",sep='' )) #99!!!!
   
   measures_names_densities = c('length_of_limbs','proportion', 'absolute_size','head_balance','joints', 'limbs')
   measures_labels_densities = c('Rel. Length of Limbs','Proportion', 'Size','Balance','Rel. Number of Joints', 'Rel. Number of Limbs')
@@ -547,10 +546,10 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
       stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
  
       if (measures_names[i] == 'displacement_velocity_hill') {  comps = list(c("Baseline: Flat", "Plastic: Flat"),
-                                                                        c("Baseline: Tilted", "Plastic: Tilted"))  
+                                                                        c("Baseline: Lava", "Plastic: Lava"))  
       }else{  comps = list(c("Baseline", "Plastic: Flat"),
-                          c("Baseline", "Plastic: Tilted"),
-                          c("Plastic: Flat", "Plastic: Tilted"))  } 
+                          c("Baseline", "Plastic: Lava"),
+                          c("Plastic: Flat", "Plastic: Lava"))  } 
       
       
     g1 = g1 + geom_signif( test="wilcox.test", size=2, textsize=22, 
@@ -559,7 +558,7 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
     if (max_y>0) {
       g1 = g1 + coord_cartesian(ylim = c(0, max_y)) 
     }
-    
+ 
     ggsave(paste(output_directory,"/",measures_names[i],"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
     
   }

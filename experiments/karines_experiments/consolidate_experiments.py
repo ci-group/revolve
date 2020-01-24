@@ -4,16 +4,19 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-    'baseline2',
-   'plastic2'
-                  # 'flat',
-                  # 'tilted'
-                     ]
-environments = [
-                'plane',
-                'tilted5'
-               ]
-runs = range(1, 11)
+      'baseline2',
+      'plastic2',
+      'flat',
+      'tilted'
+]
+environments = { 'baseline2': ['plane','tilted5'],
+                 'plastic2': ['plane','tilted5'],
+                 'flat': ['plane'],
+                 'tilted': ['tilted5']
+                 }
+
+runs = range(1, 21)
+
 
 # set these variables according to your experiments #
 
@@ -57,7 +60,7 @@ def build_headers(path1, path2):
 
 for exp in experiments_type:
 
-    for env in environments:
+    for env in environments[exp]:
 
         for run in runs:
 

@@ -4,11 +4,11 @@ library(sqldf)
 
 base_directory <-paste('data', sep='') 
 
-analysis = 'analysis1'
+analysis = 'analysis_journal2_tilted'
 
 output_directory = paste(base_directory,'/',analysis ,sep='')
 
-experiments_type = c( 'baseline','plastic') 
+experiments_type = c( 'baseline2','plastic2') 
 
 labels_type = c( 'Baseline','Plastic') 
 
@@ -17,8 +17,8 @@ environments = c( 'plane','tilted5')
 labels = c('Speed (cm/s) in Flat', 'Speed (cm/s) in Tilted')
 
 
-runs = list( c(21:30), 
-             c(21:30))
+runs = list( c(1:20),   c(1:20))
+
 
  
 
@@ -70,7 +70,7 @@ for (exp in 1:length(experiments_type))
   graph = ggplot(measures_all, aes(x=speed_plane, y=speed_tilted5, colour=generation.x))+ 
              geom_point(alpha=0.5, size=3)+
              labs(subtitle=labels_type[exp], x=labels[1], y=labels[2])+
-              coord_cartesian(ylim = c(-5, 5), xlim = c(-5, 5)) 
+              coord_cartesian(ylim = c(-2, 2), xlim = c(-2.5, 3.5)) 
   
   ggsave(paste( output_directory,'/',experiments_type[exp],'_scatter.pdf',  sep=''), graph , device='pdf', height = 10, width = 10)
   
