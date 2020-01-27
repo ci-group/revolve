@@ -42,14 +42,14 @@ runs = list(  c(1:20) ,
               c(1:20) ,  
               c(1:20) )
 
-gens = 1#100
+gens = 100
 pop = 100
 
 #### CHANGE THE PARAMETERS HERE ####
 
 sig = 0.05
 line_size = 30
-show_markers = TRUE#FALSE
+show_markers = FALSE
 show_legends = FALSE 
 experiments_type_colors = c( '#00e700' , '#009900', '#ffb83b', '#fd8a3b')  # DARK:  light green,dark green, light red, dark red
 
@@ -174,15 +174,15 @@ for (exp in 1:length(experiments_type))
 fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
 
 
-measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
+measures_snapshots_all = sqldf("select * from measures_snapshots_all where generation<=99 and cons_fitness IS NOT NULL") 
 
 
 
 
 # densities
 
-measures_snapshots_all_densities = sqldf(paste("select * from measures_snapshots_all where generation=42
-                                         and method !='", methods[length(methods)],"'",sep='' )) #99!!!!
+measures_snapshots_all_densities = sqldf(paste("select * from measures_snapshots_all where generation=99
+                                         and method !='", methods[length(methods)],"'",sep='' )) 
 
 measures_names_densities = c('length_of_limbs','proportion', 'absolute_size','head_balance','joints', 'limbs')
 measures_labels_densities = c('Rel. Length of Limbs','Proportion', 'Size','Balance','Rel. Number of Joints', 'Rel. Number of Limbs')
@@ -391,6 +391,8 @@ if (aux_m>1)
 
 close(file)
 
+
+
 # plots measures 
 
 for (type_summary in c('means','quants'))
@@ -490,12 +492,7 @@ for (type_summary in c('means','quants'))
       }
     }
     
-    max_y = 0
-    min_y = 0
-    if(measures_names[i]=='displacement_velocity_hill'  ){  
-      max_y = 3 
-      min_y = -0.5 
-    }
+    max_y =  0
     
     graph = graph  +  labs( y=measures_labels[i], x="Generation") 
     if (max_y>0) {
@@ -520,39 +517,40 @@ for (i in 1:length(measures_names))
 {
   
   all_final_values = data.frame()
-  if (measures_names[i] == 'displacement_velocity_hill') {  fin=length(methods)
+  if (measures_names[i] == 'displacement_velocity_hill' || measures_names[i] == 'head_balance') {  fin=length(methods)
   }else{  fin=length(methods)-1 }
   
   for (exp in 1:fin)
   {
     temp = data.frame( c(measures_fin[[exp]][paste(methods[exp],'_',measures_names[i],'_avg', sep='')]))
     colnames(temp) <- 'values'
-    if (measures_names[i] == 'displacement_velocity_hill')  {  temp$type = experiments_labels[exp] 
+    if (measures_names[i] == 'displacement_velocity_hill' || measures_names[i] == 'head_balance')
+      {  temp$type = experiments_labels[exp] 
     }else{  temp$type = experiments_labels2[exp] }
     
     all_final_values = rbind(all_final_values, temp)
   }
   
-  
-  max_y = 0
-  # if(measures_names[i]=='proportion' || measures_names[i]=='head_balance'  || measures_names[i]=='joints' ){  max_y = 1.1  }
+
+  max_y =  max(all_final_values$values) * 1.1
   
   g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
-    geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4, notch=TRUE) +
+    geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) + #notch=TRUE
     labs( x="Environment", y=measures_labels[i], title="Final generation")
   
-  if (measures_names[i] == 'displacement_velocity_hill') {  g1 = g1 +  scale_color_manual(values=experiments_type_colors)  
+  if (measures_names[i] == 'displacement_velocity_hill'  || measures_names[i] == 'head_balance') 
+    {  g1 = g1 +  scale_color_manual(values=experiments_type_colors)  
   }else{  g1 = g1 +  scale_color_manual(values= c(experiments_type_colors[1:2],experiments_type_colors[4:4])) }
   
   g1 = g1 + theme(legend.position="none" , text = element_text(size=45) ,  
                   plot.title=element_text(size=40),  axis.text=element_text(size=45),
                   axis.title=element_text(size=50),
                   axis.text.x = element_text(angle = 20, hjust = 1 ),
-                  plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  0.5, unit = "cm")
+                  plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  0.9, unit = "cm")
                   )+ 
     stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
   
-  if (measures_names[i] == 'displacement_velocity_hill') {  comps = list(c("Non-S: Flat", "Seasonal: Flat"),
+  if (measures_names[i] == 'displacement_velocity_hill'  || measures_names[i] == 'head_balance') {  comps = list(c("Non-S: Flat", "Seasonal: Flat"),
                                                                          c("Non-S: Tilted", "Seasonal: Tilted"),
                                                                          c("Non-S: Tilted", "Non-S: Flat"),
                                                                          c("Seasonal: Tilted", "Seasonal: Flat"))  

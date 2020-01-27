@@ -71,13 +71,13 @@ async def run():
         assert(contacts != 0)
         return fitness.floor_is_lava(robot_manager, robot, False)
 
-    fitness_functions = {'lava': fitness_function_lava}
+    fitness_function = {'lava': fitness_function_lava}
 
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness_functions,
+        fitness_function=fitness_function,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,

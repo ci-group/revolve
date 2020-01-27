@@ -368,18 +368,36 @@ class Population:
                 self.conf.experiment_management.export_fitness(individual, environment)
                 self.conf.experiment_management.export_individual(individual, environment)
 
+    # async def evaluate_single_robot(self, individual, environment):
+    #     """
+    #     :param individual: individual
+    #     :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
+    #     """
+    #
+    #     if self.analyzer_queue is not None:
+    #         collisions, _bounding_box = await self.analyzer_queue.test_robot(individual,
+    #                                                                          self.conf)
+    #         if collisions > 0:
+    #             logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
+    #             return None, None
+    #
+    #     return await self.simulator_queue[environment].test_robot(individual, self.conf)
+
+
     async def evaluate_single_robot(self, individual, environment):
         """
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
         """
 
+        conf = copy.deepcopy(self.conf)
+        conf.fitness_function = conf.fitness_function[environment]
+
         if self.analyzer_queue is not None:
             collisions, _bounding_box = await self.analyzer_queue.test_robot(individual,
-                                                                             self.conf)
+                                                                             conf)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
 
-        return await self.simulator_queue[environment].test_robot(individual, self.conf)
-
+        return await self.simulator_queue[environment].test_robot(individual, conf)

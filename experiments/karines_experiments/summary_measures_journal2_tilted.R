@@ -38,7 +38,7 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
 
   runs = list( c(1:20),  c(1:20) )
  
-  gens = 10#100
+  gens = 100
   pop = 100
   
   #### CHANGE THE PARAMETERS HERE ####
@@ -170,14 +170,14 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
   fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
   
   
-  measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
+  measures_snapshots_all = sqldf("select * from measures_snapshots_all where generation<= 99 and cons_fitness IS NOT NULL") 
   
   
   
   # densities
   
-  measures_snapshots_all_densities = sqldf(paste("select * from measures_snapshots_all where generation=42
-                                         and method !='", methods[1],"'",sep='' )) #99!!!!
+  measures_snapshots_all_densities = sqldf(paste("select * from measures_snapshots_all where generation=99
+                                         and method !='", methods[1],"'",sep='' )) 
   
   measures_names_densities = c('length_of_limbs','proportion', 'absolute_size','head_balance','joints', 'limbs')
   measures_labels_densities = c('Rel. Length of Limbs','Proportion', 'Size','Balance','Rel. Number of Joints', 'Rel. Number of Limbs')
@@ -487,10 +487,7 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
       
       max_y = 0
       min_y = 0
-      if(measures_names[i]=='displacement_velocity_hill'  ){  
-        max_y = 3 
-        min_y = -0.5 
-        }
+
       
       graph = graph  +  labs( y=measures_labels[i], x="Generation") 
       if (max_y>0) {
@@ -515,29 +512,27 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
   {
     
     all_final_values = data.frame()
-    if (measures_names[i] == 'displacement_velocity_hill') {  ini=1 
+    if (measures_names[i] == 'displacement_velocity_hill'  || measures_names[i] == 'head_balance') {  ini=1 
     }else{  ini=2 }
     
     for (exp in ini:length(methods))
     {
       temp = data.frame( c(measures_fin[[exp]][paste(methods[exp],'_',measures_names[i],'_avg', sep='')]))
       colnames(temp) <- 'values'
-      if (measures_names[i] == 'displacement_velocity_hill')  {  temp$type = experiments_labels[exp] 
+      if (measures_names[i] == 'displacement_velocity_hill'  || measures_names[i] == 'head_balance')  {  temp$type = experiments_labels[exp] 
       }else{  temp$type = experiments_labels2[exp] }
       
       all_final_values = rbind(all_final_values, temp)
     }
 
  
-    max_y = 0
-   # min_y = -0.5
-    #if(measures_names[i]=='displacement_velocity_hill'  ){  max_y = 3  }
+    max_y =  max(all_final_values$values) * 1.1
     
     g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
-      geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4, notch=TRUE) +
+      geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
       labs( x="Environment", y=measures_labels[i], title="Final generation")
    
-      if (measures_names[i] == 'displacement_velocity_hill') {  g1 = g1 +  scale_color_manual(values=experiments_type_colors)  
+      if (measures_names[i] == 'displacement_velocity_hill' || measures_names[i] == 'head_balance') {  g1 = g1 +  scale_color_manual(values=experiments_type_colors)  
       }else{  g1 = g1 +  scale_color_manual(values=experiments_type_colors[-1]) }
      
       g1 = g1 + theme(legend.position="none" , text = element_text(size=45) ,  
@@ -546,12 +541,11 @@ experiments_labels2 = c( 'Baseline',   'Baseline',
             axis.text.x = element_text(angle = 20, hjust = 1))+ 
       stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
  
-      if (measures_names[i] == 'displacement_velocity_hill') {  comps = list(c("Baseline: Flat", "Plastic: Flat"),
+      if (measures_names[i] == 'displacement_velocity_hill' || measures_names[i] == 'head_balance') {  comps = list(c("Baseline: Flat", "Plastic: Flat"),
                                                                         c("Baseline: Tilted", "Plastic: Tilted"))  
       }else{  comps = list(c("Baseline", "Plastic: Flat"),
                           c("Baseline", "Plastic: Tilted"),
                           c("Plastic: Flat", "Plastic: Tilted"))  } 
-      
       
     g1 = g1 + geom_signif( test="wilcox.test", size=2, textsize=22, 
                            comparisons = comps,  

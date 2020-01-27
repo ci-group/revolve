@@ -22,7 +22,7 @@ class BehaviouralMeasurements:
             self.displacement_velocity = displacement_velocity(robot_manager)
             self.displacement_velocity_hill = displacement_velocity_hill(robot_manager)
             self.head_balance = head_balance(robot_manager)
-            self.contacts = -1 #contacts(robot_manager, robot)
+            self.contacts = contacts(robot_manager, robot)
         else:
             self.velocity = None
             self.displacement = None

@@ -15,7 +15,7 @@ environments = list(c( 'plane'),
 base_directory <- paste('data/', sep='')
 
 experiments = c(1:20)
-gens = 42#100
+gens = 100
 pop = 100
 num_top = 1
 

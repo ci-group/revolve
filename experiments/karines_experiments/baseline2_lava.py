@@ -69,8 +69,8 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(robot_manager, robot):
-        contacts = measures.contacts(robot_manager, robot)
-        assert(contacts != 0)
+        #contacts = measures.contacts(robot_manager, robot)
+        #assert(contacts != 0)
         return fitness.displacement_velocity_hill(robot_manager, robot, False)
 
     def fitness_function_lava(robot_manager, robot):
@@ -78,14 +78,14 @@ async def run():
         assert(contacts != 0)
         return fitness.floor_is_lava(robot_manager, robot, False)
 
-    fitness_functions = {'plane': fitness_function_plane,
+    fitness_function = {'plane': fitness_function_plane,
                          'lava': fitness_function_lava}
 
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness_functions,
+        fitness_function=fitness_function,
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,

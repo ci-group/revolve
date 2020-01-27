@@ -127,6 +127,134 @@ done
 
 while true
 	do
+         for i in {1..5}; do
+                ./revolve.py --experiment-name karines_experiments/data/lava_$i --run $i --manager experiments/karines_experiments/lava.py --n-cores 4 --port-start 11111  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {6..10}; do
+                ./revolve.py --experiment-name karines_experiments/data/lava_$i --run $i --manager experiments/karines_experiments/lava.py --n-cores 4 --port-start 11121  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
+         for i in {11..15}; do
+                ./revolve.py --experiment-name karines_experiments/data/lava_$i --run $i --manager experiments/karines_experiments/lava.py --n-cores 4 --port-start 11131  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
+         for i in {16..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/lava_$i --run $i --manager experiments/karines_experiments/lava.py --n-cores 4 --port-start 11141  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+###
+
+
+while true
+	do
+         for i in {1..2}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_lava_$i --run $i --manager experiments/karines_experiments/baseline2_lava.py --n-cores 4 --port-start 11111  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {3..4}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_lava_$i --run $i --manager experiments/karines_experiments/baseline2_lava.py --n-cores 4 --port-start 11121  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
+         for i in {5..6}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_lava_$i --run $i --manager experiments/karines_experiments/baseline2_lava.py --n-cores 4 --port-start 11131  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
+         for i in {7..8}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_lava_$i --run $i --manager experiments/karines_experiments/baseline2_lava.py --n-cores 4 --port-start 11141  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+while true
+	do
+         for i in {9..11}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_lava_$i --run $i --manager experiments/karines_experiments/baseline2_lava.py --n-cores 4 --port-start 11151  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {12..14}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_lava_$i --run $i --manager experiments/karines_experiments/baseline2_lava.py --n-cores 4 --port-start 11161  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
+         for i in {15..17}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_lava_$i --run $i --manager experiments/karines_experiments/baseline2_lava.py --n-cores 4 --port-start 11171  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
+         for i in {18..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_lava_$i --run $i --manager experiments/karines_experiments/baseline2_lava.py --n-cores 4 --port-start 11181  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
     sleep 900s;
     kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
     kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');

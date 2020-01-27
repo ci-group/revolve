@@ -66,10 +66,12 @@ async def run():
         gen_num = 0
         next_robot_id = 1
 
-    def fitness_function(robot_manager, robot):
+    def fitness_function_tilted(robot_manager, robot):
         #contacts = measures.contacts(robot_manager, robot)
         #assert(contacts != 0)
         return fitness.displacement_velocity_hill(robot_manager, robot, False)
+
+        fitness_function = {'tilted5': fitness_function_tilted}
 
     population_conf = PopulationConfig(
         population_size=population_size,
