@@ -3,6 +3,50 @@ class NameSpace:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
+def pop_to_dic(populationconfig):
+    Dic={}
+    Dic["population_size"] = populationconfig.population_size
+    Dic["genotype_constructor"] = populationconfig.genotype_constructor
+    Dic["genotype_conf"] = populationconfig.genotype_conf
+    Dic["fitness_function"] = populationconfig.fitness_function
+    Dic["mutation_operator"] = populationconfig.mutation_operator
+    Dic["mutation_conf"] = populationconfig.mutation_conf
+    Dic["crossover_operator"] = populationconfig.crossover_operator
+    Dic["crossover_conf"] = populationconfig.crossover_conf
+    Dic["selection"] = populationconfig.selection
+    Dic["parent_selection"] = populationconfig.parent_selection
+    Dic["population_management"] = populationconfig.population_management
+    Dic["population_management_selector"] = populationconfig.population_management_selector
+    Dic["evaluation_time"] = populationconfig.evaluation_time
+    Dic["offspring_size"] = populationconfig.offspring_size
+    Dic["experiment_name"] = populationconfig.experiment_name
+    Dic["experiment_management"] = populationconfig.experiment_management
+    Dic["next_robot_id"] = populationconfig.next_robot_id
+
+    return Dic
+
+def dic_to_pop(dic):
+    args = NameSpace(
+        population_size = Dic["population_size"],
+        genotype_constructor= Dic["genotype_constructor"],
+        genotype_conf = Dic["genotype_conf"],
+        fitness_function = Dic["fitness_function"],
+        mutation_operator = Dic["mutation_operator"],
+        mutation_conf = Dic["mutation_conf"],
+        crossover_operator = Dic["crossover_operator"],
+        crossover_conf = Dic["crossover_conf"],
+        parent_selection = Dic["parent_selection"],
+        population_management = Dic["population_management"],
+        population_management_selector = Dic["population_management_selector"],
+        evaluation_time = Dic["evaluation_time"],
+        offspring_size = Dic["offspring_size"],
+        experiment_name = Dic["experiment_name"],
+        experiment_management = Dic["experiment_management"],
+        selection = Dic["selection"],
+        next_robot_id = Dic["next_robot_id"])
+
+    return args
+
 def args_to_dic(settings):
     """This functions takes a NameSpace argument, and returns a dictionary.
     This dictionary is Yaml and Json serializable and therefore can be transfered
