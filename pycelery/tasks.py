@@ -27,7 +27,7 @@ from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 from celery.signals import celeryd_init, worker_process_init
-from pycelery.converter import args_to_dic, dic_to_args, args_default
+from pycelery.converter import args_to_dic, dic_to_args, args_default, pop_to_dic, dic_to_pop
 
 # ------------- Collection of tasks ------------------- #
 connection = None
@@ -79,43 +79,39 @@ async def run_gazebo(settingsDir, i):
     return "SIMULATOR "+ str(i) + " STARTED"
 
 @app.task
-async def put_in_queue(file_location):
+async def put_in_queue(yaml_object):
     """Puts a robot in the queue of the local worker responding to this task"""
     global robot_queue
-    robot_queue.put_nowait(file_location)
+    robot_queue.put_nowait(yaml_object)
 
 @app.task
-async def test_robot(settingsDir):
+async def evaluate_robot(yaml_object, settingsDir):
     global connection
-    global robot_queue
 
     settings = dic_to_args(settingsDir)
+    # conf = dic_to_pop(populationDir)
+
     max_age = settings.evaluation_time
-    fitnesses = []
 
-    while not robot_queue.empty():
+    # Load the robot
+    robot = revolve_bot.RevolveBot()
+    robot.load_yaml(yaml_object)
+    robot.update_substrate()
 
-        task = robot_queue.get_nowait()
+    # Simulate robot
+    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
 
-        # Load the robot (might be different if tasks format is different)
-        robot = revolve_bot.RevolveBot()
-        robot.load_file(task)
-        robot.update_substrate()
+    while not robot_manager.dead:
+        await asyncio.sleep(1.0/2)
 
-        # SIMULATE TASKS
-        robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
+    # Calc Fitness
+    robot_fitness = fitness.displacement(robot_manager, robot)
 
-        while not robot_manager.dead:
-            await asyncio.sleep(1.0/2)
+    # Remove robot and reset.
+    connection.unregister_robot(robot_manager)
+    await connection.reset(rall=True, time_only=True, model_only=False)
 
-        # CHECK FITNESS AND STORE IT SOMEWHERE
-        fitnesses.append(fitness.displacement(robot_manager, robot))
-
-        # REMOVE ROBOT FROM SIMULATOR AND REGISTER AND RESET
-        connection.unregister_robot(robot_manager)
-        await connection.reset(rall=True, time_only=True, model_only=False)
-
-    return fitnesses
+    return robot_fitness, None
 
 @app.task
 async def shutdown_gazebo():

@@ -1,12 +1,12 @@
 import asyncio
 import subprocess
 import time
-from pycelery.tasks import shutdown_gazebo, run_gazebo, put_in_queue, test_robot
-from pycelery.converter import args_to_dic, dic_to_args
+from pycelery.tasks import shutdown_gazebo, run_gazebo, evaluate_robot
+from pycelery.converter import args_to_dic, dic_to_args, dic_to_pop, pop_to_dic
 
 class CeleryController:
-    """This class handles requests to celery workers such as starting a process,
-    shutting down a process or worker. """
+    """(This controller also act as the simulator_queue. This class handles requests to
+    celery workers such as starting a process, shutting down a process or worker. """
 
     def __init__(self, settings):
         self.settings = settings
@@ -23,7 +23,7 @@ class CeleryController:
 
     async def shutdown(self):
         """A function to call all workers and shut them down."""
-        
+
         shutdowns = []
         for i in range(self.settings.n_cores):
             sd = await shutdown_gazebo.delay()
@@ -33,7 +33,6 @@ class CeleryController:
             await shutdowns[i].get()
 
         subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
-
 
     async def start_gazebo_instances(self):
         """ This functions starts N_CORES number of gazebo instances.
@@ -52,28 +51,27 @@ class CeleryController:
 
         return grs
 
-    async def distribute_robots(self, robots):
-        """A function that distributes a list of robots (string locations)
-        to different workers.
-        param: List of robots string locations
+    """ FOR MY OWN CLEARITY
+        This function should return a future, which will be awaited in the population file. However, it
+        will be awaited on the main thread and therefore the future needs to be added to the main thread.
+        I think the plan should be as follows:
+        1. Population sends every individual robot to celerysimulatorqueue test_robot (main thread)
+        2. CeleryQueue.test_robot should send the robot to the worker and return the delay() future (worker)
+        3. The population can read the future value with .get(), hoping for fitness, None"""
+
+    async def test_robot(self, robot, conf):
         """
-        population = []
-        for k in robots:
-            robot = await put_in_queue.delay(k)
-            population.append(robot)
+        :param robot: robot phenotype
+        :param conf: configuration of the experiment
+        :return:
+        """
 
-        for l in population:
-            fitness = await l.get()
+        # Create a yaml text from robot
+        yaml_bot = robot.phenotype.to_yaml()
+        conf_dic = pop_to_dic(conf)
 
-    async def test_robots(self):
-        running_workers = []
-        for i in range(self.settings.n_cores):
-            start = await test_robot.delay(self.settingsDir)
-            running_workers.append(start)
+        # Create future which is task.delay()
+        future = await evaluate_robot.delay(yaml_bot, self.settingsDir)
 
-        fitnesses = []
-        for i in range(self.settings.n_cores):
-            result = await running_workers[i].get()
-            fitnesses.append(result)
-
-        return fitnesses
+        # return the future
+        return future

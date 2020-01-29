@@ -16,9 +16,9 @@ app = Celery('pycelery')
 app.conf.update(
     broker_url = 'amqp://guest@localhost//',
     result_backend = 'rpc://',
-    task_serializer = 'json',
-    result_serializer = 'json',
-    accept_content = ['json'],
+    task_serializer = 'yaml',
+    result_serializer = 'yaml',
+    accept_content = ['yaml'],
     enable_utc = True,
     result_expires = 3600,
     include = 'pycelery.tasks'

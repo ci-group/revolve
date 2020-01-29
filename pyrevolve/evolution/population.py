@@ -199,6 +199,7 @@ class Population:
 
             # Mutation operator
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
+
             # Insert individual in new population
             individual = self._new_individual(child_genotype)
 
@@ -233,18 +234,21 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
+            robot_futures.append(await self.evaluate_single_robot(individual))
+            # robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
 
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
+            individual.fitness, individual.phenotype._behavioural_measurements = await future.get()
 
             if individual.phenotype._behavioural_measurements is None:
+                logger.info("Hier de error?")
                 assert (individual.fitness is None)
-
+                logger.info("Ja?")
+                
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
 
