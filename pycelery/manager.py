@@ -35,9 +35,9 @@ async def run(loop):
     await celerycontroller.start_gazebo_instances()
 
     # experiment params #
-    num_generations = 2
-    population_size = 2
-    offspring_size = 2
+    num_generations = 4
+    population_size = 10
+    offspring_size = 5
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -66,6 +66,7 @@ async def run(loop):
 
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
+            await celerycontroller.shutdown()
             return
     else:
         gen_num = 0
@@ -122,5 +123,3 @@ async def run(loop):
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     await celerycontroller.shutdown()
-
-    print(fitnesses)

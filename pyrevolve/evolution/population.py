@@ -244,11 +244,9 @@ class Population:
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
             individual.fitness, individual.phenotype._behavioural_measurements = await future.get()
 
-            if individual.phenotype._behavioural_measurements is None:
-                logger.info("Hier de error?")
-                assert (individual.fitness is None)
-                logger.info("Ja?")
-                
+            # if individual.phenotype._behavioural_measurements is None:
+            #     assert (individual.fitness is None)
+
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
 

@@ -33,7 +33,7 @@ from pycelery.converter import args_to_dic, dic_to_args, args_default, pop_to_di
 connection = None
 settings = None
 simulator_supervisor = None
-robot_queue = asyncio.Queue()
+running = False
 
 @app.task
 async def run_gazebo(settingsDir, i):
@@ -87,6 +87,16 @@ async def put_in_queue(yaml_object):
 @app.task
 async def evaluate_robot(yaml_object, settingsDir):
     global connection
+    global running
+
+    # Make sure to wait for a running process.
+    while True:
+        while running:
+            await asyncio.sleep(1.0)
+
+        if not running:
+            running = True
+            break
 
     settings = dic_to_args(settingsDir)
     # conf = dic_to_pop(populationDir)
@@ -104,12 +114,15 @@ async def evaluate_robot(yaml_object, settingsDir):
     while not robot_manager.dead:
         await asyncio.sleep(1.0/2)
 
-    # Calc Fitness
-    robot_fitness = fitness.displacement(robot_manager, robot)
+    ### WITHOUT THE FLOAT(), CELERY WILL GIVE AN ERROR ###
+    robot_fitness = float(fitness.displacement(robot_manager, robot))
 
     # Remove robot and reset.
     connection.unregister_robot(robot_manager)
     await connection.reset(rall=True, time_only=True, model_only=False)
+
+    # Let other robots enter simulator.
+    running = False
 
     return robot_fitness, None
 
