@@ -34,7 +34,7 @@ def run(loop, arguments):
         manager_lib = os.path.splitext(arguments.manager)[0]
         manager_lib = '.'.join(manager_lib.split('/'))
         manager = importlib.import_module(manager_lib).run
-        return loop.run_until_complete(manager(loop))
+        return loop.run_until_complete(manager())
 
     else:
         # no test robot, no manager -> just run gazebo

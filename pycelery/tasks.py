@@ -41,7 +41,7 @@ connection = None
 settings = None
 simulator_supervisor = None
 running = False
-waitingList = []
+robot_queue = asyncio.Queue()
 
 # ------------- Collection of tasks ------------------- #
 @app.task

@@ -23,7 +23,7 @@ from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.custom_logging.logger import logger
 
 
-async def run(loop):
+async def run():
     """A revolve manager that is using celery for task execution."""
     settings = parser.parse_args()
 
@@ -32,9 +32,9 @@ async def run(loop):
     await asyncio.sleep(5) # Celery needs time
 
     # experiment params #
-    num_generations = 2
-    population_size = 4
-    offspring_size = 2
+    num_generations = 10
+    population_size = 10
+    offspring_size = 5
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -89,8 +89,11 @@ async def run(loop):
         celery = True
     )
 
-    analyzer_queue = None
+    # analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+settings.n_cores, simulator_cmd=settings.simulator_cmd)
+    # await analyzer_queue.start()
 
+    analyzer_queue = None
+    
     population = Population(population_conf, celerycontroller, analyzer_queue, next_robot_id)
 
     if do_recovery:

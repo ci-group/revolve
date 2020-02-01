@@ -1,4 +1,4 @@
-id: robot_6
+id: robot_8
 body:
   id: '1'
   type: CoreComponent
@@ -8,21 +8,30 @@ body:
     green: 1
     red: 1
   children:
-    2:
+    3:
       id: '2'
-      type: ActiveHinge
+      type: FixedBrick
       orientation: 0
       params:
-        blue: 0.58
-        green: 0.08
-        red: 1
+        blue: 1
+        green: 0
+        red: 0
+      children:
+        3:
+          id: '3'
+          type: ActiveHinge
+          orientation: 0
+          params:
+            blue: 0.58
+            green: 0.08
+            red: 1
 brain:
   type: neural-network
   neurons:
     node1:
       id: node1
       layer: output
-      part_id: '2'
+      part_id: '3'
       type: Oscillator
     node-core1:
       id: node-core1
@@ -56,6 +65,6 @@ brain:
       type: Input
   params:
     node1:
-      amplitude: 6.38803488497106
-      period: 3.3088896185307597
-      phase_offset: 5.9941455692003665
+      amplitude: 6.0904913878271225
+      period: 8.510588601301173
+      phase_offset: 2.596298194519531

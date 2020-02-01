@@ -247,9 +247,14 @@ class Population:
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
+
             if self.conf.celery: # ADDED THIS FOR CELERY -Sam
-                individual.fitness, measurements = await future.get()
-                individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
+                if future == (None, None): # If collisions > 0
+                    logger.info(f'Individual {individual.phenotype.id} had to many collisions')
+                    individual.fitness, individual.phenotype._behavioural_measurements = None, None
+                else:
+                    individual.fitness, measurements = await future.get()
+                    individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
             else:
                 individual.fitness, individual.phenotype._behavioural_measurements = await future
 
