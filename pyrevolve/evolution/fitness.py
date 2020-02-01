@@ -5,10 +5,8 @@ from pyrevolve.tol.manage import measures
 def stupid(_robot_manager, robot):
     return 1.0
 
-
 def random(_robot_manager, robot):
     return py_random.random()
-
 
 def displacement(robot_manager, robot):
     displacement_vec = measures.displacement(robot_manager)[0]

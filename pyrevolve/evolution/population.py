@@ -3,6 +3,7 @@
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
+from pycelery.converter import dic_to_measurements
 from ..custom_logging.logger import logger
 import time
 import asyncio
@@ -27,7 +28,8 @@ class PopulationConfig:
                  experiment_name,
                  experiment_management,
                  offspring_size=None,
-                 next_robot_id=1):
+                 next_robot_id=1,
+                 celery = False):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -63,7 +65,7 @@ class PopulationConfig:
         self.experiment_management = experiment_management
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
-
+        self.celery = celery
 
 class Population:
     def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
@@ -234,18 +236,25 @@ class Population:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(await self.evaluate_single_robot(individual))
-            # robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
+
+            if self.conf.celery: # ADDED THIS FOR CELERY -Sam
+                robot_futures.append(await self.evaluate_single_robot(individual))
+            else:
+                robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
 
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future.get()
+            if self.conf.celery: # ADDED THIS FOR CELERY -Sam
+                individual.fitness, measurements = await future.get()
+                individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
+            else:
+                individual.fitness, individual.phenotype._behavioural_measurements = await future
 
-            # if individual.phenotype._behavioural_measurements is None:
-            #     assert (individual.fitness is None)
+            if individual.phenotype._behavioural_measurements is None:
+                 assert (individual.fitness is None)
 
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)

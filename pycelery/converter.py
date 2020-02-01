@@ -1,3 +1,6 @@
+from pyrevolve.evolution.individual import Individual
+from pyrevolve.tol.manage import measures
+from pyrevolve.SDF.math import Vector3
 
 class NameSpace:
     def __init__(self, **kwargs):
@@ -125,3 +128,32 @@ def args_default():
     test_collision_robot = None)
 
     return args
+
+def measurements_to_dict(robot_manager, robot):
+    individual = Individual("no genotype needed", robot) # just a shell for phenotype
+    measurements = measures.BehaviouralMeasurements(robot_manager, individual)
+
+    dic = {}
+    dic["velocity"] = float(measurements.velocity)
+    dic["displacement_x"] = float(measurements.displacement[0].x)
+    dic["displacement_y"] = float(measurements.displacement[0].y)
+    dic["displacement_z"] =float( measurements.displacement[0].z)
+    dic["displacement_time"] = float(measurements.displacement[1])
+    dic["displacement_velocity"] = float(measurements.displacement_velocity)
+    dic["displacement_velocity_hill"] = float(measurements.displacement_velocity_hill)
+    dic["head_balance"] = float(measurements.head_balance)
+    dic["contacts"] = float(measurements.contacts)
+
+    return dic
+
+def dic_to_measurements(dic):
+    measurements = measures.BehaviouralMeasurements(None, None)
+
+    measurements.velocity = dic["velocity"]
+    measurements.displacement = (Vector3(dic["displacement_x"], dic["displacement_y"], dic["displacement_z"]), dic["displacement_time"])
+    measurements.displacement_velocity=dic["displacement_velocity"]
+    measurements.displacement_velocity_hill =dic["displacement_velocity_hill"]
+    measurements.head_balance =dic["head_balance"]
+    measurements.contacts =dic["contacts"]
+
+    return measurements

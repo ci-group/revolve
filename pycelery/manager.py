@@ -4,7 +4,6 @@ import jsonpickle
 import subprocess
 import os, sys
 import random
-from celery.worker.control import control_command
 from pycelery.converter import args_to_dic, dic_to_args, args_default
 from pyrevolve import revolve_bot, parser
 from pycelery.celerycontroller import CeleryController
@@ -32,12 +31,10 @@ async def run(loop):
 
     await asyncio.sleep(5) # Celery needs time
 
-    await celerycontroller.start_gazebo_instances()
-
     # experiment params #
-    num_generations = 4
-    population_size = 10
-    offspring_size = 5
+    num_generations = 2
+    population_size = 4
+    offspring_size = 2
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -52,9 +49,6 @@ async def run(loop):
         crossover_prob=0.8,
     )
     # experiment params #
-
-    # Parse command line / file input arguments
-    settings = parser.parse_args()
 
     experiment_management = ExperimentManagement(settings)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
@@ -72,11 +66,14 @@ async def run(loop):
         gen_num = 0
         next_robot_id = 1
 
+    # Start gazebos!
+    await celerycontroller.start_gazebo_instances()
+
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=random_initialization,
         genotype_conf=genotype_conf,
-        fitness_function=fitness.displacement_velocity,
+        fitness_function='displacement_velocity', # Celery will evaluate the string into a function
         mutation_operator=standard_mutation,
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
@@ -89,6 +86,7 @@ async def run(loop):
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
+        celery = True
     )
 
     analyzer_queue = None

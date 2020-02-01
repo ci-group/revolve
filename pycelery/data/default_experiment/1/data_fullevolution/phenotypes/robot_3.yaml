@@ -1,0 +1,148 @@
+id: robot_3
+body:
+  id: '1'
+  type: CoreComponent
+  orientation: 0
+  params:
+    blue: 0
+    green: 1
+    red: 1
+  children:
+    2:
+      id: '2'
+      type: ActiveHinge
+      orientation: 90
+      params:
+        blue: 0
+        green: 0
+        red: 0.7
+      children:
+        1:
+          id: '3'
+          type: ActiveHinge
+          orientation: 0
+          params:
+            blue: 0
+            green: 0
+            red: 0.7
+          children:
+            1:
+              id: '4'
+              type: FixedBrick
+              orientation: 270
+              params:
+                blue: 1
+                green: 0
+                red: 0
+              children:
+                2:
+                  id: '5'
+                  type: ActiveHinge
+                  orientation: 90
+                  params:
+                    blue: 0
+                    green: 0
+                    red: 0.7
+                3:
+                  id: 4s3
+                  type: TouchSensor
+                  orientation: 0
+                  params:
+                    blue: 0.7
+                    green: 0.7
+                    red: 0.7
+    3:
+      id: 1s3
+      type: TouchSensor
+      orientation: 0
+      params:
+        blue: 0.7
+        green: 0.7
+        red: 0.7
+brain:
+  type: neural-network
+  neurons:
+    node1:
+      id: node1
+      layer: output
+      part_id: '2'
+      type: Oscillator
+    node2:
+      id: node2
+      layer: output
+      part_id: '3'
+      type: Oscillator
+    node3:
+      id: node3
+      layer: input
+      part_id: 4s3
+      type: Input
+    node4:
+      id: node4
+      layer: output
+      part_id: '5'
+      type: Oscillator
+    node5:
+      id: node5
+      layer: input
+      part_id: 1s3
+      type: Input
+    node-core1:
+      id: node-core1
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core2:
+      id: node-core2
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core3:
+      id: node-core3
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core4:
+      id: node-core4
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core5:
+      id: node-core5
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core6:
+      id: node-core6
+      layer: input
+      part_id: '1'
+      type: Input
+  connections:
+  - dst: node1
+    src: node3
+    weight: -0.31381628695076735
+  - dst: node2
+    src: node3
+    weight: 0.5254293069319549
+  - dst: node4
+    src: node3
+    weight: -0.3338299656984427
+  - dst: node1
+    src: node1
+    weight: -0.7670071172368009
+  - dst: node1
+    src: node5
+    weight: 1
+  params:
+    node1:
+      amplitude: 1
+      period: 1
+      phase_offset: 9.86012881651367
+    node2:
+      amplitude: 3.980552645930013
+      period: 2.4262747133312197
+      phase_offset: 6.565068026824937
+    node4:
+      amplitude: 4.69955403407414
+      period: 7.499335259731564
+      phase_offset: 6.790937792535097

@@ -51,14 +51,6 @@ class CeleryController:
 
         return grs
 
-    """ FOR MY OWN CLEARITY
-        This function should return a future, which will be awaited in the population file. However, it
-        will be awaited on the main thread and therefore the future needs to be added to the main thread.
-        I think the plan should be as follows:
-        1. Population sends every individual robot to celerysimulatorqueue test_robot (main thread)
-        2. CeleryQueue.test_robot should send the robot to the worker and return the delay() future (worker)
-        3. The population can read the future value with .get(), hoping for fitness, None"""
-
     async def test_robot(self, robot, conf):
         """
         :param robot: robot phenotype
@@ -68,10 +60,9 @@ class CeleryController:
 
         # Create a yaml text from robot
         yaml_bot = robot.phenotype.to_yaml()
-        conf_dic = pop_to_dic(conf)
 
         # Create future which is task.delay()
-        future = await evaluate_robot.delay(yaml_bot, self.settingsDir)
+        future = await evaluate_robot.delay(yaml_bot, self.settingsDir, conf.fitness_function)
 
         # return the future
         return future
