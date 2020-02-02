@@ -7,6 +7,14 @@ class NameSpace:
         self.__dict__.update(kwargs)
 
 def pop_to_dic(populationconfig):
+    """
+    A converter function which converts the populationconfig namespace to a dictionary.
+    Currently not in use.
+
+    :param populationconfig: The populationconfig
+    :return Dic: A dictionary containing all the populationconfigurations.
+    """
+
     Dic={}
     Dic["population_size"] = populationconfig.population_size
     Dic["genotype_constructor"] = populationconfig.genotype_constructor
@@ -29,6 +37,13 @@ def pop_to_dic(populationconfig):
     return Dic
 
 def dic_to_pop(dic):
+    """
+    This function converts a dictionary to a PopulationConfig.
+
+    :param dic: A dictionary of the configurations
+    :return args: A populationconfig class containing the configurations.
+    """
+
     args = NameSpace(
         population_size = Dic["population_size"],
         genotype_constructor= Dic["genotype_constructor"],
@@ -51,9 +66,12 @@ def dic_to_pop(dic):
     return args
 
 def args_to_dic(settings):
-    """This functions takes a NameSpace argument, and returns a dictionary.
-    This dictionary is Yaml and Json serializable and therefore can be transfered
-    in between tasks in celery."""
+    """
+    A converter function to send the settings to a celery worker.
+
+    :param settings: a settings namespace containing all the settings
+    :return dic: a dictionary containing the settings
+    """
 
     Dic = {}
     Dic['celery'] = settings.celery
@@ -80,8 +98,13 @@ def args_to_dic(settings):
 
 
 def dic_to_args(Dic):
-    """ argument: dictionary with arguments in it and its values
-        return: a namespace args as used by other functions"""
+    """
+    This function converts dictionaries back to settings namespace. A celery worker
+    can use this to evaluate a settingsDir.
+
+    :param Dic: A dictionary containing the settings
+    :return args: a settings namesplace containing the settings
+    """
 
     args = NameSpace(celery = Dic["celery"],
         controller_update_rate= Dic["controller_update_rate"],
@@ -106,6 +129,10 @@ def dic_to_args(Dic):
     return args
 
 def args_default():
+    """
+    In case default arguments are used, this function could deliver them. Converting would
+    then not be necessary since a celery worker can just call this function.
+    """
 
     args = NameSpace(celery = True,
     manager = "pycelery/manager.py",
@@ -130,6 +157,15 @@ def args_default():
     return args
 
 def measurements_to_dict(robot_manager, robot):
+    """
+    This function calculates the BehaviouralMeasurements of a robot and then converts
+    it into a dictionary such that it can be send through celery.
+
+    :param robot_manager: the robot_manager of the robot
+    :param robot: the PHENOTYPE of the robot
+    :return dic: a dictionary containing the measurements.
+    """
+
     individual = Individual("no genotype needed", robot) # just a shell for phenotype
     measurements = measures.BehaviouralMeasurements(robot_manager, individual)
 
@@ -147,6 +183,14 @@ def measurements_to_dict(robot_manager, robot):
     return dic
 
 def dic_to_measurements(dic):
+    """
+    A converter function, converting a dictionary to measurements. This is after a
+    dictionary is send through celery.
+
+    :param dic: a dictionary containing the measurements.
+    :return measurements: a BehaviouralMeasurements class containing measurements.
+    """
+    
     measurements = measures.BehaviouralMeasurements(None, None)
 
     measurements.velocity = dic["velocity"]

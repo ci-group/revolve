@@ -3,10 +3,15 @@ import subprocess
 import time
 from pycelery.tasks import shutdown_gazebo, run_gazebo, put_in_queue
 from pycelery.converter import args_to_dic, dic_to_args, dic_to_pop, pop_to_dic
+from pyrevolve.custom_logging.logger import logger
 
 class CeleryController:
-    """(This controller also act as the simulator_queue. This class handles requests to
-    celery workers such as starting a process, shutting down a process or worker. """
+    """
+    This class handles requests to celery workers such as starting a process, evaluating a robot or shutting down a process or worker.
+    Note that this class also functions as a simulator_queue.
+
+    :param settings: The settings namespace of the experiment.
+    """
 
     def __init__(self, settings):
         self.settings = settings
@@ -16,13 +21,17 @@ class CeleryController:
         self.start_workers()
 
     def start_workers(self):
-        """Starts n_cores celery workers """
+        """
+        Starts n_cores celery workers
+        """
 
-        print("Starting a worker at the background using " + str(self.settings.n_cores) + " cores.")
+        logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores.")
         subprocess.Popen("celery multi restart "+str(self.settings.n_cores)+" -A pycelery -P celery_pool_asyncio:TaskPool --loglevel=info -c 0", shell=True)
 
     async def shutdown(self):
-        """A function to call all workers and shut them down."""
+        """
+        A function to call all celery workers and shut them down.
+        """
 
         shutdowns = []
         for i in range(self.settings.n_cores):
@@ -35,8 +44,10 @@ class CeleryController:
         subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
 
     async def start_gazebo_instances(self):
-        """ This functions starts N_CORES number of gazebo instances.
-        For every worker one."""
+        """
+        This functions starts N_CORES number of gazebo instances.
+        Every worker owns one gazebo instance.
+        """
 
         gws = []
         grs = []
@@ -53,9 +64,9 @@ class CeleryController:
 
     async def test_robot(self, robot, conf):
         """
-        :param robot: robot phenotype
+        :param robot: robot (individual)
         :param conf: configuration of the experiment
-        :return:
+        :return: future which contains fitness and measures.
         """
 
         # Create a yaml text from robot
