@@ -30,24 +30,31 @@ from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
 from pycelery.converter import args_to_dic, dic_to_args, args_default, pop_to_dic, dic_to_pop, measurements_to_dict
 
-"""The unique variables per worker
+"""The unique variables per worker (!!!NONE OF THEM HAVE TO BE SET IN ADVANCE!!!)
     :variable connection: connection with a gazebo instance.
     :variable settings: The settings of the experiment.
     :variable simulator_supervisor: The supervisor linked with @connection.
     :variable running: a boolean telling if a robot is being ran.
-    :variable waitinglist: A list of yaml_objects which need to be evaluated."""
+    :variable robot_queue: a asyncio queue to store the robots locally
+    :variable fitness_function: a function which the simulator_worker will use as fitness."""
 
 connection = None
 settings = None
 simulator_supervisor = None
 running = False
 robot_queue = asyncio.Queue()
+fitness_function = None
 
 # ------------- Collection of tasks ------------------- #
 @app.task
 async def run_gazebo(settingsDir, i):
-    """Argument i: Core_ID
-        Starts a gazebo simulator with name gazebo_ID """
+    """
+    Starts a gazebo simulator with name gazebo_ID
+
+    :param settingsDir: a dictionary of the settings.
+    :param i: an integer representing the worker ID or number.
+    """
+
     global settings
     global connection
     global simulator_supervisor
@@ -84,62 +91,86 @@ async def run_gazebo(settingsDir, i):
 
             await asyncio.sleep(1)
 
+            asyncio.ensure_future(simulator_worker(settingsDir, i))
 
-    return "SIMULATOR "+ str(i) + " STARTED"
+    return True
 
 @app.task
-async def evaluate_robot(yaml_object, settingsDir, fitnessName):
+async def put_in_queue(robot, fitnessName):
+    """
+    A celery task that puts the robot in a workers queue.
+
+    :param robot: a yaml object which represents a revolve bot.
+    :param fitnessName: a string of the fitness_function used.
+    """
+
+    global robot_queue
+    global fitness_function
+
+    # Set global fitness_function
+    if fitness_function == None:
+        function_string = 'pyrevolve.evolution.fitness.' + fitnessName
+        mod_name, func_name = function_string.rsplit('.',1)
+        mod = importlib.import_module(mod_name)
+        fitness_function = getattr(mod, fitnessName)
+
+    future = asyncio.Future()
+    robot_queue.put_nowait((robot, future))
+
+    result = await future
+    return result
+
+async def simulator_worker(settingsDir, i):
+    """
+    This function represents the worker and is activated by run_gazebo above.
+    It will evaluate robots that are in the robot_queue.
+
+    :param settingsDir: A dictionary of the settings.
+    :param i: an integer representing the worker ID or number.
+    """
     global connection
     global running
-    global waitingList
-
-    # Evaluating the fitness function
-    function_string = 'pyrevolve.evolution.fitness.' + fitnessName
-    mod_name, func_name = function_string.rsplit('.',1)
-    mod = importlib.import_module(mod_name)
-    fitness_function = getattr(mod, fitnessName)
-
-    # Make sure to wait for a running process.
-    waitingList.append(yaml_object)
-    while True:
-        if running:
-            await asyncio.sleep(1.0)
-        elif waitingList[0] == yaml_object: # if it is my turn
-            running = True
-            break
+    global robot_queue
+    global fitness_function
 
     settings = dic_to_args(settingsDir)
-
     max_age = settings.evaluation_time
-
-    # Load the robot
-    robot = revolve_bot.RevolveBot()
-    robot.load_yaml(yaml_object)
-    robot.update_substrate()
-    robot.measure_phenotype()
-
-    # Simulate robot
-    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
-
-    while not robot_manager.dead:
-        await asyncio.sleep(1.0/2)
-
-    ### WITHOUT THE FLOAT(), CELERY WILL GIVE AN ERROR ###
-    robot_fitness = float(fitness_function(robot_manager, robot))
-
-    # Remove robot, reset, and let other robot run.
-    connection.unregister_robot(robot_manager)
-    await connection.reset(rall=True, time_only=True, model_only=False)
     running = False
-    waitingList.remove(yaml_object)
 
-    BehaviouralMeasurementsDic = measurements_to_dict(robot_manager, robot)
-    return robot_fitness, BehaviouralMeasurementsDic
+    while True:
+        # Load the robot
+        logger.info(f"Simulator {i} waiting for next robot")
+        (yaml_object, future) = await robot_queue.get()
+        running = True
+
+        robot = revolve_bot.RevolveBot()
+        robot.load_yaml(yaml_object)
+        robot.update_substrate()
+        robot.measure_phenotype()
+
+        # Simulate robot
+        robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
+
+        while not robot_manager.dead:
+            await asyncio.sleep(1.0/2)
+
+        ### WITHOUT THE FLOAT(), CELERY WILL GIVE AN ERROR ###
+        robot_fitness = float(fitness_function(robot_manager, robot))
+
+        # Remove robot, reset, and let other robot run.
+        connection.unregister_robot(robot_manager)
+        await connection.reset(rall=True, time_only=True, model_only=False)
+
+        running = False
+
+        BehaviouralMeasurementsDic = measurements_to_dict(robot_manager, robot)
+        future.set_result((robot_fitness, BehaviouralMeasurementsDic))
 
 @app.task
 async def shutdown_gazebo():
-    """Shutsdown the local running gazebo if there is one.
-    Always seems so give a timeouterror when stopping gazebo."""
+    """
+    Shutsdown the local running gazebo if there is one.
+    """
 
     global simulator_supervisor
     global connection

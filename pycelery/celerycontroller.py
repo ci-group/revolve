@@ -1,7 +1,7 @@
 import asyncio
 import subprocess
 import time
-from pycelery.tasks import shutdown_gazebo, run_gazebo, evaluate_robot
+from pycelery.tasks import shutdown_gazebo, run_gazebo, put_in_queue
 from pycelery.converter import args_to_dic, dic_to_args, dic_to_pop, pop_to_dic
 
 class CeleryController:
@@ -62,7 +62,7 @@ class CeleryController:
         yaml_bot = robot.phenotype.to_yaml()
 
         # Create future which is task.delay()
-        future = await evaluate_robot.delay(yaml_bot, self.settingsDir, conf.fitness_function)
+        future = await put_in_queue.delay(yaml_bot, conf.fitness_function)
 
         # return the future
         return future

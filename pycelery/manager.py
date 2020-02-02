@@ -89,10 +89,8 @@ async def run():
         celery = True
     )
 
-    # analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+settings.n_cores, simulator_cmd=settings.simulator_cmd)
-    # await analyzer_queue.start()
-
-    analyzer_queue = None
+    analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+settings.n_cores, simulator_cmd=settings.simulator_cmd)
+    await analyzer_queue.start()
     
     population = Population(population_conf, celerycontroller, analyzer_queue, next_robot_id)
 
