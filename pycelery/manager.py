@@ -1,6 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 import asyncio
-import jsonpickle
+import time
 import subprocess
 import os, sys
 import random
@@ -25,16 +25,18 @@ from pyrevolve.custom_logging.logger import logger
 
 async def run():
     """A revolve manager that is using celery for task execution."""
+    begin = time.time()
+
     settings = parser.parse_args()
 
     celerycontroller = CeleryController(settings) # Starting celery
 
-    await asyncio.sleep(5) # Celery needs time
+    await asyncio.sleep(2) # Celery needs time
 
     # experiment params #
-    num_generations = 10
-    population_size = 10
-    offspring_size = 5
+    num_generations = 5
+    population_size = 100
+    offspring_size = 50
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -89,9 +91,9 @@ async def run():
         celery = True
     )
 
-    analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+settings.n_cores, simulator_cmd=settings.simulator_cmd)
-    await analyzer_queue.start()
-    
+    # analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+settings.n_cores)
+    # await analyzer_queue.start()
+    analyzer_queue = None
     population = Population(population_conf, celerycontroller, analyzer_queue, next_robot_id)
 
     if do_recovery:
@@ -122,3 +124,6 @@ async def run():
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     await celerycontroller.shutdown()
+
+    end = time.time()
+    print(f'Actual running time: {end-begin}')

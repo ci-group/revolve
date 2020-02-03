@@ -21,7 +21,13 @@ app.conf.update(
     accept_content = ['yaml'],
     enable_utc = True,
     result_expires = 3600,
-    include = 'pycelery.tasks'
+    include = 'pycelery.tasks',
+    worker_prefetch_multiplier = 1,
+    task_acks_late = True,
+    task_default_queue = 'robots',
+    max_tasks_per_child = 1,
+    task_routes = ([
+    ('pycelery.tasks.*', {'queue': 'robots'})],)
 )
 
 if __name__ == '__main__':

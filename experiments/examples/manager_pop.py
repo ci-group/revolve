@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import time
 
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
@@ -21,9 +22,10 @@ async def run():
     """
     The main coroutine, which is started below.
     """
+    begin = time.time()
 
     # experiment params #
-    num_generations = 100
+    num_generations = 5
     population_size = 100
     offspring_size = 50
 
@@ -84,8 +86,7 @@ async def run():
     simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)
     await simulator_queue.start()
 
-    analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+n_cores)
-    await analyzer_queue.start()
+    analyzer_queue= None
 
     population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
@@ -117,3 +118,5 @@ async def run():
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     # output result after completing all generations...
+    end = time.time()
+    print(f'actual running time: {end-begin}')

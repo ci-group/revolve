@@ -3,6 +3,7 @@ import os
 import sys
 import asyncio
 import importlib
+import time
 import subprocess
 from subprocess import *
 
@@ -75,9 +76,9 @@ def main():
         print("Got CtrlC, shutting down.")
 
 if __name__ == '__main__':
-
+    begin = time.time()
     print("STARTING")
 
     main()
-
-    print("FINISHED")
+    end = time.time()
+    print(f"FINISHED IN {end-begin} SECONDS TOTAL!")

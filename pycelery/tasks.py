@@ -1,48 +1,29 @@
 from __future__ import absolute_import, unicode_literals
 from .celery import app
 import asyncio
-import jsonpickle
-import subprocess
 import importlib
-import os, sys
-import random
+import os
 
-from pyrevolve.evolution.individual import Individual
-from pyrevolve import revolve_bot, parser
+from pyrevolve import revolve_bot
 from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
-from pyrevolve.evolution import fitness
-from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
-from pyrevolve.evolution.selection import multiple_selection, tournament_selection
-from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
-from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.plasticoding.initialization import random_initialization
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
-from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
-from celery.signals import celeryd_init, worker_process_init
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
 from pycelery.converter import args_to_dic, dic_to_args, args_default, pop_to_dic, dic_to_pop, measurements_to_dict
+from celery.app.control import Control
 
 """The unique variables per worker (!!!NONE OF THEM HAVE TO BE SET IN ADVANCE!!!)
     :variable connection: connection with a gazebo instance.
     :variable settings: The settings of the experiment.
     :variable simulator_supervisor: The supervisor linked with @connection.
-    :variable running: a boolean telling if a robot is being ran.
     :variable robot_queue: a asyncio queue to store the robots locally
     :variable fitness_function: a function which the simulator_worker will use as fitness."""
 
 connection = None
 settings = None
 simulator_supervisor = None
-running = False
-robot_queue = asyncio.Queue()
+# robot_queue = asyncio.Queue(maxsize=4)
 fitness_function = None
 
 # ------------- Collection of tasks ------------------- #
@@ -91,19 +72,19 @@ async def run_gazebo(settingsDir, i):
 
             await asyncio.sleep(1)
 
-            asyncio.ensure_future(simulator_worker(settingsDir, i))
+            # asyncio.ensure_future(simulator_worker(settingsDir, i))
 
     return True
 
-@app.task
+@app.task(queue = 'robots')
 async def put_in_queue(robot, fitnessName):
     """
     A celery task that puts the robot in a workers queue.
+    CURRENTLY NOT IN USE
 
     :param robot: a yaml object which represents a revolve bot.
     :param fitnessName: a string of the fitness_function used.
     """
-
     global robot_queue
     global fitness_function
 
@@ -115,10 +96,49 @@ async def put_in_queue(robot, fitnessName):
         fitness_function = getattr(mod, fitnessName)
 
     future = asyncio.Future()
+
     robot_queue.put_nowait((robot, future))
+    if robot_queue.qsize() > 2:
+        app.control.cancel_consumer(queue="robots")
 
     result = await future
     return result
+
+@app.task(queue="robots")
+async def evaluate_robot(yaml_object, fitnessName, settingsDir):
+    global connection
+    global fitness_function
+
+    # Set global fitness_function
+    if fitness_function == None:
+        function_string = 'pyrevolve.evolution.fitness.' + fitnessName
+        mod_name, func_name = function_string.rsplit('.',1)
+        mod = importlib.import_module(mod_name)
+        fitness_function = getattr(mod, fitnessName)
+
+    settings = dic_to_args(settingsDir)
+    max_age = settings.evaluation_time
+
+    robot = revolve_bot.RevolveBot()
+    robot.load_yaml(yaml_object)
+    robot.update_substrate()
+    robot.measure_phenotype()
+
+    # Simulate robot
+    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
+
+    while not robot_manager.dead:
+        await asyncio.sleep(1.0/2)
+
+    ### WITHOUT THE FLOAT(), CELERY WILL GIVE AN ERROR ###
+    robot_fitness = float(fitness_function(robot_manager, robot))
+
+    # Remove robot, reset, and let other robot run.
+    connection.unregister_robot(robot_manager)
+    await connection.reset(rall=True, time_only=True, model_only=False)
+
+    BehaviouralMeasurementsDic = measurements_to_dict(robot_manager, robot)
+    return (robot_fitness, BehaviouralMeasurementsDic)
 
 async def simulator_worker(settingsDir, i):
     """
@@ -129,7 +149,6 @@ async def simulator_worker(settingsDir, i):
     :param i: an integer representing the worker ID or number.
     """
     global connection
-    global running
     global robot_queue
     global fitness_function
 
@@ -140,7 +159,11 @@ async def simulator_worker(settingsDir, i):
     while True:
         # Load the robot
         logger.info(f"Simulator {i} waiting for next robot")
+        logger.info(f"Queuesize is {robot_queue.qsize()}")
         (yaml_object, future) = await robot_queue.get()
+        if robot_queue.qsize() < 2:
+            app.control.add_consumer(queue = "robots")
+
         running = True
 
         robot = revolve_bot.RevolveBot()
