@@ -1,0 +1,79 @@
+ #!/bin/bash
+ 
+while true
+	do
+         for i in {1..5}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_$i --run $i --manager experiments/karines_experiments/baseline2.py --n-cores 4 --port-start 11000  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {6..10}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_$i --run $i --manager experiments/karines_experiments/baseline2.py --n-cores 4 --port-start 11050  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {11..15}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_$i --run $i --manager experiments/karines_experiments/baseline2.py --n-cores 4 --port-start 11100  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {16..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline2_$i --run $i --manager experiments/karines_experiments/baseline2.py --n-cores 4 --port-start 11150  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
+         for i in {1..10}; do
+                ./revolve.py --experiment-name karines_experiments/data/flat_$i --run $i --manager experiments/karines_experiments/flat.py --n-cores 4 --port-start 11400  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+while true
+	do
+         for i in {11..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/flat_$i --run $i --manager experiments/karines_experiments/flat.py --n-cores 4 --port-start 11500  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {1..10}; do
+                ./revolve.py --experiment-name karines_experiments/data/tilted_$i --run $i --manager experiments/karines_experiments/tilted.py --n-cores 4 --port-start 11600  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+while true
+	do
+         for i in {11..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/tilted_$i --run $i --manager experiments/karines_experiments/tilted.py --n-cores 4 --port-start 11700  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
