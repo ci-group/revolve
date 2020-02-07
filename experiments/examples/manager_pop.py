@@ -23,7 +23,6 @@ async def run():
     The main coroutine, which is started below.
     """
     begin = time.time()
-
     # experiment params #
     num_generations = 5
     population_size = 100
@@ -86,7 +85,8 @@ async def run():
     simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)
     await simulator_queue.start()
 
-    analyzer_queue= None
+    analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+settings.n_cores)
+    await analyzer_queue.start()
 
     population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 

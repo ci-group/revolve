@@ -1,0 +1,39 @@
+runtime: 471.70182704925537 on 4 cores
+runtime: 555.0602924823761 on 4 cores
+runtime: 510.88630986213684 on 4 cores
+runtime: 500.54945158958435 on 4 cores
+
+runtime: 577.4421763420105 on 7 cores
+runtime: 692.312872171402 on 7 cores
+runtime: 671.2294638156891 on 7 cores
+runtime: 601.6020660400391 on 7 cores
+
+runtime: 643.8352630138397 on 6 cores
+runtime: 640.7406685352325 on 6 cores
+runtime: 676.137284040451 on 6 cores
+runtime: 620.8201506137848 on 6 cores
+runtime: 673.6687700748444 on 6 cores
+runtime: 554.3278155326843 on 6 cores
+
+with n analyzer queues.
+
+runtime: 782.8130211830139 on 2 cores
+runtime: 751.0461828708649 on 2 cores
+
+runtime: 638.9919993877411 on 4 cores
+runtime: 581.3478889465332 on 4 cores
+runtime: 502.4670400619507 on 4 cores
+runtime: 514.9482555389404 on 4 cores
+runtime: 646.7743666172028 on 4 cores
+runtime: 546.1829454898834 on 4 cores
+
+runtime: 508.4072961807251 on 6 cores
+
+runtime: 523.3840367794037 on 7 cores
+runtime: 592.6672096252441 on 7 cores
+runtime: 532.8435573577881 on 7 cores
+runtime: 516.1282842159271 on 7 cores
+runtime: 612.7942807674408 on 7 cores
+runtime: 611.8041517734528 on 7 cores
+runtime: 479.7140619754791 on 7 cores
+runtime: 557.7205626964569 on 7 cores

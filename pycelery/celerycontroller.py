@@ -1,7 +1,7 @@
 import asyncio
 import subprocess
 import time
-from pycelery.tasks import shutdown_gazebo, run_gazebo, put_in_queue, evaluate_robot
+from pycelery.tasks import shutdown_gazebo, run_gazebo, evaluate_robot, run_gazebo_and_analyzer
 from pycelery.converter import args_to_dic, dic_to_args, dic_to_pop, pop_to_dic
 from pyrevolve.custom_logging.logger import logger
 
@@ -25,7 +25,7 @@ class CeleryController:
         Starts n_cores celery workers
         """
 
-        logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores.")
+        logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores. ")
         subprocess.Popen("celery multi restart "+str(self.settings.n_cores)+" -Q robots -A pycelery -P celery_pool_asyncio:TaskPool --loglevel=info -c 1", shell=True)
 
     async def shutdown(self):
@@ -42,6 +42,7 @@ class CeleryController:
             await shutdowns[i].get()
 
         subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
+        subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
 
     async def start_gazebo_instances(self):
         """
@@ -52,7 +53,7 @@ class CeleryController:
         gws = []
         grs = []
         for i in range(self.settings.n_cores):
-            gw = await run_gazebo.delay(self.settingsDir, i)
+            gw = await run_gazebo_and_analyzer.delay(self.settingsDir, i)
             gws.append(gw)
 
         # Testing the last gw.

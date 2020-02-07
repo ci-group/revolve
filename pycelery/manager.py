@@ -126,4 +126,6 @@ async def run():
     await celerycontroller.shutdown()
 
     end = time.time()
-    print(f'Actual running time: {end-begin}')
+    f = open("speed.txt", "a")
+    f.write(f"runtime: {end-begin} on {settings.n_cores} cores\n")
+    f.close()

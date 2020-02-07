@@ -4,9 +4,12 @@ import asyncio
 import importlib
 import os
 
+from celery.exceptions import SoftTimeLimitExceeded
 from pyrevolve import revolve_bot
 from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
+from pyrevolve.gazebo.analyze import BodyAnalyzer
+from pyrevolve.util.supervisor.supervisor_collision import CollisionSimSupervisor
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
@@ -23,8 +26,10 @@ from celery.app.control import Control
 connection = None
 settings = None
 simulator_supervisor = None
-# robot_queue = asyncio.Queue(maxsize=4)
 fitness_function = None
+analyzer_connection = None
+analyzer_supervisor = None
+id = None
 
 # ------------- Collection of tasks ------------------- #
 @app.task
@@ -72,110 +77,148 @@ async def run_gazebo(settingsDir, i):
 
             await asyncio.sleep(1)
 
-            # asyncio.ensure_future(simulator_worker(settingsDir, i))
 
     return True
 
-@app.task(queue = 'robots')
-async def put_in_queue(robot, fitnessName):
+@app.task
+async def run_gazebo_and_analyzer(settingsDir, i):
     """
-    A celery task that puts the robot in a workers queue.
-    CURRENTLY NOT IN USE
+    Starts a gazebo simulator with name gazebo_ID
 
-    :param robot: a yaml object which represents a revolve bot.
-    :param fitnessName: a string of the fitness_function used.
-    """
-    global robot_queue
-    global fitness_function
-
-    # Set global fitness_function
-    if fitness_function == None:
-        function_string = 'pyrevolve.evolution.fitness.' + fitnessName
-        mod_name, func_name = function_string.rsplit('.',1)
-        mod = importlib.import_module(mod_name)
-        fitness_function = getattr(mod, fitnessName)
-
-    future = asyncio.Future()
-
-    robot_queue.put_nowait((robot, future))
-    if robot_queue.qsize() > 2:
-        app.control.cancel_consumer(queue="robots")
-
-    result = await future
-    return result
-
-@app.task(queue="robots")
-async def evaluate_robot(yaml_object, fitnessName, settingsDir):
-    global connection
-    global fitness_function
-
-    # Set global fitness_function
-    if fitness_function == None:
-        function_string = 'pyrevolve.evolution.fitness.' + fitnessName
-        mod_name, func_name = function_string.rsplit('.',1)
-        mod = importlib.import_module(mod_name)
-        fitness_function = getattr(mod, fitnessName)
-
-    settings = dic_to_args(settingsDir)
-    max_age = settings.evaluation_time
-
-    robot = revolve_bot.RevolveBot()
-    robot.load_yaml(yaml_object)
-    robot.update_substrate()
-    robot.measure_phenotype()
-
-    # Simulate robot
-    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
-
-    while not robot_manager.dead:
-        await asyncio.sleep(1.0/2)
-
-    ### WITHOUT THE FLOAT(), CELERY WILL GIVE AN ERROR ###
-    robot_fitness = float(fitness_function(robot_manager, robot))
-
-    # Remove robot, reset, and let other robot run.
-    connection.unregister_robot(robot_manager)
-    await connection.reset(rall=True, time_only=True, model_only=False)
-
-    BehaviouralMeasurementsDic = measurements_to_dict(robot_manager, robot)
-    return (robot_fitness, BehaviouralMeasurementsDic)
-
-async def simulator_worker(settingsDir, i):
-    """
-    This function represents the worker and is activated by run_gazebo above.
-    It will evaluate robots that are in the robot_queue.
-
-    :param settingsDir: A dictionary of the settings.
+    :param settingsDir: a dictionary of the settings.
     :param i: an integer representing the worker ID or number.
     """
+
+    global settings
     global connection
-    global robot_queue
+    global analyzer_connection
+    global analyzer_supervisor
+    global simulator_supervisor
+    global id
+
+    id = i
+
+    loop = asyncio.get_event_loop()
+
+    try:
+        asyncio.get_child_watcher().attach_loop(loop)
+
+    except:
+        print("Attach loop failed.")
+
+    finally:
+
+        # Parse command line / file input arguments
+
+        settings = dic_to_args(settingsDir)
+
+        simulator_supervisor = DynamicSimSupervisor(
+            world_file=settings.world,
+            simulator_cmd=settings.simulator_cmd,
+            simulator_args=["--verbose"],
+            plugins_dir_path=os.path.join('.', 'build', 'lib'),
+            models_dir_path=os.path.join('.', 'models'),
+            simulator_name=f'gazebo_{i}'
+        )
+        await simulator_supervisor.launch_simulator(port=settings.port_start+i)
+        # let there be some time to sync all initial output of the simulator
+        await asyncio.sleep(5)
+
+        # Connect to the simulator and pause
+        connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start+i))
+
+        await asyncio.sleep(2)
+
+        analyzer_supervisor = CollisionSimSupervisor(
+            world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
+            simulator_cmd=settings.simulator_cmd,
+            simulator_args=["--verbose"],
+            plugins_dir_path=os.path.join('.', 'build', 'lib'),
+            models_dir_path=os.path.join('.', 'models'),
+            simulator_name=f'analyzer_{i}'
+        )
+
+        await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
+
+        await asyncio.sleep(5)
+
+        analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
+
+        await asyncio.sleep(2)
+
+    return True
+
+async def _restart_simulator(settings, connection_, supervisor_, simulator_type):
+    global id
+    global analyzer_connection
+    global connection
+
+    address = '127.0.0.1'
+    port = settings.port_start+id+settings.n_cores
+
+    logger.error("Restarting simulator")
+    logger.error("Restarting simulator... disconnecting")
+    try:
+        await asyncio.wait_for(connection_.disconnect(), 10)
+    except asyncio.TimeoutError:
+        pass
+
+    logger.error("Restarting simulator... restarting")
+    await supervisor_.relaunch(10, adress=adress, port=port)
+
+    await asyncio.sleep(5)
+
+    logger.debug("Restarting simulator done... connecting")
+
+    if simulator_type == "analzer":
+        analyzer_connection = await BodyAnalyzer.create(adress, port)
+    else:
+        connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start+id))
+
+    logger.debug("Restarting simulator done... connection done")
+
+@app.task(queue="robots", time_limit = 150) # this is 30 (analyzer) + 120 (simulator)
+async def evaluate_robot(yaml_object, fitnessName, settingsDir):
+    global connection
+    global analyzer_connection
+    global simulator_supervisor
+    global analyzer_supervisor
     global fitness_function
 
-    settings = dic_to_args(settingsDir)
-    max_age = settings.evaluation_time
-    running = False
+    try:
+        EVALUATION_TIMEOUT = 30
 
-    while True:
-        # Load the robot
-        logger.info(f"Simulator {i} waiting for next robot")
-        logger.info(f"Queuesize is {robot_queue.qsize()}")
-        (yaml_object, future) = await robot_queue.get()
-        if robot_queue.qsize() < 2:
-            app.control.add_consumer(queue = "robots")
+        # Set global fitness_function
+        if fitness_function == None:
+            function_string = 'pyrevolve.evolution.fitness.' + fitnessName
+            mod_name, func_name = function_string.rsplit('.',1)
+            mod = importlib.import_module(mod_name)
+            fitness_function = getattr(mod, fitnessName)
 
-        running = True
+        settings = dic_to_args(settingsDir)
+        max_age = settings.evaluation_time
 
         robot = revolve_bot.RevolveBot()
         robot.load_yaml(yaml_object)
         robot.update_substrate()
         robot.measure_phenotype()
 
+        if analyzer_connection:
+            try:
+                collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
+            except asyncio.TimeoutError:
+                _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
+                return (None, None)
+
+            if collisions > 0:
+                logger.info(f"discarding robot {robot.id} because there are {collisions} self collisions")
+                return (None, None)
+
         # Simulate robot
         robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
 
         while not robot_manager.dead:
-            await asyncio.sleep(1.0/2)
+            await asyncio.sleep(0.1)
 
         ### WITHOUT THE FLOAT(), CELERY WILL GIVE AN ERROR ###
         robot_fitness = float(fitness_function(robot_manager, robot))
@@ -184,10 +227,12 @@ async def simulator_worker(settingsDir, i):
         connection.unregister_robot(robot_manager)
         await connection.reset(rall=True, time_only=True, model_only=False)
 
-        running = False
-
         BehaviouralMeasurementsDic = measurements_to_dict(robot_manager, robot)
-        future.set_result((robot_fitness, BehaviouralMeasurementsDic))
+        return (robot_fitness, BehaviouralMeasurementsDic)
+
+    except SoftTimeLimitExceeded:
+        _restart_simulator(settings, connection, simulator_supervisor, "simulator")
+        return (None, None)
 
 @app.task
 async def shutdown_gazebo():

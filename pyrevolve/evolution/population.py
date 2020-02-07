@@ -253,7 +253,7 @@ class Population:
                     logger.info(f'Individual {individual.phenotype.id} had to many collisions')
                     individual.fitness, individual.phenotype._behavioural_measurements = None, None
                 else:
-                    individual.fitness, measurements = await future.get()
+                    individual.fitness, measurements = await future.get(interval = 0.1)
                     individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
             else:
                 individual.fitness, individual.phenotype._behavioural_measurements = await future
