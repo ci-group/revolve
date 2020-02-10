@@ -1,0 +1,35 @@
+ #!/bin/bash
+
+ 
+while true
+	do
+         for i in {1..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/baseline_big_$i --run $i --manager experiments/karines_experiments/baseline_big.py --n-cores 4 --port-start 11000  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {1..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/plastic_big_$i --run $i --manager experiments/karines_experiments/plastic_big.py --n-cores 4 --port-start 11141  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+ 
+ 
+ 
+
+while true
+	do
+    sleep 900s;
+    kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
+    kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');
+    sleep 60s;
+done
+
+
