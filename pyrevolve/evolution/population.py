@@ -4,6 +4,7 @@ from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
 from pycelery.converter import dic_to_measurements
+from celery.result import ResultSet
 from ..custom_logging.logger import logger
 import time
 import asyncio
@@ -234,6 +235,7 @@ class Population:
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
         robot_futures = []
+
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
 
@@ -253,7 +255,7 @@ class Population:
                     logger.info(f'Individual {individual.phenotype.id} had to many collisions')
                     individual.fitness, individual.phenotype._behavioural_measurements = None, None
                 else:
-                    individual.fitness, measurements = await future.get(interval = 0.1)
+                    individual.fitness, measurements = await future.get()
                     individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
             else:
                 individual.fitness, individual.phenotype._behavioural_measurements = await future

@@ -37,3 +37,7 @@ runtime: 612.7942807674408 on 7 cores
 runtime: 611.8041517734528 on 7 cores
 runtime: 479.7140619754791 on 7 cores
 runtime: 557.7205626964569 on 7 cores
+runtime: 82.63228249549866 on 5 cores
+runtime: 77.8221263885498 on 5 cores
+runtime: 58.847506284713745 on 3 cores
+runtime: 95.38740611076355 on 3 cores

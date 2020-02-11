@@ -27,6 +27,8 @@
 #include <map>
 #include <string>
 #include <queue>
+#include <SimpleAmqpClient/SimpleAmqpClient.h>
+#include <jsoncpp/json/json.h>
 
 #include <boost/thread/mutex.hpp>
 

@@ -131,7 +131,7 @@ async def run_gazebo_and_analyzer(settingsDir, i):
 
         analyzer_supervisor = CollisionSimSupervisor(
             world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
-            simulator_cmd=settings.simulator_cmd,
+            simulator_cmd="gzserver",
             simulator_args=["--verbose"],
             plugins_dir_path=os.path.join('.', 'build', 'lib'),
             models_dir_path=os.path.join('.', 'models'),
@@ -177,7 +177,7 @@ async def _restart_simulator(settings, connection_, supervisor_, simulator_type)
 
     logger.debug("Restarting simulator done... connection done")
 
-@app.task(queue="robots", time_limit = 150) # this is 30 (analyzer) + 120 (simulator)
+@app.task(queue="robots", time_limit = 120)
 async def evaluate_robot(yaml_object, fitnessName, settingsDir):
     global connection
     global analyzer_connection
@@ -186,6 +186,7 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
     global fitness_function
 
     try:
+
         EVALUATION_TIMEOUT = 30
 
         # Set global fitness_function
@@ -207,7 +208,7 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
             try:
                 collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
             except asyncio.TimeoutError:
-                _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
+                await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
                 return (None, None)
 
             if collisions > 0:
@@ -234,6 +235,32 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
         _restart_simulator(settings, connection, simulator_supervisor, "simulator")
         return (None, None)
 
+@app.task(queue="robots", time_limit = 120)
+async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
+
+    try:
+
+        EVALUATION_TIMEOUT = 30
+
+        settings = dic_to_args(settingsDir)
+        max_age = settings.evaluation_time
+
+        robot = revolve_bot.RevolveBot()
+        robot.load_yaml(yaml_object)
+        robot.update_substrate()
+        robot.measure_phenotype()
+
+        # Simulate robot
+        robot_manager = await insert_robot.delay(str(robot.phenotype.id))
+
+        robot_fitness = await robot_manager.get()
+
+        return (robot_fitness, None)
+
+    except SoftTimeLimitExceeded:
+        _restart_simulator(settings, connection, simulator_supervisor, "simulator")
+        return (None, None)
+
 @app.task
 async def shutdown_gazebo():
     """
@@ -249,3 +276,7 @@ async def shutdown_gazebo():
         print("TimeoutError: timeout error when closing gazebo instance.")
     finally:
         return True
+
+@app.task(queue="celery")
+async def insert_robot(name):
+    print("This will be handled by c++ part in worldcontroller.")

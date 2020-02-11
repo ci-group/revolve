@@ -62,10 +62,10 @@ pkg_check_modules(SimpleAmqpClient REQUIRED libSimpleAmqpClient)
 include_directories(${SimpleAmqpClient_INCLUDE_DIRS})
 link_directories(${SimpleAmqpClient_LIBRARY_DIRS})
 
-# Find SimpleAmqpClient
-pkg_check_modules(Jsonccp REQUIRED jsoncpp)
-include_directories(${Jsoncpp_INCLUDE_DIRS})
-link_directories(${Jsoncpp_LIBRARY_DIRS})
+# Find json
+pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+include_directories(${JSONCPP_INCLUDE_DIRS})
+link_directories(${JSONCPP_LIBRARY_DIRS})
 
 # Find Limbo - LIbrary for Model-Based Optimization
 set(LIMBO_DIR ${CMAKE_SOURCE_DIR}/thirdparty/limbo)
@@ -216,7 +216,7 @@ target_link_libraries(
         ${YAML_CPP_LIBRARIES}
         ${NLOpt_LIBRARIES}
         ${SimpleAmqpClient_LIBRARIES}
-        ${Jsoncpp_LIBRARIES}
+        ${JSONCPP_LIBRARIES}
 )
 
 target_compile_definitions(

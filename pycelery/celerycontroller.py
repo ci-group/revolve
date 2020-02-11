@@ -1,7 +1,7 @@
 import asyncio
 import subprocess
 import time
-from pycelery.tasks import shutdown_gazebo, run_gazebo, evaluate_robot, run_gazebo_and_analyzer
+from pycelery.tasks import shutdown_gazebo, run_gazebo, evaluate_robot, run_gazebo_and_analyzer, hello
 from pycelery.converter import args_to_dic, dic_to_args, dic_to_pop, pop_to_dic
 from pyrevolve.custom_logging.logger import logger
 
@@ -26,7 +26,7 @@ class CeleryController:
         """
 
         logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores. ")
-        subprocess.Popen("celery multi restart "+str(self.settings.n_cores)+" -Q robots -A pycelery -P celery_pool_asyncio:TaskPool --loglevel=info -c 1", shell=True)
+        subprocess.Popen("celery multi restart "+str(self.settings.n_cores)+" -Q robots -A pycelery -P celery_pool_asyncio:TaskPool -c 1", shell=True)
 
     async def shutdown(self):
         """
@@ -58,10 +58,8 @@ class CeleryController:
 
         # Testing the last gw.
         for j in range(self.settings.n_cores):
-            gr = await gws[j].get()
-            grs.append(gr)
+            await gws[j].get()
 
-        return grs
 
     async def test_robot(self, robot, conf):
         """
@@ -73,7 +71,7 @@ class CeleryController:
         # Create a yaml text from robot
         yaml_bot = robot.phenotype.to_yaml()
 
-        future = await evaluate_robot.delay(yaml_bot, conf.fitness_function, self.settingsDir)
+        future = await evaluate_robot_test.delay(yaml_bot, conf.fitness_function, self.settingsDir)
 
         # return the future
         return future

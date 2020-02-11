@@ -14,7 +14,7 @@ app = Celery('pycelery')
 
 # Setting configurations of celery.
 app.conf.update(
-    broker_url = 'amqp://guest@localhost//',
+    broker_url = 'pyamqp://localhost:5672//',
     result_backend = 'rpc://',
     task_serializer = 'yaml',
     result_serializer = 'yaml',
@@ -27,7 +27,8 @@ app.conf.update(
     task_default_queue = 'robots',
     max_tasks_per_child = 1,
     task_routes = ([
-    ('pycelery.tasks.*', {'queue': 'robots'})],)
+    ('pycelery.tasks.*', {'queue': 'robots'}),
+    ('pycelery.tasks.hello', {'queue': 'celery'})],)
 )
 
 if __name__ == '__main__':

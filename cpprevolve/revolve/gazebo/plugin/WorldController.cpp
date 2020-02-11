@@ -128,6 +128,43 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         return;
     }
 
+    /// SEE https://blog.csdn.net/csm201314/article/details/76381087 
+    auto channel = AmqpClient::Channel::Create("localhost", 5672);
+    auto consumer_tag = channel->BasicConsume(
+    /*queue*/"celery",
+    /*consumer_tag*/"",
+    /*no_local*/true,
+    /*no_ack*/false,
+    /*exclusive*/false,
+    /*message_prefetch_count*/1
+    );
+    auto envelope = channel->BasicConsumeMessage(consumer_tag);
+    auto message = envelope->Message();
+    auto body = message->Body();
+
+    Json::Value root;   // will contains the root value after parsing.
+    Json::Reader reader;
+
+    bool parsingSuccessful = reader.parse( message->Body(), root );
+    if ( !parsingSuccessful )
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout  << "Failed to parse configuration\n"
+                   << reader.getFormattedErrorMessages();
+        return;
+    }
+
+    // Get the value of the member of root named 'encoding', return 'UTF-8' if there is no
+    // such member.
+    auto name = root[0][0];
+    std::cout << "TEST: Processing robot with id:  " << name.asString() << std::endl;
+
+    // Tell the celery queue that we are done
+    channel->BasicAck(envelope);
+    channel->BasicCancel(consumer_tag);
+
+    auto envelope2 = channel->BasicConsumeMessage(consumer_tag);
+
     auto secs = 1.0 / this->robotStatesPubFreq_;
     auto time = _info.simTime.Double();
     if ((time - this->lastRobotStatesUpdateTime_) >= secs) {
