@@ -18,7 +18,6 @@ from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 import sys
-import time
 
 async def run():
     """
@@ -29,16 +28,14 @@ async def run():
     num_generations = 200
     population_size = 100
     offspring_size = 100
-    front = 'slaves'
+    front = None
 
     # environment world and z-start
-    environments = {'plane': 0.03,
-                    'tilted5': 0.1
-                    }
+    environments = {'plane': 0.03}
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,
-        plastic=True,
+        plastic=False,
     )
 
     mutation_conf = MutationConfig(
@@ -72,8 +69,7 @@ async def run():
     def fitness_function_plane(robot_manager, robot):
         return fitness.displacement_velocity_hill(robot_manager, robot, False)
 
-    fitness_function = {'plane': fitness_function_plane,
-                        'tilted5': fitness_function_plane}
+    fitness_function = {'plane': fitness_function_plane}
 
     population_conf = PopulationConfig(
         population_size=population_size,
@@ -95,7 +91,6 @@ async def run():
         environments=environments,
         front=front
     )
-
 
     settings = parser.parse_args()
 

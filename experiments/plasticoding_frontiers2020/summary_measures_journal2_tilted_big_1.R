@@ -8,15 +8,16 @@
   
   base_directory <-paste('journal2', sep='') 
   
-analysis = 'analysis_journal2_tilted_big_2'
+analysis = 'analysis_journal2_tilted_big_1'
   
 output_directory = paste(base_directory,'/',analysis ,sep='')
   
 #### CHANGE THE PARAMETERS HERE ####
-
-experiments_type = c('baseline_big', 'plastic_big' )
-
-environments = list( c( 'plane'), c( 'plane') )
+  
+  
+experiments_type = c( 'flat_big', 'tilted_big' ) 
+ 
+environments = list(c( 'plane'), c('tilted5') )
 
 methods = c()
 for (exp in 1:length(experiments_type))
@@ -27,23 +28,22 @@ for (exp in 1:length(experiments_type))
   }
 }
 
-initials =   c( 'b', 'p' )
+initials =   c( 'p', 't' )
   
-experiments_labels = c(  'Baseline' ,  'Plastic')
-experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
+experiments_labels = c( 'Static: Flat',   'Static: Tilted')
 
-  runs = list( c(1:20), c(1:20) )
+  runs = list( c(1:20),  c(1:20) )
  
-  gens = 200
+  gens = 200 
   pop = 100
   
   #### CHANGE THE PARAMETERS HERE ####
   
   sig = 0.05
   line_size = 30
-  show_markers = FALSE
+  show_markers = TRUE#FALSE
   show_legends = FALSE 
-  experiments_type_colors = c(  '#00ff00',  '#006600'  )  #  light green; dark green;
+  experiments_type_colors = c( '#009999' , '#cc9900' )  # weird green and weird yellow
   
   measures_names = c(
                      'displacement_velocity_hill',
@@ -107,7 +107,7 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
     'width',
     'height',
     'Size',
-    'Sensors',
+    'sensors',
     'Symmetry',
     'Average Period',
     'dev_period',
@@ -117,8 +117,8 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
     'dev_amplitude',
     'avg_intra_dev_params',
     'avg_inter_dev_params',
-    'Sensors Reach',
-    'Recurrence',
+    'sensors_reach',
+    'recurrence',
     'synaptic_reception',
     'Fitness', 
     'Number of slaves'
@@ -152,7 +152,6 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
         measures_snapshots$displacement_velocity_hill =   measures_snapshots$displacement_velocity_hill*100
         measures_snapshots$run = as.factor(measures_snapshots$run)
         measures_snapshots$method = paste(experiments_type[exp], environments[[exp]][env],sep='_')
-        measures_snapshots$method_label =  experiments_labels2[exp] 
         
         if ( is.null(measures_snapshots_all)){
           measures_snapshots_all = measures_snapshots
@@ -171,40 +170,6 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
   
   
   
-  # densities
-  
-  measures_snapshots_all_densities = sqldf(paste("select * from measures_snapshots_all where generation=199",sep='' )) 
-  
-  measures_names_densities = c('length_of_limbs','proportion', 'absolute_size','head_balance','joints', 'limbs', 'recurrence', 'sensors', 'sensors_reach','displacement_velocity_hill')
-  measures_labels_densities = c('Rel. Length of Limbs','Proportion', 'Size','Balance','Rel. Number of Joints', 'Rel. Number of Limbs', 'Recurrence', 'Sensors', 'Sensors Reach', 'Speed (cm/s)')
-  
-  for (i in 1:length(measures_names_densities)) 
-  {
-    
-    for (j in 1:length(measures_names_densities)) 
-    {
-      
-      if(i != j)
-      {
-       
-        summary = sqldf(paste('select method_label,',measures_names_densities[j], ' as x,', measures_names_densities[i], 
-                              " as y,  count(*)  as n from  measures_snapshots_all_densities
-                               group by 1,2 order by n", sep=''))
-        
-        graph = ggplot(data=summary,aes(x=x ,y=y ,fill=n)) + 
-                stat_density_2d(geom = "raster", aes(fill = stat(density)), contour = FALSE)+
-               labs( x = measures_labels_densities[j], y= measures_labels_densities[i]  )+
-               theme(legend.position="none" , strip.text  = element_text(  size = 20  ), plot.title=element_text(size=25),  
-                     axis.text=element_text(size=17),axis.title=element_text(size=20) )  +
-                coord_cartesian(ylim = c(0, 1), xlim = c(0, 1))+  facet_grid(. ~ method_label)
-         
-        ggsave(paste( output_directory ,'/density_',measures_names_densities[i],'_', measures_names_densities[j],'.png',  sep=''), graph , 
-               device='png', height = 6, width = 10)
-        
-      }
-      
-    }
-  }
   
   measures_averages_gens_1 = list()
   measures_averages_gens_2 = list()
@@ -385,8 +350,6 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
   
   close(file)
   
-  
-  
   # plots measures 
   
   for (type_summary in c('means','quants'))
@@ -486,18 +449,17 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
           }
       }
       
-      
       max_y =  0
       min_y = 0
-      if (measures_names[i] == 'displacement_velocity_hill' )  { 
-        max_y = 2.5 
+      if (measures_names[i] == 'displacement_velocity_hill' )  {  
+        max_y = 6 
         min_y = -0.5}
-      if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' || measures_names[i] == 'joints')  {    max_y = 1}
+      if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' || measures_names[i] == 'joints')  {    max_y = 1.1}
       if (measures_names[i] == 'proportion' )  {    max_y = 1}
       if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
 
       
-      graph = graph  +  labs( y=measures_labels[i], x="Generation", title="Flat Season") 
+      graph = graph  +  labs( y=measures_labels[i], x="Generation") 
       if (max_y>0) {
         graph = graph + coord_cartesian(ylim = c(min_y, max_y)) 
       }
@@ -506,20 +468,28 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
         graph = graph  + labs( y=measures_labels[i], x="Generation", subtitle = paste(tests1,'\n', tests2, '\n', tests3, sep='')) 
       }
       graph = graph  + theme(legend.position="bottom" ,  legend.text=element_text(size=20), axis.text=element_text(size=27),axis.title=element_text(size=25),
-                             plot.subtitle=element_text(size=25 ),plot.title=element_text(size=25 )) 
+                             plot.subtitle=element_text(size=25 )) 
       
       ggsave(paste( output_directory,'/',type_summary,'_' ,measures_names[i],'_generations.pdf',  sep=''), graph , device='pdf', height = 10, width = 10)
-      
     }
   
   }
   
   
   
+  
   for (i in 1:length(measures_names)) 
   {
+  
+    max_y =  0
+    min_y = 0
+    if (measures_names[i] == 'displacement_velocity_hill' )  {  
+      max_y = 6 
+      min_y = -0.5}
+    if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' || measures_names[i] == 'joints')  {    max_y = 1.1}
+    if (measures_names[i] == 'proportion' )  {    max_y = 1}
+    if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
     
-
     all_final_values = data.frame()
     for (exp in 1:length(methods))
     {
@@ -529,36 +499,20 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
       temp$type = experiments_labels[exp]
       all_final_values = rbind(all_final_values, temp)
     }
- 
+
     g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
       geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
-      labs( x="Environment", y=measures_labels[i], title="Flat Season")
+      labs( x="Environment", y=measures_labels[i])  
     
-    
-    max_y =  0
-    min_y = 0
-    if (measures_names[i] == 'displacement_velocity_hill' )  {  
-      g1 = g1 + geom_hline(yintercept=1.32, linetype="dashed", color = "red")
-      max_y = 4.8 
-      min_y = -0.5}
-    if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' 
-        || measures_names[i] == 'joints' || measures_names[i] == 'sensors_reach')  {    max_y = 1.15}
-    if (measures_names[i] == 'recurrence' )  {    max_y = 0.8}
-    if (measures_names[i] == 'sensors' )  {    max_y = 0.6}
-    if (measures_names[i] == 'proportion' )  {    max_y = 1}
-    if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
-  
-    
-     g1 = g1 +  scale_color_manual(values=  experiments_type_colors  )
+     g1 = g1 +  scale_color_manual(values=experiments_type_colors)  
      
       g1 = g1 + theme(legend.position="none" , text = element_text(size=45) ,  
-                      plot.title=element_text(size=45),  axis.text=element_text(size=45),
+                      plot.title=element_text(size=40),  axis.text=element_text(size=45),
                       axis.title=element_text(size=50),
-            axis.text.x = element_text(angle = 20, hjust = 0.9),
-            plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  1.3, unit = "cm"))+ 
+            axis.text.x = element_text(angle = 20, hjust = 1))+ 
       stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
  
-      comps = list( c( 'Baseline', 'Plastic') )   
+      comps = list(c( 'Static: Flat',   'Static: Tilted') )   
       
     g1 = g1 + geom_signif( test="wilcox.test", size=2, textsize=22, 
                            comparisons = comps,  
@@ -566,7 +520,7 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
     if (max_y>0) {
       g1 = g1 + coord_cartesian(ylim = c(min_y, max_y)) 
     }
-     
+    
     ggsave(paste(output_directory,"/",measures_names[i],"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
     
   }

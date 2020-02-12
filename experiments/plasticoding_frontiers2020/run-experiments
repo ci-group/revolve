@@ -20,16 +20,25 @@ while true
 	   done
 done
 
- 
- 
- 
-
-while true
+ while true
 	do
-    sleep 900s;
-    kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
-    kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');
-    sleep 60s;
+         for i in {1..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/flat_big_$i --run $i --manager experiments/karines_experiments/flat_big.py --n-cores 4 --port-start 11141  --evaluation-time 50;
+
+                sleep 5s
+	   done
 done
 
+ 
+  while true
+	do
+         for i in {1..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/tilted_big_$i --run $i --manager experiments/karines_experiments/tilted_big.py --n-cores 4 --port-start 11141  --evaluation-time 50;
 
+                sleep 5s
+	   done
+done
+
+ 
+
+ 

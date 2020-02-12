@@ -6,7 +6,7 @@
   library(purrr)
   library(ggsignif)
   
-  base_directory <-paste('data', sep='') 
+  base_directory <-paste('journal2', sep='') 
   
 analysis = 'analysis_journal2_tilted_big_3'
   
@@ -15,6 +15,7 @@ output_directory = paste(base_directory,'/',analysis ,sep='')
 #### CHANGE THE PARAMETERS HERE ####
 
 experiments_type = c( 'baseline_big', 'plastic_big' )
+experiments_labels2 = c(  'Baseline: Tilted' ,  'Plastic: Tilted')
 
 environments = list( c( 'tilted5'), c( 'tilted5') )
 
@@ -30,8 +31,9 @@ for (exp in 1:length(experiments_type))
 initials =   c(  'b', 'p' )
   
 experiments_labels = c( 'Baseline' ,  'Plastic')
+experiments_labels2 = c(  'Baseline: Tilted' ,  'Plastic: Tilted')
 
-  runs = list( c(1:20), c(1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20,21,22)  )
+  runs = list( c(1:20),c(1:20)  )
  
   gens = 200 
   pop = 100
@@ -106,7 +108,7 @@ experiments_labels = c( 'Baseline' ,  'Plastic')
     'width',
     'height',
     'Size',
-    'sensors',
+    'Sensors',
     'Symmetry',
     'Average Period',
     'dev_period',
@@ -116,8 +118,8 @@ experiments_labels = c( 'Baseline' ,  'Plastic')
     'dev_amplitude',
     'avg_intra_dev_params',
     'avg_inter_dev_params',
-    'sensors_reach',
-    'recurrence',
+    'Sensors Reach',
+    'Recurrence',
     'synaptic_reception',
     'Fitness', 
     'Number of slaves'
@@ -151,6 +153,7 @@ experiments_labels = c( 'Baseline' ,  'Plastic')
         measures_snapshots$displacement_velocity_hill =   measures_snapshots$displacement_velocity_hill*100
         measures_snapshots$run = as.factor(measures_snapshots$run)
         measures_snapshots$method = paste(experiments_type[exp], environments[[exp]][env],sep='_')
+        measures_snapshots$method_label =  experiments_labels2[exp] 
         
         if ( is.null(measures_snapshots_all)){
           measures_snapshots_all = measures_snapshots
@@ -171,10 +174,10 @@ experiments_labels = c( 'Baseline' ,  'Plastic')
   
   # densities
   
-  measures_snapshots_all_densities = sqldf(paste("select * from measures_snapshots_all where generation=199 ",sep='' )) 
+  measures_snapshots_all_densities = sqldf(paste("select * from measures_snapshots_all where generation=199",sep='' )) 
   
-  measures_names_densities = c('length_of_limbs','proportion', 'absolute_size','head_balance','joints', 'limbs')
-  measures_labels_densities = c('Rel. Length of Limbs','Proportion', 'Size','Balance','Rel. Number of Joints', 'Rel. Number of Limbs')
+  measures_names_densities = c('length_of_limbs','proportion', 'absolute_size','head_balance','joints', 'limbs', 'recurrence', 'sensors', 'sensors_reach','displacement_velocity_hill')
+  measures_labels_densities = c('Rel. Length of Limbs','Proportion', 'Size','Balance','Rel. Number of Joints', 'Rel. Number of Limbs', 'Recurrence', 'Sensors', 'Sensors Reach', 'Speed (cm/s)')
   
   for (i in 1:length(measures_names_densities)) 
   {
@@ -185,19 +188,27 @@ experiments_labels = c( 'Baseline' ,  'Plastic')
       if(i != j)
       {
         
-        graph <- ggplot(measures_snapshots_all_densities, aes_string(x=measures_names_densities[j], y= measures_names_densities[i]))+ 
-          geom_density_2d(aes(colour = method ), alpha=0.7, size=3 )+
-          scale_color_manual(values =  experiments_type_colors  )+  
-          labs( x = measures_labels_densities[j], y= measures_labels_densities[i] )+
-          theme(legend.position="none" ,   axis.text=element_text(size=21),axis.title=element_text(size=22),
-                plot.subtitle=element_text(size=25 )) +
-          coord_cartesian(ylim = c(0, 1), xlim = c(0, 1))
+        summary = sqldf(paste('select method_label,',measures_names_densities[j], ' as x,', measures_names_densities[i], 
+                              " as y,  count(*)  as n from  measures_snapshots_all_densities
+                               group by 1,2 order by n", sep=''))
+        
+        graph = ggplot(data=summary,aes(x=x ,y=y ,fill=n)) + 
+          stat_density_2d(geom = "raster", aes(fill = stat(density)), contour = FALSE)+
+          labs( x = measures_labels_densities[j], y= measures_labels_densities[i]  )+
+          theme(legend.position="none" , strip.text  = element_text(  size = 20  ), plot.title=element_text(size=25),  
+                axis.text=element_text(size=17),axis.title=element_text(size=20) )  +
+          coord_cartesian(ylim = c(0, 1), xlim = c(0, 1))+  facet_grid(. ~ method_label)
+        
         ggsave(paste( output_directory ,'/density_',measures_names_densities[i],'_', measures_names_densities[j],'.png',  sep=''), graph , 
-               device='png', height = 6, width = 6)
+               device='png', height = 6, width = 10)
+        
+        
       }
       
     }
   }
+  
+  
   
   measures_averages_gens_1 = list()
   measures_averages_gens_2 = list()
@@ -510,7 +521,6 @@ experiments_labels = c( 'Baseline' ,  'Plastic')
   {
     
     
-    
     all_final_values = data.frame()
     for (exp in 1:length(methods))
     {
@@ -523,7 +533,7 @@ experiments_labels = c( 'Baseline' ,  'Plastic')
     
     g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
       geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
-      labs( x="Environment", y=measures_labels[i], title="Flat Season")
+      labs( x="Environment", y=measures_labels[i], title="Tilted Season")
     
     max_y =  0
     min_y = 0
@@ -531,7 +541,10 @@ experiments_labels = c( 'Baseline' ,  'Plastic')
       g1 = g1 + geom_hline(yintercept=1.32, linetype="dashed", color = "red")
       max_y = 4.8 
       min_y = -0.5}
-    if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' || measures_names[i] == 'joints')  {    max_y = 1.1}
+    if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' 
+        || measures_names[i] == 'joints' || measures_names[i] == 'sensors_reach')  {    max_y = 1.15}
+    if (measures_names[i] == 'recurrence' )  {    max_y = 0.8}
+    if (measures_names[i] == 'sensors' )  {    max_y = 0.6}
     if (measures_names[i] == 'proportion' )  {    max_y = 1}
     if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
     

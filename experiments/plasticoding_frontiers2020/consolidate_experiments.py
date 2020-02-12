@@ -4,12 +4,14 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-    
+  'flat_big',
+'tilted_big',
  'plastic_big'
 ,'baseline_big'
 ]
 environments = {
-
+  'flat_big': ['plane'],
+'tilted_big': ['tilted5'],
   'plastic_big': ['plane','tilted5']
  ,'baseline_big': ['plane','tilted5']
                  }
