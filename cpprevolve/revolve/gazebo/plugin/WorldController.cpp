@@ -144,18 +144,7 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         return;
     }
 
-    // auto channel = AmqpClient::Channel::Create("localhost", 5672);
-    // auto consumer_tag = channel->BasicConsume(
-    // /*queue*/"celery",
-    // /*consumer_tag*/"",
-    // /*no_local*/true,
-    // /*no_ack*/false,
-    // /*exclusive*/false,
-    // /*message_prefetch_count*/1
-    // );
-    // std::string reply_queue_name =
-    //   channel->DeclareQueue("", false, true, false, false);
-
+    // receive a celery task or wait until there is one!
     auto envelope = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
     this->celeryChannel->BasicAck(envelope);
 
