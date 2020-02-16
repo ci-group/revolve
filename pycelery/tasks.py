@@ -251,9 +251,11 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         robot.measure_phenotype()
 
         # Simulate robot
-        robot_manager = await insert_robot.delay(str(robot.phenotype.id))
+        robot_manager = await insert_robot.apply_async((str(robot.phenotype.id),), serializer="json")
 
         robot_fitness = await robot_manager.get()
+
+        logger.info(f'fitness is {robot_fitness}')
 
         return (robot_fitness, None)
 
@@ -277,6 +279,6 @@ async def shutdown_gazebo():
     finally:
         return True
 
-@app.task(queue="celery")
+@app.task(queue="celery", task_serializer='json', result_serializer = 'json')
 async def insert_robot(name):
     print("This will be handled by c++ part in worldcontroller.")

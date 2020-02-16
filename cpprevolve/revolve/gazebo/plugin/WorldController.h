@@ -130,6 +130,10 @@ protected:
 //    boost::mutex world_insert_remove_mutex;
 
     ::gazebo::physics::Model_V models_to_remove;
+
+    // celery consumer functionality
+    AmqpClient::Channel::ptr_t celeryChannel;
+    std::string consumer_tag;
 };
 
 }  // namespace gazebo

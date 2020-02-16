@@ -115,6 +115,22 @@ void WorldController::Load(
   // Robot pose publisher
   this->robotStatesPub_ = this->node_->Advertise< revolve::msgs::RobotStates >(
       "~/revolve/robot_states", 500);
+
+  // Consumer celery channel
+  this->celeryChannel = AmqpClient::Channel::Create("localhost", 5672);
+
+  // Consumer tag
+  this->consumer_tag = this->celeryChannel->BasicConsume(
+  /*queue*/"celery",
+  /*consumer_tag*/"",
+  /*no_local*/true,
+  /*no_ack*/false,
+  /*exclusive*/false,
+  /*message_prefetch_count*/1
+  );
+  std::string reply_queue_name =
+    this->celeryChannel->DeclareQueue("", false, true, false, false);
+
 }
 
 void WorldController::Reset()
@@ -124,21 +140,25 @@ void WorldController::Reset()
 
 /////////////////////////////////////////////////
 void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
-    if (not this->robotStatesPubFreq_) {
+    if (not this->robotStatesPubFreq_ || not this->celeryChannel) {
         return;
     }
 
-    /// SEE https://blog.csdn.net/csm201314/article/details/76381087 
-    auto channel = AmqpClient::Channel::Create("localhost", 5672);
-    auto consumer_tag = channel->BasicConsume(
-    /*queue*/"celery",
-    /*consumer_tag*/"",
-    /*no_local*/true,
-    /*no_ack*/false,
-    /*exclusive*/false,
-    /*message_prefetch_count*/1
-    );
-    auto envelope = channel->BasicConsumeMessage(consumer_tag);
+    // auto channel = AmqpClient::Channel::Create("localhost", 5672);
+    // auto consumer_tag = channel->BasicConsume(
+    // /*queue*/"celery",
+    // /*consumer_tag*/"",
+    // /*no_local*/true,
+    // /*no_ack*/false,
+    // /*exclusive*/false,
+    // /*message_prefetch_count*/1
+    // );
+    // std::string reply_queue_name =
+    //   channel->DeclareQueue("", false, true, false, false);
+
+    auto envelope = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
+    this->celeryChannel->BasicAck(envelope);
+
     auto message = envelope->Message();
     auto body = message->Body();
 
@@ -154,16 +174,33 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         return;
     }
 
-    // Get the value of the member of root named 'encoding', return 'UTF-8' if there is no
-    // such member.
+
     auto name = root[0][0];
     std::cout << "TEST: Processing robot with id:  " << name.asString() << std::endl;
 
-    // Tell the celery queue that we are done
-    channel->BasicAck(envelope);
-    channel->BasicCancel(consumer_tag);
+    Json::Value rootmsg;
+    rootmsg["task_id"] = envelope->Message()->CorrelationId();
+    rootmsg["status"] = "SUCCESS";
+    rootmsg["result"] = 1;
 
-    auto envelope2 = channel->BasicConsumeMessage(consumer_tag);
+    Json::FastWriter fastWriter;
+    std::string output = fastWriter.write(rootmsg);
+
+    auto MESSAGE = AmqpClient::BasicMessage::Create(output);
+    MESSAGE->ContentType("application/json");
+    MESSAGE->ContentEncoding("utf-8");
+    MESSAGE->ReplyTo(envelope->Message()->ReplyTo());
+    MESSAGE->CorrelationId(envelope->Message()->CorrelationId());
+
+    MESSAGE->HeaderTable({
+      {"id", envelope->Message()->CorrelationId()},
+      {"task", "tasks.insert_robot"}
+    });
+    this->celeryChannel->BasicPublish("", MESSAGE->ReplyTo(), MESSAGE);
+    std::cout << "Succesfully send the message! " << name.asString() << std::endl;
+
+    // LETS BLOCK IT HERE
+    auto envelope2 = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
 
     auto secs = 1.0 / this->robotStatesPubFreq_;
     auto time = _info.simTime.Double();
