@@ -8,7 +8,7 @@
   
   base_directory <-paste('journal2', sep='') 
   
-analysis = 'analysis_journal2_tilted_big_2'
+analysis = 'nonstatic/analysis_journal2_tilted_big_2'
   
 output_directory = paste(base_directory,'/',analysis ,sep='')
   
@@ -492,10 +492,13 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
       if (measures_names[i] == 'displacement_velocity_hill' )  { 
         max_y = 2.5 
         min_y = -0.5}
-      if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' || measures_names[i] == 'joints')  {    max_y = 1}
-      if (measures_names[i] == 'proportion' )  {    max_y = 1}
+      if (measures_names[i] == 'head_balance' ) {    
+        max_y = 1
+        min_y = 0.6}
       if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
-
+      if (measures_names[i] == 'recurrence' )  {    max_y = 0.3}
+      if (measures_names[i] == 'sensors' )  {    max_y = 0.3 }
+      if (measures_names[i] == 'sensors_reach' )  {    max_y = 1 }
       
       graph = graph  +  labs( y=measures_labels[i], x="Generation", title="Flat Season") 
       if (max_y>0) {
@@ -534,21 +537,21 @@ experiments_labels2 = c(  'Baseline: Flat' ,  'Plastic: Flat')
       geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
       labs( x="Environment", y=measures_labels[i], title="Flat Season")
     
-    
     max_y =  0
     min_y = 0
     if (measures_names[i] == 'displacement_velocity_hill' )  {  
-      g1 = g1 + geom_hline(yintercept=1.32, linetype="dashed", color = "red")
+      g1 = g1 + geom_hline(yintercept=3.63, linetype="dashed", color = "red", size=2)
       max_y = 4.8 
       min_y = -0.5}
-    if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' 
-        || measures_names[i] == 'joints' || measures_names[i] == 'sensors_reach')  {    max_y = 1.15}
+    if (measures_names[i] == 'head_balance'){
+      max_y = 1.15
+      min_y = 0.55
+    }
+    if (measures_names[i] == 'sensors_reach')  {    max_y = 1.15}
     if (measures_names[i] == 'recurrence' )  {    max_y = 0.8}
     if (measures_names[i] == 'sensors' )  {    max_y = 0.6}
-    if (measures_names[i] == 'proportion' )  {    max_y = 1}
     if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
   
-    
      g1 = g1 +  scale_color_manual(values=  experiments_type_colors  )
      
       g1 = g1 + theme(legend.position="none" , text = element_text(size=45) ,  

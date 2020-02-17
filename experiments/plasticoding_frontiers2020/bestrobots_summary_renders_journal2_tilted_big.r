@@ -19,7 +19,7 @@ gens = 200
 pop = 100
 num_top = 1
 
-analysis = 'images'
+analysis = 'nonstatic/images'
 
 ##### change paths/labels/params here #####
 

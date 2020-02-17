@@ -8,7 +8,7 @@
   
   base_directory <-paste('journal2', sep='') 
   
-analysis = 'analysis_journal2_tilted_big_3'
+analysis = 'nonstatic/analysis_journal2_tilted_big_3'
   
 output_directory = paste(base_directory,'/',analysis ,sep='')
   
@@ -489,13 +489,16 @@ experiments_labels2 = c(  'Baseline: Tilted' ,  'Plastic: Tilted')
       
       max_y =  0
       min_y = 0
-      if (measures_names[i] == 'displacement_velocity_hill' )  {  
-        max_y = 2.5
+      if (measures_names[i] == 'displacement_velocity_hill' )  { 
+        max_y = 2.5 
         min_y = -0.5}
-      if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' || measures_names[i] == 'joints')  {    max_y = 1}
-      if (measures_names[i] == 'head_balance') {  min_y = 0.6 }
-      if (measures_names[i] == 'proportion' )  {    max_y = 1}
+      if (measures_names[i] == 'head_balance' ) {    
+        max_y = 1
+        min_y = 0.6}
       if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
+      if (measures_names[i] == 'recurrence' )  {    max_y = 0.3}
+      if (measures_names[i] == 'sensors' )  {    max_y = 0.3 }
+      if (measures_names[i] == 'sensors_reach' )  {    max_y = 1 }
 
       
       graph = graph  +  labs( y=measures_labels[i], x="Generation", title="Tilted Season") 
@@ -534,18 +537,20 @@ experiments_labels2 = c(  'Baseline: Tilted' ,  'Plastic: Tilted')
     g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
       geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
       labs( x="Environment", y=measures_labels[i], title="Tilted Season")
-    
+
     max_y =  0
     min_y = 0
     if (measures_names[i] == 'displacement_velocity_hill' )  {  
-      g1 = g1 + geom_hline(yintercept=1.32, linetype="dashed", color = "red")
+      g1 = g1 + geom_hline(yintercept=1.32, linetype="dashed", color = "red", size=2)
       max_y = 4.8 
       min_y = -0.5}
-    if (measures_names[i] == 'head_balance' || measures_names[i] == 'limbs' 
-        || measures_names[i] == 'joints' || measures_names[i] == 'sensors_reach')  {    max_y = 1.15}
+    if (measures_names[i] == 'head_balance'){
+      max_y = 1.15
+      min_y = 0.55
+    }
+    if (measures_names[i] == 'sensors_reach')  {    max_y = 1.15}
     if (measures_names[i] == 'recurrence' )  {    max_y = 0.8}
     if (measures_names[i] == 'sensors' )  {    max_y = 0.6}
-    if (measures_names[i] == 'proportion' )  {    max_y = 1}
     if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
     
     
