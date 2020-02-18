@@ -121,16 +121,51 @@ void WorldController::Load(
 
   // Consumer tag
   this->consumer_tag = this->celeryChannel->BasicConsume(
-  /*queue*/"celery",
+  /*queue*/"cpp",
   /*consumer_tag*/"",
   /*no_local*/true,
   /*no_ack*/false,
   /*exclusive*/false,
   /*message_prefetch_count*/1
   );
-  std::string reply_queue_name =
-    this->celeryChannel->DeclareQueue("", false, true, false, false);
+  // std::string reply_queue_name =
+  //   this->celeryChannel->DeclareQueue("", false, true, false, false);
 
+  // THIS PART IS USED TO CONSUME THE STARTUP MESSAGE!
+  this->envelope = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
+  this->celeryChannel->BasicAck(this->envelope);
+
+  auto message = this->envelope->Message();
+  auto body = message->Body();
+  this->root.clear();
+
+  auto parsingSuccessful = this->reader.parse( body, this->root );
+  if ( !parsingSuccessful )
+  {
+      // report to the user the failure and their locations in the document.
+      std::cout  << "Failed to parse configuration\n"
+                 << reader.getFormattedErrorMessages();
+      return;
+  }
+  auto name = root[0][0];
+  std::cout << name.asString() << std::endl;
+
+  // clear the last message and make a new one.
+  this->rootmsg.clear();
+  this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
+  this->rootmsg["status"] = "SUCCESS";
+  this->rootmsg["result"] = "Succesfully started cpp celery queue!";
+
+  std::string output = this->fastWriter.write(this->rootmsg);
+
+  // send result trough celery!
+  auto MESSAGE = AmqpClient::BasicMessage::Create(output);
+  MESSAGE->ContentType("application/json");
+  MESSAGE->ContentEncoding("utf-8");
+  MESSAGE->ReplyTo(this->envelope->Message()->ReplyTo());
+  MESSAGE->CorrelationId(this->envelope->Message()->CorrelationId());
+
+  this->celeryChannel->BasicPublish("", MESSAGE->ReplyTo(), MESSAGE);
 }
 
 void WorldController::Reset()
@@ -144,17 +179,17 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         return;
     }
 
-    // receive a celery task or wait until there is one!
-    auto envelope = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
-    this->celeryChannel->BasicAck(envelope);
-
-    auto message = envelope->Message();
+    // receive a celery task or wait until there is one
+    auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope, 1000);
+    if (!message_delivered){
+      std::cout << "No message delivered" << std::endl;
+      return;
+    }
+    std::cout << "Celery message Acknowlegded.  " << std::endl;
+    auto message = this->envelope->Message();
     auto body = message->Body();
 
-    Json::Value root;   // will contains the root value after parsing.
-    Json::Reader reader;
-
-    bool parsingSuccessful = reader.parse( message->Body(), root );
+    bool parsingSuccessful = this->reader.parse( message->Body(), this->root );
     if ( !parsingSuccessful )
     {
         // report to the user the failure and their locations in the document.
@@ -164,114 +199,115 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
     }
 
 
-    auto name = root[0][0];
-    std::cout << "TEST: Processing robot with id:  " << name.asString() << std::endl;
+    auto sdf_string = root[0][0];
+    std::cout << "Processing robot" << std::endl;
 
-    Json::Value rootmsg;
-    rootmsg["task_id"] = envelope->Message()->CorrelationId();
-    rootmsg["status"] = "SUCCESS";
-    rootmsg["result"] = 1;
+    this->rootmsg.clear();
+    this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
+    this->rootmsg["status"] = "SUCCESS";
+    this->rootmsg["result"][0] = 1; // fitness return
+    this->rootmsg["result"][1] = "NULL"; // Here we would like to return all behavioural movement
 
-    Json::FastWriter fastWriter;
-    std::string output = fastWriter.write(rootmsg);
+    std::string output = this->fastWriter.write(rootmsg);
 
+    std::cout << "Creating message for celery .... " << std::endl;
     auto MESSAGE = AmqpClient::BasicMessage::Create(output);
     MESSAGE->ContentType("application/json");
     MESSAGE->ContentEncoding("utf-8");
-    MESSAGE->ReplyTo(envelope->Message()->ReplyTo());
-    MESSAGE->CorrelationId(envelope->Message()->CorrelationId());
+    MESSAGE->ReplyTo(this->envelope->Message()->ReplyTo());
+    MESSAGE->CorrelationId(this->envelope->Message()->CorrelationId());
 
     MESSAGE->HeaderTable({
-      {"id", envelope->Message()->CorrelationId()},
+      {"id", this->envelope->Message()->CorrelationId()},
       {"task", "tasks.insert_robot"}
     });
+
     this->celeryChannel->BasicPublish("", MESSAGE->ReplyTo(), MESSAGE);
-    std::cout << "Succesfully send the message! " << name.asString() << std::endl;
 
-    // LETS BLOCK IT HERE
-    auto envelope2 = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
-
+    this->celeryChannel->BasicAck(this->envelope);
+    
     auto secs = 1.0 / this->robotStatesPubFreq_;
     auto time = _info.simTime.Double();
     if ((time - this->lastRobotStatesUpdateTime_) >= secs) {
-        // Send robot info update message, this only sends the
-        // main pose of the robot (which is all we need for now)
-        msgs::RobotStates msg;
-        gz::msgs::Set(msg.mutable_time(), _info.simTime);
+      // Send robot info update message, this only sends the
+      // main pose of the robot (which is all we need for now)
+      msgs::RobotStates msg;
+      gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
-        {
-            boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
-            for (const auto &model : this->world_->Models()) {
-                if (model->IsStatic()) {
-                    // Ignore static models such as the ground and obstacles
-                    continue;
-                }
+      {
+        boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+        for (const auto &model : this->world_->Models()) {
+          if (model->IsStatic()) {
+            // Ignore static models such as the ground and obstacles
+            continue;
+          }
 
-                revolve::msgs::RobotState *stateMsg = msg.add_robot_state();
-                const std::string scoped_name = model->GetScopedName();
-                stateMsg->set_name(scoped_name);
-                stateMsg->set_id(model->GetId());
+          revolve::msgs::RobotState *stateMsg = msg.add_robot_state();
+          const std::string scoped_name = model->GetScopedName();
+          stateMsg->set_name(scoped_name);
+          stateMsg->set_id(model->GetId());
 
-                auto poseMsg = stateMsg->mutable_pose();
-                auto relativePose = model->RelativePose();
+          auto poseMsg = stateMsg->mutable_pose();
+          auto relativePose = model->RelativePose();
 
-                gz::msgs::Set(poseMsg, relativePose);
+          gz::msgs::Set(poseMsg, relativePose);
 
-                // Death sentence check
-                const std::string name = model->GetName();
-                bool death_sentence = false;
-                double death_sentence_value = 0;
-                {
-                    boost::mutex::scoped_lock lock_death(death_sentences_mutex_);
-                    death_sentence = death_sentences_.count(name) > 0;
-                    if (death_sentence)
-                        death_sentence_value = death_sentences_[name];
-                }
+          // Death sentence check
+          const std::string name = model->GetName();
+          bool death_sentence = false;
+          double death_sentence_value = 0;
+          {
+            boost::mutex::scoped_lock lock_death(death_sentences_mutex_);
+            death_sentence = death_sentences_.count(name) > 0;
+            if (death_sentence)
+            death_sentence_value = death_sentences_[name];
+          }
 
-                if (death_sentence) {
-                    if (death_sentence_value < 0) {
-                        // Initialize death sentence
-                        death_sentences_[name] = time - death_sentence_value;
-                        stateMsg->set_dead(false);
-                    } else {
-                        bool alive = death_sentence_value > time;
-                        stateMsg->set_dead(not alive);
+          if (death_sentence) {
+            if (death_sentence_value < 0) {
+              // Initialize death sentence
+              death_sentences_[name] = time - death_sentence_value;
+              stateMsg->set_dead(false);
+            } else {
+              bool alive = death_sentence_value > time;
+              stateMsg->set_dead(not alive);
 
-                        if (not alive) {
-                            boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
-                            this->death_sentences_.erase(model->GetName());
+              if (not alive) {
+                boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
+                this->death_sentences_.erase(model->GetName());
 
-                            this->models_to_remove.emplace_back(model);
-                        }
-                    }
-                }
+                this->models_to_remove.emplace_back(model);
+              }
             }
+          }
         }
+      }
 
-        if (msg.robot_state_size() > 0) {
-            this->robotStatesPub_->Publish(msg);
-            this->lastRobotStatesUpdateTime_ = time;
-        }
+      if (msg.robot_state_size() > 0) {
+        this->robotStatesPub_->Publish(msg);
+        this->lastRobotStatesUpdateTime_ = time;
+      }
     }
 
 
-//    if (world_insert_remove_mutex.try_lock()) {
-        for (const auto &model: this->models_to_remove) {
-            std::cout << "Removing " << model->GetScopedName() << std::endl;
-//            this->world_->RemoveModel(model);
-//            gz::msgs::Request deleteReq;
-//            auto id = gz::physics::getUniqueId();
-//            deleteReq.set_id(id);
-//            deleteReq.set_request("entity_delete");
-//            deleteReq.set_data(model->GetScopedName());
-//            this->requestPub_->Publish(deleteReq);
-            gz::transport::requestNoReply(this->world_->Name(), "entity_delete", model->GetScopedName());
-            std::cout << "Removed " << model->GetScopedName() << std::endl;
+    //    if (world_insert_remove_mutex.try_lock()) {
+      for (const auto &model: this->models_to_remove) {
+        std::cout << "Removing " << model->GetScopedName() << std::endl;
+        //            this->world_->RemoveModel(model);
+        //            gz::msgs::Request deleteReq;
+        //            auto id = gz::physics::getUniqueId();
+        //            deleteReq.set_id(id);
+        //            deleteReq.set_request("entity_delete");
+        //            deleteReq.set_data(model->GetScopedName());
+        //            this->requestPub_->Publish(deleteReq);
+        gz::transport::requestNoReply(this->world_->Name(), "entity_delete", model->GetScopedName());
+        std::cout << "Removed " << model->GetScopedName() << std::endl;
 
-        }
-        this->models_to_remove.clear();
-//        this->world_insert_remove_mutex.unlock();
-//    }
+      }
+      this->models_to_remove.clear();
+      //        this->world_insert_remove_mutex.unlock();
+      //    }
+
 }
 
 void WorldController::OnEndUpdate()

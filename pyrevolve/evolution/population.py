@@ -260,8 +260,8 @@ class Population:
             else:
                 individual.fitness, individual.phenotype._behavioural_measurements = await future
 
-            if individual.phenotype._behavioural_measurements is None:
-                 assert (individual.fitness is None)
+            # if individual.phenotype._behavioural_measurements is None:
+            #      assert (individual.fitness is None)
 
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)

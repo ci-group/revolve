@@ -1,9 +1,11 @@
 import asyncio
 import subprocess
 import time
-from pycelery.tasks import shutdown_gazebo, run_gazebo, evaluate_robot, run_gazebo_and_analyzer, insert_robot
+from pycelery.tasks import shutdown_gazebo, run_gazebo, evaluate_robot, run_gazebo_and_analyzer, evaluate_robot_test, start_robot_queue, insert_robot
+from pyrevolve.SDF.revolve_bot_sdf_builder import revolve_bot_to_sdf
 from pycelery.converter import args_to_dic, dic_to_args, dic_to_pop, pop_to_dic
 from pyrevolve.custom_logging.logger import logger
+from pyrevolve.SDF.math import Vector3
 
 class CeleryController:
     """
@@ -49,7 +51,7 @@ class CeleryController:
         This functions starts N_CORES number of gazebo instances.
         Every worker owns one gazebo instance.
         """
-        startup = await insert_robot.apply_async(("Start simulator celery queue.",), serializer="json")
+        start_cpp_queue = await start_robot_queue.apply_async(("Start simulator celery queue.",), serializer="json")
 
         gws = []
         grs = []
@@ -57,9 +59,8 @@ class CeleryController:
             gw = await run_gazebo_and_analyzer.delay(self.settingsDir, i)
             gws.append(gw)
 
-        print("Until here is fine!")
-        print(await startup.get())
-        print("After the get statement.")
+        print(await start_cpp_queue.get())
+
         # Testing the last gw.
         for j in range(self.settings.n_cores):
             await gws[j].get()
@@ -72,9 +73,13 @@ class CeleryController:
         """
 
         # Create a yaml text from robot
-        yaml_bot = robot.phenotype.to_yaml()
+        # yaml_bot = robot.phenotype.to_yaml()
 
-        future = await evaluate_robot_test.delay(yaml_bot, conf.fitness_function, self.settingsDir)
+        # future = await evaluate_robot_test.delay(yaml_bot, conf.fitness_function, self.settingsDir)
+
+        SDF = revolve_bot_to_sdf(robot.phenotype, Vector3(0, 0, self.settings.z_start), None)
+        #
+        future = await insert_robot.apply_async((str(SDF),), serializer="json")
 
         # return the future
         return future

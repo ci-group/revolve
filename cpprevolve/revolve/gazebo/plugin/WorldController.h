@@ -134,6 +134,12 @@ protected:
     // celery consumer functionality
     AmqpClient::Channel::ptr_t celeryChannel;
     std::string consumer_tag;
+    AmqpClient::Envelope::ptr_t envelope;
+
+    Json::FastWriter fastWriter;
+    Json::Value rootmsg;
+    Json::Value root;   // will contains the root value after parsing.
+    Json::Reader reader;
 };
 
 }  // namespace gazebo

@@ -190,7 +190,7 @@ def dic_to_measurements(dic):
     :param dic: a dictionary containing the measurements.
     :return measurements: a BehaviouralMeasurements class containing measurements.
     """
-    if dic == None:
+    if dic == None or dic == "NULL":
         return None
 
     measurements = measures.BehaviouralMeasurements(None, None)

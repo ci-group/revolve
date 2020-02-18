@@ -12,6 +12,8 @@ cpa_monkey.patch()
 
 app = Celery('pycelery')
 
+app.control.purge()
+
 # Setting configurations of celery.
 app.conf.update(
     broker_url = 'pyamqp://localhost:5672//',

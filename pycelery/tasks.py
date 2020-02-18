@@ -10,6 +10,7 @@ from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 from pyrevolve.gazebo.analyze import BodyAnalyzer
 from pyrevolve.util.supervisor.supervisor_collision import CollisionSimSupervisor
+from pyrevolve.SDF.revolve_bot_sdf_builder import revolve_bot_to_sdf
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
@@ -121,6 +122,7 @@ async def run_gazebo_and_analyzer(settingsDir, i):
             simulator_name=f'gazebo_{i}'
         )
         await simulator_supervisor.launch_simulator(port=settings.port_start+i)
+
         # let there be some time to sync all initial output of the simulator
         await asyncio.sleep(5)
 
@@ -129,22 +131,22 @@ async def run_gazebo_and_analyzer(settingsDir, i):
 
         await asyncio.sleep(2)
 
-        analyzer_supervisor = CollisionSimSupervisor(
-            world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
-            simulator_cmd="gzserver",
-            simulator_args=["--verbose"],
-            plugins_dir_path=os.path.join('.', 'build', 'lib'),
-            models_dir_path=os.path.join('.', 'models'),
-            simulator_name=f'analyzer_{i}'
-        )
-
-        await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
-
-        await asyncio.sleep(5)
-
-        analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
-
-        await asyncio.sleep(2)
+        # analyzer_supervisor = CollisionSimSupervisor(
+        #     world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
+        #     simulator_cmd="gzserver",
+        #     simulator_args=["--verbose"],
+        #     plugins_dir_path=os.path.join('.', 'build', 'lib'),
+        #     models_dir_path=os.path.join('.', 'models'),
+        #     simulator_name=f'analyzer_{i}'
+        # )
+        #
+        # await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
+        #
+        # await asyncio.sleep(5)
+        #
+        # analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
+        #
+        # await asyncio.sleep(2)
 
     return True
 
@@ -250,9 +252,16 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         robot.update_substrate()
         robot.measure_phenotype()
 
-        # Simulate robot
-        robot_manager = await insert_robot.apply_async((str(robot.phenotype.id),), serializer="json")
+        # Convert to sdf for cpp (nice_format:None)
+        SDF = revolve_bot_to_sdf(robot, Vector3(0, 0, settings.z_start), None)
 
+        logger.info(f"Succesfully made SDF of robot {robot.id} and sending it to celery.")
+        # Send robot to cpp queue
+        robot_manager = await insert_robot.apply_async((str(SDF),), serializer="json")
+
+        logger.info(f"Waiting for result of {robot.id}")
+        
+        # await the simulation results and fitness.
         robot_fitness = await robot_manager.get()
 
         logger.info(f'fitness is {robot_fitness}')
@@ -279,6 +288,13 @@ async def shutdown_gazebo():
     finally:
         return True
 
-@app.task(queue="celery", task_serializer='json', result_serializer = 'json')
+@app.task(queue="cpp", task_serializer='json', result_serializer = 'json')
 async def insert_robot(name):
     print("This will be handled by c++ part in worldcontroller.")
+
+@app.task(queue="cpp", task_serializer='json', result_serializer = 'json')
+async def start_robot_queue(name):
+    """This function is called such that the celery queue exists before c++ tries to connect.
+    Otherwise an error will occur!"""
+
+    print("This will be handled by c++ part in worldcontroller. Used to start the queue where robots are put into.")
