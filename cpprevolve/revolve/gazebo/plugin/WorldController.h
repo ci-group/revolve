@@ -136,6 +136,8 @@ protected:
     std::string consumer_tag;
     AmqpClient::Envelope::ptr_t envelope;
 
+    bool running;
+    
     Json::FastWriter fastWriter;
     Json::Value rootmsg;
     Json::Value root;   // will contains the root value after parsing.

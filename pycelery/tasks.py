@@ -131,22 +131,22 @@ async def run_gazebo_and_analyzer(settingsDir, i):
 
         await asyncio.sleep(2)
 
-        # analyzer_supervisor = CollisionSimSupervisor(
-        #     world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
-        #     simulator_cmd="gzserver",
-        #     simulator_args=["--verbose"],
-        #     plugins_dir_path=os.path.join('.', 'build', 'lib'),
-        #     models_dir_path=os.path.join('.', 'models'),
-        #     simulator_name=f'analyzer_{i}'
-        # )
-        #
-        # await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
-        #
-        # await asyncio.sleep(5)
-        #
-        # analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
-        #
-        # await asyncio.sleep(2)
+        analyzer_supervisor = CollisionSimSupervisor(
+            world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
+            simulator_cmd="gzserver",
+            simulator_args=["--verbose"],
+            plugins_dir_path=os.path.join('.', 'build', 'lib'),
+            models_dir_path=os.path.join('.', 'models'),
+            simulator_name=f'analyzer_{i}'
+        )
+
+        await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
+
+        await asyncio.sleep(5)
+
+        analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
+
+        await asyncio.sleep(2)
 
     return True
 
@@ -252,21 +252,33 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         robot.update_substrate()
         robot.measure_phenotype()
 
+        if analyzer_connection:
+            try:
+                collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
+            except asyncio.TimeoutError:
+                await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
+                return (None, None)
+
+            if collisions > 0:
+                logger.info(f"discarding robot {robot.id} because there are {collisions} self collisions")
+                return (None, None)
+
         # Convert to sdf for cpp (nice_format:None)
         SDF = revolve_bot_to_sdf(robot, Vector3(0, 0, settings.z_start), None)
 
         logger.info(f"Succesfully made SDF of robot {robot.id} and sending it to celery.")
+
         # Send robot to cpp queue
-        robot_manager = await insert_robot.apply_async((str(SDF),), serializer="json")
+        robot_manager = await insert_robot.apply_async((str(SDF), max_age), serializer="json")
 
         logger.info(f"Waiting for result of {robot.id}")
-        
+
         # await the simulation results and fitness.
-        robot_fitness = await robot_manager.get()
+        robot_data = await robot_manager.get()
 
-        logger.info(f'fitness is {robot_fitness}')
+        logger.info(f'fitness is {robot_data[0]} and movement data {robot_data[1]}')
 
-        return (robot_fitness, None)
+        return (robot_data[0], None)
 
     except SoftTimeLimitExceeded:
         _restart_simulator(settings, connection, simulator_supervisor, "simulator")
@@ -289,7 +301,7 @@ async def shutdown_gazebo():
         return True
 
 @app.task(queue="cpp", task_serializer='json', result_serializer = 'json')
-async def insert_robot(name):
+async def insert_robot(sdf_string, evaluation_time=120):
     print("This will be handled by c++ part in worldcontroller.")
 
 @app.task(queue="cpp", task_serializer='json', result_serializer = 'json')

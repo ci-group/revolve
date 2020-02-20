@@ -8,7 +8,49 @@ body:
     green: 1
     red: 1
   children:
+    0:
+      id: '9'
+      type: FixedBrick
+      orientation: 0
+      params:
+        blue: 1
+        green: 0
+        red: 0
     1:
+      id: '8'
+      type: ActiveHinge
+      orientation: 90
+      params:
+        blue: 0
+        green: 0
+        red: 0.7
+      children:
+        1:
+          id: '10'
+          type: ActiveHinge
+          orientation: 0
+          params:
+            blue: 0
+            green: 0
+            red: 0.7
+          children:
+            1:
+              id: '11'
+              type: ActiveHinge
+              orientation: 0
+              params:
+                blue: 0
+                green: 0
+                red: 0.7
+    2:
+      id: 1s2
+      type: TouchSensor
+      orientation: 0
+      params:
+        blue: 0.7
+        green: 0.7
+        red: 0.7
+    3:
       id: '2'
       type: FixedBrick
       orientation: 0
@@ -17,35 +59,105 @@ body:
         green: 0
         red: 0
       children:
+        1:
+          id: '6'
+          type: ActiveHinge
+          orientation: 90
+          params:
+            blue: 0
+            green: 0
+            red: 0.7
         2:
-          id: 2s2
-          type: TouchSensor
+          id: '3'
+          type: ActiveHinge
+          orientation: 90
+          params:
+            blue: 0
+            green: 0
+            red: 0.7
+          children:
+            1:
+              id: '7'
+              type: ActiveHinge
+              orientation: 0
+              params:
+                blue: 0
+                green: 0
+                red: 0.7
+        3:
+          id: '4'
+          type: ActiveHinge
           orientation: 0
           params:
-            blue: 0.7
-            green: 0.7
-            red: 0.7
-    3:
-      id: 1s3
-      type: TouchSensor
-      orientation: 0
-      params:
-        blue: 0.7
-        green: 0.7
-        red: 0.7
+            blue: 0.58
+            green: 0.08
+            red: 1
+          children:
+            1:
+              id: '5'
+              type: FixedBrick
+              orientation: 0
+              params:
+                blue: 1
+                green: 0
+                red: 0
+              children:
+                1:
+                  id: 5s1
+                  type: TouchSensor
+                  orientation: 0
+                  params:
+                    blue: 0.7
+                    green: 0.7
+                    red: 0.7
 brain:
   type: neural-network
   neurons:
     node1:
       id: node1
       layer: input
-      part_id: 1s3
+      part_id: 1s2
       type: Input
     node2:
       id: node2
+      layer: output
+      part_id: '3'
+      type: Oscillator
+    node3:
+      id: node3
+      layer: output
+      part_id: '4'
+      type: Oscillator
+    node4:
+      id: node4
       layer: input
-      part_id: 2s2
+      part_id: 5s1
       type: Input
+    node5:
+      id: node5
+      layer: output
+      part_id: '6'
+      type: Oscillator
+    node6:
+      id: node6
+      layer: output
+      part_id: '7'
+      type: Oscillator
+    node7:
+      id: node7
+      layer: output
+      part_id: '8'
+      type: Oscillator
+    node8:
+      id: node8
+      layer: output
+      part_id: '10'
+      type: Oscillator
+    node9:
+      id: node9
+      layer: output
+      part_id: '11'
+      type: Oscillator
     node-core1:
       id: node-core1
       layer: input
@@ -76,4 +188,57 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  params: {}
+  connections:
+  - dst: node2
+    src: node1
+    weight: 1
+  - dst: node3
+    src: node1
+    weight: -1
+  - dst: node2
+    src: node4
+    weight: 1
+  - dst: node5
+    src: node1
+    weight: 0.1110152337324033
+  - dst: node6
+    src: node1
+    weight: -0.8345033423702342
+  - dst: node7
+    src: node1
+    weight: 0.1110152337324033
+  - dst: node8
+    src: node1
+    weight: 0.1110152337324033
+  - dst: node9
+    src: node1
+    weight: -0.40245364267940986
+  params:
+    node2:
+      amplitude: 1.4397422547540824
+      period: 7.362903721428471
+      phase_offset: 9.699679891082614
+    node3:
+      amplitude: 2.9898672983832983
+      period: 1.6935899703570763
+      phase_offset: 8.56653647555469
+    node5:
+      amplitude: 5.240634062553584
+      period: 6.7623006630944245
+      phase_offset: 5.985208979968859
+    node6:
+      amplitude: 3.638762734132004
+      period: 3.2263579044185198
+      phase_offset: 4.118915171077386
+    node7:
+      amplitude: 5.240634062553584
+      period: 6.7623006630944245
+      phase_offset: 5.985208979968859
+    node8:
+      amplitude: 5.240634062553584
+      period: 6.7623006630944245
+      phase_offset: 5.985208979968859
+    node9:
+      amplitude: 1.2883274331245413
+      period: 2.8108036465585498
+      phase_offset: 8.76601754041031

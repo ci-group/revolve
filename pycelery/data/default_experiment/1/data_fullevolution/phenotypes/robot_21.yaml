@@ -10,59 +10,34 @@ body:
   children:
     2:
       id: '2'
-      type: FixedBrick
-      orientation: 0
+      type: ActiveHinge
+      orientation: 90
       params:
-        blue: 1
+        blue: 0
         green: 0
-        red: 0
+        red: 0.7
       children:
         1:
           id: '3'
-          type: FixedBrick
-          orientation: 0
+          type: ActiveHinge
+          orientation: 270
           params:
-            blue: 1
-            green: 0
-            red: 0
-          children:
-            3:
-              id: '4'
-              type: FixedBrick
-              orientation: 0
-              params:
-                blue: 1
-                green: 0
-                red: 0
-              children:
-                1:
-                  id: '7'
-                  type: FixedBrick
-                  orientation: 0
-                  params:
-                    blue: 1
-                    green: 0
-                    red: 0
-                3:
-                  id: '5'
-                  type: FixedBrick
-                  orientation: 0
-                  params:
-                    blue: 1
-                    green: 0
-                    red: 0
-                  children:
-                    1:
-                      id: '6'
-                      type: FixedBrick
-                      orientation: 0
-                      params:
-                        blue: 1
-                        green: 0
-                        red: 0
+            blue: 0.58
+            green: 0.08
+            red: 1
 brain:
   type: neural-network
   neurons:
+    node1:
+      id: node1
+      layer: output
+      part_id: '2'
+      type: Oscillator
+    node2:
+      id: node2
+      layer: output
+      part_id: '3'
+      type: Oscillator
     node-core1:
       id: node-core1
       layer: input
@@ -93,4 +68,12 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  params: {}
+  params:
+    node1:
+      amplitude: 6.718339082836434
+      period: 2.000900851694874
+      phase_offset: 10
+    node2:
+      amplitude: 4.528497924902688
+      period: 1.2231546993525242
+      phase_offset: 7.885531698949356

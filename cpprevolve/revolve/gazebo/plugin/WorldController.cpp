@@ -131,41 +131,46 @@ void WorldController::Load(
   // std::string reply_queue_name =
   //   this->celeryChannel->DeclareQueue("", false, true, false, false);
 
-  // THIS PART IS USED TO CONSUME THE STARTUP MESSAGE!
-  this->envelope = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
-  this->celeryChannel->BasicAck(this->envelope);
+  // Weither simulator is busy or not
+  this->running = false;
 
-  auto message = this->envelope->Message();
-  auto body = message->Body();
-  this->root.clear();
+  // THIS PART IS USED TO CONSUME THE STARTUP MESSAGE (if there is one)!
+  auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope, 100);
+  if (message_delivered){
+    this->celeryChannel->BasicAck(this->envelope);
 
-  auto parsingSuccessful = this->reader.parse( body, this->root );
-  if ( !parsingSuccessful )
-  {
-      // report to the user the failure and their locations in the document.
-      std::cout  << "Failed to parse configuration\n"
-                 << reader.getFormattedErrorMessages();
-      return;
+    auto message = this->envelope->Message();
+    auto body = message->Body();
+    this->root.clear();
+
+    auto parsingSuccessful = this->reader.parse( body, this->root );
+    if ( !parsingSuccessful )
+    {
+        // report to the user the failure and their locations in the document.
+        std::cout  << "Failed to parse configuration\n"
+                   << reader.getFormattedErrorMessages();
+        return;
+    }
+    auto name = root[0][0];
+    std::cout << name.asString() << std::endl;
+
+    // clear the last message and make a new one.
+    this->rootmsg.clear();
+    this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
+    this->rootmsg["status"] = "SUCCESS";
+    this->rootmsg["result"] = "Succesfully started cpp celery queue!";
+
+    std::string output = this->fastWriter.write(this->rootmsg);
+
+    // send result trough celery!
+    auto MESSAGE = AmqpClient::BasicMessage::Create(output);
+    MESSAGE->ContentType("application/json");
+    MESSAGE->ContentEncoding("utf-8");
+    MESSAGE->ReplyTo(this->envelope->Message()->ReplyTo());
+    MESSAGE->CorrelationId(this->envelope->Message()->CorrelationId());
+
+    this->celeryChannel->BasicPublish("", MESSAGE->ReplyTo(), MESSAGE);
   }
-  auto name = root[0][0];
-  std::cout << name.asString() << std::endl;
-
-  // clear the last message and make a new one.
-  this->rootmsg.clear();
-  this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
-  this->rootmsg["status"] = "SUCCESS";
-  this->rootmsg["result"] = "Succesfully started cpp celery queue!";
-
-  std::string output = this->fastWriter.write(this->rootmsg);
-
-  // send result trough celery!
-  auto MESSAGE = AmqpClient::BasicMessage::Create(output);
-  MESSAGE->ContentType("application/json");
-  MESSAGE->ContentEncoding("utf-8");
-  MESSAGE->ReplyTo(this->envelope->Message()->ReplyTo());
-  MESSAGE->CorrelationId(this->envelope->Message()->CorrelationId());
-
-  this->celeryChannel->BasicPublish("", MESSAGE->ReplyTo(), MESSAGE);
 }
 
 void WorldController::Reset()
@@ -179,53 +184,6 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         return;
     }
 
-    // receive a celery task or wait until there is one
-    auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope, 1000);
-    if (!message_delivered){
-      std::cout << "No message delivered" << std::endl;
-      return;
-    }
-    std::cout << "Celery message Acknowlegded.  " << std::endl;
-    auto message = this->envelope->Message();
-    auto body = message->Body();
-
-    bool parsingSuccessful = this->reader.parse( message->Body(), this->root );
-    if ( !parsingSuccessful )
-    {
-        // report to the user the failure and their locations in the document.
-        std::cout  << "Failed to parse configuration\n"
-                   << reader.getFormattedErrorMessages();
-        return;
-    }
-
-
-    auto sdf_string = root[0][0];
-    std::cout << "Processing robot" << std::endl;
-
-    this->rootmsg.clear();
-    this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
-    this->rootmsg["status"] = "SUCCESS";
-    this->rootmsg["result"][0] = 1; // fitness return
-    this->rootmsg["result"][1] = "NULL"; // Here we would like to return all behavioural movement
-
-    std::string output = this->fastWriter.write(rootmsg);
-
-    std::cout << "Creating message for celery .... " << std::endl;
-    auto MESSAGE = AmqpClient::BasicMessage::Create(output);
-    MESSAGE->ContentType("application/json");
-    MESSAGE->ContentEncoding("utf-8");
-    MESSAGE->ReplyTo(this->envelope->Message()->ReplyTo());
-    MESSAGE->CorrelationId(this->envelope->Message()->CorrelationId());
-
-    MESSAGE->HeaderTable({
-      {"id", this->envelope->Message()->CorrelationId()},
-      {"task", "tasks.insert_robot"}
-    });
-
-    this->celeryChannel->BasicPublish("", MESSAGE->ReplyTo(), MESSAGE);
-
-    this->celeryChannel->BasicAck(this->envelope);
-    
     auto secs = 1.0 / this->robotStatesPubFreq_;
     auto time = _info.simTime.Double();
     if ((time - this->lastRobotStatesUpdateTime_) >= secs) {
@@ -303,6 +261,31 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         gz::transport::requestNoReply(this->world_->Name(), "entity_delete", model->GetScopedName());
         std::cout << "Removed " << model->GetScopedName() << std::endl;
 
+        std::cout << "Send results to celery" << model->GetScopedName() << std::endl;
+
+        this->rootmsg.clear();
+        this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
+        this->rootmsg["status"] = "SUCCESS";
+        this->rootmsg["result"][0] = 1; // fitness return
+        this->rootmsg["result"][1] = "NULL"; // Here we would like to return all behavioural movement
+
+        std::string output = this->fastWriter.write(rootmsg);
+
+        std::cout << "Creating message for celery .... " << std::endl;
+        auto MESSAGE = AmqpClient::BasicMessage::Create(output);
+        MESSAGE->ContentType("application/json");
+        MESSAGE->ContentEncoding("utf-8");
+        MESSAGE->ReplyTo(this->envelope->Message()->ReplyTo());
+        MESSAGE->CorrelationId(this->envelope->Message()->CorrelationId());
+
+        MESSAGE->HeaderTable({
+          {"id", this->envelope->Message()->CorrelationId()},
+          {"task", "tasks.insert_robot"}
+        });
+
+        this->celeryChannel->BasicPublish("", MESSAGE->ReplyTo(), MESSAGE);
+
+        this->running = false;
       }
       this->models_to_remove.clear();
       //        this->world_insert_remove_mutex.unlock();
@@ -312,49 +295,94 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 
 void WorldController::OnEndUpdate()
 {
-    { // check if there are robots to delete
-        std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot;
-        {
-            boost::mutex::scoped_lock lock(this->deleteMutex_);
-            if (not this->delete_robot_queue.empty()) {
-                delete_robot = this->delete_robot_queue.front();
-                this->delete_robot_queue.pop();
-            }
-        }
-        auto model = std::get<0>(delete_robot);
-        auto request_id = std::get<1>(delete_robot);
-        if (model)
-        {
-            {
-//                boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
-                this->world_->RemoveModel(model);
-            }
-
-            gz::msgs::Response resp;
-            resp.set_id(request_id);
-            resp.set_request("delete_robot");
-            resp.set_response("success");
-            this->responsePub_->Publish(resp);
-        }
-    }
+//     { // check if there are robots to delete
+//         std::tuple< ::gazebo::physics::ModelPtr, int> delete_robot;
+//         {
+//             boost::mutex::scoped_lock lock(this->deleteMutex_);
+//             if (not this->delete_robot_queue.empty()) {
+//                 delete_robot = this->delete_robot_queue.front();
+//                 this->delete_robot_queue.pop();
+//             }
+//         }
+//         auto model = std::get<0>(delete_robot);
+//         auto request_id = std::get<1>(delete_robot);
+//         if (model)
+//         {
+//             {
+// //                boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+//                 this->world_->RemoveModel(model);
+//             }
+//
+//             gz::msgs::Response resp;
+//             resp.set_id(request_id);
+//             resp.set_request("delete_robot");
+//             resp.set_response("success");
+//             this->responsePub_->Publish(resp);
+//         }
+//     }
 
     { // check if there are robots to insert
-        boost::mutex::scoped_lock lock(this->insertMutex_);
-        for (auto &iterator: this->insertMap_)
-        {
-            bool &insert_operation_pending = std::get<2>(iterator.second);
-            //std::cout << "trying to insert " << iterator.first << " - " << insert_operation_pending << std::endl;
-//            if (insert_operation_pending and this->world_insert_remove_mutex.try_lock())
-            if (insert_operation_pending)
-            {
-                // Start insert operation!
-//                boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
-                const std::string &robotSDF = std::get<1>(iterator.second);
-                this->world_->InsertModelString(robotSDF);
-                insert_operation_pending = false;
-                break;
-            }
+        // celery part of inserting robot (waits for robot)
+        if (not this->running){
+          auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope, 1000);
+          if (!message_delivered){
+            std::cout << "No message delivered" << std::endl;
+            return;
+          }
+          std::cout << "Celery message received. Reading SDF string " << std::endl;
+          auto message = this->envelope->Message();
+          auto body = message->Body();
+
+          bool parsingSuccessful = this->reader.parse( message->Body(), this->root );
+          if ( !parsingSuccessful )
+          {
+              // report to the user the failure and their locations in the document.
+              std::cout  << "Failed to parse configuration\n"
+                         << reader.getFormattedErrorMessages();
+              return;
+          }
+          this->celeryChannel->BasicAck(this->envelope);
+
+          auto sdfString = this->root[0][0];
+          auto lifespan_timeout = this->root[0][1];
+          std::cout << "Lifespan is " << lifespan_timeout.asString() << std::endl;
+          sdf::SDF robotSDF;
+          robotSDF.SetFromString(sdfString.asString());
+
+          std::cout << "Inserting robot into world." << std::endl;
+
+          auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
+                              ->GetAsString();
+
+          death_sentences_[name] = -lifespan_timeout.asDouble();
+          std::cout << death_sentences_[name] << std::endl;
+
+          this->world_->InsertModelString(robotSDF.ToString());
+
+          // against memory leaking
+          robotSDF.Root()->Reset();
+
+          this->running = true;
         }
+
+
+        // old revolve to insert robot
+//         boost::mutex::scoped_lock lock(this->insertMutex_);
+//         for (auto &iterator: this->insertMap_)
+//         {
+//             bool &insert_operation_pending = std::get<2>(iterator.second);
+//             //std::cout << "trying to insert " << iterator.first << " - " << insert_operation_pending << std::endl;
+// //            if (insert_operation_pending and this->world_insert_remove_mutex.try_lock())
+//             if (insert_operation_pending)
+//             {
+//                 // Start insert operation!
+// //                boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+//                 const std::string &robotSDF = std::get<1>(iterator.second);
+//                 this->world_->InsertModelString(robotSDF);
+//                 insert_operation_pending = false;
+//                 break;
+//             }
+//         }
     }
 }
 

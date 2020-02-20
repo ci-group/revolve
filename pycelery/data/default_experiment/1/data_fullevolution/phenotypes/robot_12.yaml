@@ -11,29 +11,29 @@ body:
     2:
       id: '2'
       type: ActiveHinge
-      orientation: 0
+      orientation: 90
       params:
-        blue: 0.58
-        green: 0.08
-        red: 1
+        blue: 0
+        green: 0
+        red: 0.7
       children:
         1:
           id: '3'
           type: ActiveHinge
           orientation: 0
           params:
-            blue: 0.58
-            green: 0.08
-            red: 1
+            blue: 0
+            green: 0
+            red: 0.7
           children:
             1:
               id: '4'
               type: ActiveHinge
               orientation: 0
               params:
-                blue: 0.58
-                green: 0.08
-                red: 1
+                blue: 0
+                green: 0
+                red: 0.7
 brain:
   type: neural-network
   neurons:
@@ -84,14 +84,14 @@ brain:
       type: Input
   params:
     node1:
-      amplitude: 8.887428585082343
-      period: 1.457313716786608
-      phase_offset: 6.486019510946346
+      amplitude: 6.718339082836434
+      period: 1
+      phase_offset: 9.169761148416308
     node2:
-      amplitude: 8.74041025800871
-      period: 6.36365861108488
-      phase_offset: 6.5475812374346525
+      amplitude: 6.172364285383191
+      period: 1
+      phase_offset: 3.9315030280326417
     node3:
-      amplitude: 8.74041025800871
-      period: 6.36365861108488
-      phase_offset: 6.264102296212133
+      amplitude: 6.172364285383191
+      period: 2.0955419995436895
+      phase_offset: 3.9315030280326417

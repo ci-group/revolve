@@ -51,7 +51,7 @@ class CeleryController:
         This functions starts N_CORES number of gazebo instances.
         Every worker owns one gazebo instance.
         """
-        start_cpp_queue = await start_robot_queue.apply_async(("Start simulator celery queue.",), serializer="json")
+        start_cpp = await start_robot_queue.apply_async(("Start cpp celery queue.",), serializer="json")
 
         gws = []
         grs = []
@@ -59,11 +59,10 @@ class CeleryController:
             gw = await run_gazebo_and_analyzer.delay(self.settingsDir, i)
             gws.append(gw)
 
-        print(await start_cpp_queue.get())
-
-        # Testing the last gw.
         for j in range(self.settings.n_cores):
             await gws[j].get()
+
+        await start_cpp.get()
 
     async def test_robot(self, robot, conf):
         """
@@ -73,13 +72,13 @@ class CeleryController:
         """
 
         # Create a yaml text from robot
-        # yaml_bot = robot.phenotype.to_yaml()
+        yaml_bot = robot.phenotype.to_yaml()
 
-        # future = await evaluate_robot_test.delay(yaml_bot, conf.fitness_function, self.settingsDir)
+        future = await evaluate_robot_test.delay(yaml_bot, conf.fitness_function, self.settingsDir)
 
-        SDF = revolve_bot_to_sdf(robot.phenotype, Vector3(0, 0, self.settings.z_start), None)
-        #
-        future = await insert_robot.apply_async((str(SDF),), serializer="json")
+        # SDF = revolve_bot_to_sdf(robot.phenotype, Vector3(0, 0, self.settings.z_start), None)
+        # #
+        # future = await insert_robot.apply_async((str(SDF), 120), serializer="json")
 
         # return the future
         return future
