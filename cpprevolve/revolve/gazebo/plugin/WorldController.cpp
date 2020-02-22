@@ -116,7 +116,9 @@ void WorldController::Load(
   this->robotStatesPub_ = this->node_->Advertise< revolve::msgs::RobotStates >(
       "~/revolve/robot_states", 500);
 
-  // Consumer celery channel
+
+
+  // FROM HERE EVERYTHING WILL BE CELERY RELATED -Sam Ferwerda
   this->celeryChannel = AmqpClient::Channel::Create("localhost", 5672);
 
   // Consumer tag
@@ -128,8 +130,6 @@ void WorldController::Load(
   /*exclusive*/false,
   /*message_prefetch_count*/1
   );
-  // std::string reply_queue_name =
-  //   this->celeryChannel->DeclareQueue("", false, true, false, false);
 
   // Weither simulator is busy or not
   this->running = false;
@@ -190,7 +190,9 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
       // Send robot info update message, this only sends the
       // main pose of the robot (which is all we need for now)
       msgs::RobotStates msg;
-      gz::msgs::Set(msg.mutable_time(), _info.simTime);
+      //gz::msgs::Set(msg.mutable_time(), _info.simTime);
+
+      this->rootmsg["result"][1]["times"].append(_info.simTime.Double());
 
       {
         boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
@@ -201,14 +203,22 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
           }
 
           revolve::msgs::RobotState *stateMsg = msg.add_robot_state();
-          const std::string scoped_name = model->GetScopedName();
-          stateMsg->set_name(scoped_name);
-          stateMsg->set_id(model->GetId());
+          //const std::string scoped_name = model->GetScopedName();
+          //stateMsg->set_name(scoped_name);
+          //stateMsg->set_id(model->GetId());
 
-          auto poseMsg = stateMsg->mutable_pose();
+          //auto poseMsg = stateMsg->mutable_pose();
           auto relativePose = model->RelativePose();
 
-          gz::msgs::Set(poseMsg, relativePose);
+          //gz::msgs::Set(poseMsg, relativePose);
+
+          // Update relative position in JSON
+          this->rootmsg["result"][1]["x"].append(relativePose.Pos().X());
+          this->rootmsg["result"][1]["y"].append(relativePose.Pos().Y());
+          this->rootmsg["result"][1]["z"].append(relativePose.Pos().Z());
+          this->rootmsg["result"][1]["roll"].append(relativePose.Rot().Roll());
+          this->rootmsg["result"][1]["pitch"].append(relativePose.Rot().Pitch());
+          this->rootmsg["result"][1]["yaw"].append(relativePose.Rot().Yaw());
 
           // Death sentence check
           const std::string name = model->GetName();
@@ -225,10 +235,10 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
             if (death_sentence_value < 0) {
               // Initialize death sentence
               death_sentences_[name] = time - death_sentence_value;
-              stateMsg->set_dead(false);
+              // stateMsg->set_dead(false);
             } else {
               bool alive = death_sentence_value > time;
-              stateMsg->set_dead(not alive);
+              // stateMsg->set_dead(not alive);
 
               if (not alive) {
                 boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
@@ -242,7 +252,7 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
       }
 
       if (msg.robot_state_size() > 0) {
-        this->robotStatesPub_->Publish(msg);
+        //this->robotStatesPub_->Publish(msg);
         this->lastRobotStatesUpdateTime_ = time;
       }
     }
@@ -263,13 +273,11 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 
         std::cout << "Send results to celery" << model->GetScopedName() << std::endl;
 
-        this->rootmsg.clear();
         this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
         this->rootmsg["status"] = "SUCCESS";
-        this->rootmsg["result"][0] = 1; // fitness return
-        this->rootmsg["result"][1] = "NULL"; // Here we would like to return all behavioural movement
+        this->rootmsg["result"][0] = 1.0; // fitness return
 
-        std::string output = this->fastWriter.write(rootmsg);
+        std::string output = this->fastWriter.write(this->rootmsg);
 
         std::cout << "Creating message for celery .... " << std::endl;
         auto MESSAGE = AmqpClient::BasicMessage::Create(output);
@@ -351,11 +359,22 @@ void WorldController::OnEndUpdate()
 
           std::cout << "Inserting robot into world." << std::endl;
 
+          // resetting last message
+          this->rootmsg.clear();
+
+          // The skeleton for the movement values
+          this->rootmsg["result"][1]["x"] = Json::arrayValue;
+          this->rootmsg["result"][1]["y"] = Json::arrayValue;
+          this->rootmsg["result"][1]["z"] = Json::arrayValue;
+          this->rootmsg["result"][1]["roll"] = Json::arrayValue;
+          this->rootmsg["result"][1]["pitch"] = Json::arrayValue;
+          this->rootmsg["result"][1]["yaw"] = Json::arrayValue;
+          this->rootmsg["result"][1]["times"] = Json::arrayValue;
+
           auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
                               ->GetAsString();
 
           death_sentences_[name] = -lifespan_timeout.asDouble();
-          std::cout << death_sentences_[name] << std::endl;
 
           this->world_->InsertModelString(robotSDF.ToString());
 

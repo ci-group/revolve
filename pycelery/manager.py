@@ -31,12 +31,12 @@ async def run():
 
     celerycontroller = CeleryController(settings) # Starting celery
 
-    await asyncio.sleep(2) # Celery needs time
+    await asyncio.sleep(5) # Celery needs time
 
     # experiment params #
-    num_generations = 2
-    population_size = 20
-    offspring_size = 10
+    num_generations = 5
+    population_size = 100
+    offspring_size = 50
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,

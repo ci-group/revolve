@@ -6,17 +6,24 @@ import math
 import sys
 
 
-class BehaviouralMeasurements:
+class BehaviouralMeasurementsCelery:
     """
-        Calculates all the measurements and saves them in one object
+        Calculates all the measurements and saves them in one object, this class is looks similar
+        to the one in the pyrevolve folder. However, this one is used to convert JSON celery data to
+        actual behavioural measurements.
     """
     def __init__(self, robot_manager = None, robot = None):
         """
-        :param robot_manager: Revolve Manager that holds the life of the robot
+        :param robot_manager: Should be a json result from celery containing displacement data
         :param robot: Revolve Bot for measurements relative to the robot morphology and brain
         :type robot: RevolveBot
         """
         if robot_manager is not None and robot is not None:
+            robot_manager["time"] = float(robot_manager["times"][-1] - robot_manager["times"][0])
+            robot_manager["displacement_vector"] = Vector3(robot_manager["x"][-1], robot_manager["y"][-1], robot_manager["z"][-1]) - Vector3(robot_manager["x"][0], robot_manager["y"][0], robot_manager["z"][0])
+            robot_manager["dist"] = float(robot_manager["displacement_vector"].magnitude())
+            robot_manager["contacts"] = []
+
             self.velocity = velocity(robot_manager)
             self.displacement = displacement(robot_manager)
             self.displacement_velocity = displacement_velocity(robot_manager)
@@ -47,9 +54,11 @@ class BehaviouralMeasurements:
 def velocity(robot_manager):
     """
     Returns the velocity over the maintained window
+
+    _dist is currently just the last position minus the first position.
     :return:
     """
-    return robot_manager._dist / robot_manager._time if robot_manager._time > 0 else 0
+    return robot_manager["dist"] / robot_manager["time"] if robot_manager["time"] > 0 else 0
 
 
 def displacement(robot_manager):
@@ -61,16 +70,16 @@ def displacement(robot_manager):
              and the second a `Time` instance.
     :rtype: tuple(Vector3, Time)
     """
-    if len(robot_manager._positions) == 0:
+    if len(robot_manager["x"]) == 0:
         return Vector3(0, 0, 0), Time()
     return (
-        robot_manager._positions[-1] - robot_manager._positions[0],
-        robot_manager._times[-1] - robot_manager._times[0]
+        robot_manager["displacement_vector"],
+        robot_manager["time"]
     )
 
 
 def path_length(robot_manager):
-    return robot_manager._dist
+    return robot_manager["dist"]
 
 
 def displacement_velocity(robot_manager):
@@ -82,14 +91,14 @@ def displacement_velocity(robot_manager):
     :return:
     """
     dist, time = displacement(robot_manager)
-    if time.is_zero():
+    if float(time) == 0:
         return 0.0
     return np.sqrt(dist.x ** 2 + dist.y ** 2) / float(time)
 
 
 def displacement_velocity_hill(robot_manager):
     dist, time = displacement(robot_manager)
-    if time.is_zero():
+    if float(time) == 0:
         return 0.0
     return dist.y / float(time)
 
@@ -101,10 +110,10 @@ def head_balance(robot_manager):
     """
     roll = 0
     pitch = 0
-    instants = len(robot_manager._orientations)
-    for o in robot_manager._orientations:
-        roll = roll + abs(o[0]) * 180 / math.pi
-        pitch = pitch + abs(o[1]) * 180 / math.pi
+    instants = len(robot_manager["roll"])
+    for i in range(instants):
+        roll = roll + abs(robot_manager["roll"][i]) * 180 / math.pi
+        pitch = pitch + abs(robot_manager["pitch"][i]) * 180 / math.pi
     #  accumulated angles for each type of rotation
     #  divided by iterations * maximum angle * each type of rotation
     if instants == 0:
@@ -128,7 +137,7 @@ def contacts(robot_manager, robot):
     :return: average number of contacts per block in the lifetime
     """
     avg_contacts = 0
-    for c in robot_manager._contacts:
+    for c in robot_manager["contacts"]:
         avg_contacts += c
 
     avg_contacts = avg_contacts / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']

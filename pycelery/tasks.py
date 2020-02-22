@@ -14,8 +14,10 @@ from pyrevolve.SDF.revolve_bot_sdf_builder import revolve_bot_to_sdf
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
-from pycelery.converter import args_to_dic, dic_to_args, args_default, pop_to_dic, dic_to_pop, measurements_to_dict
+from pycelery import measures as CeleryMeasures
+from pycelery.converter import args_to_dic, dic_to_args, args_default, pop_to_dic, dic_to_pop, measurements_to_dict, CeleryMeasures_to_dict
 from celery.app.control import Control
+from pyrevolve.evolution.individual import Individual
 
 """The unique variables per worker (!!!NONE OF THEM HAVE TO BE SET IN ADVANCE!!!)
     :variable connection: connection with a gazebo instance.
@@ -76,7 +78,7 @@ async def run_gazebo(settingsDir, i):
             # Connect to the simulator and pause
             connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start+i))
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
 
 
     return True
@@ -237,12 +239,20 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
         _restart_simulator(settings, connection, simulator_supervisor, "simulator")
         return (None, None)
 
-@app.task(queue="robots", time_limit = 120)
+@app.task(queue="robots", time_limit=150)
 async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
+    global fitness_function
 
     try:
 
         EVALUATION_TIMEOUT = 30
+
+        # Set global fitness_function
+        if fitness_function == None:
+            function_string = 'pyrevolve.evolution.fitness.' + fitnessName
+            mod_name, func_name = function_string.rsplit('.',1)
+            mod = importlib.import_module(mod_name)
+            fitness_function = getattr(mod, fitnessName)
 
         settings = dic_to_args(settingsDir)
         max_age = settings.evaluation_time
@@ -266,19 +276,20 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         # Convert to sdf for cpp (nice_format:None)
         SDF = revolve_bot_to_sdf(robot, Vector3(0, 0, settings.z_start), None)
 
-        logger.info(f"Succesfully made SDF of robot {robot.id} and sending it to celery.")
-
         # Send robot to cpp queue
         robot_manager = await insert_robot.apply_async((str(SDF), max_age), serializer="json")
-
-        logger.info(f"Waiting for result of {robot.id}")
 
         # await the simulation results and fitness.
         robot_data = await robot_manager.get()
 
-        logger.info(f'fitness is {robot_data[0]} and movement data {robot_data[1]}')
+        # Converting the JSON measurements to real measurements
+        individual = Individual("no genotype needed", robot) # just a shell for phenotype
+        measurements = CeleryMeasures.BehaviouralMeasurementsCelery(robot_data[1], individual)
+        robot_fitness = fitness_function(measurements, robot)
 
-        return (robot_data[0], None)
+        measurementsDic = CeleryMeasures_to_dict(measurements)
+
+        return (robot_fitness, measurementsDic)
 
     except SoftTimeLimitExceeded:
         _restart_simulator(settings, connection, simulator_supervisor, "simulator")

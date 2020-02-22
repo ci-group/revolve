@@ -58,3 +58,15 @@ runtime: 50.95568799972534 on 1 cores
 runtime: 53.32477378845215 on 1 cores
 runtime: 62.61030888557434 on 2 cores
 runtime: 52.04319214820862 on 2 cores
+runtime: 67.69674372673035 on 2 cores
+runtime: 45.74751543998718 on 2 cores
+runtime: 38.27990174293518 on 2 cores
+runtime: 42.4318470954895 on 2 cores
+runtime: 40.19240641593933 on 2 cores
+runtime: 52.84250020980835 on 2 cores
+runtime: 44.15158128738403 on 2 cores
+runtime: 56.692625522613525 on 2 cores
+runtime: 36.41211199760437 on 2 cores
+runtime: 403.95793437957764 on 4 cores
+runtime: 506.94862270355225 on 2 cores
+runtime: 367.445111989975 on 6 cores
