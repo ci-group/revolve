@@ -242,7 +242,11 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
 @app.task(queue="robots", time_limit=150)
 async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
     global fitness_function
-
+    global connection
+    global analyzer_connection
+    global simulator_supervisor
+    global analyzer_supervisor
+    
     try:
 
         EVALUATION_TIMEOUT = 30
@@ -257,6 +261,7 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         settings = dic_to_args(settingsDir)
         max_age = settings.evaluation_time
 
+        # Read robot from ymal
         robot = revolve_bot.RevolveBot()
         robot.load_yaml(yaml_object)
         robot.update_substrate()
@@ -292,8 +297,7 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         return (robot_fitness, measurementsDic)
 
     except SoftTimeLimitExceeded:
-        _restart_simulator(settings, connection, simulator_supervisor, "simulator")
-        return (None, None)
+        pass
 
 @app.task
 async def shutdown_gazebo():
