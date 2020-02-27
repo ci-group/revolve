@@ -140,7 +140,7 @@ class Population:
 
         return individual
 
-    async def load_snapshot(self, gen_num):
+    async def load_snapshot(self, gen_num: int):
         """
         Recovers all genotypes and fitnesses of robots in the lastest selected population
         :param gen_num: number of the generation snapshot to recover
@@ -171,10 +171,12 @@ class Population:
         self.next_robot_id = next_robot_id
         return individuals
 
-    async def init_pop(self, recovered_individuals=[]):
+    async def init_pop(self, recovered_individuals=None):
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
+        recovered_individuals = [] if recovered_individuals is None else recovered_individuals
+
         for i in range(self.conf.population_size-len(recovered_individuals)):
             individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
             self.individuals.append(individual)
@@ -183,14 +185,15 @@ class Population:
         await self.evaluate(self.individuals, 0)
         self.individuals = recovered_individuals + self.individuals
 
-    async def next_gen(self, gen_num, recovered_individuals=[]):
+    async def next_gen(self, gen_num: int, recovered_individuals=None):
         """
         Creates next generation of the population through selection, mutation, crossover
 
         :param gen_num: generation number
-        :param individuals: recovered offspring
+        :param recovered_individuals: recovered offspring
         :return: new population
         """
+        recovered_individuals = [] if recovered_individuals is None else recovered_individuals
 
         new_individuals = []
 
@@ -231,7 +234,7 @@ class Population:
 
         return new_population
 
-    async def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve'):
+    async def evaluate(self, new_individuals, gen_num: int, type_simulation = 'evolve'):
         """
         Evaluates each individual in the new gen population
 

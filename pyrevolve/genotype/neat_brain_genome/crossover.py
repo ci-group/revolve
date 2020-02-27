@@ -7,6 +7,7 @@ class NEATCrossoverConf:
     def __init__(self):
         self.mate_average = True
         self.interspecies_crossover = True
+        self.speciation = True
 
 
 def standard_crossover(parents, NeatCrossoverConf, crossover_conf, lsystem_conf):
