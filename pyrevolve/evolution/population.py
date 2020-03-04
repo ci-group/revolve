@@ -252,7 +252,6 @@ class Population:
 
             if self.conf.celery: # ADDED THIS FOR CELERY -Sam
                 if future == (None, None): # If collisions > 0
-                    logger.info(f'Individual {individual.phenotype.id} had to many collisions')
                     individual.fitness, individual.phenotype._behavioural_measurements = None, None
                 else:
                     individual.fitness, measurements = await future.get()

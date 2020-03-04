@@ -246,7 +246,7 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
     global analyzer_connection
     global simulator_supervisor
     global analyzer_supervisor
-    
+
     try:
 
         EVALUATION_TIMEOUT = 30
@@ -287,6 +287,8 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         # await the simulation results and fitness.
         robot_data = await robot_manager.get()
 
+        print(robot_data)
+        
         # Converting the JSON measurements to real measurements
         individual = Individual("no genotype needed", robot) # just a shell for phenotype
         measurements = CeleryMeasures.BehaviouralMeasurementsCelery(robot_data[1], individual)

@@ -119,6 +119,12 @@ void WorldController::Load(
 
 
   // FROM HERE EVERYTHING WILL BE CELERY RELATED -Sam Ferwerda
+
+  // contactSub_ = this->node_->Subscribe(
+  //         "~/physics/contacts",
+  //         &WorldController::OnContacts,
+  //         this);
+
   this->celeryChannel = AmqpClient::Channel::Create("localhost", 5672);
 
   // Consumer tag
@@ -192,7 +198,9 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
       msgs::RobotStates msg;
       //gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
+      boost::mutex::scoped_lock plock(dataMutex_);
       this->rootmsg["result"][1]["times"].append(_info.simTime.Double());
+      plock.unlock();
 
       {
         boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
@@ -213,12 +221,14 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
           //gz::msgs::Set(poseMsg, relativePose);
 
           // Update relative position in JSON
+          boost::mutex::scoped_lock plock(dataMutex_);
           this->rootmsg["result"][1]["x"].append(relativePose.Pos().X());
           this->rootmsg["result"][1]["y"].append(relativePose.Pos().Y());
           this->rootmsg["result"][1]["z"].append(relativePose.Pos().Z());
           this->rootmsg["result"][1]["roll"].append(relativePose.Rot().Roll());
           this->rootmsg["result"][1]["pitch"].append(relativePose.Rot().Pitch());
           this->rootmsg["result"][1]["yaw"].append(relativePose.Rot().Yaw());
+          plock.unlock();
 
           // Death sentence check
           const std::string name = model->GetName();
@@ -273,11 +283,13 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 
         std::cout << "Send results to celery" << model->GetScopedName() << std::endl;
 
+        boost::mutex::scoped_lock plock(dataMutex_);
         this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
         this->rootmsg["status"] = "SUCCESS";
         this->rootmsg["result"][0] = 1.0; // fitness return
 
         std::string output = this->fastWriter.write(this->rootmsg);
+        plock.unlock();
 
         std::cout << "Creating message for celery .... " << std::endl;
         auto MESSAGE = AmqpClient::BasicMessage::Create(output);
@@ -359,10 +371,11 @@ void WorldController::OnEndUpdate()
 
           std::cout << "Inserting robot into world." << std::endl;
 
+
+          boost::mutex::scoped_lock plock(dataMutex_);
           // resetting last message
           this->rootmsg.clear();
-
-          // The skeleton for the movement values
+          // The skeleton for message
           this->rootmsg["result"][1]["x"] = Json::arrayValue;
           this->rootmsg["result"][1]["y"] = Json::arrayValue;
           this->rootmsg["result"][1]["z"] = Json::arrayValue;
@@ -370,6 +383,9 @@ void WorldController::OnEndUpdate()
           this->rootmsg["result"][1]["pitch"] = Json::arrayValue;
           this->rootmsg["result"][1]["yaw"] = Json::arrayValue;
           this->rootmsg["result"][1]["times"] = Json::arrayValue;
+          this->rootmsg["result"][1]["contacts"] = Json::arrayValue;
+
+          plock.unlock();
 
           auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
                               ->GetAsString();
@@ -503,7 +519,19 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     this->responsePub_->Publish(resp);
   }
 }
-
+/////////////////////////////////////////////////
+// void WorldController::OnContacts(ConstContactsPtr &msg){
+//   // Pause the world so no new contacts will come in
+//   this->world_->SetPaused(true);
+//
+//   boost::mutex::scoped_lock plock(dataMutex_);
+//
+//   std::cout << "This and lock works well" << std::endl;
+//
+//
+//   // this->rootmsg["result"][1]["contacts"].append(10);
+//   this->world_->SetPaused(false);
+// }
 /////////////////////////////////////////////////
 void WorldController::OnModel(ConstModelPtr &msg)
 {

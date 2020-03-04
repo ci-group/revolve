@@ -71,6 +71,8 @@ protected:
 
     virtual void OnEndUpdate();
 
+    // virtual void OnContacts(ConstContactsPtr &_msg);
+
     // Maps model names to insert request IDs
     // model_name -> request_id, SDF, insert_operation_pending
     std::map<std::string, std::tuple<int, std::string, bool> > insertMap_;
@@ -87,8 +89,17 @@ protected:
     // Mutex for the insertMap_
     boost::mutex insertMutex_;
 
+    // Mutex for message writing
+    boost::mutex dataMutex_;
+
     // Mutex for the deleteMap_
     boost::mutex deleteMutex_;
+
+    // request subscriber
+    ::gazebo::transport::SubscriberPtr contactSub_;
+
+    // request subscriber
+    ::gazebo::transport::PublisherPtr contactPub_;
 
     // Request subscriber
     ::gazebo::transport::SubscriberPtr requestSub_;
@@ -137,7 +148,7 @@ protected:
     AmqpClient::Envelope::ptr_t envelope;
 
     bool running;
-    
+
     Json::FastWriter fastWriter;
     Json::Value rootmsg;
     Json::Value root;   // will contains the root value after parsing.

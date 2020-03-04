@@ -15,7 +15,7 @@ runtime: 620.8201506137848 on 6 cores
 runtime: 673.6687700748444 on 6 cores
 runtime: 554.3278155326843 on 6 cores
 
-with n analyzer queues.
+with n analyzer queues. without cpp celery
 
 runtime: 782.8130211830139 on 2 cores
 runtime: 751.0461828708649 on 2 cores
@@ -37,36 +37,11 @@ runtime: 612.7942807674408 on 7 cores
 runtime: 611.8041517734528 on 7 cores
 runtime: 479.7140619754791 on 7 cores
 runtime: 557.7205626964569 on 7 cores
-runtime: 82.63228249549866 on 5 cores
-runtime: 77.8221263885498 on 5 cores
-runtime: 58.847506284713745 on 3 cores
-runtime: 95.38740611076355 on 3 cores
-runtime: 19.505406141281128 on 1 cores
-runtime: 20.351297616958618 on 1 cores
-runtime: 54.797685861587524 on 1 cores
-runtime: 57.55262804031372 on 1 cores
-runtime: 53.04594349861145 on 1 cores
-runtime: 22.677622079849243 on 1 cores
-runtime: 20.66908359527588 on 1 cores
-runtime: 25.01717734336853 on 1 cores
-runtime: 22.25588822364807 on 1 cores
-runtime: 24.348387479782104 on 1 cores
-runtime: 45.45508360862732 on 1 cores
-runtime: 67.39758324623108 on 1 cores
-runtime: 47.708641052246094 on 1 cores
-runtime: 50.95568799972534 on 1 cores
-runtime: 53.32477378845215 on 1 cores
-runtime: 62.61030888557434 on 2 cores
-runtime: 52.04319214820862 on 2 cores
-runtime: 67.69674372673035 on 2 cores
-runtime: 45.74751543998718 on 2 cores
-runtime: 38.27990174293518 on 2 cores
-runtime: 42.4318470954895 on 2 cores
-runtime: 40.19240641593933 on 2 cores
-runtime: 52.84250020980835 on 2 cores
-runtime: 44.15158128738403 on 2 cores
-runtime: 56.692625522613525 on 2 cores
-runtime: 36.41211199760437 on 2 cores
-runtime: 403.95793437957764 on 4 cores
-runtime: 506.94862270355225 on 2 cores
-runtime: 367.445111989975 on 6 cores
+
+with n analyzer queues and cpp celery
+
+
+runtime: 70.05060315132141 on 2 cores
+runtime: 52.16065716743469 on 2 cores
+runtime: 48.324859380722046 on 2 cores
+runtime: 60.72305178642273 on 2 cores
