@@ -133,22 +133,22 @@ async def run_gazebo_and_analyzer(settingsDir, i):
 
         await asyncio.sleep(2)
 
-        analyzer_supervisor = CollisionSimSupervisor(
-            world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
-            simulator_cmd="gzserver",
-            simulator_args=["--verbose"],
-            plugins_dir_path=os.path.join('.', 'build', 'lib'),
-            models_dir_path=os.path.join('.', 'models'),
-            simulator_name=f'analyzer_{i}'
-        )
-
-        await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
-
-        await asyncio.sleep(5)
-
-        analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
-
-        await asyncio.sleep(2)
+        # analyzer_supervisor = CollisionSimSupervisor(
+        #     world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
+        #     simulator_cmd="gzserver",
+        #     simulator_args=["--verbose"],
+        #     plugins_dir_path=os.path.join('.', 'build', 'lib'),
+        #     models_dir_path=os.path.join('.', 'models'),
+        #     simulator_name=f'analyzer_{i}'
+        # )
+        #
+        # await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
+        #
+        # await asyncio.sleep(5)
+        #
+        # analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
+        #
+        # await asyncio.sleep(2)
 
     return True
 
@@ -299,7 +299,8 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         return (robot_fitness, measurementsDic)
 
     except SoftTimeLimitExceeded:
-        pass
+        logger.info("WARNING: Celery time limit SoftTimeLimitExceeded.")
+        return (None, None)
 
 @app.task
 async def shutdown_gazebo():

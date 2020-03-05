@@ -24,10 +24,10 @@ app.conf.update(
     enable_utc = True,
     result_expires = 3600,
     include = 'pycelery.tasks',
-    worker_prefetch_multiplier = 10,
+    worker_prefetch_multiplier = 2, #contacts works aslong as multiplier x child < 8
     task_acks_late = True,
     task_default_queue = 'robots',
-    max_tasks_per_child = 10,
+    max_tasks_per_child = 2, #contacts worked with child = 1
     task_routes = ([
     ('pycelery.tasks.*', {'queue': 'robots'}),
     ('pycelery.tasks.hello', {'queue': 'celery'})],)

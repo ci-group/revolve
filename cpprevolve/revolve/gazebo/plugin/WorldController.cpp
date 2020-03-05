@@ -50,6 +50,7 @@ WorldController::~WorldController()
     unsubscribe(this->requestSub_);
     unsubscribe(this->responseSub_);
     unsubscribe(this->modelSub_);
+    unsubscribe(this->contactsSub_);
     fini(this->requestPub_);
     fini(this->responsePub_);
     fini(this->robotStatesPub_);
@@ -119,12 +120,6 @@ void WorldController::Load(
 
 
   // FROM HERE EVERYTHING WILL BE CELERY RELATED -Sam Ferwerda
-
-  // contactSub_ = this->node_->Subscribe(
-  //         "~/physics/contacts",
-  //         &WorldController::OnContacts,
-  //         this);
-
   this->celeryChannel = AmqpClient::Channel::Create("localhost", 5672);
 
   // Consumer tag
@@ -160,13 +155,15 @@ void WorldController::Load(
     auto name = root[0][0];
     std::cout << name.asString() << std::endl;
 
+    boost::mutex::scoped_lock plock(dataMutex_);
     // clear the last message and make a new one.
     this->rootmsg.clear();
     this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
     this->rootmsg["status"] = "SUCCESS";
-    this->rootmsg["result"] = "Succesfully started cpp celery queue!";
+    this->rootmsg["result"][0] = "Succesfully started cpp celery queue!";
 
     std::string output = this->fastWriter.write(this->rootmsg);
+    plock.unlock();
 
     // send result trough celery!
     auto MESSAGE = AmqpClient::BasicMessage::Create(output);
@@ -176,6 +173,12 @@ void WorldController::Load(
     MESSAGE->CorrelationId(this->envelope->Message()->CorrelationId());
 
     this->celeryChannel->BasicPublish("", MESSAGE->ReplyTo(), MESSAGE);
+
+    this->contactsSub_ = this->node_->Subscribe(
+            "~/physics/contacts",
+            &WorldController::OnContacts,
+            this);
+
   }
 }
 
@@ -230,6 +233,9 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
           this->rootmsg["result"][1]["yaw"].append(relativePose.Rot().Yaw());
           plock.unlock();
 
+          // give time for contact messages to update contact!
+          ::gazebo::common::Time::MSleep(10);
+
           // Death sentence check
           const std::string name = model->GetName();
           bool death_sentence = false;
@@ -280,8 +286,6 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         //            this->requestPub_->Publish(deleteReq);
         gz::transport::requestNoReply(this->world_->Name(), "entity_delete", model->GetScopedName());
         std::cout << "Removed " << model->GetScopedName() << std::endl;
-
-        std::cout << "Send results to celery" << model->GetScopedName() << std::endl;
 
         boost::mutex::scoped_lock plock(dataMutex_);
         this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
@@ -370,7 +374,6 @@ void WorldController::OnEndUpdate()
           robotSDF.SetFromString(sdfString.asString());
 
           std::cout << "Inserting robot into world." << std::endl;
-
 
           boost::mutex::scoped_lock plock(dataMutex_);
           // resetting last message
@@ -520,18 +523,14 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
   }
 }
 /////////////////////////////////////////////////
-// void WorldController::OnContacts(ConstContactsPtr &msg){
-//   // Pause the world so no new contacts will come in
-//   this->world_->SetPaused(true);
-//
-//   boost::mutex::scoped_lock plock(dataMutex_);
-//
-//   std::cout << "This and lock works well" << std::endl;
-//
-//
-//   // this->rootmsg["result"][1]["contacts"].append(10);
-//   this->world_->SetPaused(false);
-// }
+void WorldController::OnContacts(ConstContactsPtr &msgContact){
+
+  boost::mutex::scoped_lock plock(dataMutex_);
+  auto contactsList = msgContact->contact();
+
+  this->rootmsg["result"][1]["contacts"].append(10);
+  plock.unlock();
+}
 /////////////////////////////////////////////////
 void WorldController::OnModel(ConstModelPtr &msg)
 {

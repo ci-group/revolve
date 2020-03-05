@@ -71,7 +71,7 @@ protected:
 
     virtual void OnEndUpdate();
 
-    // virtual void OnContacts(ConstContactsPtr &_msg);
+    virtual void OnContacts(ConstContactsPtr &msgContacts);
 
     // Maps model names to insert request IDs
     // model_name -> request_id, SDF, insert_operation_pending
@@ -96,10 +96,7 @@ protected:
     boost::mutex deleteMutex_;
 
     // request subscriber
-    ::gazebo::transport::SubscriberPtr contactSub_;
-
-    // request subscriber
-    ::gazebo::transport::PublisherPtr contactPub_;
+    ::gazebo::transport::SubscriberPtr contactsSub_;
 
     // Request subscriber
     ::gazebo::transport::SubscriberPtr requestSub_;
