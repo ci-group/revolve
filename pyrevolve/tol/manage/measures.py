@@ -82,17 +82,19 @@ def displacement_velocity(robot_manager):
     :return:
     """
     dist, time = displacement(robot_manager)
-    if time.is_zero():
+    try:
+        return np.sqrt(dist.x ** 2 + dist.y ** 2) / float(time)
+    except:
+        # divided by zero
         return 0.0
-    return np.sqrt(dist.x ** 2 + dist.y ** 2) / float(time)
-
 
 def displacement_velocity_hill(robot_manager):
     dist, time = displacement(robot_manager)
-    if time.is_zero():
+    try:
+        return dist.y / float(time)
+    except:
+        # divided by zero
         return 0.0
-    return dist.y / float(time)
-
 
 def head_balance(robot_manager):
     """

@@ -14,8 +14,7 @@ from pyrevolve.SDF.revolve_bot_sdf_builder import revolve_bot_to_sdf
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
-from pycelery import measures as CeleryMeasures
-from pycelery.converter import args_to_dic, dic_to_args, args_default, pop_to_dic, dic_to_pop, measurements_to_dict, CeleryMeasures_to_dict
+from pycelery.converter import args_to_dic, dic_to_args, args_default, pop_to_dic, dic_to_pop, measurements_to_dict, msg_to_robotmanager
 from celery.app.control import Control
 from pyrevolve.evolution.individual import Individual
 
@@ -133,22 +132,22 @@ async def run_gazebo_and_analyzer(settingsDir, i):
 
         await asyncio.sleep(2)
 
-        # analyzer_supervisor = CollisionSimSupervisor(
-        #     world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
-        #     simulator_cmd="gzserver",
-        #     simulator_args=["--verbose"],
-        #     plugins_dir_path=os.path.join('.', 'build', 'lib'),
-        #     models_dir_path=os.path.join('.', 'models'),
-        #     simulator_name=f'analyzer_{i}'
-        # )
-        #
-        # await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
-        #
-        # await asyncio.sleep(5)
-        #
-        # analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
-        #
-        # await asyncio.sleep(2)
+        analyzer_supervisor = CollisionSimSupervisor(
+            world_file=os.path.join('tools', 'analyzer', 'analyzer-world.world'),
+            simulator_cmd="gzserver",
+            simulator_args=["--verbose"],
+            plugins_dir_path=os.path.join('.', 'build', 'lib'),
+            models_dir_path=os.path.join('.', 'models'),
+            simulator_name=f'analyzer_{i}'
+        )
+
+        await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
+
+        await asyncio.sleep(5)
+
+        analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
+
+        await asyncio.sleep(2)
 
     return True
 
@@ -181,66 +180,8 @@ async def _restart_simulator(settings, connection_, supervisor_, simulator_type)
 
     logger.debug("Restarting simulator done... connection done")
 
-@app.task(queue="robots", time_limit = 120)
-async def evaluate_robot(yaml_object, fitnessName, settingsDir):
-    global connection
-    global analyzer_connection
-    global simulator_supervisor
-    global analyzer_supervisor
-    global fitness_function
-
-    try:
-
-        EVALUATION_TIMEOUT = 30
-
-        # Set global fitness_function
-        if fitness_function == None:
-            function_string = 'pyrevolve.evolution.fitness.' + fitnessName
-            mod_name, func_name = function_string.rsplit('.',1)
-            mod = importlib.import_module(mod_name)
-            fitness_function = getattr(mod, fitnessName)
-
-        settings = dic_to_args(settingsDir)
-        max_age = settings.evaluation_time
-
-        robot = revolve_bot.RevolveBot()
-        robot.load_yaml(yaml_object)
-        robot.update_substrate()
-        robot.measure_phenotype()
-
-        if analyzer_connection:
-            try:
-                collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
-            except asyncio.TimeoutError:
-                await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
-                return (None, None)
-
-            if collisions > 0:
-                logger.info(f"discarding robot {robot.id} because there are {collisions} self collisions")
-                return (None, None)
-
-        # Simulate robot
-        robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), max_age)
-
-        while not robot_manager.dead:
-            await asyncio.sleep(0.1)
-
-        ### WITHOUT THE FLOAT(), CELERY WILL GIVE AN ERROR ###
-        robot_fitness = float(fitness_function(robot_manager, robot))
-
-        # Remove robot, reset, and let other robot run.
-        connection.unregister_robot(robot_manager)
-        await connection.reset(rall=True, time_only=True, model_only=False)
-
-        BehaviouralMeasurementsDic = measurements_to_dict(robot_manager, robot)
-        return (robot_fitness, BehaviouralMeasurementsDic)
-
-    except SoftTimeLimitExceeded:
-        _restart_simulator(settings, connection, simulator_supervisor, "simulator")
-        return (None, None)
-
 @app.task(queue="robots", time_limit=150)
-async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
+async def evaluate_robot(yaml_object, fitnessName, settingsDir):
     global fitness_function
     global connection
     global analyzer_connection
@@ -271,6 +212,7 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
             try:
                 collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
             except asyncio.TimeoutError:
+                logger.info("WARNING: Celery time limit for analyzer connection. Restarting analyzer and returning None as value.")
                 await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
                 return (None, None)
 
@@ -287,19 +229,15 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         # await the simulation results and fitness.
         robot_data = await robot_manager.get()
 
-        print(robot_data)
+        # converting celery data to robot_manager and calculate fitness and measurements.
+        robot_manager = msg_to_robotmanager(robot_data[0], connection, settings, robot, Vector3(0, 0, settings.z_start), max_age)
+        robot_fitness = fitness_function(robot_manager, robot)
+        BehaviouralMeasurementsDic = measurements_to_dict(robot_manager, robot)
 
-        # Converting the JSON measurements to real measurements
-        individual = Individual("no genotype needed", robot) # just a shell for phenotype
-        measurements = CeleryMeasures.BehaviouralMeasurementsCelery(robot_data[0], individual)
-        robot_fitness = fitness_function(measurements, robot)
-
-        measurementsDic = CeleryMeasures_to_dict(measurements)
-
-        return (robot_fitness, measurementsDic)
+        return (robot_fitness, BehaviouralMeasurementsDic)
 
     except SoftTimeLimitExceeded:
-        logger.info("WARNING: Celery time limit SoftTimeLimitExceeded.")
+        logger.info(f"WARNING: Celery time limit SoftTimeLimitExceeded with robot: {robot.id}. Returning None value.")
         return (None, None)
 
 @app.task
@@ -314,7 +252,7 @@ async def shutdown_gazebo():
         await connection.disconnect()
         await asyncio.wait_for(simulator_supervisor.stop(), timeout=2)
     except:
-        print("TimeoutError: timeout error when closing gazebo instance.")
+        logger.info("TimeoutError: timeout error when closing gazebo instance.")
     finally:
         return True
 

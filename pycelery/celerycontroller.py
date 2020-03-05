@@ -1,7 +1,7 @@
 import asyncio
 import subprocess
 import time
-from pycelery.tasks import shutdown_gazebo, run_gazebo, evaluate_robot, run_gazebo_and_analyzer, evaluate_robot_test, start_robot_queue, insert_robot
+from pycelery.tasks import shutdown_gazebo, run_gazebo, run_gazebo_and_analyzer, evaluate_robot, start_robot_queue, insert_robot
 from pyrevolve.SDF.revolve_bot_sdf_builder import revolve_bot_to_sdf
 from pycelery.converter import args_to_dic, dic_to_args, dic_to_pop, pop_to_dic
 from pyrevolve.custom_logging.logger import logger
@@ -74,7 +74,7 @@ class CeleryController:
         # Create a yaml text from robot
         yaml_bot = robot.phenotype.to_yaml()
 
-        future = await evaluate_robot_test.delay(yaml_bot, conf.fitness_function, self.settingsDir)
+        future = await evaluate_robot.delay(yaml_bot, conf.fitness_function, self.settingsDir)
 
         # SDF = revolve_bot_to_sdf(robot.phenotype, Vector3(0, 0, self.settings.z_start), None)
         # #

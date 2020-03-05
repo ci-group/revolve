@@ -8,15 +8,15 @@ body:
     green: 1
     red: 1
   children:
-    0:
-      id: '6'
-      type: FixedBrick
-      orientation: 0
-      params:
-        blue: 1
-        green: 0
-        red: 0
     1:
+      id: '2'
+      type: ActiveHinge
+      orientation: 90
+      params:
+        blue: 0
+        green: 0
+        red: 0.7
+    3:
       id: '3'
       type: FixedBrick
       orientation: 0
@@ -25,33 +25,68 @@ body:
         green: 0
         red: 0
       children:
-        3:
-          id: '4'
-          type: FixedBrick
+        1:
+          id: '6'
+          type: ActiveHinge
           orientation: 0
           params:
-            blue: 1
+            blue: 0.58
+            green: 0.08
+            red: 1
+          children:
+            1:
+              id: '7'
+              type: ActiveHinge
+              orientation: 0
+              params:
+                blue: 0.58
+                green: 0.08
+                red: 1
+        3:
+          id: '4'
+          type: ActiveHinge
+          orientation: 90
+          params:
+            blue: 0
             green: 0
-            red: 0
-    2:
-      id: '2'
-      type: FixedBrick
-      orientation: 0
-      params:
-        blue: 1
-        green: 0
-        red: 0
-    3:
-      id: '5'
-      type: FixedBrick
-      orientation: 0
-      params:
-        blue: 1
-        green: 0
-        red: 0
+            red: 0.7
+          children:
+            1:
+              id: '5'
+              type: ActiveHinge
+              orientation: 0
+              params:
+                blue: 0
+                green: 0
+                red: 0.7
 brain:
   type: neural-network
   neurons:
+    node1:
+      id: node1
+      layer: output
+      part_id: '2'
+      type: Oscillator
+    node2:
+      id: node2
+      layer: output
+      part_id: '4'
+      type: Oscillator
+    node3:
+      id: node3
+      layer: output
+      part_id: '5'
+      type: Oscillator
+    node4:
+      id: node4
+      layer: output
+      part_id: '6'
+      type: Oscillator
+    node5:
+      id: node5
+      layer: output
+      part_id: '7'
+      type: Oscillator
     node-core1:
       id: node-core1
       layer: input
@@ -82,4 +117,24 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  params: {}
+  params:
+    node1:
+      amplitude: 8.04292209056354
+      period: 2.4091004743578885
+      phase_offset: 6.486797176388546
+    node2:
+      amplitude: 5.2710749312187035
+      period: 4.323883467160207
+      phase_offset: 3.5732057925651928
+    node3:
+      amplitude: 1.6653831239188739
+      period: 3.7266380022953554
+      phase_offset: 3.5732057925651928
+    node4:
+      amplitude: 1.5276471145023938
+      period: 6.686255015950358
+      phase_offset: 7.992698058872426
+    node5:
+      amplitude: 2.130613818323428
+      period: 2.8838764069293035
+      phase_offset: 3.3400615273232312

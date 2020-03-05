@@ -9,33 +9,63 @@ body:
     red: 1
   children:
     1:
-      id: '2'
-      type: ActiveHinge
-      orientation: 90
-      params:
-        blue: 0
-        green: 0
-        red: 0.7
-    3:
-      id: 1s3
-      type: TouchSensor
+      id: '3'
+      type: FixedBrick
       orientation: 0
       params:
-        blue: 0.7
-        green: 0.7
-        red: 0.7
+        blue: 1
+        green: 0
+        red: 0
+    3:
+      id: '2'
+      type: FixedBrick
+      orientation: 0
+      params:
+        blue: 1
+        green: 0
+        red: 0
+      children:
+        1:
+          id: 2s1
+          type: TouchSensor
+          orientation: 0
+          params:
+            blue: 0.7
+            green: 0.7
+            red: 0.7
+        2:
+          id: 2s2
+          type: TouchSensor
+          orientation: 0
+          params:
+            blue: 0.7
+            green: 0.7
+            red: 0.7
+        3:
+          id: '4'
+          type: ActiveHinge
+          orientation: 90
+          params:
+            blue: 0
+            green: 0
+            red: 0.7
 brain:
   type: neural-network
   neurons:
     node1:
       id: node1
       layer: input
-      part_id: 1s3
+      part_id: 2s2
       type: Input
     node2:
       id: node2
+      layer: input
+      part_id: 2s1
+      type: Input
+    node3:
+      id: node3
       layer: output
-      part_id: '2'
+      part_id: '4'
       type: Oscillator
     node-core1:
       id: node-core1
@@ -68,11 +98,17 @@ brain:
       part_id: '1'
       type: Input
   connections:
-  - dst: node2
+  - dst: node3
     src: node1
-    weight: -0.3637999449454947
+    weight: 0.3838425680653683
+  - dst: node3
+    src: node2
+    weight: -0.10289760694158456
+  - dst: node3
+    src: node3
+    weight: -0.4420049086864781
   params:
-    node2:
-      amplitude: 3.1313952351510093
-      period: 3.255309943555402
-      phase_offset: 1.546753824566892
+    node3:
+      amplitude: 1.7734471954138646
+      period: 3.302524600352206
+      phase_offset: 5.2592868704236215

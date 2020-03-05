@@ -201,10 +201,6 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
       msgs::RobotStates msg;
       //gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
-      boost::mutex::scoped_lock plock(dataMutex_);
-      this->rootmsg["result"][0]["times"].append(_info.simTime.Double());
-      plock.unlock();
-
       {
         boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
         for (const auto &model : this->world_->Models()) {
@@ -231,6 +227,7 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
           this->rootmsg["result"][0]["roll"].append(relativePose.Rot().Roll());
           this->rootmsg["result"][0]["pitch"].append(relativePose.Rot().Pitch());
           this->rootmsg["result"][0]["yaw"].append(relativePose.Rot().Yaw());
+          this->rootmsg["result"][0]["times"].append(_info.simTime.Double());
           plock.unlock();
 
           // Death sentence check

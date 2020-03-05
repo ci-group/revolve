@@ -53,3 +53,9 @@ runtime: 86.50378751754761 on 1 cores
 runtime: 111.92651081085205 on 1 cores
 runtime: 84.22683334350586 on 1 cores
 runtime: 65.02676248550415 on 1 cores
+runtime: 77.42176246643066 on 1 cores
+runtime: 90.9048421382904 on 1 cores
+runtime: 95.3698239326477 on 1 cores
+runtime: 88.50136017799377 on 1 cores
+runtime: 52.53362679481506 on 2 cores
+runtime: 60.15571093559265 on 2 cores

@@ -16,6 +16,24 @@ body:
         blue: 0.58
         green: 0.08
         red: 1
+      children:
+        1:
+          id: '3'
+          type: ActiveHinge
+          orientation: 90
+          params:
+            blue: 0
+            green: 0
+            red: 0.7
+          children:
+            1:
+              id: '4'
+              type: ActiveHinge
+              orientation: 270
+              params:
+                blue: 0.58
+                green: 0.08
+                red: 1
 brain:
   type: neural-network
   neurons:
@@ -23,6 +41,16 @@ brain:
       id: node1
       layer: output
       part_id: '2'
+      type: Oscillator
+    node2:
+      id: node2
+      layer: output
+      part_id: '3'
+      type: Oscillator
+    node3:
+      id: node3
+      layer: output
+      part_id: '4'
       type: Oscillator
     node-core1:
       id: node-core1
@@ -56,6 +84,14 @@ brain:
       type: Input
   params:
     node1:
-      amplitude: 4.4744067717311555
-      period: 9.275278761054297
-      phase_offset: 2.0311348170428642
+      amplitude: 3.9432875182893694
+      period: 3.2329224366028595
+      phase_offset: 6.01658011503221
+    node2:
+      amplitude: 1
+      period: 2.587546207199809
+      phase_offset: 7.2041621119754895
+    node3:
+      amplitude: 6.883971824138847
+      period: 8.687427145813206
+      phase_offset: 8.508823407818802

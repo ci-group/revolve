@@ -1,11 +1,27 @@
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.tol.manage import measures
-from pycelery import measures as CeleryMeasures
 from pyrevolve.SDF.math import Vector3
+from pyrevolve.tol.manage.robotmanager import RobotManager
 
 class NameSpace:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
+
+def msg_to_robotmanager(msg, world, conf, robot, position = Vector3(0,0,0.05), timeout = None):
+    # create robot_manager
+    robot_manager = RobotManager(
+        conf=conf,
+        robot=robot,
+        position=position,
+        time=timeout,
+        battery_level=robot.battery_level,
+    )
+
+    # update the robot_manager with celery message
+    robot_manager.update_from_celery(msg, world)
+
+    return robot_manager
+
 
 def pop_to_dic(populationconfig):
     """
@@ -169,29 +185,6 @@ def measurements_to_dict(robot_manager, robot):
 
     individual = Individual("no genotype needed", robot) # just a shell for phenotype
     measurements = measures.BehaviouralMeasurements(robot_manager, individual)
-
-    dic = {}
-    dic["velocity"] = float(measurements.velocity)
-    dic["displacement_x"] = float(measurements.displacement[0].x)
-    dic["displacement_y"] = float(measurements.displacement[0].y)
-    dic["displacement_z"] =float( measurements.displacement[0].z)
-    dic["displacement_time"] = float(measurements.displacement[1])
-    dic["displacement_velocity"] = float(measurements.displacement_velocity)
-    dic["displacement_velocity_hill"] = float(measurements.displacement_velocity_hill)
-    dic["head_balance"] = float(measurements.head_balance)
-    dic["contacts"] = float(measurements.contacts)
-
-    return dic
-
-def CeleryMeasures_to_dict(measurements):
-    """
-    This function calculates the BehaviouralMeasurements of a robot and then converts
-    it into a dictionary such that it can be send through celery.
-
-    :param robot_manager: the robot_manager of the robot
-    :param robot: the PHENOTYPE of the robot
-    :return dic: a dictionary containing the measurements.
-    """
 
     dic = {}
     dic["velocity"] = float(measurements.velocity)
