@@ -22,7 +22,6 @@ class BehaviouralMeasurementsCelery:
             robot_manager["time"] = float(robot_manager["times"][-1] - robot_manager["times"][0])
             robot_manager["displacement_vector"] = Vector3(robot_manager["x"][-1], robot_manager["y"][-1], robot_manager["z"][-1]) - Vector3(robot_manager["x"][0], robot_manager["y"][0], robot_manager["z"][0])
             robot_manager["dist"] = float(robot_manager["displacement_vector"].magnitude())
-            robot_manager["contacts"] = []
 
             self.velocity = velocity(robot_manager)
             self.displacement = displacement(robot_manager)

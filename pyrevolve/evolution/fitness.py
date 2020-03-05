@@ -18,7 +18,7 @@ def displacement(robot_manager, robot):
 
 
 def displacement_velocity(robot_manager, robot):
-    if robot_manager.displacement_velocity:
+    if robot_manager.displacement_velocity or robot_manager.displacement_velocity==0:
         return robot_manager.displacement_velocity
 
     return measures.displacement_velocity(robot_manager)

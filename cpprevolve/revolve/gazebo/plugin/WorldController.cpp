@@ -160,7 +160,7 @@ void WorldController::Load(
     this->rootmsg.clear();
     this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
     this->rootmsg["status"] = "SUCCESS";
-    this->rootmsg["result"][0] = "Succesfully started cpp celery queue!";
+    this->rootmsg["result"] = "Succesfully started cpp celery queue!";
 
     std::string output = this->fastWriter.write(this->rootmsg);
     plock.unlock();
@@ -202,7 +202,7 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
       //gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
       boost::mutex::scoped_lock plock(dataMutex_);
-      this->rootmsg["result"][1]["times"].append(_info.simTime.Double());
+      this->rootmsg["result"][0]["times"].append(_info.simTime.Double());
       plock.unlock();
 
       {
@@ -225,16 +225,13 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 
           // Update relative position in JSON
           boost::mutex::scoped_lock plock(dataMutex_);
-          this->rootmsg["result"][1]["x"].append(relativePose.Pos().X());
-          this->rootmsg["result"][1]["y"].append(relativePose.Pos().Y());
-          this->rootmsg["result"][1]["z"].append(relativePose.Pos().Z());
-          this->rootmsg["result"][1]["roll"].append(relativePose.Rot().Roll());
-          this->rootmsg["result"][1]["pitch"].append(relativePose.Rot().Pitch());
-          this->rootmsg["result"][1]["yaw"].append(relativePose.Rot().Yaw());
+          this->rootmsg["result"][0]["x"].append(relativePose.Pos().X());
+          this->rootmsg["result"][0]["y"].append(relativePose.Pos().Y());
+          this->rootmsg["result"][0]["z"].append(relativePose.Pos().Z());
+          this->rootmsg["result"][0]["roll"].append(relativePose.Rot().Roll());
+          this->rootmsg["result"][0]["pitch"].append(relativePose.Rot().Pitch());
+          this->rootmsg["result"][0]["yaw"].append(relativePose.Rot().Yaw());
           plock.unlock();
-
-          // give time for contact messages to update contact!
-          ::gazebo::common::Time::MSleep(10);
 
           // Death sentence check
           const std::string name = model->GetName();
@@ -290,7 +287,6 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         boost::mutex::scoped_lock plock(dataMutex_);
         this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
         this->rootmsg["status"] = "SUCCESS";
-        this->rootmsg["result"][0] = 1.0; // fitness return
 
         std::string output = this->fastWriter.write(this->rootmsg);
         plock.unlock();
@@ -379,14 +375,14 @@ void WorldController::OnEndUpdate()
           // resetting last message
           this->rootmsg.clear();
           // The skeleton for message
-          this->rootmsg["result"][1]["x"] = Json::arrayValue;
-          this->rootmsg["result"][1]["y"] = Json::arrayValue;
-          this->rootmsg["result"][1]["z"] = Json::arrayValue;
-          this->rootmsg["result"][1]["roll"] = Json::arrayValue;
-          this->rootmsg["result"][1]["pitch"] = Json::arrayValue;
-          this->rootmsg["result"][1]["yaw"] = Json::arrayValue;
-          this->rootmsg["result"][1]["times"] = Json::arrayValue;
-          this->rootmsg["result"][1]["contacts"] = Json::arrayValue;
+          this->rootmsg["result"][0]["x"] = Json::arrayValue;
+          this->rootmsg["result"][0]["y"] = Json::arrayValue;
+          this->rootmsg["result"][0]["z"] = Json::arrayValue;
+          this->rootmsg["result"][0]["roll"] = Json::arrayValue;
+          this->rootmsg["result"][0]["pitch"] = Json::arrayValue;
+          this->rootmsg["result"][0]["yaw"] = Json::arrayValue;
+          this->rootmsg["result"][0]["times"] = Json::arrayValue;
+          this->rootmsg["result"][0]["contacts"] = Json::arrayValue;
 
           plock.unlock();
 
@@ -524,12 +520,27 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
 }
 /////////////////////////////////////////////////
 void WorldController::OnContacts(ConstContactsPtr &msgContact){
+  // in this function I process what in the old revolve was done inside the robot manager.
+  // I am not yet sure which one is faster, computing here or there. Doing this computation blocks
+  // other message writing commands to celery.
 
-  boost::mutex::scoped_lock plock(dataMutex_);
   auto contactsList = msgContact->contact();
+  boost::mutex::scoped_lock plock(dataMutex_);
 
-  this->rootmsg["result"][1]["contacts"].append(10);
+  //// METHOD 1: ////
+  for (const auto &contact : contactsList){
+    auto number_of_contacts = 0;
+    for (const auto &pos : contact.position()){
+        number_of_contacts++;
+    }
+    this->rootmsg["result"][0]["contacts"].append(number_of_contacts);
+  }
   plock.unlock();
+
+  //// METHOD 2: NOT YET IMPLEMENTED ////
+  // Receiving number of contacts from the contactmanager would be more efficient.
+  // because we are not using any collision information as far as I know.
+
 }
 /////////////////////////////////////////////////
 void WorldController::OnModel(ConstModelPtr &msg)

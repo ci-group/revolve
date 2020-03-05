@@ -288,10 +288,10 @@ async def evaluate_robot_test(yaml_object, fitnessName, settingsDir):
         robot_data = await robot_manager.get()
 
         print(robot_data)
-        
+
         # Converting the JSON measurements to real measurements
         individual = Individual("no genotype needed", robot) # just a shell for phenotype
-        measurements = CeleryMeasures.BehaviouralMeasurementsCelery(robot_data[1], individual)
+        measurements = CeleryMeasures.BehaviouralMeasurementsCelery(robot_data[0], individual)
         robot_fitness = fitness_function(measurements, robot)
 
         measurementsDic = CeleryMeasures_to_dict(measurements)
