@@ -124,7 +124,7 @@ namespace limbo {
 
                 while (!this->_stop(*this, afun)) {
 
-                    gettimeofday(&timeStart,NULL);
+                    gettimeofday(&timeStart, nullptr);
 
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
@@ -149,7 +149,7 @@ namespace limbo {
                     this->_current_iteration++;
                     this->_total_iterations++;
 
-                    gettimeofday(&timeEnd,NULL);
+                    gettimeofday(&timeEnd, nullptr);
 
                     timeDiff = 1000000 * (timeEnd.tv_sec - timeStart.tv_sec)
                                + timeEnd.tv_usec - timeStart.tv_usec; //tv_sec: value of second, tv_usec: value of microsecond

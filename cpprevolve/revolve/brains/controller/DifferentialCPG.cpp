@@ -50,11 +50,13 @@ using namespace revolve;
  */
 DifferentialCPG::DifferentialCPG(
         const DifferentialCPG::ControllerParams &params,
-        const std::vector<std::shared_ptr<Actuator>> &actuators)
+        const std::vector<std::shared_ptr<Actuator>> &actuators,
+        std::shared_ptr<AngleToTargetDetector> angle_to_target_sensor)
         : Controller(ControllerType::DIFFERENTIAL_CPG)
         , next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()])
+        , angle_to_target_sensor(std::move(angle_to_target_sensor))
         , connection_weights(actuators.size(), 0)
 {
     this->init_params_and_connections(params, actuators);
@@ -82,11 +84,13 @@ DifferentialCPG::DifferentialCPG(
 DifferentialCPG::DifferentialCPG(
         const DifferentialCPG::ControllerParams &params,
         const std::vector<std::shared_ptr<Actuator>> &actuators,
-        const NEAT::Genome &gen)
+        const NEAT::Genome &gen,
+        std::shared_ptr<AngleToTargetDetector> angle_to_target_sensor)
         : Controller(ControllerType::DIFFERENTIAL_CPG)
         , next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()])
+        , angle_to_target_sensor(std::move(angle_to_target_sensor))
         , connection_weights(actuators.size(), 0)
 {
     this->init_params_and_connections(params, actuators);
@@ -161,11 +165,15 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
     this->range_lb = -params.range_ub;
     this->range_ub = params.range_ub;
     this->use_frame_of_reference = params.use_frame_of_reference;
-    this->signal_factor_all_ = params.signal_factor_all;
-    this->signal_factor_mid = params.signal_factor_mid;
-    this->signal_factor_left_right = params.signal_factor_left_right;
+    this->output_signal_factor = params.output_signal_factor;
     this->abs_output_bound = params.abs_output_bound;
     this->connection_weights = params.weights;
+
+    if (use_frame_of_reference and not angle_to_target_sensor) {
+        std::clog << "WARNING!: use_frame_of_reference is activated but no angle_to_target_sensor camera is configured. "
+                     "Disabling the use of the frame of reference" << std::endl;
+        use_frame_of_reference = false;
+    }
 
     size_t j=0;
     for (const std::shared_ptr<Actuator> &actuator: actuators)
@@ -183,7 +191,7 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
         {
             frame_of_reference = -1;
         }
-            // We are a right neuron
+        // We are a right neuron
         else if (coord_x > 0)
         {
             frame_of_reference = 1;
@@ -323,7 +331,7 @@ void DifferentialCPG::set_ode_matrix()
         matrix.emplace_back(row);
     }
 
-    // Process A<->A connections
+    // Process A<->B connections
     int index = 0;
     for (const Neuron &neuron: neurons)
     {
@@ -349,7 +357,7 @@ void DifferentialCPG::set_ode_matrix()
         index+=2;
     }
 
-    // A<->B connections
+    // A<->A connections
     index++;
     int k = 0;
     std::vector<std::string> connections_seen;
@@ -401,7 +409,7 @@ void DifferentialCPG::set_ode_matrix()
         else // else continue to next iteration
         {
             // actually, we should never encounter this, every connection should appear only once
-            std::cerr << "Should not see the same connection appearing twice" << std::endl;
+            std::cerr << "Should not see the same connection appearing twice: " << connection_string << std::endl;
             throw std::runtime_error("Should not see the same connection appearing twice");
             continue;
         }
@@ -497,11 +505,11 @@ void DifferentialCPG::step(
         neuron_count++;
     }
 
-    // Copy values from next_state into x for ODEINT
-    state_type x(this->neurons.size());
+    // Copy values from next_state into x_state for ODEINT
+    state_type x_state(this->neurons.size());
     for (size_t i = 0; i < this->neurons.size(); i++)
     {
-        x[i] = this->next_state[i];
+        x_state[i] = this->next_state[i];
     }
 
     // Perform one step
@@ -517,14 +525,31 @@ void DifferentialCPG::step(
                     }
                 }
             },
-            x,
+            x_state,
             time,
             dt);
 
     // Copy values into nextstate
     for (size_t i = 0; i < this->neurons.size(); i++)
     {
-        this->next_state[i] = x[i];
+        this->next_state[i] = x_state[i];
+    }
+
+//    // Load the angle value from the sensor
+//    double angle_difference = this->angle_to_goal - move_angle;
+//    if (angle_difference > 180)
+//        angle_difference -= 360;
+//    else if (angle_difference < -180)
+//        angle_difference += 360;
+//    this->angle_diff = angle_difference;
+    double angle_difference = 0.0;
+    double slow_down_factor = 1.0;
+    if (use_frame_of_reference) {
+        angle_difference = angle_to_target_sensor->detect_angle();
+        std::cout << "Angle detected " << angle_difference << std::endl;
+        const double frame_of_reference_slower_power = 7.0;
+        slow_down_factor = std::pow(
+                (180.0 - std::abs(angle_difference))/180.0, frame_of_reference_slower_power);
     }
 
     // Loop over all neurons to actually update their states. Note that this is a new outer for loop
@@ -548,35 +573,30 @@ void DifferentialCPG::step(
             // Apply saturation formula
             auto x_input = this->next_state[i];
 
+            double output_j = this->output_function(x_input);
+
             // Use frame of reference
-            if(use_frame_of_reference)
+            if(use_frame_of_reference and frame_of_reference != 0)
             {
-
-                if (std::abs(frame_of_reference) == 1)
+                if ((frame_of_reference == 1 and angle_difference < 0) or
+                    (frame_of_reference == -1 and angle_difference > 0)) //TODO >= / <= ?
                 {
-                    this->output[j] = this->signal_factor_left_right*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound)) - 1);
+                    output_j *= slow_down_factor;
                 }
-                else if (frame_of_reference == 0)
-                {
-                    this->output[j] = this->signal_factor_mid*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound)) - 1);
-                }
-                else
-                {
-                    std::clog << "WARNING: frame_of_reference not in {-1,0,1}." << std::endl;
-                }
-
             }
-            // Don't use frame of reference
-            else
-            {
-                this->output[j] = this->signal_factor_all_
-                        * this->abs_output_bound
-                        * (
-                                (2.0) / (1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound))
-                                - 1
-                          );
-            }
+
+            this->output[j] = output_j;
         }
         i++;
     }
+}
+
+double DifferentialCPG::output_function(double input) const
+{
+    return this->output_signal_factor
+            * this->abs_output_bound
+            * (
+                    (2.0) / (1.0 + std::pow(2.718, -2.0 * input / this->abs_output_bound))
+                    - 1
+            );
 }

@@ -2,17 +2,17 @@
 // Created by matteo on 14/06/19.
 //
 
-#ifndef REVOLVE_SERVO_H
-#define REVOLVE_SERVO_H
+#ifndef REVOLVE_RASPBERRY_SERVO_H
+#define REVOLVE_RASPBERRY_SERVO_H
 
 #include "PIGPIOConnection.h"
 #include "../brains/controller/actuators/Actuator.h"
 #include <iostream>
 
 namespace revolve {
+namespace raspberry {
 
-class Servo: public revolve::Actuator
-{
+class Servo : public ::revolve::Actuator {
 public:
     explicit Servo(
             double coordinate_x,
@@ -20,12 +20,13 @@ public:
             double coordinate_z,
             PIGPIOConnection *connection,
             unsigned short pin,
-            unsigned int frequency=50,
-            int range=1000,
-            bool inverse=false
+            unsigned int frequency = 50,
+            int range = 1000,
+            bool inverse = false
     );
 
-    ~Servo() {
+    ~Servo()
+    {
         this->off();
     }
 
@@ -36,7 +37,8 @@ public:
      */
     void move_to_position(double position);
 
-    void center() { move_to_position(0); }
+    void center()
+    { move_to_position(0); }
 
     void off();
 
@@ -45,7 +47,8 @@ public:
     std::ostream &print(std::ostream &os) const
     {
         os << "Servo pin:\t" << this->pin << std::endl;
-        os << "\tcoordinates [" << this->coordinate_x() << ',' << this->coordinate_y() << ',' << this->coordinate_z() << ']' << std::endl;
+        os << "\tcoordinates [" << this->coordinate_x() << ',' << this->coordinate_y() << ','
+           << this->coordinate_z() << ']' << std::endl;
         os << "\tfrequency:\t" << this->frequency << std::endl;
         os << "\trange:    \t" << this->range << std::endl;
         os << "\tinverse:  \t" << this->inverse;
@@ -64,7 +67,8 @@ private:
 };
 
 }
+}
 
-std::ostream &operator<<(std::ostream &os, revolve::Servo const &s);
+std::ostream &operator<<(std::ostream &os, revolve::raspberry::Servo const &s);
 
-#endif //REVOLVE_SERVO_H
+#endif //REVOLVE_RASPBERRY_SERVO_H

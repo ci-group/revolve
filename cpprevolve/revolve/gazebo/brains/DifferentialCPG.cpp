@@ -57,9 +57,7 @@ revolve::DifferentialCPG::ControllerParams DifferentialCPG::load_params_from_sdf
     params.use_frame_of_reference = (controller_sdf->GetAttribute("use_frame_of_reference")->GetAsString() == "true");
     params.init_neuron_state = stod(controller_sdf->GetAttribute("init_neuron_state")->GetAsString());
     params.range_ub = stod(controller_sdf->GetAttribute("range_ub")->GetAsString());
-    params.signal_factor_all = stod(controller_sdf->GetAttribute("signal_factor_all")->GetAsString());
-    params.signal_factor_mid = stod(controller_sdf->GetAttribute("signal_factor_mid")->GetAsString());
-    params.signal_factor_left_right = stod(controller_sdf->GetAttribute("signal_factor_left_right")->GetAsString());
+    params.output_signal_factor = stod(controller_sdf->GetAttribute("output_signal_factor")->GetAsString());
     params.abs_output_bound = stod(controller_sdf->GetAttribute("abs_output_bound")->GetAsString());
 
     // Get the weights from the sdf:

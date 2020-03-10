@@ -2,8 +2,8 @@
 // Created by matteo on 14/06/19.
 //
 
-#ifndef REVOLVE_PIGPIOCONNECTION_H
-#define REVOLVE_PIGPIOCONNECTION_H
+#ifndef REVOLVE_RASPBERRY_PIGPIOCONNECTION_H
+#define REVOLVE_RASPBERRY_PIGPIOCONNECTION_H
 
 extern "C" {
 #include "pigpiod_if2.h"
@@ -47,4 +47,4 @@ private:
 };
 
 
-#endif //REVOLVE_PIGPIOCONNECTION_H
+#endif //REVOLVE_RASPBERRY_PIGPIOCONNECTION_H

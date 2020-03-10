@@ -8,6 +8,7 @@
 #include "Controller.h"
 #include "actuators/Actuator.h"
 #include "sensors/Sensor.h"
+#include "sensors/AngleToTargetDetector.h"
 
 #include <map>
 #include <memory>
@@ -27,9 +28,7 @@ public:
         bool use_frame_of_reference;
         double init_neuron_state;
         double range_ub;
-        double signal_factor_all;
-        double signal_factor_mid;
-        double signal_factor_left_right;
+        double output_signal_factor;
         double abs_output_bound;
         std::vector< double > weights;
         /// can be null, indicating that there is no map
@@ -41,7 +40,8 @@ public:
     /// \param[in] _actuators Reference to a actuator list
     DifferentialCPG(
             const DifferentialCPG::ControllerParams &params,
-            const std::vector<std::shared_ptr<Actuator>> &_actuators);
+            const std::vector<std::shared_ptr<Actuator>> &_actuators,
+            std::shared_ptr<AngleToTargetDetector> angle_to_target_sensor = nullptr);
 
     /// \brief Constructor for Controller with config CPPN
     /// \param[in] params Parameters for the controller
@@ -50,7 +50,8 @@ public:
     DifferentialCPG(
             const DifferentialCPG::ControllerParams &params,
             const std::vector<std::shared_ptr<Actuator>> &_actuators,
-            const NEAT::Genome &config_cppn_genome);
+            const NEAT::Genome &config_cppn_genome,
+            std::shared_ptr<AngleToTargetDetector> angle_to_target_sensor = nullptr);
 
     /// \brief Destructor
     virtual ~DifferentialCPG();
@@ -63,8 +64,8 @@ public:
     virtual void update(
             const std::vector<std::shared_ptr<Actuator>> &actuators,
             const std::vector<std::shared_ptr<Sensor>> &sensors,
-            const double _time,
-            const double _step) override;
+            double _time,
+            double _step) override;
 
     /// \brief Set the connection weights of the Controller and make sure the matrix is set appropriately
     /// \param[in] The weights to be set
@@ -75,9 +76,7 @@ public:
 
 protected:
 
-    void step(
-            const double time,
-            const double step);
+    void step(double time, double step);
 
     void init_params_and_connections(const ControllerParams &params, const std::vector<std::shared_ptr<Actuator>> &actuators);
 
@@ -87,9 +86,11 @@ private:
     /// \brief Function that resets neuron state
     void reset_neuron_state();
 
+    /// \brief function that transforms the value of the CPG A-neurons and returns the correct output for the actuators
+    double output_function(double input) const;
+
 public:
     std::map< std::tuple< int, int, int >, size_t > motor_coordinates;
-
 
 protected:
     /// \brief Register of motor IDs and their x,y-coordinates
@@ -119,6 +120,9 @@ protected:
     /// \brief Used for ODE-int
     std::vector<std::vector<double>> ode_matrix;
 
+    /// \brief Angle sensor holder
+    std::shared_ptr<::revolve::AngleToTargetDetector> angle_to_target_sensor;
+
 private:
     /// \brief Used to determine the next state array
     double *next_state;
@@ -139,13 +143,7 @@ private:
     size_t n_weights;
 
     /// \brief Factor to multiply output signal with
-    double signal_factor_all_;
-
-    /// \brief Factor to multiply output signal with
-    double signal_factor_mid;
-
-    /// \brief Factor to multiply output signal with
-    double signal_factor_left_right;
+    double output_signal_factor;
 
     /// \brief When reset a neuron state,do it randomly:
     bool reset_neuron_random;
@@ -161,7 +159,7 @@ private:
 
     double abs_output_bound;
 
-    };
+};
 
 }
 

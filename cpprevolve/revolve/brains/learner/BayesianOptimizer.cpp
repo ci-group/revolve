@@ -9,9 +9,9 @@
 #include <typeinfo>
 
 #include "BayesianOptimizer.h"
+#include "BoDefinitions.h"
 #include "../controller/DifferentialCPG.h"
 #include "../controller/Controller.h"
-#include "BoDefinitions.h"
 
 using namespace revolve;
 
