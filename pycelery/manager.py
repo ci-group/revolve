@@ -34,9 +34,9 @@ async def run():
     await asyncio.sleep(5) # Celery needs time
 
     # experiment params #
-    num_generations = 2
-    population_size = 20
-    offspring_size = 10
+    num_generations = 5
+    population_size = 200
+    offspring_size = 100
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,

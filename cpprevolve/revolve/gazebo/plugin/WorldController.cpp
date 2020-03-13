@@ -288,7 +288,7 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         std::string output = this->fastWriter.write(this->rootmsg);
         plock.unlock();
 
-        std::cout << "Creating message for celery .... " << std::endl;
+        std::cout << "Setting celery result for robot: " << model->GetScopedName() << std::endl;
         auto MESSAGE = AmqpClient::BasicMessage::Create(output);
         MESSAGE->ContentType("application/json");
         MESSAGE->ContentEncoding("utf-8");
@@ -343,10 +343,8 @@ void WorldController::OnEndUpdate()
         if (not this->running){
           auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope, 1000);
           if (!message_delivered){
-            std::cout << "No message delivered" << std::endl;
             return;
           }
-          std::cout << "Celery message received. Reading SDF string " << std::endl;
           auto message = this->envelope->Message();
           auto body = message->Body();
 
@@ -362,7 +360,7 @@ void WorldController::OnEndUpdate()
 
           auto sdfString = this->root[0][0];
           auto lifespan_timeout = this->root[0][1];
-          std::cout << "Lifespan is " << lifespan_timeout.asString() << std::endl;
+
           sdf::SDF robotSDF;
           robotSDF.SetFromString(sdfString.asString());
 

@@ -3,6 +3,7 @@ from .celery import app
 import asyncio
 import importlib
 import os
+import time
 
 from celery.exceptions import SoftTimeLimitExceeded
 from pyrevolve import revolve_bot
@@ -23,7 +24,9 @@ from pyrevolve.evolution.individual import Individual
     :variable settings: The settings of the experiment.
     :variable simulator_supervisor: The supervisor linked with @connection.
     :variable robot_queue: a asyncio queue to store the robots locally
-    :variable fitness_function: a function which the simulator_worker will use as fitness."""
+    :variable fitness_function: a function which the simulator_worker will use as fitness.
+    :variable id: keeps track of the id of this worker
+    :variable restarting: keeps track of a simulator restarting"""
 
 connection = None
 settings = None
@@ -32,6 +35,8 @@ fitness_function = None
 analyzer_connection = None
 analyzer_supervisor = None
 id = None
+restarting = False
+last_restart = None
 
 # ------------- Collection of tasks ------------------- #
 @app.task
@@ -97,6 +102,7 @@ async def run_gazebo_and_analyzer(settingsDir, i):
     global analyzer_supervisor
     global simulator_supervisor
     global id
+    global last_restart
 
     id = i
 
@@ -143,6 +149,8 @@ async def run_gazebo_and_analyzer(settingsDir, i):
 
         await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
 
+        last_restart = time.time()
+
         await asyncio.sleep(5)
 
         analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
@@ -152,6 +160,8 @@ async def run_gazebo_and_analyzer(settingsDir, i):
     return True
 
 async def _restart_simulator(settings, connection_, supervisor_, simulator_type):
+    """This is currently only able to reset the analyzer simulator, due to lack
+    of knowlegde which simulator is crashing. """
     global id
     global analyzer_connection
     global connection
@@ -162,19 +172,19 @@ async def _restart_simulator(settings, connection_, supervisor_, simulator_type)
     logger.error("Restarting simulator")
     logger.error("Restarting simulator... disconnecting")
     try:
-        await asyncio.wait_for(connection_.disconnect(), 10)
+        await asyncio.wait_for(connection_.disconnect(), 5)
     except asyncio.TimeoutError:
         pass
 
     logger.error("Restarting simulator... restarting")
-    await supervisor_.relaunch(10, adress=adress, port=port)
+    await supervisor_.relaunch(5, address = address, port=port)
 
     await asyncio.sleep(5)
 
     logger.debug("Restarting simulator done... connecting")
 
-    if simulator_type == "analzer":
-        analyzer_connection = await BodyAnalyzer.create(adress, port)
+    if simulator_type == "analyzer":
+        analyzer_connection = await BodyAnalyzer.create(address, port)
     else:
         connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start+id))
 
@@ -187,6 +197,8 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
     global analyzer_connection
     global simulator_supervisor
     global analyzer_supervisor
+    global restarting
+    global last_restart
 
     try:
 
@@ -210,11 +222,35 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
 
         if analyzer_connection:
             try:
+                # if we are restarting, wait for it to be done
+                while restarting:
+                    await asyncio.sleep(2)
+
                 collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
             except asyncio.TimeoutError:
-                logger.info("WARNING: Celery time limit for analyzer connection. Restarting analyzer and returning None as value.")
-                await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
-                return (None, None)
+                if not restarting and float(time.time()-last_restart) > EVALUATION_TIMEOUT+1:
+                    logger.info("WARNING C 1: Celery time limit for analyzer connection. Restarting analyzer and returning None as value.")
+                    restarting = True
+                    await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
+                    restarting = False
+                    last_restart = time.time()
+
+                    return (None, None)
+                else:
+                    logger.info("WARNING C 2: Simulator already restarting. This async task will wait until simulator restarted.")
+                    while restarting:
+                        await asyncio.sleep(2)
+
+                    try:
+                        collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
+                    except asyncio.TimeoutError:
+                        if not restarting:
+                            logger.info("WARNING C 3: Celery time limit for analyzer connection. Restarting analyzer and returning None as value.")
+                            restarting = True
+                            await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
+                            restarting = False
+
+                        return (None, None)
 
             if collisions > 0:
                 logger.info(f"discarding robot {robot.id} because there are {collisions} self collisions")
@@ -237,7 +273,9 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
         return (robot_fitness, BehaviouralMeasurementsDic)
 
     except SoftTimeLimitExceeded:
-        logger.info(f"WARNING: Celery time limit SoftTimeLimitExceeded with robot: {robot.id}. Returning None value.")
+        logger.info(f"WARNING C 4: Celery SoftTimeLimitExceeded Trown with robot: {robot.id}. Returning None value.")
+        # Currently we cannot restart simulators if a robot isnt returned. Because we dont know what
+        # simulator is processing our robot. Therefore best we can do here is return None, None
         return (None, None)
 
 @app.task
