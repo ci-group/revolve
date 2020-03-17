@@ -9,7 +9,7 @@ from ..custom_logging.logger import logger
 import time
 import asyncio
 import os
-
+import celery
 
 class PopulationConfig:
     def __init__(self,
@@ -251,11 +251,12 @@ class Population:
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
 
             if self.conf.celery: # ADDED THIS FOR CELERY -Sam
-                if future == (None, None): # If collisions > 0
-                    individual.fitness, individual.phenotype._behavioural_measurements = None, None
-                else:
-                    individual.fitness, measurements = await future.get()
+                try:
+                    individual.fitness, measurements = await asyncio.wait_for(future.get(timeout=50), timeout=50) # 50 seconds might be to short, but in general this only happens if analyzer disconnects. 100 second might be too long, since the time starts when get is called. it should be processed within seconds by then..
                     individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
+                except TimeoutError:
+                    logger.info(f"Individual's get request timed out. Robot_id: {individual.phenotype.id}")
+                    individual.fitness, individual.phenotype._behavioural_measurements = None, None
             else:
                 individual.fitness, individual.phenotype._behavioural_measurements = await future
 

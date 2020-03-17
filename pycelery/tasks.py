@@ -26,7 +26,7 @@ from pyrevolve.evolution.individual import Individual
     :variable robot_queue: a asyncio queue to store the robots locally
     :variable fitness_function: a function which the simulator_worker will use as fitness.
     :variable id: keeps track of the id of this worker
-    :variable restarting: keeps track of a simulator restarting"""
+    :variable busy: keeps track of analyzer simulator running"""
 
 connection = None
 settings = None
@@ -35,8 +35,7 @@ fitness_function = None
 analyzer_connection = None
 analyzer_supervisor = None
 id = None
-restarting = False
-last_restart = None
+busy = False
 
 # ------------- Collection of tasks ------------------- #
 @app.task
@@ -102,7 +101,6 @@ async def run_gazebo_and_analyzer(settingsDir, i):
     global analyzer_supervisor
     global simulator_supervisor
     global id
-    global last_restart
 
     id = i
 
@@ -149,8 +147,6 @@ async def run_gazebo_and_analyzer(settingsDir, i):
 
         await analyzer_supervisor.launch_simulator(port=settings.port_start+i+settings.n_cores)
 
-        last_restart = time.time()
-
         await asyncio.sleep(5)
 
         analyzer_connection = await BodyAnalyzer.create('127.0.0.1', settings.port_start+i+settings.n_cores)
@@ -169,17 +165,22 @@ async def _restart_simulator(settings, connection_, supervisor_, simulator_type)
     address = '127.0.0.1'
     port = settings.port_start+id+settings.n_cores
 
-    logger.error("Restarting simulator")
+    logger.error(f"Restarting simulator with ID: {id}")
     logger.error("Restarting simulator... disconnecting")
     try:
-        await asyncio.wait_for(connection_.disconnect(), 5)
-    except asyncio.TimeoutError:
+        await asyncio.wait_for(connection_.disconnect(), 3)
+    except:
+        pass
+
+    try:
+        await asyncio.wait_for(supervisor_.stop(), timeout=3)
+    except:
         pass
 
     logger.error("Restarting simulator... restarting")
-    await supervisor_.relaunch(5, address = address, port=port)
+    await supervisor_.launch_simulator(port=port)
 
-    await asyncio.sleep(5)
+    await asyncio.sleep(3)
 
     logger.debug("Restarting simulator done... connecting")
 
@@ -190,15 +191,14 @@ async def _restart_simulator(settings, connection_, supervisor_, simulator_type)
 
     logger.debug("Restarting simulator done... connection done")
 
-@app.task(queue="robots", time_limit=150)
+@app.task(queue="robots", soft_time_limit=150)
 async def evaluate_robot(yaml_object, fitnessName, settingsDir):
     global fitness_function
     global connection
     global analyzer_connection
     global simulator_supervisor
     global analyzer_supervisor
-    global restarting
-    global last_restart
+    global busy
 
     try:
 
@@ -222,35 +222,27 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
 
         if analyzer_connection:
             try:
-                # if we are restarting, wait for it to be done
-                while restarting:
-                    await asyncio.sleep(2)
+                # if analyzer running or restarting, wait
+                while busy:
+                    await asyncio.sleep(0.5)
 
+                # Busy is a lock for the analyzer queue on its own core.
+                busy = True
                 collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
-            except asyncio.TimeoutError:
-                if not restarting and float(time.time()-last_restart) > EVALUATION_TIMEOUT+1:
-                    logger.info("WARNING C 1: Celery time limit for analyzer connection. Restarting analyzer and returning None as value.")
-                    restarting = True
-                    await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
-                    restarting = False
-                    last_restart = time.time()
+                busy = False
 
-                    return (None, None)
-                else:
-                    logger.info("WARNING C 2: Simulator already restarting. This async task will wait until simulator restarted.")
-                    while restarting:
-                        await asyncio.sleep(2)
+                if robot.id == "robot_20":
+                    await asyncio.sleep(60) # just to trigger test
 
-                    try:
-                        collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
-                    except asyncio.TimeoutError:
-                        if not restarting:
-                            logger.info("WARNING C 3: Celery time limit for analyzer connection. Restarting analyzer and returning None as value.")
-                            restarting = True
-                            await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
-                            restarting = False
+                if robot.id == "robot_30":
+                    raise TimeoutError
+            except:
+                logger.info(f"WARNING C 1: Celery time limit for analyzer connection. Restarting analyzer and returning None as value. Robot: {robot.id}")
 
-                        return (None, None)
+                await _restart_simulator(settings, analyzer_connection, analyzer_supervisor, "analyzer")
+                busy = False
+
+                return (None, None)
 
             if collisions > 0:
                 logger.info(f"discarding robot {robot.id} because there are {collisions} self collisions")

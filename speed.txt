@@ -54,6 +54,20 @@ runtime: 887.3150136470795 on 4 cores
 runtime: 1166.426346540451 on 4 cores
 runtime: 1094.9197328090668 on 4 cores
 runtime: 1002.2129650115967 on 4 cores
-runtime: 936.5737705230713 on 4 cores
-runtime: 334.5642349720001 on 4 cores
-runtime: 633.7031321525574 on 4 cores
+runtime: 936.5737705230713 on 4 cores (10 gen, 100, 50)
+runtime: 633.7031321525574 on 4 cores (5 gen, 200, 100)
+runtime: 1227.5259146690369 on 4 cores (7 gen, 200, 100)
+runtime: 191.02020120620728 on 4 cores
+runtime: 692.4519791603088 on 4 cores
+runtime: 755.6062722206116 on 4 cores
+runtime: 712.8734681606293 on 4 cores
+runtime: 768.489245891571 on 4 cores
+runtime: 753.899983882904 on 4 cores
+runtime: 804.5930087566376 on 4 cores
+runtime: 883.2536962032318 on 4 cores
+runtime: 730.33083152771 on 4 cores
+runtime: 948.1255295276642 on 4 cores
+runtime: 831.4269962310791 on 4 cores
+runtime: 797.058183670044 on 4 cores
+runtime: 849.9681017398834 on 4 cores
+runtime: 252.04378509521484 on 4 cores
