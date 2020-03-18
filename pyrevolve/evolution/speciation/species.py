@@ -1,9 +1,12 @@
 class Species:
-    def __init__(self, representative_individuals, species_id: int):
+    def __init__(self, individual, species_id: int):
+
         # list of individuals and adjusted fitnesses
-        self._individuals = [(representative_individuals, None)]
+        self._individuals = [(individual, None)] # TODO _adjusted_fitness name to split off from regular individuals
+
         # Individual representative of the species
-        self._representative = representative_individuals
+        self._representative = individual
+
         # ID of the species
         self._id = species_id
         # Age of the species (in generations)
@@ -12,7 +15,7 @@ class Species:
         self._age_evaluations = 0
 
         self._generations_with_no_improvements = 0
-        self._last_best_fitness = 0  # TODO -Inf
+        self._last_best_fitness = 0  # TODO -Inf |-float('Inf')|
 
     @property
     def id(self):
@@ -105,3 +108,16 @@ class Species:
 
             # Compute the adjusted fitness for this member
             self._individuals[i] = (individual, fitness / n_individuals)
+
+    def next_generation(self, new_individuals):
+        # create ...
+        new_species = Species(self._representative, self._id)
+
+        new_species._age_evaluations = self._age_evaluations
+        new_species._age_generations = self._age_generations
+        new_species._
+
+
+        # TODO make tuple from individuals list
+        new_species._individuals = [(individual, None) for individual in new_individuals]
+

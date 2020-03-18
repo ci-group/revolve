@@ -2,8 +2,8 @@
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
-from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
+from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated, PopulationSpeciatedConfig
+from pyrevolve.evolution.population.population_management import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.lsystem_neat.crossover import CrossoverConfig as lCrossoverConfig
 from pyrevolve.genotype.lsystem_neat.crossover import standard_crossover as lcrossover
@@ -71,7 +71,13 @@ async def run():
         gen_num = 0
         next_robot_id = 1
 
-    population_conf = PopulationConfig(
+    are_genomes_compatible_fn = None # TODO
+    young_age_threshold: int = 0 # TODO
+    young_age_fitness_boost: float = 0.0 # TODO
+    old_age_threshold: int = 0 # TODO
+    old_age_fitness_penalty: float = 0.0 # TODO
+
+    population_conf = PopulationSpeciatedConfig(
         population_size=population_size,
         genotype_constructor=LSystemCPGHyperNEATGenotype,
         genotype_conf=lsystem_conf,
@@ -88,6 +94,11 @@ async def run():
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
+        are_genomes_compatible_fn=are_genomes_compatible_fn,
+        young_age_threshold=young_age_threshold,
+        young_age_fitness_boost=young_age_fitness_boost,
+        old_age_threshold=old_age_threshold,
+        old_age_fitness_penalty=old_age_fitness_penalty,
     )
 
     n_cores = settings.n_cores
@@ -99,31 +110,33 @@ async def run():
     analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+n_cores)
     await analyzer_queue.start()
 
-    population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
+    population = PopulationSpeciated(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
     if do_recovery:
         # loading a previous state of the experiment
         await population.load_snapshot(gen_num)
         if gen_num >= 0:
             logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
+
+        # TODO has offspring is does not have to be initialized.
         if has_offspring:
             individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
             logger.info('Recovered unfinished offspring '+str(gen_num))
 
             if gen_num == 0:
-                await population.init_pop(individuals)
+                await population.initialize(individuals)
             else:
-                population = await population.next_gen(gen_num, individuals)
+                population = await population.next_generation(gen_num, individuals)
 
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-        await population.init_pop()
+        await population.initialize()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     while gen_num < num_generations-1:
         gen_num += 1
-        population = await population.next_gen(gen_num)
+        population = await population.next_generation(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)

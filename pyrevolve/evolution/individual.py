@@ -1,5 +1,3 @@
-# (G,P)
-
 
 class Individual:
     def __init__(self, genotype, phenotype=None):
@@ -37,7 +35,7 @@ class Individual:
 
     def export_phenotype(self, folder):
         if self.phenotype is not None:
-            self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}.yaml', conf_type='yaml')
+            self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}.yaml', conf_type='yaml') # TODO "/phenotypes/phenotype_"
 
     def export_fitness(self, folder):
         """
