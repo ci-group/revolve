@@ -12,6 +12,10 @@ can shutdown, reset, evaluate robots through this CeleryController. It is used a
 
 Use the manager.py file in the pycelery folder as an example to make your own experiment.
 
+# ---------------------------- # CHANGED FILES #----------------------------#
+pyrevolve/evolution/population.py           	(Added a celery part to receive data)- old revolve intact
+pyrevolve/tol/manage/robotmanager.py					(Added a way to convert a celery message to a robotmanager class)- old revolve intact
+cpprevolve/gazebo/plugin/WorldController.cpp 	(Changed the file to retrieve celery messages from the workers.) - OLD REVOLVE NOT INTACT
 
 			#---------------------# PROBLEMS #--------------------------#
 
@@ -27,4 +31,10 @@ go back to like 0.01 or something).
 -3. If a gazebo instance is running, the robot simulation time is building up. This is normal since robots
 are getting more complex over time, however I believe it should decrease and at some point reach a threshold.
 It is not memory leaking because the memory usage is not increasing, however the computation time is. A solution is
-restarting the simulator per X generations, however I think it should be possible without restarting. 
+restarting the simulator per X generations, however I think it should be possible without restarting.
+
+-4. If in any case the experiment is disrupted, and stopped, celery messages can still be in the system. Restarting without removing
+these messages will give errors. So before restarting the experiment; celery, gazebo and the messages need to be deleted.
+This can be done by the following two commands:
+	- $ pkill -9 -f 'celery worker' && pkill -9 -f 'gzserver'
+	- $ celery amqp && queue.delete cpp && queue.delete robots
