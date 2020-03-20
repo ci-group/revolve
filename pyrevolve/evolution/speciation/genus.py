@@ -8,10 +8,10 @@ from .species import Species
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .population_speciated_config import PopulationSpeciatedConfig
-    from pyrevolve.evolution.individual import Individual
+    from pyrevolve.evolution.individual import Individual, create_individual
     from typing import List, Optional, Callable, Iterator
 
-
+#TODO refactor
 class Genus:
     """
     Collection of species
@@ -77,6 +77,23 @@ class Genus:
                 new_species.append(species)
 
         self.species_list = new_species
+
+    def generate_individual_function(self, individuals: List[Individual]) -> Individual:
+        # Selection operator (based on fitness)
+        # Crossover
+        if self.config.crossover_operator is not None:
+            parents = self.config.parent_selection(individuals)
+            child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf,
+                                                            self.config.crossover_conf)
+            child = Individual(child_genotype)
+        else:
+            child = self.config.selection(individuals)
+
+        # Mutation operator
+        child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
+
+        # Create new individual
+        return create_individual(self.config.experiment_management, child_genotype)
 
     def next_generation(self,
                         recovered_individuals: List[Individual],
