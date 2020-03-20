@@ -1,6 +1,12 @@
-import asyncio
+from __future__ import annotations
 
-from pyrevolve.evolution.individual import create_individual
+import asyncio
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import List, Optional
+
+from pyrevolve.evolution.individual import Individual, create_individual
 from pyrevolve.evolution.population import PopulationConfig, Population
 from pyrevolve.evolution.population.population import create_population
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
@@ -16,7 +22,7 @@ class PopulationManager:
         self.simulator_queue = simulator_queue
         self.analyzer_queue = analyzer_queue
 
-    async def initialize(self, recovered_individuals=None):
+    async def initialize(self, recovered_individuals: Optional[List[Individual]] = None) -> None:
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
@@ -32,7 +38,8 @@ class PopulationManager:
         individuals = recovered_individuals + individuals
         self.population = Population(self.config, individuals)
 
-    async def next_generation(self, generation_index: int, recovered_individuals=None):
+    async def next_generation(self, generation_index: int,
+                              recovered_individuals: Optional[List[Individual]] = None) -> Population:
         """
         Creates next generation of the population through selection, mutation, crossover
 
@@ -40,6 +47,8 @@ class PopulationManager:
         :param recovered_individuals: recovered offspring
         :return: new population
         """
+        assert len(recovered_individuals) == 0
+
         recovered_individuals = [] if recovered_individuals is None else recovered_individuals
         new_individuals = self.population.evolve(recovered_individuals)
 
@@ -51,12 +60,13 @@ class PopulationManager:
 
         return new_population
 
-    async def evaluate(self, new_individuals, generation_index: int, type_simulation='evolve'):
+    async def evaluate(self, new_individuals: List[Individual], generation_index: int, type_simulation='evolve') -> None:
         """
         Evaluates each individual in the new gen population
 
         :param new_individuals: newly created population after an evolution iteration
         :param generation_index: generation number
+        TODO remove `type_simulation`, I have no idea what that is for, but I have a strong feeling it should not be here.
         """
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
@@ -83,7 +93,7 @@ class PopulationManager:
             if type_simulation == 'evolve':
                 self.config.experiment_management.export_fitness(individual)
 
-    async def evaluate_single_robot(self, individual):
+    async def evaluate_single_robot(self, individual: Individual) -> (float, BehaviouralMeasurements):
         """
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)

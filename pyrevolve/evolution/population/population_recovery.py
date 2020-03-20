@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import List,  AnyStr
 
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.tol.manage import measures
@@ -39,7 +43,7 @@ async def population_recovery(population_config: PopulationConfig, experiment_ma
 
         # TODO has offspring is does not have to be initialized.
         if has_offspring:
-            individuals = await load_offspring(population, population_config, generation_index,
+            individuals = await load_offspring(population_config, generation_index,
                                                population_size, offspring_size)
             generation_index += 1
             logger.info('Recovered unfinished offspring '+str(generation_index))
@@ -59,7 +63,7 @@ async def population_recovery(population_config: PopulationConfig, experiment_ma
     return population, generation_index
 
 
-async def load_snapshot(population: Population, config: PopulationConfig, generation_index: int):
+async def load_snapshot(population: Population, config: PopulationConfig, generation_index: int) -> None:
     """
     Recovers all genotypes and fitnesses of robots in the lastest selected population
     :param generation_index: number of the generation snapshot to recover
@@ -73,12 +77,15 @@ async def load_snapshot(population: Population, config: PopulationConfig, genera
                 population.individuals.append(await load_individual(config, robot_name))
 
 
-async def load_offspring(population: Population, config: PopulationConfig, last_snapshot,
-                         population_size, offspring_size):
+async def load_offspring(config: PopulationConfig, last_snapshot: int,
+                         population_size: int, offspring_size: int) -> List[Individual]:
     """
     Recovers the part of an unfinished offspring
-    :param
-    :return:
+    :param config TODO
+    :param last_snapshot: number of robots expected until the latest snapshot
+    :param population_size: Population size
+    :param offspring_size: Offspring size (steady state)
+    :return: the list of recovered individuals
     """
     individuals = []
     # number of robots expected until the latest snapshot
@@ -93,20 +100,25 @@ async def load_offspring(population: Population, config: PopulationConfig, last_
     return individuals
 
 
-async def load_individual(config: PopulationConfig, robot_name: str):
+async def load_individual(config: PopulationConfig, ID: AnyStr) -> Individual:
+    """
+    TODO
+    :param ID: id of the robot to load
+    :return: the Individual loaded from the file system
+    """
     data_path = config.experiment_management.data_folder
-    genotype = config.genotype_constructor(config.genotype_conf, robot_name)
-    genotype.load_genotype(os.path.join(data_path, 'genotypes', f'genotype_{robot_name}.txt'))
+    genotype = config.genotype_constructor(config.genotype_conf, ID)
+    genotype.load_genotype(os.path.join(data_path, 'genotypes', f'genotype_{ID}.txt'))
 
     individual = Individual(genotype)
     individual.develop()
     individual.phenotype.measure_phenotype()
 
-    with open(os.path.join(data_path, 'fitness', f'fitness_{robot_name}.txt')) as f:
+    with open(os.path.join(data_path, 'fitness', f'fitness_{ID}.txt')) as f:
         data = f.readlines()[0]
         individual.fitness = None if data == 'None' else float(data)
 
-    with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{robot_name}.txt')) as f:
+    with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{ID}.txt')) as f:
         lines = f.readlines()
         if lines[0] == 'None':
             individual.phenotype._behavioural_measurements = None
