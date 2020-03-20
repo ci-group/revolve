@@ -71,3 +71,15 @@ runtime: 831.4269962310791 on 4 cores
 runtime: 797.058183670044 on 4 cores
 runtime: 849.9681017398834 on 4 cores
 runtime: 252.04378509521484 on 4 cores
+runtime: 190.5873579978943 on 4 cores
+runtime: 350.3830602169037 on 4 cores. Gen: 5, Population: 100, Offspring: 50
+runtime: 453.34073209762573 on 4 cores. Gen: 5, Population: 100, Offspring: 50
+runtime: 431.7494490146637 on 4 cores. Gen: 5, Population: 100, Offspring: 50
+runtime: 357.5847795009613 on 4 cores. Gen: 5, Population: 100, Offspring: 50
+runtime: 746.8557877540588 on 4 cores. Gen: 5, Population: 200, Offspring: 100
+runtime: 1547.8356235027313 on 4 cores. Gen: 20, Population: 100, Offspring: 50
+runtime: 2071.1255826950073 on 4 cores. Gen: 40, Population: 100, Offspring: 50
+runtime: 7019.962174415588 on 4 cores. Gen: 40, Population: 100, Offspring: 50
+runtime: 2460.9678070545197 on 3 cores. Gen: 20, Population: 100, Offspring: 50
+runtime: 3303.576198577881 on 4 cores. Gen: 20, Population: 100, Offspring: 50
+runtime: 1949.4200978279114 on 4 cores. Gen: 20, Population: 100, Offspring: 50

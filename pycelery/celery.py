@@ -4,7 +4,7 @@
 # better be split in the future, if the tasks get to large.
 
 from __future__ import absolute_import, unicode_literals
-from celery import Celery
+from celery import Celery, signals
 from celery_pool_asyncio import monkey as cpa_monkey
 
 # Starting Celery
@@ -32,6 +32,13 @@ app.conf.update(
     ('pycelery.tasks.*', {'queue': 'robots'}),
     ('pycelery.tasks.hello', {'queue': 'celery'})],)
 )
+
+@signals.setup_logging.connect
+def setup_celery_logging(**kwargs):
+    """This function disables logging."""
+    pass
+    
+app.log.setup()
 
 if __name__ == '__main__':
     app.start()

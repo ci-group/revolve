@@ -1,7 +1,7 @@
 import asyncio
 import subprocess
 import time
-from pycelery.tasks import shutdown_gazebo, run_gazebo, run_gazebo_and_analyzer, evaluate_robot, start_robot_queue, insert_robot
+from pycelery.tasks import shutdown_gazebo, run_gazebo, run_gazebo_and_analyzer, evaluate_robot, start_robot_queue, insert_robot, reset
 from pyrevolve.SDF.revolve_bot_sdf_builder import revolve_bot_to_sdf
 from pycelery.converter import args_to_dic, dic_to_args, dic_to_pop, pop_to_dic
 from pyrevolve.custom_logging.logger import logger
@@ -30,6 +30,33 @@ class CeleryController:
         logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores. ")
         subprocess.Popen("celery multi start "+str(self.settings.n_cores)+" -Q robots -A pycelery -P celery_pool_asyncio:TaskPool -c 1", shell=True)
 
+    async def reset_connections(self):
+        logger.info("Resetting connection on every worker.")
+
+        futures = []
+        for i in range(self.settings.n_cores):
+            future = await reset.delay()
+            futures.append(future)
+
+        for i in futures:
+            await i.get()
+
+    async def reset_celery(self):
+        logger.info("Resetting every celery worker and gazebo instance. This will take approximately 25 seconds...")
+
+        await self.shutdown()
+
+        #celery need time to start
+        await asyncio.sleep(5)
+
+        self.start_workers()
+
+        # workers need time to start
+        await asyncio.sleep(5)
+
+        await self.start_gazebo_instances()
+
+
     async def shutdown(self):
         """
         A function to call all celery workers and shut them down.
@@ -41,7 +68,8 @@ class CeleryController:
             shutdowns.append(sd)
 
         for i in range(self.settings.n_cores):
-            await shutdowns[i].get()
+            result = await shutdowns[i].get()
+            logger.info(f"Worker {i} with result: {result}")
 
         subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
         subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)

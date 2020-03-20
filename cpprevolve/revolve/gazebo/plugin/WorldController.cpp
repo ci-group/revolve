@@ -522,7 +522,7 @@ void WorldController::OnContacts(ConstContactsPtr &msgContact){
   auto contactsList = msgContact->contact();
   boost::mutex::scoped_lock plock(dataMutex_);
 
-  //// METHOD 1: ////
+  // //// METHOD 1: ////
   for (const auto &contact : contactsList){
     auto number_of_contacts = 0;
     for (const auto &pos : contact.position()){
@@ -577,7 +577,6 @@ void WorldController::OnModel(ConstModelPtr &msg)
     inserted.SerializeToString(resp.mutable_serialized_data());
 
     this->responsePub_->Publish(resp);
-
 //    this->world_insert_remove_mutex.unlock();
 
     std::cout << "Model `" << name << "` inserted, world now contains "

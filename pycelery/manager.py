@@ -34,7 +34,7 @@ async def run():
     await asyncio.sleep(5) # Celery needs time
 
     # experiment params #
-    num_generations = 20
+    num_generations = 40
     population_size = 100
     offspring_size = 50
 
@@ -91,8 +91,6 @@ async def run():
         celery = True
     )
 
-    # analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+settings.n_cores)
-    # await analyzer_queue.start()
     analyzer_queue = None
     population = Population(population_conf, celerycontroller, analyzer_queue, next_robot_id)
 
@@ -115,17 +113,24 @@ async def run():
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
+
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     while gen_num < num_generations-1:
         gen_num += 1
         population = await population.next_gen(gen_num)
+
+        # reset gazebo and celery if something went wrong or every 10 generations
+        if population.conf.celery_reboot or gen_num%10 == 0:
+            await celerycontroller.reset_celery()
+            population.conf.celery_reboot = False
+
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     await celerycontroller.shutdown()
 
     end = time.time()
     f = open("speed.txt", "a")
-    f.write(f"runtime: {end-begin} on {settings.n_cores} cores\n")
+    f.write(f"runtime: {end-begin} on {settings.n_cores} cores. Gen: {num_generations}, Population: {population_size}, Offspring: {offspring_size}\n")
     f.close()

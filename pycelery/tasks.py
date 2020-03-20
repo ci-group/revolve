@@ -4,6 +4,7 @@ import asyncio
 import importlib
 import os
 import time
+import statistics
 
 from celery.exceptions import SoftTimeLimitExceeded
 from pyrevolve import revolve_bot
@@ -201,7 +202,6 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
     global busy
 
     try:
-
         EVALUATION_TIMEOUT = 30
 
         # Set global fitness_function
@@ -222,7 +222,7 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
 
         if analyzer_connection:
             try:
-                # if analyzer running or restarting, wait
+                # if analyzer running or restarting, wait (Its ugly so i wanna change it)
                 while busy:
                     await asyncio.sleep(0.5)
 
@@ -231,11 +231,6 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
                 collisions, _bounding_box = await asyncio.wait_for(analyzer_connection.analyze_robot(robot), timeout=EVALUATION_TIMEOUT)
                 busy = False
 
-                if robot.id == "robot_20":
-                    await asyncio.sleep(60) # just to trigger test
-
-                if robot.id == "robot_30":
-                    raise TimeoutError
             except:
                 logger.info(f"WARNING C 1: Celery time limit for analyzer connection. Restarting analyzer and returning None as value. Robot: {robot.id}")
 
@@ -278,6 +273,7 @@ async def shutdown_gazebo():
 
     global simulator_supervisor
     global connection
+
     try:
         await connection.disconnect()
         await asyncio.wait_for(simulator_supervisor.stop(), timeout=2)
@@ -285,6 +281,19 @@ async def shutdown_gazebo():
         logger.info("TimeoutError: timeout error when closing gazebo instance.")
     finally:
         return True
+
+
+@app.task
+async def reset():
+    """A function that will reset the connection with the simulator on this worker."""
+    global connection
+
+    try:
+        await asyncio.wait_for(connection.reset(rall=True, time_only=True, model_only=False), timeout = 3)
+    except:
+        return True
+
+    return True
 
 @app.task(queue="cpp", task_serializer='json', result_serializer = 'json')
 async def insert_robot(sdf_string, evaluation_time=120):

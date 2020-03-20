@@ -30,7 +30,8 @@ class PopulationConfig:
                  experiment_management,
                  offspring_size=None,
                  next_robot_id=1,
-                 celery = False):
+                 celery = False,
+                 celery_reboot = False):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -67,6 +68,7 @@ class PopulationConfig:
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
         self.celery = celery
+        self.celery_reboot = celery_reboot
 
 class Population:
     def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
@@ -168,6 +170,7 @@ class Population:
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
+
         for i in range(self.conf.population_size-len(recovered_individuals)):
             individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
             self.individuals.append(individual)
@@ -184,6 +187,8 @@ class Population:
         :param individuals: recovered offspring
         :return: new population
         """
+
+        begin3 = time.time()
 
         new_individuals = []
 
@@ -207,6 +212,9 @@ class Population:
             individual = self._new_individual(child_genotype)
 
             new_individuals.append(individual)
+
+        end3 = time.time()
+        logger.info(f"Time to start next generation {end3-begin3}, per generation")
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
@@ -255,7 +263,8 @@ class Population:
                     individual.fitness, measurements = await asyncio.wait_for(future.get(timeout=50), timeout=50) # 50 seconds might be to short, but in general this only happens if analyzer disconnects. 100 second might be too long, since the time starts when get is called. it should be processed within seconds by then..
                     individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
                 except TimeoutError:
-                    logger.info(f"Individual's get request timed out. Robot_id: {individual.phenotype.id}")
+                    logger.info(f"Individual's get request timed out. Celery will be restarted next generation.")
+                    self.conf.celery_reboot = True
                     individual.fitness, individual.phenotype._behavioural_measurements = None, None
             else:
                 individual.fitness, individual.phenotype._behavioural_measurements = await future
@@ -269,6 +278,8 @@ class Population:
             logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_fitness(individual)
+
+
 
     async def evaluate_single_robot(self, individual):
         """
