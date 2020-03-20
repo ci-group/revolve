@@ -1,4 +1,4 @@
-
+from __future__ import annotations
 import asyncio
 import os
 
@@ -7,9 +7,26 @@ from pyrevolve.tol.manage import measures
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.population.population_config import PopulationConfig
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import List, Optional, AnyStr
+    from pyrevolve.tol.manage.measures import BehaviouralMeasurements
+    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
+
 
 class Population:
-    def __init__(self, config: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
+    """
+    Population class
+
+    It handles the list of individuals: evaluations, mutations and crossovers.
+    It is the central component for robot evolution in this framework.
+    """
+
+    def __init__(self,
+                 config: PopulationConfig,
+                 simulator_queue: SimulatorQueue,
+                 analyzer_queue: Optional[AnalyzerQueue] = None,
+                 next_robot_id: int = 1):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -39,21 +56,25 @@ class Population:
 
         return individual
 
-
-    async def load_individual(self, id):
+    async def load_individual(self, ID: AnyStr) -> Individual:
+        """
+        TODO
+        :param ID: id of the robot to load
+        :return: the Individual loaded from the file system
+        """
         data_path = self.config.experiment_management.data_folder
-        genotype = self.config.genotype_constructor(self.config.genotype_conf, id)
-        genotype.load_genotype(os.path.join(data_path, 'genotypes', f'genotype_{id}.txt'))
+        genotype = self.config.genotype_constructor(self.config.genotype_conf, ID)
+        genotype.load_genotype(os.path.join(data_path, 'genotypes', f'genotype_{ID}.txt'))
 
         individual = Individual(genotype)
         individual.develop()
         individual.phenotype.measure_phenotype()
 
-        with open(os.path.join(data_path, 'fitness', f'fitness_{id}.txt')) as f:
+        with open(os.path.join(data_path, 'fitness', f'fitness_{ID}.txt')) as f:
             data = f.readlines()[0]
             individual.fitness = None if data == 'None' else float(data)
 
-        with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')) as f:
+        with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{ID}.txt')) as f:
             lines = f.readlines()
             if lines[0] == 'None':
                 individual.phenotype._behavioural_measurements = None
@@ -84,7 +105,7 @@ class Population:
 
         return individual
 
-    async def load_snapshot(self, gen_num: int):
+    async def load_snapshot(self, gen_num: int) -> None:
         """
         Recovers all genotypes and fitnesses of robots in the lastest selected population
         :param gen_num: number of the generation snapshot to recover
@@ -93,14 +114,21 @@ class Population:
         for r, d, f in os.walk(data_path +'/selectedpop_'+str(gen_num)):
             for file in f:
                 if 'body' in file:
-                    id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
-                    self.individuals.append(await self.load_individual(id))
+                    ID = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
+                    self.individuals.append(await self.load_individual(ID))
 
-    async def load_offspring(self, last_snapshot, population_size, offspring_size, next_robot_id):
+    async def load_offspring(self,
+                             last_snapshot: int,
+                             population_size: int,
+                             offspring_size: int,
+                             next_robot_id: int) -> List[Individual]:
         """
         Recovers the part of an unfinished offspring
-        :param
-        :return:
+        :param last_snapshot: number of robots expected until the latest snapshot
+        :param population_size: Population size
+        :param offspring_size: Offspring size (steady state)
+        :param next_robot_id: TODO
+        :return: the list of recovered individuals
         """
         individuals = []
         # number of robots expected until the latest snapshot
@@ -115,7 +143,7 @@ class Population:
         self.next_robot_id = next_robot_id
         return individuals
 
-    async def initialize(self, recovered_individuals=None):
+    async def initialize(self, recovered_individuals: Optional[List[Individual]] = None) -> None:
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
@@ -129,7 +157,9 @@ class Population:
         await self.evaluate(self.individuals, 0)
         self.individuals = recovered_individuals + self.individuals
 
-    async def next_generation(self, gen_num: int, recovered_individuals=None):
+    async def next_generation(self,
+                              gen_num: int,
+                              recovered_individuals: Optional[List[Individual]] = None) -> Population:
         """
         Creates next generation of the population through selection, mutation, crossover
 
@@ -178,12 +208,16 @@ class Population:
 
         return new_population
 
-    async def evaluate(self, new_individuals, gen_num: int, type_simulation = 'evolve'):
+    async def evaluate(self,
+                       new_individuals: List[Individual],
+                       gen_num: int,
+                       type_simulation = 'evolve') -> None:
         """
         Evaluates each individual in the new gen population
 
         :param new_individuals: newly created population after an evolution iteration
         :param gen_num: generation number
+        TODO remove `type_simulation`, I have no idea what that is for, but I have a strong feeling it should not be here.
         """
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
@@ -209,7 +243,7 @@ class Population:
             if type_simulation == 'evolve':
                 self.config.experiment_management.export_fitness(individual)
 
-    async def evaluate_single_robot(self, individual):
+    async def evaluate_single_robot(self, individual: Individual) -> (float, BehaviouralMeasurements):
         """
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)

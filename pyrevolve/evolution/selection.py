@@ -1,5 +1,11 @@
 from random import randint
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import List, Callable
+    from pyrevolve.evolution.individual import Individual
+
+
 _neg_inf = -float('Inf')
 
 
@@ -9,9 +15,10 @@ def _compare_maj_fitness(indiv_1, indiv_2):
     return fit_1 > fit_2
 
 
-def tournament_selection(population, k=2):
+def tournament_selection(population: List[Individual], k=2) -> Individual:
     """
     Perform tournament selection and return best individual
+    :param population: list of individuals where to select from
     :param k: amount of individuals to participate in tournament
     """
     best_individual = None
@@ -22,10 +29,12 @@ def tournament_selection(population, k=2):
     return best_individual
 
 
-def multiple_selection(population, selection_size, selection_function):
+def multiple_selection(population: List[Individual],
+                       selection_size: int,
+                       selection_function: Callable[[List[Individual]], Individual]) -> List[Individual]:
     """
     Perform selection on population of distinct group, can be used in the form parent selection or survival selection
-    :param population: parent selection in population
+    :param population: list of individuals where to select from
     :param selection_size: amount of indivuals to select
     :param selection_function:
     """
