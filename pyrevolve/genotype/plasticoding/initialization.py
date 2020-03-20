@@ -52,13 +52,13 @@ def _generate_random_grammar(conf):
     return grammar
 
 
-def random_initialization(conf, next_robot_id):
+def random_initialization(conf):
     """
     Initializing a random genotype.
     :type conf: PlasticodingConfig
     :return: a Genome
     :rtype: Plasticoding
     """
-    genotype = Plasticoding(conf, next_robot_id)
+    genotype = Plasticoding(conf)
     genotype.grammar = _generate_random_grammar(conf)
     return genotype

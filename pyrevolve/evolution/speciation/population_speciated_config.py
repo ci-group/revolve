@@ -1,5 +1,5 @@
 
-from ..population.population_config import PopulationConfig
+from ..population import PopulationConfig
 
 
 class PopulationSpeciatedConfig(PopulationConfig):
@@ -24,8 +24,7 @@ class PopulationSpeciatedConfig(PopulationConfig):
                  young_age_fitness_boost: float,
                  old_age_threshold: int,
                  old_age_fitness_penalty: float,
-                 offspring_size=None,
-                 next_robot_id=1):
+                 offspring_size=None):
         super().__init__(population_size,
                          genotype_constructor,
                          genotype_conf,
@@ -41,8 +40,7 @@ class PopulationSpeciatedConfig(PopulationConfig):
                          evaluation_time,
                          experiment_name,
                          experiment_management,
-                         offspring_size,
-                         next_robot_id)
+                         offspring_size)
         self.are_genomes_compatible = are_genomes_compatible_fn
         self.young_age_threshold = young_age_threshold
         self.young_age_fitness_boost = young_age_fitness_boost

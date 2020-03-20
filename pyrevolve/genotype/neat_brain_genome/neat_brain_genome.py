@@ -1,11 +1,10 @@
 import enum
 import multineat
-import re
 import sys
 
 from pyrevolve.genotype import Genotype
-from pyrevolve.revolve_bot.brain import BrainCPG, BrainCPPNCPG
-
+from pyrevolve.revolve_bot.brain import BrainCPPNCPG
+from pyrevolve.util.robot_identifier import RobotIdentifier
 
 class BrainType(enum.Enum):
     NN = 0
@@ -136,13 +135,15 @@ class NeatBrainGenomeConfig:
 
 
 class NeatBrainGenome(Genotype):
-    def __init__(self, conf: NeatBrainGenomeConfig = None, robot_id=None):  # Change
+    def __init__(self, conf: NeatBrainGenomeConfig = None):  # Change
+
+        super().__init__()
+
         if conf is None:
             self._brain_type = None
             self._neat_genome = None
             return
 
-        # self.id = int(robot_id)
         self._brain_type = conf.brain_type
         is_cppn = conf.is_brain_cppn()
 
@@ -184,10 +185,6 @@ class NeatBrainGenome(Genotype):
                 0,  # number of hidden layers
             )
 
-        if type(robot_id) is int:
-            self.id = robot_id
-        else:
-            self.id = int(re.search('\d+', str(robot_id))[0])
         self.phenotype = None
 
     def load_genotype(self, file_path: str):

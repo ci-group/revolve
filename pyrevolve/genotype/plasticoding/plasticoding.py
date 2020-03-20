@@ -1,10 +1,11 @@
 import random
 import math
 
-from pyrevolve.custom_logging.logger import logger
 from pyrevolve.genotype import Genotype
 from pyrevolve.genotype.plasticoding.alphabet import Alphabet, INDEX_SYMBOL, INDEX_PARAMS
 from pyrevolve.genotype.plasticoding.decoder import GrammarExpander
+from pyrevolve.util.robot_identifier import RobotIdentifier
+
 from pyrevolve.revolve_bot.brain.brain_nn import Node
 
 
@@ -13,14 +14,13 @@ class Plasticoding(Genotype):
     L-system genotypic representation, enhanced with epigenetic capabilities for phenotypic plasticity, through Genetic Programming.
     """
 
-    def __init__(self, conf, robot_id):
+    def __init__(self, conf):
+        super().__init__()
         """
         :param conf: configurations for lsystem
-        :param robot_id: unique id of the robot
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = str(robot_id)
         self.grammar = {}
 
         # Auxiliary variables

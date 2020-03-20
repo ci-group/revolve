@@ -1,6 +1,11 @@
+import os
+
+from pyrevolve.experiment_management import ExperimentManagement
+from pyrevolve.genotype import Genotype
+
 
 class Individual:
-    def __init__(self, genotype, phenotype=None):
+    def __init__(self, genotype: Genotype, phenotype=None):
         """
         Creates an Individual object with the given genotype and optionally the phenotype.
 
@@ -13,6 +18,7 @@ class Individual:
         self.parents = None
         self.failed_eval_attempt_count = 0
 
+    # TODO make genotype, phenotype and other properties private.
     def develop(self):
         """
         Develops genotype into a intermediate phenotype
@@ -21,6 +27,8 @@ class Individual:
         if self.phenotype is None:
             self.phenotype = self.genotype.develop()
 
+    # TODO is this needed to be recalculated each time, could be set in the constructor and
+    #  in the develop function if after the phenotype is set.
     @property
     def id(self):
         _id = None
@@ -30,14 +38,19 @@ class Individual:
             _id = self.genotype.id
         return _id
 
-    def export_genotype(self, folder):
-        self.genotype.export_genotype(f'{folder}/genotypes/genotype_{self.phenotype.id}.txt')
+    def _export_genotype(self, folder: str):
+        if self.genotype is not None:
+            # TODO should be yaml?
+            # TODO should this be phenotype?
+            self.genotype.export_genotype(f'{folder}/genotypes/genotype_{self.genotype.id}.txt')
 
-    def export_phenotype(self, folder):
+    def _export_phenotype(self, folder: str):
         if self.phenotype is not None:
-            self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}.yaml', conf_type='yaml') # TODO "/phenotypes/phenotype_"
+            # TODO should be txt?
+            # TODO "/phenotypes/"
+            self.phenotype.save_file(f'{folder}/phenotypes/phenotype_{self.phenotype.id}.yaml', conf_type='yaml')
 
-    def export_fitness(self, folder):
+    def _export_fitness(self, folder: str):
         """
         It's saving the fitness into a file. The fitness can be a floating point number or None
         :param folder: folder where to save the fitness
@@ -45,10 +58,24 @@ class Individual:
         with open(f'{folder}/fitness_{self.id}.txt', 'w') as f:
             f.write(str(self.fitness))
 
-    def export(self, folder):
-        self.export_genotype(folder)
-        self.export_phenotype(folder)
-        self.export_fitness(folder)
+    def export(self, folder : str):
+        if folder is not None:
+            self._export_genotype(folder)
+            self._export_phenotype(folder)
+            self._export_fitness(folder)
 
     def __repr__(self):
         return f'Individual_{self.id}({self.fitness})'
+
+
+def create_individual(experiment_management: ExperimentManagement, genotype: Genotype):
+    individual = Individual(genotype)
+    individual.develop()
+    individual.phenotype.update_substrate()
+    experiment_management.export_genotype(individual)
+    experiment_management.export_phenotype(individual)
+    experiment_management.export_phenotype_images(os.path.join('data_fullevolution', 'phenotype_images'), individual)
+    individual.phenotype.measure_phenotype()
+    individual.phenotype.export_phenotype_measurements(experiment_management.data_folder)
+
+    return individual

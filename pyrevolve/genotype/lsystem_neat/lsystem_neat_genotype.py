@@ -1,8 +1,8 @@
 from .. import Genotype
-from pyrevolve.genotype.plasticoding.plasticoding import Alphabet
 from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenome
 
+from pyrevolve.util.robot_identifier import RobotIdentifier
 
 class LSystemCPGHyperNEATGenotypeConfig:
     def __init__(self, plasticonfig_conf, neat_conf):
@@ -11,17 +11,16 @@ class LSystemCPGHyperNEATGenotypeConfig:
 
 
 class LSystemCPGHyperNEATGenotype(Genotype):
-    def __init__(self, conf: LSystemCPGHyperNEATGenotypeConfig = None, robot_id=None):
+    def __init__(self, conf: LSystemCPGHyperNEATGenotypeConfig = None):
 
-        self._id = robot_id
+        super().__init__()
 
         if conf is None:
             self._body_genome = None
             self._brain_genome = None
         else:
-            assert robot_id is not None
-            self._body_genome = random_initialization(conf.plasticoding, robot_id)
-            self._brain_genome = NeatBrainGenome(conf.neat, robot_id)
+            self._body_genome = random_initialization(conf.plasticoding, self._id)
+            self._brain_genome = NeatBrainGenome(conf.neat, self._id)
 
     @property
     def id(self):

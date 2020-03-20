@@ -1,7 +1,13 @@
 import copy
 
+from pyrevolve.util.robot_identifier import RobotIdentifier
+
 
 class Genotype:
+
+    def __init__(self):
+        self._id = RobotIdentifier.getInstance().next()
+
     def clone(self):
         """
         Create an returns deep copy of the genotype

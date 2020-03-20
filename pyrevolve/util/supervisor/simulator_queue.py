@@ -175,6 +175,7 @@ class SimulatorQueue:
             await simulator_connection.reset(rall=True, time_only=True, model_only=False)
             return robot_fitness, measures.BehaviouralMeasurements(robot_manager, robot)
 
+    #TODO unused
     async def _joint(self):
         await self._robot_queue.join()
 

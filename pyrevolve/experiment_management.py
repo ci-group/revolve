@@ -1,8 +1,10 @@
-import os
-import shutil
 import numpy as np
+import shutil
+import os
+
 from pyrevolve.custom_logging.logger import logger
-import sys
+
+from pyrevolve.util.robot_identifier import RobotIdentifier
 
 
 class ExperimentManagement:
@@ -125,4 +127,6 @@ class ExperimentManagement:
         else:
             has_offspring = False
 
-        return last_snapshot, has_offspring, last_id+1
+        RobotIdentifier.getInstance().initialize(last_id + 1)
+
+        return last_snapshot, has_offspring
