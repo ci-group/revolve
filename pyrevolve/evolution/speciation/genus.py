@@ -1,26 +1,52 @@
+from __future__ import annotations
 
 import copy
+import math
 import numpy
-
 from .species import Species
-from .population_speciated_config import PopulationSpeciatedConfig
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .population_speciated_config import PopulationSpeciatedConfig
+    from pyrevolve.evolution.individual import Individual
+    from typing import List, Optional, Callable, Iterator
 
 
 class Genus:
+    """
+    Collection of species
+    """
 
-    def __init__(self, config : PopulationSpeciatedConfig):
+    def __init__(self, config: PopulationSpeciatedConfig):
         self.config = config
 
-        self.species_list = []
+        self.species_list = []  # type: List[Species]
         self._next_species_id = 0
-        self._best_species = None
+        self._best_species = None  # type: Optional[Species]
 
-    def speciate(self, species_list):
+    def __len__(self):
+        return len(self.species_list)
 
+    def iter_individuals(self) -> Iterator[Individual]:
+        """
+        :return: an iterator of `individual` for all individuals of the species
+        """
+        for species in self.species_list:
+            for individual, _ in species.iter_individuals():
+                yield individual
+
+    def speciate(self, individuals: List[Individual]) -> None:
+        """
+        Creates the species. It takes a list of individuals and splits them into multiple species, grouping the
+        compatible individuals together.
+
+        :param individuals:
+        :return:
+        """
         assert len(individuals) > 0
 
         # clear out the species list
-        species_list.clear()
+        self.species_list.clear()
 
         # NOTE: we are comparing the new generation's genomes to the representatives from the previous generation!
         # Any new species that is created is assigned a representative from the new generation.
@@ -41,7 +67,7 @@ class Genus:
 
         self._cleanup_species()
 
-    def _cleanup_species(self):
+    def _cleanup_species(self) -> None:
         """
         Remove all empty species (cleanup routine for every case..)
         """
@@ -52,7 +78,18 @@ class Genus:
 
         self.species_list = new_species
 
-    def next_generation(self, recovered_individuals, generate_individual_function):
+    def next_generation(self,
+                        recovered_individuals: List[Individual],
+                        generate_individual_function: Callable[[List[Individual]], Individual]) -> Genus:
+        """
+        Creates the genus for the next generation
+
+        :param recovered_individuals: TODO implement recovery
+        :param generate_individual_function: The function that generates a new individual.
+        :return:
+        """
+        assert len(recovered_individuals) == 0
+
         # update species stagnation and stuff
         self._update_species()
 
@@ -107,7 +144,7 @@ class Genus:
                                                                 offspring_amount, self.config.population_management_selector)
 
         #TODO assert species list size and number of individuals
-        assert(self.config.population_size == number_of_individuals(new_species_list))
+        assert(self.config.population_size == self.number_of_individuals(new_species_list))
 
         new_genus = Genus(self.config)
         new_genus.species_list = new_species_list
@@ -115,7 +152,10 @@ class Genus:
 
         return new_genus
 
-    def _update_species(self):
+    def _update_species(self) -> None:
+        """
+        Updates the best_species, increases age for all species
+        """
         # the old best species will be None at the first iteration
         old_best_species = self._best_species
 
@@ -126,8 +166,6 @@ class Genus:
             # Reset the species and update its age
             species.increase_age_generations()
             species.increase_gens_no_improvement()
-            # TODO remove (how many of this species should be spawned for the next population)
-            species.SetOffspringRqd(0)
 
         # This prevents the previous best species from sudden death
         # If the best species happened to be another one, reset the old
@@ -137,16 +175,24 @@ class Genus:
         if old_best_species is not None:
             old_best_species.reset_age_gens()
 
-    def _adjust_fitness(self):
+    def _adjust_fitness(self) -> None:
+        """
+        Computes the adjusted fitness for all species
+        """
         for species in self.species_list:
             species.adjust_fitness(species is self._best_species, self.config)
 
-
-
     # TODO testing
     # TODO list of all individuals for all species
-    def _count_offsprings(self, number_of_individuals):
+    def _count_offsprings(self, number_of_individuals: int) -> List[int]:
+        """
+        Calculates the number of offspring allocated for each individual.
+        The total of allocated individuals will be `number_of_individuals`
 
+        :param number_of_individuals: Total number of individuals to generate.
+        :return: a list of integers representing the number of allocated individuals for each species.
+        The index of this list correspond to the same index in self._species_list.
+        """
         assert number_of_individuals > 0
 
         total_adjusted_fitness = 0.0
@@ -172,13 +218,12 @@ class Genus:
 
         if missing > 0: # positive have lacking individuals
             # TODO take best species
-            species_offspring_amount[self._best_species_index()] += missing
+            species_offspring_amount[self._find_best_species()[0]] += missing
 
         elif missing < 0: # negative have excess individuals
             # TODO remove missing number of individuals
             # TODO more documentation ...
-            # TODO check if the number of individuals is not smaller than 1
-            species_offspring_amount[self._worst_species_index()] -= -missing
+            species_offspring_amount[self._find_worst_species(exclude_empty_species=True)[0]] -= -missing
 
         # There are some individuals missing from approximation
         #missing_offsprings = self.config.offspring_size - len(new_individuals)
@@ -193,15 +238,57 @@ class Genus:
         return species_offspring_amount
 
     #TODO performance of double finding.
-    def _best_species_index(self):
-        return numpy.argmax(self.species_list, key=lambda species: species.get_best_fitness())
+    def _find_best_species(self) -> (int, Species):
+        """
+        :return: the index of the best species
+        """
+        index = int(
+            numpy.argmax(self.species_list, key=lambda species: species.get_best_fitness())
+        )
 
-    def _worst_species(self):
-        return numpy.sort(self.species_list, key=lambda species: species.get_best_fitness())
+        return index, self.species_list[index]
 
-def number_of_individuals(species_list):
-    # count the total number of individuals inside every species in the species_list
-    number_of_individuals = 0
-    for species in species_list:
-        number_of_individuals += len(species._individuals)  # todo function number of individuals.
-    return number_of_individuals
+    def _find_worst_species(self, exclude_empty_species: bool = False) -> (int, Species):
+        """
+        :return: the index of the worst species and a reference to the worst species
+        """
+        assert len(self.species_list) > 0
+        iter_species = enumerate(iter(self.species_list[1:]))
+
+        worst_species_index, worst_species = next(iter_species)
+        worst_species_fitness = worst_species.get_best_fitness()
+
+        while True:
+            try:
+                i, species = next(iter_species)
+            except StopIteration:
+                # stop the infinite loop when the iterator is exhausted
+                break
+
+            if not species.empty():
+                species_fitness = species.get_best_fitness()
+            else:
+                if exclude_empty_species:
+                    # ignore empty species in the loop
+                    continue
+                else:
+                    species_fitness = -math.inf
+
+            if species_fitness < worst_species_fitness:
+                worst_species_fitness = species_fitness
+                worst_species = species
+                worst_species_index = i
+        return worst_species_index, worst_species
+
+    def number_of_individuals(self, species_list: Optional[List[Species]] = None) -> int:
+        """
+        Counts the number of individuals in the species_list.
+        :param species_list: if None, it will use self.species_list
+        :return: the total number of individuals
+        """
+        species_list = self.species_list if species_list is None else species_list
+        # count the total number of individuals inside every species in the species_list
+        number_of_individuals = 0
+        for species in species_list:
+            number_of_individuals += len(species)
+        return number_of_individuals

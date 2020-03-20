@@ -1,37 +1,55 @@
+from __future__ import annotations
 
-from pyrevolve.evolution.individual import Individual
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.individual import create_individual
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pyrevolve.evolution.individual import Individual
+    from pyrevolve.genotype import Genotype
+    from typing import Callable, Optional, List
+    from pyrevolve.revolve_bot import RevolveBot
+    from pyrevolve.tol.manage.robotmanager import RobotManager
+    from typing import List, Optional
 
 
 class PopulationConfig:
     def __init__(self,
-                 population_size: int,
-                 genotype_constructor,
-                 genotype_conf,
-                 fitness_function,
-                 mutation_operator,
-                 mutation_conf,
-                 crossover_operator,
-                 crossover_conf,
-                 selection,
-                 parent_selection,
-                 population_management,
-                 population_management_selector,
-                 evaluation_time,
-                 experiment_name,
-                 experiment_management,
-                 offspring_size=None):
+         population_size: int,
+         genotype_constructor: Callable[[object, int], Genotype],
+         genotype_conf: object,
+         fitness_function: Callable[[RobotManager, RevolveBot], float],
+         mutation_operator: Callable[[Genotype, object], Genotype],
+         mutation_conf: object,
+         crossover_operator: Callable[[List[Individual], object, object], Genotype],
+         crossover_conf: object,
+         selection: Callable[[List[Individual]], Individual],
+         parent_selection: Callable[[List[Individual]], List[Individual]],
+         population_management: Callable[
+             [List[Individual], List[Individual], Callable[[List[Individual]], Individual]],
+             List[Individual]
+         ],
+         population_management_selector: Callable[[List[Individual]], Individual],
+         evaluation_time: float,
+         experiment_name: str,
+         experiment_management,
+         offspring_size: Optional[int] = None):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
         :param population_size: size of the population
-        :param genotype_constructor: class of the genotype used
+        :param genotype_constructor: class of the genotype used.
+            First parameter is the config of the genome.
+            Second is the id of the genome
         :param genotype_conf: configuration for genotype constructor
         :param fitness_function: function that takes in a `RobotManager` as a parameter and produces a fitness for the robot
         :param mutation_operator: operator to be used in mutation
         :param mutation_conf: configuration for mutation operator
-        :param crossover_operator: operator to be used in crossover
+        :param crossover_operator: operator to be used in crossover.
+            First parameter is the list of parents (usually 2).
+            Second parameter is the Genotype Conf
+            Third parameter is Crossover Conf
         :param selection: selection type
         :param parent_selection: selection type during parent selection
         :param population_management: type of population management ie. steady state or generational
@@ -60,7 +78,8 @@ class PopulationConfig:
 
 class Population:
 
-    def __init__(self, config: PopulationConfig, individuals = None):
+    def __init__(self, config: PopulationConfig, individuals :List[Individual] = None):
+
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -111,3 +130,4 @@ def create_population(config, previous_population, new_individuals, generation_i
     logger.info(f'Population selected in gen {generation_index} with {len(new_population.individuals)} individuals...')
 
     return new_population
+

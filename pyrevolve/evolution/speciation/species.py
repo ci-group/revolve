@@ -1,32 +1,45 @@
+from __future__ import annotations
+import math
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import List, Optional
+    from pyrevolve.evolution.individual import Individual
+    from .population_speciated_config import PopulationSpeciatedConfig
+
+
 class Species:
-    def __init__(self, individual, species_id: int):
+    def __init__(self, individual: Individual, species_id: int):
 
         # list of individuals and adjusted fitnesses
-        self._individuals = [(individual, None)] # TODO _adjusted_fitness name to split off from regular individuals
+        # TODO _adjusted_fitness name to split off from regular individuals
+        self._individuals = [(individual, None)]  # type: List[(Individual, Optional[int])]
 
         # Individual representative of the species
-        self._representative = individual
+        self._representative = individual  # type: Individual
 
         # ID of the species
-        self._id = species_id
+        self._id = species_id  # type: int
         # Age of the species (in generations)
-        self._age_generations = 0
+        self._age_generations = 0  # type: int
         # Age of the species (in evaluations)
-        self._age_evaluations = 0
+        self._age_evaluations = 0  # type: int
 
-        self._generations_with_no_improvements = 0
-        self._last_best_fitness = 0  # TODO -Inf |-float('Inf')|
+        self._generations_with_no_improvements = 0  # type: int
+        self._last_best_fitness = 0.0  # type: float  # TODO -Inf |-float('Inf')|
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self._id
 
-    def get_representative(self):
+    def get_representative(self) -> Individual:
         # return self._individuals[0][0]
         return self._representative
 
-    def is_compatible(self, candidate, population_config):
-        return population_config.are_genomes_compatible(candidate, self.get_representative())
+    def is_compatible(self,
+                      candidate: Individual,
+                      population_config: PopulationSpeciatedConfig) -> bool:
+        return population_config.are_genomes_compatible(candidate.genotype, self.get_representative().genotype)
 
     def append(self, genome):
         self._individuals.append((genome, None))
@@ -46,26 +59,35 @@ class Species:
     # def clear(self):
     #     self._individuals.clear()
 
-    def get_best_fitness(self):
+    def get_best_fitness(self) -> float:
+        """
+        Finds the best fitness over all individuals in the species.
+        If the species is empty, it returns negative infinity
+        :return: the best fitness in the species.
+        """
+        if self.empty():
+            return -math.inf
         # TODO cache?
         return max(self._individuals, key=lambda individual: individual[0].fitness)
 
-    def increase_age_evals(self):
+    def increase_age_evals(self) -> None:
         self._age_evaluations += 1
 
-    def increase_age_generations(self):
+    def increase_age_generations(self) -> None:
         self._age_generations += 1
 
-    def increase_gens_no_improvement(self):
+    def increase_gens_no_improvement(self) -> None:
         self._generations_with_no_improvements += 1
 
-    def reset_age_gens(self):
+    def reset_age_gens(self) -> None:
         self._age_generations = 0
         self._generations_with_no_improvements = 0
 
-    def adjust_fitness(self, is_best_species: bool, population_config):
+    def adjust_fitness(self,
+                       is_best_species: bool,
+                       population_config: PopulationSpeciatedConfig) -> None:
         """
-        This method performs fitness sharing.
+        This method performs fitness sharing. It computes the adjusted fitness of the individuals.
         It also boosts the fitness of the young and penalizes old species
 
         :param is_best_species: True if this is the best species.
@@ -109,7 +131,7 @@ class Species:
             # Compute the adjusted fitness for this member
             self._individuals[i] = (individual, fitness / n_individuals)
 
-    def next_generation(self, new_individuals):
+    def next_generation(self, new_individuals: List[Individual]) -> Species:
         # create ...
         new_species = Species(self._representative, self._id)
 
@@ -120,4 +142,4 @@ class Species:
 
         # TODO make tuple from individuals list
         new_species._individuals = [(individual, None) for individual in new_individuals]
-
+        return new_species

@@ -1,16 +1,22 @@
-from .species import Species
-from ..population.population import Population
-from ..individual import Individual
-from ...custom_logging.logger import logger
-from ...evolution.speciation.population_speciated_config import PopulationSpeciatedConfig
+from __future__ import annotations
+from pyrevolve.evolution.population.population import Population
+from pyrevolve.evolution.individual import Individual
+from pyrevolve.custom_logging.logger import logger
 from .genus import Genus
 from pyrevolve.util.robot_identifier import RobotIdentifier
 from pyrevolve.evolution.individual import create_individual
 
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Optional, List
+    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
+    from pyrevolve.evolution.speciation.population_speciated_config import PopulationSpeciatedConfig
+
+
 class PopulationSpeciated(Population):
+
     def __init__(self, config: PopulationSpeciatedConfig, genus: Genus = None):
-        # TODO analyzer
         super().__init__(config)
         self.individuals = None # TODO Crash when we should use it
 
@@ -20,9 +26,7 @@ class PopulationSpeciated(Population):
         else:
             self.genus = genus
 
-        self.genomes = []
-
-    async def initialize(self, recovered_individuals=None):
+    async def initialize(self, recovered_individuals: Optional[List[Individual]] = None) -> None:
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
@@ -39,7 +43,7 @@ class PopulationSpeciated(Population):
 
         self.genus.speciate(individuals)
 
-    def _generate_new_individual(self, individuals):
+    def _generate_new_individual(self, individuals: List[Individual]) -> Individual:
         # Selection operator (based on fitness)
         # Crossover
         if self.config.crossover_operator is not None:
@@ -57,7 +61,9 @@ class PopulationSpeciated(Population):
         # Create new individual
         return create_individual(self.config.experiment_management, child_genotype)
 
-    def next_generation(self, gen_num: int, recovered_individuals=None):
+    async def next_generation(self,
+                        gen_num: int,
+                        recovered_individuals: Optional[List[Individual]] = None) -> PopulationSpeciated:
         """
         Creates next generation of the population through selection, mutation, crossover
 
@@ -72,14 +78,17 @@ class PopulationSpeciated(Population):
         # TODO create number of individuals based on the number of recovered individuals.
         new_genus = self.genus.next_generation(recovered_individuals, self._generate_new_individual)
 
-        """
         # evaluate new individuals
+        new_individuals = [individual for individual in new_genus.iter_individuals()]
         await self.evaluate(new_individuals, gen_num)
-        """
 
         # append recovered individuals ## Same as population.next_generation
         # new_individuals = recovered_individuals + new_individuals
+
         new_population = PopulationSpeciated(self.config, new_genus)
-        logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
+
+        logger.info(f'Population selected in gen {gen_num} '
+                    f'with {len(new_population.genus)} species '
+                    f'and {new_population.genus.number_of_individuals()} individuals.')
 
         return new_population
