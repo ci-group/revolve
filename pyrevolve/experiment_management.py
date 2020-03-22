@@ -2,9 +2,17 @@ import numpy as np
 import shutil
 import os
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import List
+
 from pyrevolve.custom_logging.logger import logger
 
+from pyrevolve.evolution.individual import Individual
+
 from pyrevolve.util.robot_identifier import RobotIdentifier
+from pyrevolve.util.generation import Generation
 
 
 class ExperimentManagement:
@@ -16,7 +24,7 @@ class ExperimentManagement:
         self._experiment_folder = os.path.join(manager_folder, 'data', self.settings.experiment_name, self.settings.run)
         self._data_folder = os.path.join(self._experiment_folder, 'data_fullevolution')
 
-    def create_exp_folders(self):
+    def prepare_folders(self):
         if os.path.exists(self.experiment_folder):
             shutil.rmtree(self.experiment_folder)
         os.makedirs(self.experiment_folder)
@@ -74,15 +82,18 @@ class ExperimentManagement:
         individual.phenotype.save_file(os.path.join(self.data_folder, 'failed_eval_robots', f'phenotype_{individual.phenotype.id}.yaml'))
         individual.phenotype.save_file(os.path.join(self.data_folder, 'failed_eval_robots', f'phenotype_{individual.phenotype.id}.sdf'), conf_type='sdf')
 
-    def export_snapshots(self, individuals, gen_num):
+    def export_snapshots(self, individuals: List[Individual]):
+
+        generation_index = Generation.getInstance().index()
+
         if self.settings.recovery_enabled:
-            path = os.path.join(self.experiment_folder, f'selectedpop_{gen_num}')
+            path = os.path.join(self.experiment_folder, f'selectedpop_{generation_index}')
             if os.path.exists(path):
                 shutil.rmtree(path)
             os.mkdir(path)
             for ind in individuals:
-                self.export_phenotype_images(f'selectedpop_{str(gen_num)}', ind)
-            logger.info(f'Exported snapshot {str(gen_num)} with {str(len(individuals))} individuals')
+                self.export_phenotype_images(f'selectedpop_{str(generation_index)}', ind)
+            logger.info(f'Exported snapshot {str(generation_index)} with {str(len(individuals))} individuals')
 
     def experiment_is_new(self):
         if not os.path.exists(self.experiment_folder):
@@ -93,7 +104,7 @@ class ExperimentManagement:
         else:
             return False
 
-    def read_recovery_state(self, population_size, offspring_size):
+    def read_recovery_state(self, population_size: int, offspring_size: int):
         snapshots = []
 
         for r, d, f in os.walk(self.experiment_folder):
@@ -105,13 +116,17 @@ class ExperimentManagement:
                     if exported_files == population_size: # body and brain files
                         snapshots.append(int(dir.split('_')[1]))
 
+        generation = Generation.getInstance()
+
         if len(snapshots) > 0:
             # the latest complete snapshot
-            last_snapshot = np.sort(snapshots)[-1]
+            generation.initialize(np.sort(snapshots)[-1])
+            generation_index = generation.index()
             # number of robots expected until the snapshot
-            n_robots = population_size + last_snapshot * offspring_size
+            n_robots = population_size + generation_index * offspring_size
         else:
-            last_snapshot = -1
+            # TODO why -1? workaround of the pre-incremental step in the main for loop?
+            generation.initialize(-1)
             n_robots = 0
 
         robot_ids = []
@@ -129,4 +144,4 @@ class ExperimentManagement:
 
         RobotIdentifier.getInstance().initialize(last_id + 1)
 
-        return last_snapshot, has_offspring
+        return has_offspring

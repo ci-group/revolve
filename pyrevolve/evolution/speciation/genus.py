@@ -7,7 +7,7 @@ from .species import Species
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from .population_speciated_config import PopulationSpeciatedConfig
+    from .speciation import SpeciationConfig
     from pyrevolve.evolution.individual import Individual, create_individual
     from typing import List, Optional, Callable, Iterator
 
@@ -17,7 +17,7 @@ class Genus:
     Collection of species
     """
 
-    def __init__(self, config: PopulationSpeciatedConfig):
+    def __init__(self, config: SpeciationConfig):
         self.config = config
 
         self.species_list = []  # type: List[Species]

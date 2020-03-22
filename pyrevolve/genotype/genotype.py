@@ -6,7 +6,11 @@ from pyrevolve.util.robot_identifier import RobotIdentifier
 class Genotype:
 
     def __init__(self):
-        self._id = RobotIdentifier.getInstance().next()
+        self._id = RobotIdentifier.getInstance().increment()
+
+    @property
+    def id(self):
+        return self._id
 
     def clone(self):
         """

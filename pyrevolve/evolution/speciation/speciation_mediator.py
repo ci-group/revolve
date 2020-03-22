@@ -7,16 +7,16 @@ if TYPE_CHECKING:
     from typing import List, Optional
 
 from pyrevolve.evolution.individual import Individual, create_individual
-from pyrevolve.evolution.speciation import PopulationSpeciatedConfig, PopulationSpeciated
-from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated
+from pyrevolve.evolution.speciation import SpeciationConfig, Speciation
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 
 
-class PopulationSpeciatedManager:
-    def __init__(self, config: PopulationSpeciatedConfig, simulator_queue: SimulatorQueue, analyzer_queue: AnalyzerQueue):
+class SpeciationMediator:
+
+    def __init__(self, config: SpeciationConfig, simulator_queue: SimulatorQueue, analyzer_queue: AnalyzerQueue):
         self.config = config
 
         # TODO integrate population and genus dependencies
@@ -45,7 +45,7 @@ class PopulationSpeciatedManager:
         self.genus.speciate(individuals)
 
     async def next_generation(self, generation_index: int,
-                              recovered_individuals: Optional[List[Individual]] = None) -> PopulationSpeciated:
+                              recovered_individuals: Optional[List[Individual]] = None) -> Speciation:
         """
         Creates next generation of the population through selection, mutation, crossover
 
@@ -68,7 +68,7 @@ class PopulationSpeciatedManager:
         # append recovered individuals ## Same as population.next_generation
         # new_individuals = recovered_individuals + new_individuals
 
-        new_population = PopulationSpeciated(self.config, new_genus)
+        new_population = Speciation(self.config, new_genus)
 
         logger.info(f'Population selected in gen {generation_index} '
                     f'with {len(new_population.genus)} species '
@@ -89,9 +89,9 @@ class PopulationSpeciatedManager:
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {generation_index}) {individual.genotype.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
+            robot_futures.append(asyncio.ensure_future(self._evaluate_robot(individual)))
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(1) # TODO why wait ? ...
 
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
@@ -109,7 +109,7 @@ class PopulationSpeciatedManager:
             if type_simulation == 'evolve':
                 self.config.experiment_management.export_fitness(individual)
 
-    async def evaluate_single_robot(self, individual: Individual) -> (float, BehaviouralMeasurements):
+    async def _evaluate_robot(self, individual: Individual) -> (float, BehaviouralMeasurements):
         """
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)

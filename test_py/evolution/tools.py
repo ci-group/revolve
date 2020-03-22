@@ -4,7 +4,7 @@ from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.population.population import Population, PopulationConfig
-from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated, PopulationSpeciatedConfig
+from pyrevolve.evolution.speciation.population_speciated import Speciation, SpeciationConfig
 from pyrevolve.evolution.population.population_management import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.lsystem_neat.crossover import CrossoverConfig as lCrossoverConfig
@@ -155,7 +155,7 @@ def get_population_speciated(random_fitness = False):
     old_age_threshold: int = 0              # TODO
     old_age_fitness_penalty: float = 0.0    # TODO
 
-    population_conf = PopulationSpeciatedConfig(
+    population_conf = SpeciationConfig(
         population_size=population_size,
         genotype_constructor=LSystemCPGHyperNEATGenotype,
         genotype_conf=lsystem_config,
@@ -185,7 +185,7 @@ def get_population_speciated(random_fitness = False):
     simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)
     analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+n_cores)
 
-    population = PopulationSpeciated(population_conf, simulator_queue, analyzer_queue)
+    population = Speciation(population_conf, simulator_queue, analyzer_queue)
 
     if random_fitness:
         for individual in population.individuals:

@@ -118,7 +118,7 @@ async def run():
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
-        experiment_management.create_exp_folders()
+        experiment_management.prepare_folders()
         await population.initialize()
         experiment_management.export_snapshots(population.individuals, gen_num)
 

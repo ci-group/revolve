@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import List, Optional
     from pyrevolve.evolution.individual import Individual
-    from .population_speciated_config import PopulationSpeciatedConfig
+    from .speciation import SpeciationConfig
 
 
 class Species:
@@ -42,7 +42,7 @@ class Species:
         return new_species
 
     ## FITNESS
-    def adjust_fitness(self, is_best_species: bool, population_config: PopulationSpeciatedConfig) -> None:
+    def adjust_fitness(self, is_best_species: bool, population_config: SpeciationConfig) -> None:
         """
         This method performs fitness sharing. It computes the adjusted fitness of the individuals.
         It also boosts the fitness of the young and penalizes old species
@@ -102,7 +102,7 @@ class Species:
     ## INDIVIDUALS:
     def is_compatible(self,
                       candidate: Individual,
-                      population_config: PopulationSpeciatedConfig) -> bool:
+                      population_config: SpeciationConfig) -> bool:
         return population_config.are_genomes_compatible(candidate.genotype, self.get_representative().genotype)
 
     def iter_individuals(self):
@@ -123,7 +123,6 @@ class Species:
         return self._id
 
     def get_representative(self) -> Individual:
-        # return self._individuals[0][0]
         return self._representative
 
     ## COUNTERS

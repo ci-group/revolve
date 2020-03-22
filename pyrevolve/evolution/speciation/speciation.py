@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from pyrevolve.evolution.speciation.genus import Genus
 
 
-class PopulationSpeciatedConfig(PopulationConfig):
+class SpeciationConfig(PopulationConfig):
 
     def __init__(self,
                  population_size: int,
@@ -101,9 +101,9 @@ class PopulationSpeciatedConfig(PopulationConfig):
         self.old_age_fitness_penalty = old_age_fitness_penalty
 
 
-class PopulationSpeciated(Population):
+class Speciation(Population):
 
-    def __init__(self, config: PopulationSpeciatedConfig, genus: Genus = None):
+    def __init__(self, config: SpeciationConfig, genus: Genus = None):
         super().__init__(config)
         self.individuals = None # TODO Crash when we should use it
 

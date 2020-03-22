@@ -1,3 +1,9 @@
+import os
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import AnyStr
 
 from pyrevolve.tol.manage import measures
 
@@ -74,3 +80,9 @@ def online_old_revolve(robot_manager):
              + v_fac * measures.velocity(robot_manager)
              + s_fac * robot_manager.size)
     return v if v <= fitness_limit else 0.0
+
+
+def read_fitness(data_path : str, id : AnyStr):
+    with open(os.path.join(data_path, 'fitness', f'fitness_{id}.txt')) as f:
+        data = f.readlines()[0]
+        return None if data == 'None' else float(data)

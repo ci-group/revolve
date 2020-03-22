@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import asyncio
 import unittest
 
-from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated
+from pyrevolve.evolution.speciation.population_speciated import Speciation
 
 from .tools import get_population_speciated
 
@@ -14,7 +14,7 @@ class TestPopulationSpeciated(unittest.TestCase):
     """
 
     def test_generation(self):
-        population: PopulationSpeciated = get_population_speciated()
+        population: Speciation = get_population_speciated()
 
         # TODO await?
         population.initialize()

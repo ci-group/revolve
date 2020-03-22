@@ -5,6 +5,7 @@ from pyrevolve.genotype import Genotype
 
 
 class Individual:
+
     def __init__(self, genotype: Genotype, phenotype=None):
         """
         Creates an Individual object with the given genotype and optionally the phenotype.
@@ -34,22 +35,25 @@ class Individual:
         _id = None
         if self.phenotype is not None:
             _id = self.phenotype.id
-        elif self.genotype.id is not None:
-            _id = self.genotype.id
+        elif self.genotype.id() is not None:
+            _id = self.genotype.id()
         return _id
 
+    # TODO refactor to momento
     def _export_genotype(self, folder: str):
         if self.genotype is not None:
             # TODO should be yaml?
             # TODO should this be phenotype?
-            self.genotype.export_genotype(f'{folder}/genotypes/genotype_{self.genotype.id}.txt')
+            self.genotype.export_genotype(f'{folder}/genotypes/genotype_{self.genotype.id()}.txt')
 
+    # TODO refactor to momento
     def _export_phenotype(self, folder: str):
         if self.phenotype is not None:
             # TODO should be txt?
             # TODO "/phenotypes/"
             self.phenotype.save_file(f'{folder}/phenotypes/phenotype_{self.phenotype.id}.yaml', conf_type='yaml')
 
+    # TODO refactor to momento
     def _export_fitness(self, folder: str):
         """
         It's saving the fitness into a file. The fitness can be a floating point number or None
@@ -58,6 +62,7 @@ class Individual:
         with open(f'{folder}/fitness_{self.id}.txt', 'w') as f:
             f.write(str(self.fitness))
 
+    # TODO refactor to momento
     def export(self, folder : str):
         if folder is not None:
             self._export_genotype(folder)

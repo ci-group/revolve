@@ -22,10 +22,6 @@ class LSystemCPGHyperNEATGenotype(Genotype):
             self._body_genome = random_initialization(conf.plasticoding, self._id)
             self._brain_genome = NeatBrainGenome(conf.neat, self._id)
 
-    @property
-    def id(self):
-        return self._id
-
     @id.setter
     def id(self, value):
         self._id = value

@@ -12,29 +12,30 @@ if TYPE_CHECKING:
     from pyrevolve.revolve_bot import RevolveBot
     from pyrevolve.tol.manage.robotmanager import RobotManager
     from typing import List, Optional
+    from pyrevolve.util.generation import Generation
 
 
 class PopulationConfig:
-    def __init__(self,
-         population_size: int,
-         genotype_constructor: Callable[[object, int], Genotype],
-         genotype_conf: object,
-         fitness_function: Callable[[RobotManager, RevolveBot], float],
-         mutation_operator: Callable[[Genotype, object], Genotype],
-         mutation_conf: object,
-         crossover_operator: Callable[[List[Individual], object, object], Genotype],
-         crossover_conf: object,
-         selection: Callable[[List[Individual]], Individual],
-         parent_selection: Callable[[List[Individual]], List[Individual]],
-         population_management: Callable[
-             [List[Individual], List[Individual], Callable[[List[Individual]], Individual]],
-             List[Individual]
-         ],
-         population_management_selector: Callable[[List[Individual]], Individual],
-         evaluation_time: float,
-         experiment_name: str,
-         experiment_management,
-         offspring_size: Optional[int] = None):
+
+    def __init__(self, population_size: int,
+                 genotype_constructor: Callable[[object, int], Genotype],
+                 genotype_conf: object,
+                 fitness_function: Callable[[RobotManager, RevolveBot], float],
+                 mutation_operator: Callable[[Genotype, object], Genotype],
+                 mutation_conf: object,
+                 crossover_operator: Callable[[List[Individual], object, object], Genotype],
+                 crossover_conf: object,
+                 selection: Callable[[List[Individual]], Individual],
+                 parent_selection: Callable[[List[Individual]], List[Individual]],
+                 population_management: Callable[
+                    [List[Individual], List[Individual], Callable[[List[Individual]], Individual]],
+                    List[Individual]
+                 ],
+                 population_management_selector: Callable[[List[Individual]], Individual],
+                 evaluation_time: float,
+                 experiment_name: str,
+                 experiment_management,
+                 offspring_size: Optional[int] = None):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -78,7 +79,7 @@ class PopulationConfig:
 
 class Population:
 
-    def __init__(self, config: PopulationConfig, individuals :List[Individual] = None):
+    def __init__(self, config: PopulationConfig, individuals: List[Individual] = None):
 
         """
         Creates a Population object that initialises the
@@ -119,15 +120,16 @@ class Population:
         return new_individuals
 
 
-def create_population(config, previous_population, new_individuals, generation_index):
-    if config.population_management_selector is not None:
-        new_individuals = config.population_management(previous_population.individuals, new_individuals,
-                                                            config.population_management_selector)
+# Factory method for population
+def create_population(previous_population: Population, new_individuals):
+    if previous_population.config.population_management_selector is not None:
+        new_individuals = previous_population.config.population_management(previous_population.individuals, new_individuals,
+                                                            previous_population.config.population_management_selector)
     else:
-        new_individuals = config.population_management(previous_population.individuals, new_individuals)
+        new_individuals = previous_population.config.population_management(previous_population.individuals, new_individuals)
 
-    new_population = Population(config, new_individuals)
-    logger.info(f'Population selected in gen {generation_index} with {len(new_population.individuals)} individuals...')
+    new_population = Population(previous_population.config, new_individuals)
+    logger.info(f'Population selected in gen {Generation.getInstance().index()} with {len(new_population.individuals)} individuals...')
 
     return new_population
 

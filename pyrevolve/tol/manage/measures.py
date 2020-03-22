@@ -1,9 +1,15 @@
+
+import math
 import numpy as np
+import os
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import AnyStr
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.util import Time
-import math
-import sys
 
 
 class BehaviouralMeasurements:
@@ -169,3 +175,36 @@ def logs_position_orientation(robot_manager, o, evaluation_time, robotid, path):
             robot_manager.avg_y = 0
             robot_manager.avg_z = 0
             robot_manager.count_group = 1
+
+
+def create_behavioral_measures(data_path : str, id : AnyStr):
+    with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')) as f:
+        lines = f.readlines()
+        if lines[0] == 'None':
+             return None
+        else:
+            behavioral_measures = BehaviouralMeasurements()
+            for line in lines:
+                line_split = line.split(' ')
+                line_0 = line_split[0]
+                line_1 = line_split[1]
+                if line_0 == 'velocity':
+                    behavioral_measures.velocity = \
+                        float(line_1) if line_1 != 'None\n' else None
+                # if line_0 == 'displacement':
+                #     individual.phenotype._behavioural_measurements.displacement = \
+                #         float(line_1) if line_1 != 'None\n' else None
+                if line_0 == 'displacement_velocity':
+                    behavioral_measures.displacement_velocity = \
+                        float(line_1) if line_1 != 'None\n' else None
+                if line_0 == 'displacement_velocity_hill':
+                    behavioral_measures.displacement_velocity_hill = \
+                        float(line_1) if line_1 != 'None\n' else None
+                if line_0 == 'head_balance':
+                    behavioral_measures.head_balance = \
+                        float(line_1) if line_1 != 'None\n' else None
+                if line_0 == 'contacts':
+                    behavioral_measures.contacts = \
+                        float(line_1) if line_1 != 'None\n' else None
+
+            return behavioral_measures
