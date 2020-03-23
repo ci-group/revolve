@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     from typing import Optional, List
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
     from pyrevolve.evolution.speciation.population_speciated_config import PopulationSpeciatedConfig
+    from pyrevolve.evolution.speciation.species_collection import number_of_individuals
 
 
 class PopulationSpeciated(Population):
@@ -76,29 +77,6 @@ class PopulationSpeciated(Population):
         assert recovered_individuals is None
         recovered_individuals = [] if recovered_individuals is None else recovered_individuals
 
-        # TODO do recovery of species
-        # TODO remove comments"""
-        #             for _i in range(self.conf.offspring_size - len(recovered_individuals)):
-        #         # Selection operator (based on fitness)
-        #         # Crossover
-        #         if self.conf.crossover_operator is not None:
-        #             parents = self.conf.parent_selection(self.individuals)
-        #             child_genotype = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
-        #             child = Individual(child_genotype)
-        #         else:
-        #             child = self.conf.selection(self.individuals)
-        #
-        #         child.genotype.id = self.next_robot_id
-        #         self.next_robot_id += 1
-        #
-        #         # Mutation operator
-        #         child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
-        #         # Insert individual in new population
-        #         individual = self._new_individual(child_genotype)
-        #
-        #         new_individuals.append(individual)
-        #         """
-
         # TODO create number of individuals based on the number of recovered individuals.
         new_genus = self.genus.next_generation(recovered_individuals, self._generate_new_individual)
 
@@ -112,7 +90,7 @@ class PopulationSpeciated(Population):
         new_population = PopulationSpeciated(self.config, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
         new_population.genus = new_genus
         logger.info(f'Population selected in gen {gen_num} '
-                    f'with {len(new_population.genus)} species '
-                    f'and {new_population.genus.number_of_individuals()} individuals.')
+                    f'with {len(new_population.genus.species_collection)} species '
+                    f'and {number_of_individuals(new_population.genus.species_collection)} individuals.')
 
         return new_population

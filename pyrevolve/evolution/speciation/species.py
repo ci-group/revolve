@@ -16,30 +16,26 @@ class Species:
         self._individuals = [(individual, None)]  # type: List[(Individual, Optional[int])]
 
         # Individual representative of the species
-        self._representative = individual  # type: Individual
+        self._representative: Individual = individual
 
         # ID of the species
-        self._id = species_id  # type: int
+        self._id: int = species_id
         # Age of the species (in generations)
-        self._age_generations = 0  # type: int
+        self._age_generations: int = 0
         # Age of the species (in evaluations)
-        self._age_evaluations = 0  # type: int
+        self._age_evaluations: int = 0
 
-        self._generations_with_no_improvements = 0  # type: int
-        self._last_best_fitness = 0.0  # type: float  # TODO -Inf |-float('Inf')|
+        self._generations_with_no_improvements: int = 0
+        self._last_best_fitness: float = 0.0 # TODO -Inf |-float('Inf')|
 
     @property
     def id(self) -> int:
         return self._id
 
-    def get_representative(self) -> Individual:
-        # return self._individuals[0][0]
-        return self._representative
-
     def is_compatible(self,
                       candidate: Individual,
                       population_config: PopulationSpeciatedConfig) -> bool:
-        return population_config.are_genomes_compatible(candidate.genotype, self.get_representative().genotype)
+        return population_config.are_genomes_compatible(candidate.genotype, self._representative.genotype)
 
     def append(self, genome):
         self._individuals.append((genome, None))
@@ -55,9 +51,6 @@ class Species:
         :return: an iterator of (individual, adjusted_fitness) for all individuals of the species
         """
         return iter(self._individuals)
-
-    # def clear(self):
-    #     self._individuals.clear()
 
     def get_best_fitness(self) -> float:
         """
