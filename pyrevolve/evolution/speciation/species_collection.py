@@ -12,40 +12,12 @@ if TYPE_CHECKING:
 from pyrevolve.evolution.speciation.species import Species
 from pyrevolve.evolution.individual import Individual
 
-
 """
 Based on https://refactoring.guru/design-patterns/iterator/python/example
 To create an iterator in Python, there are two abstract classes from the built-
 in `collections` module - Iterable,Iterator. 
-method in theiterator.
+method in the iterator.
 """
-class SpeciesIterator(Iterator):
-    """
-    Concrete Iterators implement various traversal algorithms. These classes
-    store the current traversal position at all times.
-    """
-
-    """
-    `_position` attribute stores the current traversal position.
-    """
-    _position: int = None
-
-    def __init__(self, collection: List[Species]) -> None:
-        self._collection = collection
-        self._position = 0
-
-    def __next__(self):
-        """
-        The __next__() method must return the next item in the sequence. On
-        reaching the end, and in subsequent calls, it must raise StopIteration.
-        """
-        try:
-            value = self._collection[self._position]
-            self._position += 1
-        except IndexError:
-            raise StopIteration()
-
-        return value
 
 
 class SpeciesCollection(Iterable):
@@ -54,8 +26,8 @@ class SpeciesCollection(Iterable):
     iterator instances, compatible with the collection class.
     """
 
-    def __init__(self, collection: List[Species] = []) -> None:
-        self._collection = collection
+    def __init__(self, collection: List[Species] = None) -> None:
+        self._collection = collection if collection is not None else []
 
         # TODO typing
         # best and worst are a tuple of the index (0) and Individual (1)
@@ -189,6 +161,36 @@ def count_individuals(self, species_list: Optional[List[Species]] = None) -> int
         number_of_individuals += len(species)
 
     return number_of_individuals
+
+
+class SpeciesIterator(Iterator):
+    """
+    Concrete Iterators implement various traversal algorithms. These classes
+    store the current traversal position at all times.
+    """
+
+    """
+    `_position` stores the current traversal position.
+    """
+    _position: int = None
+
+    def __init__(self, collection: List[Species]) -> None:
+        self._collection = collection
+        self._position = 0
+
+    def __next__(self):
+        """
+        The __next__() method must return the next item in the sequence. On
+        reaching the end, and in subsequent calls, it must raise StopIteration.
+        """
+        try:
+            value = self._collection[self._position]
+            self._position += 1
+        except IndexError:
+            raise StopIteration()
+
+        return value
+
 
 
 if __name__ == "__main__":

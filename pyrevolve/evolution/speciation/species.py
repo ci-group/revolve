@@ -8,7 +8,6 @@ if TYPE_CHECKING:
     from .population_speciated_config import PopulationSpeciatedConfig
     from pyrevolve.genotype.genotype import Genotype
     from pyrevolve.evolution.speciation.age import Age
-    from pyrevolve.evolution.fitness import modify_fitness
 
 
 class Species:
@@ -63,7 +62,7 @@ class Species:
             assert individual.fitness is not None
             assert individual.fitness >= 0.0  # TODO can we make this work with negative fitnesses?
 
-            fitness = modify_fitness(individual.fitness, is_best_species, population_config)
+            fitness = self._modify_fitness(individual.fitness, is_best_species, population_config)
 
             # Compute the adjusted fitness for this member
             self._individuals[individual_index] = (individual, fitness / n_individuals)
