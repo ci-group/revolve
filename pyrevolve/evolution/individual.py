@@ -1,22 +1,27 @@
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Optional, List
+    from pyrevolve.revolve_bot import RevolveBot
+    from pyrevolve.genotype import Genotype
+
 
 class Individual:
-    def __init__(self, genotype, phenotype=None):
+    def __init__(self, genotype: Genotype, phenotype: Optional[RevolveBot] = None):
         """
         Creates an Individual object with the given genotype and optionally the phenotype.
 
         :param genotype: genotype of the individual
         :param phenotype (optional): phenotype of the individual
         """
-        self.genotype = genotype
-        self.phenotype = phenotype
-        self.fitness = None
-        self.parents = None
-        self.failed_eval_attempt_count = 0
+        self.genotype: Genotype = genotype
+        self.phenotype: RevolveBot = phenotype
+        self.fitness: Optional[float] = None
+        self.parents: Optional[List[Individual]] = None
+        self.failed_eval_attempt_count: int = 0
 
     def develop(self):
         """
         Develops genotype into a intermediate phenotype
-
         """
         if self.phenotype is None:
             self.phenotype = self.genotype.develop()
@@ -35,7 +40,8 @@ class Individual:
 
     def export_phenotype(self, folder):
         if self.phenotype is not None:
-            self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}.yaml', conf_type='yaml') # TODO "/phenotypes/phenotype_"
+            # TODO "/phenotypes/phenotype_"
+            self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}.yaml', conf_type='yaml')
 
     def export_fitness(self, folder):
         """
