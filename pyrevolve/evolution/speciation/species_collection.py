@@ -165,8 +165,8 @@ class SpeciesCollection(Iterable):
 
         for species in self._collection:
             # Reset the species and update its age
-            species.increase_age_generations()
-            species.increase_gens_no_improvement()
+            species.age.increase_generations()
+            species.age.increase_no_improvement()
 
         # This prevents the previous best species from sudden death
         # If the best species happened to be another one, reset the old
@@ -174,9 +174,9 @@ class SpeciesCollection(Iterable):
         # if it grows old and stagnates again, it is no longer the best one
         # so it will die off anyway.
         if old_best_species is not None:
-            old_best_species.reset_age_gens()
+            old_best_species.age.reset_generations()
 
-def number_of_individuals(self, species_list: Optional[List[Species]] = None) -> int:
+def count_individuals(self, species_list: Optional[List[Species]] = None) -> int:
     """
     Counts the number of individuals in the species_list.
     :param species_list: if None, it will use self.species_list
@@ -198,11 +198,11 @@ if __name__ == "__main__":
     # in your program.
     species_collection = SpeciesCollection()
     individual1 = Individual(Genotype())
-    species_collection.add_species(Species(individual1, 0))
+    species_collection.add_species(Species([individual1], 0))
     individual2 = Individual(Genotype())
-    species_collection.add_species(Species(individual2, 1))
+    species_collection.add_species(Species([individual2], 1))
     individual3 = Individual(Genotype())
-    species_collection.add_species(Species(individual3, 2))
+    species_collection.add_species(Species([individual3], 2))
 
     print("Straight traversal:")
     for individual in species_collection:

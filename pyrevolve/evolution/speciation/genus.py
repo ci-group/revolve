@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import copy
-import math
-import numpy
 from .species import Species
 
 from typing import TYPE_CHECKING
@@ -10,7 +7,7 @@ if TYPE_CHECKING:
     from .population_speciated_config import PopulationSpeciatedConfig
     from pyrevolve.evolution.individual import Individual
     from typing import List, Optional, Callable, Iterator
-    from pyrevolve.evolution.speciation.species_collection import SpeciesCollection, number_of_individuals
+    from pyrevolve.evolution.speciation.species_collection import SpeciesCollection, count_individuals
 
 
 class Genus:
@@ -24,12 +21,14 @@ class Genus:
         :param config: Population speciated config.
         :param species_collection: Managers the list of species.
         """
+        #TODO refactor config (is it part of species, species collection, or genus?
         self.config: PopulationSpeciatedConfig = config
         self.species_collection: SpeciesCollection = species_collection
         self._next_species_id: int = 0
 
     def iter_individuals(self) -> Iterator[Individual]:
         """
+        Returns all individuals from the species.
         :return: an iterator of `individual` for all individuals of the species
         """
         for species in self.species_collection:
@@ -62,13 +61,12 @@ class Genus:
                     species.append(genotype)
                     break
             else:
-                self.species_collection.add_species(Species(individual, self._next_species_id))
+                self.species_collection.add_species(Species([individual], self._next_species_id))
                 self._next_species_id += 1
 
         self.species_collection.cleanup()
 
-    def next_generation(self,
-                        recovered_individuals: List[Individual],
+    def next_generation(self, recovered_individuals: List[Individual],
                         generate_individual_function: Callable[[List[Individual]], Individual]) -> Genus:
         """
         Creates the genus for the next generation
@@ -120,7 +118,7 @@ class Genus:
                     species.append(orphan)
                     break
             else:
-                new_species_collection.add_species(Species(orphan, self._next_species_id))
+                new_species_collection.add_species(Species([orphan], self._next_species_id))
                 self._next_species_id += 1
 
         offspring_amounts = self._count_offsprings(self.config.population_size)
@@ -134,7 +132,7 @@ class Genus:
                                                                 offspring_amount, self.config.population_management_selector)
 
         #TODO assert species list size and number of individuals
-        assert(self.config.population_size == number_of_individuals(new_species_collection))
+        assert(self.config.population_size == count_individuals(new_species_collection))
 
         new_genus = Genus(self.config, new_species_collection)
         new_genus.species_collection.cleanup()
@@ -164,7 +162,7 @@ class Genus:
 
         average_adjusted_fitness = total_adjusted_fitness / float(number_of_individuals)
 
-        species_offspring_amount = [] # list of integers
+        species_offspring_amount = []  # list of integers
         for species in self.species_collection:
             offspring_amount = 0.0
             for individual, adjusted_fitness in species.iter_individuals():
@@ -175,11 +173,11 @@ class Genus:
 
         missing = number_of_individuals - total_offspring_amount
 
-        if missing > 0: # positive have lacking individuals
+        if missing > 0:  # positive have lacking individuals
             # TODO take best species
             species_offspring_amount[self.species_collection.get_best()[0]] += missing
 
-        elif missing < 0: # negative have excess individuals
+        elif missing < 0:  # negative have excess individuals
             # TODO remove missing number of individuals
             # TODO more documentation ...
             species_offspring_amount[self.species_collection.get_worst(exclude_empty_species=True)[0]] -= -missing

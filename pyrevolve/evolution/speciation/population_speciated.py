@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from typing import Optional, List
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
     from pyrevolve.evolution.speciation.population_speciated_config import PopulationSpeciatedConfig
-    from pyrevolve.evolution.speciation.species_collection import number_of_individuals
+    from pyrevolve.evolution.speciation.species_collection import count_individuals
 
 
 class PopulationSpeciated(Population):
@@ -44,7 +44,39 @@ class PopulationSpeciated(Population):
 
         self.genus.speciate(individuals)
 
-    def _generate_new_individual(self, individuals: List[Individual]) -> Individual:
+    def next_generation(self,
+                        gen_num: int,
+                        recovered_individuals: Optional[List[Individual]] = None) -> PopulationSpeciated:
+        """
+        Creates next generation of the population through selection, mutation, crossover
+
+        :param gen_num: generation number
+        :param recovered_individuals: recovered offspring
+        :return: new population
+        """
+        # TODO recovery
+        assert recovered_individuals is None
+        recovered_individuals = [] if recovered_individuals is None else recovered_individuals
+
+        # TODO create number of individuals based on the number of recovered individuals.
+        new_genus = self.genus.next_generation(recovered_individuals, self._generate_individual)
+
+        # evaluate new individuals
+        new_individuals = [individual for individual in new_genus.iter_individuals()]
+        await self.evaluate(new_individuals, gen_num)
+
+        # append recovered individuals ## Same as population.next_gen
+        # new_individuals = recovered_individuals + new_individuals
+
+        new_population = PopulationSpeciated(self.config, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
+        new_population.genus = new_genus
+        logger.info(f'Population selected in gen {gen_num} '
+                    f'with {len(new_population.genus.species_collection)} species '
+                    f'and {count_individuals(new_population.genus.species_collection)} individuals.')
+
+        return new_population
+
+    def _generate_individual(self, individuals: List[Individual]) -> Individual:
         # Selection operator (based on fitness)
         # Crossover
         if self.config.crossover_operator is not None:
@@ -62,35 +94,3 @@ class PopulationSpeciated(Population):
 
         # Create new individual
         return self._new_individual(child_genotype)
-
-    def next_generation(self,
-                        gen_num: int,
-                        recovered_individuals: Optional[List[Individual]] = None) -> PopulationSpeciated:
-        """
-        Creates next generation of the population through selection, mutation, crossover
-
-        :param gen_num: generation number
-        :param recovered_individuals: recovered offspring
-        :return: new population
-        """
-        # TODO recovery
-        assert recovered_individuals is None
-        recovered_individuals = [] if recovered_individuals is None else recovered_individuals
-
-        # TODO create number of individuals based on the number of recovered individuals.
-        new_genus = self.genus.next_generation(recovered_individuals, self._generate_new_individual)
-
-        # evaluate new individuals
-        new_individuals = [individual for individual in new_genus.iter_individuals()]
-        await self.evaluate(new_individuals, gen_num)
-
-        # append recovered individuals ## Same as population.next_gen
-        # new_individuals = recovered_individuals + new_individuals
-
-        new_population = PopulationSpeciated(self.config, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
-        new_population.genus = new_genus
-        logger.info(f'Population selected in gen {gen_num} '
-                    f'with {len(new_population.genus.species_collection)} species '
-                    f'and {number_of_individuals(new_population.genus.species_collection)} individuals.')
-
-        return new_population

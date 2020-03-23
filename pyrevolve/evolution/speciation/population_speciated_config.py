@@ -10,6 +10,8 @@ if TYPE_CHECKING:
 
 
 class PopulationSpeciatedConfig(PopulationConfig):
+
+    # TODO reorder arguments
     def __init__(self,
                  population_size: int,
                  genotype_constructor: Callable[[object, int], Genotype],
@@ -34,6 +36,7 @@ class PopulationSpeciatedConfig(PopulationConfig):
                  young_age_fitness_boost: float,
                  old_age_threshold: int,
                  old_age_fitness_penalty: float,
+                 species_max_stagnation: int,
                  offspring_size: Optional[int] = None):
         """
         Creates a PopulationSpeciatedConfig object that sets the particular configuration for the population with species
@@ -65,6 +68,7 @@ class PopulationSpeciatedConfig(PopulationConfig):
             and need to be penalized (the best species is forcefully kept young - age 0)
         :param old_age_fitness_penalty: Fitness multiplier for old species.
             Make sure it is < 1.0 to avoid confusion.
+        :param species_max_stagnation: maximum number of iterations without improvement of the species.
         :param offspring_size (optional): size of offspring (for steady state)
         """
         super().__init__(population_size,
@@ -88,4 +92,5 @@ class PopulationSpeciatedConfig(PopulationConfig):
         self.young_age_fitness_boost = young_age_fitness_boost
         self.old_age_threshold = old_age_threshold
         self.old_age_fitness_penalty = old_age_fitness_penalty
+        self.species_max_stagnation = species_max_stagnation
 
