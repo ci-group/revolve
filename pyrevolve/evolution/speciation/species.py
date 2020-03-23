@@ -10,13 +10,14 @@ if TYPE_CHECKING:
 
 from pyrevolve.evolution.speciation.age import Age
 
+
 class Species:
 
     def __init__(self, individuals: List[Individual], species_id: int, age: Age = None, best_fitness: float = 0.0):
 
         # list of individuals and adjusted fitnesses
         # TODO _adjusted_fitness name to split off from regular individuals
-        self._individuals: List[(Individual, Optional[int])] =  [(individual, None) for individual in individuals]
+        self._individuals: List[(Individual, Optional[int])] = [(individual, None) for individual in individuals]
         # Individual representative of the species
         self._representative: Individual = individuals[0]  # TODO is this always the first individual?
 
@@ -95,7 +96,7 @@ class Species:
 
         return fitness
 
-    def next_generation(self, new_individuals: List[Individual]) -> Species:
+    def create_species(self, new_individuals: List[Individual]) -> Species:
         # create ...
         new_species = Species(new_individuals, self._id, self.age, self._last_best_fitness)
         new_species._representative = self._representative

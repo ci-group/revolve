@@ -45,6 +45,10 @@ class SpeciesCollection(Iterable):
         """
         return SpeciesIterator(self._collection)
 
+    def set_individuals(self, species_index, new_individuals):
+        self._collection[species_index] = new_individuals
+        self._update_prototypes = True
+
     def get_best(self) -> (int, Species):
         assert len(self._collection) > 0
 
