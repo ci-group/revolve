@@ -5,17 +5,17 @@ In Revolve/
 
 We can start revolve using celery when you use the next line.
 
-./revolve.py --manager pycelery/manager.py --n-cores 8
+./revolve.py --manager pycelery/manager.py --n-cores 8 --world worlds/celeryplane.world
 
-it will start the manager, which uses the class CeleryController to control and start celery. The manager
-can shutdown, reset, evaluate robots through this CeleryController. It is used as a simulator_queue class.
+it will start the manager, which uses the class CeleryController to control and start celery. The manager can shutdown, reset, evaluate robots through this CeleryController. It is used as a simulator_queue class.
+
+The celeryworld.world loads the worldcontroller for celery. If you do not use this, the C++ part is not able to receive and send messages to celery and therefore the experiment will not work. So make sure to add that in.
 
 Use the manager.py file in the pycelery folder as an example to make your own experiment.
 
 # ---------------------------- # CHANGED FILES #----------------------------#
 pyrevolve/evolution/population.py           	(Added a celery part to receive data)- old revolve intact
 pyrevolve/tol/manage/robotmanager.py					(Added a way to convert a celery message to a robotmanager class)- old revolve intact
-cpprevolve/gazebo/plugin/WorldController.cpp 	(Changed the file to retrieve celery messages from the workers.) - OLD REVOLVE NOT INTACT
 
 			#---------------------# PROBLEMS #--------------------------#
 

@@ -2,7 +2,7 @@
 # _____________________________________________________________________________
 
 # CMake flag to help local projects find the build dir
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
+set(CMAKE_RARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 
@@ -234,6 +234,19 @@ target_link_libraries(
         WorldControlPlugin
         revolve-gazebo
         revolve-proto
+        ${GAZEBO_LIBRARIES}
+)
+
+# Create Celery World plugin
+add_library(
+        CeleryWorldControlPlugin SHARED
+        plugin/CeleryWorldController.cpp
+        plugin/register_celeryworld_plugin.cpp
+)
+target_link_libraries(
+        CeleryWorldControlPlugin
+        revolve-gazebo
+	revolve-proto
         ${GAZEBO_LIBRARIES}
 )
 

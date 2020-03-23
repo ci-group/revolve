@@ -188,8 +188,6 @@ class Population:
         :return: new population
         """
 
-        begin3 = time.time()
-
         new_individuals = []
 
         for _i in range(self.conf.offspring_size-len(recovered_individuals)):
@@ -212,9 +210,6 @@ class Population:
             individual = self._new_individual(child_genotype)
 
             new_individuals.append(individual)
-
-        end3 = time.time()
-        logger.info(f"Time to start next generation {end3-begin3}, per generation")
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)

@@ -34,7 +34,7 @@ async def run():
     await asyncio.sleep(5) # Celery needs time
 
     # experiment params #
-    num_generations = 40
+    num_generations = 20
     population_size = 100
     offspring_size = 50
 
@@ -122,7 +122,7 @@ async def run():
         population = await population.next_gen(gen_num)
 
         # reset gazebo and celery if something went wrong or every 10 generations
-        if population.conf.celery_reboot or gen_num%10 == 0:
+        if population.conf.celery_reboot:
             await celerycontroller.reset_celery()
             population.conf.celery_reboot = False
 

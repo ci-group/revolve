@@ -37,7 +37,7 @@ app.conf.update(
 def setup_celery_logging(**kwargs):
     """This function disables logging."""
     pass
-    
+
 app.log.setup()
 
 if __name__ == '__main__':

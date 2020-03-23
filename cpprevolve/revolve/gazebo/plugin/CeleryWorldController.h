@@ -21,12 +21,14 @@
 // Created by elte on 6-6-15.
 //
 
-#ifndef REVOLVE_WORLDCONTROLLER_H
-#define REVOLVE_WORLDCONTROLLER_H
+#ifndef REVOLVE_CELERYWORLDCONTROLLER_H
+#define REVOLVE_CELERYWORLDCONTROLLER_H
 
 #include <map>
 #include <string>
 #include <queue>
+#include <SimpleAmqpClient/SimpleAmqpClient.h>
+#include <jsoncpp/json/json.h>
 
 #include <boost/thread/mutex.hpp>
 
@@ -41,12 +43,12 @@
 namespace revolve {
 namespace gazebo {
 
-class WorldController: public ::gazebo::WorldPlugin
+class CeleryWorldController: public ::gazebo::WorldPlugin
 {
 public:
-    WorldController();
+    CeleryWorldController();
 
-    virtual ~WorldController();
+    virtual ~CeleryWorldController();
 
     virtual void Load(
             ::gazebo::physics::WorldPtr _parent,
@@ -69,6 +71,8 @@ protected:
 
     virtual void OnEndUpdate();
 
+    virtual void OnContacts(ConstContactsPtr &msgContacts);
+
     // Maps model names to insert request IDs
     // model_name -> request_id, SDF, insert_operation_pending
     std::map<std::string, std::tuple<int, std::string, bool> > insertMap_;
@@ -85,8 +89,14 @@ protected:
     // Mutex for the insertMap_
     boost::mutex insertMutex_;
 
+    // Mutex for message writing
+    boost::mutex dataMutex_;
+
     // Mutex for the deleteMap_
     boost::mutex deleteMutex_;
+
+    // request subscriber
+    ::gazebo::transport::SubscriberPtr contactsSub_;
 
     // Request subscriber
     ::gazebo::transport::SubscriberPtr requestSub_;
@@ -128,9 +138,21 @@ protected:
 //    boost::mutex world_insert_remove_mutex;
 
     ::gazebo::physics::Model_V models_to_remove;
+
+    // celery consumer functionality
+    AmqpClient::Channel::ptr_t celeryChannel;
+    std::string consumer_tag;
+    AmqpClient::Envelope::ptr_t envelope;
+
+    bool running;
+
+    Json::FastWriter fastWriter;
+    Json::Value rootmsg;
+    Json::Value root;   // will contains the root value after parsing.
+    Json::Reader reader;
 };
 
 }  // namespace gazebo
 }  // namespace revolve
 
-#endif  // REVOLVE_WORLDCONTROLLER_H
+#endif  // REVOLVE_CELERYCeleryWorldController_H
