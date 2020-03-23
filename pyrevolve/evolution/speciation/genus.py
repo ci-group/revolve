@@ -15,7 +15,7 @@ class Genus:
     Collection of species
     """
 
-    def __init__(self, config: PopulationSpeciatedConfig, species_collection: SpeciesCollection = SpeciesCollection()):
+    def __init__(self, config: PopulationSpeciatedConfig, species_collection: SpeciesCollection = None):
         """
         Creates the genus object.
         :param config: Population speciated config.
@@ -23,7 +23,10 @@ class Genus:
         """
         #TODO refactor config (is it part of species, species collection, or genus?
         self.config: PopulationSpeciatedConfig = config
-        self.species_collection: SpeciesCollection = species_collection
+
+        self.species_collection: SpeciesCollection = SpeciesCollection() \
+            if species_collection is None else species_collection
+
         self._next_species_id: int = 0
 
     def iter_individuals(self) -> Iterator[Individual]:

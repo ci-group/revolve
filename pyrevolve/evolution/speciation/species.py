@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class Species:
 
-    def __init__(self, individuals: List[Individual], species_id: int, age: Age = Age(), best_fitness: float = 0.0):
+    def __init__(self, individuals: List[Individual], species_id: int, age: Age = None, best_fitness: float = 0.0):
 
         # list of individuals and adjusted fitnesses
         # TODO _adjusted_fitness name to split off from regular individuals
@@ -24,7 +24,7 @@ class Species:
         # ID of the species
         self._id: int = species_id
 
-        self.age = age
+        self.age: Age = Age() if age is None else age
 
         # Fitness
         self._last_best_fitness: float = best_fitness  # TODO -Inf |-float('Inf')|
