@@ -66,14 +66,14 @@ class SpeciesCollection(Iterable):
         assert len(self._collection) > 0
 
         if self._update_prototypes:
-            iter_species = enumerate(iter(self._collection[1:]))
+            species_iterator = enumerate(iter(self._collection[1:]))
 
-            worst_species_index, worst_species = next(iter_species)
+            worst_species_index, worst_species = next(species_iterator)
             worst_species_fitness = worst_species.get_best_fitness()
 
             while True:
                 try:
-                    i, species = next(iter_species)
+                    i, species = next(species_iterator)
                 except StopIteration:
                     # stop the infinite loop when the iterator is exhausted
                     break
@@ -148,7 +148,8 @@ class SpeciesCollection(Iterable):
         if old_best_species is not None:
             old_best_species.age.reset_generations()
 
-def count_individuals(self, species_list: Optional[List[Species]] = None) -> int:
+
+def count_individuals(species_collection: Optional[SpeciesCollection] = None) -> int:
     """
     Counts the number of individuals in the species_list.
     :param species_list: if None, it will use self.species_list
@@ -157,7 +158,7 @@ def count_individuals(self, species_list: Optional[List[Species]] = None) -> int
     # count the total number of individuals inside every species in the species_list
     number_of_individuals = 0
 
-    for species in species_list:
+    for species in species_collection:
         number_of_individuals += len(species)
 
     return number_of_individuals
@@ -192,21 +193,20 @@ class SpeciesIterator(Iterator):
         return value
 
 
-
 if __name__ == "__main__":
     from pyrevolve.genotype.genotype import Genotype
     # The client code may or may not know about the Concrete Iterator or
     # Collection classes, depending on the level of indirection you want to keep
     # in your program.
-    species_collection = SpeciesCollection()
+    collection = SpeciesCollection()
     individual1 = Individual(Genotype())
-    species_collection.add_species(Species([individual1], 0))
+    collection.add_species(Species([individual1], 0))
     individual2 = Individual(Genotype())
-    species_collection.add_species(Species([individual2], 1))
+    collection.add_species(Species([individual2], 1))
     individual3 = Individual(Genotype())
-    species_collection.add_species(Species([individual3], 2))
+    collection.add_species(Species([individual3], 2))
 
     print("Straight traversal:")
-    for individual in species_collection:
+    for individual in collection:
         print(individual)
     print("")

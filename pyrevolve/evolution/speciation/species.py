@@ -7,8 +7,8 @@ if TYPE_CHECKING:
     from pyrevolve.evolution.individual import Individual
     from .population_speciated_config import PopulationSpeciatedConfig
     from pyrevolve.genotype.genotype import Genotype
-    from pyrevolve.evolution.speciation.age import Age
 
+from pyrevolve.evolution.speciation.age import Age
 
 class Species:
 
