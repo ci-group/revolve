@@ -1,5 +1,6 @@
 from __future__ import annotations
 import math
+from pyrevolve.evolution.speciation.age import Age
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -8,17 +9,20 @@ if TYPE_CHECKING:
     from .speciation import SpeciationConfig
     from pyrevolve.genotype.genotype import Genotype
 
-
 from pyrevolve.evolution.speciation.age import Age
 
 class Species:
+    """
+    Collection of individuals that share the same Species
+    I.e. they have compatible genomes and are considered similar individuals/solutions.
+    A crossover between two individuals of the same species is supposed to have a good fitness.
+    """
 
     def __init__(self, individuals: List[Individual], species_id: int, age: Age = None, best_fitness: float = 0.0):
 
         # list of individuals and adjusted fitnesses
         # TODO _adjusted_fitness name to split off from regular individuals
-
-        self._individuals: List[(Individual, Optional[int])] = [(individual, None) for individual in individuals]
+        self._individuals: List[(Individual, Optional[float])] = [(individual, None) for individual in individuals]
         # Individual representative of the species
         self._representative: Individual = individuals[0]  # TODO is this always the first individual?
 
@@ -33,10 +37,39 @@ class Species:
     def next_generation(self, new_individuals: List[Individual]) -> Species:
         # create ...
         new_species = Species(new_individuals, self._id, self.age, self._last_best_fitness)
-        new_species._representative = self._representative
+        new_species._representative = self.get_representative()
 
         # TODO next generation
         return new_species
+
+    # TODO refactor population_config
+    def is_compatible(self, candidate: Individual, population_config: SpeciationConfig) -> bool:
+        """
+        Tests if the candidate individual is compatible with this Species
+        :param candidate: candidate individual to test against the current species
+        :param population_config: config where to pick the `are genomes compatible` function
+        :return: if the candidate individual is compatible or not
+        """
+        return population_config.are_genomes_compatible(candidate.genotype, self.get_representative().genotype)
+
+    # TODO duplicate code with species collection best/worst function
+    def get_best_fitness(self) -> float:
+        """
+        Finds the best fitness for individuals in the species. If the species is empty, it returns negative infinity.
+        :return: the best fitness in the species.
+        """
+        if self.empty():
+            return -math.inf
+        # TODO cache?
+        return self.get_best_individual().fitness
+
+    def get_best_individual(self) -> Individual:
+        """
+        :return: the best individual of the species
+        """
+        # TODO cache?
+        # all the individuals should have fitness defined
+        return max(self._individuals, key=lambda individual: individual[0].fitness)
 
     ## FITNESS
     def adjust_fitness(self, is_best_species: bool, population_config: SpeciationConfig) -> None:
@@ -90,23 +123,20 @@ class Species:
 
         return fitness
 
-    # TODO duplicate code with species collection best/worst function
-    def get_best_fitness(self) -> float:
-        """
-        Finds the best fitness over all individuals in the species.
-        If the species is empty, it returns negative infinity
-        :return: the best fitness in the species.
-        """
-        if self.empty():
-            return -math.inf
-        # TODO cache?
-        return max(self._individuals, key=lambda individual: individual[0].fitness)
+
+    def create_species(self, new_individuals: List[Individual]) -> Species:
+        # create ...
+        new_species = Species(new_individuals, self._id, self.age, self._last_best_fitness)
+        # TODO study differences in selecting the representative individual.
+        new_species._representative = new_individuals[0]  # same as NEAT
+        #new_species._representative = self.get_best_individual()
+
+        # TODO next generation
 
     ## INDIVIDUALS:
-    def is_compatible(self,
-                      candidate: Individual,
-                      population_config: SpeciationConfig) -> bool:
-        return population_config.are_genomes_compatible(candidate.genotype, self.get_representative().genotype)
+
+    def get_representative(self):
+        return self._representative
 
     def iter_individuals(self):
         """:return: an iterator of (individual, adjusted_fitness) for all individuals of the species"""

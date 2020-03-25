@@ -45,6 +45,10 @@ class SpeciesCollection(Iterable):
         """
         return SpeciesIterator(self._collection)
 
+    def set_individuals(self, species_index, new_individuals):
+        self._collection[species_index] = new_individuals
+        self._update_prototypes = True
+
     def get_best(self) -> (int, Species):
         assert len(self._collection) > 0
 
@@ -59,42 +63,41 @@ class SpeciesCollection(Iterable):
         return self._best
 
     # TODO refactor function to be smaller.
-    def get_worst(self, exclude_empty_species: bool = False) -> (int, Species):
+    def get_worst(self, minimal_size: int) -> (int, Species):
         """
         :return: the index of the worst species and a reference to the worst species
         """
-        assert len(self._collection) > 0
-
         if self._update_prototypes:
-            species_iterator = enumerate(iter(self._collection[1:]))
 
-            worst_species_index, worst_species = next(species_iterator)
-            worst_species_fitness = worst_species.get_best_fitness()
+            assert len(self._collection) > 0
 
-            while True:
-                try:
-                    i, species = next(species_iterator)
-                except StopIteration:
-                    # stop the infinite loop when the iterator is exhausted
-                    break
+            worst_species_index, worst_species = self._calculate_worst_fitness(minimal_size)
 
-                if not species.empty():
-                    species_fitness = species.get_best_fitness()
-                else:
-                    if exclude_empty_species:
-                        # ignore empty species in the loop
-                        continue
-                    else:
-                        species_fitness = -math.inf
-
-                if species_fitness < worst_species_fitness:
-                    worst_species_fitness = species_fitness
-                    worst_species = species
-                    worst_species_index = i
+            assert (worst_species_index != -1 and worst_species is not None)
 
             self._worst = (worst_species_index, worst_species)
 
         return self._worst
+
+    def _calculate_worst_fitness(self, minimal_size):
+        worst_species_index = -1
+        worst_species_fitness = float('Inf')
+        worst_species = None
+
+        for i, species in enumerate(self._collection):
+
+            if len(species) < minimal_size:
+                continue
+                # TODO remove - this is never used since the function is only called in count_offsprings.
+                # species_fitness = -math.inf
+
+            species_fitness = species.get_best_fitness()
+            if species_fitness < worst_species_fitness:
+                worst_species_fitness = species_fitness
+                worst_species = species
+                worst_species_index = i
+
+        return worst_species_index, worst_species
 
     def add_species(self, item: Species):
         self._collection.append(item)

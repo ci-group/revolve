@@ -1,29 +1,32 @@
 import os
 
-#from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype import Genotype
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Optional, List
+    from pyrevolve.revolve_bot import RevolveBot
+    from pyrevolve.genotype import Genotype
 
 
 class Individual:
 
-    def __init__(self, genotype: Genotype, phenotype=None):
+    def __init__(self, genotype: Genotype, phenotype: Optional[RevolveBot] = None):
+
         """
         Creates an Individual object with the given genotype and optionally the phenotype.
 
         :param genotype: genotype of the individual
         :param phenotype (optional): phenotype of the individual
         """
-        self.genotype = genotype
-        self.phenotype = phenotype
-        self.fitness = None
-        self.parents = None
-        self.failed_eval_attempt_count = 0
+        self.genotype: Genotype = genotype
+        self.phenotype: RevolveBot = phenotype
+        self.fitness: Optional[float] = None
+        self.parents: Optional[List[Individual]] = None
+        self.failed_eval_attempt_count: int = 0
 
     # TODO make genotype, phenotype and other properties private.
     def develop(self):
         """
         Develops genotype into a intermediate phenotype
-
         """
         if self.phenotype is None:
             self.phenotype = self.genotype.develop()
@@ -49,9 +52,8 @@ class Individual:
     # TODO refactor to momento
     def _export_phenotype(self, folder: str):
         if self.phenotype is not None:
-            # TODO should be txt?
-            # TODO "/phenotypes/"
-            self.phenotype.save_file(f'{folder}/phenotypes/phenotype_{self.phenotype.id}.yaml', conf_type='yaml')
+            # TODO "/phenotypes/phenotype_"
+            self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}.yaml', conf_type='yaml')
 
     # TODO refactor to momento
     def _export_fitness(self, folder: str):
@@ -71,7 +73,6 @@ class Individual:
 
     def __repr__(self):
         return f'Individual_{self.id}({self.fitness})'
-
 
 def create_individual(experiment_management, genotype: Genotype):
     individual = Individual(genotype)

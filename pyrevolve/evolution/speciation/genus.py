@@ -93,18 +93,18 @@ class Genus:
         # clone species:
         new_species_collection = SpeciesCollection()
         orphans: List[Individual] = []
+        old_species_individuals: List[List[Individual]] = [[] for _ in range(len(self.species_collection))]
 
         # Generate new individuals
-        for species, offspring_amount in zip(self.species_collection, offspring_amounts):
+        for species_index, species in enumerate(self.species_collection):
 
             # Get the individuals from the individual with adjusted fitness tuple list.
-            species_individuals = [individual for individual, _ in species.iter_individuals()]
+            old_species_individuals[species_index] = [individual for individual, _ in species.iter_individuals()]
 
             new_individuals = []
 
-            #TODO offspring amount: ???
-            for _ in range(offspring_amount):
-                new_individual = generate_individual_function(species_individuals)
+            for _ in range(offspring_amounts[species_index]):
+                new_individual = generate_individual_function(old_species_individuals[species_index])
 
                 # if the new individual is compatible with the species, otherwise create new.
                 if species.is_compatible(new_individual.genotype, self.config):
@@ -112,10 +112,9 @@ class Genus:
                 else:
                     orphans.append(new_individual)
 
-            new_species_collection.add_species(species.next_generation(new_individuals))
+            new_species_collection.set_individuals(species_index, species.create_species(new_individuals))
 
-        # create new species from orphans
-        #TODO refactor
+        # recheck if other species can adopt the orphan individuals.
         for orphan in orphans:
             for species in new_species_collection:
                 if species.is_compatible(orphan.genotype, self.config):
@@ -123,28 +122,34 @@ class Genus:
                     break
             else:
                 new_species_collection.add_species(Species([orphan], self._next_species_id))
+                # add an entry for new species which does not have a previous iteration.
+                old_species_individuals.append([])
                 self._next_species_id += 1
 
+        # Do a recount on the number of offspring per species.
         offspring_amounts = self._count_offsprings(self.config.population_size)
 
-        # TODO finish up population management.
-        for species, offspring_amount in zip(self.species_collection, offspring_amounts):
+        # Update the species population, based on the population management algorithm.
+        for species_index, species in enumerate(self.species_collection):
             species_individuals = [individual for individual, _ in species.iter_individuals()]
             # create next population ## Same as population.next_gen
-            # TODO new individuals
-            new_individuals = self.config.population_management(species_individuals, new_individuals,
-                                                                offspring_amount, self.config.population_management_selector)
+            new_individuals = self.config.population_management(species_individuals,
+                                                                old_species_individuals[species_index],
+                                                                offspring_amounts[species_index],
+                                                                self.config.population_management_selector)
+            new_species_collection.set_individuals(species_index, new_individuals)
 
-        #TODO assert species list size and number of individuals
-        assert(self.config.population_size == count_individuals(new_species_collection))
+        new_species_collection.cleanup()
+
+        # Assert species list size and number of individuals
+        assert count_individuals(new_species_collection) == self.config.population_size
 
         new_genus = Genus(self.config, new_species_collection)
-        new_genus.species_collection.cleanup()
 
         return new_genus
 
     # TODO testing
-    # TODO list of all individuals for all species
+    # TODO separate these functions to a different class, and pass on the species collection.
     def _count_offsprings(self, number_of_individuals: int) -> List[int]:
         """
         Calculates the number of offspring allocated for each individual.
@@ -156,43 +161,49 @@ class Genus:
         """
         assert number_of_individuals > 0
 
-        total_adjusted_fitness = 0.0
+        average_adjusted_fitness: float = self._calculate_average_fitness(number_of_individuals)
+
+        species_offspring_amount: List[int] = self._calculate_population_size(average_adjusted_fitness)
+
+        missing_offspring = number_of_individuals - sum(species_offspring_amount)
+
+        species_offspring_amount = self._correct_population_size(species_offspring_amount, missing_offspring)
+
+        return species_offspring_amount
+
+    def _calculate_average_fitness(self, number_of_individuals: int) -> float:
+        # Calculate the total adjusted fitness
+        total_fitness: float = 0.0
+        for species in self.species_collection:
+            for _, fitness in species.iter_individuals():
+                total_fitness += fitness
+
+        assert total_fitness > 0.0
+        average_adjusted_fitness = total_fitness / float(number_of_individuals)
+
+        return average_adjusted_fitness
+
+    def _calculate_population_size(self, average_adjusted_fitness) -> List[int]:
+        species_offspring_amount: List[int] = []
 
         for species in self.species_collection:
-            for _, adjusted_fitness in species.iter_individuals():
-                total_adjusted_fitness += adjusted_fitness
-
-        assert total_adjusted_fitness > 0.0
-
-        average_adjusted_fitness = total_adjusted_fitness / float(number_of_individuals)
-
-        species_offspring_amount = []  # list of integers
-        for species in self.species_collection:
-            offspring_amount = 0.0
+            offspring_amount: float = 0.0
             for individual, adjusted_fitness in species.iter_individuals():
                 offspring_amount += adjusted_fitness / average_adjusted_fitness
             species_offspring_amount.append(round(offspring_amount))
 
-        total_offspring_amount = sum(species_offspring_amount)
+        return species_offspring_amount
 
-        missing = number_of_individuals - total_offspring_amount
+    def _correct_population_size(self, species_offspring_amount, missing_offspring) -> List[int]:
+        
+        if missing_offspring > 0:  # positive have lacking individuals
+            # take best species and
+            species_offspring_amount[self.species_collection.get_best()[0]] += missing_offspring
 
-        if missing > 0:  # positive have lacking individuals
-            # TODO take best species
-            species_offspring_amount[self.species_collection.get_best()[0]] += missing
-
-        elif missing < 0:  # negative have excess individuals
-            # TODO remove missing number of individuals
-            # TODO more documentation ...
-            species_offspring_amount[self.species_collection.get_worst(exclude_empty_species=True)[0]] -= -missing
-
-        # There are some individuals missing from approximation
-        #missing_offsprings = self.config.offspring_size - len(new_individuals)
-
-        #assert missing_offsprings >= 0
-        #best_species = self.species_list[0]  # TODO call best species
-        #for _ in range(missing_offsprings):
-        #    species_individuals = [individual for individual, _ in best_species.iter_individuals()]
-        #    generate_individual_function(species_individuals)
+        elif missing_offspring < 0:  # negative have excess individuals
+            # remove missing number of individuals
+            remove_offspring = -missing_offspring  # get the positive number of individual to remove
+            worst_species_index, _ = self.species_collection.get_worst(remove_offspring)
+            species_offspring_amount[worst_species_index] -= remove_offspring
 
         return species_offspring_amount
