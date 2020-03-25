@@ -148,7 +148,7 @@ class Genus:
         return new_genus
 
     # TODO testing
-    # TODO list of all individuals for all species
+    # TODO separate these functions to a different class, and pass on the species collection.
     def _count_offsprings(self, number_of_individuals: int) -> List[int]:
         """
         Calculates the number of offspring allocated for each individual.
@@ -160,39 +160,49 @@ class Genus:
         """
         assert number_of_individuals > 0
 
+        average_adjusted_fitness: float = self._calculate_average_fitness(number_of_individuals)
+
+        species_offspring_amount: List[int] = self._calculate_population_size(average_adjusted_fitness)
+
+        missing_offspring = number_of_individuals - sum(species_offspring_amount)
+
+        species_offspring_amount = self._correct_population_size(species_offspring_amount, missing_offspring)
+
+        return species_offspring_amount
+
+    def _calculate_average_fitness(self, number_of_individuals: int) -> float:
         # Calculate the total adjusted fitness
-        total_adjusted_fitness = 0.0
+        total_fitness: float = 0.0
         for species in self.species_collection:
-            for _, adjusted_fitness in species.iter_individuals():
-                total_adjusted_fitness += adjusted_fitness
+            for _, fitness in species.iter_individuals():
+                total_fitness += fitness
 
-        # Calculate the average adjusted fitness
-        assert total_adjusted_fitness > 0.0
-        average_adjusted_fitness = total_adjusted_fitness / float(number_of_individuals)
+        assert total_fitness > 0.0
+        average_adjusted_fitness = total_fitness / float(number_of_individuals)
 
-        # Get the number of offspring per species.
-        # This calculation is based on the adjusted fitness and the average adjusted fitness
+        return average_adjusted_fitness
+
+    def _calculate_population_size(self, average_adjusted_fitness) -> List[int]:
         species_offspring_amount: List[int] = []
+
         for species in self.species_collection:
-            offspring_amount = 0.0
+            offspring_amount: float = 0.0
             for individual, adjusted_fitness in species.iter_individuals():
                 offspring_amount += adjusted_fitness / average_adjusted_fitness
             species_offspring_amount.append(round(offspring_amount))
 
-        total_offspring_amount = sum(species_offspring_amount)
+        return species_offspring_amount
 
-        missing_offspring = number_of_individuals - total_offspring_amount
-
-        assert missing_offspring >= 0
-
+    def _correct_population_size(self, species_offspring_amount, missing_offspring) -> List[int]:
+        
         if missing_offspring > 0:  # positive have lacking individuals
             # take best species and
             species_offspring_amount[self.species_collection.get_best()[0]] += missing_offspring
 
         elif missing_offspring < 0:  # negative have excess individuals
-            # TODO test approach
             # remove missing number of individuals
-            worst_species_index, _ = self.species_collection.get_worst(exclude_empty_species=True)
-            species_offspring_amount[worst_species_index] -= -missing_offspring
+            remove_offspring = -missing_offspring  # get the positive number of individual to remove
+            worst_species_index, _ = self.species_collection.get_worst(remove_offspring)
+            species_offspring_amount[worst_species_index] -= remove_offspring
 
         return species_offspring_amount
