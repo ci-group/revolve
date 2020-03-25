@@ -5,7 +5,7 @@ import unittest
 
 from pyrevolve.evolution.population.population import Population
 
-from .tools import get_population
+from .helper import get_population
 
 
 class TestPopulation(unittest.TestCase):

@@ -3,7 +3,7 @@ from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.speciation.population_speciated import Speciation, SpeciationConfig
-from pyrevolve.evolution.population import PopulationMediator, steady_state_population_management
+from pyrevolve.evolution.population import create_population_mediator, steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.lsystem_neat.crossover import CrossoverConfig as lCrossoverConfig
 from pyrevolve.genotype.lsystem_neat.crossover import standard_crossover as lcrossover
@@ -66,6 +66,7 @@ async def run():
 
     logger.info('Activated run ' + settings.run + ' of experiment ' + settings.experiment_name)
 
+    # TODO population config reform required
     population_config = SpeciationConfig(
         population_size=population_size,
         genotype_constructor=LSystemCPGHyperNEATGenotype,
@@ -99,7 +100,7 @@ async def run():
 
     generation = Generation(number_of_generations)
     recover_population = settings.recovery_enabled and not experiment_management.experiment_is_new()
-    population_mediator = PopulationMediator(population_config, simulator_queue, analyzer_queue, recover_population)
+    population_mediator = await create_population_mediator(population_config, simulator_queue, analyzer_queue, recover_population)
 
     while not generation.done():
         #TODO why increment before doing the step?

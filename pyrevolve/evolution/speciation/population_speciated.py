@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from pyrevolve.evolution.speciation.species_collection import count_individuals
 
 
-class PopulationSpeciated(Population):
+class Speciation(Population):
     def __init__(self,
                  config: PopulationSpeciatedConfig,
                  simulator_queue: SimulatorQueue,
@@ -46,7 +46,7 @@ class PopulationSpeciated(Population):
 
     def next_generation(self,
                         gen_num: int,
-                        recovered_individuals: Optional[List[Individual]] = None) -> PopulationSpeciated:
+                        recovered_individuals: Optional[List[Individual]] = None) -> Speciation:
         """
         Creates next generation of the population through selection, mutation, crossover
 
@@ -68,7 +68,7 @@ class PopulationSpeciated(Population):
         # append recovered individuals ## Same as population.next_gen
         # new_individuals = recovered_individuals + new_individuals
 
-        new_population = PopulationSpeciated(self.config, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
+        new_population = Speciation(self.config, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
         new_population.genus = new_genus
         logger.info(f'Population selected in gen {gen_num} '
                     f'with {len(new_population.genus.species_collection)} species '

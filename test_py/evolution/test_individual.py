@@ -6,7 +6,7 @@ from pyrevolve.evolution.individual import Individual
 
 from pyrevolve.genotype.lsystem_neat.lsystem_neat_genotype import LSystemCPGHyperNEATGenotype
 
-from .tools import get_genotype
+from .helper import get_genotype
 
 class TestIndividual(unittest.TestCase):
     """

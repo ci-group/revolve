@@ -5,11 +5,13 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List
-
-from pyrevolve.custom_logging.logger import logger
+    pass
 
 from pyrevolve.evolution.individual import Individual
+
+from typing import List
+
+from pyrevolve.custom_logging.logger import logger
 
 from pyrevolve.util.robot_identifier import RobotIdentifier
 from pyrevolve.util.generation import Generation

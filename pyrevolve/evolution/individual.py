@@ -1,6 +1,6 @@
 import os
 
-from pyrevolve.experiment_management import ExperimentManagement
+#from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype import Genotype
 
 
@@ -73,7 +73,7 @@ class Individual:
         return f'Individual_{self.id}({self.fitness})'
 
 
-def create_individual(experiment_management: ExperimentManagement, genotype: Genotype):
+def create_individual(experiment_management, genotype: Genotype):
     individual = Individual(genotype)
     individual.develop()
     individual.phenotype.update_substrate()

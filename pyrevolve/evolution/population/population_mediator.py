@@ -13,15 +13,14 @@ from pyrevolve.evolution.population.population import create_population
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
-from pyrevolve.evolution.population.population_memento import population_recovery, load_offspring
+from pyrevolve.evolution.population.loader import load_population, load_offspring
 
 from pyrevolve.util.generation import Generation
 
 
 class PopulationMediator:
 
-    def __init__(self, config: PopulationConfig, simulator_queue: SimulatorQueue, analyzer_queue: AnalyzerQueue,
-                 recover_population: bool):
+    def __init__(self, config: PopulationConfig, simulator_queue: SimulatorQueue, analyzer_queue: AnalyzerQueue):
         self.population = Population(config)
 
         self.generation = Generation.getInstance()
@@ -29,14 +28,15 @@ class PopulationMediator:
         self.simulator_queue = simulator_queue
         self.analyzer_queue = analyzer_queue
 
+    async def recover(self, recover_population: bool):
         if recover_population:
-            self.population, has_offspring = await population_recovery(self.population)
+            self.population, has_offspring = await load_population(self.population)
             if has_offspring:
-                self.recover_offspring()
+                await self.recover_offspring()
         else:
             await self.initialize()
 
-    def recover_offspring(self):
+    async def recover_offspring(self):
 
         individuals = await load_offspring(self.population.config)
         generation_index = self.generation.increment()
@@ -62,7 +62,7 @@ class PopulationMediator:
         for i in range(self.population.config.population_size - len(recovered_individuals)):
             individuals.append(create_individual(self.population.config.experiment_management,
                                                  self.population.config.genotype_constructor(self.population.config.genotype_conf)))
-
+        # TODO why evaluate.
         await self.evaluate(individuals)
 
         individuals = recovered_individuals + individuals
@@ -141,3 +141,9 @@ class PopulationMediator:
                 individual.phenotype.simulation_boundaries = bounding_box
 
         return await self.simulator_queue.test_robot(individual, self.population.config)
+
+
+async def create_population_mediator(config: PopulationConfig, simulator_queue: SimulatorQueue,
+                                     analyzer_queue: AnalyzerQueue, recover_population: bool):
+    population_mediator = PopulationMediator(config, simulator_queue, analyzer_queue)
+    await population_mediator.recover(recover_population)

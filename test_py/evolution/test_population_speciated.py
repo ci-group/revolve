@@ -5,7 +5,7 @@ import unittest
 
 from pyrevolve.evolution.speciation.population_speciated import Speciation
 
-from .tools import get_population_speciated
+from .helper import get_population_speciated
 
 
 class TestPopulationSpeciated(unittest.TestCase):

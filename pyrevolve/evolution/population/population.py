@@ -89,7 +89,7 @@ class Population:
 
         :param config: configuration of the system
         """
-        self.config = config
+        self.config: PopulationConfig = config
 
         if individuals is None:
             self.individuals = []
