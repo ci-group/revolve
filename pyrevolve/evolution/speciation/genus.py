@@ -111,7 +111,7 @@ class Genus:
                 else:
                     orphans.append(new_individual)
 
-            new_species_collection.set_individuals(species_index, species.create_species(new_individuals))
+            new_species_collection.set_species(species_index, species.create_species(new_individuals))
 
         # recheck if other species can adopt the orphan individuals.
         for orphan in orphans:
@@ -136,7 +136,7 @@ class Genus:
                                                                 old_species_individuals[species_index],
                                                                 offspring_amounts[species_index],
                                                                 self.config.population_management_selector)
-            new_species_collection.set_individuals(species_index, new_individuals)
+            new_species_collection.set_species(species_index, species.create_species(new_individuals))
 
         new_species_collection.cleanup()
 

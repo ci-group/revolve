@@ -45,8 +45,8 @@ class SpeciesCollection(Iterable):
         """
         return SpeciesIterator(self._collection)
 
-    def set_individuals(self, species_index, new_individuals):
-        self._collection[species_index] = new_individuals
+    def set_species(self, species_index: int, new_species: Species):
+        self._collection[species_index] = new_species
         self._update_prototypes = True
 
     def get_best(self) -> (int, Species):

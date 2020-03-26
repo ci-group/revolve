@@ -44,7 +44,7 @@ class PopulationSpeciated(Population):
 
         self.genus.speciate(individuals)
 
-    def next_generation(self,
+    async def next_generation(self,
                         gen_num: int,
                         recovered_individuals: Optional[List[Individual]] = None) -> PopulationSpeciated:
         """

@@ -61,6 +61,7 @@ async def run():
 
     logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
 
+    has_offspring = False
     if do_recovery:
         gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size, offspring_size)
 

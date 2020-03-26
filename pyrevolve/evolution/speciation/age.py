@@ -33,3 +33,12 @@ class Age:
     def reset_generations(self) -> None:
         self._generations = 0
         self._no_improvements = 0
+
+
+if __name__ == "__main__":
+    age = Age()
+    age.increase_evaluations()
+    age.increase_generations()
+    age.increase_no_improvement()
+
+    print(age._generations)
