@@ -22,7 +22,7 @@ async def run():
     """
     The main coroutine, which is started below.
     """
-    begin = time.time()
+    
     # experiment params #
     num_generations = 20
     population_size = 100
@@ -118,5 +118,3 @@ async def run():
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     # output result after completing all generations...
-    end = time.time()
-    print(f'actual running time: {end-begin}')
