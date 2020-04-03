@@ -1,14 +1,15 @@
 from __future__ import annotations
 import math
+import os
+import yaml
+
 from pyrevolve.evolution.speciation.age import Age
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import List, Optional, Dict, Iterator, Callable
     from pyrevolve.evolution.individual import Individual
     from .population_speciated_config import PopulationSpeciatedConfig
-    from pyrevolve.genotype.genotype import Genotype
-
 
 
 class Species:
@@ -23,8 +24,6 @@ class Species:
         # list of individuals and adjusted fitnesses
         # TODO _adjusted_fitness name to split off from regular individuals
         self._individuals: List[(Individual, Optional[float])] = [(individual, None) for individual in individuals]
-        # Individual representative of the species
-        self._representative: Individual = individuals[0]  # TODO is this always the first individual?
 
         # ID of the species
         self._id: int = species_id
@@ -34,6 +33,19 @@ class Species:
         # Fitness
         self._last_best_fitness: float = best_fitness  # TODO -Inf |-float('Inf')|
 
+    def __eq__(self, other):
+        if not isinstance(other, Species):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+
+        if self._id != other._id or self.age != other.age:
+            return False
+
+        for (individual1, fit1), (individual2, fit2) in zip(self._individuals, other._individuals):
+            if individual1 != individual2 or fit1 != fit2:
+                return False
+        return True
+
     # TODO refactor population_config
     def is_compatible(self, candidate: Individual, population_config: PopulationSpeciatedConfig) -> bool:
         """
@@ -42,7 +54,7 @@ class Species:
         :param population_config: config where to pick the `are genomes compatible` function
         :return: if the candidate individual is compatible or not
         """
-        return population_config.are_genomes_compatible(candidate.genotype, self._representative.genotype)
+        return population_config.are_genomes_compatible(candidate.genotype, self._representative().genotype)
 
     # TODO duplicate code with species collection best/worst function
     def get_best_fitness(self) -> float:
@@ -60,7 +72,8 @@ class Species:
         """
         # TODO cache?
         # all the individuals should have fitness defined
-        return max(self._individuals, key=lambda individual: individual[0].fitness)
+        return max(self._individuals,
+                   key=lambda individual: individual[0].fitness if individual[0].fitness is not None else -math.inf)[0]
 
     # TODO refactor population_config
     def adjust_fitness(self, is_best_species: bool, population_config: PopulationSpeciatedConfig) -> None:
@@ -78,16 +91,31 @@ class Species:
         n_individuals = len(self._individuals)
 
         for individual_index, (individual, _) in enumerate(self._individuals):
-            assert individual.fitness is not None
-            assert individual.fitness >= 0.0  # TODO can we make this work with negative fitnesses?
+            fitness = individual.fitness
+            if fitness is None:
+                fitness = 0.0
+            assert fitness >= 0.0  # TODO can we make this work with negative fitnesses?
 
-            fitness = self._modify_fitness(individual.fitness, is_best_species, population_config)
+            fitness = self._adjusted_fitness(fitness, is_best_species, population_config)
 
             # Compute the adjusted fitness for this member
             self._individuals[individual_index] = (individual, fitness / n_individuals)
 
-    def _modify_fitness(self, fitness: float, is_best_species: bool, population_config: PopulationSpeciatedConfig):
+    def _adjusted_fitness(self,
+                          fitness: float,
+                          is_best_species: bool,
+                          population_config: PopulationSpeciatedConfig) -> float:
+        """
+        Generates the adjusted fitness (not normalized) for the individual.
+        It's based on its current fitness, the status of the species and the Configuration of the experiment.
 
+        It also updates the self._last_best_fitness.
+
+        :param fitness: real fitness of the individual
+        :param is_best_species: is `self` the best species in the population?
+        :param population_config: experimental configuration
+        :return: the adjusted fitness for the individual (not normalized)
+        """
         # set small fitness if it is absent.
         if fitness == 0.0:
             fitness = 0.0001
@@ -115,34 +143,93 @@ class Species:
         return fitness
 
     def create_species(self, new_individuals: List[Individual]) -> Species:
-        # create ...
-        new_species = Species(new_individuals, self._id, self.age, self._last_best_fitness)
-        # TODO study differences in selecting the representative individual.
-        new_species._representative = new_individuals[0]  # same as NEAT
-        #new_species._representative = self.get_best_individual()
+        """
+        Clone the current species with a new list of individuals.
+        This function is necessary to produce the new generation.
 
-        # TODO next generation
+        Updating the age of the species should have already been happened before this.
+        This function will not update the age.
 
-        return new_species
+        :param new_individuals: list of individuals that the cloned species should have
+        :return: The cloned Species
+        """
+        return Species(new_individuals, self._id, self.age, self._last_best_fitness)
 
     # ID
     @property
     def id(self) -> int:
         return self._id
 
-    # Individuals
-    def append(self, genotype: Genotype):
-        self._individuals.append((genotype, None))
+    def _representative(self) -> Individual:
+        """
+        Returns a reference to the representative individual.
+        It crashes if the species is empty.
+        :return: the representative individual
+        """
+        # TODO study differences in selecting the representative individual.
+        return self._individuals[0][0]
+        # return self.get_best_individual()
 
-    def empty(self):
+    # Individuals
+    def append(self, individual: Individual) -> None:
+        self._individuals.append((individual, None))
+
+    def empty(self) -> bool:
         return len(self._individuals) == 0
 
     def __len__(self):
         return len(self._individuals)
 
-    def iter_individuals(self):
+    def iter_individuals(self) -> Iterator[(Individual, float)]:
         """
         :return: an iterator of (individual, adjusted_fitness) for all individuals of the species
         """
         return iter(self._individuals)
 
+    def serialize(self, filename: str) -> None:
+        """
+        Saving the Species to file in yaml formats.
+        :param filename: file where to save the species
+        """
+        data = {
+            'id': self.id,
+            'individuals_ids': [int(individual.id) for individual, _ in self._individuals],
+            'age': self.age.serialize()
+        }
+
+        with open(filename, 'w') as file:
+            yaml.dump(data, file)
+
+    @staticmethod
+    def Deserialize(filename: str,
+                    loaded_individuals: Dict[int, Individual],
+                    load_individual_fn: Callable[[int], Individual] = None) -> Species:
+        """
+        Alternative constructor that loads the species from file
+        :param filename: path to the species file
+        :param loaded_individuals: dictionary of all individuals ever created, to get a reference of them into
+          inside loaded_individuals list
+        :param load_individual_fn: optional function to load up individuals from disk
+        :return: loaded Species
+        """
+        assert os.path.isfile(filename)
+        with open(filename, 'r') as file:
+            data = yaml.load(file, Loader=yaml.SafeLoader)
+
+        def read_or_load(_id: int) -> Individual:
+            if load_individual_fn is not None and _id not in loaded_individuals:
+                loaded_individuals[_id] = load_individual_fn(_id)
+            return loaded_individuals[_id]
+
+        individuals = [read_or_load(_id) for _id in data['individuals_ids']]
+
+        species = Species(
+            individuals=individuals,
+            species_id=data['id'],
+        )
+        species.age = Age.Deserialize(data['age'])
+
+        return species
+
+    def set_individuals(self, new_individuals: List[Individual]):
+        self._individuals = [(individual, None) for individual in new_individuals]

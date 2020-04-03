@@ -50,74 +50,26 @@ class Population:
         individual.phenotype.update_substrate()
         self.config.experiment_management.export_genotype(individual)
         self.config.experiment_management.export_phenotype(individual)
-        self.config.experiment_management.export_phenotype_images(os.path.join('data_fullevolution', 'phenotype_images'), individual)
+        self.config.experiment_management.export_phenotype_images(individual)
         individual.phenotype.measure_phenotype()
         individual.phenotype.export_phenotype_measurements(self.config.experiment_management.data_folder)
 
         return individual
 
-    async def load_individual(self, ID: AnyStr) -> Individual:
-        """
-        TODO
-        :param ID: id of the robot to load
-        :return: the Individual loaded from the file system
-        """
-        data_path = self.config.experiment_management.data_folder
-        genotype = self.config.genotype_constructor(self.config.genotype_conf, ID)
-        genotype.load_genotype(os.path.join(data_path, 'genotypes', f'genotype_{ID}.txt'))
-
-        individual = Individual(genotype)
-        individual.develop()
-        individual.phenotype.measure_phenotype()
-
-        with open(os.path.join(data_path, 'fitness', f'fitness_{ID}.txt')) as f:
-            data = f.readlines()[0]
-            individual.fitness = None if data == 'None' else float(data)
-
-        with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{ID}.txt')) as f:
-            lines = f.readlines()
-            if lines[0] == 'None':
-                individual.phenotype._behavioural_measurements = None
-            else:
-                individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
-                for line in lines:
-                    line_split = line.split(' ')
-                    line_0 = line_split[0]
-                    line_1 = line_split[1]
-                    if line_0 == 'velocity':
-                        individual.phenotype._behavioural_measurements.velocity = \
-                            float(line_1) if line_1 != 'None\n' else None
-                    # if line_0 == 'displacement':
-                    #     individual.phenotype._behavioural_measurements.displacement = \
-                    #         float(line_1) if line_1 != 'None\n' else None
-                    if line_0 == 'displacement_velocity':
-                        individual.phenotype._behavioural_measurements.displacement_velocity = \
-                            float(line_1) if line_1 != 'None\n' else None
-                    if line_0 == 'displacement_velocity_hill':
-                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = \
-                            float(line_1) if line_1 != 'None\n' else None
-                    if line_0 == 'head_balance':
-                        individual.phenotype._behavioural_measurements.head_balance =\
-                            float(line_1) if line_1 != 'None\n' else None
-                    if line_0 == 'contacts':
-                        individual.phenotype._behavioural_measurements.contacts = \
-                            float(line_1) if line_1 != 'None\n' else None
-
-        return individual
-
-    async def load_snapshot(self, gen_num: int) -> None:
+    def load_snapshot(self, gen_num: int) -> None:
         """
         Recovers all genotypes and fitnesses of robots in the lastest selected population
         :param gen_num: number of the generation snapshot to recover
         """
         data_path = self.config.experiment_management.experiment_folder
-        for r, d, f in os.walk(data_path +'/selectedpop_'+str(gen_num)):
+        for r, d, f in os.walk(os.path.join(data_path, f'selectedpop_{gen_num}')):
             for file in f:
                 if 'body' in file:
-                    ID = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
-                    self.individuals.append(await self.load_individual(ID))
+                    _id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
+                    self.individuals.append(
+                        self.config.experiment_management.load_individual(_id, self.config))
 
-    async def load_offspring(self,
+    def load_offspring(self,
                              last_snapshot: int,
                              population_size: int,
                              offspring_size: int,
@@ -138,7 +90,10 @@ class Population:
             n_robots = population_size + last_snapshot * offspring_size
 
         for robot_id in range(n_robots+1, next_robot_id):
-            individuals.append(await self.load_individual('robot_'+str(robot_id)))
+            #TODO refactor filename
+            individuals.append(
+                self.config.experiment_management.load_individual(str(robot_id), self.config)
+            )
 
         self.next_robot_id = next_robot_id
         return individuals
@@ -198,11 +153,15 @@ class Population:
 
         # create next population
         if self.config.population_management_selector is not None:
-            new_individuals = self.config.population_management(self.individuals, new_individuals,
-                                                              self.config.population_management_selector)
+            new_individuals = self.config.population_management(self.individuals,
+                                                                new_individuals,
+                                                                self.config.population_management_selector)
         else:
             new_individuals = self.config.population_management(self.individuals, new_individuals)
-        new_population = Population(self.config, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
+        new_population = Population(self.config,
+                                    self.simulator_queue,
+                                    self.analyzer_queue,
+                                    self.next_robot_id)
         new_population.individuals = new_individuals
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
@@ -223,7 +182,7 @@ class Population:
         # await self.simulator_connection.pause(True)
         robot_futures = []
         for individual in new_individuals:
-            logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
+            logger.info(f'Evaluating individual (gen {gen_num}) {individual.id} ...')
             robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
 
         await asyncio.sleep(1)

@@ -2,6 +2,8 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 import math
 import numpy
+from pyrevolve.evolution.speciation.species import Species
+from pyrevolve.evolution.individual import Individual
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -9,8 +11,6 @@ if TYPE_CHECKING:
     from pyrevolve.evolution.individual import Individual
     from typing import List, Optional
 
-from pyrevolve.evolution.speciation.species import Species
-from pyrevolve.evolution.individual import Individual
 
 """
 Based on https://refactoring.guru/design-patterns/iterator/python/example
@@ -27,16 +27,16 @@ class SpeciesCollection(Iterable):
     """
 
     def __init__(self, collection: List[Species] = None) -> None:
-        self._collection = collection if collection is not None else []
+        self._collection: List[Species] \
+            = collection if collection is not None else []
 
-        # TODO typing
+        # CACHING ELEMENTS
         # best and worst are a tuple of the index (0) and Individual (1)
         # TODO make elements better accessible.
-        self._best = (0, None)
-        self._worst = (0, None)
+        self._best: (int, Species) = (0, None)
+        #self._worst: (int, Species) = (0, None)
 
-        # TODO different name.
-        self._update_prototypes = True
+        self._cache_needs_updating: bool = True
 
     def __iter__(self) -> SpeciesIterator:
         """
@@ -45,21 +45,33 @@ class SpeciesCollection(Iterable):
         """
         return SpeciesIterator(self._collection)
 
-    def set_individuals(self, species_index, new_individuals):
-        self._collection[species_index] = new_individuals
-        self._update_prototypes = True
+    def set_individuals(self, species_index: int, new_individuals: List[Individual]) -> None:
+        self._collection[species_index].set_individuals(new_individuals)
+        self._cache_needs_updating = True
 
-    def get_best(self) -> (int, Species):
+    def _update_cache(self) -> None:
         assert len(self._collection) > 0
 
-        if self._update_prototypes:
-            """
-            :return: the index of the best species
-            """
-            index = int(
-                numpy.argmax(self._collection, key=lambda species: species.get_best_fitness())
-            )
-            self._best = (index, self._collection[index])
+        # BEST
+        index = int(numpy.argmax(
+                [species.get_best_individual().fitness for species in self._collection]
+        ))
+        self._best = (index, self._collection[index])
+
+        # cannot calculate WORST cache, because
+        # there are 2 different version of the worst individual.
+        # Which one should be cached?
+
+        self._cache_needs_updating = False
+
+    def get_best(self) -> (int, Species):
+        """
+        :return: the index of the best species and the species
+        """
+        assert len(self._collection) > 0
+
+        if self._cache_needs_updating:
+            self._update_cache()
         return self._best
 
     # TODO refactor function to be smaller.
@@ -69,40 +81,37 @@ class SpeciesCollection(Iterable):
         """
         assert len(self._collection) > 0
 
-        if self._update_prototypes:
-            species_iterator = enumerate(iter(self._collection[1:]))
+        species_iterator = enumerate(iter(self._collection[1:]))
 
-            worst_species_index, worst_species = next(species_iterator)
-            worst_species_fitness = worst_species.get_best_fitness()
+        worst_species_index, worst_species = next(species_iterator)
+        worst_species_fitness = worst_species.get_best_fitness()
 
-            while True:
-                try:
-                    i, species = next(species_iterator)
-                except StopIteration:
-                    # stop the infinite loop when the iterator is exhausted
-                    break
+        while True:
+            try:
+                i, species = next(species_iterator)
+            except StopIteration:
+                # stop the infinite loop when the iterator is exhausted
+                break
 
-                if not species.empty():
-                    species_fitness = species.get_best_fitness()
+            if not species.empty():
+                species_fitness = species.get_best_fitness()
+            else:
+                if exclude_empty_species:
+                    # ignore empty species in the loop
+                    continue
                 else:
-                    if exclude_empty_species:
-                        # ignore empty species in the loop
-                        continue
-                    else:
-                        species_fitness = -math.inf
+                    species_fitness = -math.inf
 
-                if species_fitness < worst_species_fitness:
-                    worst_species_fitness = species_fitness
-                    worst_species = species
-                    worst_species_index = i
+            if species_fitness < worst_species_fitness:
+                worst_species_fitness = species_fitness
+                worst_species = species
+                worst_species_index = i
 
-            self._worst = (worst_species_index, worst_species)
-
-        return self._worst
+        return worst_species_index, worst_species
 
     def add_species(self, item: Species):
         self._collection.append(item)
-        self._update_prototypes = True
+        self._cache_needs_updating = True
 
     def __len__(self):
         """

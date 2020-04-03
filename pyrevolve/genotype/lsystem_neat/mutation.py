@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from ..plasticoding.mutation.standard_mutation import standard_mutation as plasticondig_mutation
 from ..neat_brain_genome.mutation import mutation_complexify as neat_mutation
-
 from ..plasticoding.mutation.mutation import MutationConfig as PlasticodingMutationConf
 from ..neat_brain_genome import NeatBrainGenomeConfig
 

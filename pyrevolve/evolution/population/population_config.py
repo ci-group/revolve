@@ -1,9 +1,10 @@
-from typing import TYPE_CHECKING
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from typing import Callable, Optional, List
     from pyrevolve.evolution.individual import Individual
     from pyrevolve.genotype import Genotype
-    from typing import Callable, Optional, List
     from pyrevolve.revolve_bot import RevolveBot
     from pyrevolve.tol.manage.robotmanager import RobotManager
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import random
 import math
 
@@ -7,20 +8,26 @@ from pyrevolve.genotype.plasticoding.alphabet import Alphabet, INDEX_SYMBOL, IND
 from pyrevolve.genotype.plasticoding.decoder import GrammarExpander
 from pyrevolve.revolve_bot.brain.brain_nn import Node
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Optional
+    from pyrevolve.genotype.plasticoding import PlasticodingConfig
+
 
 class Plasticoding(Genotype):
     """
     L-system genotypic representation, enhanced with epigenetic capabilities for phenotypic plasticity, through Genetic Programming.
     """
 
-    def __init__(self, conf, robot_id):
+    def __init__(self, conf: PlasticodingConfig, robot_id: Optional[int]):
         """
         :param conf: configurations for lsystem
         :param robot_id: unique id of the robot
         :type conf: PlasticodingConfig
         """
         self.conf = conf
-        self.id = str(robot_id)
+        assert robot_id is None or str(robot_id).isdigit()
+        self.id = int(robot_id) if robot_id is not None else -1
         self.grammar = {}
 
         # Auxiliary variables

@@ -1,15 +1,19 @@
 from __future__ import annotations
+
+import os
+
 from pyrevolve.evolution.population.population import Population
 from pyrevolve.evolution.individual import Individual
+from pyrevolve.evolution.speciation.species_collection import count_individuals
 from pyrevolve.custom_logging.logger import logger
 from .genus import Genus
+from .species import Species
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Optional, List
+    from typing import Optional, List, Dict
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
     from pyrevolve.evolution.speciation.population_speciated_config import PopulationSpeciatedConfig
-    from pyrevolve.evolution.speciation.species_collection import count_individuals
 
 
 class PopulationSpeciated(Population):
@@ -17,13 +21,14 @@ class PopulationSpeciated(Population):
                  config: PopulationSpeciatedConfig,
                  simulator_queue: SimulatorQueue,
                  analyzer_queue: Optional[AnalyzerQueue] = None,
-                 next_robot_id: int = 1):
+                 next_robot_id: int = 1,
+                 next_species_id: int = 1):
         # TODO analyzer
         super().__init__(config, simulator_queue, analyzer_queue, next_robot_id)
         self.individuals = None  # TODO Crash when we should use it
 
         # Genus contains the collection of different species.
-        self.genus = Genus(config)
+        self.genus = Genus(config, next_species_id=next_species_id)
 
     async def initialize(self, recovered_individuals: Optional[List[Individual]] = None) -> None:
         """
@@ -44,9 +49,9 @@ class PopulationSpeciated(Population):
 
         self.genus.speciate(individuals)
 
-    def next_generation(self,
-                        gen_num: int,
-                        recovered_individuals: Optional[List[Individual]] = None) -> PopulationSpeciated:
+    async def next_generation(self,
+                              gen_num: int,
+                              recovered_individuals: Optional[List[Individual]] = None) -> PopulationSpeciated:
         """
         Creates next generation of the population through selection, mutation, crossover
 
@@ -59,11 +64,11 @@ class PopulationSpeciated(Population):
         recovered_individuals = [] if recovered_individuals is None else recovered_individuals
 
         # TODO create number of individuals based on the number of recovered individuals.
-        new_genus = self.genus.next_generation(recovered_individuals, self._generate_individual)
-
-        # evaluate new individuals
-        new_individuals = [individual for individual in new_genus.iter_individuals()]
-        await self.evaluate(new_individuals, gen_num)
+        new_genus = await self.genus.next_generation(
+            recovered_individuals,
+            self._generate_individual,
+            lambda individuals: self.evaluate(individuals, gen_num)
+        )
 
         # append recovered individuals ## Same as population.next_gen
         # new_individuals = recovered_individuals + new_individuals
@@ -79,7 +84,8 @@ class PopulationSpeciated(Population):
     def _generate_individual(self, individuals: List[Individual]) -> Individual:
         # Selection operator (based on fitness)
         # Crossover
-        if self.config.crossover_operator is not None:
+        if self.config.crossover_operator is not None and len(individuals) > 1:
+            # TODO The if above may break if the parent_selection needs more than 2 different individuals as input.
             parents = self.config.parent_selection(individuals)
             child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf, self.config.crossover_conf)
             child = Individual(child_genotype)
@@ -94,3 +100,24 @@ class PopulationSpeciated(Population):
 
         # Create new individual
         return self._new_individual(child_genotype)
+
+    def load_snapshot(self, gen_num: int) -> None:
+        """
+        Recovers all genotypes and fitness of the robots in the `gen_num` generation
+        :param gen_num: number of the generation snapshot to recover
+        """
+        assert gen_num >= 0
+        loaded_individuals: Dict[int, Individual] = {}
+
+        def load_individual_fn(_id: int) -> Individual:
+            return self.config.experiment_management.load_individual(str(_id), self.config)
+
+        data_path = self.config.experiment_management.generation_folder(gen_num)
+        for file in os.scandir(data_path):
+            file: os.DirEntry
+            if not file.name.startswith('species_'):
+                # skip irrelevant files
+                continue
+            if file.is_file() and file.name.endswith('.yaml'):
+                species = Species.Deserialize(file.path, loaded_individuals, load_individual_fn)
+                self.genus.species_collection.add_species(species)

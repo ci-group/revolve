@@ -2,8 +2,9 @@
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
-from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated, PopulationSpeciatedConfig
-from pyrevolve.evolution.population.population_management import steady_state_population_management
+from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated
+from pyrevolve.evolution.speciation.population_speciated_config import PopulationSpeciatedConfig
+from pyrevolve.evolution.speciation.population_speciated_management import steady_state_speciated_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.lsystem_neat.crossover import CrossoverConfig as lCrossoverConfig
 from pyrevolve.genotype.lsystem_neat.crossover import standard_crossover as lcrossover
@@ -30,14 +31,27 @@ async def run():
     offspring_size = 50
 
     body_conf = PlasticodingConfig(
-        max_structural_modules=20,
+        max_structural_modules=30,  # TODO increase
         allow_vertical_brick=False,
         use_movement_commands=False,
         use_rotation_commands=False,
         use_movement_stack=True,
     )
     brain_conf = NeatBrainGenomeConfig()
-    lsystem_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)
+    brain_conf.multineat_params.DisjointCoeff = 0.3
+    brain_conf.multineat_params.ExcessCoeff = 0.3
+    brain_conf.multineat_params.WeightDiffCoeff = 0.3
+    brain_conf.multineat_params.ActivationADiffCoeff = 0.3
+    brain_conf.multineat_params.ActivationBDiffCoeff = 0.3
+    brain_conf.multineat_params.TimeConstantDiffCoeff = 0.3
+    brain_conf.multineat_params.BiasDiffCoeff = 0.3
+    brain_conf.multineat_params.ActivationFunctionDiffCoeff = 0.3
+    brain_conf.multineat_params.CompatTreshold = 3.0
+    brain_conf.multineat_params.MinCompatTreshold = 3.0
+    brain_conf.multineat_params.CompatTresholdModifier = 0.1
+    brain_conf.multineat_params.CompatTreshChangeInterval_Generations = 1
+    brain_conf.multineat_params.CompatTreshChangeInterval_Evaluations = 1
+    genotype_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)
 
     plasticMutation_conf = plasticMutationConfig(
         mutation_prob=0.8,
@@ -55,14 +69,14 @@ async def run():
     # experiment params #
 
     # Parse command line / file input arguments
-    settings = parser.parse_args()
-    experiment_management = ExperimentManagement(settings)
-    do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
+    args = parser.parse_args()
+    experiment_management = ExperimentManagement(args)
+    do_recovery = args.recovery_enabled and not experiment_management.experiment_is_new()
 
-    logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
+    logger.info(f'Activated run {args.run} of experiment {args.experiment_name}')
 
     if do_recovery:
-        gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size, offspring_size)
+        gen_num, has_offspring, next_robot_id, next_species_id = experiment_management.read_recovery_state(population_size, offspring_size)
 
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
@@ -70,17 +84,26 @@ async def run():
     else:
         gen_num = 0
         next_robot_id = 1
+        next_species_id = 1
 
-    are_genomes_compatible_fn = None # TODO
-    young_age_threshold: int = 0 # TODO
-    young_age_fitness_boost: float = 0.0 # TODO
-    old_age_threshold: int = 0 # TODO
-    old_age_fitness_penalty: float = 0.0 # TODO
+    if gen_num < 0:
+        logger.info('Experiment continuing from first generation')
+        gen_num = 0
+
+    if next_robot_id < 0:
+        next_robot_id = 1
+
+    if next_species_id < 0:
+        next_species_id = 1
+
+    def are_genomes_compatible_fn(genotype1: LSystemCPGHyperNEATGenotype,
+                                  genotype2: LSystemCPGHyperNEATGenotype) -> bool:
+        return genotype1.is_brain_compatible(genotype2, genotype_conf)
 
     population_conf = PopulationSpeciatedConfig(
         population_size=population_size,
         genotype_constructor=LSystemCPGHyperNEATGenotype,
-        genotype_conf=lsystem_conf,
+        genotype_conf=genotype_conf,
         fitness_function=fitness.displacement_velocity,
         mutation_operator=lmutation,
         mutation_conf=lmutation_conf,
@@ -88,55 +111,61 @@ async def run():
         crossover_conf=crossover_conf,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
-        population_management=steady_state_population_management,
+        population_management=steady_state_speciated_population_management,
         population_management_selector=tournament_selection,
-        evaluation_time=settings.evaluation_time,
+        evaluation_time=args.evaluation_time,
         offspring_size=offspring_size,
-        experiment_name=settings.experiment_name,
+        experiment_name=args.experiment_name,
         experiment_management=experiment_management,
+        # species stuff
         are_genomes_compatible_fn=are_genomes_compatible_fn,
-        young_age_threshold=young_age_threshold,
-        young_age_fitness_boost=young_age_fitness_boost,
-        old_age_threshold=old_age_threshold,
-        old_age_fitness_penalty=old_age_fitness_penalty,
+        young_age_threshold=5,
+        young_age_fitness_boost=1.1,
+        old_age_threshold=30,
+        old_age_fitness_penalty=0.5,
+        species_max_stagnation=50,
     )
 
-    n_cores = settings.n_cores
+    n_cores = args.n_cores
 
-    settings = parser.parse_args()
-    simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)
+    simulator_queue = SimulatorQueue(n_cores, args, args.port_start)
     await simulator_queue.start()
 
-    analyzer_queue = AnalyzerQueue(1, settings, settings.port_start+n_cores)
+    analyzer_queue = AnalyzerQueue(1, args, args.port_start+n_cores)
     await analyzer_queue.start()
 
-    population = PopulationSpeciated(population_conf, simulator_queue, analyzer_queue, next_robot_id)
+    population = PopulationSpeciated(population_conf,
+                                     simulator_queue,
+                                     analyzer_queue,
+                                     next_robot_id,
+                                     next_species_id)
 
     if do_recovery:
+        raise NotImplementedError('recovery not implemented')
         # loading a previous state of the experiment
-        await population.load_snapshot(gen_num)
+        population.load_snapshot(gen_num)
         if gen_num >= 0:
-            logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
+            logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.genus)} individuals')
 
-        # TODO has offspring is does not have to be initialized.
         if has_offspring:
-            individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
+            raise NotImplementedError('partial recovery not implemented')
+            recovered_individuals = population.load_partially_completed_generation(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
-            logger.info('Recovered unfinished offspring '+str(gen_num))
+            logger.info(f'Recovered unfinished offspring for generation {gen_num}')
 
             if gen_num == 0:
-                await population.initialize(individuals)
+                await population.initialize(recovered_individuals)
             else:
-                population = await population.next_generation(gen_num, individuals)
+                population = await population.next_generation(gen_num, recovered_individuals)
 
-            experiment_management.export_snapshots(population.individuals, gen_num)
+            experiment_management.export_snapshots_species(population.genus, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
         await population.initialize()
-        experiment_management.export_snapshots(population.individuals, gen_num)
+        experiment_management.export_snapshots_species(population.genus, gen_num)
 
     while gen_num < num_generations-1:
         gen_num += 1
         population = await population.next_generation(gen_num)
-        experiment_management.export_snapshots(population.individuals, gen_num)
+        experiment_management.export_snapshots_species(population.genus, gen_num)

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+from pyrevolve.custom_logging.logger import logger
 from .species import Species
+from .species_collection import SpeciesCollection, count_individuals
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .population_speciated_config import PopulationSpeciatedConfig
     from pyrevolve.evolution.individual import Individual
-    from typing import List, Optional, Callable, Iterator
-    from pyrevolve.evolution.speciation.species_collection import SpeciesCollection, count_individuals
+    from typing import List, Callable, Iterator, Coroutine, Optional
 
 
 class Genus:
@@ -15,7 +16,10 @@ class Genus:
     Collection of species
     """
 
-    def __init__(self, config: PopulationSpeciatedConfig, species_collection: SpeciesCollection = None):
+    def __init__(self,
+                 config: PopulationSpeciatedConfig,
+                 species_collection: Optional[SpeciesCollection] = None,
+                 next_species_id: int = 1):
         """
         Creates the genus object.
         :param config: Population speciated config.
@@ -27,7 +31,10 @@ class Genus:
         self.species_collection: SpeciesCollection = SpeciesCollection() \
             if species_collection is None else species_collection
 
-        self._next_species_id: int = 0
+        self._next_species_id: int = next_species_id
+
+    def __len__(self):
+        return len(self.species_collection)
 
     def iter_individuals(self) -> Iterator[Individual]:
         """
@@ -55,13 +62,11 @@ class Genus:
         # NOTE: we are comparing the new generation's genomes to the representatives from the previous generation!
         # Any new species that is created is assigned a representative from the new generation.
         for individual in individuals:
-            genotype = individual.genotype
             # Iterate through each species and check if compatible. If compatible, then add the species.
             # If not compatible, create a new species.
-            # TODO maybe restructure with individual instead of genome...
             for species in self.species_collection:
-                if species.is_compatible(genotype, self.config):
-                    species.append(genotype)
+                if species.is_compatible(individual, self.config):
+                    species.append(individual)
                     break
             else:
                 self.species_collection.add_species(Species([individual], self._next_species_id))
@@ -69,14 +74,17 @@ class Genus:
 
         self.species_collection.cleanup()
 
-    def next_generation(self, recovered_individuals: List[Individual],
-                        generate_individual_function: Callable[[List[Individual]], Individual]) -> Genus:
+    async def next_generation(self,
+                              recovered_individuals: List[Individual],
+                              generate_individual_function: Callable[[List[Individual]], Individual],
+                              evaluate_individuals_function: Callable[[List[Individual]], Coroutine]) -> Genus:
         """
         Creates the genus for the next generation
 
         :param recovered_individuals: TODO implement recovery
         :param generate_individual_function: The function that generates a new individual.
-        :return:
+        :param evaluate_individuals_function: Function to evaluate new individuals
+        :return: The Genus of the next generation
         """
         assert len(recovered_individuals) == 0
 
@@ -91,10 +99,12 @@ class Genus:
 
         # clone species:
         new_species_collection = SpeciesCollection()
+        need_evaluation: List[Individual] = []
         orphans: List[Individual] = []
         old_species_individuals: List[List[Individual]] = [[] for _ in range(len(self.species_collection))]
 
-        # Generate new individuals
+        ##################################################################
+        # GENERATE NEW INDIVIDUALS
         for species_index, species in enumerate(self.species_collection):
 
             # Get the individuals from the individual with adjusted fitness tuple list.
@@ -104,46 +114,74 @@ class Genus:
 
             for _ in range(offspring_amounts[species_index]):
                 new_individual = generate_individual_function(old_species_individuals[species_index])
+                need_evaluation.append(new_individual)
 
                 # if the new individual is compatible with the species, otherwise create new.
-                if species.is_compatible(new_individual.genotype, self.config):
+                if species.is_compatible(new_individual, self.config):
                     new_individuals.append(new_individual)
                 else:
                     orphans.append(new_individual)
 
-            new_species_collection.set_individuals(species_index, species.create_species(new_individuals))
+            new_species_collection.add_species(species.create_species(new_individuals))
 
+        ##################################################################
+        # MANAGE ORPHANS, POSSIBLY CREATE NEW SPECIES
         # recheck if other species can adopt the orphan individuals.
         for orphan in orphans:
             for species in new_species_collection:
-                if species.is_compatible(orphan.genotype, self.config):
+                if species.is_compatible(orphan, self.config):
                     species.append(orphan)
                     break
             else:
                 new_species_collection.add_species(Species([orphan], self._next_species_id))
                 # add an entry for new species which does not have a previous iteration.
-                old_species_individuals.append([])
                 self._next_species_id += 1
 
         # Do a recount on the number of offspring per species.
-        offspring_amounts = self._count_offsprings(self.config.population_size)
+        offspring_amounts = self._count_offsprings(self.config.population_size - len(orphans))
 
+        ##################################################################
+        # EVALUATE NEW INDIVIDUALS
+        # TODO avoid recovered individuals here [partial recovery]
+        await evaluate_individuals_function(need_evaluation)
+
+        ##################################################################
+        # POPULATION MANAGEMENT
         # Update the species population, based on the population management algorithm.
-        for species_index, species in enumerate(self.species_collection):
-            species_individuals = [individual for individual, _ in species.iter_individuals()]
+        for species_index, new_species in enumerate(new_species_collection):
+            new_species_individuals = [individual for individual, _ in new_species.iter_individuals()]
+
+            if species_index >= len(old_species_individuals):
+                # Finished. The new species keep the entire population.
+                break
+
             # create next population ## Same as population.next_gen
-            new_individuals = self.config.population_management(species_individuals,
+            new_individuals = self.config.population_management(new_species_individuals,
                                                                 old_species_individuals[species_index],
                                                                 offspring_amounts[species_index],
                                                                 self.config.population_management_selector)
-            new_species_collection.set_individuals(species_index, new_individuals)
+            new_species.set_individuals(new_individuals)
+
+        ##################################################################
+        # ASSERT SECTION
+        # check species IDs [complicated assert]
+        species_id = set()
+        for species in new_species_collection:
+            if species.id in species_id:
+                raise RuntimeError(f"Species ({species.id}) present twice")
+            species_id.add(species.id)
 
         new_species_collection.cleanup()
 
         # Assert species list size and number of individuals
-        assert count_individuals(new_species_collection) == self.config.population_size
+        n_individuals = count_individuals(new_species_collection)
+        if n_individuals != self.config.population_size:
+            raise RuntimeError(f'count_individuals(new_species_collection) = {n_individuals} != '
+                               f'{self.config.population_size} = population_size')
 
-        new_genus = Genus(self.config, new_species_collection)
+        ##################################################################
+        # Create the next GENUS
+        new_genus = Genus(self.config, new_species_collection, self._next_species_id)
 
         return new_genus
 
@@ -177,22 +215,33 @@ class Genus:
             offspring_amount = 0.0
             for individual, adjusted_fitness in species.iter_individuals():
                 offspring_amount += adjusted_fitness / average_adjusted_fitness
-            species_offspring_amount.append(round(offspring_amount))
+            # sometimes offspring amount could become `numpy.float64` which will break the code becuause it cannot
+            # be used in ranges. Forcing conversion to integers here fixes that issue.
+            species_offspring_amount.append(int(round(offspring_amount)))
 
         total_offspring_amount = sum(species_offspring_amount)
 
         missing_offspring = number_of_individuals - total_offspring_amount
 
-        assert missing_offspring >= 0
+        if missing_offspring < -1:
+            # Check TODO below
+            raise NotImplementedError(f'missing_offspring({missing_offspring}) < -1 not supported')
 
         if missing_offspring > 0:  # positive have lacking individuals
             # take best species and
             species_offspring_amount[self.species_collection.get_best()[0]] += missing_offspring
 
         elif missing_offspring < 0:  # negative have excess individuals
-            # TODO test approach
+            # TODO test approach, it's not guaranteed to work when there are too many missing offsprings.
+            #      E.g. when missing_offspring > len(worst_species)
             # remove missing number of individuals
             worst_species_index, _ = self.species_collection.get_worst(exclude_empty_species=True)
             species_offspring_amount[worst_species_index] -= -missing_offspring
+
+        sum_species_offspring_amount = sum(species_offspring_amount)
+        if sum_species_offspring_amount != number_of_individuals:
+            raise RuntimeError(f'generated sum_species_offspring_amount ({sum_species_offspring_amount}) '
+                               f'does not equal number_of_individuals ({number_of_individuals}).\n'
+                               f'species_offspring_amount: {species_offspring_amount}')
 
         return species_offspring_amount

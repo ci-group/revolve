@@ -1,3 +1,4 @@
+from __future__ import annotations
 from random import randint
 
 from typing import TYPE_CHECKING
@@ -35,7 +36,7 @@ def multiple_selection(population: List[Individual],
     """
     Perform selection on population of distinct group, can be used in the form parent selection or survival selection
     :param population: list of individuals where to select from
-    :param selection_size: amount of indivuals to select
+    :param selection_size: amount of individuals to select
     :param selection_function:
     """
     assert (len(population) >= selection_size)

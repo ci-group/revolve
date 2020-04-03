@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ..population.population_config import PopulationConfig
 
 from typing import TYPE_CHECKING
@@ -32,11 +33,11 @@ class PopulationSpeciatedConfig(PopulationConfig):
                  experiment_name: str,
                  experiment_management,
                  are_genomes_compatible_fn: Callable[[Genotype, Genotype], bool],
-                 young_age_threshold: int,
-                 young_age_fitness_boost: float,
-                 old_age_threshold: int,
-                 old_age_fitness_penalty: float,
-                 species_max_stagnation: int,
+                 young_age_threshold: int = 5,
+                 young_age_fitness_boost: float = 1.1,
+                 old_age_threshold: int = 30,
+                 old_age_fitness_penalty: float = 0.5,
+                 species_max_stagnation: int = 50,
                  offspring_size: Optional[int] = None):
         """
         Creates a PopulationSpeciatedConfig object that sets the particular configuration for the population with species

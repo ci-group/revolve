@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import print_function
+from __future__ import annotations
 
 import csv
 import os
@@ -13,16 +12,20 @@ from datetime import datetime
 from pygazebo.msg import gz_string_pb2
 from pygazebo.msg.contacts_pb2 import Contacts
 
+from .robotmanager import RobotManager
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.spec.msgs import BoundingBox
 from pyrevolve.spec.msgs import ModelInserted
 from pyrevolve.spec.msgs import RobotStates
-from .robotmanager import RobotManager
-from ...gazebo import manage
-from ...gazebo import RequestHandler
-from ...util import multi_future
-from ...util import Time
-from ...custom_logging.logger import logger
+from pyrevolve.gazebo import manage, RequestHandler
+from pyrevolve.util import multi_future, Time
+from pyrevolve.custom_logging.logger import logger
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Optional, Union
+    from pyrevolve.SDF import Pose
+    from pyrevolve.revolve_bot import RevolveBot
 
 
 class WorldManager(manage.WorldManager):
@@ -409,9 +412,9 @@ class WorldManager(manage.WorldManager):
 
     async def insert_robot(
             self,
-            revolve_bot,
-            pose=Vector3(0, 0, 0.05),
-            life_timeout=None,
+            revolve_bot: RevolveBot,
+            pose: Union[Pose, Vector3] = Vector3(0, 0, 0.05),
+            life_timeout: Optional[float] = None,
     ):
         """
         Inserts a robot into the world. This consists of two steps:
@@ -436,9 +439,20 @@ class WorldManager(manage.WorldManager):
 
         # if the ID is digit, when removing the robot, the simulation will try to remove random stuff from the
         # environment and give weird crash errors
-        assert(not str(revolve_bot.id).isdigit())
 
         sdf_bot = revolve_bot.to_sdf(pose)
+        
+        # assert the robot id is not bad
+        # assert not str(revolve_bot.id).isdigit()
+        import xml.dom.minidom
+        reparsed = xml.dom.minidom.parseString(sdf_bot)
+        for model in reparsed.documentElement.getElementsByTagName('model'):
+            robot_name = model.getAttribute('name')
+            if str(robot_name).isdigit():
+                error_message = f'Inserting robot with invalid name: {robot_name}'
+                logger.critical(error_message)
+                raise RuntimeError(error_message)
+            logger.info("Inserting robot {}.".format(robot_name))
 
         # if self.output_directory:
         #     robot_file_path = os.path.join(

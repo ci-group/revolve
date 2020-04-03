@@ -11,9 +11,12 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format, self_collide=True):
 
     sdf_root = ElementTree.Element('sdf', {'version': '1.6'})
 
-    assert (robot.id is not None)
+    robot_id = robot.id
+    assert (robot_id is not None)
+    if str(robot_id).isdigit():
+        robot_id = f"robot_{robot_id}"
     model = ElementTree.SubElement(sdf_root, 'model', {
-        'name': str(robot.id)
+        'name': str(robot_id)
     })
 
     pose_elem = SDF.Pose(robot_pose)

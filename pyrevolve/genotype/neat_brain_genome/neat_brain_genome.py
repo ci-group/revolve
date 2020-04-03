@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 import multineat
 import re
@@ -187,7 +189,7 @@ class NeatBrainGenome(Genotype):
         if type(robot_id) is int:
             self.id = robot_id
         else:
-            self.id = int(re.search('\d+', str(robot_id))[0])
+            self.id = int(re.search(r'\d+', str(robot_id))[0])
         self.phenotype = None
 
     def load_genotype(self, file_path: str):
@@ -238,3 +240,7 @@ class NeatBrainGenome(Genotype):
             raise NotImplementedError(f"{self._brain_type} brain not implemented yet")
 
         return brain
+
+    def is_compatible(self, other: NeatBrainGenome, conf: NeatBrainGenomeConfig) -> bool:
+        return isinstance(other, NeatBrainGenome) \
+               and self._neat_genome.IsCompatibleWith(other._neat_genome, conf.multineat_params)

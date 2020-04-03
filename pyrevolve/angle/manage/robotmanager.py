@@ -70,7 +70,7 @@ class RobotManager(object):
 
     @property
     def name(self):
-        return str(self.robot.id)
+        return str(f'robot_{self.robot.id}')
 
     def update_state(self, world, time, state, poses_file):
         """

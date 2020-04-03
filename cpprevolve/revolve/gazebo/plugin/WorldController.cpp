@@ -331,11 +331,15 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
 
     {
       boost::mutex::scoped_lock lock(this->insertMutex_);
-      this->insertMap_[name] = std::make_tuple(request->id(), robotSDF.ToString(), true);
+      this->world_->InsertModelString(robotSDF.ToString());
+      bool operation_pending = false;
+      this->insertMap_[name] = std::make_tuple(
+              request->id(),
+              robotSDF.ToString(),
+              operation_pending);
     }
 
     //TODO insert here, it's better
-    //this->world_->InsertModelString(robotSDF.ToString());
 
     // Don't leak memory
     // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
