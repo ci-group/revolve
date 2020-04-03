@@ -31,11 +31,12 @@ async def run():
     offspring_size = 50
 
     body_conf = PlasticodingConfig(
-        max_structural_modules=30,  # TODO increase
+        max_structural_modules=20,  # TODO increase
         allow_vertical_brick=False,
-        use_movement_commands=False,
+        use_movement_commands=True,
         use_rotation_commands=False,
-        use_movement_stack=True,
+        use_movement_stack=False,
+        allow_joint_joint_attachment=False,
     )
     brain_conf = NeatBrainGenomeConfig()
     brain_conf.multineat_params.DisjointCoeff = 0.3
@@ -64,7 +65,7 @@ async def run():
     )
 
     crossover_conf = lCrossoverConfig(
-        crossover_prob=0.0,
+        crossover_prob=0.8,
     )
     # experiment params #
 
@@ -120,10 +121,10 @@ async def run():
         # species stuff
         are_genomes_compatible_fn=are_genomes_compatible_fn,
         young_age_threshold=5,
-        young_age_fitness_boost=1.1,
-        old_age_threshold=30,
+        young_age_fitness_boost=2.0,
+        old_age_threshold=20,
         old_age_fitness_penalty=0.5,
-        species_max_stagnation=50,
+        species_max_stagnation=30,
     )
 
     n_cores = args.n_cores
