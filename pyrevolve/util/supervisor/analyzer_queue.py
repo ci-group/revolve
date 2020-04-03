@@ -11,6 +11,7 @@ class AnalyzerQueue(SimulatorQueue):
 
     def __init__(self, n_cores: int, settings, port_start=11345, simulator_cmd='gzserver'):
         super(AnalyzerQueue, self).__init__(n_cores, settings, port_start, simulator_cmd)
+        self._enable_play_pause = False
 
     def _simulator_supervisor(self, simulator_name_postfix):
         return CollisionSimSupervisor(
