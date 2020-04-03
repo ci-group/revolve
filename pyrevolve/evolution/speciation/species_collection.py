@@ -7,9 +7,9 @@ from pyrevolve.evolution.individual import Individual
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from typing import List, Optional, Set
     from .population_speciated_config import PopulationSpeciatedConfig
     from pyrevolve.evolution.individual import Individual
-    from typing import List, Optional
 
 
 """
@@ -74,25 +74,38 @@ class SpeciesCollection(Iterable):
             self._update_cache()
         return self._best
 
-    def get_worst(self, minimal_size: int) -> (int, Species):
+    def get_worst(self,
+                  minimal_size: int,
+                  exclude_list: Optional[Set[Species]] = None) -> (int, Species):
         """
-        :return: the index of the worst species and a reference to the worst species
+        Finds the worst species (based on the best fitness of that species)
+        Crashes if there are no species with at least `minimal_size` individuals
+
+        :param minimal_size: Species with less individuals than this will not be considered
+        :param exclude_list: Species in this list will be ignored
+        :return: the index and a reference to the worst species
         """
         assert len(self._collection) > 0
 
-        worst_species_index, worst_species = self._calculate_worst_fitness(minimal_size)
+        worst_species_index, worst_species = self._calculate_worst_fitness(minimal_size, exclude_list)
 
         assert worst_species_index != -1
         assert worst_species is not None
 
         return worst_species_index, worst_species
 
-    def _calculate_worst_fitness(self, minimal_size: int) -> (int, Species):
+    def _calculate_worst_fitness(self,
+                                 minimal_size: int,
+                                 exclude_list: Optional[Set[Species]]) -> (int, Species):
         worst_species_index = -1
         worst_species_fitness = math.inf
         worst_species = None
 
         for i, species in enumerate(self._collection):
+
+            if exclude_list is not None \
+                    and species in exclude_list:
+                continue
 
             if len(species) < minimal_size:
                 continue

@@ -247,8 +247,23 @@ class Genus:
 
         elif missing_offspring < 0:  # negative have excess individuals
             # remove missing number of individuals
-            remove_offspring = -missing_offspring  # get the positive number of individual to remove
-            worst_species_index, _ = self.species_collection.get_worst(remove_offspring)
-            species_offspring_amount[worst_species_index] -= remove_offspring
+            excess_offspring = -missing_offspring
+            excluded_list = set()
+
+            while excess_offspring > 0:
+                worst_species_index, species = self.species_collection.get_worst(1, excluded_list)
+                current_amount = species_offspring_amount[worst_species_index]
+
+                if current_amount > excess_offspring:
+                    current_amount -= excess_offspring
+                    excess_offspring = 0
+                else:
+                    excess_offspring -= current_amount
+                    current_amount = 0
+
+                species_offspring_amount[worst_species_index] = current_amount
+                excluded_list.add(species)
+
+            assert excess_offspring == 0
 
         return species_offspring_amount
