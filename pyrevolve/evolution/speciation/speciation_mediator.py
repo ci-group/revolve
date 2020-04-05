@@ -10,7 +10,7 @@ from pyrevolve.evolution.individual import Individual, create_individual
 from pyrevolve.evolution.speciation import SpeciationConfig, Speciation
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 
 

@@ -8,7 +8,6 @@ import shutil
 import sys
 import traceback
 
-from asyncio import Future
 from datetime import datetime
 from pygazebo.msg import gz_string_pb2
 from pygazebo.msg.contacts_pb2 import Contacts
@@ -22,7 +21,7 @@ from ...gazebo import manage
 from ...gazebo import RequestHandler
 from ...util import multi_future
 from ...util import Time
-from ...custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 
 class WorldManager(manage.WorldManager):

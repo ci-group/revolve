@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pyrevolve.evolution.population.population import Population
 from pyrevolve.evolution.individual import Individual
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 from .genus import Genus
 
 from typing import TYPE_CHECKING

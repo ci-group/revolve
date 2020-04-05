@@ -1,8 +1,7 @@
-import cairo
 from .canvas import Canvas
 from .grid import Grid
-from ..revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, TouchSensorModule, BrickSensorModule
-from ...custom_logging.logger import logger
+from ..revolve_module import CoreModule, BrickModule, ActiveHingeModule, TouchSensorModule, BrickSensorModule
+from pyrevolve.util.logger import logger
 
 
 class Render:

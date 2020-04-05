@@ -1,6 +1,6 @@
 import random
 from pyrevolve.genotype.plasticoding.plasticoding import Alphabet, Plasticoding
-from pyrevolve.custom_logging.logger import genotype_logger
+from pyrevolve.util.logger import genotype_logger
 
 
 def handle_deletion(genotype):

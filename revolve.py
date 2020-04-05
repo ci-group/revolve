@@ -4,8 +4,8 @@ import sys
 import asyncio
 import importlib
 
-from pyrevolve.data_analisys.visualize_robot import test_robot_run
-from pyrevolve.data_analisys.check_robot_collision import test_collision_robot
+from pyrevolve.analysis.visualize_robot import test_robot_run
+from pyrevolve.analysis.check_robot_collision import test_collision_robot
 from pyrevolve import parser
 from experiments.examples import only_gazebo
 

@@ -10,7 +10,7 @@ from pyrevolve.sdfbuilder.math import Vector3
 
 from .generated_sdf import body_spec, brain_spec
 
-from ..custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 bot_yaml = '''
 ---

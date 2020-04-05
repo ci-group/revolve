@@ -7,10 +7,9 @@ import logging
 import yaml
 import enum
 import time
-import shutil
 import pickle
 
-from pyrevolve.custom_logging import logger
+from pyrevolve.util import logger
 from pyrevolve import parser
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import World
@@ -23,7 +22,6 @@ from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
-from pyrevolve.revolve_bot.brain import BrainRLPowerSplines
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
 ROBOT_BATTERY = 5000

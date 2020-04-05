@@ -3,7 +3,7 @@ import math
 # belong to TODO
 import fnmatch
 from ..brain.brain_nn import BrainNN
-from ...custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 
 class MeasureBrain:

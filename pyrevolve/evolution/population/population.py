@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 from pyrevolve.evolution.individual import create_individual
 
 from typing import TYPE_CHECKING

@@ -3,15 +3,14 @@ Revolve body generator based on RoboGen framework
 """
 import math
 import yaml
-import traceback
 from collections import OrderedDict
 from collections import deque
 import numpy as np
 
 from pyrevolve import SDF
 
-from .revolve_module import CoreModule, TouchSensorModule, Orientation
-from .revolve_module import Orientation, rotate_matrix_x_axis, rotate_matrix_z_axis
+from .revolve_module import CoreModule
+from .revolve_module import Orientation, rotate_matrix_x_axis
 from .brain import Brain, BrainNN
 
 from .render.render import Render
@@ -19,7 +18,7 @@ from .render.brain_graph import BrainGraph
 from .measure.measure_body_3d import MeasureBody3D
 from .measure.measure_brain import MeasureBrain
 
-from ..custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 import os
 
 class RevolveBot:

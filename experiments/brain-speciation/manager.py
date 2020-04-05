@@ -2,7 +2,7 @@
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
-from pyrevolve.evolution.speciation.population_speciated import Speciation, SpeciationConfig
+from pyrevolve.evolution.speciation.population_speciated import SpeciationConfig
 from pyrevolve.evolution.population import create_population_mediator, steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.lsystem_neat.crossover import CrossoverConfig as lCrossoverConfig
@@ -13,7 +13,7 @@ from pyrevolve.genotype.lsystem_neat.mutation import standard_mutation as lmutat
 
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 from pyrevolve.genotype.plasticoding import PlasticodingConfig
 from pyrevolve.genotype.lsystem_neat.lsystem_neat_genotype import LSystemCPGHyperNEATGenotype, LSystemCPGHyperNEATGenotypeConfig
 from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig

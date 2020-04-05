@@ -1,6 +1,6 @@
 import os
 
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 from pyrevolve.gazebo.analyze import BodyAnalyzer
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.supervisor_collision import CollisionSimSupervisor

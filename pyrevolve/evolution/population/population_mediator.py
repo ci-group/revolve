@@ -12,7 +12,7 @@ from pyrevolve.evolution.population import PopulationConfig, Population
 from pyrevolve.evolution.population.population import create_population
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 from pyrevolve.evolution.population.loader import load_population, load_offspring
 
 from pyrevolve.util.generation import Generation

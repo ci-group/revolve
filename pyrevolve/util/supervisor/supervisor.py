@@ -10,7 +10,7 @@ import time
 
 from datetime import datetime
 
-from ...custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 from .nbsr import NonBlockingStreamReader as NBSR
 mswindows = (sys.platform == "win32")

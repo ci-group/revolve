@@ -6,7 +6,7 @@ import sys
 import time
 
 from pyrevolve import parser
-from pyrevolve.custom_logging import logger
+from pyrevolve.util import logger
 from pyrevolve.gazebo.analyze import BodyAnalyzer
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.util.supervisor.supervisor_collision import CollisionSimSupervisor

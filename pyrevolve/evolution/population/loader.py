@@ -3,14 +3,11 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import List, AnyStr
+    from typing import List
 
-from pyrevolve.custom_logging.logger import logger
-from pyrevolve.tol.manage import measures
+from pyrevolve.util.logger import logger
 from pyrevolve.util.generation import Generation
-from pyrevolve.experiment_management import ExperimentManagement
 
-from pyrevolve.evolution.speciation.population_speciated import Speciation
 from pyrevolve.evolution.population import PopulationConfig, Population
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.individual_memento import load_individual

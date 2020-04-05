@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from enum import Enum
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 INDEX_SYMBOL = 0
 INDEX_PARAMS = 1

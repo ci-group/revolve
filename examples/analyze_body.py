@@ -14,8 +14,8 @@ import random
 
 from pyrevolve.sdfbuilder.math import Vector3
 from .generated_sdf import generate_robot, builder, robot_to_sdf
-from ..gazebo import get_analysis_robot, BodyAnalyzer
-from ..custom_logging.logger import logger
+from pyrevolve.gazebo import get_analysis_robot, BodyAnalyzer
+from pyrevolve.util.logger import logger
 
 import asyncio
 

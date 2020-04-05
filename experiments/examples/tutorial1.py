@@ -4,7 +4,7 @@ import os
 from pyrevolve import parser
 from pyrevolve.gazebo.manage import WorldManager as World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 
 async def run():

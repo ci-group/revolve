@@ -2,7 +2,7 @@ import asyncio
 import os
 import time
 
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor

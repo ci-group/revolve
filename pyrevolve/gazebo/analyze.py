@@ -1,4 +1,4 @@
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.spec import BodyAnalysisResponse
 from .connect import connect, RequestHandler

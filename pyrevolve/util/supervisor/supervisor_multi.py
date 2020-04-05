@@ -11,8 +11,8 @@ import platform
 
 from datetime import datetime
 
-from ...custom_logging.logger import create_logger
-from ...custom_logging.logger import logger as revolve_logger
+from pyrevolve.util.logger import create_logger
+from pyrevolve.util.logger import logger as revolve_logger
 
 from .stream import PrettyStreamReader
 

@@ -11,7 +11,7 @@ from pyrevolve.evolution.individual import Individual
 
 from typing import List
 
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 from pyrevolve.util.robot_identifier import RobotIdentifier
 from pyrevolve.util.generation import Generation

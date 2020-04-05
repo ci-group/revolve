@@ -32,7 +32,7 @@ from pyrevolve.build.sdf import NeuralNetBuilder
 from pyrevolve.build.sdf import VelocityMotor
 from pyrevolve.build.sdf import PID
 
-from ..custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 # Some configuration
 # This is the number of times per second we will call our

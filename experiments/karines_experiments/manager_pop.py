@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import asyncio
 
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
@@ -14,7 +13,7 @@ from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_
 from pyrevolve.genotype.plasticoding import PlasticodingConfig
 from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 
 async def run():

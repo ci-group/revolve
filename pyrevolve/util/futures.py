@@ -8,7 +8,7 @@ from __future__ import print_function
 import sys
 
 from asyncio import Future
-from ..custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 
 def multi_future(children, quiet_exceptions=()):

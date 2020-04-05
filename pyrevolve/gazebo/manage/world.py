@@ -8,8 +8,7 @@ from pygazebo.msg import world_control_pb2
 
 # Revolve
 from ..connect import connect, RequestHandler
-import logging
-from ...custom_logging.logger import logger
+from pyrevolve.util.logger import logger
 
 # Construct a message base from the time. This should make
 # it unique enough for consecutive use when the script

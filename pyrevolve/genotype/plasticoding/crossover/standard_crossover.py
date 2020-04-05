@@ -1,7 +1,7 @@
 import random
 
 from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet
-from pyrevolve.custom_logging.logger import genotype_logger
+from pyrevolve.util.logger import genotype_logger
 
 
 def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
