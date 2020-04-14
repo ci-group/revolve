@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from typing import List, AnyStr, Optional
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
     from pyrevolve.evolution.speciation.genus import Genus
+    from pyrevolve.evolution.speciation.species import Species
     from pyrevolve.evolution.population.population_config import PopulationConfig
 
 
@@ -28,6 +29,7 @@ class ExperimentManagement:
         self._experiment_folder: str = os.path.join(manager_folder, self.EXPERIMENT_FOLDER, self.settings.experiment_name, self.settings.run)
         self._data_folder: str = os.path.join(self._experiment_folder, self.DATA_FOLDER)
         self._genotype_folder: str = os.path.join(self.data_folder, 'genotypes')
+        self._phylogenetic_folder: str = os.path.join(self.data_folder, 'phylogeny')
         self._phenotype_folder: str = os.path.join(self.data_folder, 'phenotypes')
         self._phenotype_images_folder: str = os.path.join(self._phenotype_folder, 'images')
         self._fitness_file_path: str = os.path.join(self.data_folder, 'fitness.csv')
@@ -48,6 +50,7 @@ class ExperimentManagement:
         os.makedirs(self.experiment_folder)
         os.mkdir(self.data_folder)
         os.mkdir(self._genotype_folder)
+        os.mkdir(self._phylogenetic_folder)
         os.mkdir(self._phenotype_folder)
         os.mkdir(self._descriptor_folder)
         os.mkdir(self._behavioural_desc_folder)
@@ -83,6 +86,7 @@ class ExperimentManagement:
         """
         if self.settings.recovery_enabled:
             individual.export_genotype(self._genotype_folder)
+            individual.export_phylogenetic_info(self._phylogenetic_folder)
 
     def export_phenotype(self, individual: Individual) -> None:
         """
@@ -152,12 +156,35 @@ class ExperimentManagement:
                 for key, val in measures.items():
                     f.write(f'{key} {val}\n')
 
-    def export_phenotype_images(self, individual: Individual, dirpath: Optional[str] = None) -> None:
+    def export_phenotype_images(self, individual: Individual, dirpath: Optional[str] = None, rename_if_present=False) -> None:
         dirpath = dirpath if dirpath is not None \
             else self._phenotype_images_folder
         try:
-            individual.phenotype.render_body(os.path.join(dirpath, f'body_{individual.phenotype.id}.png'))
-            individual.phenotype.render_brain(os.path.join(dirpath, f'brain_{individual.phenotype.id}.png'))
+            # -- Body image --
+            body_filename_part = os.path.join(dirpath, f'body_{individual.phenotype.id}')
+            if rename_if_present and os.path.exists(f'{body_filename_part}.png'):
+                counter = 1
+                while os.path.exists(f'{body_filename_part}_{counter}.png'):
+                    counter += 1
+                os.symlink(f'body_{individual.phenotype.id}.png',
+                           f'{body_filename_part}_{counter}.png',
+                           target_is_directory=False)
+            else:
+                # Write file
+                individual.phenotype.render_body(f'{body_filename_part}.png')
+
+            # -- Brain image --
+            brain_filename_part = os.path.join(dirpath, f'brain_{individual.phenotype.id}')
+            if rename_if_present and os.path.exists(f'{brain_filename_part}.png'):
+                counter = 1
+                while os.path.exists(f'{brain_filename_part}_{counter}.png'):
+                    counter += 1
+                os.symlink(f'brain_{individual.phenotype.id}.png',
+                           f'{brain_filename_part}_{counter}.png',
+                           target_is_directory=False)
+            else:
+                # Write file
+                individual.phenotype.render_brain(os.path.join(dirpath, f'{brain_filename_part}.png'))
         except Exception as e:
             logger.warning(f'Error rendering phenotype images: {e}')
 
@@ -193,7 +220,7 @@ class ExperimentManagement:
                 os.mkdir(species_folder)
                 species.serialize(species_on_disk)
                 for individual, _ in species.iter_individuals():
-                    self.export_phenotype_images(individual, species_folder)
+                    self.export_phenotype_images(individual, species_folder, rename_if_present=True)
 
     def experiment_is_new(self) -> bool:
         """
@@ -253,7 +280,7 @@ class ExperimentManagement:
                         if not species_on_disk.is_file():
                             continue
                         with open(species_on_disk.path) as file:
-                            species = yaml.load(file)
+                            species = yaml.load(file, Loader=yaml.SafeLoader)
                             n_exported_genomes += len(species['individuals_ids'])
                             species_id = species['id']
 

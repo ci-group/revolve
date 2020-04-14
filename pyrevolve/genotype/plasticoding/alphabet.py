@@ -1,6 +1,11 @@
+from __future__ import annotations
 from collections.abc import Iterable
 from enum import Enum
 from pyrevolve.custom_logging.logger import logger
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import List, Union
 
 INDEX_SYMBOL = 0
 INDEX_PARAMS = 1
@@ -43,7 +48,7 @@ class Alphabet(Enum):
     MOVE_REF_O = 'brainmoveTTS'
 
     @staticmethod
-    def modules(allow_vertical_brick: bool):
+    def modules(allow_vertical_brick: bool) -> List[Alphabet]:
         # this function MUST return the core always as the first element
         modules = [
             Alphabet.CORE_COMPONENT,
@@ -56,16 +61,16 @@ class Alphabet(Enum):
             modules.append(Alphabet.BLOCK_VERTICAL)
         return modules
 
-    def is_vertical_module(self):
+    def is_vertical_module(self) -> bool:
         return self is Alphabet.JOINT_VERTICAL \
                or self is Alphabet.BLOCK_VERTICAL
 
-    def is_joint(self):
+    def is_joint(self) -> bool:
         return self is Alphabet.JOINT_VERTICAL \
                or self is Alphabet.JOINT_HORIZONTAL
 
     @staticmethod
-    def morphology_mounting_commands():
+    def morphology_mounting_commands() -> List[Alphabet]:
         return [
             Alphabet.ADD_RIGHT,
             Alphabet.ADD_FRONT,
@@ -73,7 +78,9 @@ class Alphabet(Enum):
         ]
 
     @staticmethod
-    def morphology_moving_commands(use_movement_commands: bool, use_rotation_commands: bool, use_movement_stack: bool):
+    def morphology_moving_commands(use_movement_commands: bool,
+                                   use_rotation_commands: bool,
+                                   use_movement_stack: bool) -> List[Alphabet]:
         commands = []
         if use_movement_commands:
             commands.append(Alphabet.MOVE_RIGHT)
@@ -93,7 +100,7 @@ class Alphabet(Enum):
         return commands
 
     @staticmethod
-    def controller_changing_commands():
+    def controller_changing_commands() -> List[Alphabet]:
         return [
             Alphabet.ADD_EDGE,
             Alphabet.MUTATE_EDGE,
@@ -104,15 +111,18 @@ class Alphabet(Enum):
         ]
 
     @staticmethod
-    def controller_moving_commands():
+    def controller_moving_commands() -> List[Alphabet]:
         return [
             Alphabet.MOVE_REF_S,
             Alphabet.MOVE_REF_O,
         ]
 
     @staticmethod
-    def wordify(letters):
+    def wordify(letters: Union[Alphabet, List]
+                ) -> Union[(Alphabet, List), List[(Alphabet, List)]]:
         if isinstance(letters, Iterable):
             return [(a, []) for a in letters]
-        else:
+        elif isinstance(letters, Alphabet):
             return (letters, [])
+        else:
+            raise RuntimeError(f'Cannot wordify element of type {type(letters)}')

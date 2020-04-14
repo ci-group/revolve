@@ -27,7 +27,7 @@ class LSystemCPGHyperNEATGenotype(Genotype):
             self._brain_genome = None
         else:
             assert robot_id is not None
-            self._body_genome = random_initialization(conf.plasticoding, robot_id)
+            self._body_genome: Plasticoding = random_initialization(conf.plasticoding, robot_id)
             self._brain_genome = NeatBrainGenome(conf.neat, robot_id)
 
     @property

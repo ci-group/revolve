@@ -3,13 +3,13 @@ import asyncio
 import os
 
 from pyrevolve.evolution.individual import Individual
-from pyrevolve.tol.manage import measures
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.population.population_config import PopulationConfig
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import List, Optional, AnyStr
+    from typing import List, Optional
+    from pyrevolve.evolution.speciation.species import Species
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
 
@@ -44,10 +44,15 @@ class Population:
         self.simulator_queue = simulator_queue
         self.next_robot_id = next_robot_id
 
-    def _new_individual(self, genotype):
+    def _new_individual(self,
+                        genotype,
+                        parents: Optional[List[Individual]] = None):
         individual = Individual(genotype)
         individual.develop()
         individual.phenotype.update_substrate()
+        if parents is not None:
+            individual.parents = parents
+
         self.config.experiment_management.export_genotype(individual)
         self.config.experiment_management.export_phenotype(individual)
         self.config.experiment_management.export_phenotype_images(individual)

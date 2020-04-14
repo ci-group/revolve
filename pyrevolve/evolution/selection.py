@@ -32,9 +32,12 @@ def tournament_selection(population: List[Individual], k=2) -> Individual:
 
 def multiple_selection(population: List[Individual],
                        selection_size: int,
-                       selection_function: Callable[[List[Individual]], Individual]) -> List[Individual]:
+                       selection_function: Callable[[List[Individual]], Individual]
+                       ) -> List[Individual]:
     """
-    Perform selection on population of distinct group, can be used in the form parent selection or survival selection
+    Perform selection on population of distinct group, it can be used in the
+    form parent selection or survival selection.
+    It never selects the same individual more than once
     :param population: list of individuals where to select from
     :param selection_size: amount of individuals to select
     :param selection_function:
@@ -48,4 +51,23 @@ def multiple_selection(population: List[Individual],
             if selected_individual not in selected_individuals:
                 selected_individuals.append(selected_individual)
                 new_individual = True
+    return selected_individuals
+
+
+def multiple_selection_with_duplicates(population: List[Individual],
+                                       selection_size: int,
+                                       selection_function: Callable[[List[Individual]], Individual]
+                                       ) -> List[Individual]:
+    """
+    Perform selection on population of distinct group, it can be used in the
+    form parent selection or survival selection.
+    It can select the same individual more than once
+    :param population: list of individuals where to select from
+    :param selection_size: amount of individuals to select
+    :param selection_function:
+    """
+    selected_individuals = []
+    for _ in range(selection_size):
+        selected_individual = selection_function(population)
+        selected_individuals.append(selected_individual)
     return selected_individuals

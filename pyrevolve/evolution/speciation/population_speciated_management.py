@@ -1,4 +1,4 @@
-from pyrevolve.evolution.selection import multiple_selection
+from pyrevolve.evolution.selection import multiple_selection, multiple_selection_with_duplicates
 
 
 def steady_state_speciated_population_management(old_individuals, new_individuals, number_of_individuals, selector):
@@ -7,7 +7,7 @@ def steady_state_speciated_population_management(old_individuals, new_individual
     # TODO old function: need parameter for ...
     selection_pool = old_individuals + new_individuals
 
-    return multiple_selection(selection_pool, number_of_individuals, selector)
+    return multiple_selection_with_duplicates(selection_pool, number_of_individuals, selector)
 
 
 def generational_population_speciated_management(old_individuals, new_individuals, number_of_individuals, selector):

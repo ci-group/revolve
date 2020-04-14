@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from typing import Optional, List
     from pyrevolve.revolve_bot import RevolveBot
     from pyrevolve.genotype import Genotype
+    from pyrevolve.evolution.speciation.species import Species
 
 
 class Individual:
@@ -38,15 +39,31 @@ class Individual:
             _id = self.genotype.id
         return _id
 
-    def export_genotype(self, folder) -> None:
+    def export_genotype(self, folder: str) -> None:
         self.genotype.export_genotype(os.path.join(folder, f'genotype_{self.phenotype.id}.txt'))
 
-    def export_phenotype(self, folder) -> None:
+    def export_phenotype(self, folder: str) -> None:
         if self.phenotype is None:
             self.develop()
         self.phenotype.save_file(os.path.join(folder, f'phenotype_{self.phenotype.id}.yaml'), conf_type='yaml')
 
-    def export_fitness(self, folder) -> None:
+    def export_phylogenetic_info(self, folder: str) -> None:
+        """
+        Export phylogenetic information
+        (parents and other possibly other information to build a phylogenetic tree)
+        :param folder: folder where to save the information
+        """
+        if self.parents is not None:
+            parents_ids: List[str] = [str(p.id) for p in self.parents]
+            parents_ids_str = ",".join(parents_ids)
+        else:
+            parents_ids_str = 'None'
+
+        filename = os.path.join(folder, f'parents_{self.id}.yaml')
+        with open(filename, 'w') as file:
+            file.write(f'parents:{parents_ids_str}')
+
+    def export_fitness_single_file(self, folder: str) -> None:
         """
         It's saving the fitness into a file. The fitness can be a floating point number or None
         :param folder: folder where to save the fitness
@@ -54,8 +71,9 @@ class Individual:
         with open(os.path.join(folder, f'fitness_{self.id}.txt'), 'w') as f:
             f.write(str(self.fitness))
 
-    def export(self, folder) -> None:
+    def export(self, folder: str) -> None:
         self.export_genotype(folder)
+        self.export_phylogenetic_info(folder)
         self.export_phenotype(folder)
         self.export_fitness(folder)
 

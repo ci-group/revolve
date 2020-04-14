@@ -32,7 +32,7 @@ class PopulationSpeciatedConfig(PopulationConfig):
                  evaluation_time: float,
                  experiment_name: str,
                  experiment_management,
-                 are_genomes_compatible_fn: Callable[[Genotype, Genotype], bool],
+                 are_individuals_compatible_fn: Callable[[Individual, Individual], bool],
                  young_age_threshold: int = 5,
                  young_age_fitness_boost: float = 1.1,
                  old_age_threshold: int = 30,
@@ -60,7 +60,7 @@ class PopulationSpeciatedConfig(PopulationConfig):
         :param evaluation_time: duration of an experiment
         :param experiment_name: name for the folder of the current experiment
         :param experiment_management: object with methods for managing the current experiment
-        :param are_genomes_compatible_fn: function that determines if two genomes are compatible
+        :param are_individuals_compatible_fn: function that determines if two individuals are compatible
         :param young_age_threshold: define until what age (excluded) species are still young
             and need to be protected (with a fitness boost)
         :param young_age_fitness_boost: Fitness multiplier for young species.
@@ -88,7 +88,7 @@ class PopulationSpeciatedConfig(PopulationConfig):
                          experiment_name,
                          experiment_management,
                          offspring_size)
-        self.are_genomes_compatible = are_genomes_compatible_fn  # type: Callable[[Genotype, Genotype], bool]
+        self.are_individuals_compatible = are_individuals_compatible_fn  # type: Callable[[Individual, Individual], bool]
         self.young_age_threshold = young_age_threshold
         self.young_age_fitness_boost = young_age_fitness_boost
         self.old_age_threshold = old_age_threshold

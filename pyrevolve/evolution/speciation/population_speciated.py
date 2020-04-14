@@ -34,6 +34,7 @@ class PopulationSpeciated(Population):
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
+        assert recovered_individuals is None
         individuals = []
 
         recovered_individuals = [] if recovered_individuals is None else recovered_individuals
@@ -91,6 +92,7 @@ class PopulationSpeciated(Population):
             child = Individual(child_genotype)
         else:
             child = self.config.selection(individuals)
+            parents = [child]
 
         child.genotype.id = self.next_robot_id
         self.next_robot_id += 1
@@ -99,7 +101,7 @@ class PopulationSpeciated(Population):
         child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
 
         # Create new individual
-        return self._new_individual(child_genotype)
+        return self._new_individual(child_genotype, parents)
 
     def load_snapshot(self, gen_num: int) -> None:
         """
@@ -121,3 +123,8 @@ class PopulationSpeciated(Population):
             if file.is_file() and file.name.endswith('.yaml'):
                 species = Species.Deserialize(file.path, loaded_individuals, load_individual_fn)
                 self.genus.species_collection.add_species(species)
+
+        n_loaded_individuals = count_individuals(self.genus.species_collection)
+        if n_loaded_individuals != self.config.population_size:
+            raise RuntimeError(f'The loaded population ({n_loaded_individuals}) '
+                               f'does not match the population size ({self.config.population_size})')

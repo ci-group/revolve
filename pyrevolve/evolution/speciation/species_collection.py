@@ -53,9 +53,9 @@ class SpeciesCollection(Iterable):
         assert len(self._collection) > 0
 
         # BEST
-        index = int(numpy.argmax(
-                [species.get_best_individual().fitness for species in self._collection]
-        ))
+        species_best_fitness = [species.get_best_individual().fitness for species in self._collection]
+        species_best_fitness = map(lambda f: -math.inf if f is None else f, species_best_fitness)
+        index = int(numpy.argmax(species_best_fitness))
         self._best = (index, self._collection[index])
 
         # cannot calculate WORST cache, because
@@ -76,18 +76,18 @@ class SpeciesCollection(Iterable):
 
     def get_worst(self,
                   minimal_size: int,
-                  exclude_list: Optional[Set[Species]] = None) -> (int, Species):
+                  exclude_id_list: Optional[Set[int]] = None) -> (int, Species):
         """
         Finds the worst species (based on the best fitness of that species)
         Crashes if there are no species with at least `minimal_size` individuals
 
         :param minimal_size: Species with less individuals than this will not be considered
-        :param exclude_list: Species in this list will be ignored
+        :param exclude_id_list: Species in this list will be ignored
         :return: the index and a reference to the worst species
         """
         assert len(self._collection) > 0
 
-        worst_species_index, worst_species = self._calculate_worst_fitness(minimal_size, exclude_list)
+        worst_species_index, worst_species = self._calculate_worst_fitness(minimal_size, exclude_id_list)
 
         assert worst_species_index != -1
         assert worst_species is not None
@@ -96,15 +96,15 @@ class SpeciesCollection(Iterable):
 
     def _calculate_worst_fitness(self,
                                  minimal_size: int,
-                                 exclude_list: Optional[Set[Species]]) -> (int, Species):
+                                 exclude_id_list: Optional[Set[int]]) -> (int, Species):
         worst_species_index = -1
         worst_species_fitness = math.inf
         worst_species = None
 
         for i, species in enumerate(self._collection):
 
-            if exclude_list is not None \
-                    and species in exclude_list:
+            if exclude_id_list is not None \
+                    and species.id in exclude_id_list:
                 continue
 
             if len(species) < minimal_size:
@@ -113,6 +113,7 @@ class SpeciesCollection(Iterable):
                 # species_fitness = -math.inf
 
             species_fitness = species.get_best_fitness()
+            species_fitness = -math.inf if species_fitness is None else species_fitness
             if species_fitness < worst_species_fitness:
                 worst_species_fitness = species_fitness
                 worst_species = species
@@ -135,12 +136,12 @@ class SpeciesCollection(Iterable):
         """
         Remove all empty species (cleanup routine for every case..)
         """
-        new_species = []
+        new_collection = []
         for species in self._collection:
             if not species.empty():
-                new_species.append(species)
+                new_collection.append(species)
 
-        self._collection = new_species
+        self._collection = new_collection
 
     def clear(self) -> None:
         self._collection.clear()
@@ -173,10 +174,10 @@ class SpeciesCollection(Iterable):
             old_best_species.age.reset_generations()
 
 
-def count_individuals(species_collection: Optional[SpeciesCollection] = None) -> int:
+def count_individuals(species_collection: SpeciesCollection) -> int:
     """
     Counts the number of individuals in the species_list.
-    :param species_list: if None, it will use self.species_list
+    :param species_collection: collection of species
     :return: the total number of individuals
     """
     # count the total number of individuals inside every species in the species_list

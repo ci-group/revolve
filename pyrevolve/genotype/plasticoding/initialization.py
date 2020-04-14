@@ -1,15 +1,19 @@
+from __future__ import annotations
+import random
 from pyrevolve.genotype.plasticoding.plasticoding import Alphabet
 from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding
-import random
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Dict, List
+    from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 
 
-def _generate_random_grammar(conf):
+def _generate_random_grammar(conf: PlasticodingConfig) -> Dict[Alphabet, List]:
     """
     Initializing a new genotype,
     :param conf: e_max_groups, maximum number of groups of symbols
-    :type conf: PlasticodingConfig
     :return: a random new Genome
-    :rtype: dictionary
     """
     s_segments = random.randint(1, conf.e_max_groups)
     grammar = {}
@@ -52,13 +56,13 @@ def _generate_random_grammar(conf):
     return grammar
 
 
-def random_initialization(conf, next_robot_id):
+def random_initialization(conf: PlasticodingConfig, _id: int) -> Plasticoding:
     """
     Initializing a random genotype.
-    :type conf: PlasticodingConfig
-    :return: a Genome
-    :rtype: Plasticoding
+    :param conf: Plasticoding genotype configuration
+    :param _id: id of the newly created genotype
+    :return: a Plasticoding Genome
     """
-    genotype = Plasticoding(conf, next_robot_id)
+    genotype = Plasticoding(conf, _id)
     genotype.grammar = _generate_random_grammar(conf)
     return genotype

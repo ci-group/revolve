@@ -54,7 +54,9 @@ class Species:
         :param population_config: config where to pick the `are genomes compatible` function
         :return: if the candidate individual is compatible or not
         """
-        return population_config.are_genomes_compatible(candidate.genotype, self._representative().genotype)
+        if self.empty():
+            return False
+        return population_config.are_individuals_compatible(candidate, self._representative())
 
     # TODO duplicate code with species collection best/worst function
     def get_best_fitness(self) -> float:

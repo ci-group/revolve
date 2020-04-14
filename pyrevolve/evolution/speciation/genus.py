@@ -127,18 +127,23 @@ class Genus:
         ##################################################################
         # MANAGE ORPHANS, POSSIBLY CREATE NEW SPECIES
         # recheck if other species can adopt the orphan individuals.
+        list_of_new_species = []
         for orphan in orphans:
             for species in new_species_collection:
                 if species.is_compatible(orphan, self.config):
                     species.append(orphan)
                     break
             else:
-                new_species_collection.add_species(Species([orphan], self._next_species_id))
+                new_species = Species([orphan], self._next_species_id)
+                new_species_collection.add_species(new_species)
+                list_of_new_species.append(new_species)
                 # add an entry for new species which does not have a previous iteration.
                 self._next_species_id += 1
 
         # Do a recount on the number of offspring per species.
-        offspring_amounts = self._count_offsprings(self.config.population_size - len(orphans))
+        new_species_size = sum(map(lambda species: len(species), list_of_new_species))
+        offspring_amounts = self._count_offsprings(self.config.population_size - new_species_size)
+        assert sum(offspring_amounts) == self.config.population_size - new_species_size
 
         ##################################################################
         # EVALUATE NEW INDIVIDUALS
@@ -248,10 +253,10 @@ class Genus:
         elif missing_offspring < 0:  # negative have excess individuals
             # remove missing number of individuals
             excess_offspring = -missing_offspring
-            excluded_list = set()
+            excluded_id_list = set()
 
             while excess_offspring > 0:
-                worst_species_index, species = self.species_collection.get_worst(1, excluded_list)
+                worst_species_index, species = self.species_collection.get_worst(1, excluded_id_list)
                 current_amount = species_offspring_amount[worst_species_index]
 
                 if current_amount > excess_offspring:
@@ -262,7 +267,7 @@ class Genus:
                     current_amount = 0
 
                 species_offspring_amount[worst_species_index] = current_amount
-                excluded_list.add(species)
+                excluded_id_list.add(species.id)
 
             assert excess_offspring == 0
 
