@@ -68,7 +68,8 @@ namespace revolve
           const ::gazebo::physics::ModelPtr &_model,
           const sdf::ElementPtr robot_config,
           const std::vector< MotorPtr > &_motors,
-          const std::vector< SensorPtr > &_sensors);
+          const std::vector< SensorPtr > &_sensors,
+          std::shared_ptr<::revolve::gazebo::Battery> battery);
 
       public: void set_ode_matrix();
 
@@ -258,6 +259,9 @@ namespace revolve
 
       /// \brief Use frame of reference {-1,0,1} version or not
       private: bool use_frame_of_reference;
+
+      /// \brief shared pointer to battery
+      protected: std::shared_ptr<::revolve::gazebo::Battery> battery_;
 
         // BO Learner parameters
     private: double kernel_noise_;

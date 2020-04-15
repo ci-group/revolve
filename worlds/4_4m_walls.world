@@ -1,0 +1,168 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+    <world name="default">
+        <scene>
+            <origin_visual>0</origin_visual>
+            <grid>0</grid>
+        </scene>
+        <model name="my_ground_plane">
+              <static>true</static>
+              <link name="link">
+                <collision name="collision">
+                  <geometry>
+                    <plane>
+                      <normal>0 0 1</normal>
+                      <size>4 4</size>
+                    </plane>
+                  </geometry>
+                  <surface>
+                    <friction>
+                      <ode>
+                        <mu>100</mu>
+                        <mu2>50</mu2>
+                      </ode>
+                    </friction>
+                  </surface>
+                  <max_contacts>10</max_contacts>
+                </collision>
+                <visual name="visual">
+                  <cast_shadows>false</cast_shadows>
+                  <geometry>
+                    <plane>
+                      <normal>0 0 1</normal>
+                      <size>4 4</size>
+                    </plane>
+                  </geometry>
+                  <material>
+                    <script>
+                      <name>Gazebo/Grey</name>
+                    </script>
+                  </material>
+                </visual>
+                <self_collide>0</self_collide>
+                <kinematic>0</kinematic>
+                <gravity>1</gravity>
+              </link>
+            </model>
+        <model name="walls">
+                <static>1</static>
+                <link name='wall1'>
+                    <pose>0 2 0.125 0 0 0</pose>
+                    <collision name='wall_body'>
+                        <geometry>
+                            <box>
+                                <size>4.1 0.1 0.25</size>
+                            </box>
+                        </geometry>
+                    </collision>
+                    <visual name='wall_visual'>
+                    <material>
+                        <ambient>1.0 0.26 0.72 1.0</ambient>
+                        <diffuse>1.0 0.26 0.72 1.0</diffuse>
+                        <specular>0.1 0.1 0.1 1.0</specular>
+                    </material>
+                        <geometry>
+                            <box>
+                                <size>4.1 0.1 0.25</size>
+                            </box>
+                        </geometry>
+
+                    </visual>
+                </link>
+                <link name='wall2'>
+                    <pose>0 -2 0.125 0 0 0</pose>
+                    <collision name='wall_body'>
+                        <geometry>
+                            <box>
+                                <size>4.1 0.1 0.25</size>
+                            </box>
+                        </geometry>
+                    </collision>
+                    <visual name='wall_visual'>
+                        <geometry>
+                            <box>
+                                <size>4.1 0.1 0.25</size>
+                            </box>
+                        </geometry>
+
+                    </visual>
+                </link>
+                <link name='wall3'>
+                    <pose>2 0 0.125 0 0 1.57079632679</pose>
+                    <collision name='wall_body'>
+                        <geometry>
+                            <box>
+                                <size>4.1 0.1 0.25</size>
+                            </box>
+                        </geometry>
+                    </collision>
+                    <visual name='wall_visual'>
+                    <material>
+                        <ambient>0.04 1.0 0.72 1.0</ambient>
+                        <diffuse>0.04 1.0 0.72 1.0</diffuse>
+                        <specular>0.1 0.1 0.1 1.0</specular>
+                    </material>
+                        <geometry>
+                            <box>
+                                <size>4.1 0.1 0.25</size>
+                            </box>
+                        </geometry>
+
+                    </visual>
+                </link>
+                <link name='wall4'>
+                    <pose>-2 0 0.125 0 0 1.57079632679</pose>
+                    <collision name='wall_body'>
+                        <geometry>
+                            <box>
+                                <size>4.1 0.1 0.25</size>
+                            </box>
+                        </geometry>
+                    </collision>
+                    <visual name='wall_visual'>
+                        <geometry>
+                            <box>
+                                <size>4.1 0.1 0.25</size>
+                            </box>
+                        </geometry>
+
+                    </visual>
+                </link>
+
+            </model>
+        <physics type="ode">
+            <max_step_size>0.005</max_step_size>
+
+            <!-- Run as fast as possible -->
+            <real_time_update_rate>0.0</real_time_update_rate>
+
+            <!-- Simulation == real time -->
+            <!--<real_time_update_rate>800</real_time_update_rate>-->
+
+            <ode>
+                <constraints>
+                    <!-- Simulator.cpp -->
+                    <erp>0.1</erp>
+                    <cfm>10e-6</cfm>
+
+                    <!-- Making this smaller seems to decrease rather than increase stability. -->
+                    <contact_max_correcting_vel>100</contact_max_correcting_vel>
+                    <contact_surface_layer>1e-8</contact_surface_layer>
+                </constraints>
+                <solver>
+                    <type>world</type>
+                </solver>
+            </ode>
+        </physics>
+
+        <gui/>
+
+        <!-- A global light source -->
+        <include>
+            <uri>model://sun</uri>
+        </include>
+
+
+        <plugin name="revolve-world" filename="libWorldControlPlugin.so" />
+    </world>
+</sdf>

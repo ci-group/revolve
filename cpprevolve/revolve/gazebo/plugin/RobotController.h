@@ -32,6 +32,8 @@
 #include "revolve/brains/controller/sensors/Sensor.h"
 #include "revolve/brains/controller/actuators/Actuator.h"
 
+#include <revolve/gazebo/battery/Battery.h>
+
 namespace revolve
 {
   namespace gazebo
@@ -141,6 +143,9 @@ namespace revolve
 
       /// \brief Pointer to the world
       protected: ::gazebo::physics::WorldPtr world_;
+
+      /// \brief Shared pointer to the battery
+      protected: std::shared_ptr<::revolve::gazebo::Battery> battery_;
 
       /// \brief Driver update event pointer
       private: ::gazebo::event::ConnectionPtr updateConnection_;

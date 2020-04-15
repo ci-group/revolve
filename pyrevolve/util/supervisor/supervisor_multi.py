@@ -230,7 +230,6 @@ class DynamicSimSupervisor(object):
         """
         Launches the simulator
         """
-
         self._logger.info("Launching the simulator...")
         gz_args = self.simulator_cmd + self.simulator_args
         snapshot_world = os.path.join(
@@ -285,7 +284,12 @@ class DynamicSimSupervisor(object):
         self._process_terminated_futures.clear()
 
     async def _launch_with_ready_str(self, cmd, ready_str, env):
-
+        """
+        :param cmd:
+        :param ready_str:
+        :param env:
+        :return:
+        """
         process = await asyncio.create_subprocess_exec(
             cmd[0],
             *cmd[1:],
