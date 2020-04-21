@@ -8,7 +8,7 @@ from celery import Celery, signals
 from celery_pool_asyncio import monkey as cpa_monkey
 
 # Starting Celery
-# cpa_monkey.patch()
+cpa_monkey.patch()
 
 app = Celery('pycelery')
 
