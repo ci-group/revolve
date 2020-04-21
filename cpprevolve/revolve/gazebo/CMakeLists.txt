@@ -58,12 +58,12 @@ include_directories(${NLOpt_INCLUDE_DIRS})
 link_directories(${NLOpt_LIBRARY_DIRS})
 
 # Find SimpleAmqpClient
-pkg_check_modules(SimpleAmqpClient REQUIRED libSimpleAmqpClient)
+find_library(SimpleAmqpClient REQUIRED libSimpleAmqpClient)
 include_directories(${SimpleAmqpClient_INCLUDE_DIRS})
 link_directories(${SimpleAmqpClient_LIBRARY_DIRS})
 
 # Find json
-pkg_check_modules(JSONCPP REQUIRED jsoncpp)
+find_package(jsoncpp REQUIRED)
 include_directories(${JSONCPP_INCLUDE_DIRS})
 link_directories(${JSONCPP_LIBRARY_DIRS})
 
