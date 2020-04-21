@@ -33,12 +33,12 @@ app.conf.update(
     ('pycelery.tasks.hello', {'queue': 'celery'})],)
 )
 
-@signals.setup_logging.connect
-def setup_celery_logging(**kwargs):
-    """This function disables logging."""
-    pass
-
-app.log.setup()
+# @signals.setup_logging.connect
+# def setup_celery_logging(**kwargs):
+#     """This function disables logging."""
+#     pass
+#
+# app.log.setup()
 
 if __name__ == '__main__':
     app.start()
