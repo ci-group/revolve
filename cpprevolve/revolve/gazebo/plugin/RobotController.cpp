@@ -113,6 +113,34 @@ void RobotController::Load(
 }
 
 /////////////////////////////////////////////////
+void RobotController::UpdateBattery(ConstRequestPtr &_request)
+{
+    if (_request->data() not_eq this->model_->GetName() and
+        _request->data() not_eq this->model_->GetScopedName())
+    {
+        return;
+    }
+
+    gz::msgs::Response resp;
+    resp.set_id(_request->id());
+    resp.set_request(_request->request());
+
+    if (_request->request() == "set_battery_level")
+    {
+        resp.set_response("success");
+        this->SetBatteryLevel(_request->dbl_data());
+    }
+    else
+    {
+        std::stringstream ss;
+        ss << this->BatteryLevel();
+        resp.set_response(ss.str());
+    }
+
+    batterySetPub_->Publish(resp);
+}
+
+/////////////////////////////////////////////////
 void RobotController::LoadActuators(const sdf::ElementPtr _sdf)
 {
   if (not _sdf->HasElement("rv:brain")

@@ -9,14 +9,10 @@ import asyncio
 from pyrevolve.SDF.math import Vector3
 from pyrevolve import revolve_bot, parser
 from pyrevolve.tol.manage import World
-<<<<<<< HEAD
-from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
-from pyrevolve.evolution import fitness
 
-=======
 from pyrevolve.evolution import fitness
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
->>>>>>> 04614a2fb963fcd83dc5592dfc5e978a14d5a898
+
 
 async def run():
     """
@@ -44,24 +40,6 @@ async def run():
     robot = revolve_bot.RevolveBot()
     robot.load_file(robot_file_path)
     robot.update_substrate()
-<<<<<<< HEAD
-    # robot._brain = BrainRLPowerSplines()
-=======
-    robot.save_file("./spider.sdf", conf_type='sdf')
-
-
-    # Start Simulator
-    if settings.simulator_cmd != 'debug':
-        simulator_supervisor = DynamicSimSupervisor(
-            world_file=settings.world,
-            simulator_cmd=settings.simulator_cmd,
-            simulator_args=["--verbose"],
-            plugins_dir_path=os.path.join('.', 'build', 'lib'),
-            models_dir_path=os.path.join('.', 'models'),
-            simulator_name='gazebo'
-        )
-        await simulator_supervisor.launch_simulator(port=settings.port_start)
->>>>>>> 04614a2fb963fcd83dc5592dfc5e978a14d5a898
 
     # Connect to the simulator and pause
     connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start))
@@ -76,14 +54,9 @@ async def run():
     # Start a run loop to do some stuff
     while True:
         # Print robot fitness every second
-<<<<<<< HEAD
         status = 'dead' if robot_manager.dead else 'alive'
         print(f"Robot fitness ({status}) is \n"
               f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
               f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
               f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
-=======
-        fitness_=fitness.random(robot_manager)
-        print(f"Robot fitness is {fitness_}")
->>>>>>> 04614a2fb963fcd83dc5592dfc5e978a14d5a898
         await asyncio.sleep(1.0)

@@ -21,9 +21,11 @@ void Battery::Update(double global_time, double delta_time)
     this->current_charge += sum * delta_time; // charge is measured in joules
 
     //TODO properly save battery data somewhere
+    /*
     std::ofstream b_info_file;
     b_info_file.open("output/cpg_bo/" + this->robot_name + "/" + this->time_init + "/battery.txt", std::ios_base::app);
     if (b_info_file.fail())
         std::cout << "Failed to open: " << b_info_file.fail() <<  " " << "output/cpg_bo/" + this->robot_name + "/" + this->time_init + "/battery.txt" << std::endl;
     b_info_file << global_time << " " << sum << " " << current_charge << std::endl;
+    */
 }

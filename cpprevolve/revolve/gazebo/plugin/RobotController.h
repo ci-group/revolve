@@ -145,7 +145,7 @@ namespace revolve
       protected: ::gazebo::physics::WorldPtr world_;
 
       /// \brief Shared pointer to the battery
-      protected: std::shared_ptr<::revolve::gazebo::Battery> battery_;
+      protected: std::shared_ptr<Battery> battery_;
 
       /// \brief Driver update event pointer
       private: ::gazebo::event::ConnectionPtr updateConnection_;
