@@ -71,8 +71,9 @@ class CeleryController:
             result = await shutdowns[i].get()
             logger.info(f"Worker {i} with result: {result}")
 
-        subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
-        subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
+        # I have commented this out because i am not sure of the effects for other users on the same ripper.
+        # subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
+        # subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
 
     async def start_gazebo_instances(self):
         """
