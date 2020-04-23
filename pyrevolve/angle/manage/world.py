@@ -214,11 +214,6 @@ class WorldManager(manage.WorldManager):
             self._update_contacts
         )
 
-        # Awaiting this immediately will lock the program
-        update_state_future = self.set_state_update_frequency(
-            freq=self.state_update_frequency
-        )
-
         self.battery_handler = await RequestHandler.create(
             manager=self.manager,
             advertise='/gazebo/default/battery_level/request',
@@ -231,7 +226,6 @@ class WorldManager(manage.WorldManager):
         # Wait for connections
         await self.pose_subscriber.wait_for_connection()
         await self.contact_subscriber.wait_for_connection()
-        await update_state_future
 
         if self.do_restore:
             await (self.restore_snapshot(self.do_restore))
@@ -453,6 +447,7 @@ class WorldManager(manage.WorldManager):
                 robot=revolve_bot,
                 msg=response
         )
+
         return robot_manager
 
     def to_sdfbot(

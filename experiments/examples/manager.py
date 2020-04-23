@@ -58,5 +58,6 @@ async def run():
         print(f"Robot fitness ({status}) is \n"
               f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
               f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
-              f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
+              f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}\n"
+              f" battery: {fitness.battery(robot_manager, robot)}")
         await asyncio.sleep(1.0)

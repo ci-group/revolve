@@ -87,6 +87,7 @@ class RobotManager(object):
         """
         dead = state.dead if state.dead is not None else False
         self.dead = dead or self.dead
+        self.battery_level = state.battery_charge
 
         pos = state.pose.position
         position = Vector3(pos.x, pos.y, pos.z)
