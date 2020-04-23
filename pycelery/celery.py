@@ -1,9 +1,5 @@
 # !/usr/bin/env python3
 
-# This file both starts the celery app and it does also define the tasks. These might
-# better be split in the future, if the tasks get to large.
-
-from __future__ import absolute_import, unicode_literals
 from celery import Celery, signals
 from celery_pool_asyncio import monkey as cpa_monkey
 
