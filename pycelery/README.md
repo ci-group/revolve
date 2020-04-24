@@ -15,7 +15,7 @@ The *celeryplane.world* loads the worldcontroller for celery. If you do not use 
 ## IF IN ANY CASE THE EXPERIMENT FAILS
 If the experiment fails, celery, gzservers and the amqp queue can still be running in the background. When you start celery again this will give problems. Therefore, whenever your prematurely end an experiment, remember to quit celery, gzservers and empty the celery queue with the following commands:
 
-`pkill -9 -f 'celery worker' && pkill -9 -f 'gzserver'`
+`pkill -9 -f 'celery worker' && pkill -9 -f 'gzserver'` and
 `celery amqp && queue.delete cpp && queue.delete robots (OR $ celery -A proj purge)`
 
 ## EXAMPLE
@@ -48,5 +48,5 @@ restarting the simulator per X generations, however I think it should be possibl
 these messages will give errors. So before restarting the experiment; celery, gazebo and the messages need to be deleted.
 This can be done by the following two commands:
 
-`pkill -9 -f 'celery worker' && pkill -9 -f 'gzserver'`
+`pkill -9 -f 'celery worker' && pkill -9 -f 'gzserver'` and 
 `celery amqp && queue.delete cpp && queue.delete robots (OR $ celery -A proj purge)`
