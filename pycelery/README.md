@@ -20,7 +20,7 @@ If the experiment fails, celery, gzservers and the amqp queue can still be runni
 `celery amqp && queue.delete cpp && queue.delete robots (OR $ celery -A proj purge)`
 
 ## EXAMPLE
-Use the manager.py file in the pycelery folder as an example to make your own experiment.
+Use the [manager.py](pycelery/manager.py) file in the pycelery folder as an example to make your own experiment.
 
 ## CHANGED FILES
 **pyrevolve/evolution/population.py**
