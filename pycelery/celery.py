@@ -8,8 +8,6 @@ cpa_monkey.patch()
 
 app = Celery('pycelery')
 
-app.control.purge()
-
 # Setting configurations of celery.
 app.conf.update(
     broker_url = 'pyamqp://localhost:5672//',
@@ -29,12 +27,15 @@ app.conf.update(
     ('pycelery.tasks.hello', {'queue': 'celery'})],)
 )
 
-@signals.setup_logging.connect
-def setup_celery_logging(**kwargs):
-    """This function disables logging."""
-    pass
+# THIS FUNCTION ALLOWS YOU TO SHUT DOWN LOGGING FOR ALL WORKERS.
+# @signals.setup_logging.connect
+# def setup_celery_logging(**kwargs):
+#     """This function disables logging."""
+#     pass
 
 app.log.setup()
 
 if __name__ == '__main__':
     app.start()
+    
+    app.control.purge()
