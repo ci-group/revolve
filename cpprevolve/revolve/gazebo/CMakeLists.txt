@@ -248,6 +248,7 @@ target_link_libraries(
         revolve-gazebo
 	revolve-proto
         ${GAZEBO_LIBRARIES}
+	${JSONCPP_LIBRARIES}
 )
 
 # Create Analyzer plugin
