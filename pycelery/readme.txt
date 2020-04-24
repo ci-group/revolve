@@ -1,11 +1,12 @@
-Celery is a task distribution manager. We can start it from this folder, however most
+# HOW TO USE CELERY
+#### Celery is a task distribution manager. We can start it from this folder, however most
 of the times it would be better to start it from the revolve folder.
 
 In Revolve/
 
 We can start revolve using celery when you use the next line.
 
-./revolve.py --manager pycelery/manager.py --n-cores 8 --world worlds/celeryplane.world
+*./revolve.py --manager pycelery/manager.py --n-cores 8 --world worlds/celeryplane.world*
 
 it will start the manager, which uses the class CeleryController to control and start celery. The manager can shutdown, reset, evaluate robots through this CeleryController. It is used as a simulator_queue class.
 
@@ -13,11 +14,11 @@ The celeryworld.world loads the worldcontroller for celery. If you do not use th
 
 Use the manager.py file in the pycelery folder as an example to make your own experiment.
 
-# ---------------------------- # CHANGED FILES #----------------------------#
+## CHANGED FILES
 pyrevolve/evolution/population.py           	(Added a celery part to receive data)- old revolve intact
 pyrevolve/tol/manage/robotmanager.py					(Added a way to convert a celery message to a robotmanager class)- old revolve intact
 
-			#---------------------# PROBLEMS #--------------------------#
+## PROBLEMS
 
 -1. Celery is currently using RabbitMQ and RPC (remote procedure call) to handle messages. RPC is dependent on the
 network you are connected to. If the network disconnects the experiment stops. The current
@@ -37,4 +38,4 @@ restarting the simulator per X generations, however I think it should be possibl
 these messages will give errors. So before restarting the experiment; celery, gazebo and the messages need to be deleted.
 This can be done by the following two commands:
 	- $ pkill -9 -f 'celery worker' && pkill -9 -f 'gzserver'
-	- $ celery amqp && queue.delete cpp && queue.delete robots
+	- $ celery amqp && queue.delete cpp && queue.delete robots (OR $ celery -A proj purge)
