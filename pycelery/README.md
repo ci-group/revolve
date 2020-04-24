@@ -20,13 +20,13 @@ If the experiment fails, celery, gzservers and the amqp queue can still be runni
 `celery amqp && queue.delete cpp && queue.delete robots (OR $ celery -A proj purge)`
 
 ## EXAMPLE
-Use the [manager.py](pycelery/manager.py) file in the pycelery folder as an example to make your own experiment.
+Use the [manager.py](manager.py) file in the pycelery folder as an example to make your own experiment.
 
 ## CHANGED FILES
-[population.py](pyrevolve/evolution/population.py)
+[population.py](../pyrevolve/evolution/population.py)
 Added some code such that the population class can still be used. The old revolve maintains useable.
  
-[robotmanager.py](pyrevolve/tol/manage/robotmanager.py)  
+[robotmanager.py](../pyrevolve/tol/manage/robotmanager.py)  
 The robotmanager is changed so it can now convert JSON data from a celery message to a robotmanager. This way many already created modules can still be used.
 
 ## PROBLEMS
