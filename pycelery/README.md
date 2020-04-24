@@ -23,7 +23,7 @@ If the experiment fails, celery, gzservers and the amqp queue can still be runni
 Use the [manager.py](manager.py) file in the pycelery folder as an example to make your own experiment.
 
 ## CHANGED FILES
-[population.py](../pyrevolve/evolution/population.py)
+[population.py](../pyrevolve/evolution/population.py)  
 Added some code such that the population class can still be used. The old revolve maintains useable.
  
 [robotmanager.py](../pyrevolve/tol/manage/robotmanager.py)  
