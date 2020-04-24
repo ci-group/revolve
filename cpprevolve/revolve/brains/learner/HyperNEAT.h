@@ -40,6 +40,12 @@ private:
     std::unique_ptr<NEAT::Population> population;
     std::vector<NEAT::Species>::iterator current_specie_evaluating;
     std::vector<NEAT::Genome>::iterator current_genome_evaluating;
+    double best_fitness = -std::numeric_limits<double>::infinity();
+    std::vector<NEAT::Genome>::iterator best_genome;
+
+protected:
+    /// \brief function to load a genome into a controller
+    std::function<void(std::vector<NEAT::Genome>::iterator)> load_genome;
 };
 
 }

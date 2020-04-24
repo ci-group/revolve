@@ -1,0 +1,16 @@
+/snap/clion/103/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_RASPBERRY=0 -DBUILD_ONLY_BRAIN=0 -DCMAKE_BUILD_TYPE=Release && make -G "CodeBlocks - Unix Makefiles" /home/fuda/Projects/revolve/cpprevolve/revolve/gazebo/IMC
+-- Configuring done
+CMake Error at CMakeLists.txt:16 (add_executable):
+  Cannot find source file:
+
+    FeedForwardModel.cpp
+
+  Tried extensions .c .C .c++ .cc .cpp .cxx .cu .m .M .mm .h .hh .h++ .hm
+  .hpp .hxx .in .txx
+
+
+CMake Error at CMakeLists.txt:16 (add_executable):
+  No SOURCES given to target: Test_IMC
+
+
+CMake Generate step failed.  Build files cannot be regenerated correctly.

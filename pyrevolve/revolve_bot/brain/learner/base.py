@@ -11,8 +11,10 @@ class Learner(object):
 
         if brain_type == learners.bo.BOLearner.TYPE:
             return learners.bo.BOLearner.from_yaml(yaml_learner)
+        if brain_type == learners.hyperneat.HyperNEATLearner.TYPE:
+            return learners.hyperneat.HyperNEATLearner.from_yaml(yaml_learner)
         else:
-            print("No matching brain type defined in yaml file.")
+            print("No matching brain/learner type defined in yaml file.")
             return Learner()
 
     def to_yaml(self):

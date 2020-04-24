@@ -19,7 +19,7 @@
 
 #include <memory>
 #include <stdexcept>
-
+#include <cstdio>
 #include <gazebo/sensors/sensors.hh>
 
 #include <revolve/gazebo/motors/MotorFactory.h>
@@ -28,6 +28,11 @@
 #include <revolve/gazebo/brains/GazeboReporter.h>
 #include <revolve/brains/learner/NoLearner.h>
 #include <revolve/brains/learner/BayesianOptimizer.h>
+#include <revolve/brains/learner/HyperNEAT.h>
+#include <multineat/Genome.h>
+#include <multineat/Population.h>
+#include <revolve/brains/controller/IMC/IMC.h>
+#include <torch/torch.h>
 
 #include "RobotController.h"
 
@@ -211,13 +216,14 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
     auto brain_sdf = _sdf->GetElement("rv:brain");
     auto controller_type = brain_sdf->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
+//    auto IMC_params = brain_sdf->GetElement("rv:IMC")->GetElement("rv:params");
     auto learner_type = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
     std::cout << "Loading controller " << controller_type << " and learner " << learner_type << std::endl;
 
 
     //TODO parameters from SDF
-    const double evaluation_rate = 15.0;
-    const unsigned int n_learning_evaluations = 50;
+    const double evaluation_rate = 60.0;
+    const unsigned int n_learning_evaluations = 250;
 
     this->evaluator = std::make_unique<::revolve::gazebo::Evaluator>(evaluation_rate, true, this->model_);
 
@@ -247,6 +253,12 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
     } else {
         throw std::runtime_error("Robot brain: Controller \"" + controller_type + "\" is not supported.");
     }
+    std::cout << "Initializing IMC" << std::endl;
+    // ================= INITIALIZE IMC ====================
+    IMC::IMCParams imc_params = IMC::IMCParams();
+    controller = std::make_unique<IMC>(std::move(controller), motors_, imc_params);
+    std::cout<<"IMC Parameters: lr:"<< imc_params.learning_rate<<", beta1:"  << imc_params.beta1<<", beta2:"  << imc_params.beta2<<", wd:" << imc_params.weight_decay << std::endl;
+    std::cout<<"IMC has been Loaded"<<std::endl;
 
     // SELECT LEARNER ---------------------------------------------------------
     if ("offline" == learner_type) {
@@ -264,6 +276,63 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
                 this->reporter.get(),
                 evaluation_rate,
                 n_learning_evaluations);
+//    } else if ("hyperneat" == learner_type) {
+//        NEAT::Parameters neat_params = NEAT::Parameters();
+//
+//        const sdf::ElementPtr learner_sdf = brain_sdf->GetElement("rv:learner")->GetElement("rv:params");
+//
+//#define WRITE_DOUBLE_PARAM(x)   std::cout << #x << " is set to: " << learner_sdf->GetAttribute(#x)->GetAsString() << std::endl; neat_params.x = stod(learner_sdf->GetAttribute(#x)->GetAsString());
+//#define CHECK_PARAM(x)   {stod(std::to_string(neat_params.x))==stod(learner_sdf->GetAttribute(#x)->GetAsString()) ? std::cout << std::left <<#x << " is set to: Default" << std::endl : WRITE_DOUBLE_PARAM(x)}
+//        CHECK_PARAM(PopulationSize)
+//        CHECK_PARAM(WeightDiffCoeff)
+//        CHECK_PARAM(CompatTreshold)
+//        CHECK_PARAM(YoungAgeTreshold)
+//        CHECK_PARAM(OldAgeTreshold)
+//        CHECK_PARAM(MinSpecies)
+//        CHECK_PARAM(MaxSpecies)
+//        CHECK_PARAM(RouletteWheelSelection)
+//        CHECK_PARAM(RecurrentProb)
+//        CHECK_PARAM(OverallMutationRate)
+//        CHECK_PARAM(ArchiveEnforcement)
+//        CHECK_PARAM(MutateWeightsProb)
+//        CHECK_PARAM(WeightMutationMaxPower)
+//        CHECK_PARAM(WeightReplacementMaxPower)
+//        CHECK_PARAM(MutateWeightsSevereProb)
+//        CHECK_PARAM(WeightMutationRate)
+//        CHECK_PARAM(WeightReplacementRate)
+//        CHECK_PARAM(MaxWeight)
+//        CHECK_PARAM(MutateAddNeuronProb)
+//        CHECK_PARAM(MutateAddLinkProb)
+//        CHECK_PARAM(MutateRemLinkProb)
+//        CHECK_PARAM(MinActivationA)
+//        CHECK_PARAM(MaxActivationA)
+//        CHECK_PARAM(ActivationFunction_SignedSigmoid_Prob)
+//        CHECK_PARAM(ActivationFunction_UnsignedSigmoid_Prob)
+//        CHECK_PARAM(ActivationFunction_Tanh_Prob)
+//        CHECK_PARAM(ActivationFunction_SignedStep_Prob)
+//        CHECK_PARAM(CrossoverRate)
+//        CHECK_PARAM(MultipointCrossoverRate)
+//        CHECK_PARAM(SurvivalRate)
+//        CHECK_PARAM(MutateNeuronTraitsProb)
+//        CHECK_PARAM(MutateLinkTraitsProb)
+//#undef CHECK_PARAM
+//#undef WRITE_DOUBLE_PARAM
+//
+//        neat_params.DynamicCompatibility = (learner_sdf->GetAttribute("DynamicCompatibility")->GetAsString() == "true");
+//        neat_params.NormalizeGenomeSize = (learner_sdf->GetAttribute("NormalizeGenomeSize")->GetAsString() == "true");
+//        neat_params.AllowLoops = (learner_sdf->GetAttribute("AllowLoops")->GetAsString() == "true");
+//        neat_params.AllowClones = (learner_sdf->GetAttribute("AllowClones")->GetAsString() == "true");
+//
+//        int seed = 0;
+//
+//        learner = std::make_unique<HyperNEAT>(
+//                std::move(controller),
+//                this->evaluator.get(),
+//                this->reporter.get(),
+//                neat_params,
+//                seed,
+//                evaluation_rate,
+//                n_learning_evaluations);
     } else {
         throw std::runtime_error("Robot brain: Learner \"" + learner_type + "\" is not supported.");
     }
@@ -284,7 +353,7 @@ void RobotController::CheckUpdate(const ::gazebo::common::UpdateInfo _info)
 {
   auto diff = _info.simTime - lastActuationTime_;
 
-  if (diff.Double() > actuationTime_)
+  if (diff.Double() >= actuationTime_)
   {
     this->DoUpdate(_info);
     lastActuationTime_ = _info.simTime;

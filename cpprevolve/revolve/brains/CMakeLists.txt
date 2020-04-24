@@ -2,8 +2,9 @@ set (CMAKE_CXX_STANDARD 14)
 
 set(CONTROLLER_SRCS
     controller/DifferentialCPG.cpp
-    controller/BrokenDifferentialCPG.cpp
-    controller/sensors/AngleToTargetDetector.cpp
+    controller/IMC/IMC.cpp
+    controller/IMC/FeedForwardNetwork.cpp
+    controller/IMC/InverseNetwork.cpp
 )
 set(LEARNER_SRCS
     learner/Learner.cpp
@@ -50,8 +51,9 @@ target_compile_definitions(revolve-learners
         PUBLIC USE_NLOPT=1)
 
 target_link_libraries(revolve-controllers
-        MultiNEAT::MultiNEAT
-        ${OpenCV_LIBS})
+        PUBLIC MultiNEAT::MultiNEAT
+        ${OpenCV_LIBS}
+        PUBLIC torch)
 
 target_link_libraries(revolve-learners
         revolve-controllers
@@ -60,3 +62,17 @@ target_link_libraries(revolve-learners
 install(TARGETS revolve-controllers revolve-learners
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
+
+if (${CUDA})
+#    set(Torch_DIR "/home/fuda/Projects/pytorch/libtorch_cuda/share/cmake/Torch")
+    set(Torch_DIR "${CMAKE_SOURCE_DIR}/thirdparty/libtorch/share/cmake/Torch")
+else ()
+#    set(Torch_DIR "/home/fuda/Projects/pytorch/libtorch/share/cmake/Torch")
+    set(Torch_DIR "${CMAKE_SOURCE_DIR}/thirdparty/libtorch/share/cmake/Torch")
+endif()
+
+find_package(Torch REQUIRED)
+target_include_directories(revolve-controllers
+        PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/libtorch/include/torch/csrc/api/include/)
+target_include_directories(revolve-controllers
+        PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/libtorch/include/)

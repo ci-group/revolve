@@ -60,6 +60,8 @@ namespace revolve
           const double *outputs,
           double step);
 
+      public: virtual double Current_State(  Actuator::StateType type ) override ;
+
       /// \brief World update event function
 //    protected: void OnUpdate(const ::gazebo::common::UpdateInfo info);
 

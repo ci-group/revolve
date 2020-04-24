@@ -95,65 +95,7 @@ DifferentialCPG::DifferentialCPG(
 {
     this->init_params_and_connections(params, actuators);
 
-    // build the NN according to the genome
-    NEAT::NeuralNetwork net;
-    gen.BuildPhenotype(net);
-    unsigned int net_depth = net.CalculateNetworkDepth();
-
-    // get weights for each connection
-    // assuming that connections are distinct for each direction
-    connection_weights.resize(n_weights, 0);
-    std::vector<double> inputs(8);
-
-    for(const std::pair< const std::tuple< int, int, int>, size_t > &motor: motor_coordinates)
-    {
-        size_t k = motor.second;
-
-        // convert tuple to vector
-        std::tie(inputs[0], inputs[1], inputs[2]) = motor.first;
-        inputs[3] = 1;
-        std::tie(inputs[4], inputs[5], inputs[6]) = motor.first;
-        inputs[7] = -1;
-        inputs[8] = 1;
-
-        net.Flush();
-        net.Input(inputs);
-        for (int i=0; i<net_depth; i++)
-            net.Activate();
-        double weight = net.Output()[0];
-#ifdef DifferentialCPG_PRINT_INFO
-        std::cout << "Creating weight ["
-                  << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
-                  << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
-                  << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
-#endif
-        connection_weights.at(k) = weight;  // order of weights corresponds to order of connections.
-    }
-
-    for(const std::pair<const std::tuple<int, int, int, int, int, int, int, int>, int > &con : connections)
-    {
-        int k = con.second;
-        // convert tuple to vector
-        std::tie(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5], inputs[6], inputs[7]) = con.first;
-        inputs[8] = 1;
-
-        net.Flush();
-        net.Input(inputs);
-        for (int i=0; i<net_depth; i++)
-            net.Activate();
-        double weight = net.Output()[0];
-#ifdef DifferentialCPG_PRINT_INFO
-        std::cout << "Creating weight ["
-                  << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
-                  << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
-                  << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
-#endif
-        connection_weights.at(k) = weight;  // order of weights corresponds to order of connections.
-    }
-
-    // Set ODE matrix at initialization
-    set_ode_matrix();
-
+    this->load_genome_to_controller(gen);
     std::cout << "DifferentialCPG brain with CPPN configuration has been loaded." << std::endl;
 }
 
@@ -281,6 +223,69 @@ DifferentialCPG::~DifferentialCPG()
 
 void DifferentialCPG::set_connection_weights(std::vector<double> weights){
     this->connection_weights = weights;
+    this->set_ode_matrix();
+}
+
+void DifferentialCPG::load_genome_to_controller(const NEAT::Genome &genome)
+{
+    // build the NN according to the genome
+    NEAT::NeuralNetwork net;
+    genome.BuildPhenotype(net);
+    unsigned int net_depth =99999;// net.CalculateNetworkDepth();
+
+    // get weights for each connection
+    // assuming that connections are distinct for each direction
+    connection_weights.resize(n_weights, 0);
+    std::vector<double> inputs(8);
+
+    for(const std::pair< const std::tuple< int, int, int>, size_t > &motor: motor_coordinates)
+    {
+        size_t k = motor.second;
+
+        // convert tuple to vector
+        std::tie(inputs[0], inputs[1], inputs[2]) = motor.first;
+        inputs[3] = 1;
+        std::tie(inputs[4], inputs[5], inputs[6]) = motor.first;
+        inputs[7] = -1;
+        inputs[8] = 1;
+
+        net.Flush();
+        net.Input(inputs);
+        for (int i=0; i<net_depth; i++)
+            net.Activate();
+        double weight = net.Output()[0];
+#ifdef DifferentialCPG_PRINT_INFO
+        std::cout << "Creating weight ["
+                  << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
+                  << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
+                  << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
+#endif
+        this->connection_weights.at(k) = weight;  // order of weights corresponds to order of connections.
+    }
+
+
+    for(const std::pair<const std::tuple<int, int, int, int, int, int, int, int>, int > &con : connections)
+    {
+        int k = con.second;
+        // convert tuple to vector
+        std::tie(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5], inputs[6], inputs[7]) = con.first;
+        inputs[8] = 1;
+
+        net.Flush();
+        net.Input(inputs);
+        for (int i=0; i<net_depth; i++)
+            net.Activate();
+        double weight = net.Output()[0];
+#ifdef DifferentialCPG_PRINT_INFO
+        std::cout << "Creating weight ["
+                  << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
+                  << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
+                  << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
+#endif
+        this->connection_weights.at(k) = weight;  // order of weights corresponds to order of connections.
+    }
+
+    // Set ODE matrix at initialization
     this->set_ode_matrix();
 }
 

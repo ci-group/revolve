@@ -53,7 +53,7 @@ Evaluator::Evaluator(const double evaluation_rate,
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "turing_left"; // {directed, gait}
+  this->locomotion_type = "directed"; // {turing_left,directed, gait}
   this->path_length = 0.0;
 }
 

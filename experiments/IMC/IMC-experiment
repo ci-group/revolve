@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+set -x
+runs=1
+runs_start=0
+start_port=15000
+exp_name=IMCspider
+log_suffix=''
+project_folder=experiments/IMC/
+manager="${project_folder}"manager.py
+
+for i in $(seq $runs)
+	do
+		run=$((i+runs_start))
+		screen -d -m -S "${exp_name}_${run}" -L -Logfile "${project_folder}${exp_name}${log_suffix}_${run}.log" nice -n19 ./revolve.py --manager $manager --simulator-cmd=/home/fuda/Projects/gazebo/build/gazebo/gzserver --experiment-name $exp_name --n-cores 4 --port-start $((${start_port} + ($run*10))) --run $run
+	done

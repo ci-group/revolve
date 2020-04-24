@@ -44,6 +44,7 @@ class Joint(SDF.Posable):
 
         servomotor = xml.etree.ElementTree.Element('rv:servomotor', {
             'type': 'position',
+            # 'type': 'velocity',
             'id': "{}__rotate".format(self._id),
             'part_id': self._id,
             'part_name': self._name,
@@ -57,7 +58,7 @@ class Joint(SDF.Posable):
             servomotor.attrib['coordinates'] = ';'.join(str(i) for i in self._coordinates)
 
         pid = xml.etree.ElementTree.SubElement(servomotor, 'rv:pid')
-        SDF.sub_element_text(pid, 'rv:p', 0.9)
+        SDF.sub_element_text(pid, 'rv:p', 1.0)
         SDF.sub_element_text(pid, 'rv:i', 0.0)
         SDF.sub_element_text(pid, 'rv:d', 0.0)
         SDF.sub_element_text(pid, 'rv:i_max', 0.0)
@@ -77,10 +78,10 @@ class JointAxis(xml.etree.ElementTree.Element):
         limit = xml.etree.ElementTree.SubElement(self, 'limit')
 
         # TODO calibrate this (load from configuration?)
-        SDF.sub_element_text(limit, 'lower', -7.853982e-01)
-        SDF.sub_element_text(limit, 'upper', 7.853982e-01)
-        SDF.sub_element_text(limit, 'effort', 1.765800e-01)
-        SDF.sub_element_text(limit, 'velocity', 5.235988e+00)
+        SDF.sub_element_text(limit, 'lower', -1) #-7.853982e-01
+        SDF.sub_element_text(limit, 'upper', 1)
+        SDF.sub_element_text(limit, 'effort', 9.4*9.8e-02)
+        SDF.sub_element_text(limit, 'velocity', 5.235988e-00)
 
     def set_xyz(self, xyz: SDF.math.Vector3):
         self.xyz.text = '{:e} {:e} {:e}'.format(xyz[0], xyz[1], xyz[2])

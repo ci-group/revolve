@@ -46,6 +46,7 @@ nosetests.xml
 coverage.xml
 *,cover
 experiments/examples/output/
+experiments/IMC/output/
 test.py
 
 # Translations

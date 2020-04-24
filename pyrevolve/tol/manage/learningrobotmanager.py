@@ -1,6 +1,6 @@
 from pyrevolve.util import Time
 from pyrevolve.SDF.math import Vector3
-from spec.msgs.robot_states_learning_pb2 import LearningRobotStates, BehaviourData
+from pyrevolve.spec.msgs.robot_states_learning_pb2 import LearningRobotStates, BehaviourData
 
 
 class Evaluation:

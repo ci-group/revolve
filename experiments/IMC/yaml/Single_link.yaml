@@ -1,0 +1,47 @@
+---
+id: Single_link
+body:
+  id          : Core
+  type        : Core
+  params:
+    red: 0.04
+    green: 0.26
+    blue: 0.72
+  children    :
+    0:
+      id          : Leg00Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation: 0
+      children    :
+        1:
+          id          : Leg00
+          type        : FixedBrick
+          params:
+            red: 0.04
+            green: 0.26
+            blue: 0.72
+          orientation : -90
+
+
+brain:
+  type: cpg
+  learner:
+    type : bo
+#    params:
+#      PopulationSize: 350
+#      OldAgeTreshold: 20
+#      MaxSpecies: 15
+  controller:
+    reset_neuron_random : false;
+    use_frame_of_reference : false;
+    init_neuron_state : 0.707;
+    range_ub : 1.0;
+    signal_factor_all : 1.0;
+    signal_factor_mid : 1.0;
+    signal_factor_left_right : 1.0;
+    abs_output_bound : 1.0;
+    weights: [ 1.482167]

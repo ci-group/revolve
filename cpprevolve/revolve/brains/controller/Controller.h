@@ -12,6 +12,7 @@
 
 namespace revolve
 {
+class DifferentialCPG;
 
 class Controller
 {
@@ -38,6 +39,8 @@ public:
             const double _time,
             const double _step
     ) = 0;
+
+    virtual DifferentialCPG* into_DifferentialCPG() { return nullptr; }
 };
 
 }

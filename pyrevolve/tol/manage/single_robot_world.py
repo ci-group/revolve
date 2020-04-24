@@ -3,7 +3,7 @@ import os
 
 import time
 
-from SDF.math import Vector3
+from pyrevolve.SDF.math import Vector3
 from pyrevolve.gazebo.manage import WorldManager
 from .learningrobotmanager import LearningRobotManager
 from pyrevolve.spec.msgs import LearningRobotStates

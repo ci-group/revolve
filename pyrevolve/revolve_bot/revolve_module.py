@@ -245,8 +245,8 @@ class CoreModule(RevolveModule):
     TYPE = "CoreComponent"
     VISUAL_MESH = 'model://rg_robot/meshes/CoreComponent.dae'
     SLOT_COORDINATES = 0.089 / 2.0
-    COLLISION_BOX = (0.089, 0.089, 0.045)
-    MASS = grams(90)
+    COLLISION_BOX = (0.089, 0.089, 0.0603)
+    MASS = grams(250)
 
     def __init__(self):
         super().__init__()
@@ -273,15 +273,16 @@ class ActiveHingeModule(RevolveModule):
     TYPE = 'ActiveHinge'
     VISUAL_MESH_FRAME = 'model://rg_robot/meshes/ActiveHinge_Frame.dae'
     VISUAL_MESH_SERVO = 'model://rg_robot/meshes/ActiveCardanHinge_Servo_Holder.dae'
-    COLLISION_BOX_FRAME = (2.20e-02, 3.575e-02, 1.0e-02)
-    COLLISION_BOX_SERVO = (2.45e-02, 2.575e-02, 1.5e-02)
-    COLLISION_BOX_SERVO_2 = (1.0e-3, 3.4e-2, 3.4e-02)
+
+    COLLISION_BOX_FRAME = (4.525e-02, 5.3e-02, 1.65891e-02)
+    COLLISION_BOX_SERVO = (5.83e-02, 5.12e-02, 2.0e-02)
+    COLLISION_BOX_SERVO_2 = (2.0e-3, 5.3e-2, 5.3e-02)
     COLLISION_BOX_SERVO_OFFSET = (
         SDF.math.Vector3(0, 0, 0),
-        SDF.math.Vector3(-0.0091, 0, 0),
+        SDF.math.Vector3(-1.0e-02, 0, 0),
     )
-    MASS_FRAME = grams(1.7)
-    MASS_SERVO = grams(9)
+    MASS_FRAME = grams(11)
+    MASS_SERVO = grams(58)
 
     def __init__(self):
         super().__init__()
@@ -318,12 +319,12 @@ class ActiveHingeModule(RevolveModule):
         visual_servo.append(geometry)
 
         collision_servo = SDF.Collision(name_servo, self.MASS_SERVO)
-        collision_servo.translate(SDF.math.Vector3(0.002375, 0, 0))
+        collision_servo.translate(SDF.math.Vector3(-0.018, 0, 0))
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO)
         collision_servo.append(geometry)
 
         collision_servo_2 = SDF.Collision(name_servo2, 0)
-        collision_servo_2.translate(SDF.math.Vector3(0.01175, 0.001, 0))
+        collision_servo_2.translate(SDF.math.Vector3(0.02815, 0, 0))
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO_2)
         collision_servo_2.append(geometry)
 
@@ -335,7 +336,7 @@ class ActiveHingeModule(RevolveModule):
                           coordinates=self.substrate_coordinates,
                           motorized=True)
 
-        joint.set_position(SDF.math.Vector3(-0.0085, 0, 0))
+        joint.set_position(SDF.math.Vector3(-0.0299, 0, 0))
 
         return visual_frame, \
                [collision_frame], \
@@ -389,9 +390,9 @@ class BrickModule(RevolveModule):
     """
     TYPE = "FixedBrick"
     VISUAL_MESH = 'model://rg_robot/meshes/FixedBrick.dae'
-    SLOT_COORDINATES = 3.8e-2 / 2.0
-    COLLISION_BOX = (4.1e-2, 4.1e-2, 3.55e-02)
-    MASS = grams(10.2)
+    SLOT_COORDINATES = 0.06288625/ 2.0
+    COLLISION_BOX = (0.06288625, 0.06288625, 0.0603)
+    MASS = grams(30)
 
     def __init__(self):
         super().__init__()

@@ -71,6 +71,10 @@ public:
     /// \param[in] The weights to be set
     void set_connection_weights(std::vector<double> weights);
 
+    void load_genome_to_controller(const NEAT::Genome &genome);
+
+    DifferentialCPG* into_DifferentialCPG() override { return this; };
+
     /// \brief Return the weights of the connections
     std::vector<double> get_connection_weights();
 

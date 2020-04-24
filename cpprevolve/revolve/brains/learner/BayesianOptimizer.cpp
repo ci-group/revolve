@@ -33,11 +33,11 @@ BayesianOptimizer::BayesianOptimizer(
         //, init_method("LHS")
         , kernel_noise(0.00000001)
         , kernel_optimize_noise("false")
-        , kernel_sigma_sq(0.222)
-        , kernel_l(0.55)
+        , kernel_sigma_sq(1)
+        , kernel_l(0.2)
         , kernel_squared_exp_ard_k(4)
         , acqui_gpucb_delta(0.5)
-        , acqui_ucb_alpha(0.44)
+        , acqui_ucb_alpha(3.0)
         , acqui_ei_jitter(0.0)
         , acquisition_function("UCB")
 {
@@ -52,12 +52,12 @@ BayesianOptimizer::BayesianOptimizer(
                     std_weights[j] = weights(j);
                 }
 
-                auto *temp_controller = dynamic_cast<::revolve::DifferentialCPG *>(this->_controller.get());
+                auto *temp_controller = dynamic_cast<::revolve::DifferentialCPG*>(this->_controller.get()->into_DifferentialCPG());
                 temp_controller->set_connection_weights(std_weights);
             };
 
             vectorize_controller = [this]() {
-                auto *controller = dynamic_cast<::revolve::DifferentialCPG *>(this->_controller.get());
+                auto *controller = dynamic_cast<::revolve::DifferentialCPG*>(this->_controller.get()->into_DifferentialCPG());
                 const std::vector<double> &weights = controller->get_connection_weights();
 
                 // std::vector -> Eigen::Vector
@@ -73,6 +73,10 @@ BayesianOptimizer::BayesianOptimizer(
             std::cerr << "Controller not supported" << std::endl;
             throw std::runtime_error("Controller not supported");
     }
+
+    std::ofstream fitness_file;
+    fitness_file.open("./experiments/examples/IMC/fitnesses.txt", std::ofstream::out | std::ofstream::trunc);
+    fitness_file.close();
 }
 
 /**
@@ -221,6 +225,15 @@ void BayesianOptimizer::finalize_current_controller(double fitness)
 
     // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
     this->observations.push_back(observation);
+
+    std::string directory_name = ".";
+//            ->GetAttribute("output_directory")->GetAsString();
+    // Write fitness to file
+    std::ofstream fitness_file;
+    fitness_file.open(directory_name + "/experiments/IMC/output/fitnesses.txt", std::ios::app);
+    fitness_file << std::fixed << fitness << std::endl;
+    fitness_file.flush();
+    fitness_file.close();
 }
 
 void BayesianOptimizer::load_best_controller()

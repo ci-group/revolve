@@ -76,6 +76,22 @@ PositionMotor::~PositionMotor() = default;
 //   DoUpdate(info.simTime);
 // }
 
+double PositionMotor::Current_State(  Actuator::StateType type)
+{
+    if (type==0)
+    {
+        return this->joint_->Position(0);
+    }
+    else if (type == 1)
+    {
+        return this->joint_->GetVelocity(0);
+    }
+  else if (type == 2)
+    {
+        return this->joint_->GetForce(0);
+    }
+}
+
 /////////////////////////////////////////////////
 void PositionMotor::write(
     const double *outputs,
@@ -94,9 +110,10 @@ void PositionMotor::write(
   // rate won't mess with the joint constraints as much leading to a more
   // stable system.
   output = std::fmin(std::fmax(1e-5, output), 0.99999);
-  this->positionTarget_ = this->lowerLimit_ +
-                          (output * (this->upperLimit_ - this->lowerLimit_));
+//  this->positionTarget_ = this->lowerLimit_ +
+//                          (output * (this->upperLimit_ - this->lowerLimit_));
 
+    this->positionTarget_ = output*2*5.235988-5.235988;
   // Perform the actual motor update
   this->DoUpdate(this->joint_->GetWorld()->SimTime());
 }
@@ -128,8 +145,11 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
     position += (position > 0 ? -2 * M_PI : 2 * M_PI);
   }
 
-  auto error = position - this->positionTarget_;
-  auto cmd = this->pid_.Update(error, stepTime);
+//  auto error = (position - this->positionTarget_);
+//  auto cmd = this->pid_.Update(error, stepTime)/stepTime.Double();
+  auto cmd = this->positionTarget_;
+  auto velLimit = joint_->GetVelocityLimit(0);
+  cmd = std::fmax(-velLimit,std::fmin(velLimit,cmd));
 
-  this->joint_->SetParam("vel", 0, cmd);
+    this->joint_->SetParam("vel", 0, cmd);
 }
