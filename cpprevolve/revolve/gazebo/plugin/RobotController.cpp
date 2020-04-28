@@ -344,26 +344,6 @@ void RobotController::LoadBattery(const sdf::ElementPtr _sdf)
 }
 
 /////////////////////////////////////////////////
-double RobotController::BatteryLevel()
-{
-  if (not batteryElem_ or not batteryElem_->HasElement("rv:level"))
-  {
-    return 0.0;
-  }
-
-  return batteryElem_->GetElement("rv:level")->Get< double >();
-}
-
-/////////////////////////////////////////////////
-void RobotController::SetBatteryLevel(double _level)
-{
-  if (batteryElem_ and batteryElem_->HasElement("rv:level"))
-  {
-    batteryElem_->GetElement("rv:level")->Set(_level);
-  }
-}
-
-/////////////////////////////////////////////////
 void RobotController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 
   if (not this->robotStatesPubFreq_) {
