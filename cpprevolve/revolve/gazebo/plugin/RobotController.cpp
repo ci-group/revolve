@@ -163,6 +163,7 @@ void RobotController::UpdateBattery(ConstRequestPtr &_request)
     resp.set_id(_request->id());
     resp.set_request(_request->request());
 
+    /*
     if (_request->request() == "set_battery_level")
     {
         resp.set_response("success");
@@ -174,6 +175,7 @@ void RobotController::UpdateBattery(ConstRequestPtr &_request)
         ss << this->BatteryLevel();
         resp.set_response(ss.str());
     }
+    */
 
     batterySetPub_->Publish(resp);
 }
@@ -338,6 +340,26 @@ void RobotController::LoadBattery(const sdf::ElementPtr _sdf)
     this->battery_->ResetVoltage();
     this->battery_->robot_name = this->model_->GetName();
 
+  }
+}
+
+/////////////////////////////////////////////////
+double RobotController::BatteryLevel()
+{
+  if (not batteryElem_ or not batteryElem_->HasElement("rv:level"))
+  {
+    return 0.0;
+  }
+
+  return batteryElem_->GetElement("rv:level")->Get< double >();
+}
+
+/////////////////////////////////////////////////
+void RobotController::SetBatteryLevel(double _level)
+{
+  if (batteryElem_ and batteryElem_->HasElement("rv:level"))
+  {
+    batteryElem_->GetElement("rv:level")->Set(_level);
   }
 }
 

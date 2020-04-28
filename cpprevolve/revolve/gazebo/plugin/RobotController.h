@@ -65,16 +65,6 @@ namespace revolve
       /// according to the update rate specified in the robot plugin.
       virtual void DoUpdate(const ::gazebo::common::UpdateInfo _info);
 
-      /// \brief Returns the battery level
-      /// \details Methods allows reading and writing the battery level in
-      /// the robot SDF. This is mostly useful for the `BatterySensor` to
-      /// obtain the battery state, and storing it in the SDF also means it
-      /// will be adequately backed up in an eventual snapshot.
-      double BatteryLevel();
-
-      /// \brief Sets the battery level if possible
-      void SetBatteryLevel(double _level);
-
       /// \brief Request listener for battery update
       void UpdateBattery(ConstRequestPtr &_request);
 
