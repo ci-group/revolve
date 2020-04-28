@@ -58,12 +58,12 @@ include_directories(${NLOpt_INCLUDE_DIRS})
 link_directories(${NLOpt_LIBRARY_DIRS})
 
 # Find SimpleAmqpClient
-find_library(SimpleAmqpClient REQUIRED libSimpleAmqpClient)
+pkg_check_modules(SimpleAmqpClient REQUIRED libSimpleAmqpClient)
 include_directories(${SimpleAmqpClient_INCLUDE_DIRS})
 link_directories(${SimpleAmqpClient_LIBRARY_DIRS})
 
 # Find json
-find_package(jsoncpp REQUIRED)
+find_package(jsoncpp CONFIG REQUIRED)
 include_directories(${JSONCPP_INCLUDE_DIRS})
 link_directories(${JSONCPP_LIBRARY_DIRS})
 
@@ -243,12 +243,16 @@ add_library(
         plugin/CeleryWorldController.cpp
         plugin/register_celeryworld_plugin.cpp
 )
+
+message("Is this empty? ${SimpleAmqpClient_LIBRARIES}")
+
 target_link_libraries(
         CeleryWorldControlPlugin
         revolve-gazebo
 	revolve-proto
+	jsoncpp_lib
+	${SimpleAmqpClient_LIBRARIES}
         ${GAZEBO_LIBRARIES}
-	${JSONCPP_LIBRARIES}
 )
 
 # Create Analyzer plugin
@@ -269,6 +273,7 @@ add_library(TorusWorldPlugin SHARED
         plugin/TorusWorld.cpp
         plugin/register_torus_world_plugin.cpp
 )
+
 target_link_libraries(TorusWorldPlugin
         revolve-gazebo
         ${GAZEBO_LIBRARIES}

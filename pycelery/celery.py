@@ -8,6 +8,8 @@ cpa_monkey.patch()
 
 app = Celery('pycelery')
 
+app.control.purge()
+
 # Setting configurations of celery.
 app.conf.update(
     broker_url = 'pyamqp://localhost:5672//',
@@ -33,9 +35,7 @@ app.conf.update(
 #     """This function disables logging."""
 #     pass
 
-app.log.setup()
+# app.log.setup()
 
 if __name__ == '__main__':
     app.start()
-    
-    app.control.purge()

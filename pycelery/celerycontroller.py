@@ -28,7 +28,7 @@ class CeleryController:
         """
 
         logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores. ")
-        subprocess.Popen("celery multi start "+str(self.settings.n_cores)+" -Q robots -A pycelery -P celery_pool_asyncio:TaskPool -c 1", shell=True)
+        subprocess.Popen("celery multi start "+str(self.settings.n_cores)+" -Q robots -A pycelery -P celery_pool_asyncio:TaskPool -l info -c 1", shell=True)
 
     async def reset_connections(self):
         logger.info("Resetting connection on every worker.")
