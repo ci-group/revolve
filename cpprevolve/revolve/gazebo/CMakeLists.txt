@@ -244,14 +244,11 @@ add_library(
         plugin/register_celeryworld_plugin.cpp
 )
 
-message("Is this empty? ${SimpleAmqpClient_LIBRARIES}")
-
 target_link_libraries(
         CeleryWorldControlPlugin
         revolve-gazebo
 	revolve-proto
 	jsoncpp_lib
-	${SimpleAmqpClient_LIBRARIES}
         ${GAZEBO_LIBRARIES}
 )
 
