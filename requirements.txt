@@ -12,5 +12,7 @@ joblib
 pandas
 neat-python>=0.92
 python-dateutil>=2.8.0
+celery==4.4.0
+celery-pool-asyncio==0.1.10
 
 -e git+https://github.com/ci-group/pygazebo.git@master#egg=pygazebo
