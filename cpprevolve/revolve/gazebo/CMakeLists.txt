@@ -5,7 +5,8 @@
 set(CMAKE_RARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
-
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
+ 
 include_directories(${CMAKE_SOURCE_DIR}/cpprevolve)
 
 # Pass source dir to preprocessor
@@ -216,7 +217,6 @@ target_link_libraries(
         ${YAML_CPP_LIBRARIES}
         ${NLOpt_LIBRARIES}
         ${SimpleAmqpClient_LIBRARIES}
-        ${JSONCPP_LIBRARIES}
 )
 
 target_compile_definitions(
