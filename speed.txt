@@ -86,3 +86,6 @@ runtime: 1949.4200978279114 on 4 cores. Gen: 20, Population: 100, Offspring: 50
 runtime: 2526.5817832946777 on 4 cores. Gen: 20, Population: 100, Offspring: 50
 runtime: 39.14139413833618 on 4 cores. Gen: 1, Population: 10, Offspring: 5
 runtime: 49.09405994415283 on 4 cores. Gen: 1, Population: 10, Offspring: 5
+runtime: 40.84589338302612 on 4 cores. Gen: 1, Population: 10, Offspring: 5
+runtime: 41.94770693778992 on 4 cores. Gen: 1, Population: 10, Offspring: 5
+runtime: 44.68795466423035 on 4 cores. Gen: 1, Population: 10, Offspring: 5
