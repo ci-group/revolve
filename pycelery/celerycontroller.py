@@ -69,8 +69,8 @@ class CeleryController:
 
         for i in range(self.settings.n_cores):
             result = await shutdowns[i].get()
-            logger.info(f"Worker {i} with result: {result}")
 
+        ## Not sure about this process yet. It might be better to exit these instances in other ways.
         subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
         subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
 

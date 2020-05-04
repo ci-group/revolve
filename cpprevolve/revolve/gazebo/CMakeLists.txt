@@ -6,7 +6,7 @@ set(CMAKE_RARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
- 
+
 include_directories(${CMAKE_SOURCE_DIR}/cpprevolve)
 
 # Pass source dir to preprocessor
@@ -65,8 +65,6 @@ link_directories(${SimpleAmqpClient_LIBRARY_DIRS})
 
 # Find json
 find_package(jsoncpp CONFIG REQUIRED)
-include_directories(${JSONCPP_INCLUDE_DIRS})
-link_directories(${JSONCPP_LIBRARY_DIRS})
 
 # Find Limbo - LIbrary for Model-Based Optimization
 set(LIMBO_DIR ${CMAKE_SOURCE_DIR}/thirdparty/limbo)
@@ -216,7 +214,8 @@ target_link_libraries(
         ${GSL_LIBRARIES}
         ${YAML_CPP_LIBRARIES}
         ${NLOpt_LIBRARIES}
-        ${SimpleAmqpClient_LIBRARIES}
+        jsoncpp_lib
+        SimpleAmqpClient
 )
 
 target_compile_definitions(
@@ -247,8 +246,7 @@ add_library(
 target_link_libraries(
         CeleryWorldControlPlugin
         revolve-gazebo
-	revolve-proto
-	jsoncpp_lib
+	      revolve-proto
         ${GAZEBO_LIBRARIES}
 )
 
