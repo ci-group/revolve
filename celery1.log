@@ -1,0 +1,44 @@
+[2020-05-05 13:44:07,664: INFO/MainProcess] Connected to amqp://guest:**@127.0.0.1:5672//
+[2020-05-05 13:44:07,673: INFO/MainProcess] mingle: searching for neighbors
+[2020-05-05 13:44:08,705: INFO/MainProcess] mingle: all alone
+[2020-05-05 13:44:08,717: INFO/MainProcess] celery1@ripper2 ready.
+[2020-05-05 13:44:10,672: INFO/MainProcess] Received task: pycelery.tasks.run_gazebo_and_analyzer[9afb8157-30c5-4910-acc5-289843739be6]  
+[2020-05-05 13:44:10,676: WARNING/MainProcess] Attach loop failed.
+[2020-05-05 13:44:10,677: WARNING/MainProcess] [2020-05-05 13:44:10,677   gazebo_0] INFO     Created Supervisor with:
+	- simulator command: gzserver ['--verbose']
+	- world file: worlds/celeryplane.world
+	- GAZEBO_PLUGIN_PATH: /home/daanz/optimization_workspace/revolve/build/lib
+	- GAZEBO_MODEL_PATH: /home/daanz/optimization_workspace/revolve/models
+[2020-05-05 13:44:10,677: INFO/MainProcess] Created Supervisor with:
+	- simulator command: gzserver ['--verbose']
+	- world file: worlds/celeryplane.world
+	- GAZEBO_PLUGIN_PATH: /home/daanz/optimization_workspace/revolve/build/lib
+	- GAZEBO_MODEL_PATH: /home/daanz/optimization_workspace/revolve/models
+[2020-05-05 13:44:10,677: WARNING/MainProcess] [2020-05-05 13:44:10,677   gazebo_0] INFO     Launching the simulator...
+[2020-05-05 13:44:10,677: INFO/MainProcess] Launching the simulator...
+[2020-05-05 13:44:10,940: WARNING/MainProcess] [2020-05-05 13:44:10,939   gazebo_0] INFO     [starting] [1;32m[Msg] [0m[1;32mWaiting for master.[0m[1;32m
+[2020-05-05 13:44:10,939: INFO/MainProcess] [starting] [1;32m[Msg] [0m[1;32mWaiting for master.[0m[1;32m
+[2020-05-05 13:44:10,940: WARNING/MainProcess] [2020-05-05 13:44:10,940   gazebo_0] INFO     [0m[1;32m[0m[1;32m[Msg] [0m[1;32mConnected to gazebo master @ [0m[1;32mhttp://127.0.0.1:10000[0m[1;32m
+[2020-05-05 13:44:10,940: INFO/MainProcess] [0m[1;32m[0m[1;32m[Msg] [0m[1;32mConnected to gazebo master @ [0m[1;32mhttp://127.0.0.1:10000[0m[1;32m
+[2020-05-05 13:44:10,940: WARNING/MainProcess] [2020-05-05 13:44:10,940   gazebo_0] INFO     [0m[1;32m[0m[1;32m[Msg] [0m[1;32mPublicized address: [0m[1;32m145.108.196.54[0m[1;32m
+[2020-05-05 13:44:10,940: INFO/MainProcess] [0m[1;32m[0m[1;32m[Msg] [0m[1;32mPublicized address: [0m[1;32m145.108.196.54[0m[1;32m
+[2020-05-05 13:44:10,940: WARNING/MainProcess] [2020-05-05 13:44:10,940   gazebo_0] ERROR    Gazebo multi-robot simulator, version 10.1.0
+[2020-05-05 13:44:10,940: ERROR/MainProcess] Gazebo multi-robot simulator, version 10.1.0
+[2020-05-05 13:44:10,941: WARNING/MainProcess] [2020-05-05 13:44:10,941   gazebo_0] ERROR    Copyright (C) 2012 Open Source Robotics Foundation.
+[2020-05-05 13:44:10,941: ERROR/MainProcess] Copyright (C) 2012 Open Source Robotics Foundation.
+[2020-05-05 13:44:10,941: WARNING/MainProcess] [2020-05-05 13:44:10,941   gazebo_0] ERROR    Released under the Apache 2 License.
+[2020-05-05 13:44:10,941: ERROR/MainProcess] Released under the Apache 2 License.
+[2020-05-05 13:44:10,941: WARNING/MainProcess] [2020-05-05 13:44:10,941   gazebo_0] ERROR    http://gazebosim.org
+[2020-05-05 13:44:10,941: ERROR/MainProcess] http://gazebosim.org
+[2020-05-05 13:44:10,941: WARNING/MainProcess] [2020-05-05 13:44:10,941   gazebo_0] ERROR
+[2020-05-05 13:44:10,941: ERROR/MainProcess] 
+[2020-05-05 13:44:10,941: WARNING/MainProcess] [2020-05-05 13:44:10,941   gazebo_0] ERROR    [1;31m[Err] [RenderEngine.cc:728] [0m[1;31mCan't open display: [0m[1;31m[0m[1;31m
+[2020-05-05 13:44:10,941: ERROR/MainProcess] [1;31m[Err] [RenderEngine.cc:728] [0m[1;31mCan't open display: [0m[1;31m[0m[1;31m
+[2020-05-05 13:44:10,941: WARNING/MainProcess] [2020-05-05 13:44:10,941   gazebo_0] ERROR    [0m[1;33m[Wrn] [RenderEngine.cc:93] [0m[1;33mUnable to create X window. Rendering will be disabled
+[2020-05-05 13:44:10,941: ERROR/MainProcess] [0m[1;33m[Wrn] [RenderEngine.cc:93] [0m[1;33mUnable to create X window. Rendering will be disabled
+[2020-05-05 13:44:10,942: WARNING/MainProcess] [2020-05-05 13:44:10,941   gazebo_0] ERROR    [0m[1;33m[Wrn] [RenderEngine.cc:293] [0m[1;33mCannot initialize render engine since [0m[1;33mrender path type is NONE. Ignore this warning if[0m[1;33mrendering has been turned off on purpose.
+[2020-05-05 13:44:10,941: ERROR/MainProcess] [0m[1;33m[Wrn] [RenderEngine.cc:293] [0m[1;33mCannot initialize render engine since [0m[1;33mrender path type is NONE. Ignore this warning if[0m[1;33mrendering has been turned off on purpose.
+[2020-05-05 13:44:11,206: WARNING/MainProcess] [2020-05-05 13:44:11,205   gazebo_0] ERROR    [0m[1;31m[Err] [Plugin.hh:187] [0m[1;31mFailed to load plugin [0m[1;31m/home/daanz/optimization_workspace/revolve/build/lib/libCeleryWorldControlPlugin.so[0m[1;31m: [0m[1;31mlibSimpleAmqpClient.so.2: cannot open shared object file: No such file or directory[0m[1;31m
+[2020-05-05 13:44:11,205: ERROR/MainProcess] [0m[1;31m[Err] [Plugin.hh:187] [0m[1;31mFailed to load plugin [0m[1;31m/home/daanz/optimization_workspace/revolve/build/lib/libCeleryWorldControlPlugin.so[0m[1;31m: [0m[1;31mlibSimpleAmqpClient.so.2: cannot open shared object file: No such file or directory[0m[1;31m
+[2020-05-05 13:44:11,264: WARNING/MainProcess] [2020-05-05 13:44:11,263   gazebo_0] ERROR    [0m[1;33m[Wrn] [Publisher.cc:142] [0m[1;33mQueue limit reached for topic [0m[1;33m/gazebo/default/physics/contacts[0m[1;33m, deleting message. [0m[1;33mThis warning is printed only once.[0m[1;33m
+[2020-05-05 13:44:11,263: ERROR/MainProcess] [0m[1;33m[Wrn] [Publisher.cc:142] [0m[1;33mQueue limit reached for topic [0m[1;33m/gazebo/default/physics/contacts[0m[1;33m, deleting message. [0m[1;33mThis warning is printed only once.[0m[1;33m
