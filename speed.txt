@@ -70,22 +70,5 @@ runtime: 948.1255295276642 on 4 cores
 runtime: 831.4269962310791 on 4 cores
 runtime: 797.058183670044 on 4 cores
 runtime: 849.9681017398834 on 4 cores
-runtime: 252.04378509521484 on 4 cores
-runtime: 190.5873579978943 on 4 cores
-runtime: 350.3830602169037 on 4 cores. Gen: 5, Population: 100, Offspring: 50
-runtime: 453.34073209762573 on 4 cores. Gen: 5, Population: 100, Offspring: 50
-runtime: 431.7494490146637 on 4 cores. Gen: 5, Population: 100, Offspring: 50
-runtime: 357.5847795009613 on 4 cores. Gen: 5, Population: 100, Offspring: 50
-runtime: 746.8557877540588 on 4 cores. Gen: 5, Population: 200, Offspring: 100
-runtime: 1547.8356235027313 on 4 cores. Gen: 20, Population: 100, Offspring: 50
-runtime: 2071.1255826950073 on 4 cores. Gen: 40, Population: 100, Offspring: 50
-runtime: 7019.962174415588 on 4 cores. Gen: 40, Population: 100, Offspring: 50
-runtime: 2460.9678070545197 on 3 cores. Gen: 20, Population: 100, Offspring: 50
-runtime: 3303.576198577881 on 4 cores. Gen: 20, Population: 100, Offspring: 50
-runtime: 1949.4200978279114 on 4 cores. Gen: 20, Population: 100, Offspring: 50
-runtime: 2526.5817832946777 on 4 cores. Gen: 20, Population: 100, Offspring: 50
-runtime: 39.14139413833618 on 4 cores. Gen: 1, Population: 10, Offspring: 5
-runtime: 49.09405994415283 on 4 cores. Gen: 1, Population: 10, Offspring: 5
-runtime: 40.84589338302612 on 4 cores. Gen: 1, Population: 10, Offspring: 5
-runtime: 41.94770693778992 on 4 cores. Gen: 1, Population: 10, Offspring: 5
-runtime: 44.68795466423035 on 4 cores. Gen: 1, Population: 10, Offspring: 5
+
+FROM HERE EVERYTHING IS CALCULATED ON THE RIPPER

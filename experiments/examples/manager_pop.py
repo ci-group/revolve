@@ -22,7 +22,7 @@ async def run():
     """
     The main coroutine, which is started below.
     """
-    
+
     # experiment params #
     num_generations = 20
     population_size = 100
@@ -115,6 +115,9 @@ async def run():
     while gen_num < num_generations-1:
         gen_num += 1
         population = await population.next_gen(gen_num)
+        b1=time.time()
         experiment_management.export_snapshots(population.individuals, gen_num)
+        b2=time.time()
+        logger.info(f"Snapshot took: {b2-b1} seconds")
 
     # output result after completing all generations...
