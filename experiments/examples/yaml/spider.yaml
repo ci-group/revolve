@@ -146,3 +146,6 @@ body:
                   orientation : 0
 brain:
   type: rlpower-splines
+robot_config:
+  battery:
+    initial_charge: 1.0

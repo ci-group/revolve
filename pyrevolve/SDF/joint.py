@@ -36,6 +36,8 @@ class Joint(SDF.Posable):
         self.axis = JointAxis(axis)
         self.append(self.axis)
 
+        self.append(JointODEPhysics())
+
     def is_motorized(self):
         return self._motorized
 
@@ -66,6 +68,13 @@ class Joint(SDF.Posable):
         # SDF.sub_element_text(pid, 'rv:cmd_min', 0.0)
 
         return servomotor
+
+
+class JointODEPhysics(xml.etree.ElementTree.Element):
+    def __init__(self):
+        super().__init__('physics')
+        # ode = xml.etree.ElementTree.SubElement(self, 'ode')
+        SDF.sub_element_text(self, 'provide_feedback', True)
 
 
 class JointAxis(xml.etree.ElementTree.Element):

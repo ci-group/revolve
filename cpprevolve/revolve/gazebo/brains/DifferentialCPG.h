@@ -33,6 +33,7 @@
 // Project headers
 #include "Evaluator.h"
 #include "Brain.h"
+#include <revolve/gazebo/battery/Battery.h>
 
 /// These numbers are quite arbitrary. It used to be in:13 out:8 for the
 /// Arduino, but I upped them both to 20 to accommodate other scenarios.
@@ -68,7 +69,8 @@ namespace revolve
           const ::gazebo::physics::ModelPtr &_model,
           const sdf::ElementPtr robot_config,
           const std::vector< MotorPtr > &_motors,
-          const std::vector< SensorPtr > &_sensors);
+          const std::vector< SensorPtr > &_sensors,
+          std::shared_ptr<::revolve::gazebo::Battery> battery);
 
       public: void set_ode_matrix();
 

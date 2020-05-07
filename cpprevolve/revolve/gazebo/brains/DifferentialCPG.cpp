@@ -74,7 +74,8 @@ DifferentialCPG::DifferentialCPG(
     const ::gazebo::physics::ModelPtr &_model,
     const sdf::ElementPtr robot_config,
     const std::vector< revolve::gazebo::MotorPtr > &_motors,
-    const std::vector< revolve::gazebo::SensorPtr > &_sensors)
+    const std::vector< revolve::gazebo::SensorPtr > &_sensors,
+    std::shared_ptr<::revolve::gazebo::Battery> battery)
     : next_state(nullptr)
     , input(new double[_sensors.size()])
     , output(new double[_motors.size()])
@@ -280,12 +281,15 @@ DifferentialCPG::DifferentialCPG(
   }
 
   // Create directory for output.
-  this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
+  //  this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
   if(this->directory_name.empty())
   {
-    this->directory_name = "output/cpg_bo/";
-    this->directory_name += std::to_string(time(0)) + "/";
+    std::cout << "§yes§";
+    this->directory_name = "output/cpg_bo/" + this->robot->GetName() + "/"; // CHANGETHIS
+    this->directory_name += battery->time_init + "/";
   }
+  else
+    std::cout << "§no§\n";
 
   std::system(("mkdir -p " + this->directory_name).c_str());
 

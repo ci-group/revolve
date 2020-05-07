@@ -7,6 +7,7 @@ from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf import descriptor_pb2
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -19,10 +20,10 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='sdf_body_analyze.proto',
   package='revolve.msgs',
   syntax='proto2',
-  serialized_options=None,
   serialized_pb=_b('\n\x16sdf_body_analyze.proto\x12\x0crevolve.msgs\x1a\x0evector3d.proto\"1\n\x07\x43ontact\x12\x12\n\ncollision1\x18\x01 \x02(\t\x12\x12\n\ncollision2\x18\x02 \x02(\t\"U\n\x0b\x42oundingBox\x12\"\n\x03min\x18\x01 \x02(\x0b\x32\x15.gazebo.msgs.Vector3d\x12\"\n\x03max\x18\x02 \x02(\x0b\x32\x15.gazebo.msgs.Vector3d\"n\n\x14\x42odyAnalysisResponse\x12.\n\x0b\x62oundingBox\x18\x01 \x01(\x0b\x32\x19.revolve.msgs.BoundingBox\x12&\n\x07\x63ontact\x18\x02 \x03(\x0b\x32\x15.revolve.msgs.Contact')
   ,
   dependencies=[vector3d__pb2.DESCRIPTOR,])
+_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 
 
@@ -40,21 +41,21 @@ _CONTACT = _descriptor.Descriptor(
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='collision2', full_name='revolve.msgs.Contact.collision2', index=1,
       number=2, type=9, cpp_type=9, label=2,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
+  options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],
@@ -78,21 +79,21 @@ _BOUNDINGBOX = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='max', full_name='revolve.msgs.BoundingBox.max', index=1,
       number=2, type=11, cpp_type=10, label=2,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
+  options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],
@@ -116,21 +117,21 @@ _BODYANALYSISRESPONSE = _descriptor.Descriptor(
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
     _descriptor.FieldDescriptor(
       name='contact', full_name='revolve.msgs.BodyAnalysisResponse.contact', index=1,
       number=2, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      options=None),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
+  options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],
@@ -147,7 +148,6 @@ _BODYANALYSISRESPONSE.fields_by_name['contact'].message_type = _CONTACT
 DESCRIPTOR.message_types_by_name['Contact'] = _CONTACT
 DESCRIPTOR.message_types_by_name['BoundingBox'] = _BOUNDINGBOX
 DESCRIPTOR.message_types_by_name['BodyAnalysisResponse'] = _BODYANALYSISRESPONSE
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Contact = _reflection.GeneratedProtocolMessageType('Contact', (_message.Message,), dict(
   DESCRIPTOR = _CONTACT,

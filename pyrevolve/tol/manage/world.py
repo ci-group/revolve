@@ -176,6 +176,13 @@ class World(WorldManager):
         future = multi_future(futures)
         future.add_done_callback(
             lambda _: logger.info("Done inserting population."))
+
+        # Awaiting this immediately will lock the program
+        update_state_future = self.set_state_update_frequency(
+            freq=self.state_update_frequency
+        )
+        await update_state_future
+
         return future
 
     def to_sdfbot(self, robot, robot_name, initial_battery=0.0):

@@ -3,7 +3,7 @@
 set -e
 
 PROTO_FOLDER='../cpprevolve/revolve/gazebo/msgs'
-GAZEBO_PROTO_FOLDER='/home/matteo/Tools/gazebo/include/gazebo-10/gazebo/msgs/proto/'
+GAZEBO_PROTO_FOLDER='/usr/include/gazebo-9/gazebo/msgs/proto'
 PY_PROTOBUF_FOLDER='../pyrevolve/spec/msgs/'
 
 # Generate Python protobuf files

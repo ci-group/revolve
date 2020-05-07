@@ -30,6 +30,11 @@
 
 #include <revolve/gazebo/Types.h>
 
+#include <revolve/gazebo/battery/Battery.h>
+
+#include <revolve/msgs/model_inserted.pb.h>
+#include <revolve/msgs/robot_states.pb.h>
+
 namespace revolve
 {
   namespace gazebo
@@ -86,6 +91,7 @@ namespace revolve
       /// \brief Loads / initializes the robot battery
       protected: virtual void LoadBattery(const sdf::ElementPtr _sdf);
 
+      protected: virtual void OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info);
       /// \brief Method called at the end of the default `Load` function.
       /// \details This  should be used to initialize robot actuation, i.e.
       /// register some update event. By default, this grabs the
@@ -98,11 +104,19 @@ namespace revolve
       /// \brief actuation time has passed and updates if required.
       protected: void CheckUpdate(const ::gazebo::common::UpdateInfo _info);
 
+      // Listener for analysis requests
+      virtual void HandleRequest(ConstRequestPtr &request);
+
       /// \brief Networking node
       protected: ::gazebo::transport::NodePtr node_;
 
       /// \brief Subscriber for battery update request
       protected: ::gazebo::transport::SubscriberPtr batterySetSub_;
+
+      protected: ::gazebo::event::ConnectionPtr onBeginUpdateConnection;
+
+      // Response publisher
+      protected: ::gazebo::transport::PublisherPtr responsePub_;
 
       /// \brief Responder for battery update request
       protected: ::gazebo::transport::PublisherPtr batterySetPub_;
@@ -139,6 +153,31 @@ namespace revolve
 
       /// \brief Pointer to the world
       protected: ::gazebo::physics::WorldPtr world_;
+
+      /// \brief Shared pointer to the battery
+      protected: std::shared_ptr<Battery> battery_;
+
+      protected: ::gazebo::physics::Model_V models_to_remove;
+
+      // Request subscriber
+      protected: ::gazebo::transport::SubscriberPtr requestSub_;
+
+      // Death sentence list. It collects all the end time for all robots that have
+      // a death sentence
+      // NEGATIVE DEATH SENTENCES mean total lifetime, death sentence not yet initialized.
+      protected: std::map<std::string, double> death_sentences_;
+
+      // Mutex for the deleteMap_
+      protected: boost::mutex death_sentences_mutex_;
+
+      // Publisher for periodic robot poses
+      protected: ::gazebo::transport::PublisherPtr robotStatesPub_;
+
+      // Frequency at which robot info is published
+      // Defaults to 0, which means no update at all
+      protected: unsigned int robotStatesPubFreq_;
+      // Last (simulation) time robot info was sent
+      protected: double lastRobotStatesUpdateTime_;
 
       /// \brief Driver update event pointer
       private: ::gazebo::event::ConnectionPtr updateConnection_;

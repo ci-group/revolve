@@ -169,6 +169,7 @@ set_source_files_properties(
 # Plugin C++ files
 file(GLOB_RECURSE
         REVOLVE_GZ_SRC
+        battery/*.cpp
         brains/*.cpp
         motors/*.cpp
         sensors/*.cpp

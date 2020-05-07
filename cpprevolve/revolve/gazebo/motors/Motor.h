@@ -27,6 +27,8 @@
 
 #include <revolve/gazebo/Types.h>
 
+#include <revolve/gazebo/battery/Battery.h>
+
 namespace revolve
 {
   namespace gazebo
@@ -84,6 +86,14 @@ namespace revolve
 
       /// \brief Number of output neurons that should be connected to the motor.
       protected: unsigned int outputs_;
+
+      /// \brief Pointer to the battery
+      protected: std::shared_ptr<::revolve::gazebo::Battery> battery_;
+
+      /// \brief The id of the consumer
+      protected: uint32_t consumerId_;
+
+      friend class MotorFactory;
     };
   } /* namespace gazebo */
 } /* namespace tol_robogen */
