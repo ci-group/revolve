@@ -250,6 +250,7 @@ void RobotController::UpdateBattery(ConstRequestPtr &_request)
   resp.set_id(_request->id());
   resp.set_request(_request->request());
 
+  /* TODO set battery level customized
   if (_request->request() == "set_battery_level")
   {
     resp.set_response("success");
@@ -261,6 +262,7 @@ void RobotController::UpdateBattery(ConstRequestPtr &_request)
     ss << this->BatteryLevel();
     resp.set_response(ss.str());
   }
+  */
 
   batterySetPub_->Publish(resp);
 }
