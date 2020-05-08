@@ -235,6 +235,7 @@ class Population:
         :param new_individuals: newly created population after an evolution iteration
         :param gen_num: generation number
         """
+        b2 = time.time()
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
         robot_futures = []
@@ -274,7 +275,10 @@ class Population:
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_fitness(individual)
 
-
+        e2 = time.time()
+        f = open("speed.txt", "a")
+        f.write(f"Robot evaluation (generation {gen_num}) took: {e2-b2} seconds.\n")
+        f.close()
 
     async def evaluate_single_robot(self, individual):
         """

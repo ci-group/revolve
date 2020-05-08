@@ -34,9 +34,9 @@ async def run():
     await asyncio.sleep(5) # Celery needs time
 
     # experiment params #
-    num_generations = 1
-    population_size = 10
-    offspring_size = 5
+    num_generations = 50
+    population_size = 100
+    offspring_size = 50
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -117,16 +117,29 @@ async def run():
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
+    end1 = time.time()
+    f=open("speed.txt", "a")
+    f.write(f"NEW EXPERIMENT: Initialization took {end1-begin} seconds. \n")
+
+    export_time = []
     while gen_num < num_generations-1:
         gen_num += 1
+
         population = await population.next_gen(gen_num)
 
         # reset gazebo and celery if something went wrong or every 10 generations
-        if population.conf.celery_reboot:
-            await celerycontroller.reset_celery()
-            population.conf.celery_reboot = False
+        # if population.conf.celery_reboot:
+        #    await celerycontroller.reset_celery()
+        #    population.conf.celery_reboot = False}
 
+        b1 = time.time()
         experiment_management.export_snapshots(population.individuals, gen_num)
+        b2 = time.time()
+
+        export_time.append(b2-b1)
+        f = open("speed.txt", "a")
+        f.write(f"Export times: {export_time} \n")
+        f.close()
 
     await celerycontroller.shutdown()
 
