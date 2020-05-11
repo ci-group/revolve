@@ -70,6 +70,12 @@ class PopulationConfig:
         self.celery = celery
         self.celery_reboot = celery_reboot
 
+        # For analyzing speed up
+        self.generation_time = []
+        self.generation_init = []
+        self.analyzer_time = []
+        self.generational_fin = []
+
 class Population:
     def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
         """
@@ -187,6 +193,7 @@ class Population:
         :param individuals: recovered offspring
         :return: new population
         """
+        g1 = time.time()
 
         new_individuals = []
 
@@ -211,11 +218,14 @@ class Population:
 
             new_individuals.append(individual)
 
+        g2 = time.time()
+        self.generation_init.append(g2-g1)
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
 
         new_individuals = recovered_individuals + new_individuals
 
+        f1 = time.time()
         # create next population
         if self.conf.population_management_selector is not None:
             new_individuals = self.conf.population_management(self.individuals, new_individuals,
@@ -225,6 +235,9 @@ class Population:
         new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
         new_population.individuals = new_individuals
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
+
+        f2 = time.time()
+        self.generational_fin.append(f2-f1)
 
         return new_population
 
@@ -276,9 +289,7 @@ class Population:
                 self.conf.experiment_management.export_fitness(individual)
 
         e2 = time.time()
-        f = open("speed.txt", "a")
-        f.write(f"Robot evaluation (generation {gen_num}) took: {e2-b2} seconds.\n")
-        f.close()
+        self.generation_time.append(b2-e2)
 
     async def evaluate_single_robot(self, individual):
         """
@@ -288,10 +299,13 @@ class Population:
         if individual.phenotype is None:
             individual.develop()
 
+        a1 = time.time()
         if self.analyzer_queue is not None:
             collisions, _bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
+        a2 = time.time()
+        self.analyzer_time.append(a2-a1)
 
         return await self.simulator_queue.test_robot(individual, self.conf)

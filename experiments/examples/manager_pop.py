@@ -22,6 +22,7 @@ async def run():
     """
     The main coroutine, which is started below.
     """
+    init1 = time.time()
 
     # experiment params #
     num_generations = 20
@@ -112,12 +113,21 @@ async def run():
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
+
+    snapshot = []
+    init2=time.time()
+    initiation = init2-init1
+
     while gen_num < num_generations-1:
         gen_num += 1
         population = await population.next_gen(gen_num)
         b1=time.time()
         experiment_management.export_snapshots(population.individuals, gen_num)
         b2=time.time()
-        logger.info(f"Snapshot took: {b2-b1} seconds")
+        snapshot.append(b2-b1)
+        print(population.generation_time, population.generation_init, population.generational_fin, population.analyzer_time)
 
     # output result after completing all generations...
+    f = open("speed.txt", "a")
+    f.write(f"gen_time: {population.generation_time}, generation initiation {population.generation_init}, finalising generation: {population.generational_fin}, export times: {snapshot}, analyzer times: {population.analyzer_time}, initialization {initiation} \n")
+    f.close()
