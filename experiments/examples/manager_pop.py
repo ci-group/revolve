@@ -25,7 +25,7 @@ async def run():
     init1 = time.time()
 
     # experiment params #
-    num_generations = 20
+    num_generations = 30
     population_size = 100
     offspring_size = 50
 
@@ -129,5 +129,5 @@ async def run():
 
     # output result after completing all generations...
     f = open("speed.txt", "a")
-    f.write(f"gen_time: {population.generation_time}, generation initiation {population.generation_init}, finalising generation: {population.generational_fin}, export times: {snapshot}, analyzer times: {population.analyzer_time}, initialization {initiation} \n")
+    f.write(f"gen_time: {population.generation_time}, generation initiation {population.generation_init}, finalising generation: {population.generational_fin}, export times: {snapshot}, analyzer times: {population.analyzer_time}, initialization {initiationaaaaaa} \n")
     f.close()

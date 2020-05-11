@@ -70,12 +70,6 @@ class PopulationConfig:
         self.celery = celery
         self.celery_reboot = celery_reboot
 
-        # For analyzing speed up
-        self.generation_time = []
-        self.generation_init = []
-        self.analyzer_time = []
-        self.generational_fin = []
-
 class Population:
     def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
         """
@@ -94,6 +88,12 @@ class Population:
         self.analyzer_queue = analyzer_queue
         self.simulator_queue = simulator_queue
         self.next_robot_id = next_robot_id
+
+        # For analyzing speed up
+        self.generation_time = []
+        self.generation_init = []
+        self.analyzer_time = []
+        self.generational_fin = []
 
     def _new_individual(self, genotype):
         individual = Individual(genotype)
