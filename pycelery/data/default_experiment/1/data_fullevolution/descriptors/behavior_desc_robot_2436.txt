@@ -1,0 +1,5 @@
+velocity 0.004401830545083898
+displacement_velocity 0.0375897582390391
+displacement_velocity_hill 0.024566315221390744
+head_balance 0.6603720680962591
+contacts 0.0

@@ -1,0 +1,236 @@
+id: robot_739
+body:
+  id: '1'
+  type: CoreComponent
+  orientation: 0
+  params:
+    blue: 0
+    green: 1
+    red: 1
+  children:
+    1:
+      id: '2'
+      type: ActiveHinge
+      orientation: 0
+      params:
+        blue: 0.58
+        green: 0.08
+        red: 1
+      children:
+        1:
+          id: '3'
+          type: FixedBrick
+          orientation: 0
+          params:
+            blue: 1
+            green: 0
+            red: 0
+          children:
+            2:
+              id: '4'
+              type: ActiveHinge
+              orientation: 0
+              params:
+                blue: 0.58
+                green: 0.08
+                red: 1
+            3:
+              id: '5'
+              type: FixedBrick
+              orientation: 0
+              params:
+                blue: 1
+                green: 0
+                red: 0
+              children:
+                2:
+                  id: '6'
+                  type: ActiveHinge
+                  orientation: 90
+                  params:
+                    blue: 0
+                    green: 0
+                    red: 0.7
+                  children:
+                    1:
+                      id: '7'
+                      type: FixedBrick
+                      orientation: 270
+                      params:
+                        blue: 1
+                        green: 0
+                        red: 0
+                      children:
+                        2:
+                          id: '8'
+                          type: FixedBrick
+                          orientation: 0
+                          params:
+                            blue: 1
+                            green: 0
+                            red: 0
+                          children:
+                            2:
+                              id: '10'
+                              type: ActiveHinge
+                              orientation: 0
+                              params:
+                                blue: 0.58
+                                green: 0.08
+                                red: 1
+                            3:
+                              id: '9'
+                              type: FixedBrick
+                              orientation: 0
+                              params:
+                                blue: 1
+                                green: 0
+                                red: 0
+                              children:
+                                2:
+                                  id: '11'
+                                  type: ActiveHinge
+                                  orientation: 0
+                                  params:
+                                    blue: 0.58
+                                    green: 0.08
+                                    red: 1
+                                  children:
+                                    1:
+                                      id: '12'
+                                      type: FixedBrick
+                                      orientation: 0
+                                      params:
+                                        blue: 1
+                                        green: 0
+                                        red: 0
+                        3:
+                          id: 7s3
+                          type: TouchSensor
+                          orientation: 0
+                          params:
+                            blue: 0.7
+                            green: 0.7
+                            red: 0.7
+    2:
+      id: 1s2
+      type: TouchSensor
+      orientation: 0
+      params:
+        blue: 0.7
+        green: 0.7
+        red: 0.7
+brain:
+  type: neural-network
+  neurons:
+    node1:
+      id: node1
+      layer: input
+      part_id: 1s2
+      type: Input
+    node2:
+      id: node2
+      layer: output
+      part_id: '2'
+      type: Oscillator
+    node3:
+      id: node3
+      layer: output
+      part_id: '4'
+      type: Oscillator
+    node4:
+      id: node4
+      layer: output
+      part_id: '6'
+      type: Oscillator
+    node5:
+      id: node5
+      layer: input
+      part_id: 7s3
+      type: Input
+    node6:
+      id: node6
+      layer: output
+      part_id: '10'
+      type: Oscillator
+    node7:
+      id: node7
+      layer: output
+      part_id: '11'
+      type: Oscillator
+    node-core1:
+      id: node-core1
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core2:
+      id: node-core2
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core3:
+      id: node-core3
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core4:
+      id: node-core4
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core5:
+      id: node-core5
+      layer: input
+      part_id: '1'
+      type: Input
+    node-core6:
+      id: node-core6
+      layer: input
+      part_id: '1'
+      type: Input
+  connections:
+  - dst: node2
+    src: node1
+    weight: -1
+  - dst: node2
+    src: node2
+    weight: 0.18849199445742615
+  - dst: node3
+    src: node1
+    weight: -1
+  - dst: node4
+    src: node1
+    weight: -0.5858841083882464
+  - dst: node3
+    src: node3
+    weight: -0.17250559312406222
+  - dst: node3
+    src: node5
+    weight: 0.5853527019416249
+  - dst: node6
+    src: node1
+    weight: -0.00945930087379554
+  - dst: node7
+    src: node1
+    weight: 0.3221968388502776
+  params:
+    node2:
+      amplitude: 7.712976532242927
+      period: 5.597156978469817
+      phase_offset: 2.9888975901750126
+    node3:
+      amplitude: 7.1725048901364605
+      period: 5.449546869726557
+      phase_offset: 10
+    node4:
+      amplitude: 1.655197933923315
+      period: 4.1603219150142845
+      phase_offset: 7.7895670328185975
+    node6:
+      amplitude: 7.970763318785749
+      period: 5.449546869726557
+      phase_offset: 9.98691906138873
+    node7:
+      amplitude: 7.550574770507523
+      period: 3.952226324753263
+      phase_offset: 7.848377657524628

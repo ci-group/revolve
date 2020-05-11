@@ -31,7 +31,7 @@ async def run():
 
     celerycontroller = CeleryController(settings) # Starting celery
 
-    await asyncio.sleep(5) # Celery needs time
+    await asyncio.sleep(settings.n_cores) # Celery needs time
 
     # experiment params #
     num_generations = 50

@@ -52,7 +52,7 @@ class CeleryController:
         self.start_workers()
 
         # workers need time to start
-        await asyncio.sleep(5)
+        await asyncio.sleep(self.settings.n_cores)
 
         await self.start_gazebo_instances()
 
