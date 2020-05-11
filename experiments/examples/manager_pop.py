@@ -125,9 +125,6 @@ async def run():
         experiment_management.export_snapshots(population.individuals, gen_num)
         b2=time.time()
         snapshot.append(b2-b1)
-        print(population_conf.generation_time, population_conf.generation_init, population_conf.generational_fin)
+        logger.info(population_conf.generation_time, population_conf.generation_init, population_conf.generational_fin, snapshot)
 
     # output result after completing all generations...
-    f = open("speed.txt", "a")
-    f.write(f"gen_time: {population_conf.generation_time}, generation initiation {population_conf.generation_init}, finalising generation: {population_conf.generational_fin}, export times: {snapshot}, initialization {initiation} \n")
-    f.close()
