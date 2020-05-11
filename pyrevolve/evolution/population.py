@@ -289,7 +289,7 @@ class Population:
                 self.conf.experiment_management.export_fitness(individual)
 
         e2 = time.time()
-        self.conf.generation_time.append(b2-e2)
+        self.conf.generation_time.append(e2-b2)
 
     async def evaluate_single_robot(self, individual):
         """
@@ -299,13 +299,10 @@ class Population:
         if individual.phenotype is None:
             individual.develop()
 
-        a1 = time.time()
         if self.analyzer_queue is not None:
             collisions, _bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
-        a2 = time.time()
-        self.conf.analyzer_time.append(a2-a1)
 
         return await self.simulator_queue.test_robot(individual, self.conf)
