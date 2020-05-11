@@ -70,6 +70,12 @@ class PopulationConfig:
         self.celery = celery
         self.celery_reboot = celery_reboot
 
+        # For analyzing speed up
+        self.generation_time = []
+        self.generation_init = []
+        self.analyzer_time = []
+        self.generational_fin = []
+
 class Population:
     def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
         """
@@ -88,12 +94,6 @@ class Population:
         self.analyzer_queue = analyzer_queue
         self.simulator_queue = simulator_queue
         self.next_robot_id = next_robot_id
-
-        # For analyzing speed up
-        self.generation_time = []
-        self.generation_init = []
-        self.analyzer_time = []
-        self.generational_fin = []
 
     def _new_individual(self, genotype):
         individual = Individual(genotype)
@@ -219,7 +219,7 @@ class Population:
             new_individuals.append(individual)
 
         g2 = time.time()
-        self.generation_init.append(g2-g1)
+        self.conf.generation_init.append(g2-g1)
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
 
@@ -237,7 +237,7 @@ class Population:
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
         f2 = time.time()
-        self.generational_fin.append(f2-f1)
+        self.conf.generational_fin.append(f2-f1)
 
         return new_population
 
@@ -289,7 +289,7 @@ class Population:
                 self.conf.experiment_management.export_fitness(individual)
 
         e2 = time.time()
-        self.generation_time.append(b2-e2)
+        self.conf.generation_time.append(b2-e2)
 
     async def evaluate_single_robot(self, individual):
         """
@@ -306,6 +306,6 @@ class Population:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
         a2 = time.time()
-        self.analyzer_time.append(a2-a1)
+        self.conf.analyzer_time.append(a2-a1)
 
         return await self.simulator_queue.test_robot(individual, self.conf)
