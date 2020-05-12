@@ -137,9 +137,10 @@ async def run():
         b2 = time.time()
 
         export_time.append(b2-b1)
-        f = open("speed.txt", "a")
-        f.write(f"Export times: {export_time} \n")
-        f.close()
+    
+    f = open("speed.txt", "a")
+    f.write(f"Export times: {export_time} \n")
+    f.close()
 
     await celerycontroller.shutdown()
 
