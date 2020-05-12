@@ -28,8 +28,6 @@ using namespace revolve::gazebo;
 /////////////////////////////////////////////////
 WorldController::WorldController()
     : delete_robot_queue()
-    , robotStatesPubFreq_(5)
-    , lastRobotStatesUpdateTime_(0)
 {
 }
 
@@ -119,96 +117,11 @@ void WorldController::Load(
 
 void WorldController::Reset()
 {
-    this->lastRobotStatesUpdateTime_ = 0; //this->world_->SimTime().Double();
 }
 
 /////////////////////////////////////////////////
 void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
-    if (not this->robotStatesPubFreq_) {
-        return;
-    }
 
-    auto secs = 1.0 / this->robotStatesPubFreq_;
-    auto time = _info.simTime.Double();
-    if ((time - this->lastRobotStatesUpdateTime_) >= secs) {
-        // Send robot info update message, this only sends the
-        // main pose of the robot (which is all we need for now)
-        msgs::RobotStates msg;
-        gz::msgs::Set(msg.mutable_time(), _info.simTime);
-
-        {
-            boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
-            for (const auto &model : this->world_->Models()) {
-                if (model->IsStatic()) {
-                    // Ignore static models such as the ground and obstacles
-                    continue;
-                }
-
-                revolve::msgs::RobotState *stateMsg = msg.add_robot_state();
-                const std::string scoped_name = model->GetScopedName();
-                stateMsg->set_name(scoped_name);
-                stateMsg->set_id(model->GetId());
-
-                auto poseMsg = stateMsg->mutable_pose();
-                auto relativePose = model->RelativePose();
-
-                gz::msgs::Set(poseMsg, relativePose);
-
-                // Death sentence check
-                const std::string name = model->GetName();
-                bool death_sentence = false;
-                double death_sentence_value = 0;
-                {
-                    boost::mutex::scoped_lock lock_death(death_sentences_mutex_);
-                    death_sentence = death_sentences_.count(name) > 0;
-                    if (death_sentence)
-                        death_sentence_value = death_sentences_[name];
-                }
-
-                if (death_sentence) {
-                    if (death_sentence_value < 0) {
-                        // Initialize death sentence
-                        death_sentences_[name] = time - death_sentence_value;
-                        stateMsg->set_dead(false);
-                    } else {
-                        bool alive = death_sentence_value > time;
-                        stateMsg->set_dead(not alive);
-
-                        if (not alive) {
-                            boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
-                            this->death_sentences_.erase(model->GetName());
-
-                            this->models_to_remove.emplace_back(model);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (msg.robot_state_size() > 0) {
-            this->robotStatesPub_->Publish(msg);
-            this->lastRobotStatesUpdateTime_ = time;
-        }
-    }
-
-
-//    if (world_insert_remove_mutex.try_lock()) {
-        for (const auto &model: this->models_to_remove) {
-            std::cout << "Removing " << model->GetScopedName() << std::endl;
-//            this->world_->RemoveModel(model);
-//            gz::msgs::Request deleteReq;
-//            auto id = gz::physics::getUniqueId();
-//            deleteReq.set_id(id);
-//            deleteReq.set_request("entity_delete");
-//            deleteReq.set_data(model->GetScopedName());
-//            this->requestPub_->Publish(deleteReq);
-            gz::transport::requestNoReply(this->world_->Name(), "entity_delete", model->GetScopedName());
-            std::cout << "Removed " << model->GetScopedName() << std::endl;
-
-        }
-        this->models_to_remove.clear();
-//        this->world_insert_remove_mutex.unlock();
-//    }
 }
 
 void WorldController::OnEndUpdate()
@@ -270,44 +183,13 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     std::cout << "Processing request `" << request->id()
               << "` to delete robot `" << name << "`" << std::endl;
 
-//    auto model = this->world_->ModelByName(name);
-//    if (model)
-//    {
-//      // Tell the world to remove the model
-//      // Using `World::RemoveModel()` from here crashes the transport
-//      // library, the cause of which I've yet to figure out - it has
-//      // something to do with race conditions where the model is used by
-//      // the world while it is being updated. Fixing this completely
-//      // appears to be a rather involved process, instead, we'll use an
-//      // `entity_delete` request, which will make sure deleting the model
-//      // happens on the world thread.
-//      gz::msgs::Request deleteReq;
-//      auto id = gz::physics::getUniqueId();
-//      deleteReq.set_id(id);
-//      deleteReq.set_request("entity_delete");
-//      deleteReq.set_data(model->GetScopedName());
-//
-//      {
-//        boost::mutex::scoped_lock lock(this->deleteMutex_);
-//        this->delete_robot_queue.emplace(std::make_tuple(model, request->id()));
-//      }
-//      {
-//        boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
-//        this->death_sentences_.erase(model->GetName());
-//      }
-//
-//      this->requestPub_->Publish(deleteReq);
-//    }
-//    else
-//    {
-      std::cerr << "Model `" << name << "` could not be found in the world."
-                << std::endl;
-      gz::msgs::Response resp;
-      resp.set_id(request->id());
-      resp.set_request("delete_robot");
-      resp.set_response("error");
-      this->responsePub_->Publish(resp);
-//    }
+    std::cerr << "Model `" << name << "` could not be found in the world."
+              << std::endl;
+    gz::msgs::Response resp;
+    resp.set_id(request->id());
+    resp.set_request("delete_robot");
+    resp.set_response("error");
+    this->responsePub_->Publish(resp);
   }
   else if (request->request() == "insert_sdf")
   {
@@ -321,14 +203,6 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
                         ->GetAsString();
 
-    if (lifespan_timeout > 0)
-    {
-        boost::mutex::scoped_lock lock(death_sentences_mutex_);
-        // Initializes the death sentence negative because I don't dare to take the
-        // simulation time from this thread.
-        death_sentences_[name] = -lifespan_timeout;
-    }
-
     {
       boost::mutex::scoped_lock lock(this->insertMutex_);
       this->insertMap_[name] = std::make_tuple(request->id(), robotSDF.ToString(), true);
@@ -340,21 +214,6 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     // Don't leak memory
     // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
     robotSDF.Root()->Reset();
-  }
-  else if (request->request() == "set_robot_state_update_frequency")
-  {
-    auto frequency = request->data();
-    assert(frequency.find_first_not_of( "0123456789" ) == std::string::npos);
-    this->robotStatesPubFreq_ = (unsigned int)std::stoul(frequency);
-    std::cout << "Setting robot state update frequency to "
-              << this->robotStatesPubFreq_ << "." << std::endl;
-
-    gz::msgs::Response resp;
-    resp.set_id(request->id());
-    resp.set_request("set_robot_state_update_frequency");
-    resp.set_response("success");
-
-    this->responsePub_->Publish(resp);
   }
 }
 
@@ -415,23 +274,4 @@ void WorldController::HandleResponse(ConstResponsePtr &response)
         return;
     }
 
-//    int id;
-//    {
-//        boost::mutex::scoped_lock lock(this->deleteMutex_);
-//        if (this->deleteMap_.count(response->id()) <= 0)
-//        {
-//            return;
-//        }
-//
-//        id = this->deleteMap_[response->id()];
-//        this->deleteMap_.erase(id);
-//    }
-
-//    this->world_insert_remove_mutex.unlock();
-
-//    gz::msgs::Response resp;
-//    resp.set_id(id);
-//    resp.set_request("delete_robot");
-//    resp.set_response("success");
-//    this->responsePub_->Publish(resp);
 }

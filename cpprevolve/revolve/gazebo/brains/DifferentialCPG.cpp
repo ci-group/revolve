@@ -64,6 +64,9 @@ using Init_t = limbo::init::LHS<DifferentialCPG::Params>;
 using Kernel_t = limbo::kernel::MaternFiveHalves<DifferentialCPG::Params>;
 using GP_t = limbo::model::GP<DifferentialCPG::Params, Kernel_t, Mean_t>;
 
+
+
+
 /**
  * Constructor for DifferentialCPG class.
  *
@@ -74,10 +77,13 @@ DifferentialCPG::DifferentialCPG(
     const ::gazebo::physics::ModelPtr &_model,
     const sdf::ElementPtr robot_config,
     const std::vector< revolve::gazebo::MotorPtr > &_motors,
-    const std::vector< revolve::gazebo::SensorPtr > &_sensors)
+    const std::vector< revolve::gazebo::SensorPtr > &_sensors,
+    std::shared_ptr<::revolve::gazebo::Battery> battery
+    )
     : next_state(nullptr)
     , input(new double[_sensors.size()])
     , output(new double[_motors.size()])
+    , battery_(battery)
 {
 
   this->learner = robot_config->GetElement("rv:brain")->GetElement("rv:learner");
@@ -279,17 +285,24 @@ DifferentialCPG::DifferentialCPG(
     }
   }
 
+
+
   // Create directory for output.
-  this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
+//  this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
   if(this->directory_name.empty())
   {
-    this->directory_name = "output/cpg_bo/";
-    this->directory_name += std::to_string(time(0)) + "/";
+      std::cout << "§yes§";
+    this->directory_name = "output/cpg_bo/" + this->robot->GetName() + "/"; // CHANGETHIS
+    this->directory_name += this->battery_->time_init + "/";
   }
+  else
+      std::cout << "§no§\n";
 
-  std::system(("mkdir -p " + this->directory_name).c_str());
 
-  // Initialise array of neuron states for Update() method
+
+    std::system(("mkdir -p " + this->directory_name).c_str());
+
+  // Initialise array of neuron states for Update() methodc
   this->next_state = new double[this->neurons.size()];
   this->n_weights = (int)(this->connections.size()/2) + this->n_motors;
 
@@ -353,7 +366,7 @@ DifferentialCPG::DifferentialCPG(
   }
 
   // Initiate the cpp Evaluator
-  this->evaluator.reset(new Evaluator(this->evaluation_rate));
+  this->evaluator.reset(new Evaluator(battery, this->evaluation_rate));
   this->evaluator->directory_name = this->directory_name;
 }
 
@@ -370,9 +383,21 @@ DifferentialCPG::~DifferentialCPG()
 /**
  * Dummy function for limbo
  */
+
+
 struct DifferentialCPG::evaluation_function{
   // Number of input dimension (samples.size())
-  BO_PARAM(size_t, dim_in, 18);
+  // spider9:18,
+  // spider13:26,
+  // spider17:34,
+  // gecko7:13,
+  // gecko12:23,
+  // gecko17:33,
+  // babyA:16,
+  // babyB:22,
+  // babyC:32,
+  // one+:12
+  BO_PARAM(size_t, dim_in, 13); // CHANGETHIS
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
@@ -409,6 +434,9 @@ void DifferentialCPG::bo_init_sampling(){
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all weights
+        srand((unsigned)time(NULL));
+        // trash first one, because it could be the same and I do not know why
+        auto trash_first = rand();
       for (size_t j = 0; j < this->n_weights; j++)
       {
         // Generate a random number in [0, 1]. Transform later
@@ -456,6 +484,9 @@ void DifferentialCPG::bo_init_sampling(){
       Eigen::VectorXd init_sample(this->n_weights);
 
       // For all dimensions
+        srand((unsigned)time(NULL));
+        // trash first one, because it could be the same and I do not know why
+        auto trash_first = rand();
       for (size_t j = 0; j < this->n_weights; j++)
       {
         // Take a LHS
@@ -637,6 +668,7 @@ void DifferentialCPG::bo_step(){
           limbo::acquifun<limbo::acqui::UCB<DifferentialCPG::Params, GP_t>>> boptimizer;
 
       // Optimize. Pass dummy evaluation function and observations .
+
       boptimizer.optimize(DifferentialCPG::evaluation_function(),
                           this->samples,
                           this->observations);
@@ -814,7 +846,7 @@ void DifferentialCPG::Update(
       {
         std::cout << std::endl << "I am finished " << std::endl;
       }
-      std::exit(0);
+//      std::exit(0);
     }
 
     // Evaluation policy here

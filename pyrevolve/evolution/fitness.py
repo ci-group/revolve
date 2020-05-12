@@ -20,6 +20,10 @@ def displacement_velocity(robot_manager, robot):
     return measures.displacement_velocity(robot_manager)
 
 
+def battery(robot_manager, robot):
+    return robot_manager.battery_level
+
+
 def online_old_revolve(robot_manager):
     """
     Fitness is proportional to both the displacement and absolute

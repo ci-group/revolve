@@ -26,7 +26,7 @@
 #include <gazebo/common/common.hh>
 
 #include <revolve/gazebo/Types.h>
-
+#include <revolve/gazebo/battery/Battery.h>
 namespace revolve
 {
   namespace gazebo
@@ -52,10 +52,11 @@ namespace revolve
         const std::string &_type,
         const std::string &_partId,
         const std::string &_motorId,
-        const std::string &_coordinates);
+        const std::string &_coordinates,
+        std::shared_ptr<::revolve::gazebo::Battery> battery);
 
       /// \brief Creates a motor for the given model for the given SDF element.
-      public: virtual MotorPtr Create(sdf::ElementPtr _motorSdf);
+      public: virtual MotorPtr Create(sdf::ElementPtr _motorSdf, std::shared_ptr<::revolve::gazebo::Battery>);
 
       /// \brief Internal reference to the robot model
       protected: ::gazebo::physics::ModelPtr model_;

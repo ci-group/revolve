@@ -155,7 +155,7 @@ brain:
     signal_factor_all: 4.0
     signal_factor_mid: 2.5
     signal_factor_left_right: 2.5
-    range_lb: -1.0
+    range_lb: -1.5
     range_ub: 1.5
     init_neuron_state: 0.707
   learner:
@@ -170,6 +170,9 @@ brain:
     acqui_ucb_alpha: 0.44
     acqui_ei_jitter: 0
     acquisition_function: "UCB"
+    gaussian_step_size: 0.3
+    covrate: 0.4
+    mutrate: 0.6
   meta:
     robot_size: 18
     run_analytics: "true"
@@ -178,5 +181,5 @@ brain:
     reset_robot_position: "false"
     evaluation_rate: 60
     output_directory: ""
-    verbose: 0
+    verbose: true
     startup_time: 0

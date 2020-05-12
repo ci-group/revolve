@@ -9,8 +9,9 @@ import asyncio
 from pyrevolve.SDF.math import Vector3
 from pyrevolve import revolve_bot, parser
 from pyrevolve.tol.manage import World
-from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
+
 from pyrevolve.evolution import fitness
+from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
 
 async def run():
@@ -39,7 +40,6 @@ async def run():
     robot = revolve_bot.RevolveBot()
     robot.load_file(robot_file_path)
     robot.update_substrate()
-    # robot._brain = BrainRLPowerSplines()
 
     # Connect to the simulator and pause
     connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start))
@@ -58,5 +58,6 @@ async def run():
         print(f"Robot fitness ({status}) is \n"
               f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
               f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
-              f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
+              f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}\n"
+              f" battery: {fitness.battery(robot_manager, robot)}")
         await asyncio.sleep(1.0)

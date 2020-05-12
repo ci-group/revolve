@@ -79,7 +79,8 @@ PositionMotor::~PositionMotor() = default;
 /////////////////////////////////////////////////
 void PositionMotor::write(
     const double *outputs,
-    double /*step*/)
+    double /*step*/
+    )
 {
   // Just one network output, which is the first
   auto output = outputs[0];
@@ -128,8 +129,20 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
     position += (position > 0 ? -2 * M_PI : 2 * M_PI);
   }
 
-  auto error = position - this->positionTarget_;
-  auto cmd = this->pid_.Update(error, stepTime);
 
+  auto error = position - this->positionTarget_;
+  auto cmd = this->pid_.Update(error, stepTime); // angular velocity TODO this is targeted velocity
+
+  if (this->battery_)
+  {
+      ::gazebo::physics::JointWrench jointWrench = this->joint_->GetForceTorque(0);
+
+      // TODO find which axis to use local or global
+      // TODO check the power if it should be positive or negative
+      // TODO change this for now im using the absolute value of the power so it always decreases from the joint movements
+      double power = -abs(cmd * jointWrench.body1Torque.Length()); // TODO check which torque to use 1 or 2
+      this->battery_->SetPowerLoad(this->consumerId_ , power);
+
+  }
   this->joint_->SetParam("vel", 0, cmd);
 }
