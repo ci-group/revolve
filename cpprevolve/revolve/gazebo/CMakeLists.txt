@@ -78,7 +78,7 @@ if (LOCAL_GAZEBO_DIR)
             NO_DEFAULT_PATH)
     message(WARNING "Using local Gazebo @ ${gazebo_DIR}")
 else()
-    find_package(gazebo 9 REQUIRED)
+    find_package(gazebo 10 REQUIRED)
 endif()
 include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
@@ -201,6 +201,7 @@ add_library(
 target_link_libraries(
         revolve-gazebo
         revolve-controllers
+        revolve-learners
         ${GAZEBO_LIBRARIES}
         ${Boost_LIBRARIES}
         ${GSL_LIBRARIES}
@@ -221,6 +222,19 @@ add_library(
 )
 target_link_libraries(
         WorldControlPlugin
+        revolve-gazebo
+        revolve-proto
+        ${GAZEBO_LIBRARIES}
+)
+
+# Create Realtime World plugin
+add_library(
+        RealtimeWorldControlPlugin SHARED
+        plugin/RealtimeWorldController.cpp
+        plugin/register_realtime_world_plugin.cpp
+)
+target_link_libraries(
+        RealtimeWorldControlPlugin
         revolve-gazebo
         revolve-proto
         ${GAZEBO_LIBRARIES}

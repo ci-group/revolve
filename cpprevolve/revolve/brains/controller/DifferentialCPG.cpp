@@ -26,12 +26,9 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include <iomanip>
-#include <map>
 #include <memory>
 #include <random>
 #include <tuple>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <multineat/Genome.h>
 
@@ -52,20 +49,23 @@ using namespace revolve;
  * @param robot_config
  */
 DifferentialCPG::DifferentialCPG(
-        const DifferentialCPG::ControllerParams params,
-        const std::vector<std::shared_ptr<Actuator>> &actuators)
-        : next_state(nullptr)
+        const DifferentialCPG::ControllerParams &params,
+        const std::vector<std::shared_ptr<Actuator>> &actuators,
+        std::shared_ptr<AngleToTargetDetector> angle_to_target_sensor)
+        : Controller(ControllerType::DIFFERENTIAL_CPG)
+        , next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()])
-        , sample(actuators.size(), 0)
+        , angle_to_target_sensor(std::move(angle_to_target_sensor))
+        , connection_weights(actuators.size(), 0)
 {
     this->init_params_and_connections(params, actuators);
     // Save weights for brain
     assert(params.weights.size() == n_weights);
-    sample.resize(n_weights, 0);
+    connection_weights.resize(n_weights, 0);
     for(size_t j = 0; j < n_weights; j++)
     {
-        sample.at(j) = params.weights.at(j);
+        connection_weights.at(j) = params.weights.at(j);
     }
 
     // Set ODE matrix at initialization
@@ -82,23 +82,27 @@ DifferentialCPG::DifferentialCPG(
  * @param config_cppn_genome
  */
 DifferentialCPG::DifferentialCPG(
-        DifferentialCPG::ControllerParams params,
+        const DifferentialCPG::ControllerParams &params,
         const std::vector<std::shared_ptr<Actuator>> &actuators,
-        const NEAT::Genome &gen)
-        : next_state(nullptr)
+        const NEAT::Genome &gen,
+        std::shared_ptr<AngleToTargetDetector> angle_to_target_sensor)
+        : Controller(ControllerType::DIFFERENTIAL_CPG)
+        , next_state(nullptr)
         , n_motors(actuators.size())
         , output(new double[actuators.size()])
-        , sample(actuators.size(), 0)
+        , angle_to_target_sensor(std::move(angle_to_target_sensor))
+        , connection_weights(actuators.size(), 0)
 {
     this->init_params_and_connections(params, actuators);
 
     // build the NN according to the genome
     NEAT::NeuralNetwork net;
     gen.BuildPhenotype(net);
+    unsigned int net_depth = net.CalculateNetworkDepth();
 
     // get weights for each connection
     // assuming that connections are distinct for each direction
-    sample.resize(n_weights, 0);
+    connection_weights.resize(n_weights, 0);
     std::vector<double> inputs(8);
 
     for(const std::pair< const std::tuple< int, int, int>, size_t > &motor: motor_coordinates)
@@ -110,17 +114,20 @@ DifferentialCPG::DifferentialCPG(
         inputs[3] = 1;
         std::tie(inputs[4], inputs[5], inputs[6]) = motor.first;
         inputs[7] = -1;
+        inputs[8] = 1;
 
+        net.Flush();
         net.Input(inputs);
-        net.Activate();
+        for (int i=0; i<net_depth; i++)
+            net.Activate();
         double weight = net.Output()[0];
 #ifdef DifferentialCPG_PRINT_INFO
         std::cout << "Creating weight ["
                   << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
                   << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
-                  << "] to sample[" << k << "]\t-> " << weight << std::endl;
+                  << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
 #endif
-        sample.at(k) = weight;  // order of weights corresponds to order of connections.
+        connection_weights.at(k) = weight;  // order of weights corresponds to order of connections.
     }
 
     for(const std::pair<const std::tuple<int, int, int, int, int, int, int, int>, int > &con : connections)
@@ -128,16 +135,20 @@ DifferentialCPG::DifferentialCPG(
         int k = con.second;
         // convert tuple to vector
         std::tie(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5], inputs[6], inputs[7]) = con.first;
+        inputs[8] = 1;
+
+        net.Flush();
         net.Input(inputs);
-        net.Activate();
+        for (int i=0; i<net_depth; i++)
+            net.Activate();
         double weight = net.Output()[0];
 #ifdef DifferentialCPG_PRINT_INFO
         std::cout << "Creating weight ["
                   << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
                   << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
-                  << "] to sample[" << k << "]\t-> " << weight << std::endl;
+                  << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
 #endif
-        sample.at(k) = weight;  // order of weights corresponds to order of connections.
+        connection_weights.at(k) = weight;  // order of weights corresponds to order of connections.
     }
 
     // Set ODE matrix at initialization
@@ -154,10 +165,15 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
     this->range_lb = -params.range_ub;
     this->range_ub = params.range_ub;
     this->use_frame_of_reference = params.use_frame_of_reference;
-    this->signal_factor_all_ = params.signal_factor_all;
-    this->signal_factor_mid = params.signal_factor_mid;
-    this->signal_factor_left_right = params.signal_factor_left_right;
+    this->output_signal_factor = params.output_signal_factor;
     this->abs_output_bound = params.abs_output_bound;
+    this->connection_weights = params.weights;
+
+    if (use_frame_of_reference and not angle_to_target_sensor) {
+        std::clog << "WARNING!: use_frame_of_reference is activated but no angle_to_target_sensor camera is configured. "
+                     "Disabling the use of the frame of reference" << std::endl;
+        use_frame_of_reference = false;
+    }
 
     size_t j=0;
     for (const std::shared_ptr<Actuator> &actuator: actuators)
@@ -175,7 +191,7 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
         {
             frame_of_reference = -1;
         }
-            // We are a right neuron
+        // We are a right neuron
         else if (coord_x > 0)
         {
             frame_of_reference = 1;
@@ -237,7 +253,7 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
                     std::cout << "Creating connnection ["
                               << x << ';' << y << ';' << z << ';' << 1 << '-'
                               << near_x << ';' << near_y << ';' << near_z << ';' << 1
-                              << "] to sample[" << i << ']' << std::endl;
+                              << "] to connection_weights[" << i << ']' << std::endl;
 #endif
                     this->connections[{x, y, z, 1, near_x, near_y, near_z, 1}] = i;
                     //this->connections[{near_x, near_y, near_z, 1, x, y, z, 1}] = i;
@@ -261,6 +277,15 @@ DifferentialCPG::~DifferentialCPG()
 {
     delete[] this->next_state;
     delete[] this->output;
+}
+
+void DifferentialCPG::set_connection_weights(std::vector<double> weights){
+    this->connection_weights = weights;
+    this->set_ode_matrix();
+}
+
+std::vector<double> DifferentialCPG::get_connection_weights(){
+    return this->connection_weights;
 }
 
 /**
@@ -306,7 +331,7 @@ void DifferentialCPG::set_ode_matrix()
         matrix.emplace_back(row);
     }
 
-    // Process A<->A connections
+    // Process A<->B connections
     int index = 0;
     for (const Neuron &neuron: neurons)
     {
@@ -321,10 +346,10 @@ void DifferentialCPG::set_ode_matrix()
         std::cout << "Setting connection ["
                   << x << ';' << y << ';' << z << ';' << 1 << '-'
                   << x << ';' << y << ';' << z << ';' << -1
-                  << "] to sample[" << k << "]\t-> " << this->sample.at(k) << std::endl;
+                  << "] to connection_weights[" << k << "]\t-> " << this->connection_weights.at(k) << std::endl;
 #endif
-        auto weight = this->sample.at(k) *
-                 (this->range_ub - this->range_lb) + this->range_lb;
+        auto weight = this->connection_weights.at(k) *
+                      (this->range_ub - this->range_lb) + this->range_lb;
         size_t i = index;
         size_t c = index + 1;
         matrix.at(i).at(c) = weight;
@@ -332,7 +357,7 @@ void DifferentialCPG::set_ode_matrix()
         index+=2;
     }
 
-    // A<->B connections
+    // A<->A connections
     index++;
     int k = 0;
     std::vector<std::string> connections_seen;
@@ -384,7 +409,7 @@ void DifferentialCPG::set_ode_matrix()
         else // else continue to next iteration
         {
             // actually, we should never encounter this, every connection should appear only once
-            std::cerr << "Should not see the same connection appearing twice" << std::endl;
+            std::cerr << "Should not see the same connection appearing twice: " << connection_string << std::endl;
             throw std::runtime_error("Should not see the same connection appearing twice");
             continue;
         }
@@ -394,11 +419,11 @@ void DifferentialCPG::set_ode_matrix()
         std::cout << "Setting connection ["
                   << x1 << ';' << y1 << ';' << z1 << ';' << w1 << '-'
                   << x2 << ';' << y2 << ';' << z2 << ';' << w2
-                  << "] to sample[" << sample_index << "]\t-> " << this->sample.at(sample_index) << std::endl;
+                  << "] to connection_weights[" << sample_index << "]\t-> " << this->connection_weights.at(sample_index) << std::endl;
 #endif
 
         // Get weight
-        const auto w  = this->sample.at(sample_index) *
+        const auto w  = this->connection_weights.at(sample_index) *
                         (this->range_ub - this->range_lb) + this->range_lb;
 
         // Set connection in weight matrix
@@ -480,11 +505,11 @@ void DifferentialCPG::step(
         neuron_count++;
     }
 
-    // Copy values from next_state into x for ODEINT
-    state_type x(this->neurons.size());
+    // Copy values from next_state into x_state for ODEINT
+    state_type x_state(this->neurons.size());
     for (size_t i = 0; i < this->neurons.size(); i++)
     {
-        x[i] = this->next_state[i];
+        x_state[i] = this->next_state[i];
     }
 
     // Perform one step
@@ -500,14 +525,31 @@ void DifferentialCPG::step(
                     }
                 }
             },
-            x,
+            x_state,
             time,
             dt);
 
     // Copy values into nextstate
     for (size_t i = 0; i < this->neurons.size(); i++)
     {
-        this->next_state[i] = x[i];
+        this->next_state[i] = x_state[i];
+    }
+
+//    // Load the angle value from the sensor
+//    double angle_difference = this->angle_to_goal - move_angle;
+//    if (angle_difference > 180)
+//        angle_difference -= 360;
+//    else if (angle_difference < -180)
+//        angle_difference += 360;
+//    this->angle_diff = angle_difference;
+    double angle_difference = 0.0;
+    double slow_down_factor = 1.0;
+    if (use_frame_of_reference) {
+        angle_difference = angle_to_target_sensor->detect_angle();
+        std::cout << "Angle detected " << angle_difference << std::endl;
+        const double frame_of_reference_slower_power = 7.0;
+        slow_down_factor = std::pow(
+                (180.0 - std::abs(angle_difference))/180.0, frame_of_reference_slower_power);
     }
 
     // Loop over all neurons to actually update their states. Note that this is a new outer for loop
@@ -531,30 +573,30 @@ void DifferentialCPG::step(
             // Apply saturation formula
             auto x_input = this->next_state[i];
 
+            double output_j = this->output_function(x_input);
+
             // Use frame of reference
-            if(use_frame_of_reference)
+            if(use_frame_of_reference and frame_of_reference != 0)
             {
-
-                if (std::abs(frame_of_reference) == 1)
+                if ((frame_of_reference == 1 and angle_difference < 0) or
+                    (frame_of_reference == -1 and angle_difference > 0)) //TODO >= / <= ?
                 {
-                    this->output[j] = this->signal_factor_left_right*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound)) - 1);
+                    output_j *= slow_down_factor;
                 }
-                else if (frame_of_reference == 0)
-                {
-                    this->output[j] = this->signal_factor_mid*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound)) - 1);
-                }
-                else
-                {
-                    std::clog << "WARNING: frame_of_reference not in {-1,0,1}." << std::endl;
-                }
-
             }
-            // Don't use frame of reference
-            else
-            {
-                this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound)) - 1);
-            }
+
+            this->output[j] = output_j;
         }
         i++;
     }
+}
+
+double DifferentialCPG::output_function(double input) const
+{
+    return this->output_signal_factor
+            * this->abs_output_bound
+            * (
+                    (2.0) / (1.0 + std::pow(2.718, -2.0 * input / this->abs_output_bound))
+                    - 1
+            );
 }

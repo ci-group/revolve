@@ -5,7 +5,7 @@
 #include "Servo.h"
 #include "PIGPIOConnection.h"
 
-using namespace revolve;
+using namespace revolve::raspberry;
 
 #define POSITION_OFF 0
 #define POSITION_BEGIN 40

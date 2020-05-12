@@ -3,7 +3,7 @@ import xml.etree.ElementTree
 
 from pyrevolve import SDF
 import pyrevolve.SDF.math
-from ..custom_logging.logger import logger
+from pyrevolve.custom_logging.logger import logger
 
 
 class Pose(xml.etree.ElementTree.Element):

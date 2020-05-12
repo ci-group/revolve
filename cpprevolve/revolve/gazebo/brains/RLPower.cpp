@@ -41,16 +41,13 @@ RLPower::RLPower(
     const ::gazebo::physics::ModelPtr &_model,
     const sdf::ElementPtr &_settings,
     const std::vector< MotorPtr > &_motors,
-    const std::vector< SensorPtr > &_sensors)
-    : generationCounter_(0)
+    const std::vector< SensorPtr > &/*_sensors*/)
+    : Controller(ControllerType::SPLINES)
+    , generationCounter_(0)
     , cycleStartTime_(-1)
-    , startTime_(-1)
     , evaluationRate_(30.0) // default
+    , startTime_(-1)
 {
-  // Create transport node
-  this->node_.reset(new gz::transport::Node());
-  this->node_->Init();
-
   auto learner_settings = _settings->GetElement("rv:learner");
 
   this->robot_ = _model;
@@ -82,7 +79,7 @@ RLPower::RLPower(
 RLPower::~RLPower() = default;
 
 /////////////////////////////////////////////////
-void RLPower::Update(
+void RLPower::update(
     const std::vector< MotorPtr > &_motors,
     const std::vector< SensorPtr > &/* _sensors */,
     double _time,
@@ -103,7 +100,7 @@ void RLPower::Update(
   {
     this->UpdatePolicy(numMotors);
     this->startTime_ = _time;
-    this->evaluator_->Reset();
+    this->evaluator_->reset();
   }
 
   // generate outputs
@@ -119,7 +116,7 @@ void RLPower::Update(
   }
 
   auto currPosition = this->robot_->WorldPose();
-  this->evaluator_->Update(currPosition, _time, _step);
+//  this->evaluator_->update(currPosition, _time, _step);
   delete[] output;
 }
 
@@ -476,7 +473,7 @@ const double RLPower::SIGMA = 0.98;
 
 double RLPower::Fitness()
 {
-  return this->evaluator_->Fitness();
+  return this->evaluator_->fitness();
 }
 
 void RLPower::Modify(ConstModifyPolicyPtr &/* _request */)

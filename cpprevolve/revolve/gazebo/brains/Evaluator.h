@@ -17,67 +17,69 @@
 *
 */
 
-#ifndef REVOLVEBRAIN_BRAIN_EVALUATOR_H
-#define REVOLVEBRAIN_BRAIN_EVALUATOR_H
+#pragma once
 
 #include <boost/shared_ptr.hpp>
 
 #include <gazebo/common/common.hh>
+#include <revolve/brains/learner/Evaluator.h>
 
-namespace revolve
+namespace revolve {
+namespace gazebo {
+class Evaluator : public ::revolve::Evaluator
 {
-  namespace gazebo
-  {
-    class Evaluator
-    {
-      /// \brief Constructor
-      public: Evaluator(const double _evaluationRate,
-                        const double step_saving_rate = 0.1);
+public:
+    /// \brief Constructor
+    Evaluator(double _evaluationRate,
+              bool reset_robot_position = false,
+              const ::gazebo::physics::ModelPtr &robot = nullptr,
+              double step_saving_rate = 0.1);
 
-      /// \brief Destructor
-      public: ~Evaluator();
+    /// \brief Destructor
+    ~Evaluator();
 
-      /// \brief Initialisation method
-      public: void Reset();
+    /// \brief Initialisation method
+    void reset() override;
 
-      /// \brief Retrieve the fitness
-      /// \return A fitness value according to a given formula
-      public: double Fitness();
+    /// \brief Retrieve the fitness
+    /// \return A fitness value according to a given formula
+    double fitness() override;
 
-      public: double measure_distance(
-          const ignition::math::Pose3d &_pose1,
-          const ignition::math::Pose3d &_pose2);
+    double measure_distance(
+            const ignition::math::Pose3d &_pose1,
+            const ignition::math::Pose3d &_pose2);
 
-      /// brief Specifies locomotion type
-      public: std::string locomotion_type;
+    /// brief Specifies locomotion type
+    std::string locomotion_type;
 
-      /// \brief Update the position
-      /// \param[in] _pose Current position of a robot
-      public: void Update(const ignition::math::Pose3d &_pose,
-                          const double time,
-                          const double step);
+    /// \brief Update the position
+    /// \param[in] pose Current position of a robot
+    void simulation_update(const ignition::math::Pose3d &pose,
+                           double time,
+                           double step);
 
-      /// \brief start position of a robot
-      protected: ignition::math::Pose3d start_position_;
+protected:
+    /// \brief start position of a robot
+    ignition::math::Pose3d start_position_;
 
-      /// \brief Previous position of a robot
-      protected: ignition::math::Pose3d previous_position_;
+    /// \brief Previous position of a robot
+    ignition::math::Pose3d previous_position_;
 
-      /// \brief Current position of a robot
-      protected: ignition::math::Pose3d current_position_;
+    /// \brief Current position of a robot
+    ignition::math::Pose3d current_position_;
 
-      /// \brief
-      protected: double evaluation_rate_;
+    /// \brief
+    double evaluation_rate_;
 
-      protected: double path_length = 0.0;
+    double path_length = 0.0;
 
-      protected: double last_step_time;
-      protected: double step_saving_rate;
-      protected: std::vector<ignition::math::Pose3d> step_poses;
-      //      public: double current_dist_pro = 0.0;
-    public: std::string directory_name = "";
-    };
-  }
+    double last_step_time;
+    double step_saving_rate;
+    std::vector <ignition::math::Pose3d> step_poses;
+
+    const bool reset_robot_position;
+    const boost::weak_ptr<::gazebo::physics::Model> robot;
+};
+
 }
-
-#endif  // REVOLVEBRAIN_BRAIN_EVALUATOR_H
+}

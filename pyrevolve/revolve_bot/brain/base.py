@@ -1,31 +1,43 @@
-import pyrevolve.revolve_bot.brain
+from pyrevolve.revolve_bot import brain as brains
+from pyrevolve.revolve_bot.brain.learner import Learner
 
 
 class Brain(object):
+    TYPE = 'NONE'
+
+    def __init__(self):
+        self.learner = None
 
     @staticmethod
     def from_yaml(yaml_brain):
         brain_type = yaml_brain['type']
 
-        if brain_type == pyrevolve.revolve_bot.brain.BrainNN.TYPE:
-            return pyrevolve.revolve_bot.brain.BrainNN.from_yaml(yaml_brain)
-        elif brain_type == pyrevolve.revolve_bot.brain.BrainRLPowerSplines.TYPE:
-            return pyrevolve.revolve_bot.brain.BrainRLPowerSplines.from_yaml(yaml_brain)
-        elif brain_type == pyrevolve.revolve_bot.brain.BrainCPGBO.TYPE:
-            return pyrevolve.revolve_bot.brain.BrainCPGBO.from_yaml(yaml_brain)
-        elif brain_type == pyrevolve.revolve_bot.brain.BrainCPG.TYPE:
-            return pyrevolve.revolve_bot.brain.BrainCPG.from_yaml(yaml_brain)
-        elif brain_type == pyrevolve.revolve_bot.brain.BrainCPPNCPG.TYPE:
-            return pyrevolve.revolve_bot.brain.BrainCPPNCPG.from_yaml(yaml_brain)
+        brain = None
+        if brain_type == brains.BrainNN.TYPE:
+            brain = brains.BrainNN.from_yaml(yaml_brain)
+        elif brain_type == brains.BrainRLPowerSplines.TYPE:
+            brain = brains.BrainRLPowerSplines.from_yaml(yaml_brain)
+        elif brain_type == brains.BrainCPGBO.TYPE:
+            brain = brains.BrainCPGBO.from_yaml(yaml_brain)
+        elif brain_type == brains.BrainCPG.TYPE:
+            brain = brains.BrainCPG.from_yaml(yaml_brain)
+        elif brain_type == brains.BrainCPPNCPG.TYPE:
+            brain = brains.BrainCPPNCPG.from_yaml(yaml_brain)
         else:
             print("No matching brain type defined in yaml file.")
-            return Brain()
+            brain = Brain()
+
+        brain.learner = Learner.from_yaml(yaml_brain['learner'])
+        return brain
 
     def to_yaml(self):
-        return {}
+        return {
+            'type': self.TYPE,
+            'learner': self.learner.to_yaml()
+        }
 
     def learner_sdf(self):
-        return None
+        return self.learner.learner_sdf()
 
     def controller_sdf(self):
         return None

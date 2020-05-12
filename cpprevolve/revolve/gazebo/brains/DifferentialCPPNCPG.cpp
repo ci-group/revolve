@@ -6,7 +6,7 @@
 #include "Brain.h"
 
 #include "DifferentialCPPNCPG.h"
-#include "DifferentialCPGClean.h"
+#include "DifferentialCPG.h"
 
 using namespace revolve::gazebo;
 
@@ -26,7 +26,7 @@ bool string_replace(std::string& str, const std::string& from, const std::string
 
 DifferentialCPPNCPG::DifferentialCPPNCPG(const sdf::ElementPtr brain_sdf,
                                            const std::vector<MotorPtr> &motors)
-        : DifferentialCPGClean(
+        : DifferentialCPG(
         				brain_sdf,
         				motors,
 								DifferentialCPPNCPG::load_cppn_genome_from_sdf(brain_sdf))

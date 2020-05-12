@@ -39,16 +39,15 @@ class BrainCPG(Brain):
     @staticmethod
     def from_yaml(yaml_object):
         BCPG = BrainCPG()
-        for my_type in ["controller", "learner"]:  #, "meta"]:
-            try:
-                my_object = yaml_object[my_type]
-                for key, value in my_object.items():
-                    try:
-                        setattr(BCPG, key, value)
-                    except:
-                        print("Couldn't set {}, {}", format(key, value))
-            except:
-                print("Didn't load {} parameters".format(my_type))
+        try:
+            my_object = yaml_object["controller"]
+            for key, value in my_object.items():
+                try:
+                    setattr(BCPG, key, value)
+                except:
+                    print(f"Couldn't set {key}, {value}")
+        except:
+            print("Didn't load \"controller\" parameters")
 
         return BCPG
 
@@ -75,11 +74,6 @@ class BrainCPG(Brain):
                 'weights': self.weights,
             }
         }
-
-    def learner_sdf(self):
-        return xml.etree.ElementTree.Element('rv:learner', {
-            'type': 'offline',
-        })
 
     def controller_sdf(self):
         return xml.etree.ElementTree.Element('rv:controller', {

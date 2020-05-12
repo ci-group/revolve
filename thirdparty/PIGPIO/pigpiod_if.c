@@ -161,7 +161,7 @@ static int pigpio_command_ext
    return cmd.res;
 }
 
-static int pigpioOpenSocket(char *addr, char *port)
+static int pigpioOpenSocket(const char *addr, const char *port)
 {
    int sock, err, opt;
    struct addrinfo hints, *res, *rp;

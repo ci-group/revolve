@@ -6,7 +6,7 @@
 #define REVOLVE_DIFFERENTIALCPPNCPG_H
 
 #include <revolve/brains/controller/actuators/Actuator.h>
-#include "DifferentialCPGClean.h"
+#include "DifferentialCPG.h"
 #include "Brain.h"
 
 
@@ -15,7 +15,7 @@ namespace revolve {
 
         /// \brief connection between gazebo and revolve CPG with config CPPN
         /// \details gets the sdf - model data and passes them to revolve
-        class DifferentialCPPNCPG : public DifferentialCPGClean
+        class DifferentialCPPNCPG : public DifferentialCPG
 				{
         public:
             /// \brief Constructor

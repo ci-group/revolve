@@ -3,7 +3,7 @@ import sys
 
 from pyrevolve import SDF
 from pyrevolve.SDF.inertial import transform_inertia_tensor
-from ..custom_logging.logger import logger
+from pyrevolve.custom_logging.logger import logger
 
 
 class Link(SDF.Posable):

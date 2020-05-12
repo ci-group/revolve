@@ -304,18 +304,23 @@ class DynamicSimSupervisor(object):
 
         async def read_stdout():
             while not ready_str_found.done():
-                if process.returncode is None:
+                if process.returncode is not None:
                     ready_str_found.set_exception(SimulatorEnded())
-                out = await stdout.readline()
-                self._logger.info(f'[starting] {out}')
-                if ready_str in out:
-                    ready_str_found.set_result(None)
+                    return
+                out_stream = asyncio.create_task(stdout.readline())
+                done, pending = await asyncio.wait({out_stream, ready_str_found}, return_when='FIRST_COMPLETED')
+                if out_stream in done:
+                    out = out_stream.result()
+                    self._logger.info(f'[starting] {out}')
+                    if ready_str in out:
+                        ready_str_found.set_result(None)
 
         async def read_stderr():
             while not ready_str_found.done() and process.returncode is None:
-                err = await stderr.readline()
-                if err:
-                    self._logger.error(f'[starting] {err}')
+                err_stream = asyncio.create_task(stderr.readline())
+                done, pending = await asyncio.wait({err_stream, ready_str_found}, return_when='FIRST_COMPLETED')
+                if err_stream in done:
+                    self._logger.error(f'[starting] {err_stream.result()}')
 
         stdout_async = asyncio.ensure_future(read_stdout())
         stderr_async = asyncio.ensure_future(read_stderr())

@@ -13,16 +13,11 @@
 * limitations under the License.
 *
 * Description: TODO: <Add brief description about file purpose>
-* Author: Elte Hupkes
+* Author: Elte Hupkes and Matteo De Carlo
 *
 */
 
-//
-// Created by elte on 6-6-15.
-//
-
-#ifndef REVOLVE_WORLDCONTROLLER_H
-#define REVOLVE_WORLDCONTROLLER_H
+#pragma once
 
 #include <map>
 #include <string>
@@ -37,22 +32,23 @@
 
 #include <revolve/msgs/model_inserted.pb.h>
 #include <revolve/msgs/robot_states.pb.h>
+#include <revolve/msgs/robot_states_learning.pb.h>
 
 namespace revolve {
 namespace gazebo {
 
-class WorldController: public ::gazebo::WorldPlugin
+class WorldController : public ::gazebo::WorldPlugin
 {
 public:
     WorldController();
 
-    virtual ~WorldController();
+    ~WorldController() override;
 
-    virtual void Load(
+    void Load(
             ::gazebo::physics::WorldPtr _parent,
             sdf::ElementPtr _sdf) override;
 
-    virtual void Reset() override;
+    void Reset() override;
 
 protected:
     // Listener for analysis requests
@@ -69,12 +65,14 @@ protected:
 
     virtual void OnEndUpdate();
 
+    void OnRobotReport(const boost::shared_ptr<revolve::msgs::LearningRobotStates const> &msg);
+
+protected:
+    const bool enable_parallelization;
+
     // Maps model names to insert request IDs
     // model_name -> request_id, SDF, insert_operation_pending
-    std::map<std::string, std::tuple<int, std::string, bool> > insertMap_;
-
-    // Queue of `delete_robot` requests
-    std::queue<std::tuple<::gazebo::physics::ModelPtr, int>> delete_robot_queue;
+    std::map<std::string, int> insertMap_;
 
     // Stores the world
     ::gazebo::physics::WorldPtr world_;
@@ -84,9 +82,6 @@ protected:
 
     // Mutex for the insertMap_
     boost::mutex insertMutex_;
-
-    // Mutex for the deleteMap_
-    boost::mutex deleteMutex_;
 
     // Request subscriber
     ::gazebo::transport::SubscriberPtr requestSub_;
@@ -103,34 +98,16 @@ protected:
     // Subscriber for actual model insertion
     ::gazebo::transport::SubscriberPtr modelSub_;
 
-    // Publisher for periodic robot poses
-    ::gazebo::transport::PublisherPtr robotStatesPub_;
-
-    // Frequency at which robot info is published
-    // Defaults to 0, which means no update at all
-    unsigned int robotStatesPubFreq_;
+    // Subscriber for periodic robot learning reports
+    ::gazebo::transport::SubscriberPtr robotLearningStatesSub;
 
     // Pointer to the update event connection
     ::gazebo::event::ConnectionPtr onBeginUpdateConnection;
     ::gazebo::event::ConnectionPtr onEndUpdateConnection;
 
-    // Last (simulation) time robot info was sent
-    double lastRobotStatesUpdateTime_;
-
-    // Death sentence list. It collects all the end time for all robots that have
-    // a death sentence
-    // NEGATIVE DEATH SENTENCES mean total lifetime, death sentence not yet initialized.
-    std::map<std::string, double> death_sentences_;
-
-    // Mutex for the deleteMap_
-    boost::mutex death_sentences_mutex_;
-
-//    boost::mutex world_insert_remove_mutex;
-
+    boost::mutex model_remove_mutex;
     ::gazebo::physics::Model_V models_to_remove;
 };
 
 }  // namespace gazebo
 }  // namespace revolve
-
-#endif  // REVOLVE_WORLDCONTROLLER_H

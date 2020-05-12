@@ -2,8 +2,7 @@
 // Created by maarten on 03/02/19.
 //
 
-#ifndef REVOLVE_BOPTIMIZER_CPG_H
-#define REVOLVE_BOPTIMIZER_CPG_H
+#pragma once
 
 // Standard libraries
 #include <algorithm>
@@ -25,16 +24,35 @@ namespace limbo {
             BO_PARAM(int, hp_period, -1);
         };
     }
+    namespace init {
+        template<typename Params>
+        struct FlexibleLHS
+        {
+            template<typename StateFunction, typename AggregatorFunction, typename Opt>
+            void operator()(const StateFunction &seval, const AggregatorFunction &, Opt &opt) const
+            {
+                assert(Params::bayes_opt_bobase::bounded());
+
+                Eigen::MatrixXd H = tools::random_lhs(seval.dim_in(), Params::init_lhs::samples());
+
+                for (int i = 0; i < Params::init_lhs::samples(); i++) {
+                    opt.eval_and_add(seval, H.row(i));
+                }
+            }
+        };
+    }
     BOOST_PARAMETER_TEMPLATE_KEYWORD(acquiopt)
 
     namespace bayes_opt {
 
-        using boptimizer_signature = boost::parameter::parameters<boost::parameter::optional<tag::acquiopt>,
+        using boptimizer_signature = boost::parameter::parameters<
+                boost::parameter::optional<tag::acquiopt>,
                 boost::parameter::optional<tag::statsfun>,
                 boost::parameter::optional<tag::initfun>,
                 boost::parameter::optional<tag::acquifun>,
                 boost::parameter::optional<tag::stopcrit>,
-                boost::parameter::optional<tag::modelfun>>;
+                boost::parameter::optional<tag::modelfun>
+        >;
 
         // clang-format off
         /**
@@ -97,7 +115,7 @@ namespace limbo {
                 }
                 else {
                     std::cout << "OBSERVATION SET IS EMPTY \n";
-                    _model = model_t(StateFunction::dim_in(), StateFunction::dim_out());
+                    _model = model_t(sfun.dim_in(), StateFunction::dim_out());
                 }
                 acqui_optimizer_t acqui_optimizer;
 
@@ -106,13 +124,13 @@ namespace limbo {
 
                 while (!this->_stop(*this, afun)) {
 
-                    gettimeofday(&timeStart,NULL);
+                    gettimeofday(&timeStart, nullptr);
 
                     acquisition_function_t acqui(_model, this->_current_iteration);
 
                     auto acqui_optimization =
                             [&](const Eigen::VectorXd& x, bool g) { return acqui(x, afun, g); };
-                    Eigen::VectorXd starting_point = tools::random_vector(StateFunction::dim_in(), Params::bayes_opt_bobase::bounded());
+                    Eigen::VectorXd starting_point = tools::random_vector(sfun.dim_in(), Params::bayes_opt_bobase::bounded());
 
                     // new samples are from the acquisition optimizer
                     Eigen::VectorXd new_sample = acqui_optimizer(acqui_optimization, starting_point, Params::bayes_opt_bobase::bounded());
@@ -131,7 +149,7 @@ namespace limbo {
                     this->_current_iteration++;
                     this->_total_iterations++;
 
-                    gettimeofday(&timeEnd,NULL);
+                    gettimeofday(&timeEnd, nullptr);
 
                     timeDiff = 1000000 * (timeEnd.tv_sec - timeStart.tv_sec)
                                + timeEnd.tv_usec - timeStart.tv_usec; //tv_sec: value of second, tv_usec: value of microsecond
@@ -191,5 +209,3 @@ namespace limbo {
         using BOptimizerHPOpt = BOptimizer<Params, modelfun<_default_hp::model_t<Params>>, acquifun<_default_hp::acqui_t<Params>>, A1, A2, A3, A4>;
     }
 }
-
-#endif //REVOLVE_BOPTIMIZER_CPG_H

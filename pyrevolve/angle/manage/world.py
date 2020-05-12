@@ -38,6 +38,7 @@ class WorldManager(manage.WorldManager):
             world_address=None,
             output_directory=None,
             state_update_frequency=None,
+            listen_to_contacts=False,
             restore=None,
             _private=None
     ):
@@ -86,6 +87,8 @@ class WorldManager(manage.WorldManager):
         self.update_triggers = []
 
         self.do_restore = None
+
+        self._listen_to_contacts = listen_to_contacts
 
         # Sorry Matteo
         if False: #output_directory:
@@ -165,19 +168,21 @@ class WorldManager(manage.WorldManager):
     async def create(
             cls,
             world_address=("127.0.0.1", 11345),
-            pose_update_frequency=10
+            pose_update_frequency=10,
+            listen_to_contacts=False,
     ):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager
         :param pose_update_frequency:
         :param world_address:
-        :param analyzer_address:
+        :param listen_to_contacts:
         :return:
         """
         self = cls(
             _private=cls._PRIVATE,
             world_address=world_address,
-            state_update_frequency=pose_update_frequency
+            state_update_frequency=pose_update_frequency,
+            listen_to_contacts=listen_to_contacts,
         )
         await self._init(builder=None, generator=None)
         return self
@@ -199,7 +204,7 @@ class WorldManager(manage.WorldManager):
         if self.manager is not None:
             return
 
-        await (super(WorldManager, self)._init())
+        await (super()._init())
 
         # Subscribe to pose updates
         self.pose_subscriber = await self.manager.subscribe(
@@ -208,11 +213,12 @@ class WorldManager(manage.WorldManager):
             self._update_states
         )
 
-        self.contact_subscriber = await self.manager.subscribe(
-            '/gazebo/default/physics/contacts',
-            'gazebo.msgs.Contacts',
-            self._update_contacts
-        )
+        if self._listen_to_contacts:
+            self.contact_subscriber = await self.manager.subscribe(
+                '/gazebo/default/physics/contacts',
+                'gazebo.msgs.Contacts',
+                self._update_contacts
+            )
 
         # Awaiting this immediately will lock the program
         update_state_future = self.set_state_update_frequency(
@@ -230,7 +236,8 @@ class WorldManager(manage.WorldManager):
 
         # Wait for connections
         await self.pose_subscriber.wait_for_connection()
-        await self.contact_subscriber.wait_for_connection()
+        if self._listen_to_contacts:
+            await self.contact_subscriber.wait_for_connection()
         await update_state_future
 
         if self.do_restore:

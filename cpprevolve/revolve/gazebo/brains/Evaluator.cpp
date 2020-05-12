@@ -20,6 +20,9 @@
  */
 
 #include <cmath>
+#include <gazebo/physics/Model.hh>
+#include <revolve/brains/learner/Evaluator.h>
+
 
 #include "Evaluator.h"
 
@@ -35,19 +38,22 @@ double Evaluator::measure_distance(
 }
 
 /////////////////////////////////////////////////
-Evaluator::Evaluator(const double _evaluationRate,
+Evaluator::Evaluator(const double evaluation_rate,
+                     const bool reset_robot_position,
+                     const ::gazebo::physics::ModelPtr &robot,
                      const double step_saving_rate)
-    : last_step_time(-1)
-    , step_saving_rate(step_saving_rate)
-    , step_poses(0)
+        : ::revolve::Evaluator()
+        , evaluation_rate_(evaluation_rate)
+        , last_step_time(-1)
+        , step_saving_rate(step_saving_rate)
+        , step_poses(0)
+        , reset_robot_position(reset_robot_position)
+        , robot(robot)
 {
-  assert(_evaluationRate > 0 and "`_evaluationRate` should be greater than 0");
-  this->evaluation_rate_ = _evaluationRate;
-
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "directed"; // {directed, gait}
+  this->locomotion_type = "turing_left"; // {directed, gait}
   this->path_length = 0.0;
 }
 
@@ -55,16 +61,27 @@ Evaluator::Evaluator(const double _evaluationRate,
 Evaluator::~Evaluator() = default;
 
 /////////////////////////////////////////////////
-void Evaluator::Reset()
+void Evaluator::reset()
 {
-  this->step_poses.clear(); //cleared to null
-  this->path_length = 0.0;
-  this->last_step_time = 0.0;
-  this->start_position_ = this->current_position_;
+    // Reset robot if opted to do
+    if (this->reset_robot_position) {
+        //this->robot->Reset();
+        ::gazebo::physics::ModelPtr _robot = robot.lock();
+        _robot->ResetPhysicsStates();
+        auto start_pose = ::ignition::math::Pose3d();
+        start_pose.Set(0.0, 0.0, 0.05, 0.0, 0.0, 0.0);
+        _robot->SetWorldPose(start_pose);
+        _robot->Update();
+    }
+
+    this->step_poses.clear(); //cleared to null
+    this->path_length = 0.0;
+    this->last_step_time = 0.0;
+    this->start_position_ = this->current_position_;
 }
 
 /////////////////////////////////////////////////
-double Evaluator::Fitness()
+double Evaluator::fitness()
 {
   double fitness_value = 0.0;
   if(this->locomotion_type == "gait")
@@ -81,20 +98,11 @@ double Evaluator::Fitness()
 
     this->step_poses.push_back(this->current_position_);
     //step_poses: x y z roll pitch yaw
-    for (int i=1; i < this->step_poses.size(); i++)
+    for (size_t i=1; i < this->step_poses.size(); i++)
     {
       const auto &pose_i_1 = this->step_poses[i-1];
       const auto &pose_i = this->step_poses[i];
       this->path_length += Evaluator::measure_distance(pose_i_1, pose_i);
-      //save coordinations to coordinates.txt
-      std::ofstream coordinates;
-      coordinates.open(this->directory_name + "/coordinates.txt",std::ios::app);
-
-      if(i == 1)
-      {
-          coordinates << std::fixed << start_position_.Pos().X() << " " << start_position_.Pos().Y() << std::endl;
-      }
-      coordinates << std::fixed << pose_i.Pos().X() << " " << pose_i.Pos().Y() << std::endl;
     }
 
     ////********** directed locomotion fitness function **********////
@@ -104,11 +112,6 @@ double Evaluator::Fitness()
     {
       beta0 = 2 * M_PI - std::abs(beta0);
     }
-
-    //save direction to coordinates.txt: This is used to make Figure 8
-    std::ofstream coordinates;
-    coordinates.open(this->directory_name + "/coordinates.txt",std::ios::app);
-    coordinates << std::fixed << beta0 << std::endl;
 
     double beta1 = std::atan2(
         this->current_position_.Pos().Y() - this->start_position_.Pos().Y(),
@@ -163,35 +166,69 @@ double Evaluator::Fitness()
                         (dist_projection / (alpha + ksi) - penalty);
     fitness_value = fitness_direction;
   }
-  return fitness_value;
+  else if(this->locomotion_type == "turing_left") //anticlockwise
+  {
+      double orientations = 0.0;
+      double delta_orientations = 0.0;
+      double dS = 0.0;
+      for(int i = 1; i < this->step_poses.size(); i++)
+      {
+          const auto &pose_i_1 = this->step_poses[i-1];
+          const auto &pose_i = this->step_poses[i];
+
+          dS = dS + Evaluator::measure_distance(pose_i_1, pose_i);
+
+          double angle_i = pose_i.Rot().Yaw();
+          double angle_i_1 = pose_i_1.Rot().Yaw();
+          if(angle_i_1 > M_PI_2 and angle_i < - M_PI_2 ) // rotating left
+          {
+              delta_orientations = 2.0 * M_PI + angle_i - angle_i_1;
+          }
+          else if((angle_i_1 < - M_PI_2) and (angle_i > M_PI_2))
+          {
+              delta_orientations = - (2.0 * M_PI - angle_i + angle_i_1);
+          }
+          else
+          {
+              delta_orientations = angle_i - angle_i_1;
+          }
+          orientations += delta_orientations;
+
+      }
+      std::cout << "orientations: " << orientations << " dS: " << dS << std::endl;
+      double factor_orien_ds = 3.0; //TODO param
+      fitness_value = orientations - factor_orien_ds * dS; //dS in (0, 1.5) in 30s
+    }
+
+    return fitness_value;
 }
 
 // update is always running in the loop
-void Evaluator::Update(const ignition::math::Pose3d &_pose,
-                       const double time,
-                       const double step)
+void Evaluator::simulation_update(const ignition::math::Pose3d &pose,
+                                  const double time,
+                                  const double step)
 {
-  //  this->path_length += measure_distance(current_position_, _pose);
+  //  this->path_length += measure_distance(current_position_, pose);
   this->previous_position_ = current_position_;
-  this->current_position_ = _pose;
+  this->current_position_ = pose;
 
   //If `last_step_time` is not initialized, do the initialization now
   if (this->last_step_time < 0)
   {
     this->last_step_time = time; // 0.005
-    this->step_poses.push_back(_pose);
+    this->step_poses.push_back(pose);
   }
 
   //save the startPosition in the beginning of each iteration
   if (this->last_step_time < 0.001) // 0.001 < 0.005
   {
-    this->step_poses.push_back(_pose);
+    this->step_poses.push_back(pose);
     this->last_step_time = time;
   }
   //update information each step
   if ((time - this->last_step_time) > this->evaluation_rate_ * this->step_saving_rate)
   {
-    this->step_poses.push_back(_pose);
+    this->step_poses.push_back(pose);
     this->last_step_time = time;
   };
 }

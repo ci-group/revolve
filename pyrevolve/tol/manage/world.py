@@ -37,7 +37,7 @@ class World(WorldManager):
     future that resolves when the response is delivered.
     """
 
-    def __init__(self, conf, _private, world_address):
+    def __init__(self, conf, _private, world_address, listen_to_contacts):
         """
         :param conf:
         """
@@ -52,7 +52,8 @@ class World(WorldManager):
             builder=None,
             state_update_frequency=conf.pose_update_frequency,
             generator=None,
-            restore=conf.restore_directory
+            restore=conf.restore_directory,
+            listen_to_contacts=listen_to_contacts,
         )
 
         self.conf = conf
@@ -83,14 +84,15 @@ class World(WorldManager):
             )
 
     @classmethod
-    async def create(cls, conf, world_address=None):
+    async def create(cls, conf, world_address=None, listen_to_contacts=False):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager
         :param conf:
         :param world_address:
+        :param listen_to_contacts:
         :return:
         """
-        self = cls(_private=cls._PRIVATE, conf=conf, world_address=world_address)
+        self = cls(_private=cls._PRIVATE, conf=conf, world_address=world_address, listen_to_contacts=listen_to_contacts)
         await self._init()
         return self
 

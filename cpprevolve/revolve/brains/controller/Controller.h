@@ -16,8 +16,18 @@ namespace revolve
 class Controller
 {
 public:
+    enum ControllerType {
+        NONE = 0,
+        NEURAL_NETWORK,
+        SPLINES,
+        DIFFERENTIAL_CPG,
+        // add new controller types here
+    } const controller_type;
+
     /// \brief Constructor
-    explicit Controller() {}
+    explicit Controller(ControllerType controller_type)
+        : controller_type(controller_type)
+    {}
 
     /// \brief Deconstructor
     virtual ~Controller() {}

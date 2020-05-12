@@ -8,7 +8,7 @@
 #include <iostream>
 #include <yaml-cpp/yaml.h>
 
-typedef std::unique_ptr<revolve::Servo> Servo_p;
+typedef std::shared_ptr<revolve::raspberry::Servo> Servo_p;
 
 std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_servos);
 void reset(std::vector<Servo_p> &servos);
@@ -93,7 +93,7 @@ std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_
         auto frequency = yaml_servo["frequency"].as<unsigned>(50);
         auto range     = yaml_servo["range"]    .as<int>(1000);
         auto inverse   = yaml_servo["inverse"]  .as<bool>(false);
-        servos.emplace_back(new revolve::Servo(
+        servos.emplace_back(new revolve::raspberry::Servo(
                 x,
                 y,
                 z,
@@ -112,14 +112,14 @@ std::vector<Servo_p> read_conf(PIGPIOConnection &pigpio, const YAML::Node &yaml_
 void control(std::vector<Servo_p> &servos, const YAML::Node &controller_conf)
 {
     std::cout << "Staring controller" << std::endl;
-    std::vector<std::unique_ptr<revolve::Sensor>> sensors;
-    std::vector<std::unique_ptr<revolve::Actuator>> actuators;
+    std::vector<std::shared_ptr<revolve::Sensor>> sensors;
+    std::vector<std::shared_ptr<revolve::Actuator>> actuators;
     actuators.reserve(servos.size());
     for (Servo_p &servo: servos) {
         actuators.emplace_back(std::move(servo));
     }
 
-    revolve::RaspController controller(
+    revolve::raspberry::RaspController controller(
         std::move(actuators),
         std::move(sensors),
         controller_conf
@@ -133,14 +133,14 @@ void control(std::vector<Servo_p> &servos, const YAML::Node &controller_conf)
 void learner(std::vector<Servo_p> &servos, const YAML::Node &controllers_conf)
 {
     std::cout << "Staring controller" << std::endl;
-    std::vector<std::unique_ptr<revolve::Sensor>> sensors;
-    std::vector<std::unique_ptr<revolve::Actuator>> actuators;
+    std::vector<std::shared_ptr<revolve::Sensor>> sensors;
+    std::vector<std::shared_ptr<revolve::Actuator>> actuators;
     actuators.reserve(servos.size());
     for (Servo_p &servo: servos) {
         actuators.emplace_back(std::move(servo));
     }
 
-    revolve::RaspController controller(
+    revolve::raspberry::RaspController controller(
             std::move(actuators),
             std::move(sensors),
             controllers_conf[0]
@@ -152,7 +152,7 @@ void learner(std::vector<Servo_p> &servos, const YAML::Node &controllers_conf)
         std::cout << "Loading controller[" << ++counter << "] fitness: " << controller_conf["fitness"].as<double>(-1) << std::endl;
         controller.set_new_controller(controller_conf);
         timer.reset();
-        while (timer.elapsed_now() < 30.0) {
+        while (timer.elapsed_now() < Timer::Seconds(30.0)) {
             controller.update();
         }
     }

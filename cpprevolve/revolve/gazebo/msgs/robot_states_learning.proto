@@ -1,0 +1,19 @@
+syntax = "proto2";
+package revolve.msgs;
+import "time.proto";
+import "pose.proto";
+
+message BehaviourData {
+    required gazebo.msgs.Time time = 1;
+    optional gazebo.msgs.Pose pose = 2;
+    //     optional gazebo.msgs.Balance balance = 3;
+    //     optional gazebo.msgs.Touching touching = 4;
+}
+
+message LearningRobotStates {
+    required string id = 1;
+    required uint32 eval = 2;
+    optional bool dead = 3;
+    required double fitness = 4;
+    repeated BehaviourData behaviour = 5;
+}
