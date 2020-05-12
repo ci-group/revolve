@@ -125,6 +125,6 @@ async def run():
         experiment_management.export_snapshots(population.individuals, gen_num)
         b2=time.time()
         snapshot.append(b2-b1)
-        logger.info(population_conf.generation_time, population_conf.generation_init, population_conf.generational_fin, snapshot)
+        logger.info(f"{population_conf.generation_time}, {population_conf.generation_init}, {population_conf.generational_fin}, {snapshot}")
 
     # output result after completing all generations...
