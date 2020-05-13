@@ -24,6 +24,7 @@
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
 #include <revolve/gazebo/brains/Brains.h>
+#include <revolve/gazebo/brains/FixedAngleController.h>
 
 #include "RobotController.h"
 
@@ -232,6 +233,10 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   else if ("offline" == learner and "cppn-cpg" == controller_type)
   {
       brain_.reset(new DifferentialCPPNCPG(brain_sdf, motors_));
+  else if ("offline" == learner and "fixed-angle" == controller)
+  {
+    double angle = std::stod(brain->GetElement("rv:controller")->GetAttribute("angle")->GetAsString());
+    brain_.reset(new FixedAngleController(angle));
   }
   else
   {
