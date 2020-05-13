@@ -35,6 +35,6 @@
       <uri>model://tilted5</uri>
     </include>
 
-    <plugin name="revolve-world" filename="libWorldControlPlugin.so" />
+    <plugin name="tol-control" filename="libtolworldcontrol.so" />
   </world>
 </sdf>
