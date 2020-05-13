@@ -17,13 +17,13 @@ class Individual:
         self.parents = None
         self.failed_eval_attempt_count = 0
 
-    def develop(self, environment):
+    def develop(self):
         """
         Develops genotype into a intermediate phenotype
 
         """
         if self.phenotype is None:
-            self.phenotype = self.genotype.develop(environment)
+            self.phenotype = self.genotype.develop()
 
     @property
     def id(self):

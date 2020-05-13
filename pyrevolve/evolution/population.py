@@ -100,7 +100,7 @@ class Population:
         for environment in self.conf.environments:
 
             individual[environment] = copy.deepcopy(individual_temp)
-            individual[environment].develop(environment)
+            individual[environment].develop()
 
             if len(individual) == 1:
                 self.conf.experiment_management.export_genotype(individual[environment])
@@ -109,7 +109,7 @@ class Population:
 
             self.conf.experiment_management.export_phenotype(individual[environment], environment)
             self.conf.experiment_management.export_phenotype_images(os.path.join('data_fullevolution',
-                                                                    environment,'phenotype_images'),
+                                                                    environment, 'phenotype_images'),
                                                                     individual[environment])
             individual[environment].phenotype.measure_phenotype(self.conf.experiment_name)
             individual[environment].phenotype.export_phenotype_measurements(self.conf.experiment_name, environment)
