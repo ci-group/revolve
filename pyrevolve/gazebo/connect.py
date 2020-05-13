@@ -254,7 +254,7 @@ class RequestHandler(object):
         Performs a request. The only requirement
         of `msg` is that it has an `id` attribute.
 
-        Publishing of the srequest is always yielded to prevent multiple messages
+        Publishing of the request is always yielded to prevent multiple messages
         from going over the same pipe. The returned future is for the response.
 
         :param msg: Message object to publish

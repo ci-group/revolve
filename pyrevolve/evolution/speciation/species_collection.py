@@ -195,13 +195,9 @@ class SpeciesIterator(Iterator):
     store the current traversal position at all times.
     """
 
-    """
-    `_position` stores the current traversal position.
-    """
-    _position: int = None
-
     def __init__(self, collection: List[Species]) -> None:
         self._collection = collection
+        # `_position` stores the current traversal position.
         self._position = 0
 
     def __next__(self):
@@ -216,22 +212,3 @@ class SpeciesIterator(Iterator):
             raise StopIteration()
 
         return value
-
-
-if __name__ == "__main__":
-    from pyrevolve.genotype.genotype import Genotype
-    # The client code may or may not know about the Concrete Iterator or
-    # Collection classes, depending on the level of indirection you want to keep
-    # in your program.
-    collection = SpeciesCollection()
-    individual1 = Individual(Genotype())
-    collection.add_species(Species([individual1], 0))
-    individual2 = Individual(Genotype())
-    collection.add_species(Species([individual2], 1))
-    individual3 = Individual(Genotype())
-    collection.add_species(Species([individual3], 2))
-
-    print("Straight traversal:")
-    for individual in collection:
-        print(individual)
-    print("")

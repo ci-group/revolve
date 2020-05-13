@@ -75,10 +75,10 @@ class Population:
                         self.config.experiment_management.load_individual(_id, self.config))
 
     def load_offspring(self,
-                             last_snapshot: int,
-                             population_size: int,
-                             offspring_size: int,
-                             next_robot_id: int) -> List[Individual]:
+                       last_snapshot: int,
+                       population_size: int,
+                       offspring_size: int,
+                       next_robot_id: int) -> List[Individual]:
         """
         Recovers the part of an unfinished offspring
         :param last_snapshot: number of robots expected until the latest snapshot
