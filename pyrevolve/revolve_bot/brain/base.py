@@ -13,7 +13,12 @@ class Brain(object):
             return pyrevolve.revolve_bot.brain.BrainRLPowerSplines.from_yaml(yaml_brain)
         elif brain_type == pyrevolve.revolve_bot.brain.BrainCPGBO.TYPE:
             return pyrevolve.revolve_bot.brain.BrainCPGBO.from_yaml(yaml_brain)
+        elif brain_type == pyrevolve.revolve_bot.brain.BrainCPG.TYPE:
+            return pyrevolve.revolve_bot.brain.BrainCPG.from_yaml(yaml_brain)
+        elif brain_type == pyrevolve.revolve_bot.brain.BrainCPPNCPG.TYPE:
+            return pyrevolve.revolve_bot.brain.BrainCPPNCPG.from_yaml(yaml_brain)
         else:
+            print("No matching brain type defined in yaml file.")
             return Brain()
 
     def to_yaml(self):

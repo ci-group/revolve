@@ -87,6 +87,7 @@ class Population:
     def _new_individual(self, genotype):
         individual = Individual(genotype)
         individual.develop()
+        individual.phenotype.update_substrate()
         self.conf.experiment_management.export_genotype(individual)
         self.conf.experiment_management.export_phenotype(individual)
         self.conf.experiment_management.export_phenotype_images(os.path.join('data_fullevolution', 'phenotype_images'), individual)
@@ -115,18 +116,27 @@ class Population:
             else:
                 individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
                 for line in lines:
-                    if line.split(' ')[0] == 'velocity':
-                        individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-                    #if line.split(' ')[0] == 'displacement':
-                     #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity':
-                        individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity_hill':
-                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'head_balance':
-                        individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'contacts':
-                        individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+                    line_split = line.split(' ')
+                    line_0 = line_split[0]
+                    line_1 = line_split[1]
+                    if line_0 == 'velocity':
+                        individual.phenotype._behavioural_measurements.velocity = \
+                            float(line_1) if line_1 != 'None\n' else None
+                    # if line_0 == 'displacement':
+                    #     individual.phenotype._behavioural_measurements.displacement = \
+                    #         float(line_1) if line_1 != 'None\n' else None
+                    if line_0 == 'displacement_velocity':
+                        individual.phenotype._behavioural_measurements.displacement_velocity = \
+                            float(line_1) if line_1 != 'None\n' else None
+                    if line_0 == 'displacement_velocity_hill':
+                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = \
+                            float(line_1) if line_1 != 'None\n' else None
+                    if line_0 == 'head_balance':
+                        individual.phenotype._behavioural_measurements.head_balance =\
+                            float(line_1) if line_1 != 'None\n' else None
+                    if line_0 == 'contacts':
+                        individual.phenotype._behavioural_measurements.contacts = \
+                            float(line_1) if line_1 != 'None\n' else None
 
         return individual
 
@@ -261,9 +271,11 @@ class Population:
             individual.develop()
 
         if self.analyzer_queue is not None:
-            collisions, _bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
+            collisions, bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
+            else:
+                individual.phenotype.simulation_boundaries = bounding_box
 
         return await self.simulator_queue.test_robot(individual, self.conf)

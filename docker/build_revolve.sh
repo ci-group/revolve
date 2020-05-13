@@ -13,4 +13,5 @@ make -j4
 
 # Install the Python dependencies
 cd /revolve
+pip3 install scikit-build
 pip3 install -r requirements.txt

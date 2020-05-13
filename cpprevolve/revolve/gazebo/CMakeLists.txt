@@ -200,6 +200,7 @@ add_library(
 
 target_link_libraries(
         revolve-gazebo
+        revolve-controllers
         ${GAZEBO_LIBRARIES}
         ${Boost_LIBRARIES}
         ${GSL_LIBRARIES}

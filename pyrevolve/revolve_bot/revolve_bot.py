@@ -1,20 +1,22 @@
 """
 Revolve body generator based on RoboGen framework
 """
+import math
 import yaml
 import traceback
 from collections import OrderedDict
 from collections import deque
+import numpy as np
 
 from pyrevolve import SDF
 
 from .revolve_module import CoreModule, TouchSensorModule, Orientation
-from .revolve_module import Orientation
+from .revolve_module import Orientation, rotate_matrix_x_axis, rotate_matrix_z_axis
 from .brain import Brain, BrainNN
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
-from .measure.measure_body import MeasureBody
+from .measure.measure_body_3d import MeasureBody3D
 from .measure.measure_brain import MeasureBrain
 
 from ..custom_logging.logger import logger
@@ -36,6 +38,7 @@ class RevolveBot:
         self._behavioural_measurements = None
         self.self_collide = self_collide
         self.battery_level = 0.0
+        self.simulation_boundaries = None
 
     @property
     def id(self):
@@ -75,12 +78,12 @@ class RevolveBot:
 
     def measure_body(self):
         """
-        :return: instance of MeasureBody after performing all measurements
+        :return: instance of MeasureBody3D after performing all measurements
         """
         if self._body is None:
             raise RuntimeError('Body not initialized')
         try:
-            measure = MeasureBody(self._body)
+            measure = MeasureBody3D(self._body)
             measure.measure_all()
             return measure
         except Exception as e:
@@ -89,10 +92,12 @@ class RevolveBot:
     def export_phenotype_measurements(self, data_path):
         filepath = os.path.join(data_path, 'descriptors', f'phenotype_desc_{self.id}.txt')
         with open(filepath, 'w+') as file:
-            for key, value in self._morphological_measurements.measurements_to_dict().items():
-                file.write(f'{key} {value}\n')
-            for key, value in self._brain_measurements.measurements_to_dict().items():
-                file.write(f'{key} {value}\n')
+            if self._morphological_measurements is not None:
+                for key, value in self._morphological_measurements.measurements_to_dict().items():
+                    file.write(f'{key} {value}\n')
+            if self._brain_measurements is not None:
+                for key, value in self._brain_measurements.measurements_to_dict().items():
+                    file.write(f'{key} {value}\n')
 
     def measure_brain(self):
         """
@@ -100,7 +105,7 @@ class RevolveBot:
         """
         try:
             measure = MeasureBrain(self._brain, 10)
-            measure_b = MeasureBody(self._body)
+            measure_b = MeasureBody3D(self._body)
             measure_b.count_active_hinges()
             if measure_b.active_hinges_count > 0:
                 measure.measure_all()
@@ -108,7 +113,7 @@ class RevolveBot:
                 measure.set_all_zero()
             return measure
         except Exception as e:
-            logger.exception('Failed measuring brain')
+            logger.error(f'Failed measuring brain: {e}')
 
     def load(self, text, conf_type):
         """
@@ -198,9 +203,9 @@ class RevolveBot:
         :param raise_for_intersections: enable raising an exception if a collision of coordinates is detected
         :raises self.ItersectionCollisionException: If a collision of coordinates is detected (and check is enabled)
         """
-        substrate_coordinates_map = {(0, 0): self._body.id}
-        self._body.substrate_coordinates = (0, 0)
-        self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_map)
+        substrate_coordinates_map = {(0, 0, 0): self._body.id}
+        self._body.substrate_coordinates = (0, 0, 0)
+        self._update_substrate(raise_for_intersections, self._body, np.identity(3), substrate_coordinates_map)
 
     class ItersectionCollisionException(Exception):
         """
@@ -214,62 +219,52 @@ class RevolveBot:
     def _update_substrate(self,
                           raise_for_intersections,
                           parent,
-                          parent_direction,
+                          global_rotation_matrix,
                           substrate_coordinates_map):
-        """
-        Internal recursive function for self.update_substrate()
-        :param raise_for_intersections: same as in self.update_substrate
-        :param parent: updates the children of this parent
-        :param parent_direction: the "absolute" orientation of this parent
-        :param substrate_coordinates_map: map for all already explored coordinates(useful for coordinates conflict checks)
-        """
-        dic = {Orientation.NORTH: 0,
-               Orientation.WEST:  1,
-               Orientation.SOUTH: 2,
-               Orientation.EAST:  3}
-        inverse_dic = {0: Orientation.NORTH,
-                       1: Orientation.WEST,
-                       2: Orientation.SOUTH,
-                       3: Orientation.EAST}
 
-        movement_table = {
-            Orientation.NORTH: ( 1,  0),
-            Orientation.WEST:  ( 0, -1),
-            Orientation.SOUTH: (-1,  0),
-            Orientation.EAST:  ( 0,  1),
-        }
+        step = np.array([[1],
+                         [0],
+                         [0]])
+
+        # rotation of parent
+        # parent.orientation != of type Orientation but is an angle
+        # Orientation of coreBlock is null!
+        if parent.orientation != None:
+            rot = round(parent.orientation)
+        else:
+            rot = 0
+        vertical_rotation_matrix = rotate_matrix_x_axis(rot * math.pi / 180.0 )
+        global_rotation_matrix = np.matmul(global_rotation_matrix, vertical_rotation_matrix)
 
         for slot, module in parent.iter_children():
             if module is None:
                 continue
-
+            # rotation for slot
             slot = Orientation(slot)
 
-            # calculate new direction
-            direction = dic[parent_direction] + dic[slot]
-            if direction >= len(dic):
-                direction = direction - len(dic)
-            new_direction = Orientation(inverse_dic[direction])
+            # Z-axis rotation
+            slot_rotation = np.matmul(global_rotation_matrix, slot.get_slot_rotation_matrix())
+
+            # Do one step in the calculated direction
+            movement = np.matmul(slot_rotation, step)
 
             # calculate new coordinate
-            movement = movement_table[new_direction]
             coordinates = (
-                parent.substrate_coordinates[0] + movement[0],
-                parent.substrate_coordinates[1] + movement[1],
+                parent.substrate_coordinates[0] + movement[0][0],
+                parent.substrate_coordinates[1] + movement[1][0],
+                parent.substrate_coordinates[2] + movement[2][0]
             )
             module.substrate_coordinates = coordinates
 
             # For Karine: If you need to validate old robots, remember to add this condition to this if:
-            # if raise_for_intersections and coordinates in substrate_coordinates_map and type(module) is not TouchSensorModule:
+            # if raise_for_intersections and coordinates in substrate_coordinates_map and type(module)
+            # is not TouchSensorModule:
             if raise_for_intersections:
                 if coordinates in substrate_coordinates_map:
                     raise self.ItersectionCollisionException(substrate_coordinates_map)
                 substrate_coordinates_map[coordinates] = module.id
 
-            self._update_substrate(raise_for_intersections,
-                                   module,
-                                   new_direction,
-                                   substrate_coordinates_map)
+            self._update_substrate(raise_for_intersections, module, slot_rotation, substrate_coordinates_map)
 
     def _iter_all_elements(self):
         to_process = deque([self._body])

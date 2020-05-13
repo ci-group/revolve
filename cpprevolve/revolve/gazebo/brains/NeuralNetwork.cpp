@@ -164,7 +164,8 @@ NeuralNetwork::NeuralNetwork(
   unsigned int outputsIndex = 0;
   for (const auto &motor : _motors)
   {
-    std::string partId = motor->PartId();
+    Motor *gz_motor = reinterpret_cast<Motor*>(motor.get());
+    std::string partId = gz_motor->PartId();
     auto details = neuronPartIdMap.find(partId);
     if (details == neuronPartIdMap.end())
     {
@@ -176,7 +177,7 @@ NeuralNetwork::NeuralNetwork(
     const auto &neuron_list = details->second;
     auto neuron_iter = neuron_list.cbegin();
 
-    for (unsigned int i = 0, l = motor->Outputs(); i < l; ++i)
+    for (unsigned int i = 0, l = motor->n_outputs(); i < l; ++i)
     {
         while (not ((*neuron_iter)->GetAttribute("layer")->GetAsString() == "output"))
         {
@@ -204,7 +205,8 @@ NeuralNetwork::NeuralNetwork(
   unsigned int inputsIndex = 0;
   for (const auto &sensor : _sensors)
   {
-    auto partId = sensor->PartId();
+    Sensor * gz_sensor = reinterpret_cast<Sensor*>(sensor.get());
+    auto partId = gz_sensor->PartId();
     auto details = neuronPartIdMap.find(partId);
     if (details == neuronPartIdMap.end())
     {
@@ -215,7 +217,7 @@ NeuralNetwork::NeuralNetwork(
     const auto &neuron_list = details->second;
     auto neuron_iter = neuron_list.cbegin();
 
-    for (unsigned int i = 0, l = sensor->Inputs(); i < l; ++i)
+    for (unsigned int i = 0, l = sensor->n_inputs(); i < l; ++i)
     {
       while (not ((*neuron_iter)->GetAttribute("layer")->GetAsString() == "input"))
       {
@@ -405,8 +407,8 @@ void NeuralNetwork::Update(
   unsigned int p = 0;
   for (const auto &sensor : _sensors)
   {
-    sensor->Read(this->input_.data()+p);
-    p += sensor->Inputs();
+    sensor->read(this->input_.data()+p);
+    p += sensor->n_inputs();
   }
 
   this->Step(_time);
@@ -419,8 +421,8 @@ void NeuralNetwork::Update(
   p = 0;
   for (const auto &motor: _motors)
   {
-    motor->Update(output.data()+p, _step);
-    p += motor->Outputs();
+    motor->write(output.data()+p, _step);
+    p += motor->n_outputs();
   }
 }
 

@@ -154,7 +154,10 @@ class SimulatorQueue:
         else:
             # Change this `max_age` from the command line parameters (--evalution-time)
             max_age = conf.evaluation_time
-            robot_manager = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, self._settings.z_start), max_age)
+            pose_z = self._settings.z_start
+            if robot.phenotype.simulation_boundaries is not None:
+                pose_z -= robot.phenotype.simulation_boundaries.min.z
+            robot_manager = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, pose_z), max_age)
             start = time.time()
             # Start a run loop to do some stuff
             while not robot_manager.dead:  # robot_manager.age() < max_age:

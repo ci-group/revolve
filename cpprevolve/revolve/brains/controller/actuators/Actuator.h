@@ -28,9 +28,9 @@ public:
 
     inline unsigned int n_outputs() const {return this->_n_outputs;}
 
-private:
+protected:
     const unsigned int _n_outputs;
-    const std::tuple<double, double, double> coordinates;
+    std::tuple<double, double, double> coordinates;
 };
 
 }

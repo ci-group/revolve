@@ -55,18 +55,6 @@ SensorPtr SensorFactory::Sensor(
   {
     sensor.reset(new TouchSensor(this->model_, _sensorSdf, _partId, _sensorId));
   }
-  else if ("basic_battery" == _type)
-  {
-    sensor.reset(new BatterySensor(this->model_, _partId, _sensorId));
-  }
-  else if ("point_intensity" == _type)
-  {
-    sensor.reset(new PointIntensitySensor(
-        _sensorSdf,
-        this->model_,
-        _partId,
-        _sensorId));
-  }
   else
   {
       std::clog << "Sensor type \"" << _type << "\" not recognized. Ignoring sensor" << std::endl;

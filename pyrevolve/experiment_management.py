@@ -61,8 +61,11 @@ class ExperimentManagement:
                     f.write(f"{key} {val}\n")
 
     def export_phenotype_images(self, dirpath, individual):
-        individual.phenotype.render_body(os.path.join(self.experiment_folder, dirpath, f'body_{individual.phenotype.id}.png'))
-        individual.phenotype.render_brain(os.path.join(self.experiment_folder, dirpath, f'brain_{individual.phenotype.id}.png'))
+        try:
+            individual.phenotype.render_body(os.path.join(self.experiment_folder, dirpath, f'body_{individual.phenotype.id}.png'))
+            individual.phenotype.render_brain(os.path.join(self.experiment_folder, dirpath, f'brain_{individual.phenotype.id}.png'))
+        except Exception as e:
+            logger.warning(f'Error rendering phenotype images: {e}')
 
     def export_failed_eval_robot(self, individual):
         individual.genotype.export_genotype(os.path.join(self.data_folder, 'failed_eval_robots', f'genotype_{individual.phenotype.id}.txt'))
@@ -95,7 +98,9 @@ class ExperimentManagement:
             for dir in d:
                 if 'selectedpop' in dir:
                     exported_files = len([name for name in os.listdir(os.path.join(self.experiment_folder, dir)) if os.path.isfile(os.path.join(self.experiment_folder, dir, name))])
-                    if exported_files == (population_size * 2): # body and brain files
+                    # no brains yet so check only for body files
+                    # if exported_files == (population_size * 2): # body and brain files
+                    if exported_files == population_size: # body and brain files
                         snapshots.append(int(dir.split('_')[1]))
 
         if len(snapshots) > 0:

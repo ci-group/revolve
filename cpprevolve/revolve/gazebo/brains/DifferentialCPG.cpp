@@ -525,7 +525,8 @@ void DifferentialCPG::save_fitness(){
  * Struct that holds the parameters on which BO is called. This is required
  * by limbo.
  */
-struct DifferentialCPG::Params{
+struct DifferentialCPG::Params
+        {
 
     struct bayes_opt_boptimizer : public limbo::defaults::bayes_opt_boptimizer {
     };
@@ -710,8 +711,8 @@ void DifferentialCPG::Update(
   unsigned int p = 0;
   for (const auto &sensor : _sensors)
   {
-    sensor->Read(this->input + p);
-    p += sensor->Inputs();
+    sensor->read(this->input + p);
+    p += sensor->n_inputs();
   }
 
   this->evaluator->Update(this->robot->WorldPose(), _time, _step);
@@ -827,8 +828,8 @@ void DifferentialCPG::Update(
   p = 0;
   for (const auto &motor: _motors)
   {
-    motor->Update(this->output + p, _step);
-    p += motor->Outputs();
+    motor->write(this->output + p, _step);
+    p += motor->n_outputs();
   }
 }
 
