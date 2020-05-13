@@ -124,8 +124,7 @@ class PlasticodingDecoder:
         self.edges = {}
 
     def decode_sentence(self):
-        self.body._id = self._id if type(self._id) == str and self._id.startswith('robot') \
-            else f'robot_{self._id}'
+        self.body._id = self._id
 
         core_module = CoreModule()
         self.body._body = core_module

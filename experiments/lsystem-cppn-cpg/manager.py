@@ -2,8 +2,9 @@
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
-from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
+from pyrevolve.evolution.population.population import Population
+from pyrevolve.evolution.population.population_config import PopulationConfig
+from pyrevolve.evolution.population.population_management import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.lsystem_neat.crossover import CrossoverConfig as lCrossoverConfig
 from pyrevolve.genotype.lsystem_neat.crossover import standard_crossover as lcrossover

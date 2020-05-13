@@ -1,26 +1,32 @@
 """
 Revolve body generator based on RoboGen framework
 """
+from __future__ import annotations
+
+import os
 import math
+
 import yaml
-import traceback
 from collections import OrderedDict
 from collections import deque
 import numpy as np
 
 from pyrevolve import SDF
-
+from pyrevolve.custom_logging.logger import logger
 from .revolve_module import CoreModule, TouchSensorModule, Orientation
 from .revolve_module import Orientation, rotate_matrix_x_axis, rotate_matrix_z_axis
 from .brain import Brain, BrainNN
-
 from .render.render import Render
 from .render.brain_graph import BrainGraph
 from .measure.measure_body_3d import MeasureBody3D
 from .measure.measure_brain import MeasureBrain
 
-from ..custom_logging.logger import logger
-import os
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Optional, AnyStr, Union, Dict
+    from .revolve_module import RevolveModule
+    from pyrevolve.tol.manage.measures import BehaviouralMeasurements
+
 
 class RevolveBot:
     """
@@ -29,35 +35,35 @@ class RevolveBot:
     a robot's sdf mode
     """
 
-    def __init__(self, _id=None, self_collide=True):
-        self._id = _id
-        self._body = None
-        self._brain = None
-        self._morphological_measurements = None
-        self._brain_measurements = None
-        self._behavioural_measurements = None
-        self.self_collide = self_collide
-        self.battery_level = 0.0
+    def __init__(self, _id: int = None, self_collide: bool = True):
+        self._id: int = _id
+        self._body: Optional[CoreModule] = None
+        self._brain: Optional[Brain] = None
+        self._morphological_measurements: Optional[MeasureBody3D] = None
+        self._brain_measurements: Optional[MeasureBrain] = None
+        self._behavioural_measurements: Optional[BehaviouralMeasurements] = None
+        self.self_collide: bool = self_collide
+        self.battery_level: float = 0.0
         self.simulation_boundaries = None
 
     @property
-    def id(self):
+    def id(self) -> int:
         return self._id
 
     @property
-    def body(self):
+    def body(self) -> CoreModule:
         return self._body
 
     @property
-    def brain(self):
+    def brain(self) -> Brain:
         return self._brain
 
-    def size(self):
+    def size(self) -> int:
         robot_size = 1 + self._recursive_size_measurement(self._body)
         return robot_size
 
-    def _recursive_size_measurement(self, module):
-        count = 0
+    def _recursive_size_measurement(self, module) -> int:
+        count: int = 0
         for _, child in module.iter_children():
             if child is not None:
                 count += 1 + self._recursive_size_measurement(child)
@@ -69,14 +75,14 @@ class RevolveBot:
 
         :return:
         """
-        pass
+        raise NotImplementedError("Behaviour measurement is not implemented here")
 
-    def measure_phenotype(self):
+    def measure_phenotype(self) -> None:
         self._morphological_measurements = self.measure_body()
         self._brain_measurements = self.measure_brain()
         logger.info('Robot ' + str(self.id) + ' was measured.')
 
-    def measure_body(self):
+    def measure_body(self) -> MeasureBody3D:
         """
         :return: instance of MeasureBody3D after performing all measurements
         """
@@ -89,7 +95,7 @@ class RevolveBot:
         except Exception as e:
             logger.exception('Failed measuring body')
 
-    def export_phenotype_measurements(self, data_path):
+    def export_phenotype_measurements(self, data_path) -> None:
         filepath = os.path.join(data_path, 'descriptors', f'phenotype_desc_{self.id}.txt')
         with open(filepath, 'w+') as file:
             if self._morphological_measurements is not None:
@@ -99,7 +105,7 @@ class RevolveBot:
                 for key, value in self._brain_measurements.measurements_to_dict().items():
                     file.write(f'{key} {value}\n')
 
-    def measure_brain(self):
+    def measure_brain(self) -> MeasureBrain:
         """
         :return: instance of MeasureBrain after performing all measurements
         """
@@ -115,19 +121,18 @@ class RevolveBot:
         except Exception as e:
             logger.error(f'Failed measuring brain: {e}')
 
-    def load(self, text, conf_type):
+    def load(self, text: AnyStr, conf_type: str) -> None:
         """
         Load robot's description from a string and parse it to Python structure
         :param text: Robot's description string
         :param conf_type: Type of a robot's description format
-        :return:
         """
         if 'yaml' == conf_type:
             self.load_yaml(text)
         elif 'sdf' == conf_type:
             raise NotImplementedError("Loading from SDF not yet implemented")
 
-    def load_yaml(self, text):
+    def load_yaml(self, text: AnyStr) -> None:
         """
         Load robot's description from a yaml string
         :param text: Robot's yaml description
@@ -149,7 +154,7 @@ class RevolveBot:
             self._brain = Brain()
             logger.exception('Failed to load brain, setting to None')
 
-    def load_file(self, path, conf_type='yaml'):
+    def load_file(self, path: str, conf_type: str = 'yaml') -> None:
         """
         Read robot's description from a file and parse it to Python structure
         :param path: Robot's description file path
@@ -161,15 +166,16 @@ class RevolveBot:
 
         self.load(robot, conf_type)
 
-    def to_sdf(self, pose=SDF.math.Vector3(0, 0, 0.25), nice_format=None):
+    def to_sdf(self,
+               pose=SDF.math.Vector3(0, 0, 0.25),
+               nice_format: Union[bool, str] = None) -> AnyStr:
         if type(nice_format) is bool:
             nice_format = '\t' if nice_format else None
         return SDF.revolve_bot_to_sdf(self, pose, nice_format, self_collide=self.self_collide)
 
-    def to_yaml(self):
+    def to_yaml(self) -> AnyStr:
         """
         Converts robot data structure to yaml
-
         :return:
         """
         yaml_dict = OrderedDict()
@@ -180,30 +186,32 @@ class RevolveBot:
 
         return yaml.dump(yaml_dict)
 
-    def save_file(self, path, conf_type='yaml'):
+    def save_file(self, path: str, conf_type: str = 'yaml') -> None:
         """
         Save robot's description on a given file path in a specified format
         :param path:
         :param conf_type:
         :return:
         """
-        robot = ''
+        robot: str
         if 'yaml' == conf_type:
             robot = self.to_yaml()
         elif 'sdf' == conf_type:
             robot = self.to_sdf(nice_format=True)
+        else:
+            raise NotImplementedError(f'Config type {conf_type} not supported')
 
         with open(path, 'w') as robot_file:
             robot_file.write(robot)
 
-    def update_substrate(self, raise_for_intersections=False):
+    def update_substrate(self, raise_for_intersections: bool = False) -> None:
         """
         Update all coordinates for body components
 
         :param raise_for_intersections: enable raising an exception if a collision of coordinates is detected
         :raises self.ItersectionCollisionException: If a collision of coordinates is detected (and check is enabled)
         """
-        substrate_coordinates_map = {(0, 0, 0): self._body.id}
+        substrate_coordinates_map: Dict[(int, int, int), int] = {(0, 0, 0): self._body.id}
         self._body.substrate_coordinates = (0, 0, 0)
         self._update_substrate(raise_for_intersections, self._body, np.identity(3), substrate_coordinates_map)
 
@@ -212,15 +220,15 @@ class RevolveBot:
         A collision has been detected when updating the robot coordinates.
         Check self.substrate_coordinates_map to know more.
         """
-        def __init__(self, substrate_coordinates_map):
+        def __init__(self, substrate_coordinates_map: Dict[(int, int, int), int]):
             super().__init__(self)
-            self.substrate_coordinates_map = substrate_coordinates_map
+            self.substrate_coordinates_map: Dict[(int, int, int), int] = substrate_coordinates_map
 
     def _update_substrate(self,
-                          raise_for_intersections,
-                          parent,
-                          global_rotation_matrix,
-                          substrate_coordinates_map):
+                          raise_for_intersections: bool,
+                          parent: RevolveModule,
+                          global_rotation_matrix: np.array,
+                          substrate_coordinates_map: Dict[(int, int, int), int]):
 
         step = np.array([[1],
                          [0],
@@ -266,7 +274,7 @@ class RevolveBot:
 
             self._update_substrate(raise_for_intersections, module, slot_rotation, substrate_coordinates_map)
 
-    def _iter_all_elements(self):
+    def _iter_all_elements(self) -> RevolveModule:
         to_process = deque([self._body])
         while len(to_process) > 0:
             elem = to_process.popleft()
@@ -275,10 +283,10 @@ class RevolveBot:
                     to_process.append(child)
             yield elem
 
-    def render_brain(self, img_path):
+    def render_brain(self, img_path: str) -> None:
         """
         Render image of brain
-        @param img_path: path to where to store image
+        :param img_path: path to where to store image
         """
         if self._brain is None:
             raise RuntimeError('Brain not initialized')
@@ -292,7 +300,7 @@ class RevolveBot:
         else:
             raise RuntimeError('Brain {} image rendering not supported'.format(type(self._brain)))
 
-    def render_body(self, img_path):
+    def render_body(self, img_path: str) -> None:
         """
         Render 2d representation of robot and store as png
         :param img_path: path of storing png file
@@ -306,5 +314,5 @@ class RevolveBot:
             except Exception as e:
                 logger.exception('Failed rendering 2d robot')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'RevolveBot({self.id})'

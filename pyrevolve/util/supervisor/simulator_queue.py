@@ -3,7 +3,7 @@ import os
 import time
 
 from pyrevolve.custom_logging.logger import logger
-from pyrevolve.evolution.population import PopulationConfig
+from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 from pyrevolve.SDF.math import Vector3
@@ -24,6 +24,7 @@ class SimulatorQueue:
         self._robot_queue = asyncio.Queue()
         self._free_simulator = [True for _ in range(n_cores)]
         self._workers = []
+        self._enable_play_pause = True
 
     def _simulator_supervisor(self, simulator_name_postfix):
         return DynamicSimSupervisor(
@@ -123,6 +124,9 @@ class SimulatorQueue:
     async def _simulator_queue_worker(self, i):
         try:
             self._free_simulator[i] = True
+            if self._enable_play_pause:
+                await self._connections[i].pause(True)
+                await self._connections[i].reset(rall=True, time_only=True, model_only=False)
             while True:
                 logger.info(f"simulator {i} waiting for robot")
                 (robot, future, conf) = await self._robot_queue.get()
@@ -141,6 +145,9 @@ class SimulatorQueue:
                     logger.info(f"Robot {robot.phenotype.id} current failed attempt: {robot.failed_eval_attempt_count}")
                     await self._robot_queue.put((robot, future, conf))
                     await self._restart_simulator(i)
+                    if self._enable_play_pause:
+                        await self._connections[i].pause(True)
+                        await self._connections[i].reset(rall=True, time_only=True, model_only=False)
                 self._robot_queue.task_done()
                 self._free_simulator[i] = True
         except Exception:
@@ -158,9 +165,12 @@ class SimulatorQueue:
             if robot.phenotype.simulation_boundaries is not None:
                 pose_z -= robot.phenotype.simulation_boundaries.min.z
             robot_manager = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, pose_z), max_age)
+            if self._enable_play_pause:
+                await simulator_connection.pause(False)
             start = time.time()
             # Start a run loop to do some stuff
-            while not robot_manager.dead:  # robot_manager.age() < max_age:
+            while not robot_manager.dead:
+            # while not robot_manager.age() < max_age:
                 await asyncio.sleep(1.0 / 2)  # 5= state_update_frequency
             end = time.time()
             elapsed = end-start
@@ -171,7 +181,8 @@ class SimulatorQueue:
             simulator_connection.unregister_robot(robot_manager)
             # await simulator_connection.delete_all_robots()
             # await simulator_connection.delete_robot(robot_manager)
-            # await simulator_connection.pause(True)
+            if self._enable_play_pause:
+                await simulator_connection.pause(True)
             await simulator_connection.reset(rall=True, time_only=True, model_only=False)
             return robot_fitness, measures.BehaviouralMeasurements(robot_manager, robot)
 

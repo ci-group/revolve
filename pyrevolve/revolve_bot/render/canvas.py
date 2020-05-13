@@ -1,5 +1,12 @@
+from __future__ import annotations
+
 import cairo
 import math
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+	from typing import Union, List, Any
+
 
 class Canvas:
 	# Current position of last drawn element
@@ -21,8 +28,7 @@ class Canvas:
 	# Rotating orientation in regard to parent module
 	rotating_orientation = 0
 
-
-	def __init__(self, width, height, scale):
+	def __init__(self, width: int, height: int, scale: int):
 		"""Instantiate context and surface"""
 		self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width*scale, height*scale)
 		context = cairo.Context(self.surface)
@@ -32,24 +38,24 @@ class Canvas:
 		self.height = height
 		self.scale = scale
 
-
-	def get_position(self):
+	def get_position(self) -> (int, int):
 		"""Return current position on x and y axis"""
 		return [Canvas.x_pos, Canvas.y_pos]
 
-	def set_position(self, x, y):
+	def set_position(self, x: int, y: int):
 		"""Set position of x and y axis"""
 		Canvas.x_pos = x
 		Canvas.y_pos = y
 
-	def set_orientation(self, orientation):
+	def set_orientation(self, orientation: int) -> bool:
 		"""Set new orientation of robot"""
 		if orientation in [0, 1, 2, 3]:
 			Canvas.orientation = orientation
+			return True
 		else:
 			return False
 
-	def calculate_orientation(self):
+	def calculate_orientation(self) -> None:
 		"""Calculate new orientation based on current orientation and last movement direction"""
 		if (Canvas.previous_move == -1 or
 		(Canvas.previous_move == 1 and Canvas.orientation == 1) or
@@ -73,7 +79,7 @@ class Canvas:
 		(Canvas.previous_move == 2 and Canvas.orientation == 0)):
 			self.set_orientation(3)
 
-	def move_by_slot(self, slot):
+	def move_by_slot(self, slot: int) -> None:
 		"""Move in direction by slot id"""
 		if slot == 0:
 			self.move_down()
@@ -83,8 +89,10 @@ class Canvas:
 			self.move_right()
 		elif slot == 3:
 			self.move_left()
+		else:
+			RuntimeError("Slot can only be 0,1,2 or 3")
 
-	def move_right(self):
+	def move_right(self) -> None:
 		"""Set position one to the right in correct orientation"""
 		if Canvas.orientation == 1:
 			Canvas.x_pos += 1
@@ -96,7 +104,7 @@ class Canvas:
 			Canvas.y_pos -= 1
 		Canvas.previous_move = 2
 
-	def move_left(self):
+	def move_left(self) -> None:
 		"""Set position one to the left"""
 		if Canvas.orientation == 1:
 			Canvas.x_pos -= 1
@@ -108,7 +116,7 @@ class Canvas:
 			Canvas.y_pos += 1
 		Canvas.previous_move = 3
 
-	def move_up(self):
+	def move_up(self) -> None:
 		"""Set position one upwards"""
 		if Canvas.orientation == 1:
 			Canvas.y_pos -= 1
@@ -120,7 +128,7 @@ class Canvas:
 			Canvas.x_pos -= 1
 		Canvas.previous_move = 1
 
-	def move_down(self):
+	def move_down(self) -> None:
 		"""Set position one downwards"""
 		if Canvas.orientation == 1:
 			Canvas.y_pos += 1
@@ -132,7 +140,7 @@ class Canvas:
 			Canvas.x_pos += 1
 		Canvas.previous_move = 0
 
-	def move_back(self):
+	def move_back(self) -> None:
 		"""Move back to previous state on canvas"""
 		if len(Canvas.movement_stack) > 1:
 			Canvas.movement_stack.pop()
@@ -142,7 +150,7 @@ class Canvas:
 		Canvas.orientation = last_movement[2]
 		Canvas.rotating_orientation = last_movement[3]
 
-	def sign_id(self, mod_id):
+	def sign_id(self, mod_id: Union[int, List[Any]]) -> None:
 		"""Sign module with the id on the upper left corner of block"""
 		self.context.set_font_size(0.3)
 		self.context.move_to(Canvas.x_pos, Canvas.y_pos + 0.4)
@@ -154,7 +162,7 @@ class Canvas:
 			self.context.show_text(mod_id)
 		self.context.stroke()
 
-	def draw_controller(self, mod_id):
+	def draw_controller(self, mod_id) -> None:
 		"""Draw a controller (yellow) in the middle of the canvas"""
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
 		self.context.set_source_rgb(255, 255, 0)
@@ -165,7 +173,7 @@ class Canvas:
 		self.sign_id(mod_id)
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 
-	def draw_hinge(self, mod_id):
+	def draw_hinge(self, mod_id) -> None:
 		"""Draw a hinge (blue) on the previous object"""
 
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
@@ -181,7 +189,7 @@ class Canvas:
 		self.sign_id(mod_id)
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 
-	def draw_module(self, mod_id):
+	def draw_module(self, mod_id) -> None:
 		"""Draw a module (red) on the previous object"""
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
 		self.context.set_source_rgb(0, 0, 1)
@@ -193,7 +201,7 @@ class Canvas:
 		self.sign_id(mod_id)
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 
-	def calculate_sensor_rectangle_position(self):
+	def calculate_sensor_rectangle_position(self) -> (float, float, float, float):
 		"""Calculate squeezed sensor rectangle position based on current orientation and last movement direction"""
 		if (Canvas.previous_move == -1 or
 		(Canvas.previous_move == 1 and Canvas.orientation == 1) or
@@ -217,14 +225,14 @@ class Canvas:
 		(Canvas.previous_move == 2 and Canvas.orientation == 0)):
 			return Canvas.x_pos + 0.9, Canvas.y_pos, 0.1, 1
 
-	def save_sensor_position(self):
+	def save_sensor_position(self) -> None:
 		"""Save sensor position in list"""
 		x, y, x_scale, y_scale = self.calculate_sensor_rectangle_position()
 		Canvas.sensors.append([x, y, x_scale, y_scale])
 		self.calculate_orientation()
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 
-	def draw_sensors(self):
+	def draw_sensors(self) -> None:
 		"""Draw all sensors"""
 		for sensor in Canvas.sensors:
 			self.context.rectangle(sensor[0], sensor[1], sensor[2], sensor[3])
@@ -234,7 +242,7 @@ class Canvas:
 			self.context.set_line_width(0.01)
 			self.context.stroke()
 
-	def calculate_connector_to_parent_position(self):
+	def calculate_connector_to_parent_position(self) -> (float, float):
 		"""Calculate position of connector node on canvas"""
 		parent = Canvas.movement_stack[-2]
 		parent_orientation = parent[2]
@@ -264,7 +272,7 @@ class Canvas:
 			# Connector is on bottom of parent
 			return parent[0] + 0.5, parent[1] + 1
 
-	def draw_connector_to_parent(self):
+	def draw_connector_to_parent(self) -> None:
 		"""Draw a circle between child and parent"""
 		x, y = self.calculate_connector_to_parent_position()
 		self.context.arc(x, y, 0.1, 0, math.pi*2)
@@ -274,11 +282,11 @@ class Canvas:
 		self.context.set_line_width(0.01)
 		self.context.stroke()
 
-	def save_png(self, file_name):
+	def save_png(self, file_name: str) -> None:
 		"""Store image representation of canvas"""
-		self.surface.write_to_png('%s' % file_name)
+		self.surface.write_to_png(file_name)
 
-	def reset_canvas(self):
+	def reset_canvas(self) -> None:
 		"""Reset canvas variables to default values"""
 		Canvas.x_pos = 0
 		Canvas.y_pos = 0

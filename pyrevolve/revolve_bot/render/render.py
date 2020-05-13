@@ -95,5 +95,5 @@ class Render:
             cv.reset_canvas()
             self.grid.reset_grid()
 
-        except Exception as e:
-            logger.exception('Could not render robot and save image file')
+        except Exception:
+            logger.exception(f'Could not render robot and save image file {image_path}')
