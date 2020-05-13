@@ -71,7 +71,7 @@ async def run():
     def fitness_function_plane(robot_manager, robot):
         #contacts = measures.contacts(robot_manager, robot)
         #assert(contacts != 0)
-        return fitness.displacement_velocity_hill(robot_manager, robot, False)
+        return fitness.displacement_velocity_hill(robot_manager, robot)
 
 
     fitness_function = {'plane': fitness_function_plane,

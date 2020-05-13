@@ -67,7 +67,7 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_tilted(robot_manager, robot):
-        return fitness.displacement_velocity_hill(robot_manager, robot, False)
+        return fitness.displacement_velocity_hill(robot_manager, robot)
 
     fitness_function = {'tilted5': fitness_function_tilted}
 

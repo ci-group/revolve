@@ -71,12 +71,12 @@ async def run():
     def fitness_function_plane(robot_manager, robot):
         contacts = measures.contacts(robot_manager, robot)
         assert(contacts != 0)
-        return fitness.displacement_velocity_hill(robot_manager, robot, False)
+        return fitness.displacement_velocity_hill(robot_manager, robot)
 
     def fitness_function_lava(robot_manager, robot):
         contacts = measures.contacts(robot_manager, robot)
         assert(contacts != 0)
-        return fitness.floor_is_lava(robot_manager, robot, False)
+        return fitness.floor_is_lava(robot_manager, robot)
 
     fitness_functions = {'plane': fitness_function_plane,
                          'lava': fitness_function_lava}
