@@ -7627,6 +7627,6 @@
            <include>
            <uri>model://tol_ground</uri>
            </include>
-               <plugin name="tol-control" filename="libtolworldcontrol.so" />
+           <plugin name="tol-control" filename="libtolworldcontrol.so" />
            </world>
            </sdf>
