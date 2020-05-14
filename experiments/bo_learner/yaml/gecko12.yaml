@@ -226,7 +226,7 @@ brain:
     signal_factor_all: 4.0
     signal_factor_mid: 2.5
     signal_factor_left_right: 2.5
-    range_lb: -1.5
+    range_lb: -1.0
     range_ub: 1.5
     init_neuron_state: 0.707
   learner:
@@ -249,5 +249,5 @@ brain:
     reset_robot_position: "false"
     evaluation_rate: 60
     output_directory: ""
-    verbose: 1
+    verbose: 0
     startup_time: 0

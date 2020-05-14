@@ -28,11 +28,10 @@ async def run():
     # Load a robot from yaml
     robot = revolve_bot.RevolveBot()
     if settings.robot_yaml is None:
-        robot.load_file("experiments/bo_learner/yaml/spider9.yaml")
+        robot.load_file("experiments/bo_learner/yaml/spider.yaml")
     else:
         robot.load_file(settings.robot_yaml)
     robot.update_substrate()
-
 
     # Start Simulator
     if settings.simulator_cmd != 'debug':
@@ -45,8 +44,6 @@ async def run():
             simulator_name='gazebo'
         )
         await simulator_supervisor.launch_simulator(port=settings.port_start)
-
-
 
     # Connect to the simulator and pause
     world = await World.create(settings, world_address=('localhost', settings.port_start))

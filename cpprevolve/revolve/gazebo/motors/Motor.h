@@ -26,7 +26,6 @@
 #include <gazebo/physics/physics.hh>
 
 #include <revolve/gazebo/Types.h>
-
 #include <revolve/brains/controller/actuators/Actuator.h>
 
 #include <revolve/gazebo/battery/Battery.h>

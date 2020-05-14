@@ -17,42 +17,34 @@ import matplotlib.pyplot as plt
 from glob import glob
 from joblib import Parallel, delayed
 
+
 # Parameters
-min_lines = 1490
+min_lines = 1480
 run_gazebo = False
-n_runs = 20 # Naar 20
-n_jobs = 1
+n_runs = 15 # Naar 20
+n_jobs = 30
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "gecko7.yaml" # CHANGETHIS !
+yaml_model = "babyC.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = "~/projects/revolve/.venv/bin/python3"
-
-
-
+python_interpreter = ".venv/bin/python3"
 
 search_space = {
-    'load_brain': ["'/Users/roy/projects/revolve/output/brain_testing/directed_locomotion_runs/gecko7/best_brain_gecko7_1.31482.txt'",
-                   "'/Users/roy/projects/revolve/output/brain_testing/directed_locomotion_runs/gecko7/best_brain_gecko7_1.33971.txt'",
-                   "'/Users/roy/projects/revolve/output/brain_testing/directed_locomotion_runs/gecko7/best_brain_gecko7_1.34137.txt'",
-                   "'/Users/roy/projects/revolve/output/brain_testing/directed_locomotion_runs/gecko7/best_brain_gecko7_1.44568.txt'"]
-    # 'evaluation_rate': [60],
-    # 'init_method': ["LHS"],
-    # 'verbose': [1],
-    # 'kernel_l': [0.1],
-    # 'acqui_ucb_alpha': [1.0],
-    # 'n_learning_iterations': [1450],
-    # 'n_init_samples': [50],
-    # 'kernel_l': [0.2],
-    # 'acqui_ucb_alpha': [3.0],
-    # 'n_learning_iterations': [950],
-    # 'n_init_samples': [20],
+    'n_learning_iterations': [1500],
+    'n_init_samples': [20],
+    'evaluation_rate': [60],
+    'verbose': [0],
+    'kernel_sigma_sq': [1],
+    'kernel_l': [0.02, 0.05, 0.1, 0.2],
+    'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
+    'range_ub': [1.5],
+    'signal_factor_all': [4.0],
 }
 
 print('search_space:', search_space)
 # You don't have to change this
 my_sub_directory = "yaml_temp/"
 output_path = "output/cpg_bo/main_" + str(round(time.time())) + "/"
-start_port = 12000 # STEP 6
+start_port = 11000
 finished = False
 
 # Make in revolve/build to allow runs from terminal

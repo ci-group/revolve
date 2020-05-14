@@ -9,9 +9,8 @@ import asyncio
 from pyrevolve.SDF.math import Vector3
 from pyrevolve import revolve_bot, parser
 from pyrevolve.tol.manage import World
-
-from pyrevolve.evolution import fitness
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
+from pyrevolve.evolution import fitness
 
 
 async def run():
@@ -40,6 +39,8 @@ async def run():
     robot = revolve_bot.RevolveBot()
     robot.load_file(robot_file_path)
     robot.update_substrate()
+    # robot._brain = BrainRLPowerSplines()
+    # robot._brain = BrainRLPowerSplines()
 
     # Connect to the simulator and pause
     connection = await World.create(settings, world_address=('127.0.0.1', settings.port_start))

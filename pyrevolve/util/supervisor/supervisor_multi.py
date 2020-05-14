@@ -230,6 +230,7 @@ class DynamicSimSupervisor(object):
         """
         Launches the simulator
         """
+
         self._logger.info("Launching the simulator...")
         gz_args = self.simulator_cmd + self.simulator_args
         snapshot_world = os.path.join(

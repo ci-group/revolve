@@ -27,6 +27,7 @@
 
 #include <revolve/gazebo/Types.h>
 #include <revolve/gazebo/battery/Battery.h>
+
 namespace revolve
 {
   namespace gazebo
