@@ -110,13 +110,14 @@ async def run():
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
+        init2=time.time()
+        initiation = init2-init1
+        logger.info(f'Initiation: {initiation}')
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
 
     snapshot = []
-    init2=time.time()
-    initiation = init2-init1
 
     while gen_num < num_generations-1:
         gen_num += 1
