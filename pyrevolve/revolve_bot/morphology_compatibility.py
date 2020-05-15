@@ -28,6 +28,7 @@ class MorphologyCompatibility:
                  symmetry: float = 0.0,
                  hinge_count: float = 0.0,
                  brick_count: float = 0.0,
+                 brick_count_proportion: float = 0.0,
                  brick_sensor_count: float = 0.0,
                  touch_sensor_count: float = 0.0,
                  free_slots: float = 0.0,
@@ -78,6 +79,8 @@ class MorphologyCompatibility:
         self.hinge_count: float = hinge_count
         # Number of bricks
         self.brick_count: float = brick_count
+        # Number of bricks proportionate to max size
+        self.brick_count_proportion: float = brick_count_proportion
         # Number of brick sensors
         self.brick_sensor_count: float = brick_sensor_count
         # Number of touch sensors
@@ -120,13 +123,16 @@ class MorphologyCompatibility:
         total_distance += self.height * abs(_2.height - _1.height)
         total_distance += self.z_depth * abs(_2.z_depth - _1.z_depth)
         total_distance += self.absolute_size * abs(_2.absolute_size - _1.absolute_size)
-        if self.max_permitted_modules is not None:
+        if self.max_permitted_modules is not None and self.size != 0.0:
             total_distance += self.size * \
                               abs(_2.absolute_size - _1.absolute_size) / self.max_permitted_modules
         total_distance += self.sensors * abs(_2.sensors - _1.sensors)
         total_distance += self.symmetry * abs(_2.symmetry - _1.symmetry)
         total_distance += self.hinge_count * abs(_2.hinge_count - _1.hinge_count)
         total_distance += self.brick_count * abs(_2.brick_count - _1.brick_count)
+        if self.max_permitted_modules is not None and self.brick_count_proportion != 0.0:
+            total_distance += self.brick_count_proportion * \
+                              abs(_2.brick_count - _1.brick_count) / self.max_permitted_modules
         total_distance += self.brick_sensor_count * abs(_2.brick_sensor_count - _1.brick_sensor_count)
         total_distance += self.touch_sensor_count * abs(_2.touch_sensor_count - _1.touch_sensor_count)
         total_distance += self.free_slots * abs(_2.free_slots - _1.free_slots)

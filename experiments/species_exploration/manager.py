@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
-from pyrevolve.evolution.selection import multiple_selection_with_duplicates, tournament_selection
+from pyrevolve.evolution.selection import multiple_selection_with_duplicates, multiple_selection, tournament_selection
 from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated
 from pyrevolve.evolution.speciation.population_speciated_config import PopulationSpeciatedConfig
 from pyrevolve.evolution.speciation.population_speciated_management import steady_state_speciated_population_management
@@ -23,6 +23,8 @@ from pyrevolve.revolve_bot.morphology_compatibility import MorphologyCompatibili
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from typing import Union
+    from pyrevolve.evolution.population.population import Population
     from pyrevolve.evolution.individual import Individual
 
 
@@ -35,6 +37,7 @@ async def run():
     num_generations = 200
     population_size = 100
     offspring_size = 50
+    remove_species_gen_n = 100
 
     body_conf = PlasticodingConfig(
         max_structural_modules=20,
@@ -97,8 +100,12 @@ async def run():
     logger.info(f'Activated run {args.run} of experiment {args.experiment_name}')
 
     if do_recovery:
+        #TODO actually, if gen_num > remove_species_gen_n, we should read the recovery state with species=False
         gen_num, has_offspring, next_robot_id, next_species_id = \
             experiment_management.read_recovery_state(population_size, offspring_size, species=True)
+        if gen_num == remove_species_gen_n:
+            gen_num, has_offspring, next_robot_id, _ = \
+                experiment_management.read_recovery_state(population_size, offspring_size, species=False)
 
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
@@ -163,11 +170,19 @@ async def run():
     analyzer_queue = AnalyzerQueue(1, args, args.port_start+n_cores)
     await analyzer_queue.start()
 
-    population = PopulationSpeciated(population_conf,
-                                     simulator_queue,
-                                     analyzer_queue,
-                                     next_robot_id,
-                                     next_species_id)
+    population: Union[PopulationSpeciated, Population]
+    if gen_num < remove_species_gen_n:
+        population = PopulationSpeciated(population_conf,
+                                         simulator_queue,
+                                         analyzer_queue,
+                                         next_robot_id,
+                                         next_species_id)
+    else:
+        population = \
+            Population(population_conf,
+                       simulator_queue,
+                       analyzer_queue,
+                       next_robot_id)
 
     if do_recovery:
         # loading a previous state of the experiment
@@ -201,4 +216,15 @@ async def run():
     while gen_num < num_generations-1:
         gen_num += 1
         population = await population.next_generation(gen_num)
-        experiment_management.export_snapshots_species(population.genus, gen_num)
+        if isinstance(population, PopulationSpeciated):
+            experiment_management.export_snapshots_species(population.genus, gen_num)
+        else:
+            # WARNING: This export_snapshots may need fixing
+            experiment_management.export_snapshots(population.individuals, gen_num)
+
+        if gen_num == remove_species_gen_n:
+            population = population.into_population()
+            population.config.parent_selection = \
+                lambda individuals: multiple_selection(individuals, 2, tournament_selection)
+            # save the converted population for debugging
+            experiment_management.export_snapshots(population.individuals, num_generations + gen_num)
