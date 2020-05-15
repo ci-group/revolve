@@ -25,6 +25,7 @@ class PopulationSpeciated(Population):
                  next_species_id: int = 1):
         # TODO analyzer
         super().__init__(config, simulator_queue, analyzer_queue, next_robot_id)
+        self.config: PopulationSpeciatedConfig = self.config  # this is only for correct type hinting
         self.individuals = None  # TODO Crash when we should use it
 
         # Genus contains the collection of different species.
@@ -80,6 +81,11 @@ class PopulationSpeciated(Population):
                     f'with {len(new_population.genus.species_collection)} species '
                     f'and {count_individuals(new_population.genus.species_collection)} individuals.')
 
+        return new_population
+
+    def into_population(self) -> Population:
+        new_population = Population(self.config, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
+        new_population.individuals = [individual for individual in self.genus.iter_individuals()]
         return new_population
 
     def _generate_individual(self, individuals: List[Individual]) -> Individual:
