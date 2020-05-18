@@ -233,5 +233,5 @@ async def run():
             population = population.into_population()
             # Adjust the configuration
             adapt_population_config(population.config)
-            # save the converted population for debugging
-            experiment_management.export_snapshots(population.individuals, num_generations + gen_num)
+            # save the converted population for debugging (may create unpredictable behaviours in recovery)
+            experiment_management.export_snapshots(population.individuals, f"{gen_num}_flattened")

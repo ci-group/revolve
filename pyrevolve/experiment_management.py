@@ -10,7 +10,7 @@ from pyrevolve.tol.manage import measures
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import List, AnyStr, Optional
+    from typing import List, AnyStr, Optional, Union
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
     from pyrevolve.evolution.speciation.genus import Genus
     from pyrevolve.evolution.speciation.species import Species
@@ -76,7 +76,7 @@ class ExperimentManagement:
         """
         return self._data_folder
 
-    def generation_folder(self, gen_num: int):
+    def generation_folder(self, gen_num: Union[int, AnyStr]):
         return os.path.join(self._generations_folder, f'generation_{gen_num}')
 
     def export_genotype(self, individual: Individual) -> None:
@@ -197,7 +197,12 @@ class ExperimentManagement:
         individual.phenotype.save_file(os.path.join(self._failed_robots_folder, f'phenotype_{individual.phenotype.id}.yaml'))
         individual.phenotype.save_file(os.path.join(self._failed_robots_folder, f'phenotype_{individual.phenotype.id}.sdf'), conf_type='sdf')
 
-    def export_snapshots(self, individuals: List[Individual], gen_num: int) -> None:
+    def export_snapshots(self, individuals: List[Individual], gen_num: Union[int, AnyStr]) -> None:
+        """
+        Export snapshot of the population
+        :param individuals: list of individuals to save
+        :param gen_num: number of generation to save (this will be in the folder name)
+        """
         if self.settings.recovery_enabled:
             generation_folder = self.generation_folder(gen_num)
             if os.path.exists(generation_folder):
@@ -209,6 +214,11 @@ class ExperimentManagement:
             logger.info(f'Exported snapshot {gen_num} with {len(individuals)} individuals')
 
     def export_snapshots_species(self, genus: Genus, gen_num: int) -> None:
+        """
+        Export snapshot of the population, expecting a Genus as input (for populations with species)
+        :param genus: collection of species to save (it includes references to all the individuals)
+        :param gen_num: number of generation to save (this will be in the folder name)
+        """
         if self.settings.recovery_enabled:
             generation_folder = self.generation_folder(gen_num)
             if os.path.exists(generation_folder):
@@ -277,12 +287,17 @@ class ExperimentManagement:
                     n_exported_genomes = 0
                     for species_on_disk in os.scandir(folder.path):
                         species_on_disk: os.DirEntry
-                        if not species_on_disk.is_file():
+                        if not species_on_disk.is_file() \
+                                or not species_on_disk.path.endswith('.yaml'):
                             continue
                         with open(species_on_disk.path) as file:
-                            species = yaml.load(file, Loader=yaml.SafeLoader)
-                            n_exported_genomes += len(species['individuals_ids'])
-                            species_id = species['id']
+                            try:
+                                species = yaml.load(file, Loader=yaml.SafeLoader)
+                                n_exported_genomes += len(species['individuals_ids'])
+                                species_id = species['id']
+                            except Exception as e:
+                                logger.exception(f'Failed to load "{species_on_disk.path}"', exc_info=e)
+                                continue
 
                         if species_id > last_species_id:
                             last_species_id = species_id
