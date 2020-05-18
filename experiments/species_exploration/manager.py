@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
+from pyrevolve.evolution.population.population_management import steady_state_population_management
 from pyrevolve.evolution.selection import multiple_selection_with_duplicates, multiple_selection, tournament_selection
 from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated
 from pyrevolve.evolution.speciation.population_speciated_config import PopulationSpeciatedConfig
@@ -162,6 +163,11 @@ async def run():
         species_max_stagnation=30,
     )
 
+    def adapt_population_config(config):
+        config.population_management = steady_state_population_management
+        config.parent_selection = \
+            lambda individuals: multiple_selection(individuals, 2, tournament_selection)
+
     n_cores = args.n_cores
 
     simulator_queue = SimulatorQueue(n_cores, args, args.port_start)
@@ -183,6 +189,7 @@ async def run():
                        simulator_queue,
                        analyzer_queue,
                        next_robot_id)
+        adapt_population_config(population.config)
 
     if do_recovery:
         # loading a previous state of the experiment
@@ -224,7 +231,7 @@ async def run():
 
         if gen_num == remove_species_gen_n:
             population = population.into_population()
-            population.config.parent_selection = \
-                lambda individuals: multiple_selection(individuals, 2, tournament_selection)
+            # Adjust the configuration
+            adapt_population_config(population.config)
             # save the converted population for debugging
             experiment_management.export_snapshots(population.individuals, num_generations + gen_num)

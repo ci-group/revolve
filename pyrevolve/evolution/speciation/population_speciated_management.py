@@ -10,8 +10,7 @@ def steady_state_speciated_population_management(old_individuals, new_individual
     return multiple_selection_with_duplicates(selection_pool, number_of_individuals, selector)
 
 
-def generational_population_speciated_management(old_individuals, new_individuals, number_of_individuals, selector):
+def generational_speciated_population_management(old_individuals, new_individuals, number_of_individuals, selector):
     # Note (old_individuals, number_of_individuals, and selector) are not used,
     # but for the interface to be similar to steady state speciated.
     return new_individuals
-
