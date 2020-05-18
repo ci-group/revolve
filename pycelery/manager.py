@@ -113,13 +113,12 @@ async def run():
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-
+        end1 = time.time()
+        f=open("speed.txt", "a")
+        f.write(f"NEW EXPERIMENT: Initialization took {end1-begin} seconds. \n")
+    
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
-
-    end1 = time.time()
-    f=open("speed.txt", "a")
-    f.write(f"NEW EXPERIMENT: Initialization took {end1-begin} seconds. \n")
 
     export_time = []
     while gen_num < num_generations-1:
@@ -140,6 +139,8 @@ async def run():
     
     f = open("speed.txt", "a")
     f.write(f"Export times: {export_time} \n")
+    f.write(f"generation_time: {population_conf.generation_time} \n")
+    f.write(f"generation init time: {population_conf.generation_init} \n")
     f.close()
 
     await celerycontroller.shutdown()
