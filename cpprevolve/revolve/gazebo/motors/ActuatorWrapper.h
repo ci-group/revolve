@@ -26,7 +26,7 @@ public:
 
     void write(const double *output, double step) override
     {
-        wrapped_actuator->Update(output, step);
+        wrapped_actuator->write(output, step);
     }
 
 private:

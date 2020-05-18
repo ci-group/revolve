@@ -17,8 +17,8 @@ public:
         : angle(angle)
     {}
 
-    void update(const std::vector<std::unique_ptr<Actuator> > &_actuators,
-                const std::vector<std::unique_ptr<Sensor> > &_sensors,
+    void update(const std::vector<std::shared_ptr<Actuator> > &_actuators,
+                const std::vector<std::shared_ptr<Sensor> > &_sensors,
                 const double _time,
                 const double _step) override
     {
