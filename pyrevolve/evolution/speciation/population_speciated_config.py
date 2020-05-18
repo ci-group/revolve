@@ -13,9 +13,9 @@ if TYPE_CHECKING:
 class PopulationSpeciatedConfig(PopulationConfig):
     DEFAULT_YOUNG_AGE_THRESHOLD: int = 5
     DEFAULT_YOUNG_AGE_FITNESS_BOOST: float = 1.1
-    DEFAULT_OLD_AGE_THRESHOLD: int = 30,
+    DEFAULT_OLD_AGE_THRESHOLD: int = 30
     DEFAULT_OLD_AGE_FITNESS_PENALTY: float = 0.5
-    DEFAULT_SPECIES_MAX_STAGNATION: int = 50,
+    DEFAULT_SPECIES_MAX_STAGNATION: int = 50
     DEFAULT_OFFSPRING_SIZE: Optional[int] = None
 
     # TODO reorder arguments
