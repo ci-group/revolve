@@ -17,7 +17,7 @@
 *
 */
 
-#include  <stdexcept>
+#include <stdexcept>
 
 #include <gazebo/sensors/sensors.hh>
 
