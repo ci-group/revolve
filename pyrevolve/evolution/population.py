@@ -261,6 +261,10 @@ class Population:
             else:
                 robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
 
+        """Do export here so celery workers can work parallel to the export!"""
+        if gen_num > 0:
+            self.conf.experiment_management.export_snapshots(self.individuals, gen_num-1)
+
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):

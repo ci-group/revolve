@@ -109,18 +109,15 @@ async def run():
             else:
                 population = await population.next_gen(gen_num, individuals)
 
-            experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
         end1 = time.time()
         f=open("speed.txt", "a")
         f.write(f"NEW EXPERIMENT: Initialization took {end1-begin} seconds. \n")
-    
-        await population.init_pop()
-        experiment_management.export_snapshots(population.individuals, gen_num)
 
-    export_time = []
+        await population.init_pop()
+
     while gen_num < num_generations-1:
         gen_num += 1
 
@@ -131,21 +128,11 @@ async def run():
         #    await celerycontroller.reset_celery()
         #    population.conf.celery_reboot = False}
 
-        b1 = time.time()
-        experiment_management.export_snapshots(population.individuals, gen_num)
-        b2 = time.time()
-
-        export_time.append(b2-b1)
-    
+    end = time.time()
     f = open("speed.txt", "a")
-    f.write(f"Export times: {export_time} \n")
     f.write(f"generation_time: {population_conf.generation_time} \n")
     f.write(f"generation init time: {population_conf.generation_init} \n")
+    f.write(f"runtime: {end-begin} on {settings.n_cores} cores. Gen: {num_generations}, Population: {population_size}, Offspring: {offspring_size}\n")
     f.close()
 
     await celerycontroller.shutdown()
-
-    end = time.time()
-    f = open("speed.txt", "a")
-    f.write(f"runtime: {end-begin} on {settings.n_cores} cores. Gen: {num_generations}, Population: {population_size}, Offspring: {offspring_size}\n")
-    f.close()
