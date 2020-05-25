@@ -87,7 +87,7 @@ async def run_gazebo(settingsDir, i):
 
     return True
 
-@app.task
+@app.task(rate_limit="0.5/m")
 async def run_gazebo_and_analyzer(settingsDir, i):
     """
     Starts a gazebo simulator with name gazebo_ID
