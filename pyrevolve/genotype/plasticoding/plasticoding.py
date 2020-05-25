@@ -171,17 +171,30 @@ class Plasticoding(Genotype):
         if self.phenotype._morphological_measurements.measurement_to_dict()['hinge_count'] > 0:
             self.valid = True
 
-    def develop(self):
-        self.early_development()
+    def develop(self, environment):
+        self.early_development(environment)
         phenotype = self.late_development()
         return phenotype
 
-    def early_development(self):
+    def early_development(self, environment):
 
         if self.conf.plastic:
 
             grammar = {}
             for letter in self.grammar:
+                if environment == 'plane':
+                    hill = False
+                    hot = False
+                if environment == 'tilted5':
+                    hill = True
+                    hot = False
+                if environment == 'lava':
+                    hill = False
+                    hot = True
+                if environment == 'lavatilted5':
+                    hill = True
+                    hot = True
+
 
                 true_clauses = []
                 clause_is_true = None

@@ -1,16 +1,12 @@
 # [(G,P), (G,P), (G,P), (G,P), (G,P)]
 
 from pyrevolve.evolution.individual import Individual
-from pyrevolve.SDF.math import Vector3
-from pyrevolve.tol.manage import measures
 from ..custom_logging.logger import logger
-import time
 import asyncio
 import copy
 import os
 import pickle
-import sys
-from random import random
+
 
 class PopulationConfig:
     def __init__(self,
@@ -100,7 +96,7 @@ class Population:
         for environment in self.conf.environments:
 
             individual[environment] = copy.deepcopy(individual_temp)
-            individual[environment].develop()
+            individual[environment].develop(environment)
 
             if len(individual) == 1:
                 self.conf.experiment_management.export_genotype(individual[environment])
@@ -166,10 +162,11 @@ class Population:
 
     async def consolidate_fitness(self, individuals):
 
+        last_environment = list(self.conf.environments.keys())[-1]
+
         if len(self.conf.environments) == 1:
             for individual in individuals:
-                fit = individual[list(self.conf.environments.keys())[-1]].fitness
-                individual[list(self.conf.environments.keys())[-1]].consolidated_fitness = fit
+                individual[last_environment].consolidated_fitness = individual[last_environment].fitness
 
         # if there are multiple seasons (environments)
         else:
@@ -228,28 +225,27 @@ class Population:
                         masters += 1
 
                 if self.conf.front == 'slaves':
-                    individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = slaves
+                    individual_ref[last_environment].consolidated_fitness = slaves
 
                 if self.conf.front == 'total_slaves':
-                    individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = total_slaves
+                    individual_ref[last_environment].consolidated_fitness = total_slaves
 
                 if self.conf.front == 'total_masters':
                     if total_masters == 0:
-                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 0
+                        individual_ref[last_environment].consolidated_fitness = 0
                     else:
-                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 1/total_masters
+                        individual_ref[last_environment].consolidated_fitness = 1/total_masters
 
                 if self.conf.front == 'masters':
                     if masters == 0:
-                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 0
+                        individual_ref[last_environment].consolidated_fitness = 0
                     else:
-                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 1/masters
+                        individual_ref[last_environment].consolidated_fitness = 1/masters
 
         for individual in individuals:
-            self.conf.experiment_management.export_consolidated_fitness(individual[list(self.conf.environments.keys())[-1]])
+            self.conf.experiment_management.export_consolidated_fitness(individual[last_environment])
 
-            self.conf.experiment_management.export_individual(individual[list(self.conf.environments.keys())[-1]],
-                                                              list(self.conf.environments.keys())[-1])
+            self.conf.experiment_management.export_individual(individual[last_environment], last_environment)
 
     async def init_pop(self, recovered_individuals=[]):
         """
@@ -382,7 +378,6 @@ class Population:
     #             return None, None
     #
     #     return await self.simulator_queue[environment].test_robot(individual, self.conf)
-
 
     async def evaluate_single_robot(self, individual, environment):
         """

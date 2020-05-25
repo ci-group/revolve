@@ -1,11 +1,12 @@
 # (G,P)
 import pickle
 
+
 class Individual:
+    
     def __init__(self, genotype, phenotype=None):
         """
         Creates an Individual object with the given genotype and optionally the phenotype.
-
         :param genotype: genotype of the individual
         :param phenotype (optional): phenotype of the individual
         """
@@ -17,13 +18,12 @@ class Individual:
         self.parents = None
         self.failed_eval_attempt_count = 0
 
-    def develop(self):
+    def develop(self, environment):
         """
         Develops genotype into a intermediate phenotype
-
         """
         if self.phenotype is None:
-            self.phenotype = self.genotype.develop()
+            self.phenotype = self.genotype.develop(environment)
 
     @property
     def id(self):
