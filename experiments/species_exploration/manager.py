@@ -100,13 +100,21 @@ async def run():
 
     logger.info(f'Activated run {args.run} of experiment {args.experiment_name}')
 
+    species_done = False
     if do_recovery:
         #TODO actually, if gen_num > remove_species_gen_n, we should read the recovery state with species=False
         gen_num, has_offspring, next_robot_id, next_species_id = \
             experiment_management.read_recovery_state(population_size, offspring_size, species=True)
+        # Partial recovery for speciated populations is not implemented
+        has_offspring = False
         if gen_num == remove_species_gen_n:
-            gen_num, has_offspring, next_robot_id, _ = \
+            new_gen_num, new_has_offspring, new_next_robot_id, _ = \
                 experiment_management.read_recovery_state(population_size, offspring_size, species=False)
+            if new_gen_num > gen_num:
+                species_done = True
+                gen_num = new_gen_num
+                has_offspring = new_has_offspring
+                next_robot_id = new_next_robot_id
 
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
@@ -177,7 +185,7 @@ async def run():
     await analyzer_queue.start()
 
     population: Union[PopulationSpeciated, Population]
-    if gen_num < remove_species_gen_n:
+    if not species_done:
         population = PopulationSpeciated(population_conf,
                                          simulator_queue,
                                          analyzer_queue,
@@ -198,12 +206,12 @@ async def run():
             logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.genus)} individuals')
 
         # TODO partial recovery is not implemented, this is a substitute
-        has_offspring = False
         next_robot_id = 1 + population.config.population_size + gen_num * population.config.offspring_size
         population.next_robot_id = next_robot_id
 
         if has_offspring:
-            raise NotImplementedError('partial recovery not implemented')
+            if not species_done:
+                raise NotImplementedError('partial recovery not implemented')
             recovered_individuals = population.load_partially_completed_generation(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
             logger.info(f'Recovered unfinished offspring for generation {gen_num}')
@@ -224,12 +232,15 @@ async def run():
         gen_num += 1
         population = await population.next_generation(gen_num)
         if isinstance(population, PopulationSpeciated):
+            assert not species_done
             experiment_management.export_snapshots_species(population.genus, gen_num)
         else:
+            assert species_done
             # WARNING: This export_snapshots may need fixing
             experiment_management.export_snapshots(population.individuals, gen_num)
 
         if gen_num == remove_species_gen_n:
+            species_done = True
             population = population.into_population()
             # Adjust the configuration
             adapt_population_config(population.config)
