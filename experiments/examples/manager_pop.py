@@ -23,9 +23,9 @@ async def run():
     The main coroutine, which is started below.
     """
     init1 = time.time()
-
+    snapshot = []
     # experiment params #
-    num_generations = 100
+    num_generations = 2
     population_size = 100
     offspring_size = 50
 
@@ -113,11 +113,14 @@ async def run():
         init2=time.time()
         initiation = init2-init1
         logger.info(f'Initiation: {initiation}')
+
         await population.init_pop()
+
+        b1=time.time()
         experiment_management.export_snapshots(population.individuals, gen_num)
+        b2=time.time()
+        snapshot.append(b2-b1)
 
-
-    snapshot = []
 
     while gen_num < num_generations-1:
         gen_num += 1
@@ -126,6 +129,18 @@ async def run():
         experiment_management.export_snapshots(population.individuals, gen_num)
         b2=time.time()
         snapshot.append(b2-b1)
-        logger.info(f"{population_conf.generation_time}, {population_conf.generation_init}, {population_conf.generational_fin}, {snapshot}")
+
+    end = time.time()
+    f = open("speed.txt", "a")
+    f.write("------------\n")
+    f.write(f"runtime: {end-init1} on old revolve. Gen: {num_generations}, Population: {population_size}, Offspring: {offspring_size}\n")
+    f.write(f"initialization: {initiation} \n")
+    f.write(f"generation init time: {population_conf.generation_init} \n")
+    f.write(f"generation_time: {population_conf.generation_time} \n")
+    f.write(f"Export times: {snapshot} \n")
+    f.write(f"analyzer times: {analyzer_queue.simulation_times} \n")
+    f.write(f"simulator times: {simulator_queue.simulation_times} \n")
+    f.write(f"robotsizes: {simulator_queue.robot_size}")
+    f.close()
 
     # output result after completing all generations...

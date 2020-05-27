@@ -1,5 +1,0 @@
-velocity 0.0
-displacement_velocity 0.0
-displacement_velocity_hill 0.0
-head_balance 1.0
-contacts 0.0

@@ -75,6 +75,7 @@ class PopulationConfig:
         self.generation_init = []
         self.analyzer_time = []
         self.generational_fin = []
+        self.robot_size = []
 
 class Population:
     def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
@@ -177,10 +178,14 @@ class Population:
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
 
+        start = time.time()
         for i in range(self.conf.population_size-len(recovered_individuals)):
             individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
             self.individuals.append(individual)
             self.next_robot_id += 1
+        end = time.time()
+
+        self.conf.generation_init.append(end-start)
 
         await self.evaluate(self.individuals, 0)
         self.individuals = recovered_individuals + self.individuals
@@ -262,8 +267,8 @@ class Population:
                 robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
 
         """Do export here so celery workers can work parallel to the export!"""
-        if gen_num > 0:
-            self.conf.experiment_management.export_snapshots(self.individuals, gen_num-1)
+        # if gen_num > 0:
+        #     self.conf.experiment_management.export_snapshots(self.individuals, gen_num-1)
 
         await asyncio.sleep(1)
 
