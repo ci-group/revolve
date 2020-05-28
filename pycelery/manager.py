@@ -130,9 +130,11 @@ async def run():
 
     end = time.time()
     f = open("speed.txt", "a")
+    f.write("---------------")
+    f.write(f"runtime: {end-begin} on {settings.n_cores} cores. Gen: {num_generations}, Population: {population_size}, Offspring: {offspring_size}\n")
     f.write(f"generation_time: {population_conf.generation_time} \n")
     f.write(f"generation init time: {population_conf.generation_init} \n")
-    f.write(f"runtime: {end-begin} on {settings.n_cores} cores. Gen: {num_generations}, Population: {population_size}, Offspring: {offspring_size}\n")
+    f.write(f"generation fin time: {population_conf.generational_fin}\n ")
     f.close()
 
     await celerycontroller.shutdown()
