@@ -25,7 +25,7 @@ async def run():
     init1 = time.time()
     snapshot = []
     # experiment params #
-    num_generations = 2
+    num_generations = 50
     population_size = 100
     offspring_size = 50
 
