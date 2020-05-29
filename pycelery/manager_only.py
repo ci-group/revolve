@@ -24,14 +24,12 @@ from pyrevolve.custom_logging.logger import logger
 
 
 async def run():
-    """A revolve manager that is using celery for task execution."""
+    """A revolve manager that is using celery for task execution. ATTENTION: this manager
+    should only be used if celery workers are already active in the background. If this is
+    not the case, this manager will not work."""
     begin = time.time()
 
     settings = parser.parse_args()
-
-    celerycontroller = CeleryController(settings) # Starting celery
-
-    await asyncio.sleep(settings.n_cores) # Celery needs time
 
     # experiment params #
     num_generations = 50
@@ -62,14 +60,10 @@ async def run():
 
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
-            await celerycontroller.shutdown()
             return
     else:
         gen_num = 0
         next_robot_id = 1
-
-    # Start gazebos!
-    await celerycontroller.start_gazebo_instances()
 
     population_conf = PopulationConfig(
         population_size=population_size,
@@ -136,6 +130,3 @@ async def run():
     f.write(f"generation init time: {population_conf.generation_init} \n")
     f.write(f"generation fin time: {population_conf.generational_fin}\n ")
     f.close()
-
-    """Uncomment this if you want the manager to close celery and gazebo"""
-    # await celerycontroller.shutdown()
