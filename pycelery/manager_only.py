@@ -31,6 +31,8 @@ async def run():
 
     settings = parser.parse_args()
 
+    celerycontroller = CeleryController(settings, start_workers = False) # This connects us to the workers.
+
     # experiment params #
     num_generations = 50
     population_size = 100

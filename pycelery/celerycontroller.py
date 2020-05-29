@@ -15,12 +15,13 @@ class CeleryController:
     :param settings: The settings namespace of the experiment.
     """
 
-    def __init__(self, settings):
+    def __init__(self, settings, start_workers = True):
         self.settings = settings
         self.settingsDir = args_to_dic(settings)
 
         # Start celery
-        self.start_workers()
+        if start_workers:
+            self.start_workers()
 
     def start_workers(self):
         """
