@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import subprocess
 
-runs=[1,2,6,7,8,9,10]#range(1,11)
+runs=[1,2,3,4,5,6,7]#range(1,11)
 start_port=14000
 exp_name='SpeedUpAnalyzer'
 log_suffix=''
@@ -14,7 +14,7 @@ if __name__ == "__main__":
             '-S',f'{exp_name}_{run}',
             '-L','-Logfile',f"{exp_name}{log_suffix}_{run}.log",
             'nice','-n19',
-            './revolve.sh','--manager',manager,
+            './revolve.py','--manager',manager,
             '--experiment-name',exp_name,
             '--n-cores','4',
             '--port-start',str(run_start_port),
