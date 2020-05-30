@@ -1,5 +1,0 @@
-C C brainmoveTTS_1|2 brainperturb_-0.49846853557645726 addf AJ1_0.8095680615153189|7.136497740793942|3.996677500196664|9.213954350624531 mover 
-AJ1 brainmoveFTS_2|1 brainoffperturb_-0.8125912526003918 addl B mover 
-AJ2 brainmoveTTS_1|1 brainloop_-0.5400257950785705 addl B movef 
-B brainmoveFTS_1|2 brainperturb_1.0920360568112721 addr B mover 
-ST brainmoveFTS_2|1 brainoffperturb_0.4315805904404046 addl B moveb 
