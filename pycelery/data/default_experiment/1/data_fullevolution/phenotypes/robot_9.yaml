@@ -10,65 +10,45 @@ body:
   children:
     1:
       id: '2'
-      type: FixedBrick
-      orientation: 0
-      params:
-        blue: 1
-        green: 0
-        red: 0
-      children:
-        1:
-          id: 2s1
-          type: TouchSensor
-          orientation: 0
-          params:
-            blue: 0.7
-            green: 0.7
-            red: 0.7
-        2:
-          id: 2s2
-          type: TouchSensor
-          orientation: 0
-          params:
-            blue: 0.7
-            green: 0.7
-            red: 0.7
-        3:
-          id: '3'
-          type: ActiveHinge
-          orientation: 90
-          params:
-            blue: 0
-            green: 0
-            red: 0.7
-    2:
-      id: '4'
       type: ActiveHinge
       orientation: 0
       params:
         blue: 0.58
         green: 0.08
         red: 1
+      children:
+        1:
+          id: '3'
+          type: ActiveHinge
+          orientation: 0
+          params:
+            blue: 0.58
+            green: 0.08
+            red: 1
+          children:
+            1:
+              id: '4'
+              type: ActiveHinge
+              orientation: 0
+              params:
+                blue: 0.58
+                green: 0.08
+                red: 1
 brain:
   type: neural-network
   neurons:
     node1:
       id: node1
       layer: output
-      part_id: '3'
+      part_id: '2'
       type: Oscillator
     node2:
       id: node2
-      layer: input
-      part_id: 2s1
-      type: Input
+      layer: output
+      part_id: '3'
+      type: Oscillator
     node3:
       id: node3
-      layer: input
-      part_id: 2s2
-      type: Input
-    node4:
-      id: node4
       layer: output
       part_id: '4'
       type: Oscillator
@@ -102,22 +82,16 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  connections:
-  - dst: node1
-    src: node2
-    weight: 1
-  - dst: node1
-    src: node3
-    weight: -0.01280565873267836
-  - dst: node4
-    src: node3
-    weight: 0.529066143352225
   params:
     node1:
-      amplitude: 5.683472225533261
-      period: 3.086783145740763
-      phase_offset: 2.860441510118096
-    node4:
-      amplitude: 5.053704348040506
-      period: 3.580507679892321
-      phase_offset: 2.27924413248186
+      amplitude: 4.855879219642732
+      period: 6.660208545695216
+      phase_offset: 3.0901530580568646
+    node2:
+      amplitude: 9.290050518700426
+      period: 1.1666870515565035
+      phase_offset: 9.302741898928717
+    node3:
+      amplitude: 9.290050518700426
+      period: 1.1666870515565035
+      phase_offset: 9.302741898928717

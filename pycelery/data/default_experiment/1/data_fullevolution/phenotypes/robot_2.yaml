@@ -8,47 +8,93 @@ body:
     green: 1
     red: 1
   children:
-    0:
-      id: '4'
-      type: FixedBrick
-      orientation: 0
-      params:
-        blue: 1
-        green: 0
-        red: 0
-    1:
-      id: '3'
-      type: FixedBrick
-      orientation: 0
-      params:
-        blue: 1
-        green: 0
-        red: 0
-      children:
-        2:
-          id: 3s2
-          type: TouchSensor
-          orientation: 0
-          params:
-            blue: 0.7
-            green: 0.7
-            red: 0.7
-    2:
+    3:
       id: '2'
       type: ActiveHinge
-      orientation: 0
+      orientation: 90
       params:
-        blue: 0.58
-        green: 0.08
-        red: 1
-    3:
-      id: 1s3
-      type: TouchSensor
-      orientation: 0
-      params:
-        blue: 0.7
-        green: 0.7
+        blue: 0
+        green: 0
         red: 0.7
+      children:
+        1:
+          id: '3'
+          type: FixedBrick
+          orientation: 270
+          params:
+            blue: 1
+            green: 0
+            red: 0
+          children:
+            1:
+              id: '4'
+              type: ActiveHinge
+              orientation: 90
+              params:
+                blue: 0
+                green: 0
+                red: 0.7
+            2:
+              id: '5'
+              type: ActiveHinge
+              orientation: 90
+              params:
+                blue: 0
+                green: 0
+                red: 0.7
+              children:
+                1:
+                  id: '6'
+                  type: FixedBrick
+                  orientation: 270
+                  params:
+                    blue: 1
+                    green: 0
+                    red: 0
+                  children:
+                    1:
+                      id: '7'
+                      type: ActiveHinge
+                      orientation: 90
+                      params:
+                        blue: 0
+                        green: 0
+                        red: 0.7
+                    3:
+                      id: '8'
+                      type: ActiveHinge
+                      orientation: 0
+                      params:
+                        blue: 0.58
+                        green: 0.08
+                        red: 1
+                      children:
+                        1:
+                          id: '9'
+                          type: ActiveHinge
+                          orientation: 90
+                          params:
+                            blue: 0
+                            green: 0
+                            red: 0.7
+                          children:
+                            1:
+                              id: '10'
+                              type: ActiveHinge
+                              orientation: 0
+                              params:
+                                blue: 0
+                                green: 0
+                                red: 0.7
+                              children:
+                                1:
+                                  id: '11'
+                                  type: FixedBrick
+                                  orientation: 270
+                                  params:
+                                    blue: 1
+                                    green: 0
+                                    red: 0
 brain:
   type: neural-network
   neurons:
@@ -59,14 +105,34 @@ brain:
       type: Oscillator
     node2:
       id: node2
-      layer: input
-      part_id: 1s3
-      type: Input
+      layer: output
+      part_id: '4'
+      type: Oscillator
     node3:
       id: node3
-      layer: input
-      part_id: 3s2
-      type: Input
+      layer: output
+      part_id: '5'
+      type: Oscillator
+    node4:
+      id: node4
+      layer: output
+      part_id: '7'
+      type: Oscillator
+    node5:
+      id: node5
+      layer: output
+      part_id: '8'
+      type: Oscillator
+    node6:
+      id: node6
+      layer: output
+      part_id: '9'
+      type: Oscillator
+    node7:
+      id: node7
+      layer: output
+      part_id: '10'
+      type: Oscillator
     node-core1:
       id: node-core1
       layer: input
@@ -97,18 +163,32 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  connections:
-  - dst: node1
-    src: node2
-    weight: -0.9489649503400355
-  - dst: node1
-    src: node1
-    weight: -0.4428053839237136
-  - dst: node1
-    src: node3
-    weight: -0.06937684912401898
   params:
     node1:
-      amplitude: 5.532031851388652
-      period: 7.56177013082928
-      phase_offset: 2.5635009410085994
+      amplitude: 7.912987110394453
+      period: 3.807602606047982
+      phase_offset: 3.8017757316738905
+    node2:
+      amplitude: 3.8832040383151005
+      period: 6.417164502075517
+      phase_offset: 6.03411484912088
+    node3:
+      amplitude: 2.8868564912662555
+      period: 8.545575407989979
+      phase_offset: 7.07383031812357
+    node4:
+      amplitude: 6.443211835408894
+      period: 6.654339386432554
+      phase_offset: 6.252746435366384
+    node5:
+      amplitude: 3.121108370986264
+      period: 4.906269097889116
+      phase_offset: 1.0413205892610016
+    node6:
+      amplitude: 3.8832040383151005
+      period: 6.417164502075517
+      phase_offset: 6.252746435366384
+    node7:
+      amplitude: 2.8868564912662555
+      period: 8.545575407989979
+      phase_offset: 7.07383031812357

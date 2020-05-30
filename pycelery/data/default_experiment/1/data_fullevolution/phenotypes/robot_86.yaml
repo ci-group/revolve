@@ -8,6 +8,14 @@ body:
     green: 1
     red: 1
   children:
+    1:
+      id: '4'
+      type: FixedBrick
+      orientation: 0
+      params:
+        blue: 1
+        green: 0
+        red: 0
     2:
       id: '2'
       type: ActiveHinge
@@ -26,31 +34,14 @@ body:
             green: 0
             red: 0
           children:
-            1:
-              id: 3s1
+            2:
+              id: 3s2
               type: TouchSensor
               orientation: 0
               params:
                 blue: 0.7
                 green: 0.7
                 red: 0.7
-            2:
-              id: '4'
-              type: ActiveHinge
-              orientation: 0
-              params:
-                blue: 0.58
-                green: 0.08
-                red: 1
-              children:
-                1:
-                  id: '5'
-                  type: ActiveHinge
-                  orientation: 90
-                  params:
-                    blue: 0
-                    green: 0
-                    red: 0.7
             3:
               id: 3s3
               type: TouchSensor
@@ -70,23 +61,13 @@ brain:
     node2:
       id: node2
       layer: input
-      part_id: 3s1
+      part_id: 3s3
       type: Input
     node3:
       id: node3
       layer: input
-      part_id: 3s3
+      part_id: 3s2
       type: Input
-    node4:
-      id: node4
-      layer: output
-      part_id: '4'
-      type: Oscillator
-    node5:
-      id: node5
-      layer: output
-      part_id: '5'
-      type: Oscillator
     node-core1:
       id: node-core1
       layer: input
@@ -120,32 +101,15 @@ brain:
   connections:
   - dst: node1
     src: node2
-    weight: 0.3102650267913991
-  - dst: node1
-    src: node1
-    weight: -0.4235980757343214
+    weight: 1
   - dst: node1
     src: node3
-    weight: -0.937165540279879
-  - dst: node4
-    src: node2
-    weight: 0.8588446390389575
-  - dst: node4
-    src: node4
-    weight: 0.9397874276889759
-  - dst: node5
-    src: node2
-    weight: 0.05076468652735833
+    weight: 0.603732007700714
+  - dst: node1
+    src: node1
+    weight: 0.6837739766686834
   params:
     node1:
-      amplitude: 8.989057152282577
-      period: 4.775548815638878
-      phase_offset: 2.0045387907090326
-    node4:
-      amplitude: 9.71060995153926
-      period: 9.731424196064363
-      phase_offset: 5.441999349883938
-    node5:
-      amplitude: 8.622510553467137
-      period: 9.59652397545537
-      phase_offset: 8.200233636202295
+      amplitude: 7.324909293490174
+      period: 3.563051946112127
+      phase_offset: 5.744363648837886

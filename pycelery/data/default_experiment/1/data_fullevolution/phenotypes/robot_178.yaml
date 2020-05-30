@@ -8,32 +8,32 @@ body:
     green: 1
     red: 1
   children:
-    2:
+    3:
       id: '2'
-      type: ActiveHinge
-      orientation: 90
+      type: FixedBrick
+      orientation: 0
       params:
-        blue: 0
+        blue: 1
         green: 0
-        red: 0.7
+        red: 0
       children:
-        1:
+        2:
           id: '3'
           type: ActiveHinge
           orientation: 0
           params:
-            blue: 0
-            green: 0
-            red: 0.7
+            blue: 0.58
+            green: 0.08
+            red: 1
           children:
             1:
               id: '4'
-              type: ActiveHinge
-              orientation: 270
+              type: FixedBrick
+              orientation: 0
               params:
-                blue: 0.58
-                green: 0.08
-                red: 1
+                blue: 1
+                green: 0
+                red: 0
               children:
                 1:
                   id: '5'
@@ -47,93 +47,68 @@ body:
                     1:
                       id: '6'
                       type: ActiveHinge
-                      orientation: 270
+                      orientation: 0
                       params:
-                        blue: 0.58
-                        green: 0.08
-                        red: 1
+                        blue: 0
+                        green: 0
+                        red: 0.7
                       children:
                         1:
                           id: '7'
                           type: ActiveHinge
-                          orientation: 90
+                          orientation: 270
                           params:
-                            blue: 0
-                            green: 0
-                            red: 0.7
+                            blue: 0.58
+                            green: 0.08
+                            red: 1
                           children:
                             1:
                               id: '8'
-                              type: FixedBrick
-                              orientation: 270
+                              type: ActiveHinge
+                              orientation: 0
                               params:
-                                blue: 1
-                                green: 0
-                                red: 0
+                                blue: 0.58
+                                green: 0.08
+                                red: 1
                               children:
                                 1:
                                   id: '9'
-                                  type: FixedBrick
-                                  orientation: 0
+                                  type: ActiveHinge
+                                  orientation: 90
                                   params:
-                                    blue: 1
+                                    blue: 0
                                     green: 0
-                                    red: 0
+                                    red: 0.7
                                   children:
-                                    2:
+                                    1:
                                       id: '10'
                                       type: ActiveHinge
-                                      orientation: 90
+                                      orientation: 0
                                       params:
                                         blue: 0
                                         green: 0
                                         red: 0.7
-                                2:
-                                  id: '11'
-                                  type: FixedBrick
-                                  orientation: 0
-                                  params:
-                                    blue: 1
-                                    green: 0
-                                    red: 0
-                                  children:
-                                    1:
-                                      id: '12'
-                                      type: FixedBrick
-                                      orientation: 0
-                                      params:
-                                        blue: 1
-                                        green: 0
-                                        red: 0
                                       children:
-                                        2:
-                                          id: '13'
+                                        1:
+                                          id: '11'
                                           type: ActiveHinge
-                                          orientation: 90
+                                          orientation: 270
                                           params:
-                                            blue: 0
-                                            green: 0
-                                            red: 0.7
-                                        3:
-                                          id: '14'
-                                          type: ActiveHinge
-                                          orientation: 90
-                                          params:
-                                            blue: 0
-                                            green: 0
-                                            red: 0.7
+                                            blue: 0.58
+                                            green: 0.08
+                                            red: 1
                                           children:
                                             1:
-                                              id: '15'
-                                              type: FixedBrick
-                                              orientation: 270
+                                              id: '12'
+                                              type: ActiveHinge
+                                              orientation: 0
                                               params:
-                                                blue: 1
-                                                green: 0
-                                                red: 0
+                                                blue: 0.58
+                                                green: 0.08
+                                                red: 1
                                               children:
-                                                3:
-                                                  id: '16'
+                                                1:
+                                                  id: '13'
                                                   type: ActiveHinge
                                                   orientation: 0
                                                   params:
@@ -142,7 +117,7 @@ body:
                                                     red: 1
                                                   children:
                                                     1:
-                                                      id: '17'
+                                                      id: '14'
                                                       type: FixedBrick
                                                       orientation: 0
                                                       params:
@@ -151,125 +126,160 @@ body:
                                                         red: 0
                                                       children:
                                                         1:
-                                                          id: '18'
-                                                          type: FixedBrick
+                                                          id: '15'
+                                                          type: ActiveHinge
                                                           orientation: 0
                                                           params:
-                                                            blue: 1
-                                                            green: 0
-                                                            red: 0
+                                                            blue: 0.58
+                                                            green: 0.08
+                                                            red: 1
                                                           children:
-                                                            2:
-                                                              id: '19'
+                                                            1:
+                                                              id: '16'
                                                               type: ActiveHinge
-                                                              orientation: 90
+                                                              orientation: 0
                                                               params:
-                                                                blue: 0
-                                                                green: 0
-                                                                red: 0.7
-                                                            3:
-                                                              id: '20'
-                                                              type: ActiveHinge
-                                                              orientation: 90
-                                                              params:
-                                                                blue: 0
-                                                                green: 0
-                                                                red: 0.7
+                                                                blue: 0.58
+                                                                green: 0.08
+                                                                red: 1
                                                               children:
                                                                 1:
-                                                                  id: '21'
+                                                                  id: '17'
                                                                   type: FixedBrick
-                                                                  orientation: 270
+                                                                  orientation: 0
                                                                   params:
                                                                     blue: 1
                                                                     green: 0
                                                                     red: 0
                                                                   children:
                                                                     1:
-                                                                      id: '22'
+                                                                      id: '18'
                                                                       type: ActiveHinge
-                                                                      orientation: 90
+                                                                      orientation: 0
                                                                       params:
-                                                                        blue: 0
-                                                                        green: 0
-                                                                        red: 0.7
+                                                                        blue: 0.58
+                                                                        green: 0.08
+                                                                        red: 1
                                                                       children:
                                                                         1:
-                                                                          id: '23'
+                                                                          id: '19'
                                                                           type: ActiveHinge
-                                                                          orientation: 270
+                                                                          orientation: 90
                                                                           params:
-                                                                            blue: 0.58
-                                                                            green: 0.08
-                                                                            red: 1
+                                                                            blue: 0
+                                                                            green: 0
+                                                                            red: 0.7
                                                                           children:
                                                                             1:
-                                                                              id: '24'
+                                                                              id: '20'
                                                                               type: ActiveHinge
-                                                                              orientation: 90
+                                                                              orientation: 270
                                                                               params:
-                                                                                blue: 0
-                                                                                green: 0
-                                                                                red: 0.7
+                                                                                blue: 0.58
+                                                                                green: 0.08
+                                                                                red: 1
                                                                               children:
                                                                                 1:
-                                                                                  id: '25'
+                                                                                  id: '21'
                                                                                   type: ActiveHinge
-                                                                                  orientation: 270
+                                                                                  orientation: 0
                                                                                   params:
                                                                                     blue: 0.58
                                                                                     green: 0.08
                                                                                     red: 1
                                                                                   children:
                                                                                     1:
-                                                                                      id: '26'
-                                                                                      type: ActiveHinge
+                                                                                      id: '22'
+                                                                                      type: FixedBrick
                                                                                       orientation: 0
                                                                                       params:
-                                                                                        blue: 0.58
-                                                                                        green: 0.08
-                                                                                        red: 1
+                                                                                        blue: 1
+                                                                                        green: 0
+                                                                                        red: 0
                                                                                       children:
                                                                                         1:
-                                                                                          id: '27'
+                                                                                          id: '23'
                                                                                           type: ActiveHinge
-                                                                                          orientation: 90
+                                                                                          orientation: 0
                                                                                           params:
-                                                                                            blue: 0
-                                                                                            green: 0
-                                                                                            red: 0.7
+                                                                                            blue: 0.58
+                                                                                            green: 0.08
+                                                                                            red: 1
+                                                                                          children:
+                                                                                            1:
+                                                                                              id: '24'
+                                                                                              type: ActiveHinge
+                                                                                              orientation: 0
+                                                                                              params:
+                                                                                                blue: 0.58
+                                                                                                green: 0.08
+                                                                                                red: 1
+                                                                                              children:
+                                                                                                1:
+                                                                                                  id: '25'
+                                                                                                  type: FixedBrick
+                                                                                                  orientation: 0
+                                                                                                  params:
+                                                                                                    blue: 1
+                                                                                                    green: 0
+                                                                                                    red: 0
+                                                                                                  children:
+                                                                                                    1:
+                                                                                                      id: '26'
+                                                                                                      type: ActiveHinge
+                                                                                                      orientation: 0
+                                                                                                      params:
+                                                                                                        blue: 0.58
+                                                                                                        green: 0.08
+                                                                                                        red: 1
+                                                                                                    3:
+                                                                                                      id: 25s3
+                                                                                                      type: TouchSensor
+                                                                                                      orientation: 0
+                                                                                                      params:
+                                                                                                        blue: 0.7
+                                                                                                        green: 0.7
+                                                                                                        red: 0.7
+                                                                    3:
+                                                                      id: 17s3
+                                                                      type: TouchSensor
+                                                                      orientation: 0
+                                                                      params:
+                                                                        blue: 0.7
+                                                                        green: 0.7
+                                                                        red: 0.7
 brain:
   type: neural-network
   neurons:
     node1:
       id: node1
       layer: output
-      part_id: '2'
+      part_id: '3'
       type: Oscillator
     node2:
       id: node2
       layer: output
-      part_id: '3'
+      part_id: '5'
       type: Oscillator
     node3:
       id: node3
       layer: output
-      part_id: '4'
+      part_id: '6'
       type: Oscillator
     node4:
       id: node4
       layer: output
-      part_id: '5'
+      part_id: '7'
       type: Oscillator
     node5:
       id: node5
       layer: output
-      part_id: '6'
+      part_id: '8'
       type: Oscillator
     node6:
       id: node6
       layer: output
-      part_id: '7'
+      part_id: '9'
       type: Oscillator
     node7:
       id: node7
@@ -279,57 +289,72 @@ brain:
     node8:
       id: node8
       layer: output
-      part_id: '13'
+      part_id: '11'
       type: Oscillator
     node9:
       id: node9
       layer: output
-      part_id: '14'
+      part_id: '12'
       type: Oscillator
     node10:
       id: node10
       layer: output
-      part_id: '16'
+      part_id: '13'
       type: Oscillator
     node11:
       id: node11
       layer: output
-      part_id: '19'
+      part_id: '15'
       type: Oscillator
     node12:
       id: node12
       layer: output
-      part_id: '20'
+      part_id: '16'
       type: Oscillator
     node13:
       id: node13
-      layer: output
-      part_id: '22'
-      type: Oscillator
+      layer: input
+      part_id: 17s3
+      type: Input
     node14:
       id: node14
       layer: output
-      part_id: '23'
+      part_id: '18'
       type: Oscillator
     node15:
       id: node15
       layer: output
-      part_id: '24'
+      part_id: '19'
       type: Oscillator
     node16:
       id: node16
       layer: output
-      part_id: '25'
+      part_id: '20'
       type: Oscillator
     node17:
       id: node17
       layer: output
-      part_id: '26'
+      part_id: '21'
       type: Oscillator
     node18:
       id: node18
       layer: output
-      part_id: '27'
+      part_id: '23'
+      type: Oscillator
+    node19:
+      id: node19
+      layer: output
+      part_id: '24'
+      type: Oscillator
+    node20:
+      id: node20
+      layer: input
+      part_id: 25s3
+      type: Input
+    node21:
+      id: node21
+      layer: output
+      part_id: '26'
       type: Oscillator
     node-core1:
       id: node-core1
@@ -361,76 +386,141 @@ brain:
       layer: input
       part_id: '1'
       type: Input
+  connections:
+  - dst: node1
+    src: node13
+    weight: 1
+  - dst: node2
+    src: node13
+    weight: -0.2763313067996531
+  - dst: node3
+    src: node13
+    weight: -0.7707116922143722
+  - dst: node4
+    src: node13
+    weight: -0.7605297484766311
+  - dst: node5
+    src: node13
+    weight: -0.03778977774677017
+  - dst: node6
+    src: node13
+    weight: -0.2763313067996531
+  - dst: node7
+    src: node13
+    weight: -0.7707116922143722
+  - dst: node8
+    src: node13
+    weight: -0.7605297484766311
+  - dst: node9
+    src: node13
+    weight: -0.25897679091213366
+  - dst: node10
+    src: node13
+    weight: 0.8577088777017507
+  - dst: node11
+    src: node13
+    weight: -0.25897679091213366
+  - dst: node12
+    src: node13
+    weight: 0.27625112489577575
+  - dst: node14
+    src: node13
+    weight: -0.03778977774677017
+  - dst: node15
+    src: node13
+    weight: 0.23054403414208569
+  - dst: node16
+    src: node13
+    weight: -0.25897679091213366
+  - dst: node17
+    src: node13
+    weight: 0.8577088777017507
+  - dst: node18
+    src: node13
+    weight: -0.25897679091213366
+  - dst: node19
+    src: node13
+    weight: 0.8577088777017507
+  - dst: node2
+    src: node20
+    weight: 0.27625112489577575
+  - dst: node21
+    src: node13
+    weight: -0.03778977774677017
   params:
     node1:
-      amplitude: 2.189884322982804
-      period: 8.710504746870797
-      phase_offset: 7.568709781580549
+      amplitude: 2.745012341751381
+      period: 4.286893972764091
+      phase_offset: 9.478745849732126
     node2:
-      amplitude: 9.157087005667046
-      period: 4.819654549570735
-      phase_offset: 8.830780299448996
+      amplitude: 10
+      period: 1
+      phase_offset: 6.1897959617051965
     node3:
-      amplitude: 4.571652238850503
-      period: 2.85389696537947
-      phase_offset: 7.631679943161874
+      amplitude: 6.6326754404122115
+      period: 4.934147792507826
+      phase_offset: 8.759023307598902
     node4:
-      amplitude: 6.079127571167819
-      period: 9.265194871496611
-      phase_offset: 1.328101175124349
+      amplitude: 5.105033418558527
+      period: 5.74537288521109
+      phase_offset: 4.591134860444444
     node5:
-      amplitude: 8.586482423118413
-      period: 3.7920795726302887
-      phase_offset: 6.865759086864572
+      amplitude: 7.405721644661728
+      period: 10
+      phase_offset: 1.2273442277600726
     node6:
-      amplitude: 7.17700103678351
-      period: 8.384876034752704
-      phase_offset: 1.328101175124349
+      amplitude: 8.246833387709126
+      period: 6.071273972533317
+      phase_offset: 6.711050111973071
     node7:
-      amplitude: 2.7627403355282723
-      period: 7.325982718632286
-      phase_offset: 4.039016096420967
+      amplitude: 6.6326754404122115
+      period: 4.934147792507826
+      phase_offset: 8.759023307598902
     node8:
-      amplitude: 3.4779503142802826
-      period: 7.502160316009981
-      phase_offset: 4.039016096420967
+      amplitude: 5.105033418558527
+      period: 8.778537911030721
+      phase_offset: 3.2914283313958452
     node9:
-      amplitude: 6.234418278339964
-      period: 9.265194871496611
-      phase_offset: 1.328101175124349
+      amplitude: 8.529741551332187
+      period: 3.16537850966984
+      phase_offset: 4.487088060106436
     node10:
-      amplitude: 8.088720289258983
-      period: 2.3072841860552424
-      phase_offset: 4.943095761300601
+      amplitude: 6.663067037995678
+      period: 9.551299522589492
+      phase_offset: 8.256118740974015
     node11:
-      amplitude: 3.4779503142802826
-      period: 7.502160316009981
-      phase_offset: 4.039016096420967
+      amplitude: 8.529741551332187
+      period: 3.16537850966984
+      phase_offset: 4.487088060106436
     node12:
-      amplitude: 6.234418278339964
-      period: 9.5725163282771
-      phase_offset: 1.328101175124349
-    node13:
-      amplitude: 5.724961279931985
-      period: 9.692233365197309
-      phase_offset: 4.587988524325273
+      amplitude: 7.079755127269339
+      period: 6.518134496769861
+      phase_offset: 6.138945473534525
     node14:
-      amplitude: 2.8934997825649797
-      period: 5.195204610411348
-      phase_offset: 5.805264289843551
+      amplitude: 6.957861878405204
+      period: 8.671000994013657
+      phase_offset: 1.2273442277600726
     node15:
-      amplitude: 5.724961279931985
-      period: 9.692233365197309
-      phase_offset: 4.587988524325273
+      amplitude: 5.252384181370963
+      period: 1.362157380689335
+      phase_offset: 4.372300806918641
     node16:
-      amplitude: 1.795626316949289
-      period: 4.007564316886952
-      phase_offset: 5.805264289843551
+      amplitude: 8.529741551332187
+      period: 3.16537850966984
+      phase_offset: 4.487088060106436
     node17:
-      amplitude: 8.586482423118413
-      period: 3.7920795726302887
-      phase_offset: 6.865759086864572
+      amplitude: 6.663067037995678
+      period: 9.90958629220361
+      phase_offset: 6.138945473534525
     node18:
-      amplitude: 7.17700103678351
-      period: 9.265194871496611
-      phase_offset: 1.328101175124349
+      amplitude: 8.529741551332187
+      period: 3.16537850966984
+      phase_offset: 4.487088060106436
+    node19:
+      amplitude: 6.663067037995678
+      period: 9.90958629220361
+      phase_offset: 6.138945473534525
+    node21:
+      amplitude: 6.957861878405204
+      period: 8.671000994013657
+      phase_offset: 1.2273442277600726

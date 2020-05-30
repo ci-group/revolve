@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import subprocess
 
-runs=[1,2,3,4,5,6,7]#range(1,11)
+runs=[1,2,3,4,5,6,7,8]#range(1,11)
 start_port=14000
 exp_name='SpeedUpAnalyzer'
 log_suffix=''

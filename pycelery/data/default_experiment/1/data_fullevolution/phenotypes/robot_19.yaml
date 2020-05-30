@@ -8,6 +8,14 @@ body:
     green: 1
     red: 1
   children:
+    1:
+      id: '3'
+      type: ActiveHinge
+      orientation: 90
+      params:
+        blue: 0
+        green: 0
+        red: 0.7
     2:
       id: '2'
       type: FixedBrick
@@ -16,72 +24,13 @@ body:
         blue: 1
         green: 0
         red: 0
-      children:
-        3:
-          id: 2s3
-          type: TouchSensor
-          orientation: 0
-          params:
-            blue: 0.7
-            green: 0.7
-            red: 0.7
-    3:
-      id: '3'
-      type: ActiveHinge
-      orientation: 90
-      params:
-        blue: 0
-        green: 0
-        red: 0.7
-      children:
-        1:
-          id: '4'
-          type: ActiveHinge
-          orientation: 0
-          params:
-            blue: 0
-            green: 0
-            red: 0.7
-          children:
-            1:
-              id: '5'
-              type: FixedBrick
-              orientation: 270
-              params:
-                blue: 1
-                green: 0
-                red: 0
-              children:
-                3:
-                  id: '6'
-                  type: ActiveHinge
-                  orientation: 0
-                  params:
-                    blue: 0.58
-                    green: 0.08
-                    red: 1
 brain:
   type: neural-network
   neurons:
     node1:
       id: node1
-      layer: input
-      part_id: 2s3
-      type: Input
-    node2:
-      id: node2
       layer: output
       part_id: '3'
-      type: Oscillator
-    node3:
-      id: node3
-      layer: output
-      part_id: '4'
-      type: Oscillator
-    node4:
-      id: node4
-      layer: output
-      part_id: '6'
       type: Oscillator
     node-core1:
       id: node-core1
@@ -113,29 +62,8 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  connections:
-  - dst: node2
-    src: node1
-    weight: 0.8708655387681021
-  - dst: node2
-    src: node2
-    weight: -0.873791228770314
-  - dst: node3
-    src: node1
-    weight: -0.22606178802354826
-  - dst: node4
-    src: node1
-    weight: 0.73427263536525
   params:
-    node2:
-      amplitude: 9.003888079050126
-      period: 10
-      phase_offset: 2.1966933101730834
-    node3:
-      amplitude: 9.9224968671905
-      period: 1.0299664352333715
-      phase_offset: 9.796348249109306
-    node4:
-      amplitude: 3.803913809550008
-      period: 8.50791196731302
-      phase_offset: 4.627255019102887
+    node1:
+      amplitude: 7.28071422469802
+      period: 7.2356283736062394
+      phase_offset: 4.490841213259976

@@ -19,12 +19,12 @@ body:
       children:
         1:
           id: '3'
-          type: ActiveHinge
+          type: FixedBrick
           orientation: 0
           params:
-            blue: 0.58
-            green: 0.08
-            red: 1
+            blue: 1
+            green: 0
+            red: 0
           children:
             1:
               id: '4'
@@ -34,6 +34,78 @@ body:
                 blue: 0.58
                 green: 0.08
                 red: 1
+              children:
+                1:
+                  id: '5'
+                  type: ActiveHinge
+                  orientation: 0
+                  params:
+                    blue: 0.58
+                    green: 0.08
+                    red: 1
+                  children:
+                    1:
+                      id: '6'
+                      type: ActiveHinge
+                      orientation: 0
+                      params:
+                        blue: 0.58
+                        green: 0.08
+                        red: 1
+                      children:
+                        1:
+                          id: '7'
+                          type: ActiveHinge
+                          orientation: 0
+                          params:
+                            blue: 0.58
+                            green: 0.08
+                            red: 1
+                          children:
+                            1:
+                              id: '8'
+                              type: ActiveHinge
+                              orientation: 0
+                              params:
+                                blue: 0.58
+                                green: 0.08
+                                red: 1
+                              children:
+                                1:
+                                  id: '9'
+                                  type: ActiveHinge
+                                  orientation: 0
+                                  params:
+                                    blue: 0.58
+                                    green: 0.08
+                                    red: 1
+                                  children:
+                                    1:
+                                      id: '10'
+                                      type: ActiveHinge
+                                      orientation: 0
+                                      params:
+                                        blue: 0.58
+                                        green: 0.08
+                                        red: 1
+                                      children:
+                                        1:
+                                          id: '11'
+                                          type: ActiveHinge
+                                          orientation: 0
+                                          params:
+                                            blue: 0.58
+                                            green: 0.08
+                                            red: 1
+                                          children:
+                                            1:
+                                              id: '12'
+                                              type: ActiveHinge
+                                              orientation: 0
+                                              params:
+                                                blue: 0.58
+                                                green: 0.08
+                                                red: 1
 brain:
   type: neural-network
   neurons:
@@ -45,12 +117,47 @@ brain:
     node2:
       id: node2
       layer: output
-      part_id: '3'
+      part_id: '4'
       type: Oscillator
     node3:
       id: node3
       layer: output
-      part_id: '4'
+      part_id: '5'
+      type: Oscillator
+    node4:
+      id: node4
+      layer: output
+      part_id: '6'
+      type: Oscillator
+    node5:
+      id: node5
+      layer: output
+      part_id: '7'
+      type: Oscillator
+    node6:
+      id: node6
+      layer: output
+      part_id: '8'
+      type: Oscillator
+    node7:
+      id: node7
+      layer: output
+      part_id: '9'
+      type: Oscillator
+    node8:
+      id: node8
+      layer: output
+      part_id: '10'
+      type: Oscillator
+    node9:
+      id: node9
+      layer: output
+      part_id: '11'
+      type: Oscillator
+    node10:
+      id: node10
+      layer: output
+      part_id: '12'
       type: Oscillator
     node-core1:
       id: node-core1
@@ -84,14 +191,42 @@ brain:
       type: Input
   params:
     node1:
-      amplitude: 1.5027043805474896
-      period: 7.329474653079418
-      phase_offset: 9.572520529551207
+      amplitude: 6.22069210262549
+      period: 4.6989618566238835
+      phase_offset: 5.430656012715242
     node2:
-      amplitude: 7.34024147349052
-      period: 6.404751075614942
-      phase_offset: 1.2820238237656112
+      amplitude: 5.49563523294732
+      period: 3.9994100852512307
+      phase_offset: 1.0050266055078136
     node3:
-      amplitude: 7.34024147349052
-      period: 6.404751075614942
-      phase_offset: 1.2820238237656112
+      amplitude: 3.3830908077598014
+      period: 4.068336977352333
+      phase_offset: 1
+    node4:
+      amplitude: 6.826411731068973
+      period: 9.044480459652684
+      phase_offset: 3.177539857403943
+    node5:
+      amplitude: 5.49563523294732
+      period: 3.9994100852512307
+      phase_offset: 1.0050266055078136
+    node6:
+      amplitude: 2.3494725673726973
+      period: 3.6735097915809427
+      phase_offset: 1.3113769533817607
+    node7:
+      amplitude: 5.49563523294732
+      period: 3.9994100852512307
+      phase_offset: 1.0050266055078136
+    node8:
+      amplitude: 2.491191463616512
+      period: 3.3951717743466343
+      phase_offset: 1
+    node9:
+      amplitude: 5.49563523294732
+      period: 3.9994100852512307
+      phase_offset: 1.0050266055078136
+    node10:
+      amplitude: 3.3830908077598014
+      period: 3.6735097915809427
+      phase_offset: 1.3113769533817607

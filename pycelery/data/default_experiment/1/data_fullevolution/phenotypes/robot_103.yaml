@@ -10,60 +10,63 @@ body:
   children:
     1:
       id: '2'
-      type: ActiveHinge
-      orientation: 90
+      type: FixedBrick
+      orientation: 0
       params:
-        blue: 0
+        blue: 1
         green: 0
-        red: 0.7
+        red: 0
       children:
         1:
+          id: 2s1
+          type: TouchSensor
+          orientation: 0
+          params:
+            blue: 0.7
+            green: 0.7
+            red: 0.7
+        2:
+          id: 2s2
+          type: TouchSensor
+          orientation: 0
+          params:
+            blue: 0.7
+            green: 0.7
+            red: 0.7
+        3:
           id: '3'
           type: FixedBrick
-          orientation: 270
+          orientation: 0
           params:
             blue: 1
             green: 0
             red: 0
           children:
-            2:
-              id: '4'
-              type: FixedBrick
+            1:
+              id: 3s1
+              type: TouchSensor
               orientation: 0
               params:
-                blue: 1
-                green: 0
-                red: 0
-              children:
-                2:
-                  id: '5'
-                  type: FixedBrick
-                  orientation: 0
-                  params:
-                    blue: 1
-                    green: 0
-                    red: 0
-                  children:
-                    3:
-                      id: 5s3
-                      type: TouchSensor
-                      orientation: 0
-                      params:
-                        blue: 0.7
-                        green: 0.7
-                        red: 0.7
+                blue: 0.7
+                green: 0.7
+                red: 0.7
 brain:
   type: neural-network
   neurons:
     node1:
       id: node1
-      layer: output
-      part_id: '2'
-      type: Oscillator
+      layer: input
+      part_id: 2s2
+      type: Input
     node2:
       id: node2
       layer: input
-      part_id: 5s3
+      part_id: 2s1
+      type: Input
+    node3:
+      id: node3
+      layer: input
+      part_id: 3s1
       type: Input
     node-core1:
       id: node-core1
@@ -95,12 +98,4 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  connections:
-  - dst: node1
-    src: node2
-    weight: -0.47610642947060633
-  params:
-    node1:
-      amplitude: 8.226264342503397
-      period: 10
-      phase_offset: 2.8608706166230258
+  params: {}

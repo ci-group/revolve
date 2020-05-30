@@ -8,7 +8,7 @@ body:
     green: 1
     red: 1
   children:
-    2:
+    1:
       id: '2'
       type: ActiveHinge
       orientation: 0
@@ -26,30 +26,14 @@ body:
             green: 0
             red: 0
           children:
-            1:
-              id: 3s1
-              type: TouchSensor
-              orientation: 0
-              params:
-                blue: 0.7
-                green: 0.7
-                red: 0.7
             2:
-              id: 3s2
-              type: TouchSensor
+              id: '4'
+              type: FixedBrick
               orientation: 0
               params:
-                blue: 0.7
-                green: 0.7
-                red: 0.7
-            3:
-              id: 3s3
-              type: TouchSensor
-              orientation: 0
-              params:
-                blue: 0.7
-                green: 0.7
-                red: 0.7
+                blue: 1
+                green: 0
+                red: 0
 brain:
   type: neural-network
   neurons:
@@ -58,21 +42,6 @@ brain:
       layer: output
       part_id: '2'
       type: Oscillator
-    node2:
-      id: node2
-      layer: input
-      part_id: 3s2
-      type: Input
-    node3:
-      id: node3
-      layer: input
-      part_id: 3s1
-      type: Input
-    node4:
-      id: node4
-      layer: input
-      part_id: 3s3
-      type: Input
     node-core1:
       id: node-core1
       layer: input
@@ -103,21 +72,8 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  connections:
-  - dst: node1
-    src: node2
-    weight: 1
-  - dst: node1
-    src: node1
-    weight: -0.8470637300882369
-  - dst: node1
-    src: node3
-    weight: -0.27567836547203073
-  - dst: node1
-    src: node4
-    weight: 0.7735043212265804
   params:
     node1:
-      amplitude: 3.754417363898723
-      period: 8.693599174283618
-      phase_offset: 10
+      amplitude: 9.213954350624531
+      period: 7.136497740793942
+      phase_offset: 2.3714949949958806

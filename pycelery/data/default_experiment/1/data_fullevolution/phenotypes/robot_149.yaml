@@ -8,35 +8,35 @@ body:
     green: 1
     red: 1
   children:
-    2:
-      id: '2'
+    1:
+      id: '3'
       type: ActiveHinge
-      orientation: 0
+      orientation: 90
       params:
-        blue: 0.58
-        green: 0.08
-        red: 1
+        blue: 0
+        green: 0
+        red: 0.7
       children:
         1:
-          id: '3'
+          id: '4'
           type: ActiveHinge
-          orientation: 90
+          orientation: 0
           params:
             blue: 0
             green: 0
             red: 0.7
           children:
             1:
-              id: '4'
-              type: FixedBrick
+              id: '5'
+              type: ActiveHinge
               orientation: 270
               params:
-                blue: 1
-                green: 0
-                red: 0
+                blue: 0.58
+                green: 0.08
+                red: 1
               children:
                 1:
-                  id: '5'
+                  id: '6'
                   type: ActiveHinge
                   orientation: 0
                   params:
@@ -45,13 +45,48 @@ body:
                     red: 1
                   children:
                     1:
-                      id: '6'
+                      id: '7'
                       type: ActiveHinge
-                      orientation: 0
+                      orientation: 90
                       params:
-                        blue: 0.58
-                        green: 0.08
-                        red: 1
+                        blue: 0
+                        green: 0
+                        red: 0.7
+                      children:
+                        1:
+                          id: '8'
+                          type: ActiveHinge
+                          orientation: 270
+                          params:
+                            blue: 0.58
+                            green: 0.08
+                            red: 1
+                          children:
+                            1:
+                              id: '9'
+                              type: ActiveHinge
+                              orientation: 90
+                              params:
+                                blue: 0
+                                green: 0
+                                red: 0.7
+                              children:
+                                1:
+                                  id: '10'
+                                  type: ActiveHinge
+                                  orientation: 0
+                                  params:
+                                    blue: 0
+                                    green: 0
+                                    red: 0.7
+    2:
+      id: '2'
+      type: ActiveHinge
+      orientation: 90
+      params:
+        blue: 0
+        green: 0
+        red: 0.7
 brain:
   type: neural-network
   neurons:
@@ -68,12 +103,37 @@ brain:
     node3:
       id: node3
       layer: output
-      part_id: '5'
+      part_id: '4'
       type: Oscillator
     node4:
       id: node4
       layer: output
+      part_id: '5'
+      type: Oscillator
+    node5:
+      id: node5
+      layer: output
       part_id: '6'
+      type: Oscillator
+    node6:
+      id: node6
+      layer: output
+      part_id: '7'
+      type: Oscillator
+    node7:
+      id: node7
+      layer: output
+      part_id: '8'
+      type: Oscillator
+    node8:
+      id: node8
+      layer: output
+      part_id: '9'
+      type: Oscillator
+    node9:
+      id: node9
+      layer: output
+      part_id: '10'
       type: Oscillator
     node-core1:
       id: node-core1
@@ -107,18 +167,38 @@ brain:
       type: Input
   params:
     node1:
-      amplitude: 4.163202922351632
-      period: 7.8059018820035195
-      phase_offset: 8.688162139957797
+      amplitude: 2.2598315691354136
+      period: 3.1571734616266456
+      phase_offset: 7.857766732200465
     node2:
-      amplitude: 7.164687176296267
-      period: 9.253645892880828
-      phase_offset: 7.554630674936448
+      amplitude: 3.3735612387531693
+      period: 7.4461184981895485
+      phase_offset: 8.598116355232143
     node3:
-      amplitude: 2.172763127897775
-      period: 4.287676327377312
-      phase_offset: 9.452166462849222
+      amplitude: 2.809431995920697
+      period: 3.586739667595227
+      phase_offset: 2.339376574347101
     node4:
-      amplitude: 4.080362599426538
-      period: 7.041804227549734
-      phase_offset: 2.999385863668402
+      amplitude: 8.858104681555325
+      period: 9.695911818980015
+      phase_offset: 7.5416780574893725
+    node5:
+      amplitude: 8.877437276002865
+      period: 9.695911818980015
+      phase_offset: 7.5416780574893725
+    node6:
+      amplitude: 2.809431995920697
+      period: 3.586739667595227
+      phase_offset: 2.339376574347101
+    node7:
+      amplitude: 8.858104681555325
+      period: 9.695911818980015
+      phase_offset: 7.5416780574893725
+    node8:
+      amplitude: 2.645742116911701
+      period: 5.773730602896371
+      phase_offset: 6.090179295239441
+    node9:
+      amplitude: 2.6844756984778746
+      period: 5.773730602896371
+      phase_offset: 6.090179295239441

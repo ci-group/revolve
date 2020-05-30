@@ -12,8 +12,8 @@ brick_count 0
 touch_sensor_count 0
 brick_sensor_count 0
 proportion 0.5
-width 2
-height 1
+width 1
+height 2
 absolute_size 2
 sensors 0.0
 symmetry 0

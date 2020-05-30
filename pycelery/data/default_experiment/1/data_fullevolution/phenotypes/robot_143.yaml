@@ -10,122 +10,43 @@ body:
   children:
     2:
       id: '2'
-      type: FixedBrick
-      orientation: 0
+      type: ActiveHinge
+      orientation: 90
       params:
-        blue: 1
+        blue: 0
         green: 0
-        red: 0
+        red: 0.7
       children:
         1:
-          id: 2s1
-          type: TouchSensor
-          orientation: 0
-          params:
-            blue: 0.7
-            green: 0.7
-            red: 0.7
-        2:
           id: '3'
-          type: FixedBrick
-          orientation: 0
+          type: ActiveHinge
+          orientation: 270
           params:
-            blue: 1
-            green: 0
-            red: 0
+            blue: 0.58
+            green: 0.08
+            red: 1
           children:
-            2:
+            1:
               id: '4'
-              type: ActiveHinge
+              type: FixedBrick
               orientation: 0
               params:
-                blue: 0.58
-                green: 0.08
-                red: 1
-              children:
-                1:
-                  id: '5'
-                  type: FixedBrick
-                  orientation: 0
-                  params:
-                    blue: 1
-                    green: 0
-                    red: 0
-                  children:
-                    2:
-                      id: '6'
-                      type: FixedBrick
-                      orientation: 0
-                      params:
-                        blue: 1
-                        green: 0
-                        red: 0
-                      children:
-                        3:
-                          id: 6s3
-                          type: TouchSensor
-                          orientation: 0
-                          params:
-                            blue: 0.7
-                            green: 0.7
-                            red: 0.7
-                    3:
-                      id: 5s3
-                      type: TouchSensor
-                      orientation: 0
-                      params:
-                        blue: 0.7
-                        green: 0.7
-                        red: 0.7
-            3:
-              id: 3s3
-              type: TouchSensor
-              orientation: 0
-              params:
-                blue: 0.7
-                green: 0.7
-                red: 0.7
-        3:
-          id: 2s3
-          type: TouchSensor
-          orientation: 0
-          params:
-            blue: 0.7
-            green: 0.7
-            red: 0.7
+                blue: 1
+                green: 0
+                red: 0
 brain:
   type: neural-network
   neurons:
     node1:
       id: node1
-      layer: input
-      part_id: 2s1
-      type: Input
+      layer: output
+      part_id: '2'
+      type: Oscillator
     node2:
       id: node2
-      layer: input
-      part_id: 2s3
-      type: Input
-    node3:
-      id: node3
-      layer: input
-      part_id: 3s3
-      type: Input
-    node4:
-      id: node4
       layer: output
-      part_id: '4'
+      part_id: '3'
       type: Oscillator
-    node5:
-      id: node5
-      layer: input
-      part_id: 5s3
-      type: Input
-    node6:
-      id: node6
-      layer: input
-      part_id: 6s3
-      type: Input
     node-core1:
       id: node-core1
       layer: input
@@ -156,27 +77,12 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  connections:
-  - dst: node4
-    src: node1
-    weight: -1
-  - dst: node4
-    src: node2
-    weight: 0.5350401078728402
-  - dst: node4
-    src: node3
-    weight: 0.7959603047578265
-  - dst: node4
-    src: node4
-    weight: 0.23654759643945922
-  - dst: node4
-    src: node5
-    weight: 0.5350401078728402
-  - dst: node4
-    src: node6
-    weight: -0.5510309487876996
   params:
-    node4:
-      amplitude: 8.188319981623769
-      period: 9.607135893067051
-      phase_offset: 10
+    node1:
+      amplitude: 3.504868731970325
+      period: 6.343418319260369
+      phase_offset: 3.4241788341501644
+    node2:
+      amplitude: 3.5910968398351706
+      period: 3.6620777212282656
+      phase_offset: 8.167169588580244

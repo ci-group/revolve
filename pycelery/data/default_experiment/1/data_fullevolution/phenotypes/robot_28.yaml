@@ -9,73 +9,42 @@ body:
     red: 1
   children:
     1:
-      id: '2'
-      type: ActiveHinge
-      orientation: 90
-      params:
-        blue: 0
-        green: 0
-        red: 0.7
-      children:
-        1:
-          id: '3'
-          type: FixedBrick
-          orientation: 270
-          params:
-            blue: 1
-            green: 0
-            red: 0
-          children:
-            2:
-              id: '4'
-              type: FixedBrick
-              orientation: 0
-              params:
-                blue: 1
-                green: 0
-                red: 0
-              children:
-                2:
-                  id: 4s2
-                  type: TouchSensor
-                  orientation: 0
-                  params:
-                    blue: 0.7
-                    green: 0.7
-                    red: 0.7
-            3:
-              id: '5'
-              type: FixedBrick
-              orientation: 0
-              params:
-                blue: 1
-                green: 0
-                red: 0
-    2:
-      id: 1s2
+      id: 1s1
       type: TouchSensor
       orientation: 0
       params:
         blue: 0.7
         green: 0.7
         red: 0.7
+    3:
+      id: '2'
+      type: FixedBrick
+      orientation: 0
+      params:
+        blue: 1
+        green: 0
+        red: 0
+      children:
+        1:
+          id: 2s1
+          type: TouchSensor
+          orientation: 0
+          params:
+            blue: 0.7
+            green: 0.7
+            red: 0.7
 brain:
   type: neural-network
   neurons:
     node1:
       id: node1
       layer: input
-      part_id: 1s2
+      part_id: 2s1
       type: Input
     node2:
       id: node2
-      layer: output
-      part_id: '2'
-      type: Oscillator
-    node3:
-      id: node3
       layer: input
-      part_id: 4s2
+      part_id: 1s1
       type: Input
     node-core1:
       id: node-core1
@@ -107,15 +76,4 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  connections:
-  - dst: node2
-    src: node1
-    weight: -0.25109279764555414
-  - dst: node2
-    src: node3
-    weight: 0.14002242488582284
-  params:
-    node2:
-      amplitude: 7.719126470872464
-      period: 7.479507568761454
-      phase_offset: 1
+  params: {}

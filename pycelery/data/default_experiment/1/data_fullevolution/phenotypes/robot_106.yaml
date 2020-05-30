@@ -19,25 +19,17 @@ body:
       children:
         1:
           id: '4'
-          type: FixedBrick
-          orientation: 0
+          type: ActiveHinge
+          orientation: 90
           params:
-            blue: 1
+            blue: 0
             green: 0
-            red: 0
+            red: 0.7
           children:
             1:
-              id: 4s1
-              type: TouchSensor
-              orientation: 0
-              params:
-                blue: 0.7
-                green: 0.7
-                red: 0.7
-            2:
               id: '5'
               type: ActiveHinge
-              orientation: 90
+              orientation: 0
               params:
                 blue: 0
                 green: 0
@@ -60,9 +52,9 @@ brain:
       type: Oscillator
     node2:
       id: node2
-      layer: input
-      part_id: 4s1
-      type: Input
+      layer: output
+      part_id: '4'
+      type: Oscillator
     node3:
       id: node3
       layer: output
@@ -98,25 +90,16 @@ brain:
       layer: input
       part_id: '1'
       type: Input
-  connections:
-  - dst: node1
-    src: node2
-    weight: -0.27685044630979827
-  - dst: node1
-    src: node1
-    weight: -0.3171645479010621
-  - dst: node3
-    src: node2
-    weight: 1
-  - dst: node3
-    src: node3
-    weight: -0.2004512653634387
   params:
     node1:
-      amplitude: 4.604309823975769
-      period: 2.9478057718077952
-      phase_offset: 2.115126159210858
+      amplitude: 8.814745245305739
+      period: 8.903623038216395
+      phase_offset: 2.183060082932006
+    node2:
+      amplitude: 3.0070173097277557
+      period: 3.9757231913594815
+      phase_offset: 1.5384935652254654
     node3:
-      amplitude: 6.427904373386505
-      period: 7.029304426207203
-      phase_offset: 9.90438804933827
+      amplitude: 3.0685339120465596
+      period: 3.7737900779483393
+      phase_offset: 1

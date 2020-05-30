@@ -8,8 +8,16 @@ body:
     green: 1
     red: 1
   children:
-    3:
+    1:
       id: '2'
+      type: ActiveHinge
+      orientation: 0
+      params:
+        blue: 0.58
+        green: 0.08
+        red: 1
+    2:
+      id: '3'
       type: ActiveHinge
       orientation: 90
       params:
@@ -18,40 +26,31 @@ body:
         red: 0.7
       children:
         1:
-          id: '3'
+          id: '4'
           type: ActiveHinge
-          orientation: 0
+          orientation: 270
           params:
-            blue: 0
-            green: 0
-            red: 0.7
+            blue: 0.58
+            green: 0.08
+            red: 1
           children:
             1:
-              id: '4'
+              id: '5'
               type: ActiveHinge
               orientation: 0
               params:
-                blue: 0
-                green: 0
-                red: 0.7
+                blue: 0.58
+                green: 0.08
+                red: 1
               children:
                 1:
-                  id: '5'
+                  id: '6'
                   type: ActiveHinge
                   orientation: 0
                   params:
-                    blue: 0
-                    green: 0
-                    red: 0.7
-                  children:
-                    1:
-                      id: '6'
-                      type: ActiveHinge
-                      orientation: 0
-                      params:
-                        blue: 0
-                        green: 0
-                        red: 0.7
+                    blue: 0.58
+                    green: 0.08
+                    red: 1
 brain:
   type: neural-network
   neurons:
@@ -112,22 +111,22 @@ brain:
       type: Input
   params:
     node1:
-      amplitude: 3.872214998761316
-      period: 4.477323722273761
-      phase_offset: 2.7819574297029512
+      amplitude: 8.356709808579577
+      period: 7.136497740793942
+      phase_offset: 3.996677500196664
     node2:
-      amplitude: 8.21892999935855
-      period: 2.95192580402053
-      phase_offset: 3.4370651204100375
+      amplitude: 5.09538409356683
+      period: 2.5113701230083345
+      phase_offset: 8.54130631891157
     node3:
-      amplitude: 2.2212722769665136
-      period: 2.5457790673736285
-      phase_offset: 4.968716441501524
+      amplitude: 3.7774724697463276
+      period: 4.170696158309868
+      phase_offset: 1.7880472410549826
     node4:
-      amplitude: 5.622344794309782
-      period: 2.95192580402053
-      phase_offset: 3.4370651204100375
+      amplitude: 1.4564910982809576
+      period: 5.608662560309584
+      phase_offset: 7.559264159602346
     node5:
-      amplitude: 2.2212722769665136
-      period: 2.764949595472864
-      phase_offset: 4.968716441501524
+      amplitude: 5.633675996669751
+      period: 4.170696158309868
+      phase_offset: 1.320350405873874
