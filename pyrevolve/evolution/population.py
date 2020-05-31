@@ -262,7 +262,13 @@ class Population:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
 
             if self.conf.celery: # ADDED THIS FOR CELERY -Sam
-                robot_futures.append(await self.evaluate_single_robot(individual))
+                try:
+                    individual.fitness, measurements = await asyncio.wait_for(future.get(timeout=50), timeout=50) # 50 seconds might be to short, but in general this only happens if analyzer disconnects. 100 second might be too long, since the time starts when get is called. it should be processed within seconds by then..
+                    individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
+                except TimeoutError:
+                    logger.info(f"Individual's get request timed out. The message is lost or not handled correctly. This should not happen unless disconnection in rabbitmq or network.")
+                    self.conf.celery_reboot = True
+                    individual.fitness, individual.phenotype._behavioural_measurements = None, None
             else:
                 robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
 

@@ -117,11 +117,11 @@ void CeleryWorldController::Load(
   this->robotStatesPub_ = this->node_->Advertise< revolve::msgs::RobotStates >(
       "~/revolve/robot_states", 500);
 
-
-
-
   // FROM HERE EVERYTHING WILL BE CELERY RELATED -Sam Ferwerda
   this->celeryChannel = AmqpClient::Channel::Create("localhost", 5672);
+
+  // Weither simulator is busy or not
+  this->running = false;
 
   // Consumer tag
   this->consumer_tag = this->celeryChannel->BasicConsume(
@@ -133,17 +133,16 @@ void CeleryWorldController::Load(
   /*message_prefetch_count*/1
   );
 
-  // Weither simulator is busy or not
-  this->running = false;
-
-  // THIS PART IS USED TO CONSUME THE STARTUP MESSAGE (if there is one)!
-  auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope, 100);
+  // Get the port number of our experiments to make a unique queue
+  auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope);
   if (message_delivered){
     this->celeryChannel->BasicAck(this->envelope);
 
     auto message = this->envelope->Message();
     auto body = message->Body();
     this->root.clear();
+
+    std::cout << "ID: " << this->envelope->Message()->CorrelationId() << std::endl;
 
     auto parsingSuccessful = this->reader.parse( body, this->root );
     if ( !parsingSuccessful )
@@ -153,32 +152,27 @@ void CeleryWorldController::Load(
                    << this->reader.getFormattedErrorMessages();
         return;
     }
-    auto name = root[0][0];
-    std::cout << name.asString() << std::endl;
+    auto name = "cpp"+root[0][0].asString();
 
-    boost::mutex::scoped_lock plock(dataMutex_);
-    // clear the last message and make a new one.
-    this->rootmsg.clear();
-    this->rootmsg["task_id"] = this->envelope->Message()->CorrelationId();
-    this->rootmsg["status"] = "SUCCESS";
-    this->rootmsg["result"] = "Succesfully started cpp celery queue!";
+    this->consumer_tag = this->celeryChannel->BasicConsume(
+    /*queue*/name,
+    /*consumer_tag*/"",
+    /*no_local*/true,
+    /*no_ack*/false,
+    /*exclusive*/false,
+    /*message_prefetch_count*/1
+    );
 
-    std::string output = this->fastWriter.write(this->rootmsg);
-    plock.unlock();
+    // Make the queue ready to use by reading it init message if possible
+    auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope, 100);
+    if (message_delivered){
+      this->celeryChannel->BasicAck(this->envelope);
+    };
 
-    // send result trough celery!
-    auto MESSAGE = AmqpClient::BasicMessage::Create(output);
-    MESSAGE->ContentType("application/json");
-    MESSAGE->ContentEncoding("utf-8");
-    MESSAGE->ReplyTo(this->envelope->Message()->ReplyTo());
-    MESSAGE->CorrelationId(this->envelope->Message()->CorrelationId());
-
-    this->celeryChannel->BasicPublish("", MESSAGE->ReplyTo(), MESSAGE);
-
-    this->contactsSub_ = this->node_->Subscribe(
-            "~/physics/contacts",
-            &CeleryWorldController::OnContacts,
-            this);
+    // this->contactsSub_ = this->node_->Subscribe(
+    //         "~/physics/contacts",
+    //         &CeleryWorldController::OnContacts,
+    //         this);
 
   }
 }

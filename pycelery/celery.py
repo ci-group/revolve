@@ -2,13 +2,12 @@
 
 from celery import Celery, signals
 from celery_pool_asyncio import monkey as cpa_monkey
+from pyrevolve import parser
 
 # Starting Celery
 cpa_monkey.patch()
 
 app = Celery('pycelery')
-
-app.control.purge()
 
 # Setting configurations of celery.
 app.conf.update(
@@ -20,13 +19,9 @@ app.conf.update(
     enable_utc = True,
     result_expires = 3600,
     include = 'pycelery.tasks',
-    worker_prefetch_multiplier = 2, # contacts works aslong as multiplier x child < 8
+    worker_prefetch_multiplier = 1, # contacts works aslong as multiplier x child < 8
     task_acks_late = True,
-    task_default_queue = 'robots',
     max_tasks_per_child = 2, # contacts worked with child = 1
-    task_routes = ([
-    ('pycelery.tasks.*', {'queue': 'robots'}),
-    ('pycelery.tasks.hello', {'queue': 'celery'})],)
 )
 
 # THIS FUNCTION ALLOWS YOU TO SHUT DOWN LOGGING FOR ALL WORKERS.

@@ -31,12 +31,12 @@ async def run():
 
     celerycontroller = CeleryController(settings) # Starting celery
 
-    await asyncio.sleep(settings.n_cores) # Celery needs time
+    await asyncio.sleep(max(settings.n_cores,10)) # Celery needs time
 
     # experiment params #
-    num_generations = 50
-    population_size = 100
-    offspring_size = 50
+    num_generations = 1
+    population_size = 50
+    offspring_size = 25
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=100,
@@ -113,8 +113,7 @@ async def run():
         # starting a new experiment
         experiment_management.create_exp_folders()
         end1 = time.time()
-        f=open("speed.txt", "a")
-        f.write(f"NEW EXPERIMENT: Initialization took {end1-begin} seconds. \n")
+        initiation = end1-begin
 
         await population.init_pop()
 
@@ -132,10 +131,11 @@ async def run():
     f = open("speed.txt", "a")
     f.write("---------------")
     f.write(f"runtime: {end-begin} on {settings.n_cores} cores. Gen: {num_generations}, Population: {population_size}, Offspring: {offspring_size}\n")
+    f.write(f"init took: {initiation}")
     f.write(f"generation_time: {population_conf.generation_time} \n")
     f.write(f"generation init time: {population_conf.generation_init} \n")
     f.write(f"generation fin time: {population_conf.generational_fin}\n ")
     f.close()
 
     """Uncomment this if you want the manager to close celery and gazebo"""
-    # await celerycontroller.shutdown()
+    await celerycontroller.shutdown()

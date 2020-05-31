@@ -192,7 +192,7 @@ async def _restart_simulator(settings, connection_, supervisor_, simulator_type)
 
     logger.debug("Restarting simulator done... connection done")
 
-@app.task(queue="robots", soft_time_limit=150)
+@app.task(soft_time_limit=150)
 async def evaluate_robot(yaml_object, fitnessName, settingsDir):
     global fitness_function
     global connection
@@ -247,7 +247,7 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
         SDF = revolve_bot_to_sdf(robot, Vector3(0, 0, settings.z_start), None)
 
         # Send robot to cpp queue
-        robot_manager = await insert_robot.apply_async((str(SDF), max_age), serializer="json")
+        robot_manager = await insert_robot.apply_async((str(SDF), max_age), serializer="json", queue="cpp"+str(settings.port_start))
 
         # await the simulation results and fitness.
         robot_data = await robot_manager.get()
@@ -276,7 +276,7 @@ async def shutdown_gazebo():
 
     try:
         await connection.disconnect()
-        await asyncio.wait_for(simulator_supervisor.stop(), timeout=2)
+        await asyncio.wait_for(simulator_supervisor.stop(), timeout=10)
     except:
         logger.info("TimeoutError: timeout error when closing gazebo instance.")
     finally:
@@ -299,7 +299,7 @@ async def reset():
 async def insert_robot(sdf_string, evaluation_time=120):
     print("This will be handled by c++ part in worldcontroller.")
 
-@app.task(queue="cpp", task_serializer='json', result_serializer = 'json')
+@app.task(queue="cpp", task_serializer='json', result_serializer = 'json', ignore_result=True)
 async def start_robot_queue(name):
     """This function is called such that the celery queue exists before c++ tries to connect.
     Otherwise an error will occur!"""

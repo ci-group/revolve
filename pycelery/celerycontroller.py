@@ -1,6 +1,10 @@
 import asyncio
 import subprocess
 import time
+import random
+from .celery import app
+import sys
+
 from pycelery.tasks import shutdown_gazebo, run_gazebo, run_gazebo_and_analyzer, evaluate_robot, start_robot_queue, insert_robot, reset
 from pyrevolve.SDF.revolve_bot_sdf_builder import revolve_bot_to_sdf
 from pycelery.converter import args_to_dic, dic_to_args, dic_to_pop, pop_to_dic
@@ -18,6 +22,8 @@ class CeleryController:
     def __init__(self, settings, start_workers = True):
         self.settings = settings
         self.settingsDir = args_to_dic(settings)
+        self.celery_process = 0
+        self.celery_workers = []
 
         # Start celery
         if start_workers:
@@ -27,9 +33,21 @@ class CeleryController:
         """
         Starts n_cores celery workers
         """
+        # create random worker tags
+        x=self.settings.port_start
+        worker_string = ""
+        for i in range(self.settings.n_cores):
+            worker_string += f"worker{x+i} "
+            self.celery_workers.append(f"worker{x+i}@sam-Lenovo-ideapad-Y700-15ISK")
+
+        ampqport = random.randint(0,100)
+
+        # this creates a queue for your workers only and cleans that queue.
+        app.conf.update(task_default_queue=f"robots{self.settings.port_start}")
+        app.control.purge()
 
         logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores. ")
-        subprocess.Popen("celery multi start "+str(self.settings.n_cores)+" -Q robots -A pycelery -P celery_pool_asyncio:TaskPool -l info -c 1", shell=True)
+        self.celery_process = subprocess.Popen(f"celery multi start {worker_string} -Q robots{self.settings.port_start} -A pycelery -P celery_pool_asyncio:TaskPool -l info -c 1", shell=True)
 
     async def reset_connections(self):
         logger.info("Resetting connection on every worker.")
@@ -72,26 +90,28 @@ class CeleryController:
             result = await shutdowns[i].get()
 
         ## Not sure about this process yet. It might be better to exit these instances in other ways.
-        subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
-        subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
+        # subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
+        # subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
+
+        ## Terminate our celery workers.
+        #app.control.shutdown(destination=self.celery_workers)
 
     async def start_gazebo_instances(self):
         """
         This functions starts N_CORES number of gazebo instances.
         Every worker owns one gazebo instance.
         """
-        start_cpp = await start_robot_queue.apply_async(("Start cpp celery queue.",), serializer="json")
+        start_cpp = await start_robot_queue.apply_async(("start unique cpp queue",), serializer="json", queue=f"cpp{self.settings.port_start}")
 
         gws = []
         grs = []
         for i in range(self.settings.n_cores):
             gw = await run_gazebo_and_analyzer.delay(self.settingsDir, i)
+            await start_robot_queue.apply_async((f"{self.settings.port_start}",), serializer="json")
             gws.append(gw)
 
         for j in range(self.settings.n_cores):
             await gws[j].get()
-
-        await start_cpp.get()
 
     async def test_robot(self, robot, conf):
         """
