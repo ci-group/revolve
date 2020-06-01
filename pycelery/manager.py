@@ -26,7 +26,8 @@ from pyrevolve.custom_logging.logger import logger
 async def run():
     """A revolve manager that is using celery for task execution."""
     begin = time.time()
-
+    initiation = 0
+    
     settings = parser.parse_args()
 
     celerycontroller = CeleryController(settings) # Starting celery

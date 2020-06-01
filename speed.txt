@@ -11,4 +11,25 @@ generation fin time: [0.0012159347534179688]
 init took: 26.586177110671997generation_time: [71.80495190620422, 51.81312561035156] 
 generation init time: [4.4923622608184814, 2.507354736328125] 
 generation fin time: [0.001191854476928711]
+ ---------------runtime: 156.38717031478882 on 2 cores. Gen: 2, Population: 50, Offspring: 25
+---------------runtime: 30.848769903182983 on 2 cores. Gen: 2, Population: 50, Offspring: 25
+init took: 0generation_time: [4.285189151763916] 
+generation init time: [2.86102294921875e-06] 
+generation fin time: [0.0022208690643310547]
+ ---------------runtime: 130.98876357078552 on 2 cores. Gen: 2, Population: 50, Offspring: 25
+init took: 26.57027840614319generation_time: [56.81332564353943, 41.04914307594299] 
+generation init time: [3.810265064239502, 2.7429680824279785] 
+generation fin time: [0.0016560554504394531]
+ ---------------runtime: 175.93681406974792 on 2 cores. Gen: 2, Population: 50, Offspring: 25
+init took: 28.119065046310425generation_time: [91.14726305007935, 49.429537534713745] 
+generation init time: [4.7655298709869385, 2.4732768535614014] 
+generation fin time: [0.0014448165893554688]
+ ---------------runtime: 142.87552523612976 on 2 cores. Gen: 2, Population: 50, Offspring: 25
+init took: 25.399619817733765generation_time: [71.77562642097473, 40.2968373298645] 
+generation init time: [3.510711908340454, 1.890925645828247] 
+generation fin time: [0.0010955333709716797]
+ ---------------runtime: 141.81825876235962 on 2 cores. Gen: 2, Population: 50, Offspring: 25
+init took: 25.427992582321167generation_time: [62.545127868652344, 47.93323826789856] 
+generation init time: [3.7555036544799805, 2.1543219089508057] 
+generation fin time: [0.0010018348693847656]
  

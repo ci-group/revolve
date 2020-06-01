@@ -128,13 +128,16 @@ void CeleryWorldController::Load(
   /*queue*/"cpp",
   /*consumer_tag*/"",
   /*no_local*/true,
-  /*no_ack*/true,
+  /*no_ack*/false,
   /*exclusive*/false,
   /*message_prefetch_count*/1
   );
 
   // Get the port number of our experiments to make a unique queue
   this->envelope = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
+  this->celeryChannel->BasicCancel(this->consumer_tag);
+
+  this->celeryChannel->BasicAck(this->envelope);
 
   auto message = this->envelope->Message();
   auto body = message->Body();
