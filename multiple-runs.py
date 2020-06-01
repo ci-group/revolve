@@ -5,13 +5,12 @@ import subprocess
 """This file is used to run multiple celery experiments after another. Can be run
 using ./multiple-runs.py"""
 
-runs = 5
+runs = 10
 manager = "pycelery/manager.py"
-cores = 7
+cores = 32
 
-for i in range(10):
-    p = subprocess.Popen("./revolve.py --manager "+ manager + " --n-cores "+str(cores)+" --experiment-name default_exp_"+str(i), shell=True)
+for i in range(runs):
+    p = subprocess.Popen(f"./revolve.py --manager {manager} --n-cores {cores} --run {i}", shell=True)
     p.wait()
-    p = subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
-    p.wait()
-    print(f"run {i} done")
+    p.terminate()
+    print(f"Run {i} done")
