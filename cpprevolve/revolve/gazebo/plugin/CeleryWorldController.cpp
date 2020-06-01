@@ -128,53 +128,54 @@ void CeleryWorldController::Load(
   /*queue*/"cpp",
   /*consumer_tag*/"",
   /*no_local*/true,
-  /*no_ack*/false,
+  /*no_ack*/true,
   /*exclusive*/false,
   /*message_prefetch_count*/1
   );
 
   // Get the port number of our experiments to make a unique queue
-  auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope);
+  this->envelope = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
+
+  auto message = this->envelope->Message();
+  auto body = message->Body();
+  this->root.clear();
+
+  std::cout << "ID: " << this->envelope->Message()->CorrelationId() << std::endl;
+
+  auto parsingSuccessful = this->reader.parse( body, this->root );
+  if ( !parsingSuccessful )
+  {
+      // report to the user the failure and their locations in the document.
+      std::cout  << "Failed to parse configuration\n"
+                 << this->reader.getFormattedErrorMessages();
+      return;
+  }
+  auto name = "cpp"+root[0][0].asString();
+
+  std::cout << "Connected to queue: " << name << std::endl;
+
+  this->consumer_tag.clear();
+
+  this->consumer_tag = this->celeryChannel->BasicConsume(
+  /*queue*/name,
+  /*consumer_tag*/"",
+  /*no_local*/true,
+  /*no_ack*/false,
+  /*exclusive*/false,
+  /*message_prefetch_count*/1
+  );
+
+  // Make the queue ready to use by reading it init message if possible
+  auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope, 100);
   if (message_delivered){
     this->celeryChannel->BasicAck(this->envelope);
-
-    auto message = this->envelope->Message();
-    auto body = message->Body();
-    this->root.clear();
-
-    std::cout << "ID: " << this->envelope->Message()->CorrelationId() << std::endl;
-
-    auto parsingSuccessful = this->reader.parse( body, this->root );
-    if ( !parsingSuccessful )
-    {
-        // report to the user the failure and their locations in the document.
-        std::cout  << "Failed to parse configuration\n"
-                   << this->reader.getFormattedErrorMessages();
-        return;
-    }
-    auto name = "cpp"+root[0][0].asString();
-
-    this->consumer_tag = this->celeryChannel->BasicConsume(
-    /*queue*/name,
-    /*consumer_tag*/"",
-    /*no_local*/true,
-    /*no_ack*/false,
-    /*exclusive*/false,
-    /*message_prefetch_count*/1
-    );
-
-    // Make the queue ready to use by reading it init message if possible
-    auto message_delivered = this->celeryChannel->BasicConsumeMessage(this->consumer_tag, this->envelope, 100);
-    if (message_delivered){
-      this->celeryChannel->BasicAck(this->envelope);
-    };
+  };
 
     // this->contactsSub_ = this->node_->Subscribe(
     //         "~/physics/contacts",
     //         &CeleryWorldController::OnContacts,
     //         this);
 
-  }
 }
 
 void CeleryWorldController::Reset()

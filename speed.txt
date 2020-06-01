@@ -1,0 +1,14 @@
+
+---------------runtime: 154.63745212554932 on 2 cores. Gen: 2, Population: 50, Offspring: 25
+init took: 25.45679497718811generation_time: [77.1070601940155, 45.98223257064819] 
+generation init time: [3.7314772605895996, 2.3580257892608643] 
+generation fin time: [0.0011489391326904297]
+ ---------------runtime: 129.72808170318604 on 2 cores. Gen: 2, Population: 50, Offspring: 25
+init took: 26.38326382637024generation_time: [62.50673866271973, 34.56834077835083] 
+generation init time: [4.632944583892822, 1.6345086097717285] 
+generation fin time: [0.0012159347534179688]
+ ---------------runtime: 157.20597863197327 on 2 cores. Gen: 2, Population: 50, Offspring: 25
+init took: 26.586177110671997generation_time: [71.80495190620422, 51.81312561035156] 
+generation init time: [4.4923622608184814, 2.507354736328125] 
+generation fin time: [0.001191854476928711]
+ 

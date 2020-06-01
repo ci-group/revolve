@@ -96,6 +96,11 @@ class CeleryController:
         ## Terminate our celery workers.
         #app.control.shutdown(destination=self.celery_workers)
 
+        # Recurring experiments
+        run = eval(self.settings.run) + 1
+        if run < 10:
+            subprocess.Popen(f"./revolve.py --n-cores={self.settings.n_cores} --manager pycelery/manager.py --experiment-name={self.settings.experiment_name} --port-start={self.settings.port_start} --world worlds/celeryplane.world --run {run}", shell=True)
+
     async def start_gazebo_instances(self):
         """
         This functions starts N_CORES number of gazebo instances.
@@ -107,7 +112,7 @@ class CeleryController:
         grs = []
         for i in range(self.settings.n_cores):
             gw = await run_gazebo_and_analyzer.delay(self.settingsDir, i)
-            await start_robot_queue.apply_async((f"{self.settings.port_start}",), serializer="json")
+            await start_robot_queue.apply_async((f"{self.settings.port_start}",), serializer="json", queue="cpp")
             gws.append(gw)
 
         for j in range(self.settings.n_cores):
