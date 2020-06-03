@@ -48,7 +48,7 @@ class CeleryController:
 
         logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores. ")
         self.celery_process = subprocess.Popen(f"celery multi restart {worker_string} -Q robots{self.settings.port_start} -A pycelery -P celery_pool_asyncio:TaskPool -l info -c 1", shell=True)
-	
+
     async def reset_connections(self):
         logger.info("Resetting connection on every worker.")
 
@@ -93,7 +93,9 @@ class CeleryController:
         # subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
         # subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
 
-        ## Terminate our celery workers.
+        ## Terminate our celery workers. BE AWARE: this function might not succeed for all workers
+        ## Workers still in a process need to finish it first, if they are stuck they will never shutdown.
+        ## Therefore I recommend checking after every experiment wether you lost workers or not.
         app.control.shutdown(destination=self.celery_workers)
 
     async def start_gazebo_instances(self):
