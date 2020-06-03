@@ -6,9 +6,9 @@ import time
 used for multiple parallel experiments. Can be run
 using ./multiple-consecutive-runs.py"""
 
-runs = 11
+runs = 30
 manager = "pycelery/manager.py"
-cores = 32
+cores = 16
 
 for i in range(runs):
     print(f"-----Run {i}-----\n")
