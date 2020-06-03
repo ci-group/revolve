@@ -38,7 +38,7 @@ class CeleryController:
         worker_string = ""
         for i in range(self.settings.n_cores):
             worker_string += f"worker{x+i} "
-            self.celery_workers.append(f"worker{x+i}@sam-Lenovo-ideapad-Y700-15ISK")
+            self.celery_workers.append(f"worker{x+i}@ripper3")
 
         ampqport = random.randint(0,100)
 
@@ -48,7 +48,7 @@ class CeleryController:
 
         logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores. ")
         self.celery_process = subprocess.Popen(f"celery multi restart {worker_string} -Q robots{self.settings.port_start} -A pycelery -P celery_pool_asyncio:TaskPool -l info -c 1", shell=True)
-
+	
     async def reset_connections(self):
         logger.info("Resetting connection on every worker.")
 
@@ -94,12 +94,7 @@ class CeleryController:
         # subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
 
         ## Terminate our celery workers.
-        #app.control.shutdown(destination=self.celery_workers)
-
-        # Recurring experiments
-        run = eval(self.settings.run) + 1
-        if run < 10:
-            subprocess.Popen(f"./revolve.py --n-cores={self.settings.n_cores} --manager pycelery/manager.py --experiment-name={self.settings.experiment_name} --port-start={self.settings.port_start} --world worlds/celeryplane.world --run {run}", shell=True)
+        app.control.shutdown(destination=self.celery_workers)
 
     async def start_gazebo_instances(self):
         """
