@@ -18,4 +18,5 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 ADD . /revolve
+RUN /revolve/docker/build_install_multineat.sh
 RUN /revolve/docker/build_revolve.sh

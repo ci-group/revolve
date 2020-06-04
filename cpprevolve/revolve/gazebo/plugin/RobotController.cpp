@@ -233,9 +233,11 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   else if ("offline" == learner and "cppn-cpg" == controller_type)
   {
       brain_.reset(new DifferentialCPPNCPG(brain_sdf, motors_));
-  else if ("offline" == learner and "fixed-angle" == controller)
+  }
+  else if ("offline" == learner and "fixed-angle" == controller_type)
   {
-    double angle = std::stod(brain->GetElement("rv:controller")->GetAttribute("angle")->GetAsString());
+    double angle = std::stod(
+            brain_sdf->GetElement("rv:controller")->GetAttribute("angle")->GetAsString());
     brain_.reset(new FixedAngleController(angle));
   }
   else
