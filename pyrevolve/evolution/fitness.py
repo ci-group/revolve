@@ -102,7 +102,6 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
     # TODO move to measurements?
     orientations: float = 0.0
     delta_orientations: float = 0.0
-    dS: float = 0.0
 
     assert len(robot_manager._orientations) == len(robot_manager._positions)
 
@@ -113,8 +112,6 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
         pos_i: Vector3 = robot_manager._positions[i]
         rot_i_1 = robot_manager._orientations[i - 1]
         rot_i = robot_manager._orientations[i]
-
-        dS += _distance_flat_plane(pos_i_1, pos_i)
 
         angle_i: float = rot_i[2]  # roll / pitch / yaw
         angle_i_1: float = rot_i_1[2]  # roll / pitch / yaw
@@ -128,6 +125,5 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
             delta_orientations = angle_i - angle_i_1
         orientations += delta_orientations
 
-    print(f'orientations: {orientations} dS: {dS}')
-    fitness_value: float = orientations - factor_orien_ds * dS  # dS in (0, 1.5) in 30s
+    fitness_value: float = orientations - factor_orien_ds * robot_manager._dist
     return fitness_value
