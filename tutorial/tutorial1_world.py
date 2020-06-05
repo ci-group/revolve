@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import asyncio
 import os
+import sys
+import time
 from pyrevolve import parser
+from pyrevolve.custom_logging.logger import logger
 from pyrevolve.gazebo.manage import WorldManager as World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
-from pyrevolve.custom_logging.logger import logger
 
 
 async def run():
