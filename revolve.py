@@ -4,6 +4,7 @@ import sys
 import asyncio
 import importlib
 from pygazebo.connection import DisconnectError
+import time
 
 from pyrevolve.data_analisys.visualize_robot import test_robot_run
 from pyrevolve.data_analisys.check_robot_collision import test_collision_robot
@@ -65,14 +66,7 @@ def main():
     except KeyboardInterrupt:
         print("Got CtrlC, shutting down.")
 
-
 if __name__ == '__main__':
     print("STARTING")
-    try:
-        main()
-    except asyncio.IncompleteReadError:
-        pass
-    except DisconnectError:
-        pass
+    main()
     print("FINISHED")
-
