@@ -40,14 +40,12 @@ class CeleryController:
             worker_string += f"worker{x+i} "
             self.celery_workers.append(f"worker{x+i}@ripper3")
 
-        ampqport = random.randint(0,100)
-
         # this creates a queue for your workers only and cleans that queue.
         app.conf.update(task_default_queue=f"robots{self.settings.port_start}")
         app.control.purge()
 
         logger.info("Starting a worker at the background using " + str(self.settings.n_cores) + " cores. ")
-        self.celery_process = subprocess.Popen(f"celery multi restart {worker_string} -Q robots{self.settings.port_start} -A pycelery -P celery_pool_asyncio:TaskPool -l info -c 1", shell=True)
+        self.celery_process = subprocess.Popen(f"celery multi start {worker_string} -Q robots{self.settings.port_start} -A pycelery -P celery_pool_asyncio:TaskPool -l info -c 1", shell=True)
 
     async def reset_connections(self):
         logger.info("Resetting connection on every worker.")
@@ -97,6 +95,7 @@ class CeleryController:
         ## Workers still in a process need to finish it first, if they are stuck they will never shutdown.
         ## Therefore I recommend checking after every experiment wether you lost workers or not.
         app.control.shutdown(destination=self.celery_workers)
+        self.celery_process.terminate()
 
     async def start_gazebo_instances(self):
         """

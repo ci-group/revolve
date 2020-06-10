@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 import subprocess
+import time
 
-runs=[1,2,3,4,5,6,7,8]#range(1,11)
+number_of_experiments = 4
 start_port=14000
+cores = 8
 exp_name='SpeedUpAnalyzer'
 log_suffix=''
-manager='experiments/examples/manager_pop.py'
+manager='pycelery/manager.py'
 
 if __name__ == "__main__":
-    for run in runs:
-        run_start_port = start_port + (run*10)
+    for run in range(number_of_experiments):
+        run_start_port = start_port + (run*cores*2)
         process = ['screen','-d','-m',
             '-S',f'{exp_name}_{run}',
             '-L','-Logfile',f"{exp_name}{log_suffix}_{run}.log",
             'nice','-n19',
             './revolve.py','--manager',manager,
-            '--experiment-name',exp_name,
-            '--n-cores','4',
+            '--n-cores',str(cores),
             '--port-start',str(run_start_port),
             '--run',str(run)
             ]
         print("starting" + " ".join(process))
         subprocess.call(process)
+
+        time.sleep(30) # Let the process start without other interference.
