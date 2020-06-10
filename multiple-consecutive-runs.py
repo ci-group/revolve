@@ -6,13 +6,13 @@ import time
 used for multiple parallel experiments. Can be run
 using ./multiple-consecutive-runs.py"""
 
-runs = 30
+runs = 3
 manager = "pycelery/manager.py"
 cores = 16
 
 for i in range(runs):
     print(f"-----Run {i}-----\n")
-    p = subprocess.Popen(f"./revolve.py --manager {manager} --world worlds/celeryplane.world --n-cores {cores} --run {i}", shell=True)
+    p = subprocess.Popen(f"./revolve.py --manager {manager} --experiment-name=last3 --world worlds/celeryplane.world --n-cores {cores} --run {i}", shell=True)
     p.wait()
     p.terminate()
     subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)

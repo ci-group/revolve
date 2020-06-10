@@ -76,3 +76,6 @@ Pipfile.lock
 # Revolve related
 *.sdf
 *.urdf
+
+# Celery Data
+pycelery/data/
