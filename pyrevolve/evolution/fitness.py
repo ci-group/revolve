@@ -98,7 +98,7 @@ def floor_is_lava(robot_manager, robot):
     return fitness
 
 
-def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: float = 3.0):
+def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: float = 0.0):
     # TODO move to measurements?
     orientations: float = 0.0
     delta_orientations: float = 0.0
@@ -127,3 +127,27 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
 
     fitness_value: float = orientations - factor_orien_ds * robot_manager._dist
     return fitness_value
+
+
+# This will not be part of future code, solely for experimental practice
+def gait_with_rotation(_robot_manager, robot):
+    gait_fitness = displacement(_robot_manager, robot)
+    rotation_fitness = rotation(_robot_manager, robot)
+
+    return 0.75 * gait_fitness + 0.25 * rotation_fitness
+
+
+# This will not be part of future code, solely for experimental practice
+def gait_and_rotation(_robot_manager, robot):
+    gait_fitness = displacement(_robot_manager, robot)
+    rotation_fitness = rotation(_robot_manager, robot)
+
+    return 0.5 * gait_fitness + 0.5 * rotation_fitness
+
+
+# This will not be part of future code, solely for experimental practice
+def rotation_with_gait(_robot_manager, robot):
+    gait_fitness = displacement(_robot_manager, robot)
+    rotation_fitness = rotation(_robot_manager, robot)
+
+    return 0.75 * rotation_fitness + 0.25 * gait_fitness

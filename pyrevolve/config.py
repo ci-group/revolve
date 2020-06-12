@@ -73,6 +73,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--fitness',
+    default="displacement_velocity",
+    type=str,
+    help="Determine which manager to use. Defaults to no manager."
+)
+
+parser.add_argument(
     '--experiment-name',
     default='default_experiment', type=str,
     help="Name of current experiment. A folder with this name will be created. Default to \"default_experiment\"."
