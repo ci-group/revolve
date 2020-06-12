@@ -1,12 +1,60 @@
+from __future__ import annotations
 import random as py_random
+import math
+
 from pyrevolve.tol.manage import measures
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from pyrevolve.angle import RobotManager
+    from pyrevolve.revolve_bot import RevolveBot
+    from pyrevolve.SDF.math import Vector3
+
+
+def _distance_flat_plane(pos1: Vector3, pos2: Vector3):
+    return math.sqrt(
+        (pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2
+    )
 
 def stupid(_robot_manager, robot):
     return 1.0
 
 def random(_robot_manager, robot):
     return py_random.random()
+
+def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: float = 3.0):
+    # TODO move to measurements?
+    orientations: float = 0.0
+    delta_orientations: float = 0.0
+    dS: float = 0.0
+
+    assert len(robot_manager._orientations) == len(robot_manager._positions)
+
+    for i in range(1, len(robot_manager._orientations)):
+        # TODO why are we ignoring time here? is it a good thing?
+
+        pos_i_1: Vector3 = robot_manager._positions[i - 1]
+        pos_i: Vector3 = robot_manager._positions[i]
+        rot_i_1 = robot_manager._orientations[i - 1]
+        rot_i = robot_manager._orientations[i]
+
+        dS += _distance_flat_plane(pos_i_1, pos_i)
+
+        angle_i: float = rot_i[2]  # roll / pitch / yaw
+        angle_i_1: float = rot_i_1[2]  # roll / pitch / yaw
+        pi_2: float = math.pi / 2.0
+
+        if angle_i_1 > pi_2 and angle_i < - pi_2:  # rotating left
+            delta_orientations = 2.0 * math.pi + angle_i - angle_i_1
+        elif (angle_i_1 < - pi_2) and (angle_i > pi_2):
+            delta_orientations = - (2.0 * math.pi - angle_i + angle_i_1)
+        else:
+            delta_orientations = angle_i - angle_i_1
+        orientations += delta_orientations
+
+    print(f'orientations: {orientations} dS: {dS}')
+    fitness_value: float = orientations - factor_orien_ds * dS  # dS in (0, 1.5) in 30s
+    return fitness_value
 
 def displacement(robot_manager, robot):
     displacement_vec = measures.displacement(robot_manager)[0]
