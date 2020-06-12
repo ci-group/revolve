@@ -4,7 +4,7 @@ from __future__ import annotations
 from pyrevolve import parser
 
 from pyrevolve.evolution import fitness
-from pyrevolve.evolution.selection import multiple_selection_with_duplicates, tournament_selection
+from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.population.population import Population
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.evolution.population.population_management import steady_state_population_management
@@ -121,7 +121,7 @@ async def run():
         crossover_operator=lcrossover,
         crossover_conf=crossover_conf,
         selection=lambda individuals: tournament_selection(individuals, 2),
-        parent_selection=lambda individuals: multiple_selection_with_duplicates(individuals, 2, tournament_selection),
+        parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=args.evaluation_time,
