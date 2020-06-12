@@ -52,7 +52,6 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
             delta_orientations = angle_i - angle_i_1
         orientations += delta_orientations
 
-    print(f'orientations: {orientations} dS: {dS}')
     fitness_value: float = orientations - factor_orien_ds * dS  # dS in (0, 1.5) in 30s
     return fitness_value
 
