@@ -8,6 +8,7 @@ cores = 8
 exp_name='SpeedUpAnalyzer'
 log_suffix=''
 manager='pycelery/manager.py'
+world= 'worlds/celeryplane.world'
 
 if __name__ == "__main__":
     for run in range(number_of_experiments):
@@ -19,7 +20,8 @@ if __name__ == "__main__":
             './revolve.py','--manager',manager,
             '--n-cores',str(cores),
             '--port-start',str(run_start_port),
-            '--run',str(run)
+            '--run',str(run),
+            '--world', world
             ]
         print("starting" + " ".join(process))
         subprocess.call(process)
