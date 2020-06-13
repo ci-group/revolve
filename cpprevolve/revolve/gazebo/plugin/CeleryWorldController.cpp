@@ -175,7 +175,6 @@ void CeleryWorldController::Load(
 
   this->contactsSub_ = this->node_->Subscribe(
     "~/physics/contacts",
-    "~/physics/contacts",
     &CeleryWorldController::OnContacts,
     this);
 
