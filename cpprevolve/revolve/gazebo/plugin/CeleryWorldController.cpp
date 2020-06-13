@@ -135,9 +135,8 @@ void CeleryWorldController::Load(
 
   // Get the port number of our experiments to make a unique queue
   this->envelope = this->celeryChannel->BasicConsumeMessage(this->consumer_tag);
-  this->celeryChannel->BasicCancel(this->consumer_tag);
-
   this->celeryChannel->BasicAck(this->envelope);
+  this->celeryChannel->BasicCancel(this->consumer_tag);
 
   auto message = this->envelope->Message();
   auto body = message->Body();
@@ -174,10 +173,10 @@ void CeleryWorldController::Load(
     this->celeryChannel->BasicAck(this->envelope);
   };
 
-    // this->contactsSub_ = this->node_->Subscribe(
-    //         "~/physics/contacts",
-    //         &CeleryWorldController::OnContacts,
-    //         this);
+  this->contactsSub_ = this->node_->Subscribe(
+           "~/physics/contacts",
+          &CeleryWorldController::OnContacts,
+          this);
 
 }
 
