@@ -168,4 +168,4 @@ async def run():
     while gen_num < num_generations-1:
         gen_num += 1
         population = await population.next_generation(gen_num)
-        experiment_management.export_snapshots_species(population.genus, gen_num)
+        experiment_management.export_snapshots(population.individuals, gen_num)
