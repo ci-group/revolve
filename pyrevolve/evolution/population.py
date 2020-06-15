@@ -278,7 +278,7 @@ class Population:
 
             if self.conf.celery: # ADDED THIS FOR CELERY -Sam
                 try:
-                    individual.fitness, measurements = await asyncio.wait_for(future.get(timeout=120), timeout=120) # 50 seconds might be to short, but in general this only happens if analyzer disconnects. 100 second might be too long, since the time starts when get is called. it should be processed within seconds by then..
+                    individual.fitness, measurements = await asyncio.wait_for(future.get(), timeout=150)
                     individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
                 except TimeoutError:
                     logger.info(f"Individual's get request timed out. Either cores are saturated, celery has an error or analyzer is stuck. Consider restarting.")
