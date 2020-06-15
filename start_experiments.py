@@ -2,7 +2,7 @@
 import subprocess
 import time
 
-number_of_experiments = 4
+number_of_experiments = 3
 start_port=14000
 cores = 8
 exp_name='SpeedUpAnalyzer'
