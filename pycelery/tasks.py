@@ -249,9 +249,13 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
         # Send robot to cpp queue
         robot_manager = await insert_robot.apply_async((str(SDF), max_age), serializer="json", queue="cpp"+str(settings.port_start))
 
-        # await the simulation results and fitness.
-        robot_data = await robot_manager.get()
-
+        try:
+            # await the simulation results and fitness.
+            robot_data = await asyncio.wait_for(robot_manager.get(), timeout=120)
+        except:
+            logger.info(f"WARNING C 2: Worker could not retrieve robot from gazebo instance. Instance might have crashed. Restarting is recommended if this happens more than once. Robot_id: {robot.id}")
+            return (None, None)
+            
         # converting celery data to robot_manager and calculate fitness and measurements.
         robot_manager = msg_to_robotmanager(robot_data[0], connection, settings, robot, Vector3(0, 0, settings.z_start), max_age)
         robot_fitness = fitness_function(robot_manager, robot)

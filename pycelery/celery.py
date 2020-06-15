@@ -17,7 +17,8 @@ app.conf.update(
     result_serializer = 'json',
     accept_content = ['yaml', 'json'],
     enable_utc = True,
-    result_expires = 3600,
+    result_expires = 600,
+    result_persistant = False,
     include = 'pycelery.tasks',
     worker_prefetch_multiplier = 1, # contacts works aslong as multiplier x child < 8
     task_acks_late = True,
