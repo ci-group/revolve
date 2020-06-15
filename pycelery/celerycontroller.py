@@ -29,6 +29,9 @@ class CeleryController:
         if start_workers:
             self.start_workers()
 
+        else:
+            app.conf.update(task_default_queue=f"robots{self.settings.port_start}")
+
     def start_workers(self):
         """
         Starts n_cores celery workers
