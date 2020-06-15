@@ -173,10 +173,10 @@ void CeleryWorldController::Load(
     this->celeryChannel->BasicAck(this->envelope);
   };
 
-  this->contactsSub_ = this->node_->Subscribe(
-    "~/physics/contacts",
-    &CeleryWorldController::OnContacts,
-    this);
+  //this->contactsSub_ = this->node_->Subscribe(
+  //  "~/physics/contacts",
+  //  &CeleryWorldController::OnContacts,
+  // this);
 
 }
 
