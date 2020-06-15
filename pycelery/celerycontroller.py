@@ -102,13 +102,13 @@ class CeleryController:
         This functions starts N_CORES number of gazebo instances.
         Every worker owns one gazebo instance.
         """
-        start_cpp = await start_robot_queue.apply_async(("start unique cpp queue",), serializer="json", queue=f"cpp{self.settings.port_start}")
+        start_cpp = await start_robot_queue.apply_async(("start unique cpp queue",), serializer="json", queue=f"cpp{self.settings.port_start}", ignore_result=True)
 
         gws = []
         grs = []
         for i in range(self.settings.n_cores):
             gw = await run_gazebo_and_analyzer.delay(self.settingsDir, i)
-            await start_robot_queue.apply_async((f"{self.settings.port_start}",), serializer="json", queue="cpp")
+            await start_robot_queue.apply_async((f"{self.settings.port_start}",), serializer="json", queue="cpp", ignore_result=True)
             gws.append(gw)
 
         for j in range(self.settings.n_cores):
