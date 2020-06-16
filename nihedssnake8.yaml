@@ -174,16 +174,15 @@ brain:
     kernel_l: 0.2
     kernel_squared_exp_ard_k: 4
     acqui_gpucb_delta: 0.5
-    acqui_ucb_alpha: 3.0
+    acqui_ucb_alpha: 1.3
     acqui_ei_jitter: 0
     acquisition_function: "UCB"
-    gaussian_step_size: 0.3
     covrate: 0.7
     mutrate: 0.8
   meta:
     robot_size: 17
     run_analytics: "false"
-    n_learning_iterations: 30
+    n_learning_iterations: 1500
     n_cooldown_iterations: 0
     reset_robot_position: "false"
     evaluation_rate: 30

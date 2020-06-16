@@ -79,8 +79,8 @@ void set_my_config(galgo::ConfigInfo<_TYPE>& config, double mutrate)
   config.mutinfo._ratio_boundary  = 0.10;
   //ea: 0.4, 0.6, boea:
   config.covrate = 0.4;  // 0.0 if no cros-over
-  config.mutrate = mutrate; // mutation rate usually is 1.0 for real-valued
-  config.recombination_ratio = 0.60; //Real Valued crossover ratio, can't be 0.5 because 0.5 will generate two same offsprings after Xover
+  config.mutrate = 0.8; // mutation rate usually is 1.0 for real-valued
+  config.recombination_ratio = 0.70; //Real Valued crossover ratio, can't be 0.5 because 0.5 will generate two same offsprings after Xover
 
   config.elitpop      = 1;
   config.tntsize      = 2; //k-tournament size k=2/4, higher value higher pressure
@@ -438,7 +438,7 @@ struct DifferentialCPG::evaluation_function{
   // TODO: Make this neat. I don't know how though.
   // Number of input dimension (samples.size())
   //spider9:18,spider13:26,spider17:34,gecko7:13,gecko12:23,gecko17:33,babyA:16,babyB:22,babyC:32,one+:12
-  BO_PARAM(size_t, dim_in, 16);
+  BO_PARAM(size_t, dim_in, 20);
 
   // number of dimensions of the fitness
   BO_PARAM(size_t, dim_out, 1);
