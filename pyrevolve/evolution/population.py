@@ -278,7 +278,7 @@ class Population:
 
             if self.conf.celery: # ADDED THIS FOR CELERY -Sam
                 try:
-                    individual.fitness, measurements = await asyncio.wait_for(future.get(), timeout=150)
+                    individual.fitness, measurements = await asyncio.wait_for(future.get(timeout=150), timeout=150)
                     individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
                 except TimeoutError:
                     logger.info(f"Individual's get request timed out. Either cores are saturated, celery has an error or analyzer is stuck. Consider restarting.")

@@ -6,9 +6,9 @@ import time
 used for multiple parallel experiments. Can be run
 using ./multiple-consecutive-runs.py"""
 
-runs = 30
+runs = 8 
 manager = "pycelery/manager.py"
-cores = 16
+cores = 8
 
 for i in range(runs):
     print(f"-----Run {i}-----\n")
@@ -18,4 +18,4 @@ for i in range(runs):
     subprocess.Popen("pkill -9 -f 'celery worker'", shell=True)
     subprocess.Popen("pkill -9 -f 'gzserver'", shell=True)
 
-    time.sleep(20) #give time for celery and gazebo to shutdown.
+    time.sleep(30) #give time for celery and gazebo to shutdown.

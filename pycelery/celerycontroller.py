@@ -29,9 +29,6 @@ class CeleryController:
         if start_workers:
             self.start_workers()
 
-        else:
-            app.conf.update(task_default_queue=f"robots{self.settings.port_start}")
-
     def start_workers(self):
         """
         Starts n_cores celery workers
@@ -127,7 +124,7 @@ class CeleryController:
         # Create a yaml text from robot
         yaml_bot = robot.phenotype.to_yaml()
 
-        future = await evaluate_robot.delay(yaml_bot, conf.fitness_function, self.settingsDir)
+        future = await evaluate_robot.apply_async((yaml_bot, conf.fitness_function, self.settingsDir), queue=f"robots{self.settings.port_start}")
 
         # SDF = revolve_bot_to_sdf(robot.phenotype, Vector3(0, 0, self.settings.z_start), None)
         # #
