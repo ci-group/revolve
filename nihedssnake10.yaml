@@ -1,0 +1,190 @@
+---
+id: nihed_snake10
+body:
+  id          : Core
+  type        : Core
+  params:
+    red: 0.94
+    green: 0.98
+    blue: 0.05
+  children    :
+    0:
+      id          : Leg00Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg00
+          type        : FixedBrick
+          params:
+            red: 0.94
+            green: 0.98
+            blue: 0.05
+          orientation : -90
+          children    :
+            1:
+              id          : Leg02Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              children    :
+                1:
+                  id          : Leg02
+                  type        : FixedBrick
+                  params:
+                    red: 0.94
+                    green: 0.98
+                    blue: 0.05
+                  orientation : 0
+                  children    :
+                    1:
+                      id          : Leg03Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg03
+                          type        : FixedBrick
+                          params:
+                            red: 0.94
+                            green: 0.98
+                            blue: 0.05
+                          orientation : -90
+                          children:
+                            1:
+                              id          : Leg04Joint
+                              type        : ActiveHinge
+                              params:
+                                red: 0.98
+                                green: 0.98
+                                blue: 0.98
+                              children    :
+                                1:
+                                  id          : Leg04
+                                  type        : FixedBrick
+                                  params:
+                                    red: 0.94
+                                    green: 0.98
+                                    blue: 0.05
+                                  orientation : 0
+                                  children    :
+                                    1:
+                                      id          : Leg05Joint
+                                      type        : ActiveHinge
+                                      params:
+                                        red: 0.98
+                                        green: 0.98
+                                        blue: 0.98
+                                      orientation : 90
+                                      children    :
+                                        1:
+                                          id          : Leg05
+                                          type        : FixedBrick
+                                          params:
+                                            red: 0.94
+                                            green: 0.98
+                                            blue: 0.05
+                                          orientation : -90
+                                          children:
+                                            1:
+                                              id          : Leg06Joint
+                                              type        : ActiveHinge
+                                              params:
+                                                red: 0.98
+                                                green: 0.98
+                                                blue: 0.98
+                                              children    :
+                                                1:
+                                                  id          : Leg06
+                                                  type        : FixedBrick
+                                                  params:
+                                                    red: 0.94
+                                                    green: 0.98
+                                                    blue: 0.05
+                                                  orientation : 0
+                                                  children    :
+                                                    1:
+                                                      id          : Leg07Joint
+                                                      type        : ActiveHinge
+                                                      params:
+                                                        red: 0.98
+                                                        green: 0.98
+                                                        blue: 0.98
+                                                      orientation : 90
+                                                      children    :
+                                                        1:
+                                                          id          : Leg07
+                                                          type        : FixedBrick
+                                                          params:
+                                                            red: 0.94
+                                                            green: 0.98
+                                                            blue: 0.05
+                                                          orientation : -90
+                                                          children:
+                                                            1:
+                                                              id          : Leg08Joint
+                                                              type        : ActiveHinge
+                                                              params:
+                                                                red: 0.98
+                                                                green: 0.98
+                                                                blue: 0.98
+                                                              children    :
+                                                                1:
+                                                                  id          : Leg08
+                                                                  type        : FixedBrick
+                                                                  params:
+                                                                    red: 0.94
+                                                                    green: 0.98
+                                                                    blue: 0.05
+                                                                  orientation : 0
+                                                                  children    :
+                                                                    1:
+                                                                      id          : Leg09Joint
+                                                                      type        : ActiveHinge
+                                                                      params:
+                                                                        red: 0.98
+                                                                        green: 0.98
+                                                                        blue: 0.98
+                                                                      orientation : 90
+                                                                      children    :
+                                                                        1:
+                                                                          id          : Leg09
+                                                                          type        : FixedBrick
+                                                                          params:
+                                                                            red: 0.94
+                                                                            green: 0.98
+                                                                            blue: 0.05
+                                                                          orientation : -90
+                                                                          children:
+                                                                            1:
+                                                                              id          : Leg10Joint
+                                                                              type        : ActiveHinge
+                                                                              params:
+                                                                                red: 0.98
+                                                                                green: 0.98
+                                                                                blue: 0.98
+                                                                              children    :
+                                                                                1:
+                                                                                  id          : Leg10
+                                                                                  type        : FixedBrick
+                                                                                  params:
+                                                                                    red: 0.94
+                                                                                    green: 0.98
+                                                                                    blue: 0.05
+                                                                                  orientation : 0
+
+
+                                  
+
+brain:
+  type: rlpower-splines
