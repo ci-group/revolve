@@ -1,0 +1,9 @@
+syntax = "proto2";
+package revolve.msgs;
+import "model.proto";
+import "time.proto";
+
+message ModelInserted {
+	required gazebo.msgs.Time time = 1;
+	required gazebo.msgs.Model model = 2;
+}
