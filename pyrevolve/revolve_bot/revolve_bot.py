@@ -4,21 +4,17 @@ Revolve body generator based on RoboGen framework
 import yaml
 import traceback
 from collections import OrderedDict
-from collections import deque
 
 from pyrevolve import SDF
 
-from .revolve_module import CoreModule, TouchSensorModule, Orientation
-from .revolve_module import Orientation
-from .brain import Brain, BrainNN
+from .revolve_module import CoreModule, Orientation
+from .brain import Brain, BrainNN, BrainRLPowerSplines
 
 from .render.render import Render
 from .render.brain_graph import BrainGraph
 from .measure.measure_body import MeasureBody
 from .measure.measure_brain import MeasureBrain
 
-from ..custom_logging.logger import logger
-import os
 
 class RevolveBot:
     """
@@ -27,15 +23,11 @@ class RevolveBot:
     a robot's sdf mode
     """
 
-    def __init__(self, _id=None, self_collide=True):
+    def __init__(self, _id=None):
         self._id = _id
         self._body = None
         self._brain = None
-        self._morphological_measurements = None
-        self._brain_measurements = None
-        self._behavioural_measurements = None
-        self.self_collide = self_collide
-        self.battery_level = 0.0
+        # self._battery_level = None
 
     @property
     def id(self):
@@ -51,6 +43,7 @@ class RevolveBot:
 
     def size(self):
         robot_size = 1 + self._recursive_size_measurement(self._body)
+        print("calculating robot size: {}".format(robot_size))
         return robot_size
 
     def _recursive_size_measurement(self, module):
@@ -68,47 +61,30 @@ class RevolveBot:
         """
         pass
 
-    def measure_phenotype(self):
-        self._morphological_measurements = self.measure_body()
-        self._brain_measurements = self.measure_brain()
-        logger.info('Robot ' + str(self.id) + ' was measured.')
-
     def measure_body(self):
         """
-        :return: instance of MeasureBody after performing all measurements
+        :return: dict of body measurements
         """
         if self._body is None:
-            raise RuntimeError('Body not initialized')
+            raise RuntimeError('Brain not initialized')
         try:
             measure = MeasureBody(self._body)
-            measure.measure_all()
-            return measure
+            return measure.measure_all()
         except Exception as e:
-            logger.exception('Failed measuring body')
-
-    def export_phenotype_measurements(self, data_path):
-        filepath = os.path.join(data_path, 'descriptors', f'phenotype_desc_{self.id}.txt')
-        with open(filepath, 'w+') as file:
-            for key, value in self._morphological_measurements.measurements_to_dict().items():
-                file.write(f'{key} {value}\n')
-            for key, value in self._brain_measurements.measurements_to_dict().items():
-                file.write(f'{key} {value}\n')
+            print('Exception: {}'.format(e))
 
     def measure_brain(self):
         """
-        :return: instance of MeasureBrain after performing all measurements
+        :return: dict of brain measurements
         """
-        try:
-            measure = MeasureBrain(self._brain, 10)
-            measure_b = MeasureBody(self._body)
-            measure_b.count_active_hinges()
-            if measure_b.active_hinges_count > 0:
-                measure.measure_all()
-            else:
-                measure.set_all_zero()
-            return measure
-        except Exception as e:
-            logger.exception('Failed measuring brain')
+        if self._brain == None:
+            raise RuntimeError('Brain not initialized')
+        else:
+            try:
+                measure = MeasureBrain(self._brain, 10)
+                return measure.measure_all()
+            except:
+                print('Failed measuring brain')
 
     def load(self, text, conf_type):
         """
@@ -142,7 +118,7 @@ class RevolveBot:
                 self._brain = Brain()
         except:
             self._brain = Brain()
-            logger.exception('Failed to load brain, setting to None')
+            print('Failed to load brain, setting to None')
 
     def load_file(self, path, conf_type='yaml'):
         """
@@ -159,7 +135,7 @@ class RevolveBot:
     def to_sdf(self, pose=SDF.math.Vector3(0, 0, 0.25), nice_format=None):
         if type(nice_format) is bool:
             nice_format = '\t' if nice_format else None
-        return SDF.revolve_bot_to_sdf(self, pose, nice_format, self_collide=self.self_collide)
+        return SDF.revolve_bot_to_sdf(self, pose, nice_format)
 
     def to_yaml(self):
         """
@@ -198,9 +174,9 @@ class RevolveBot:
         :param raise_for_intersections: enable raising an exception if a collision of coordinates is detected
         :raises self.ItersectionCollisionException: If a collision of coordinates is detected (and check is enabled)
         """
-        substrate_coordinates_map = {(0, 0): self._body.id}
+        substrate_coordinates_all = {(0, 0): self._body.id}
         self._body.substrate_coordinates = (0, 0)
-        self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_map)
+        self._update_substrate(raise_for_intersections, self._body, Orientation.NORTH, substrate_coordinates_all)
 
     class ItersectionCollisionException(Exception):
         """
@@ -260,7 +236,7 @@ class RevolveBot:
             module.substrate_coordinates = coordinates
 
             # For Karine: If you need to validate old robots, remember to add this condition to this if:
-            # if raise_for_intersections and coordinates in substrate_coordinates_map and type(module) is not TouchSensorModule:
+            # if raise_for_intersections and coordinates in substrate_coordinates_all and type(module) is not TouchSensorModule:
             if raise_for_intersections:
                 if coordinates in substrate_coordinates_map:
                     raise self.ItersectionCollisionException(substrate_coordinates_map)
@@ -271,15 +247,6 @@ class RevolveBot:
                                    new_direction,
                                    substrate_coordinates_map)
 
-    def _iter_all_elements(self):
-        to_process = deque([self._body])
-        while len(to_process) > 0:
-            elem = to_process.popleft()
-            for _i, child in elem.iter_children():
-                if child is not None:
-                    to_process.append(child)
-            yield elem
-
     def render_brain(self, img_path):
         """
         Render image of brain
@@ -287,17 +254,17 @@ class RevolveBot:
         """
         if self._brain is None:
             raise RuntimeError('Brain not initialized')
-        elif isinstance(self._brain, BrainNN):
+        else:
             try:
                 brain_graph = BrainGraph(self._brain, img_path)
-                brain_graph.brain_to_graph(True)
+                brain_graph.brain_to_graph()
                 brain_graph.save_graph()
             except Exception as e:
-                logger.exception('Failed rendering brain. Exception:')
-        else:
-            raise RuntimeError('Brain {} image rendering not supported'.format(type(self._brain)))
+                print('Failed rendering brain. Exception:')
+                print(e)
+                print(traceback.format_exc())
 
-    def render_body(self, img_path):
+    def render2d(self, img_path):
         """
         Render 2d representation of robot and store as png
         :param img_path: path of storing png file
@@ -309,7 +276,6 @@ class RevolveBot:
                 render = Render()
                 render.render_robot(self._body, img_path)
             except Exception as e:
-                logger.exception('Failed rendering 2d robot')
-
-    def __repr__(self):
-        return f'RevolveBot({self.id})'
+                print('Failed rendering 2d robot. Exception:')
+                print(e)
+                print(traceback.format_exc())

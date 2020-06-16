@@ -35,6 +35,9 @@ class BrainCPGBO(Brain):
         self.acqui_ucb_alpha = None
         self.acqui_ei_jitter = None
         self.n_init_samples = None
+        self.gaussian_step_size = None
+        self.covrate = None
+        self.mutrate = None
 
         # Various
         self.robot_size = None
@@ -91,6 +94,9 @@ class BrainCPGBO(Brain):
             'acqui_gpucb_delta': str(self.acqui_gpucb_delta),
             'acqui_ucb_alpha': str(self.acqui_ucb_alpha),
             'acqui_ei_jitter': str(self.acqui_ei_jitter),
+            'gaussian_step_size': str(self.gaussian_step_size),
+            'covrate': str(self.covrate),
+            'mutrate': str(self.mutrate),
         })
 
     def controller_sdf(self):

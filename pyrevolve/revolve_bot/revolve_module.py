@@ -36,8 +36,6 @@ class Orientation(Enum):
             return 'E'
         elif self == self.WEST:
             return 'W'
-        else:
-            assert False
 
 
 class RevolveModule:
@@ -57,7 +55,6 @@ class RevolveModule:
         self.rgb = None  # RevolveModule.DEFAULT_COLOR
         self.substrate_coordinates = None
         self.children = [None, None, None, None]
-        self.info = None
 
     def color(self):
         return self.rgb if self.rgb is not None else self.DEFAULT_COLOR
@@ -139,7 +136,7 @@ class RevolveModule:
         has_children = False
 
         children = {}
-        for i, child in self.iter_children():
+        for i, child in enumerate(self.children):
             if child is not None:
                 children[i] = child.to_yaml()
                 has_children = True
@@ -218,7 +215,6 @@ class CoreModule(RevolveModule):
 
     def __init__(self):
         super().__init__()
-        self.substrate_coordinates = (0, 0)
 
     def possible_slots(self):
         return (

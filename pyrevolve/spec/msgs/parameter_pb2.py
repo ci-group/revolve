@@ -18,7 +18,6 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='parameter.proto',
   package='revolve.msgs',
   syntax='proto2',
-  serialized_options=None,
   serialized_pb=_b('\n\x0fparameter.proto\x12\x0crevolve.msgs\"\x1a\n\tParameter\x12\r\n\x05value\x18\x01 \x02(\x01')
 )
 
@@ -38,14 +37,13 @@ _PARAMETER = _descriptor.Descriptor(
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],

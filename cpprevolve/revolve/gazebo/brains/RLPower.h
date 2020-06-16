@@ -69,7 +69,7 @@ namespace revolve
       /// \return pointer to the RLPower class object
       public: RLPower(
           const ::gazebo::physics::ModelPtr &_model,
-          const sdf::ElementPtr &_settings,
+          const sdf::ElementPtr &_node,
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors);
 

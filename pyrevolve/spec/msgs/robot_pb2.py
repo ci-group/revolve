@@ -20,7 +20,6 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='robot.proto',
   package='revolve.msgs',
   syntax='proto2',
-  serialized_options=None,
   serialized_pb=_b('\n\x0brobot.proto\x12\x0crevolve.msgs\x1a\nbody.proto\x1a\x10neural_net.proto\"a\n\x05Robot\x12\n\n\x02id\x18\x01 \x02(\x05\x12 \n\x04\x62ody\x18\x02 \x02(\x0b\x32\x12.revolve.msgs.Body\x12*\n\x05\x62rain\x18\x03 \x02(\x0b\x32\x1b.revolve.msgs.NeuralNetwork')
   ,
   dependencies=[body__pb2.DESCRIPTOR,neural__net__pb2.DESCRIPTOR,])
@@ -41,28 +40,27 @@ _ROBOT = _descriptor.Descriptor(
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
     _descriptor.FieldDescriptor(
       name='body', full_name='revolve.msgs.Robot.body', index=1,
       number=2, type=11, cpp_type=10, label=2,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
     _descriptor.FieldDescriptor(
       name='brain', full_name='revolve.msgs.Robot.brain', index=2,
       number=3, type=11, cpp_type=10, label=2,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],

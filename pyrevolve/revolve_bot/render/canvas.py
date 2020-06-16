@@ -154,7 +154,7 @@ class Canvas:
 			self.context.show_text(mod_id)
 		self.context.stroke()
 
-	def draw_controller(self, mod_id):
+	def draw_controller(self):
 		"""Draw a controller (yellow) in the middle of the canvas"""
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
 		self.context.set_source_rgb(255, 255, 0)
@@ -162,7 +162,7 @@ class Canvas:
 		self.context.set_source_rgb(0, 0, 0)
 		self.context.set_line_width(0.01)
 		self.context.stroke()
-		self.sign_id(mod_id)
+		self.sign_id(0)
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 
 	def draw_hinge(self, mod_id):

@@ -3,7 +3,6 @@ import xml.etree.ElementTree
 
 from pyrevolve import SDF
 import pyrevolve.SDF.math
-from ..custom_logging.logger import logger
 
 
 class Pose(xml.etree.ElementTree.Element):
@@ -238,13 +237,13 @@ class Posable(xml.etree.ElementTree.Element):
         my_parent_normal = self.to_parent_direction(my.normal)
         at_parent_normal = of.to_parent_direction(-at.normal)
         if not my_parent_normal.parallel_to(at_parent_normal):
-            logger.info("Vector angle: %f" % my_parent_normal.angle(at_parent_normal), file=sys.stderr)
+            print("Vector angle: %f" % my_parent_normal.angle(at_parent_normal), file=sys.stderr)
             raise AssertionError("Normal vectors failed to align!")
 
         parent_tangent = self.to_parent_direction(my.tangent)
         at_parent_tangent = of.to_parent_direction(at.tangent)
         if not parent_tangent.parallel_to(at_parent_tangent):
-            logger.info("Vector angle: %f" % parent_tangent.angle(at_parent_tangent), file=sys.stderr)
+            print("Vector angle: %f" % parent_tangent.angle(at_parent_tangent), file=sys.stderr)
             raise AssertionError("Tangent vectors failed to align!")
 
         # Finally, translate so that `my` lands at `at`

@@ -19,24 +19,27 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-min_lines = 1480
+min_lines = 1490
 run_gazebo = False
-n_runs = 15 # Naar 20
-n_jobs = 30
+n_runs = 1 # Naar 20
+n_jobs = 1
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "babyC.yaml"
+yaml_model = "babyA.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = ".venv/bin/python3"
+python_interpreter = "~/projects/revolve/.venv/bin/python3"
 search_space = {
-    'n_learning_iterations': [1500],
-    'n_init_samples': [20],
+    # 'load_brain': ["/Users/lan/projects/revolve/output/cpg_bo/one/main_1560413639/0/0/best_brain.txt"],
     'evaluation_rate': [60],
-    'verbose': [0],
-    'kernel_sigma_sq': [1],
-    'kernel_l': [0.02, 0.05, 0.1, 0.2],
-    'acqui_ucb_alpha': [0.1, 0.3, 0.5, 1.0],
-    'range_ub': [1.5],
-    'signal_factor_all': [4.0],
+    'init_method': ["LHS"],
+    'verbose': [1],
+    'kernel_l': [0.1],
+    'acqui_ucb_alpha': [1.0],
+    'n_learning_iterations': [1450],
+    'n_init_samples': [50],
+    'kernel_l': [0.2],
+    'acqui_ucb_alpha': [3.0],
+    'n_learning_iterations': [950],
+    'n_init_samples': [50],
 }
 
 print(search_space)
@@ -47,8 +50,8 @@ start_port = 11000
 finished = False
 
 # Make in revolve/build to allow runs from terminal
-os.system('cmake /home/gongjinlan/projects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
-os.system("make -j60")
+os.system('cmake ~/projects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
+os.system("make -j4")
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
@@ -152,29 +155,32 @@ if __name__ == "__main__":
 
     # PASTE THE EXPERIMENTS HERE, IN THE FORMAT SHOWN BELOW
     experiments = [
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},   # BASE RUN
+        {'init_method': "LHS", 'gaussian_step_size': 0.2999, 'mutrate': 0.6},
+        {'init_method': "LHS", 'gaussian_step_size': 0.2999, 'mutrate': 0.7},
+        {'init_method': "LHS", 'gaussian_step_size': 0.3111, 'mutrate': 0.6},
+        {'init_method': "LHS", 'gaussian_step_size': 0.3111, 'mutrate': 0.7},
 
-        # BASE RUN
-        {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 1.0, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 1.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
-
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.1,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
-        # BASE RUN
-
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.2},
-        # BASE RUN
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.5},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 2.0},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 3.0},
-        {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 4.0},
-
-        {'init_method': "RS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        # # BASE RUN
+        # {'init_method': "LHS", 'kernel_l': 0.2, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 1.0, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 1.5, 'kernel_sigma_sq': 1.0, 'acqui_ucb_alpha': 0.5},
+        #
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.1,  'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.2,  'acqui_ucb_alpha': 0.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 0.5,  'acqui_ucb_alpha': 0.5},
+        # # BASE RUN
+        #
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.1},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.2},
+        # # BASE RUN
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 1.5},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 2.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 3.0},
+        # {'init_method': "LHS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 4.0},
+        #
+        # {'init_method': "RS", 'kernel_l': 0.1, 'kernel_sigma_sq': 1.0,  'acqui_ucb_alpha': 0.5},
         # BASE RUN
     ]
     # 'kernel_l': [0.02, 0.05, 0.1, 0.2],
@@ -185,6 +191,7 @@ if __name__ == "__main__":
     # Get id's on the permutations
     for ix, my_dict in enumerate(experiments):
         my_dict["id"] = ix
+    experiments *=n_runs
 
     # Save to yaml files
     create_yamls(yaml_path=my_yaml_path,

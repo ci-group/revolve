@@ -20,7 +20,7 @@
  */
 
 #include <cmath>
-
+#include_next <math.h>
 #include "Evaluator.h"
 
 using namespace revolve::gazebo;
@@ -47,7 +47,7 @@ Evaluator::Evaluator(const double _evaluationRate,
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "directed"; // {directed, gait}
+  this->locomotion_type = "gait"; // {directed, gait}
   this->path_length = 0.0;
 }
 
@@ -69,18 +69,34 @@ double Evaluator::Fitness()
   double fitness_value = 0.0;
   if(this->locomotion_type == "gait")
   {
-    double dS;
-    dS = std::sqrt(std::pow(this->previous_position_.Pos().X() -
-                            this->current_position_.Pos().X(), 2) +
-                   std::pow(this->previous_position_.Pos().Y() -
-                            this->current_position_.Pos().Y(), 2));
+    double dS = 0.0;
+//    dS = std::sqrt(std::pow(this->previous_position_.Pos().X() -
+//                            this->current_position_.Pos().X(), 2) +
+//                   std::pow(this->previous_position_.Pos().Y() -
+//                            this->current_position_.Pos().Y(), 2));
+    for(int i = 1; i < this->step_poses.size(); i++)
+    {
+      const auto &pose_i_1 = this->step_poses[i-1];
+      const auto &pose_i = this->step_poses[i];
+      dS += Evaluator::measure_distance(pose_i_1, pose_i);
+      //save coordinations to coordinates.txt
+      std::ofstream coordinates;
+      coordinates.open(this->directory_name + "/coordinates.txt",std::ios::app);
+      if(i == 1)
+      {
+        start_position_ = pose_i_1;
+        coordinates << std::fixed << start_position_.Pos().X() << " " << start_position_.Pos().Y() << std::endl;
+      }
+      coordinates << std::fixed << pose_i.Pos().X() << " " << pose_i.Pos().Y() << std::endl;
+    }
+
     fitness_value = dS / this->evaluation_rate_;
   }
   else if (this->locomotion_type == "directed")
   {
-
     this->step_poses.push_back(this->current_position_);
     //step_poses: x y z roll pitch yaw
+//    std::cout << "step_poses.size(): " << step_poses.size() << " ";
     for (int i=1; i < this->step_poses.size(); i++)
     {
       const auto &pose_i_1 = this->step_poses[i-1];
@@ -92,20 +108,22 @@ double Evaluator::Fitness()
 
       if(i == 1)
       {
-          coordinates << std::fixed << start_position_.Pos().X() << " " << start_position_.Pos().Y() << std::endl;
+        start_position_ = pose_i_1;
+        coordinates << std::fixed << start_position_.Pos().X() << " " << start_position_.Pos().Y() << std::endl;
       }
       coordinates << std::fixed << pose_i.Pos().X() << " " << pose_i.Pos().Y() << std::endl;
     }
-
+//    std::cout << "path_length " << path_length << " ";
     ////********** directed locomotion fitness function **********////
     //directions(forward) of heads are the orientation(+x axis) - 1.570796
     double beta0 = this->start_position_.Rot().Yaw()- M_PI/2.0;
+
     if (beta0 < - M_PI) //always less than pi (beta0 + max(40degree) < pi)
     {
       beta0 = 2 * M_PI - std::abs(beta0);
     }
 
-    //save direction to coordinates.txt: This is used to make Figure 8
+    //save direction to coordinates.txt
     std::ofstream coordinates;
     coordinates.open(this->directory_name + "/coordinates.txt",std::ios::app);
     coordinates << std::fixed << beta0 << std::endl;

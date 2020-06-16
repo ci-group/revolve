@@ -142,8 +142,14 @@ namespace revolve
       /// \brief Init BO loop
       public: void bo_init_sampling();
 
+      /// \brief Init EA loop
+      public: void ea_init_sampling();
+
       /// \brief Main BO loop
       public: void bo_step();
+
+      /// \brief Main EA loop
+      public: void ea_step();
 
       /// \brief evaluation rate
       private: double evaluation_rate;
@@ -169,6 +175,12 @@ namespace revolve
       /// \brief Starting time
       private: double start_time;
 
+      /// \brief time interval evaluating and learning for each iteration
+      private: double timeDiff;
+
+      /// \brief the time stamp of starting and end.
+      private: struct timeval timeStart, timeEnd;
+
       /// \brief BO attributes
       private: size_t current_iteration = 0;
 
@@ -177,6 +189,15 @@ namespace revolve
 
       /// \brief Number of initial samples
       private: size_t n_init_samples;
+
+      /// \brief Population size of Evolutionary Algorithm
+      private: size_t pop_size = 10;
+
+      /// \brief Population size of Evolutionary Algorithm
+      private: size_t switch_num = 300;
+
+      /// \brief The type of learning algorithm
+      private: std::string learner_algorithm = "BOEA";
 
       /// \brief Cool down period
       private: size_t n_cooldown_iterations;
@@ -259,15 +280,20 @@ namespace revolve
       /// \brief Use frame of reference {-1,0,1} version or not
       private: bool use_frame_of_reference;
 
-        // BO Learner parameters
-    private: double kernel_noise_;
-    private: bool kernel_optimize_noise_;
-    public: double kernel_sigma_sq_;
-    public: double kernel_l_;
-    private: int kernel_squared_exp_ard_k_;
-    private: double acqui_gpucb_delta_ ;
-    public: double acqui_ucb_alpha_;
-    private: double acqui_ei_jitter_;
+      // BO Learner parameters
+      private: double kernel_noise_;
+      private: bool kernel_optimize_noise_;
+      public: double kernel_sigma_sq_;
+      public: double kernel_l_;
+      private: int kernel_squared_exp_ard_k_;
+      private: double acqui_gpucb_delta_ ;
+      public: double acqui_ucb_alpha_;
+      private: double acqui_ei_jitter_;
+
+      //EA Learner parameters
+      public: double gaussian_step_size_;
+      public: double mutrate_;
+
     };
   }
 }

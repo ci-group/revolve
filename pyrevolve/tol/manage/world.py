@@ -37,22 +37,22 @@ class World(WorldManager):
     future that resolves when the response is delivered.
     """
 
-    def __init__(self, conf, _private, world_address):
+    def __init__(self, conf, _private):
         """
-        :param conf:
-        """
-        world_address = ("127.0.0.1", 11345) if world_address is None else world_address
 
+        :param conf:
+        :return:
+        """
         conf = make_revolve_config(conf)
         super(World, self).__init__(
-            _private=_private,
-            world_address=world_address,
-            # analyzer_address=str_to_address(conf.analyzer_address),
-            output_directory=conf.output_directory,
-            builder=None,
-            state_update_frequency=conf.pose_update_frequency,
-            generator=None,
-            restore=conf.restore_directory
+                _private=_private,
+                world_address=str_to_address(conf.world_address),
+                # analyzer_address=str_to_address(conf.analyzer_address),
+                output_directory=conf.output_directory,
+                builder=None,
+                state_update_frequency=conf.pose_update_frequency,
+                generator=None,
+                restore=conf.restore_directory
         )
 
         self.conf = conf
@@ -78,19 +78,18 @@ class World(WorldManager):
         # Write settings to config file
         if None:#self.output_directory:
             parser.record(
-                args=conf,
-                file=os.path.join(self.output_directory, "settings.conf")
+                    args=conf,
+                    file=os.path.join(self.output_directory, "settings.conf")
             )
 
     @classmethod
-    async def create(cls, conf, world_address=None):
+    async def create(cls, conf):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager
         :param conf:
-        :param world_address:
         :return:
         """
-        self = cls(_private=cls._PRIVATE, conf=conf, world_address=world_address)
+        self = cls(_private=cls._PRIVATE, conf=conf)
         await self._init()
         return self
 
@@ -115,11 +114,10 @@ class World(WorldManager):
         :return:
         """
         return RobotManager(
-            conf=self.conf,
-            robot=robot,
-            position=position,
-            time=time,
-            battery_level=robot.battery_level,
+                conf=self.conf,
+                robot=robot,
+                position=position,
+                time=time,
         )
 
     async def add_highlight(self, position, color):
@@ -129,7 +127,7 @@ class World(WorldManager):
         :param color:
         :return:
         """
-        hl = Highlight("highlight_" + str(self.get_robot_id()), color)
+        hl = Highlight("highlight_"+str(self.get_robot_id()), color)
         position = position.copy()
         position.z = 0
         hl.set_position(position)
@@ -145,7 +143,7 @@ class World(WorldManager):
         :return: Future with a list of valid robot trees and corresponding
                  bounding boxes.
         """
-        logger.info("Generating population of size %d..." % n)
+        logger.debug("Generating population of size %d..." % n)
         trees = []
         bboxes = []
 
@@ -170,12 +168,12 @@ class World(WorldManager):
         """
         futures = []
         for tree, pose in zip(trees, poses):
-            future = self.insert_robot(tree, pose)
+            future = await (self.insert_robot(tree, pose))
             futures.append(future)
 
         future = multi_future(futures)
         future.add_done_callback(
-            lambda _: logger.info("Done inserting population."))
+                lambda _: logger.debug("Done inserting population."))
         return future
 
     def to_sdfbot(self, robot, robot_name, initial_battery=0.0):
@@ -186,11 +184,11 @@ class World(WorldManager):
         :return:
         """
         return to_sdfbot(
-            robot=robot,
-            name=robot_name,
-            builder=None,
-            conf=self.conf,
-            battery_charge=initial_battery
+                robot=robot,
+                name=robot_name,
+                builder=None,
+                conf=self.conf,
+                battery_charge=initial_battery
         )
 
     async def build_walls(self, points):
@@ -206,12 +204,12 @@ class World(WorldManager):
             start = points[i]
             end = points[(i + 1) % length]
             wall = Wall(
-                name="wall_%d" % i,
-                start=start,
-                end=end,
-                thickness=constants.WALL_THICKNESS,
-                height=constants.WALL_HEIGHT)
-            future = self.insert_model(SDF(elements=[wall]))
+                    name="wall_%d" % i,
+                    start=start,
+                    end=end,
+                    thickness=constants.WALL_THICKNESS,
+                    height=constants.WALL_HEIGHT)
+            future = await (self.insert_model(SDF(elements=[wall])))
             futures.append(future)
 
         return multi_future(futures)
@@ -223,18 +221,18 @@ class World(WorldManager):
         :param rb:
         :return:
         """
-        logger.info("Attempting mating between `{}` and `{}`...".format(
-            ra.name,
-            rb.name))
+        logger.debug("Attempting mating between `{}` and `{}`...".format(
+                ra.name,
+                rb.name))
 
         # Attempt to create a child through crossover
         success, child = self.crossover.crossover(ra.tree, rb.tree)
         if not success:
-            logger.info("Crossover failed.")
+            logger.debug("Crossover failed.")
             return False
 
         # Apply mutation
-        logger.info("Crossover succeeded, applying mutation...")
+        logger.debug("Crossover succeeded, applying mutation...")
         self.mutator.mutate(child, in_place=True)
 
         # if self.conf.enforce_planarity:
@@ -242,16 +240,16 @@ class World(WorldManager):
 
         _, outputs, _ = child.root.io_count(recursive=True)
         if not outputs:
-            logger.info("Evolution resulted in child without motors.")
+            logger.debug("Evolution resulted in child without motors.")
             return False
 
         # Check if the robot body is valid
         ret = await (self.analyze_tree(child))
         if ret is None or ret[0]:
-            logger.info("Intersecting body parts: Miscarriage.")
+            logger.debug("Intersecting body parts: Miscarriage.")
             return False
 
-        logger.info("Viable child created.")
+        logger.debug("Viable child created.")
         return child, ret[1]
 
 

@@ -8,7 +8,6 @@ from __future__ import print_function
 import sys
 
 from asyncio import Future
-from ..custom_logging.logger import logger
 
 
 def multi_future(children, quiet_exceptions=()):
@@ -38,7 +37,8 @@ def multi_future(children, quiet_exceptions=()):
                 except Exception as e:
                     if future.done():
                         if not isinstance(e, quiet_exceptions):
-                            logger.error("Multiple exceptions in yield list")
+                            print("Multiple exceptions in yield list",
+                                  file=sys.stderr)
                     else:
                         future.set_exception(sys.exc_info())
             if not future.done():

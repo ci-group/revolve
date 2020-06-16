@@ -12,14 +12,13 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from . import parameter_pb2 as parameter__pb2
+import parameter_pb2 as parameter__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='spline_policy.proto',
   package='revolve.msgs',
   syntax='proto2',
-  serialized_options=None,
   serialized_pb=_b('\n\x13spline_policy.proto\x12\x0crevolve.msgs\x1a\x0fparameter.proto\"M\n\x06Spline\x12\r\n\x05index\x18\x01 \x02(\x05\x12\x0c\n\x04size\x18\x02 \x02(\x05\x12&\n\x05param\x18\x05 \x03(\x0b\x32\x17.revolve.msgs.Parameter\"\x17\n\x06Policy\x12\r\n\x05index\x18\x01 \x03(\x05\"6\n\x0cModifyPolicy\x12\x11\n\tadd_point\x18\x01 \x03(\x01\x12\x13\n\x0binterpolate\x18\x02 \x03(\t')
   ,
   dependencies=[parameter__pb2.DESCRIPTOR,])
@@ -40,28 +39,27 @@ _SPLINE = _descriptor.Descriptor(
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
     _descriptor.FieldDescriptor(
       name='size', full_name='revolve.msgs.Spline.size', index=1,
       number=2, type=5, cpp_type=1, label=2,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
     _descriptor.FieldDescriptor(
       name='param', full_name='revolve.msgs.Spline.param', index=2,
       number=5, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],
@@ -85,14 +83,13 @@ _POLICY = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],
@@ -116,21 +113,20 @@ _MODIFYPOLICY = _descriptor.Descriptor(
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
     _descriptor.FieldDescriptor(
       name='interpolate', full_name='revolve.msgs.ModifyPolicy.interpolate', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
+      ),
   ],
   extensions=[
   ],
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=None,
   is_extendable=False,
   syntax='proto2',
   extension_ranges=[],

@@ -51,7 +51,7 @@ namespace revolve
 
       /// \brief
       public: virtual void Update(
-          const double *_outputs,
+          double *_outputs,
           double _step) override;
 
       /// \brief World update event function

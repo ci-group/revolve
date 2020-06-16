@@ -32,6 +32,19 @@
 
 #include "Brain.h"
 
+/// These numbers are quite arbitrary. It used to be in:13 out:8 for the
+/// Arduino, but I upped them both to 20 to accommodate other scenarios.
+/// Should really be enforced in the Python code, this implementation should
+/// not be the limit.
+#define MAX_INPUT_NEURONS 20
+#define MAX_OUTPUT_NEURONS 20
+
+/// Arbitrary value
+#define MAX_HIDDEN_NEURONS 30
+
+/// Convenience
+#define MAX_NON_INPUT_NEURONS (MAX_HIDDEN_NEURONS + MAX_OUTPUT_NEURONS)
+
 /// (bias, tau, gain) or (phase offset, period, gain)
 #define MAX_NEURON_PARAMS 3
 
@@ -39,8 +52,8 @@ namespace revolve
 {
   namespace gazebo
   {
-//    typedef const boost::shared_ptr< revolve::msgs::ModifyNeuralNetwork const >
-//        ConstModifyNeuralNetworkPtr;
+    typedef const boost::shared_ptr< revolve::msgs::ModifyNeuralNetwork const >
+        ConstModifyNeuralNetworkPtr;
 
     /// Copied from NeuronRepresentation.h
     enum neuronType
@@ -84,8 +97,8 @@ namespace revolve
       /// \brief Steps the neural network
       protected: void Step(const double _time);
 
-//      /// \brief Request handler to modify the neural network
-//      protected: void Modify(ConstModifyNeuralNetworkPtr &_request);
+      /// \brief Request handler to modify the neural network
+      protected: void Modify(ConstModifyNeuralNetworkPtr &_request);
 
       /// \brief Network modification subscriber
       protected: ::gazebo::transport::SubscriberPtr alterSub_;
@@ -96,32 +109,36 @@ namespace revolve
       /// entries for the maximum possible number of connections. This makes
       /// restructuring the weights arrays when a hidden neuron is removed
       /// slightly less cumbersome.
-      protected: std::vector<double> inputWeights_;
+      protected: double inputWeights_[
+          MAX_INPUT_NEURONS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
 
       /// \brief output weights
-      protected: std::vector<double> outputWeights_;
+      protected: double outputWeights_[
+          MAX_OUTPUT_NEURONS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
 
       /// \brief hidden weights
-      protected: std::vector<double> hiddenWeights_;
+      protected: double hiddenWeights_[
+          MAX_HIDDEN_NEURONS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
 
       /// \brief Type of each non-input neuron
       /// \details Unlike weights, types, params and current states are stored
       /// without gaps, meaning the first `m` entries are for output neurons,
       /// followed by `n` entries for hidden neurons. If a hidden neuron is
       /// removed, the items beyond it are moved back.
-      protected: std::vector<unsigned int> types_;
+      protected: unsigned int types_[(MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
 
       /// \brief Params for hidden and output neurons, quantity depends on
       /// the type of neuron
-      protected: std::vector<double> params_;
+      protected: double params_[
+          MAX_NEURON_PARAMS * (MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS)];
 
       /// \brief Output states arrays for the current state and the next state.
-      protected: std::vector<double> state1_;
+      protected: double state1_[MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS];
 
-      protected: std::vector<double> state2_;
+      protected: double state2_[MAX_OUTPUT_NEURONS + MAX_HIDDEN_NEURONS];
 
       /// \brief One input state for each input neuron
-      protected: std::vector<double> input_;
+      protected: double input_[MAX_INPUT_NEURONS];
 
       /// \brief Used to determine the current state array.
       /// \example false := state1, true := state2.

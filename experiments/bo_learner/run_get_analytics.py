@@ -1,8 +1,8 @@
 from glob import glob
 import os
 
-python_interpreter = "/home/maarten/CLionProjects/revolve/venv/bin/python"
-path = "/home/maarten/CLionProjects/revolve/output/cpg_bo/main_1557477606/47/"
+python_interpreter = "/Users/lan/projects/revolve/venv/bin/python"
+path = "/Users/lan/projects/revolve/output/cpg_bo/main_1557477606/47/"
 
 
 paths = glob(path + "*/")

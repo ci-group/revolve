@@ -10,8 +10,6 @@ import time
 
 from datetime import datetime
 
-from ...custom_logging.logger import logger
-
 from .nbsr import NonBlockingStreamReader as NBSR
 mswindows = (sys.platform == "win32")
 
@@ -38,9 +36,9 @@ class Supervisor(object):
     Utility class that allows you to automatically restore a crashing
     experiment and continue to run it from a snapshotted. It does so
     by assuming a snapshot functionality similar to that in Revolve.Angle's
-    WorldManager. The supervisor launches subprocesses for (a) a world
+    WorldManager. The supervisor launches subprocesses for (a) a world 
     and (b) your manager / experiment. It determines a fixed output directory
-    for this experiment run, which is provided to the manager with
+    for this experiment run, which is provided to the manager with 
     the `restore_arg` argument.
 
     The experiment is considered finished if any of the processes exit with 0
@@ -89,8 +87,8 @@ class Supervisor(object):
         self.output_directory = 'output' \
             if output_directory is None else os.path.abspath(output_directory)
         self.snapshot_directory = os.path.join(
-            self.output_directory,
-            self.restore_directory)
+                self.output_directory,
+                self.restore_directory)
         self.snapshot_world_file = snapshot_world_file
         self.restore_arg = restore_arg
         self.simulator_args = simulator_args if simulator_args is not None else ["-u"]
@@ -114,8 +112,8 @@ class Supervisor(object):
             plugins_dir_path = os.path.abspath(plugins_dir_path)
             try:
                 new_env_var = "{curr_paths}:{new_path}".format(
-                    curr_paths=os.environ["GAZEBO_PLUGIN_PATH"],
-                    new_path=plugins_dir_path)
+                        curr_paths=os.environ["GAZEBO_PLUGIN_PATH"],
+                        new_path=plugins_dir_path)
             except KeyError:
                 new_env_var = plugins_dir_path
             os.environ["GAZEBO_PLUGIN_PATH"] = new_env_var
@@ -125,29 +123,29 @@ class Supervisor(object):
             models_dir_path = os.path.abspath(models_dir_path)
             try:
                 new_env_var = "{curr_paths}:{new_path}".format(
-                    curr_paths=os.environ["GAZEBO_MODEL_PATH"],
-                    new_path=models_dir_path)
+                        curr_paths=os.environ["GAZEBO_MODEL_PATHm"],
+                        new_path=models_dir_path)
             except KeyError:
                 new_env_var = models_dir_path
             os.environ['GAZEBO_MODEL_PATH'] = new_env_var
 
-        logger.info("Created Supervisor with:"
-                    "\n\t- manager command: {} {}"
-                    "\n\t- simulator command: {} {}"
-                    "\n\t- world file: {}"
-                    "\n\t- simulator plugin dir: {}"
-                    "\n\t- simulator models dir: {}"
-                    .format(manager_cmd,
-                            manager_args,
-                            simulator_cmd,
-                            simulator_args,
-                            world_file,
-                            plugins_dir_path,
-                            models_dir_path)
-                    )
+        print("Created Supervisor with:"
+              "\n\t- manager command: {} {}"
+              "\n\t- simulator command: {} {}"
+              "\n\t- world file: {}"
+              "\n\t- simulator plugin dir: {}"
+              "\n\t- simulator models dir: {}"
+              .format(manager_cmd,
+                      manager_args,
+                      simulator_cmd,
+                      simulator_args,
+                      world_file,
+                      plugins_dir_path,
+                      models_dir_path)
+              )
 
     def launch_simulator(self):
-        logger.info("\nNOTE: launching only a simulator, not a manager script!\n")
+        print("\nNOTE: launching only a simulator, not a manager script!\n")
         self._launch_simulator()
 
         # Wait for the end
@@ -175,7 +173,7 @@ class Supervisor(object):
         # if not os.path.exists(self.snapshot_directory):
         #     os.mkdir(self.snapshot_directory)
 
-        logger.info("Launching all processes...")
+        print("Launching all processes...")
         self._launch_simulator()
         self._launch_manager()
 
@@ -219,7 +217,7 @@ class Supervisor(object):
                     if err:
                         self.write_stderr(err)
             except Exception as e:
-                logger.exception("Exception while handling file reading")
+                print("Exception while handling file reading:\n{}".format(e), file=sys.stderr)
 
     @staticmethod
     def write_stdout(data):
@@ -249,7 +247,7 @@ class Supervisor(object):
         Terminates all running processes
         :return:
         """
-        logger.info("Terminating processes...")
+        print("Terminating processes...")
         for proc in list(self.procs.values()):
             if proc.poll() is None:
                 terminate_process(proc)
@@ -276,33 +274,33 @@ class Supervisor(object):
         Launches the simulator
         :return:
         """
-        logger.info("Launching the simulator...")
+        print("Launching the simulator...")
         gz_args = self.simulator_cmd + self.simulator_args
         snapshot_world = os.path.join(
-            self.snapshot_directory,
-            self.snapshot_world_file)
+                self.snapshot_directory,
+                self.snapshot_world_file)
         world = snapshot_world \
             if os.path.exists(snapshot_world) else self.world_file
         gz_args.append(world)
         self.procs[output_tag] = self._launch_with_ready_str(
-            cmd=gz_args,
-            ready_str=ready_str,
-            output_tag=output_tag)
+                cmd=gz_args,
+                ready_str=ready_str,
+                output_tag=output_tag)
         self._add_output_stream(output_tag)
 
     def _launch_manager(self):
         """
         :return:
         """
-        logger.info("Launching experiment manager...")
+        print("Launching experiment manager...")
         os.environ['PYTHONUNBUFFERED'] = 'True'
         args = self.manager_cmd + self.manager_args
         args += [self.restore_arg, self.restore_directory]
         process = subprocess.Popen(
-            args,
-            bufsize=1,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+                args,
+                bufsize=1,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
 
         self.procs['manager'] = process
         self._add_output_stream('manager')
@@ -315,10 +313,10 @@ class Supervisor(object):
         :return:
         """
         process = subprocess.Popen(
-            cmd,
-            bufsize=1,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+                cmd,
+                bufsize=1,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
 
         # make out and err non-blocking pipes
         if not mswindows:

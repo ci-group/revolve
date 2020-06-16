@@ -3,7 +3,6 @@ import sys
 
 from pyrevolve import SDF
 from pyrevolve.SDF.inertial import transform_inertia_tensor
-from ..custom_logging.logger import logger
 
 
 class Link(SDF.Posable):
@@ -79,7 +78,7 @@ class Link(SDF.Posable):
             raise RuntimeError("Inertial for this link already existing")
 
         if not np.allclose(self.get_center_of_mass().norm(), 0):
-            logger.warning("calculating inertial for link with nonzero center of mass.", file=sys.stderr)
+            print("WARNING: calculating inertial for link with nonzero center of mass.", file=sys.stderr)
 
         i_final = np.zeros((3, 3))
         total_mass = 0.0

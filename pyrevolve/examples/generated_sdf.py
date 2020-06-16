@@ -32,8 +32,6 @@ from pyrevolve.build.sdf import NeuralNetBuilder
 from pyrevolve.build.sdf import VelocityMotor
 from pyrevolve.build.sdf import PID
 
-from ..custom_logging.logger import logger
-
 # Some configuration
 # This is the number of times per second we will call our
 # robot's brain update (in the default controller). We'll
@@ -60,9 +58,9 @@ class ColorMixin(object):
         to all links in this body part.
         """
         self.make_color(
-            self.part_params["red"],
-            self.part_params["green"],
-            self.part_params["blue"])
+                self.part_params["red"],
+                self.part_params["green"],
+                self.part_params["blue"])
 
 
 # Below, we define some body parts
@@ -128,32 +126,32 @@ class PassiveHinge(Box, ColorMixin):
         # (such as self_collide) which you generally need.
         length = kwargs["length"]
         self.var_block = self.create_component(
-            BoxGeom(length, self.y, self.z, 0.1), "var-block")
+                BoxGeom(length, self.y, self.z, 0.1), "var-block")
 
         # We move the block in the x-direction so that it
         # just about overlaps with the other block (to
         # make it seem like a somewhat realistic joint)
         self.var_block.translate(
-            Vector3(0.5 * (length + self.x) - self.JOINT_OFFSET, 0, 0))
+                Vector3(0.5 * (length + self.x) - self.JOINT_OFFSET, 0, 0))
 
         # Now create a revolute joint at this same position. The
         # joint axis is in the y-direction.
         axis = Vector3(0, 1, 0)
         passive_joint = Joint(
-            joint_type="revolute",
-            parent=self.component,
-            child=self.var_block,
-            axis=axis)
+                joint_type="revolute",
+                parent=self.component,
+                child=self.var_block,
+                axis=axis)
 
         # Set some movement limits on the joint
         passive_joint.axis.limit = Limit(
-            lower=math.radians(-45),
-            upper=math.radians(45),
-            effort=1.0)
+                lower=math.radians(-45),
+                upper=math.radians(45),
+                effort=1.0)
 
         # Set the joint position - in the child frame!
         passive_joint.set_position(
-            Vector3(-0.5 * length + self.JOINT_OFFSET, 0, 0))
+                Vector3(-0.5 * length + self.JOINT_OFFSET, 0, 0))
 
         # Don't forget to add the joint and the link
         self.add_joint(passive_joint)
@@ -245,10 +243,10 @@ class Wheel(Cylinder, ColorMixin):
 
         # Create revolute joint. Remember: joint position is in child frame
         motor_joint = Joint(
-            joint_type="revolute",
-            parent=self.component,
-            child=self.attachment,
-            axis=axis)
+                joint_type="revolute",
+                parent=self.component,
+                child=self.attachment,
+                axis=axis)
         motor_joint.set_position(Vector3(0, 0, -0.5 * box_size))
 
         # Set a force limit on the joint
@@ -261,12 +259,12 @@ class Wheel(Cylinder, ColorMixin):
         pid = PID(proportional_gain=1.0, integral_gain=0.1)
         max_speed = 2 * math.pi * 50.0 / 60
         self.motors.append(VelocityMotor(
-            part_id=self.id,
-            motor_id="rotate",
-            joint=motor_joint,
-            pid=pid,
-            min_velocity=-max_speed,
-            max_velocity=max_speed))
+                part_id=self.id,
+                motor_id="rotate",
+                joint=motor_joint,
+                pid=pid,
+                min_velocity=-max_speed,
+                max_velocity=max_speed))
         self.apply_color()
 
     def get_slot(self, slot_id):
@@ -373,10 +371,10 @@ def generate_robot(robot_id=0):
 
 def robot_to_sdf(robot, name="test_bot", plugin_controller=None):
     model = builder.sdf_robot(
-        robot=robot,
-        controller_plugin=plugin_controller,
-        update_rate=UPDATE_RATE,
-        name=name)
+            robot=robot,
+            controller_plugin=plugin_controller,
+            update_rate=UPDATE_RATE,
+            name=name)
     model_sdf = SDF()
     model_sdf.add_element(model)
     return model_sdf
@@ -390,4 +388,4 @@ def generate_sdf_robot(robot_id=0, plugin_controller=None, name="test_bot"):
 if __name__ == "__main__":
     # Create SDF and output
     sdf = generate_sdf_robot()
-    logger.info(str(sdf))
+    print(str(sdf))

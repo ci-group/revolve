@@ -45,8 +45,6 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
-experiments/examples/output/
-test.py
 
 # Translations
 *.mo
@@ -69,9 +67,6 @@ target/
 
 # Virtual env
 .venv*/
-.python-version
-Pipfile
-Pipfile.lock
 
 # Revolve related
 *.sdf

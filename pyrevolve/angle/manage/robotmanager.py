@@ -4,10 +4,8 @@ from __future__ import division
 import numpy as np
 from collections import deque
 
-from pyrevolve.SDF.math import Vector3, Quaternion
+from pyrevolve.SDF.math import Vector3
 from pyrevolve.util import Time
-import math
-import os
 
 
 class RobotManager(object):
@@ -22,7 +20,7 @@ class RobotManager(object):
             time,
             battery_level=0.0,
             speed_window=60,
-            warmup_time=0.0,
+            warmup_time=0,
     ):
         """
         :param speed_window:
@@ -35,7 +33,6 @@ class RobotManager(object):
         :type battery_level: float
         :return:
         """
-        self.dead = False
         self.warmup_time = warmup_time
         self.speed_window = speed_window
         self.robot = robot
@@ -50,23 +47,15 @@ class RobotManager(object):
         self._ds = deque(maxlen=speed_window)
         self._dt = deque(maxlen=speed_window)
         self._positions = deque(maxlen=speed_window)
-        self._orientations = deque(maxlen=speed_window)
-        self._contacts = deque(maxlen=speed_window)
-        self._seconds = deque(maxlen=speed_window)
         self._times = deque(maxlen=speed_window)
+
+        self._positions.append(position)
+        self._times.append(time)
 
         self._dist = 0
         self._time = 0
         self._idx = 0
         self._count = 0
-        self.second = 1
-        self.count_group = 1
-        self.avg_roll = 0
-        self.avg_pitch = 0
-        self.avg_yaw = 0
-        self.avg_x = 0
-        self.avg_y = 0
-        self.avg_z = 0
 
     @property
     def name(self):
@@ -85,18 +74,8 @@ class RobotManager(object):
         :type poses_file: csv.writer
         :return:
         """
-        dead = state.dead if state.dead is not None else False
-        self.dead = dead or self.dead
-
         pos = state.pose.position
         position = Vector3(pos.x, pos.y, pos.z)
-
-        rot = state.pose.orientation
-        qua = Quaternion(rot.w, rot.x, rot.y, rot.z)
-        euler = qua.get_rpy()
-        euler = np.array([euler[0], euler[1], euler[2]]) # roll / pitch / yaw
-
-        age = world.age()
 
         if self.starting_time is None:
             self.starting_time = time
@@ -142,16 +121,44 @@ class RobotManager(object):
         self._times.append(time)
         self._ds.append(ds)
         self._dt.append(dt)
-        self._orientations.append(euler)
-        self._seconds.append(age.sec)
 
-    def update_contacts(self, world, module_contacts):
+    def velocity(self):
+        """
+        Returns the velocity over the maintained window
+        :return:
+        """
+        return self._dist / self._time if self._time > 0 else 0
 
-        number_contacts = 0
-        for position in module_contacts.position:
-            number_contacts += 1
+    def displacement(self):
+        """
+        Returns a tuple of the displacement in both time and space
+        between the first and last registered element in the speed
+        window.
+        :return: Tuple where the first item is a displacement vector
+                 and the second a `Time` instance.
+        :rtype: tuple(Vector3, Time)
+        """
+        if self.last_position is None:
+            return Vector3(0, 0, 0), Time()
 
-        self._contacts.append(number_contacts)
+        return (
+            self._positions[-1] - self._positions[0],
+            self._times[-1] - self._times[0]
+        )
+
+    def displacement_velocity(self):
+        """
+        Returns the displacement velocity, i.e. the velocity
+        between the first and last recorded position of the
+        robot in the speed window over a straight line,
+        ignoring the path that was taken.
+        :return:
+        """
+        dist, time = self.displacement()
+        if time.is_zero():
+            return 0.0
+
+        return np.sqrt(dist.x**2 + dist.y**2) / float(time)
 
     def age(self):
         """

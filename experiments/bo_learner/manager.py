@@ -26,7 +26,7 @@ async def run():
     # Load a robot from yaml
     robot = revolve_bot.RevolveBot()
     if settings.robot_yaml is None:
-        robot.load_file("experiments/bo_learner/yaml/spider.yaml")
+        robot.load_file("/Users/nihed/revolve_learners/nihedssnake6.yaml")
     else:
         robot.load_file(settings.robot_yaml)
     robot.update_substrate()
@@ -35,11 +35,12 @@ async def run():
     world = await World.create(settings)
     await world.pause(True)
 
-    await world.delete_model(robot.id)
+    await (await world.delete_model(robot.id))
     await asyncio.sleep(2.5)
 
     # Insert the robot in the simulator
-    robot_manager = await world.insert_robot(robot, Vector3(0, 0, 0.025))
+    insert_future = await world.insert_robot(robot, Vector3(0, 0, 0.025))
+    robot_manager = await insert_future
 
     # Resume simulation
     await world.pause(False)
