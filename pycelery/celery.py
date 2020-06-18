@@ -22,7 +22,7 @@ app.conf.update(
     include = 'pycelery.tasks',
     worker_prefetch_multiplier = 1, # contacts works aslong as multiplier x child < 8
     task_acks_late = True,
-    max_tasks_per_child = 2, # contacts worked with child = 1
+    max_tasks_per_child = 1, # contacts worked with child = 1
 )
 
 # THIS FUNCTION ALLOWS YOU TO SHUT DOWN LOGGING FOR ALL WORKERS.

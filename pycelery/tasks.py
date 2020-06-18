@@ -251,7 +251,7 @@ async def evaluate_robot(yaml_object, fitnessName, settingsDir):
 
         try:
             # await the simulation results and fitness.
-            robot_data = await asyncio.wait_for(robot_manager.get(), timeout=120)
+            robot_data = await asyncio.wait_for(robot_manager.get(timeout=120), timeout=120)
         except:
             logger.info(f"WARNING C 2: Worker could not retrieve robot from gazebo instance. Instance might have crashed. Restarting is recommended if this happens more than once. Robot_id: {robot.id}")
             return (None, None)

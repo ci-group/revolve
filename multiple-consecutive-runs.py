@@ -6,7 +6,7 @@ import time
 used for multiple parallel experiments. Can be run
 using ./multiple-consecutive-runs.py"""
 
-runs = 8 
+runs = 5 
 manager = "pycelery/manager.py"
 cores = 8
 
