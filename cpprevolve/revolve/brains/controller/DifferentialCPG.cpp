@@ -95,6 +95,7 @@ DifferentialCPG::DifferentialCPG(
     // build the NN according to the genome
     NEAT::NeuralNetwork net;
     gen.BuildPhenotype(net);
+    unsigned int net_depth = net.CalculateNetworkDepth();
 
     // get weights for each connection
     // assuming that connections are distinct for each direction
@@ -112,7 +113,9 @@ DifferentialCPG::DifferentialCPG(
         inputs[7] = -1;
 
         net.Input(inputs);
-        net.Activate();
+        for (unsigned int i=0; i<net_depth; i++) {
+            net.Activate();
+        }
         double weight = net.Output()[0];
 #ifdef DifferentialCPG_PRINT_INFO
         std::cout << "Creating weight ["
@@ -129,7 +132,9 @@ DifferentialCPG::DifferentialCPG(
         // convert tuple to vector
         std::tie(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5], inputs[6], inputs[7]) = con.first;
         net.Input(inputs);
-        net.Activate();
+        for (unsigned int i=0; i<net_depth; i++) {
+            net.Activate();
+        }
         double weight = net.Output()[0];
 #ifdef DifferentialCPG_PRINT_INFO
         std::cout << "Creating weight ["
