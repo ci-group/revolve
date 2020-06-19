@@ -2,7 +2,7 @@
 import subprocess
 import time
 
-number_of_experiments = 7
+number_of_experiments = 5
 start_port=12000
 workers = 4
 exp_name='SpeedUpAnalyzer'
