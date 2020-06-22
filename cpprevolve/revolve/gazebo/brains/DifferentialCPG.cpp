@@ -333,7 +333,7 @@ DifferentialCPG::DifferentialCPG(
   this->directory_name = controller->GetAttribute("output_directory")->GetAsString();
   if(this->directory_name.empty())
   {
-    this->directory_name = "output/cpg_bo/";
+    this->directory_name = "output/cpg_boea/";
     this->directory_name += std::to_string(time(0)) + "/";
   }
 
@@ -438,6 +438,7 @@ struct DifferentialCPG::evaluation_function{
   // TODO: Make this neat. I don't know how though.
   // Number of input dimension (samples.size())
   //spider9:18,spider13:26,spider17:34,gecko7:13,gecko12:23,gecko17:33,babyA:16,babyB:22,babyC:32,one+:12
+    //nihedssnake6:6,nihedssnake8:8,nihedssnake10:10
   BO_PARAM(size_t, dim_in, 20);
 
   // number of dimensions of the fitness

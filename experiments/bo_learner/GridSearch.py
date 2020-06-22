@@ -19,27 +19,27 @@ from joblib import Parallel, delayed
 
 
 # Parameters
-min_lines = 1490
+min_lines = 1500
 run_gazebo = False
-n_runs = 1 # Naar 20
+n_runs = 10 # Naar 20
 n_jobs = 1
-my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "babyA.yaml"
+my_yaml_path = "/Users/nihed/revolve_learners/"
+yaml_model = "nihedssnake6.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = "~/projects/revolve/.venv/bin/python3"
+python_interpreter = "~/projects/revolve_learners/.venv/bin/python3"
 search_space = {
     # 'load_brain': ["/Users/lan/projects/revolve/output/cpg_bo/one/main_1560413639/0/0/best_brain.txt"],
-    'evaluation_rate': [60],
+    'evaluation_rate': [30],
     'init_method': ["LHS"],
     'verbose': [1],
     'kernel_l': [0.1],
     'acqui_ucb_alpha': [1.0],
-    'n_learning_iterations': [1450],
-    'n_init_samples': [50],
+    'n_learning_iterations': [1500],
+    'n_init_samples': [10],
     'kernel_l': [0.2],
     'acqui_ucb_alpha': [3.0],
-    'n_learning_iterations': [950],
-    'n_init_samples': [50],
+    'n_learning_iterations': [1500],
+    'n_init_samples': [10],
 }
 
 print(search_space)
@@ -50,7 +50,7 @@ start_port = 11000
 finished = False
 
 # Make in revolve/build to allow runs from terminal
-os.system('cmake ~/projects/revolve/ -DCMAKE_BUILD_TYPE="Release"')
+os.system('cmake ~/projects/revolve_learners/ -DCMAKE_BUILD_TYPE="Release"')
 os.system("make -j4")
 
 def change_parameters(original_file, parameters):
@@ -203,8 +203,8 @@ if __name__ == "__main__":
     # Create dirs
     if not os.path.isdir("output"):
         os.mkdir("output")
-    if not os.path.isdir("output/cpg_bo"):
-        os.mkdir("output/cpg_bo")
+    if not os.path.isdir("output/cpg_boea"):
+        os.mkdir("output/cpg_boea")
     os.mkdir(output_path)
 
     # Create experiment group directories
