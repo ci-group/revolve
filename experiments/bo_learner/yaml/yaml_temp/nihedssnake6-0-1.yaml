@@ -1,0 +1,157 @@
+---
+id: nihedsnake6
+body:
+  id          : Core
+  type        : Core
+  params:
+    red: 0.94
+    green: 0.98
+    blue: 0.05
+  children    :
+    0:
+      id          : Leg00Joint
+      type        : ActiveHinge
+      params:
+        red: 0.98
+        green: 0.98
+        blue: 0.98
+      orientation : 90
+      children    :
+        1:
+          id          : Leg00
+          type        : FixedBrick
+          params:
+            red: 0.94
+            green: 0.98
+            blue: 0.05
+          orientation : -90
+          children    :
+            1:
+              id          : Leg02Joint
+              type        : ActiveHinge
+              params:
+                red: 0.98
+                green: 0.98
+                blue: 0.98
+              children    :
+                1:
+                  id          : Leg02
+                  type        : FixedBrick
+                  params:
+                    red: 0.94
+                    green: 0.98
+                    blue: 0.05
+                  orientation : 0
+                  children    :
+                    1:
+                      id          : Leg03Joint
+                      type        : ActiveHinge
+                      params:
+                        red: 0.98
+                        green: 0.98
+                        blue: 0.98
+                      orientation : 90
+                      children    :
+                        1:
+                          id          : Leg03
+                          type        : FixedBrick
+                          params:
+                            red: 0.94
+                            green: 0.98
+                            blue: 0.05
+                          orientation : -90
+                          children:
+                            1:
+                              id          : Leg04Joint
+                              type        : ActiveHinge
+                              params:
+                                red: 0.98
+                                green: 0.98
+                                blue: 0.98
+                              children    :
+                                1:
+                                  id          : Leg04
+                                  type        : FixedBrick
+                                  params:
+                                    red: 0.94
+                                    green: 0.98
+                                    blue: 0.05
+                                  orientation : 0
+                                  children    :
+                                    1:
+                                      id          : Leg05Joint
+                                      type        : ActiveHinge
+                                      params:
+                                        red: 0.98
+                                        green: 0.98
+                                        blue: 0.98
+                                      orientation : 90
+                                      children    :
+                                        1:
+                                          id          : Leg05
+                                          type        : FixedBrick
+                                          params:
+                                            red: 0.94
+                                            green: 0.98
+                                            blue: 0.05
+                                          orientation : -90
+                                          children:
+                                            1:
+                                              id          : Leg06Joint
+                                              type        : ActiveHinge
+                                              params:
+                                                red: 0.98
+                                                green: 0.98
+                                                blue: 0.98
+                                              children    :
+                                                1:
+                                                  id          : Leg06
+                                                  type        : FixedBrick
+                                                  params:
+                                                    red: 0.94
+                                                    green: 0.98
+                                                    blue: 0.05
+                                                  orientation : 0
+
+
+                                  
+
+
+brain:
+  type: bo-cpg
+  controller:
+    use_frame_of_reference: 0
+    load_brain: ""
+    reset_neuron_state_bool: "true"
+    reset_neuron_random: "false"
+    abs_output_bound: 1.0
+    signal_factor_all: 4.0
+    signal_factor_mid: 2.5
+    signal_factor_left_right: 2.5
+    range_lb: -1.5
+    range_ub: 1.5
+    init_neuron_state: 0.707
+  learner:
+    n_init_samples: 10
+    init_method: LHS
+    kernel_noise: 0.00000001
+    kernel_optimize_noise: "false"
+    kernel_sigma_sq: 1.0
+    kernel_l: 0.2
+    kernel_squared_exp_ard_k: 4
+    acqui_gpucb_delta: 0.5
+    acqui_ucb_alpha: 3.0
+    acqui_ei_jitter: 0
+    acquisition_function: "UCB"
+    covrate: 0.7
+    mutrate: 0.8
+  meta:
+    robot_size: 13
+    run_analytics: "false"
+    n_learning_iterations: 1500
+    n_cooldown_iterations: 0
+    reset_robot_position: "false"
+    evaluation_rate: 30
+    output_directory: "output/cpg_boea/main_1593421137/0/1593421142.3/"
+    verbose: 1
+    startup_time: 0
