@@ -4,8 +4,8 @@ import asyncio
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
-from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
+from pyrevolve.evolution.population.population import Population, PopulationConfig
+from pyrevolve.evolution.population.population_management import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
 from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
@@ -91,29 +91,29 @@ async def run():
 
     if do_recovery:
         # loading a previous state of the experiment
-        await population.load_snapshot(gen_num)
+        population.load_snapshot(gen_num)
         if gen_num >= 0:
             logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
         if has_offspring:
-            individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
+            individuals = population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
             logger.info('Recovered unfinished offspring '+str(gen_num))
 
             if gen_num == 0:
-                await population.init_pop(individuals)
+                await population.initialize(individuals)
             else:
-                population = await population.next_gen(gen_num, individuals)
+                population = await population.next_generation(gen_num, individuals)
 
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-        await population.init_pop()
+        await population.initialize()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     while gen_num < num_generations-1:
         gen_num += 1
-        population = await population.next_gen(gen_num)
+        population = await population.next_generation(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     # output result after completing all generations...

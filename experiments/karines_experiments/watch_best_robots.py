@@ -4,8 +4,8 @@ import asyncio
 from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
-from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
+from pyrevolve.evolution.population.population import Population, PopulationConfig
+from pyrevolve.evolution.population.population_management import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
 from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
