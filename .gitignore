@@ -15,6 +15,7 @@ env/
 develop-eggs/
 dist/
 downloads/
+yaml_temp/
 eggs/
 .eggs/
 lib/

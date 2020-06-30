@@ -145,6 +145,7 @@ brain:
     acquisition_function: "UCB"
     covrate: 0.7
     mutrate: 0.8
+    gaussian_step_size: 0.3
   meta:
     robot_size: 13
     run_analytics: "false"
