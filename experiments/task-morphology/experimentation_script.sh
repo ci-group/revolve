@@ -17,6 +17,8 @@ set -x
 runs=10
 runs_start=0
 start_port=13000
+exp_name=Experiment_E
+fitness=rotation_with_gait
 cores=4
 exp_name=Experiment_B
 fitness=rotation
