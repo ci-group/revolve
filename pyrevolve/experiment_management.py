@@ -205,7 +205,7 @@ class ExperimentManagement:
                 shutil.rmtree(path)
             os.mkdir(path)
             for ind in individuals:
-                self.export_phenotype_images(ind, os.path.join(self.experiment_folder, f'selectedpop_{gen_num}'))
+                self.export_phenotype_images(ind, path)
             logger.info(f'Exported snapshot {gen_num} with {len(individuals)} individuals')
 
     def export_snapshots_species(self, genus: Genus, gen_num: int) -> None:
