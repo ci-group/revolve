@@ -2,12 +2,21 @@ syntax = "proto2";
 package revolve.msgs;
 import "time.proto";
 import "pose.proto";
+import "vector3d.proto";
+
+message Orientation {
+  optional gazebo.msgs.Vector3d vec_forward = 1;
+  optional gazebo.msgs.Vector3d vec_left = 2;
+  optional gazebo.msgs.Vector3d vec_back = 3;
+  optional gazebo.msgs.Vector3d vec_right = 4;
+}
 
 message RobotState {
   required uint32 id = 1;
   required string name = 2;
   required gazebo.msgs.Pose pose = 3;
   optional bool dead = 4;
+  optional Orientation orientation_vecs = 5;
 }
 
 message RobotStates {
