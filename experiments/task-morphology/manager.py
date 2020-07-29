@@ -125,6 +125,7 @@ async def run():
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=args.evaluation_time,
+        grace_time=args.grace_time,
         offspring_size=offspring_size,
         experiment_name=args.experiment_name,
         experiment_management=experiment_management,

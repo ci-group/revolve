@@ -159,8 +159,8 @@ class SimulatorQueue:
             robot_fitness = None
             return robot_fitness, None
         else:
-            # Change this `max_age` from the command line parameters (--evalution-time)
-            max_age = conf.evaluation_time
+            # Change this `max_age` from the command line parameters (--evalution-time and --grace-time)
+            max_age = conf.evaluation_time + conf.grace_time
             pose_z = self._settings.z_start
             if robot.phenotype.simulation_boundaries is not None:
                 pose_z -= robot.phenotype.simulation_boundaries.min.z

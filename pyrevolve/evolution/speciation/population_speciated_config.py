@@ -38,7 +38,8 @@ class PopulationSpeciatedConfig(PopulationConfig):
                  old_age_threshold: int = 30,
                  old_age_fitness_penalty: float = 0.5,
                  species_max_stagnation: int = 50,
-                 offspring_size: Optional[int] = None):
+                 offspring_size: Optional[int] = None,
+                 grace_time: float = 0.0):
         """
         Creates a PopulationSpeciatedConfig object that sets the particular configuration for the population with species
 
@@ -57,7 +58,7 @@ class PopulationSpeciatedConfig(PopulationConfig):
         :param selection: selection type
         :param parent_selection: selection type during parent selection
         :param population_management: type of population management ie. steady state or generational
-        :param evaluation_time: duration of an experiment
+        :param evaluation_time: duration of an evaluation (experiment time = grace_time + evaluation_time)
         :param experiment_name: name for the folder of the current experiment
         :param experiment_management: object with methods for managing the current experiment
         :param are_individuals_compatible_fn: function that determines if two individuals are compatible
@@ -71,6 +72,7 @@ class PopulationSpeciatedConfig(PopulationConfig):
             Make sure it is < 1.0 to avoid confusion.
         :param species_max_stagnation: maximum number of iterations without improvement of the species.
         :param offspring_size (optional): size of offspring (for steady state)
+        :param grace_time: time to wait before starting the evaluation (experiment time = grace_time + evaluation_time), default to 0.0
         """
         super().__init__(population_size,
                          genotype_constructor,
@@ -87,7 +89,8 @@ class PopulationSpeciatedConfig(PopulationConfig):
                          evaluation_time,
                          experiment_name,
                          experiment_management,
-                         offspring_size)
+                         offspring_size,
+                         grace_time)
         self.are_individuals_compatible = are_individuals_compatible_fn  # type: Callable[[Individual, Individual], bool]
         self.young_age_threshold = young_age_threshold
         self.young_age_fitness_boost = young_age_fitness_boost

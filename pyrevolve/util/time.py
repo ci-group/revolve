@@ -195,7 +195,7 @@ class Time(object):
         Float / double representation of this time
         :return:
         """
-        return self.sec + self.nsec / 10.0e9
+        return self.sec + self.nsec / 1.0e9
 
     def __str__(self):
         return "{}".format(float(self))
