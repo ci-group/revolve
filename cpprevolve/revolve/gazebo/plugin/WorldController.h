@@ -128,6 +128,9 @@ protected:
 //    boost::mutex world_insert_remove_mutex;
 
     ::gazebo::physics::Model_V models_to_remove;
+
+    std::map<::gazebo::physics::Model*, std::array<uint64_t,4> > markers_;
+    uint64_t markers_ids_ = 0;
 };
 
 }  // namespace gazebo
