@@ -110,7 +110,19 @@ class ExperimentManagement:
         Exports fitness to the fitness file. If the individual fitness is already present, the value is overridden
         :param individual: individual which fitness needs "saving"
         """
-        fitness_line = f'{individual.id},{individual.fitness}\n'
+
+        if individual.additional_fitnesses is not None:
+            fitnesses = "["
+            for fitness in individual.additional_fitnesses:
+                if fitnesses is not "[":
+                    fitnesses += ";" + str(fitness)
+                else:
+                    fitnesses += str(fitness)
+            fitnesses += "]"
+
+            fitness_line = f'{individual.id},{individual.fitness},{fitnesses}\n'
+        else:
+            fitness_line = f'{individual.id},{individual.fitness},{0.0}\n'
 
         if individual.id in self._fitnesses_saved:
             # search and overwrite
@@ -311,9 +323,11 @@ class ExperimentManagement:
         self._fitnesses_saved = set()
 
         last_id_with_fitness = -1
+        print("fitness path: ", self._fitness_file_path)
         with open(self._fitness_file_path, 'r') as fitness_file:
             for line in fitness_file:
-                individual_id, _fitness = line.split(',')
+                print("line: ", line.split(','))
+                individual_id, _fitness, _ = line.split(',')
                 individual_id = int(individual_id)
                 self._fitnesses_saved.add(individual_id)
                 if individual_id > last_id_with_fitness:

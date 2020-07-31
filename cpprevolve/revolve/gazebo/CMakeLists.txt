@@ -73,12 +73,12 @@ include_directories(${YAML_CPP_INCLUDE_DIR})
 # Find Gazebo
 # LOCAL_GAZEBO_DIR can be set to a path with a gazebo-config.cmake
 if (LOCAL_GAZEBO_DIR)
-    find_package(gazebo 10 REQUIRED CONFIG
+    find_package(gazebo 9 REQUIRED CONFIG
             PATHS "${LOCAL_GAZEBO_DIR}"
             NO_DEFAULT_PATH)
     message(WARNING "Using local Gazebo @ ${gazebo_DIR}")
 else()
-    find_package(gazebo 10 REQUIRED)
+    find_package(gazebo 9 REQUIRED)
 endif()
 include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})

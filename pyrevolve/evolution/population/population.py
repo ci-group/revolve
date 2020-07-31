@@ -195,7 +195,7 @@ class Population:
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
+            individual.fitness, individual.phenotype._behavioural_measurements, individual.additional_fitnesses = await future
 
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
@@ -219,7 +219,7 @@ class Population:
             collisions, bounding_box = await self.analyzer_queue.test_robot(individual, self.config)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
-                return None, None
+                return None, None, None
             else:
                 individual.phenotype.simulation_boundaries = bounding_box
 

@@ -20,6 +20,7 @@ class Individual:
         self.genotype: Genotype = genotype
         self.phenotype: RevolveBot = phenotype
         self.fitness: Optional[float] = None
+        self.additional_fitnesses: Optional[List[float]] = None
         self.parents: Optional[List[Individual]] = None
         self.failed_eval_attempt_count: int = 0
 
@@ -69,13 +70,16 @@ class Individual:
         :param folder: folder where to save the fitness
         """
         with open(os.path.join(folder, f'fitness_{self.id}.txt'), 'w') as f:
-            f.write(str(self.fitness))
+            if self.additional_fitness is None:
+                f.write(str(self.fitness))
+            else:
+                f.write(str(self.fitness) + ";" + str(self.additional_fitness))
 
     def export(self, folder: str) -> None:
         self.export_genotype(folder)
         self.export_phylogenetic_info(folder)
         self.export_phenotype(folder)
-        self.export_fitness(folder)
+        self.export_fitness_single_file(folder)
 
     def __repr__(self) -> str:
         return f'Individual_{self.id}({self.fitness})'

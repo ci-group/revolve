@@ -18,21 +18,21 @@ def _distance_flat_plane(pos1: Vector3, pos2: Vector3):
 
 
 def stupid(_robot_manager, robot):
-    return 1.0
+    return 1.0, None
 
 
 def random(_robot_manager, robot):
-    return py_random.random()
+    return py_random.random(), None
 
 
 def displacement(robot_manager, robot):
     displacement_vec = measures.displacement(robot_manager)[0]
     displacement_vec.z = 0
-    return displacement_vec.magnitude()
+    return displacement_vec.magnitude(), None
 
 
 def displacement_velocity(robot_manager, robot):
-    return measures.displacement_velocity(robot_manager)
+    return measures.displacement_velocity(robot_manager), None
 
 
 def online_old_revolve(robot_manager):
@@ -69,7 +69,9 @@ def online_old_revolve(robot_manager):
     v = d * (d_fac * measures.displacement_velocity(robot_manager)
              + v_fac * measures.velocity(robot_manager)
              + s_fac * robot_manager.size)
-    return v if v <= fitness_limit else 0.0
+
+    fitness = v if v <= fitness_limit else 0.0
+    return fitness, None
 
 
 def displacement_velocity_hill(robot_manager, robot):
@@ -82,7 +84,7 @@ def displacement_velocity_hill(robot_manager, robot):
    # elif _displacement_velocity_hill > 0:
     #    _displacement_velocity_hill *= _displacement_velocity_hill
 
-    return _displacement_velocity_hill
+    return _displacement_velocity_hill, None
 
 
 def floor_is_lava(robot_manager, robot):
@@ -95,7 +97,7 @@ def floor_is_lava(robot_manager, robot):
     else:
         fitness = _displacement_velocity_hill * _contacts
 
-    return fitness
+    return fitness, None
 
 
 def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: float = 0.0):
@@ -126,28 +128,55 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
         orientations += delta_orientations
 
     fitness_value: float = orientations - factor_orien_ds * robot_manager._dist
-    return fitness_value
+    return fitness_value, None
+
+
+scale_displacement = 1.0 / 0.873453
+scale_rotation = 1.0 / 4.28
+
+# This will not be part of future code, solely for experimental practice
+def displacement_with_rotation(_robot_manager, robot):
+    global scale_displacement, scale_rotation
+
+    displacement_fitness = displacement(_robot_manager, robot)[0]
+    rotation_fitness = rotation(_robot_manager, robot)[0]
+
+    fitness_distribution = 0.75
+
+    scaled_displacement_fitness = fitness_distribution * scale_displacement * displacement_fitness
+    scaled_rotation_fitness = (1 - fitness_distribution) * scale_rotation * rotation_fitness
+    total_fitness = scaled_displacement_fitness + scaled_rotation_fitness
+
+    return total_fitness, [scaled_displacement_fitness, scaled_rotation_fitness]
 
 
 # This will not be part of future code, solely for experimental practice
-def gait_with_rotation(_robot_manager, robot):
-    gait_fitness = displacement(_robot_manager, robot)
-    rotation_fitness = rotation(_robot_manager, robot)
+def displacement_and_rotation(_robot_manager, robot):
+    global scale_displacement, scale_rotation
 
-    return 0.75 * gait_fitness + 0.25 * rotation_fitness
+    displacement_fitness = displacement(_robot_manager, robot)[0]
+    rotation_fitness = rotation(_robot_manager, robot)[0]
+
+    fitness_distribution = 0.5
+
+    scaled_displacement_fitness = fitness_distribution * scale_displacement * displacement_fitness
+    scaled_rotation_fitness = (1 - fitness_distribution) * scale_rotation * rotation_fitness
+    total_fitness = scaled_displacement_fitness + scaled_rotation_fitness
+
+    return total_fitness, [scaled_displacement_fitness, scaled_rotation_fitness]
 
 
 # This will not be part of future code, solely for experimental practice
-def gait_and_rotation(_robot_manager, robot):
-    gait_fitness = displacement(_robot_manager, robot)
-    rotation_fitness = rotation(_robot_manager, robot)
+def rotation_with_displacement(_robot_manager, robot):
+    global scale_displacement, scale_rotation
 
-    return 0.5 * gait_fitness + 0.5 * rotation_fitness
+    displacement_fitness = displacement(_robot_manager, robot)[0]
+    rotation_fitness = rotation(_robot_manager, robot)[0]
 
+    fitness_distribution = 0.25
 
-# This will not be part of future code, solely for experimental practice
-def rotation_with_gait(_robot_manager, robot):
-    gait_fitness = displacement(_robot_manager, robot)
-    rotation_fitness = rotation(_robot_manager, robot)
+    scaled_displacement_fitness = fitness_distribution * scale_displacement * displacement_fitness
+    scaled_rotation_fitness = (1 - fitness_distribution) * scale_rotation * rotation_fitness
+    total_fitness = scaled_displacement_fitness + scaled_rotation_fitness
 
-    return 0.75 * rotation_fitness + 0.25 * gait_fitness
+    return total_fitness, [scaled_displacement_fitness, scaled_rotation_fitness]
