@@ -132,6 +132,7 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
 scale_displacement = 1.0 / 0.873453
 scale_rotation = 1.0 / 4.281649
 
+
 def panoramic_rotation(robot_manager, robot: RevolveBot, vertical_angle_limit: float = math.pi/4):
     """
     This fitness evolves robots that take a panoramic scan of their surroundings.
@@ -150,7 +151,7 @@ def panoramic_rotation(robot_manager, robot: RevolveBot, vertical_angle_limit: f
 
     # decide which orientation to choose, [0] is correct because the "grace time" values are discarded by the deques
     if len(robot_manager._orientation_vecs) == 0:
-        return total_angle
+        return total_angle, None
 
     # Chose orientation base on the
     chosen_orientation = None
@@ -185,7 +186,7 @@ def panoramic_rotation(robot_manager, robot: RevolveBot, vertical_angle_limit: f
         # if vector is too vertical, fail the fitness
         # (assuming these are unit vectors)
         if abs(u.z) > vertical_limit:
-            return total_angle
+            return total_angle, None
 
         dot = u.x*v.x + u.y*v.y       # dot product between [x1, y1] and [x2, y2]
         det = u.x*v.y - u.y*v.x       # determinant
@@ -193,7 +194,7 @@ def panoramic_rotation(robot_manager, robot: RevolveBot, vertical_angle_limit: f
 
         total_angle += delta
 
-    return total_angle
+    return total_angle, None
 
 
 # This will not be part of future code, solely for experimental practice
@@ -201,7 +202,7 @@ def displacement_with_rotation(_robot_manager, robot):
     global scale_displacement, scale_rotation
 
     displacement_fitness = displacement(_robot_manager, robot)[0]
-    rotation_fitness = rotation(_robot_manager, robot)[0]
+    rotation_fitness = panoramic_rotation(_robot_manager, robot)[0]
 
     fitness_distribution = 0.75
 
@@ -217,7 +218,7 @@ def displacement_and_rotation(_robot_manager, robot):
     global scale_displacement, scale_rotation
 
     displacement_fitness = displacement(_robot_manager, robot)[0]
-    rotation_fitness = rotation(_robot_manager, robot)[0]
+    rotation_fitness = panoramic_rotation(_robot_manager, robot)[0]
 
     fitness_distribution = 0.5
 
@@ -233,7 +234,7 @@ def rotation_with_displacement(_robot_manager, robot):
     global scale_displacement, scale_rotation
 
     displacement_fitness = displacement(_robot_manager, robot)[0]
-    rotation_fitness = rotation(_robot_manager, robot)[0]
+    rotation_fitness = panoramic_rotation(_robot_manager, robot)[0]
 
     fitness_distribution = 0.25
 

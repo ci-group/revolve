@@ -7,19 +7,19 @@ set -x
 
 #for i in $(seq 1 10); do ./revolve.sh --experiment-name Experiment_B --fitness rotation --simulator-cmd=gzserver --manager experiments/task-morphology/manager.py --port-start=$port --world worlds/plane.world ; done
 
-#for i in $(seq 1 10); do ./revolve.sh --experiment-name Experiment_C --fitness gait_with_rotation --simulator-cmd=gzserver --manager experiments/task-morphology/manager.py --port-start=$port --world worlds/plane.world ; done
+#for i in $(seq 1 10); do ./revolve.sh --experiment-name Experiment_C --fitness displacement_with_rotation --simulator-cmd=gzserver --manager experiments/task-morphology/manager.py --port-start=$port --world worlds/plane.world ; done
 
-#for i in $(seq 1 10); do ./revolve.sh --experiment-name Experiment_D --fitness gait_and_rotation --simulator-cmd=gzserver --manager experiments/task-morphology/manager.py --port-start=$port --world worlds/plane.world ; done
+#for i in $(seq 1 10); do ./revolve.sh --experiment-name Experiment_D --fitness displacement_and_rotation --simulator-cmd=gzserver --manager experiments/task-morphology/manager.py --port-start=$port --world worlds/plane.world ; done
 
-#for i in $(seq 1 10); do ./revolve.sh --experiment-name Experiment_E --fitness rotation_with_gait --simulator-cmd=gzserver --manager experiments/task-morphology/manager.py --port-start=$port --world worlds/plane.world ; done
+#for i in $(seq 1 10); do ./revolve.sh --experiment-name Experiment_E --fitness rotation_with_displacement --simulator-cmd=gzserver --manager experiments/task-morphology/manager.py --port-start=$port --world worlds/plane.world ; done
 
 
-runs=1
+runs=10
 runs_start=0
-start_port=9000
-exp_name=Experiment_A
-fitness=panoramic_rotation #gait_with_rotation
-cores=1
+start_port=10000
+exp_name=Experiment_C
+fitness=displacement_with_rotation
+cores=6
 log_suffix=''
 manager=experiments/task-morphology/manager.py
 
