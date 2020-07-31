@@ -132,7 +132,7 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
 
 
 scale_displacement = 1.0 / 0.873453
-scale_rotation = 1.0 / 4.28
+scale_rotation = 1.0 / 4.281649
 
 # This will not be part of future code, solely for experimental practice
 def displacement_with_rotation(_robot_manager, robot):
