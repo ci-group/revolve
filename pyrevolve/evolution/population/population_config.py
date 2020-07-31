@@ -29,7 +29,8 @@ class PopulationConfig:
                  evaluation_time: float,
                  experiment_name: str,
                  experiment_management,
-                 offspring_size: Optional[int] = None):
+                 offspring_size: Optional[int] = None,
+                 grace_time: float = 0.0):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -48,10 +49,11 @@ class PopulationConfig:
         :param selection: selection type
         :param parent_selection: selection type during parent selection
         :param population_management: type of population management ie. steady state or generational
-        :param evaluation_time: duration of an experiment
+        :param evaluation_time: duration of an evaluation (experiment_time = grace_time + evaluation_time)
         :param experiment_name: name for the folder of the current experiment
         :param experiment_management: object with methods for managing the current experiment
         :param offspring_size (optional): size of offspring (for steady state)
+        :param grace_time: time to wait before starting the evaluation (experiment_time = grace_time + evaluation_time), default to 0.0
         """
         self.population_size = population_size
         self.genotype_constructor = genotype_constructor
@@ -66,6 +68,7 @@ class PopulationConfig:
         self.population_management = population_management
         self.population_management_selector = population_management_selector
         self.evaluation_time = evaluation_time
+        self.grace_time = grace_time
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
         self.offspring_size = offspring_size

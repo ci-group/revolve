@@ -2,13 +2,15 @@ from __future__ import annotations
 import random as py_random
 import math
 
+from pyrevolve.custom_logging.logger import logger
+from pyrevolve.revolve_bot.revolve_module import Orientation
 from pyrevolve.tol.manage import measures
+from pyrevolve.SDF.math import Vector3
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pyrevolve.angle import RobotManager
     from pyrevolve.revolve_bot import RevolveBot
-    from pyrevolve.SDF.math import Vector3
 
 
 def _distance_flat_plane(pos1: Vector3, pos2: Vector3):
@@ -108,10 +110,6 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
     assert len(robot_manager._orientations) == len(robot_manager._positions)
 
     for i in range(1, len(robot_manager._orientations)):
-        # TODO why are we ignoring time here? is it a good thing?
-
-        pos_i_1: Vector3 = robot_manager._positions[i - 1]
-        pos_i: Vector3 = robot_manager._positions[i]
         rot_i_1 = robot_manager._orientations[i - 1]
         rot_i = robot_manager._orientations[i]
 
@@ -133,6 +131,70 @@ def rotation(robot_manager: RobotManager, _robot: RevolveBot, factor_orien_ds: f
 
 scale_displacement = 1.0 / 0.873453
 scale_rotation = 1.0 / 4.281649
+
+def panoramic_rotation(robot_manager, robot: RevolveBot, vertical_angle_limit: float = math.pi/4):
+    """
+    This fitness evolves robots that take a panoramic scan of their surroundings.
+    If the chosen forward vector ever points too much upwards or downwards (limit defined by `vertical_angle_limit`),
+    the fitness is reported only up to the point of "failure".
+
+    In this fitness, I'm assuming any "grace time" is not present in the data and the first data points
+    in the robot_manager queues are the starting evaluation points.
+    :param robot_manager: Behavioural data of the robot
+    :param robot: Robot object
+    :param vertical_angle_limit: vertical limit that if passed will invalidate any subsequent step of the robot.
+    :return: fitness value
+    """
+    total_angle = 0.0
+    vertical_limit = math.sin(vertical_angle_limit)
+
+    # decide which orientation to choose, [0] is correct because the "grace time" values are discarded by the deques
+    if len(robot_manager._orientation_vecs) == 0:
+        return total_angle
+
+    # Chose orientation base on the
+    chosen_orientation = None
+    min_z = 1.0
+    for orientation, vec in robot_manager._orientation_vecs[0].items():
+        z = abs(vec.z)
+        if z < min_z:
+            chosen_orientation = orientation
+            min_z = z
+    logger.info(f"Chosen orientation for robot {robot.id} is {chosen_orientation}")
+
+    vec_list = [vecs[chosen_orientation] for vecs in robot_manager._orientation_vecs]
+
+    for i in range(1, len(robot_manager._orientation_vecs)):
+        # from: https://code-examples.net/en/q/d6a4f5
+        # more info: https://en.wikipedia.org/wiki/Atan2
+        # Just like the dot product is proportional to the cosine of the angle,
+        # the determinant is proportional to its sine. So you can compute the angle like this:
+        #
+        # dot = x1*x2 + y1*y2      # dot product between [x1, y1] and [x2, y2]
+        # det = x1*y2 - y1*x2      # determinant
+        # angle = atan2(det, dot)  # atan2(y, x) or atan2(sin, cos)
+        #
+        # The function atan2(y,x) (from "2-argument arctangent") is defined as the angle in the Euclidean plane,
+        # given in radians, between the positive x axis and the ray to the point (x, y) ≠ (0, 0).
+
+        # u = prev vector
+        # v = curr vector
+        u: Vector3 = vec_list[i-1]
+        v: Vector3 = vec_list[i]
+
+        # if vector is too vertical, fail the fitness
+        # (assuming these are unit vectors)
+        if abs(u.z) > vertical_limit:
+            return total_angle
+
+        dot = u.x*v.x + u.y*v.y       # dot product between [x1, y1] and [x2, y2]
+        det = u.x*v.y - u.y*v.x       # determinant
+        delta = math.atan2(det, dot)  # atan2(y, x) or atan2(sin, cos)
+
+        total_angle += delta
+
+    return total_angle
+
 
 # This will not be part of future code, solely for experimental practice
 def displacement_with_rotation(_robot_manager, robot):
