@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
+  <component name="CidrRootsConfiguration">
+    <libraryRoots>
+      <file path="$PROJECT_DIR$/.venv" />
+      <file path="$PROJECT_DIR$/gazebo" />
+    </libraryRoots>
+    <excludeRoots>
+      <file path="$PROJECT_DIR$/build" />
+      <file path="$PROJECT_DIR$/cmake-build-release" />
+    </excludeRoots>
+  </component>
+  <component name="JavaScriptSettings">
+    <option name="languageLevel" value="ES6" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7 (revolve)" project-jdk-type="Python SDK" />
+</project>

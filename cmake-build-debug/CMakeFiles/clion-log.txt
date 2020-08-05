@@ -1,0 +1,73 @@
+/home/karinemiras/Downloads/CLion-2018.3.4/clion-2018.3.4/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/karinemiras/projects/revolve
+-- The C compiler identification is GNU 7.3.0
+-- The CXX compiler identification is GNU 7.3.0
+-- Check for working C compiler: /home/karinemiras/miniconda3/bin/x86_64-conda_cos6-linux-gnu-cc
+-- Check for working C compiler: /home/karinemiras/miniconda3/bin/x86_64-conda_cos6-linux-gnu-cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /home/karinemiras/miniconda3/bin/x86_64-conda_cos6-linux-gnu-c++
+-- Check for working CXX compiler: /home/karinemiras/miniconda3/bin/x86_64-conda_cos6-linux-gnu-c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found PkgConfig: /usr/bin/pkg-config (found version "1.6.1") 
+-- Boost version: 1.69.0
+-- Found the following Boost libraries:
+--   system
+-- Checking for module 'nlopt>=2.4'
+--   Found nlopt, version 2.5.0
+-- Boost version: 1.69.0
+-- Found the following Boost libraries:
+--   system
+-- Found GSL: /usr/include (found version "2.4") 
+-- Checking for module 'bullet>=2.82'
+--   Found bullet, version 2.87
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Looking for pthread_create
+-- Looking for pthread_create - not found
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE  
+-- Boost version: 1.69.0
+-- Found the following Boost libraries:
+--   thread
+--   system
+--   filesystem
+--   program_options
+--   regex
+--   iostreams
+--   date_time
+--   chrono
+--   atomic
+-- Found Protobuf: /usr/lib64/libprotobuf.so;-lpthread (found version "3.6.1") 
+-- Boost version: 1.69.0
+-- Checking for module 'OGRE >= .'
+--   Found OGRE , version 1.9.0
+-- Found Protobuf: /usr/lib64/libprotobuf.so;-lpthread (found suitable version "3.6.1", minimum required is "2.3.0") 
+-- Config-file not installed for ZeroMQ -- checking for pkg-config
+-- Checking for module 'libzmq >= 4'
+--   Found libzmq , version 4.3.1
+-- Found ZeroMQ: TRUE (Required is at least version "4") 
+-- Checking for module 'uuid'
+--   Found uuid, version 2.33.2
+-- Found UUID: TRUE  
+-- Checking for module 'libavcodec'
+--   Found libavcodec, version 58.35.100
+-- Found Protobuf: /usr/lib64/libprotobuf.so;-lpthread (found version "3.6.1") 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/karinemiras/projects/revolve/cmake-build-debug
+
+Problems were encountered while collecting compiler information:
+	x86_64-conda_cos6-linux-gnu-c++: error: unrecognized command line option '-pipe;-std=c++11'; did you mean '--std=c++11'?
+	x86_64-conda_cos6-linux-gnu-c++: error: unrecognized command line option '-pipe;-std=c++11'; did you mean '--std=c++11'?
+	x86_64-conda_cos6-linux-gnu-c++: error: unrecognized command line option '-pipe;-std=c++11'; did you mean '--std=c++11'?
+	x86_64-conda_cos6-linux-gnu-c++: error: unrecognized command line option '-pipe;-std=c++11'; did you mean '--std=c++11'?
+	x86_64-conda_cos6-linux-gnu-c++: error: unrecognized command line option '-pipe;-std=c++11'; did you mean '--std=c++11'?
+	x86_64-conda_cos6-linux-gnu-c++: error: unrecognized command line option '-pipe;-std=c++11'; did you mean '--std=c++11'?

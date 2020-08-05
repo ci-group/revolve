@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/.venv/src/pygazebo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/.venv2/src/pygazebo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/.venv3/src/pygazebo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/.venv_bkp (copy)/src/pygazebo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build/.venv/src/pygazebo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/src/pygazebo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/thirdparty/limbo" vcs="Git" />
+  </component>
+</project>

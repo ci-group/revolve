@@ -46,6 +46,7 @@ nosetests.xml
 coverage.xml
 *,cover
 experiments/examples/output/
+experiments/karines_experiments/data/
 test.py
 
 # Translations

@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+<!-- Custom ground plane -->
+  <model name="tol_ground">
+    <static>true</static>
+    <link name="link">
+      <collision name="collision">
+        <geometry>
+          <mesh>
+            <uri>model://tilted15/meshes/tilted15.dae</uri>
+          </mesh>
+        </geometry>
+        <!-- <geometry>
+          <plane>
+            <normal>0 0 1</normal>
+            <size>100 100</size>
+          </plane>
+        </geometry> -->
+        <surface>
+          <friction>
+            <ode>
+              <!-- RobogenCollision.cpp -->
+              <mu>1</mu>
+              <mu2>1</mu2>
+              <slip1>0.01</slip1>
+              <slip2>0.01</slip2>
+            </ode>
+          </friction>
+          <contact>
+            <ode>
+              <kd>9.000000e+04</kd>
+              <kp>2.000000e+06</kp>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+      <visual name="visual">
+        <cast_shadows>false</cast_shadows>
+        <geometry>
+          <mesh>
+            <uri>model://tilted15/meshes/tilted15.dae</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.50 0.50 0.50 1.00</ambient>
+          <diffuse>0.50 0.50 0.50 1.00</diffuse>
+          <specular>0.1 0.1 0.1 1.00</specular>
+        </material>
+      </visual>
+    </link>
+  </model>
+<!-- END Custom ground plane -->
+</sdf>

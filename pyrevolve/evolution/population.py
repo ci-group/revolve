@@ -113,6 +113,8 @@ class Population:
                                                                     individual[environment])
             individual[environment].phenotype.measure_phenotype(self.conf.experiment_name)
             individual[environment].phenotype.export_phenotype_measurements(self.conf.experiment_name, environment)
+            # because of the bloating in plasticoding, cleans up intermediate phenotype before saving object
+            individual[environment].genotype.intermediate_phenotype = None
             self.conf.experiment_management.export_individual(individual[environment], environment)
 
         return individual

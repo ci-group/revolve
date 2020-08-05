@@ -1,0 +1,3 @@
+ToolSet: 1.0 (local)Options: 
+
+Options:-DLOCAL_GAZEBO_DIR=/home/karinemiras/Tools/gazebo
