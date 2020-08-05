@@ -24,10 +24,22 @@ def grams(x):
 
 # Module Orientation
 class Orientation(Enum):
-    BACK = 0
+    BACK = 0  # This is the parent attachment point (if any)
     FORWARD = 1
     RIGHT = 2
     LEFT = 3
+
+    def opposite(self):
+        if self == self.BACK:
+            return self.FORWARD
+        elif self == self.FORWARD:
+            return self.BACK
+        elif self == self.RIGHT:
+            return self.LEFT
+        elif self == self.LEFT:
+            return self.RIGHT
+        else:
+            assert False
 
     def short_repr(self):
         if self == self.BACK:
@@ -222,20 +234,66 @@ class RevolveModule:
             (box_geometry[2] / -2.0, box_geometry[2] / 2.0),  # Z
         )
 
-    def has_children(self):
+    def has_children(self) -> bool:
         """
-        Check wheter module has children
+        Check whether module has children
         :return: True if module has children
         """
-        has_children = False
-
-        if self.children == {1: None}: return False
-
-        for i, child in enumerate(self.children):
+        for i, child in self.iter_children():
             if child is not None:
-                has_children = True
+                return True
+        return False
 
-        return has_children
+    def count_module_connections(self) -> int:
+        """
+        Count how many connections the module has.
+        Connected TouchSensor and BrickSensor Modules are ignored
+        :return: number of connections
+        """
+        if not self.has_children():
+            return 1
+
+        children_count = 0
+        for core_slot, child in self.iter_children():
+            if child is not None:
+                continue
+            if not isinstance(child, TouchSensorModule) and \
+                    not isinstance(child, BrickSensorModule):
+                children_count += 1
+
+        return children_count + 1
+
+    def is_folding(self) -> bool:
+        """
+        Checks if the module is a folding point.
+        The module is a folding point if and only if it has one child and that child is not
+        attached opposite to the parent.
+        :return: True if the module is a folding point
+        """
+        if not self.has_children():
+            return False
+
+        # Default parent slot is BACK
+        parent_slot = Orientation.BACK
+
+        target_slot = None
+        for slot, child in self.iter_children():
+            if slot == parent_slot:
+                continue
+            # is the child slot occupied?
+            if child is None:
+                continue
+            # ignore TouchSensor and BrickSensor modules
+            if isinstance(child, TouchSensorModule) or \
+                    isinstance(child, BrickSensorModule):
+                continue
+            # second slot found, not a fold
+            if target_slot is not None:
+                return False
+            target_slot = slot
+
+        target_slot = Orientation(target_slot)
+        return parent_slot.opposite() != target_slot
 
 
 class CoreModule(RevolveModule):
@@ -264,6 +322,38 @@ class CoreModule(RevolveModule):
         visual, collision, _ = super().to_sdf(tree_depth, parent_link, child_link)
         parent_link.append(imu_sensor)
         return visual, collision, imu_sensor
+
+    def count_module_connections(self) -> int:
+        """
+        Count how many connections the module has.
+        Connected TouchSensor and BrickSensor Modules are ignored
+        :return: number of connections
+        """
+        # The CoreModule does not have a parent module
+        return super(CoreModule, self).count_module_connections() - 1
+
+    def is_folding(self) -> bool:
+        # parent slot is not supposed to be set
+        parent_slot = None
+        target_slot = None
+        for slot, child in self.iter_children():
+            # is the child slot occupied?
+            if child is None:
+                continue
+            # ignore TouchSensor and BrickSensor modules
+            if isinstance(child, TouchSensorModule) or \
+                    isinstance(child, BrickSensorModule):
+                continue
+            if parent_slot is None:
+                parent_slot = slot
+            elif target_slot is None:
+                target_slot = slot
+            else:
+                # More than 2 children, this is not a fold
+                return False
+        if parent_slot is None or target_slot is None:
+            return False
+        return parent_slot.opposite() != target_slot
 
 
 class ActiveHingeModule(RevolveModule):

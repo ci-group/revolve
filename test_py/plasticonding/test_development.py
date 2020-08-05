@@ -81,6 +81,7 @@ class Test176(unittest.TestCase):
         connectivity2_abs = 4
         connectivity3 = 1
         connectivity4 = 1
+        connectivity5 = 1
         coverage = 0.44
         effective_joints = 0.444
         joints_abs = 6
@@ -101,6 +102,7 @@ class Test176(unittest.TestCase):
         self.assertAlmostEqual(connectivity2_abs, m.extensiveness, 3)
         # self.assertAlmostEqual(connectivity3, m., 3)
         self.assertAlmostEqual(connectivity4, m.branching_modules_count, 3)
+        self.assertAlmostEqual(connectivity5, m.tx_branching_modules_count, 3)
         self.assertAlmostEqual(coverage, m.coverage, 3)
         self.assertAlmostEqual(effective_joints, m.joints, 3)
         self.assertAlmostEqual(joints_abs, m.hinge_count, 3)

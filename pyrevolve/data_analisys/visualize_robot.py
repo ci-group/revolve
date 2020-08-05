@@ -71,7 +71,7 @@ def panoramic_rotation(robot_manager, robot: RevolveBot, vertical_angle_limit: f
         if z < min_z:
             chosen_orientation = orientation
             min_z = z
-    print(f"Chosen orientation for robot {robot.id} is {chosen_orientation}")
+    #print(f"Chosen orientation for robot {robot.id} is {chosen_orientation}")
 
     vec_list = [vecs[chosen_orientation] for vecs in robot_manager._orientation_vecs]
 

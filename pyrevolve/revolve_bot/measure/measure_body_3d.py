@@ -10,6 +10,8 @@ class MeasureBody3D:
 
         # Absolute branching
         self.branching_modules_count = None
+        # Absolute T/X branching
+        self.tx_branching_modules_count = None
         # Relative branching
         self.branching = None
         # Absolute number of limbs
@@ -70,6 +72,7 @@ class MeasureBody3D:
         try:
             if init:
                 self.branching_modules_count = 0
+                self.tx_branching_modules_count = 0
             if module is None:
                 module = self.body
 
@@ -82,11 +85,21 @@ class MeasureBody3D:
                             and not isinstance(child_module, BrickSensorModule):
                         children_count += 1
                     self.count_branching_bricks(child_module, False)
-                if (isinstance(module, BrickModule) and children_count == 3) or \
-                        (isinstance(module, CoreModule) and children_count == 4):
+                module_connections = module.count_module_connections()
+                if module_connections >= 3:
+                    self.tx_branching_modules_count += 1
+                if module_connections == 4:
                     self.branching_modules_count += 1
         except Exception as e:
             logger.exception(f'Exception: {e}. \nFailed counting branching bricks')
+
+    def folding_no_branching(self):
+        pass
+        #TODO
+
+    def folding_or_tbranching(self):
+        pass
+        #TODO
 
     def measure_branching(self):
         """
@@ -516,6 +529,7 @@ class MeasureBody3D:
         return {
             'branching': self.branching,
             'branching_modules_count': self.branching_modules_count,
+            'tx_branching_modules_count': self.tx_branching_modules_count,
             'limbs': self.limbs,
             'extremities': self.extremities,
             'length_of_limbs': self.length_of_limbs,
