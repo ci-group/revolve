@@ -26,6 +26,7 @@
 #include <revolve/gazebo/brains/Brains.h>
 
 #include <revolve/gazebo/battery/Battery.h>
+#include <revolve/gazebo/util/Lifespan.h>
 
 #include "RobotController.h"
 
@@ -364,8 +365,21 @@ void RobotController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         {
           boost::mutex::scoped_lock lock_death(death_sentences_mutex_);
           death_sentence = death_sentences_.count(name) > 0;
-          if (death_sentence)
+          if (death_sentence){
             death_sentence_value = death_sentences_[name];
+          } else {
+            double lifespan_timeout = Lifespan::lifetime;
+            std::cout << "Lifespan Robot Controller" << lifespan_timeout << std::endl;
+
+            if (lifespan_timeout > 0)
+            {
+              boost::mutex::scoped_lock lock(death_sentences_mutex_);
+              // Initializes the death sentence negative because I don't dare to take the
+              // simulation time from this thread.
+              death_sentences_[name] = -lifespan_timeout;
+              death_sentence_value = -lifespan_timeout;
+            }
+          }
         }
 
         if (death_sentence) {
@@ -421,34 +435,8 @@ void RobotController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 /////////////////////////////////////////////////
 // Process insert and delete requests
 void RobotController::HandleRequest(ConstRequestPtr &request) {
-  std::cout << "RobotController handle request " << std::endl;
-  if (request->request() == "insert_sdf")
-  {
-    std::cout << "Processing insert model request ID `" << request->id() << "`."
-              << std::endl;
-    sdf::SDF robotSDF;
-    robotSDF.SetFromString(request->data());
-    double lifespan_timeout = request->dbl_data();
-
-    // Get the model name, store in the expected map
-    auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
-            ->GetAsString();
-
-    if (lifespan_timeout > 0)
-    {
-      boost::mutex::scoped_lock lock(death_sentences_mutex_);
-      // Initializes the death sentence negative because I don't dare to take the
-      // simulation time from this thread.
-      death_sentences_[name] = -lifespan_timeout;
-    }
-    //TODO insert here, it's better
-    //this->world_->InsertModelString(robotSDF.ToString());
-
-    // Don't leak memory
-    // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
-    robotSDF.Root()->Reset();
-  }
-  else if (request->request() == "set_robot_state_update_frequency")
+  std::cout << "RobotController handle request " << request->request() << std::endl;
+  if (request->request() == "set_robot_state_update_frequency")
   {
     auto frequency = request->data();
     assert(frequency.find_first_not_of( "0123456789" ) == std::string::npos);

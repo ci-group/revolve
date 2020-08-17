@@ -223,12 +223,12 @@ class WorldManager(manage.WorldManager):
             wait_for_subscriber=False
         )
 
-        # Wait for connections
-        await self.pose_subscriber.wait_for_connection()
         await self.contact_subscriber.wait_for_connection()
 
         if self.do_restore:
             await (self.restore_snapshot(self.do_restore))
+
+        #await self.pose_subscriber.wait_for_connection()
 
     async def disconnect(self):
         await super().disconnect()

@@ -21,6 +21,8 @@
 
 #include "WorldController.h"
 
+#include <revolve/gazebo/util/Lifespan.h>
+
 namespace gz = gazebo;
 
 using namespace revolve::gazebo;
@@ -50,7 +52,6 @@ WorldController::~WorldController()
     unsubscribe(this->modelSub_);
     fini(this->requestPub_);
     fini(this->responsePub_);
-    fini(this->robotStatesPub_);
 }
 
 /////////////////////////////////////////////////
@@ -110,9 +111,6 @@ void WorldController::Load(
   this->onEndUpdateConnection = gz::event::Events::ConnectWorldUpdateEnd(
         [this] () {this->OnEndUpdate();});
 
-  // Robot pose publisher
-  this->robotStatesPub_ = this->node_->Advertise< revolve::msgs::RobotStates >(
-      "~/revolve/robot_states", 500);
 }
 
 void WorldController::Reset()
@@ -201,7 +199,10 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
 
     // Get the model name, store in the expected map
     auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
-                        ->GetAsString();
+            ->GetAsString();
+
+    std::cout << "Setting Lifespan " << lifespan_timeout << std::endl;
+    Lifespan::lifetime = lifespan_timeout;
 
     {
       boost::mutex::scoped_lock lock(this->insertMutex_);

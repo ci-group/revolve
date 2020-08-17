@@ -32,6 +32,7 @@
 
 #include <revolve/gazebo/battery/Battery.h>
 
+
 #include <revolve/msgs/model_inserted.pb.h>
 #include <revolve/msgs/robot_states.pb.h>
 

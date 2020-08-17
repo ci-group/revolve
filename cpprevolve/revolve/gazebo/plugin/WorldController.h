@@ -36,7 +36,7 @@
 #include <gazebo/msgs/msgs.hh>
 
 #include <revolve/msgs/model_inserted.pb.h>
-#include <revolve/msgs/robot_states.pb.h>
+
 
 namespace revolve {
 namespace gazebo {
@@ -53,6 +53,7 @@ public:
             sdf::ElementPtr _sdf) override;
 
     virtual void Reset() override;
+
 
 protected:
     // Listener for analysis requests
@@ -102,9 +103,6 @@ protected:
 
     // Subscriber for actual model insertion
     ::gazebo::transport::SubscriberPtr modelSub_;
-
-    // Publisher for periodic robot poses
-    ::gazebo::transport::PublisherPtr robotStatesPub_;
 
     // Pointer to the update event connection
     ::gazebo::event::ConnectionPtr onBeginUpdateConnection;

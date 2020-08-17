@@ -49,7 +49,7 @@ async def run():
     await connection.pause(False)
 
     # Insert the robot in the simulator
-    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start))
+    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, settings.z_start), life_timeout=10.0)
 
     # Start a run loop to do some stuff
     while True:
