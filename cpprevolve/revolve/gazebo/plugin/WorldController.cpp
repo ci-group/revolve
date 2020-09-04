@@ -21,8 +21,6 @@
 
 #include "WorldController.h"
 
-#include <revolve/gazebo/util/Lifespan.h>
-
 namespace gz = gazebo;
 
 using namespace revolve::gazebo;
@@ -200,9 +198,6 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     // Get the model name, store in the expected map
     auto name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
             ->GetAsString();
-
-    std::cout << "Setting Lifespan " << lifespan_timeout << std::endl;
-    Lifespan::lifetime = lifespan_timeout;
 
     {
       boost::mutex::scoped_lock lock(this->insertMutex_);

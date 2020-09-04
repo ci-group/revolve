@@ -23,6 +23,7 @@ class ExperimentManagement:
         os.mkdir(os.path.join(self.data_folder, 'phenotypes'))
         os.mkdir(os.path.join(self.data_folder, 'descriptors'))
         os.mkdir(os.path.join(self.data_folder, 'fitness'))
+        os.mkdir(os.path.join(self.data_folder, 'battery'))
         os.mkdir(os.path.join(self.data_folder, 'phenotype_images'))
         os.mkdir(os.path.join(self.data_folder, 'failed_eval_robots'))
 
@@ -50,6 +51,10 @@ class ExperimentManagement:
     def export_fitness(self, individual):
         folder = os.path.join(self.data_folder, 'fitness')
         individual.export_fitness(folder)
+
+    def export_battery(self, individual):
+        folder = os.path.join(self.data_folder, 'battery')
+        individual.export_battery(folder)
 
     def export_behavior_measures(self, _id, measures):
         filename = os.path.join(self.data_folder, 'descriptors', f'behavior_desc_{_id}.txt')

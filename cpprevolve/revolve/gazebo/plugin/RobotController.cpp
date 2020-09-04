@@ -26,7 +26,6 @@
 #include <revolve/gazebo/brains/Brains.h>
 
 #include <revolve/gazebo/battery/Battery.h>
-#include <revolve/gazebo/util/Lifespan.h>
 
 #include "RobotController.h"
 
@@ -368,12 +367,9 @@ void RobotController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
           if (death_sentence){
             death_sentence_value = death_sentences_[name];
           } else {
-            double lifespan_timeout = Lifespan::lifetime;
-            std::cout << "Lifespan Robot Controller" << lifespan_timeout << std::endl;
-
+            double lifespan_timeout = 60.0;
             if (lifespan_timeout > 0)
             {
-              boost::mutex::scoped_lock lock(death_sentences_mutex_);
               // Initializes the death sentence negative because I don't dare to take the
               // simulation time from this thread.
               death_sentences_[name] = -lifespan_timeout;
@@ -381,7 +377,6 @@ void RobotController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
             }
           }
         }
-
         if (death_sentence) {
           if (death_sentence_value < 0) {
             // Initialize death sentence
@@ -390,7 +385,6 @@ void RobotController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
           } else {
             bool alive = death_sentence_value > time;
             stateMsg->set_dead(not alive);
-
             if (not alive) {
               boost::mutex::scoped_lock lock(this->death_sentences_mutex_);
               this->death_sentences_.erase(model->GetName());
@@ -435,7 +429,6 @@ void RobotController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
 /////////////////////////////////////////////////
 // Process insert and delete requests
 void RobotController::HandleRequest(ConstRequestPtr &request) {
-  std::cout << "RobotController handle request " << request->request() << std::endl;
   if (request->request() == "set_robot_state_update_frequency")
   {
     auto frequency = request->data();

@@ -11,6 +11,7 @@ class Individual:
         """
         self.genotype = genotype
         self.phenotype = phenotype
+        self.battery = None
         self.fitness = None
         self.parents = None
         self.failed_eval_attempt_count = 0
@@ -47,10 +48,19 @@ class Individual:
         with open(f'{folder}/fitness_{self.id}.txt', 'w') as f:
             f.write(str(self.fitness))
 
+    def export_battery(self, folder):
+        """
+        It's saving the fitness into a file. The fitness can be a floating point number or None
+        :param folder: folder where to save the fitness
+        """
+        with open(f'{folder}/battery_{self.id}.txt', 'w') as f:
+            f.write(str(self.battery))
+
     def export(self, folder):
         self.export_genotype(folder)
         self.export_phenotype(folder)
         self.export_fitness(folder)
+        self.export_battery(folder)
 
     def __repr__(self):
         return f'Individual_{self.id}({self.fitness})'

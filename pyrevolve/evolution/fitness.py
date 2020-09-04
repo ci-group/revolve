@@ -13,11 +13,11 @@ def random(_robot_manager, robot):
 def displacement(robot_manager, robot):
     displacement_vec = measures.displacement(robot_manager)[0]
     displacement_vec.z = 0
-    return displacement_vec.magnitude()
+    return (displacement_vec.magnitude(), robot_manager.battery_level)
 
 
 def displacement_velocity(robot_manager, robot):
-    return measures.displacement_velocity(robot_manager)
+    return (measures.displacement_velocity(robot_manager), robot_manager.battery_level)
 
 
 def battery(robot_manager, robot):

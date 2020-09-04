@@ -240,7 +240,13 @@ class Population:
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
+            combined_value, individual.phenotype._behavioural_measurements = await future
+
+            # Temporary
+            if combined_value is not None:
+                individual.fitness, individual.battery = combined_value
+
+            self.conf.experiment_management.export_battery(individual)
 
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
