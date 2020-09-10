@@ -38,6 +38,7 @@ class Alphabet(Enum):
     MOVE_FRONT = 'movef'
     MOVE_LEFT = 'movel'
     MOVE_BACK = 'moveb'
+    MOVE_NOT = 'moven'
 
     # ControllerChangingCommands
     ADD_EDGE = 'brainedge'
@@ -75,7 +76,8 @@ class Alphabet(Enum):
             [Alphabet.MOVE_RIGHT, []],
             [Alphabet.MOVE_FRONT, []],
             [Alphabet.MOVE_LEFT, []],
-            [Alphabet.MOVE_BACK, []]
+            [Alphabet.MOVE_BACK, []],
+            [Alphabet.MOVE_NOT, []]
         ]
 
     @staticmethod
