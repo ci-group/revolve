@@ -26,7 +26,7 @@ n_jobs = 1
 my_yaml_path = "experiments/bo_learner/yaml/"
 yaml_model = "babyA.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = "~/projects/revolve/.venv/bin/python3"
+python_interpreter = ".venv/bin/python3"
 search_space = {
     # 'load_brain': ["/Users/lan/projects/revolve/output/cpg_bo/one/main_1560413639/0/0/best_brain.txt"],
     'evaluation_rate': [60],
