@@ -24,9 +24,9 @@ run_gazebo = False
 n_runs = 20 # Naar 20
 n_jobs = 4
 my_yaml_path = "experiments/bo_learner/yaml/"
-yaml_model = "nihedssnake6.yaml"
+yaml_model = "BabyA.yaml"
 manager = "experiments/bo_learner/manager.py"
-python_interpreter = ".venv/bin/python3"
+python_interpreter = "~/snake_workspace/revolve/.venv/bin/python3"
 search_space = {
     # 'load_brain': ["/Users/lan/projects/revolve/output/cpg_bo/one/main_1560413639/0/0/best_brain.txt"],
     'init_method': ["LHS"],
@@ -40,8 +40,8 @@ start_port = 11000
 finished = False
 
 # Make in revolve/build to allow runs from terminal
-os.system('cmake ~/revolve/ -DCMAKE_BUILD_TYPE="Release"')
-os.system("make -j4")
+os.system('cmake ~/snake_workspace/revolve/ -DCMAKE_BUILD_TYPE="Release"')
+os.system("make -j12")
 
 def change_parameters(original_file, parameters):
     # Iterate over dictionary elements
