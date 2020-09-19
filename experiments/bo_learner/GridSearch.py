@@ -40,7 +40,7 @@ start_port = 11000
 finished = False
 
 # Make in revolve/build to allow runs from terminal
-os.system('cmake ~/revolve/ -DCMAKE_BUILD_TYPE="Release"')
+os.system('cmake . -DCMAKE_BUILD_TYPE="Release"')
 os.system("make -j4")
 
 def change_parameters(original_file, parameters):
