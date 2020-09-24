@@ -306,7 +306,7 @@ def _sdf_brain_plugin_conf(
         SDF.sub_element_text(config, 'rv:genome', str(robot_genome))
 
     #TODO get initial charge from revolve_bot
-    initial_charge = 0
+    initial_charge = 25
     battery = xml.etree.ElementTree.SubElement(config, 'rv:battery', {
         'initial_charge': str(initial_charge),
     })

@@ -121,6 +121,7 @@ class Plasticoding(Genotype):
         self.mounting_reference = None
         self.mounting_reference_stack = []
         self.quantity_modules = 1
+        self.quantity_Joints = 1
         self.quantity_nodes = 0
         self.index_symbol = 0
         self.index_params = 1
@@ -240,10 +241,14 @@ class Plasticoding(Genotype):
                 if type(self.mounting_reference) == ActiveHingeModule:
                     slot = Orientation.NORTH.value
 
-                if self.quantity_modules < self.conf.max_structural_modules:
-                    self.new_module(slot,
-                                    symbol[self.index_symbol],
-                                    symbol)
+                if self.quantity_Joints < self.conf.max_joints:
+
+                    if self.quantity_modules > self.conf.max_structural_modules:
+                        pass
+                    else:
+                        self.new_module(slot,
+                                        symbol[self.index_symbol],
+                                        symbol)
 
             if [symbol[self.index_symbol], []] in Alphabet.morphology_moving_commands():
                 self.move_in_body(symbol)
@@ -510,6 +515,10 @@ class Plasticoding(Genotype):
                 module.id = str(self.quantity_modules)
                 intersection = self.check_intersection(self.mounting_reference, slot, module)
 
+                if new_module_type == Alphabet.JOINT_VERTICAL \
+                        or new_module_type == Alphabet.JOINT_HORIZONTAL:
+                    self.quantity_Joints += 1
+
                 if not intersection:
                     self.mounting_reference.children[slot] = module
                     self.morph_mounting_container = None
@@ -520,6 +529,7 @@ class Plasticoding(Genotype):
                         self.decode_brain_node(symbol, module.id)
                 else:
                     self.quantity_modules -= 1
+                    self.quantity_Joints -= 1
             else:
                 self.mounting_reference.children[slot] = module
                 self.morph_mounting_container = None
@@ -686,6 +696,7 @@ class PlasticodingConfig:
                  axiom_w=Alphabet.CORE_COMPONENT,
                  i_iterations=3,
                  max_structural_modules=100,
+                 max_joints=10,
                  robot_id=0
                  ):
         self.initialization_genome = initialization_genome
@@ -699,4 +710,5 @@ class PlasticodingConfig:
         self.axiom_w = axiom_w
         self.i_iterations = i_iterations
         self.max_structural_modules = max_structural_modules
+        self.max_joints = max_joints
         self.robot_id = robot_id
