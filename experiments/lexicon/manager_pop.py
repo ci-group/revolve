@@ -12,7 +12,7 @@ from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standar
 from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+from pyrevolve.genotype.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.custom_logging.logger import logger
@@ -29,7 +29,10 @@ async def run():
     offspring_size = 10
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=100,
+        max_structural_modules=50,
+        allow_vertical_brick=False,
+        use_rotation_commands=False,
+        use_movement_stack=False
     )
 
     mutation_conf = MutationConfig(

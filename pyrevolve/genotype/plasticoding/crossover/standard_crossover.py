@@ -1,4 +1,5 @@
-from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet, PlasticodingConfig
+from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet
+from pyrevolve.genotype.plasticoding import PlasticodingConfig
 from pyrevolve.evolution.individual import Individual
 import random
 from ....custom_logging.logger import genotype_logger
