@@ -1,5 +1,6 @@
 import random as py_random
 from pyrevolve.tol.manage import measures
+import shutil
 
 
 def stupid(_robot_manager, robot):
@@ -62,6 +63,12 @@ def size_penalty(robot_manager, robot):
 
     return _size_penalty
 
+
+def novelty(robot_manager, robot):
+    # TODO
+    return 0
+
+
 def displacement_velocity_hill(robot_manager, robot, cost=False):
     fitness = measures.displacement_velocity_hill(robot_manager)
 
@@ -81,6 +88,37 @@ def displacement_velocity_hill(robot_manager, robot, cost=False):
     return fitness
 
 
+def gecko(robot):
+
+    points = 0
+    # TODO: add sensors zero and joints position/coverage is maybe redundant
+    if robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size'] == 13:
+        points +=1
+    if robot.phenotype._morphological_measurements.measurements_to_dict()['active_hinges_count'] == 6:
+        points +=1
+    if robot.phenotype._morphological_measurements.measurements_to_dict()['brick_count'] == 6:
+        points +=1
+    if robot.phenotype._morphological_measurements.measurements_to_dict()['proportion'] == 1:
+        points +=1
+    if robot.phenotype._morphological_measurements.measurements_to_dict()['extremities'] == 4:
+        points +=1
+    if robot.phenotype._morphological_measurements.measurements_to_dict()['extensiveness'] == 6:
+        points +=1
+    if robot.phenotype._morphological_measurements.measurements_to_dict()['symmetry'] == 1:
+        points +=1
+    if robot.phenotype._morphological_measurements.measurements_to_dict()['coverage'] == 0.52:
+        points +=1
+
+    if points == 8:
+        path_from ='experiments/karines_experiments/data/rand/data_fullevolution/plane/phenotype_images/body_'\
+              +str(robot.phenotype._id)+'.png'
+        path_to ='experiments/karines_experiments/data/geckos/body_'\
+              +str(robot.phenotype._id)+'.png'
+        shutil.copy(path_from, path_to)
+
+    return points
+
+    
 def floor_is_lava(robot_manager, robot, cost=False):
     _displacement_velocity_hill = displacement_velocity_hill(robot_manager, robot, cost)
     _contacts = measures.contacts(robot_manager, robot)

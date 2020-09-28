@@ -117,6 +117,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--run-simulation',
+    default=1, type=int,
+    help="If gazebo will actually be used. 1 for yes and 0 for no."
+)
+
+parser.add_argument(
     '--world',
     default='worlds/plane.world', type=str,
     help="Determine which world gazebo should use."

@@ -70,8 +70,7 @@ def displacement(robot_manager):
 
 def path_length(robot_manager):
     return robot_manager._dist
-
-
+    
 def displacement_velocity(robot_manager):
     """
     Returns the displacement velocity, i.e. the velocity

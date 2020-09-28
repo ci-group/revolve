@@ -1,6 +1,7 @@
 # [(G,P), (G,P), (G,P), (G,P), (G,P)]
 
 from pyrevolve.evolution.individual import Individual
+from pyrevolve.evolution import fitness
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
 from ..custom_logging.logger import logger
@@ -31,6 +32,7 @@ class PopulationConfig:
                  experiment_management,
                  environments,
                  front,
+                 run_simulation,
                  offspring_size=None,
                  next_robot_id=1):
         """
@@ -68,6 +70,7 @@ class PopulationConfig:
         self.experiment_management = experiment_management
         self.environments = environments
         self.front = front
+        self.run_simulation = run_simulation
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
 
@@ -260,13 +263,18 @@ class Population:
         for i in range(self.conf.population_size-len(recovered_individuals)):
             individual = self._new_individual(
                 self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+
             self.individuals.append(individual)
             self.next_robot_id += 1
 
         self.individuals = recovered_individuals + self.individuals
 
-        for environment in self.conf.environments:
-            await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
+        if self.conf.run_simulation == 1:
+            for environment in self.conf.environments:
+                await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
+        else:
+            for environment in self.conf.environments:
+                await self.evaluate_non_simulated(new_individuals=self.individuals, gen_num=0, environment=environment)
 
         await self.consolidate_fitness(self.individuals)
 
@@ -307,9 +315,13 @@ class Population:
 
         new_individuals = recovered_individuals + new_individuals
 
-        # evaluate new individuals
-        for environment in self.conf.environments:
-            await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
+        # # evaluate new individuals
+        if self.conf.run_simulation == 1:
+            for environment in self.conf.environments:
+                await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
+        else:
+            for environment in self.conf.environments:
+                await self.evaluate_non_simulated(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
 
         selection_pool = self.individuals + new_individuals
 
@@ -370,21 +382,30 @@ class Population:
                 self.conf.experiment_management.export_fitness(individual, environment)
                 self.conf.experiment_management.export_individual(individual, environment)
 
-    # async def evaluate_single_robot(self, individual, environment):
-    #     """
-    #     :param individual: individual
-    #     :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
-    #     """
-    #
-    #     if self.analyzer_queue is not None:
-    #         collisions, _bounding_box = await self.analyzer_queue.test_robot(individual,
-    #                                                                          self.conf)
-    #         if collisions > 0:
-    #             logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
-    #             return None, None
-    #
-    #     return await self.simulator_queue[environment].test_robot(individual, self.conf)
+    async def evaluate_non_simulated(self, new_individuals, gen_num, environment, type_simulation = 'evolve'):
+        """
+        Evaluates each individual in the new gen population
 
+        :param new_individuals: newly created population after an evolution iteration
+        :param gen_num: generation number
+        """
+        for individual in new_individuals:
+
+            logger.info(f'Evaluation of Individual {individual[environment].phenotype.id} (gen {gen_num}) ')
+
+            conf = copy.deepcopy(self.conf)
+            conf.fitness_function = conf.fitness_function[environment]
+            individual[environment].fitness = conf.fitness_function(None, individual[environment])
+
+            if type_simulation == 'evolve':
+                self.conf.experiment_management.export_behavior_measures(individual[environment].phenotype.id,
+                                                                         individual[environment].phenotype._behavioural_measurements,
+                                                                         environment)
+
+            logger.info(f'Individual {individual[environment].phenotype.id} has a fitness of {individual[environment].fitness}')
+            if type_simulation == 'evolve':
+                self.conf.experiment_management.export_fitness(individual[environment], environment)
+                self.conf.experiment_management.export_individual(individual[environment], environment)
 
     async def evaluate_single_robot(self, individual, environment):
         """
