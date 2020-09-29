@@ -4,25 +4,13 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-      # 'baseline2',
-      # 'plastic2',
-      # 'flat',
-      # 'tilted'
-    'lava',
-    'baseline2_lava',
-    'plastic2_lava'
+    'novelty'
 ]
 environments = {
-                # 'baseline2': ['plane','tilted5'],
-                #  'plastic2': ['plane','tilted5'],
-                #  'flat': ['plane'],
-                #  'tilted': ['tilted5'],
-                 'baseline2': ['plane','lava'],
-                 'plastic2': ['plane','lava'],
-                 'lava': ['lava']
+                 'novelty': ['plane']
                  }
 
-runs = range(1, 21)
+runs = range(1, 2)
 
 
 # set these variables according to your experiments #

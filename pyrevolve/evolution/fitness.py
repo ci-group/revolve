@@ -68,6 +68,15 @@ def novelty(robot_manager, robot):
     return robot.novelty
 
 
+def fast_novel_limbic(robot_manager, robot):
+
+    speed = measures.displacement_velocity_hill(robot_manager)
+    novelty = robot.novelty
+    limbic_penalty = max(0.1, 1 - robot.phenotype._morphological_measurements.measurements_to_dict()['size'])
+
+    return speed * novelty * limbic_penalty
+
+
 def displacement_velocity_hill(robot_manager, robot, cost=False):
     fitness = measures.displacement_velocity_hill(robot_manager)
 
