@@ -65,8 +65,7 @@ def size_penalty(robot_manager, robot):
 
 
 def novelty(robot_manager, robot):
-    # TODO
-    return 0
+    return robot.novelty
 
 
 def displacement_velocity_hill(robot_manager, robot, cost=False):

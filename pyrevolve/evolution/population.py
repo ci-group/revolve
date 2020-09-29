@@ -5,6 +5,8 @@ from pyrevolve.evolution import fitness
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
 from ..custom_logging.logger import logger
+from sklearn.neighbors import KDTree
+import numpy as np
 import time
 import asyncio
 import copy
@@ -12,6 +14,7 @@ import os
 import pickle
 import sys
 from random import random
+
 
 class PopulationConfig:
     def __init__(self,
@@ -143,9 +146,10 @@ class Population:
         Recovers all genotypes and fitnesses of robots in the latest selected population
         :param gen_num: number of the generation snapshot to recover
         """
+        final_season = list(self.conf.environments.keys())[-1]
         path = 'experiments/'+self.conf.experiment_name
         for r, d, f in os.walk(os.path.join(path,'selectedpop_'+
-                               list(self.conf.environments.keys())[-1],'selectedpop_'+str(gen_num))):
+                               final_season,'selectedpop_'+str(gen_num))):
             for file in f:
                 if 'body' in file:
                     id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
@@ -169,12 +173,14 @@ class Population:
 
         return individuals
 
-    async def consolidate_fitness(self, individuals):
+    def consolidate_fitness(self, individuals):
+        # saves consolidation only in the final season instances of individual:
+        final_season = list(self.conf.environments.keys())[-1]
 
         if len(self.conf.environments) == 1:
             for individual in individuals:
-                fit = individual[list(self.conf.environments.keys())[-1]].fitness
-                individual[list(self.conf.environments.keys())[-1]].consolidated_fitness = fit
+                fit = individual[final_season].fitness
+                individual[final_season].consolidated_fitness = fit
 
         # if there are multiple seasons (environments)
         else:
@@ -233,28 +239,86 @@ class Population:
                         masters += 1
 
                 if self.conf.front == 'slaves':
-                    individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = slaves
+                    individual_ref[final_season].consolidated_fitness = slaves
 
                 if self.conf.front == 'total_slaves':
-                    individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = total_slaves
+                    individual_ref[final_season].consolidated_fitness = total_slaves
 
                 if self.conf.front == 'total_masters':
                     if total_masters == 0:
-                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 0
+                        individual_ref[final_season].consolidated_fitness = 0
                     else:
-                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 1/total_masters
+                        individual_ref[final_season].consolidated_fitness = 1/total_masters
 
                 if self.conf.front == 'masters':
                     if masters == 0:
-                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 0
+                        individual_ref[final_season].consolidated_fitness = 0
                     else:
-                        individual_ref[list(self.conf.environments.keys())[-1]].consolidated_fitness = 1/masters
+                        individual_ref[final_season].consolidated_fitness = 1/masters
 
         for individual in individuals:
-            self.conf.experiment_management.export_consolidated_fitness(individual[list(self.conf.environments.keys())[-1]])
+            self.conf.experiment_management.export_consolidated_fitness(individual[final_season])
 
-            self.conf.experiment_management.export_individual(individual[list(self.conf.environments.keys())[-1]],
-                                                              list(self.conf.environments.keys())[-1])
+            self.conf.experiment_management.export_individual(individual[final_season],
+                                                                final_season)
+
+    def calculate_novelty(self, individuals):
+
+        # saves novelty only in the final season instances of individual:
+        final_season = list(self.conf.environments.keys())[-1]
+
+        # TODO: get param_measures from a file
+        param_measures = ['branching',
+                          'limbs',
+                          'length_of_limbs',
+                          'coverage',
+                          'joints',
+                          'proportion'
+                          ,'sensors',
+                          'symmetry',
+                          'size'
+                          ]
+        # neighbors
+        k = 3
+        ##
+
+        # collecting measures from pop
+        pop_measures = []
+        for individual in individuals:
+            pop_measures.append([])
+
+            for measure in param_measures:
+                value = individual[final_season].phenotype._morphological_measurements.measurements_to_dict()[measure]
+                pop_measures[-1].append(value)
+
+        # collecting measures from pop+arquive
+        pop_arquive_measures = copy.deepcopy(pop_measures)
+        # TODO: complements with archive measures
+        #pop_arquive_measures.append([])
+
+        pop_measures = np.array(pop_measures)
+        pop_arquive_measures = np.array(pop_arquive_measures)
+
+        print(pop_measures)
+        print(pop_arquive_measures)
+
+        # calculate distances
+        kdt = KDTree(pop_arquive_measures, leaf_size=30, metric='euclidean')
+
+        # distances from itself and neighbors
+        distances, indexes = kdt.query(pop_measures, k=k+1)
+        print(indexes)
+        print(distances)
+
+        average_distances = []
+        for d in range(0, len(distances)):
+            average_distances.append(sum(distances[d])/k)
+
+        print(average_distances)
+
+        for i in range(0, len(individuals)):
+            individuals[i][final_season].novelty = average_distances[i]
+            self.conf.experiment_management.export_novelty(individuals[i][final_season])
 
     async def init_pop(self, recovered_individuals=[]):
         """
@@ -269,6 +333,8 @@ class Population:
 
         self.individuals = recovered_individuals + self.individuals
 
+        self.calculate_novelty(self.individuals)
+
         if self.conf.run_simulation == 1:
             for environment in self.conf.environments:
                 await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
@@ -276,7 +342,7 @@ class Population:
             for environment in self.conf.environments:
                 await self.evaluate_non_simulated(new_individuals=self.individuals, gen_num=0, environment=environment)
 
-        await self.consolidate_fitness(self.individuals)
+        self.consolidate_fitness(self.individuals)
 
     async def next_gen(self, gen_num, recovered_individuals=[]):
         """
@@ -314,8 +380,11 @@ class Population:
             new_individuals.append(individual)
 
         new_individuals = recovered_individuals + new_individuals
+        selection_pool = self.individuals + new_individuals
 
-        # # evaluate new individuals
+        self.calculate_novelty(selection_pool)
+
+        # evaluate new individuals
         if self.conf.run_simulation == 1:
             for environment in self.conf.environments:
                 await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
@@ -323,9 +392,7 @@ class Population:
             for environment in self.conf.environments:
                 await self.evaluate_non_simulated(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
 
-        selection_pool = self.individuals + new_individuals
-
-        await self.consolidate_fitness(selection_pool)
+        self.consolidate_fitness(selection_pool)
 
         # create next population
         if self.conf.population_management_selector is not None:

@@ -52,7 +52,8 @@ class MeasureBody:
         # Number of free slots
         self.free_slots = None
         # Maximum number of modules allowed (sensors excluded)
-        self.max_permitted_modules = None
+        # TODO: should get this value from the params
+        self.max_permitted_modules = 15
 
     def count_branching_bricks(self, module=None, init=True):
         """
@@ -291,6 +292,7 @@ class MeasureBody:
             if self.absolute_size is None:
                 self.calculate_count()
                 self.absolute_size = self.brick_count + self.hinge_count + 1
+                self.size = self.absolute_size/self.max_permitted_modules
             return self.absolute_size
         except Exception as e:
             logger.exception(f'Exception: {e}. \nFailed measuring absolute size')
@@ -376,6 +378,7 @@ class MeasureBody:
             'proportion': self.proportion,
             'width': self.width,
             'height': self.height,
+            'size': self.size,
             'absolute_size': self.absolute_size,
             'sensors': self.sensors,
             'symmetry': self.symmetry

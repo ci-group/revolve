@@ -20,6 +20,7 @@ class ExperimentManagement:
         os.mkdir(self.dirpath+'/data_fullevolution')
         os.mkdir(self.dirpath+'/data_fullevolution/genotypes')
         os.mkdir(self.dirpath+'/data_fullevolution/consolidated_fitness')
+        os.mkdir(self.dirpath+'/data_fullevolution/novelty')
         os.mkdir(self.dirpath+'/data_fullevolution/failed_eval_robots')
         for environment in self.environments:
             os.mkdir(self.dirpath+'/selectedpop_'+environment)
@@ -51,6 +52,10 @@ class ExperimentManagement:
     def export_consolidated_fitness(self, individual):
         folder = os.path.join(self._data_folder(), 'consolidated_fitness')
         individual.export_consolidated_fitness(folder)
+
+    def export_novelty(self, individual):
+        folder = os.path.join(self._data_folder(), 'novelty')
+        individual.export_novelty(folder)
 
     def export_individual(self, individual, environment):
         folder = self._data_folder()+'/'+environment
