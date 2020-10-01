@@ -10,7 +10,7 @@ from pyrevolve.tol.manage import measures
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import List, AnyStr, Optional
+    from typing import List, AnyStr, Optional, Union
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
     from pyrevolve.evolution.speciation.genus import Genus
     from pyrevolve.evolution.speciation.species import Species
@@ -76,7 +76,7 @@ class ExperimentManagement:
         """
         return self._data_folder
 
-    def generation_folder(self, gen_num: int):
+    def generation_folder(self, gen_num: Union[int, AnyStr]):
         return os.path.join(self._generations_folder, f'generation_{gen_num}')
 
     def export_genotype(self, individual: Individual) -> None:
@@ -197,26 +197,36 @@ class ExperimentManagement:
         individual.phenotype.save_file(os.path.join(self._failed_robots_folder, f'phenotype_{individual.phenotype.id}.yaml'))
         individual.phenotype.save_file(os.path.join(self._failed_robots_folder, f'phenotype_{individual.phenotype.id}.sdf'), conf_type='sdf')
 
-    #TODO refactoring
-    def export_snapshots(self, individuals: List[Individual], gen_num: int) -> None:
+    def export_snapshots(self, individuals: List[Individual], gen_num: Union[int, AnyStr]) -> None:
+        """
+        Export snapshot of the population
+        :param individuals: list of individuals to save
+        :param gen_num: number of generation to save (this will be in the folder name)
+        """
         if self.settings.recovery_enabled:
-            path = os.path.join(self._generations_folder, f'generation_{gen_num}')
-            if os.path.exists(path):
-                shutil.rmtree(path)
-            os.mkdir(path)
+            generation_folder = self.generation_folder(gen_num)
+            if os.path.exists(generation_folder):
+                shutil.rmtree(generation_folder)
+            os.mkdir(generation_folder)
+
             for ind in individuals:
-                self.export_phenotype_images(ind, os.path.join(self.experiment_folder, f'selectedpop_{gen_num}'))
+                self.export_phenotype_images(ind, generation_folder)
             logger.info(f'Exported snapshot {gen_num} with {len(individuals)} individuals')
 
     def export_snapshots_species(self, genus: Genus, gen_num: int) -> None:
+        """
+        Export snapshot of the population, expecting a Genus as input (for populations with species)
+        :param genus: collection of species to save (it includes references to all the individuals)
+        :param gen_num: number of generation to save (this will be in the folder name)
+        """
         if self.settings.recovery_enabled:
-            path = os.path.join(self._generations_folder, f'generation_{gen_num}')
-            if os.path.exists(path):
-                shutil.rmtree(path)
-            os.mkdir(path)
+            generation_folder = self.generation_folder(gen_num)
+            if os.path.exists(generation_folder):
+                shutil.rmtree(generation_folder)
+            os.mkdir(generation_folder)
             for species in genus.species_collection:
-                species_on_disk = os.path.join(path, f'species_{species.id}.yaml')
-                species_folder = os.path.join(path, f'species_{species.id}')
+                species_on_disk = os.path.join(generation_folder, f'species_{species.id}.yaml')
+                species_folder = os.path.join(generation_folder, f'species_{species.id}')
                 os.mkdir(species_folder)
                 species.serialize(species_on_disk)
                 for individual, _ in species.iter_individuals():
@@ -250,7 +260,7 @@ class ExperimentManagement:
         :param population_size: how many individuals should each generation have
         :param offspring_size: how many offspring to expect for each generation
         :param species: if the data we are about to read is from a speciated population
-        :return: (last complete generation), (the next generation already has some data), (next robot id)
+        :return: (last complete generation), (the next generation already has some data), (next robot id), (next species id)
         """
 
         # the latest complete snapshot
@@ -277,12 +287,17 @@ class ExperimentManagement:
                     n_exported_genomes = 0
                     for species_on_disk in os.scandir(folder.path):
                         species_on_disk: os.DirEntry
-                        if not species_on_disk.is_file():
+                        if not species_on_disk.is_file() \
+                                or not species_on_disk.path.endswith('.yaml'):
                             continue
                         with open(species_on_disk.path) as file:
-                            species = yaml.load(file, Loader=yaml.SafeLoader)
-                            n_exported_genomes += len(species['individuals_ids'])
-                            species_id = species['id']
+                            try:
+                                species = yaml.load(file, Loader=yaml.SafeLoader)
+                                n_exported_genomes += len(species['individuals_ids'])
+                                species_id = species['id']
+                            except Exception as e:
+                                logger.exception(f'Failed to load "{species_on_disk.path}"', exc_info=e)
+                                continue
 
                         if species_id > last_species_id:
                             last_species_id = species_id
@@ -317,12 +332,11 @@ class ExperimentManagement:
         else:
             has_offspring = False
 
-        # last complete generation, the next generation already has some data, next robot id
-        #TODO return also last species ID
+        # last complete generation, the next generation already has some data, next robot id, next species id
         return last_complete_generation, has_offspring, last_id_with_fitness+1, last_species_id+1,
 
     def load_individual(self,
-                        _id: AnyStr,
+                        _id: int,
                         config: PopulationConfig,
                         fitness: Optional[str] = None) -> Individual:
         """

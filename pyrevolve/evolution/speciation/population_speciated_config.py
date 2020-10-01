@@ -3,7 +3,7 @@ from ..population.population_config import PopulationConfig
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Callable, Optional, List
+    from typing import Callable, Optional, List, Union
     from pyrevolve.evolution.individual import Individual
     from pyrevolve.genotype import Genotype
     from pyrevolve.revolve_bot import RevolveBot
@@ -11,6 +11,12 @@ if TYPE_CHECKING:
 
 
 class PopulationSpeciatedConfig(PopulationConfig):
+    DEFAULT_YOUNG_AGE_THRESHOLD: int = 5
+    DEFAULT_YOUNG_AGE_FITNESS_BOOST: float = 1.1
+    DEFAULT_OLD_AGE_THRESHOLD: int = 30
+    DEFAULT_OLD_AGE_FITNESS_PENALTY: float = 0.5
+    DEFAULT_SPECIES_MAX_STAGNATION: int = 50
+    DEFAULT_OFFSPRING_SIZE: Optional[int] = None
 
     # TODO reorder arguments
     def __init__(self,
@@ -33,12 +39,12 @@ class PopulationSpeciatedConfig(PopulationConfig):
                  experiment_name: str,
                  experiment_management,
                  are_individuals_compatible_fn: Callable[[Individual, Individual], bool],
-                 young_age_threshold: int = 5,
-                 young_age_fitness_boost: float = 1.1,
-                 old_age_threshold: int = 30,
-                 old_age_fitness_penalty: float = 0.5,
-                 species_max_stagnation: int = 50,
-                 offspring_size: Optional[int] = None):
+                 young_age_threshold: int = DEFAULT_YOUNG_AGE_THRESHOLD,
+                 young_age_fitness_boost: float = DEFAULT_YOUNG_AGE_FITNESS_BOOST,
+                 old_age_threshold: int = DEFAULT_OLD_AGE_THRESHOLD,
+                 old_age_fitness_penalty: float = DEFAULT_OLD_AGE_FITNESS_PENALTY,
+                 species_max_stagnation: int = DEFAULT_SPECIES_MAX_STAGNATION,
+                 offspring_size: Optional[int] = DEFAULT_OFFSPRING_SIZE):
         """
         Creates a PopulationSpeciatedConfig object that sets the particular configuration for the population with species
 
@@ -94,4 +100,67 @@ class PopulationSpeciatedConfig(PopulationConfig):
         self.old_age_threshold = old_age_threshold
         self.old_age_fitness_penalty = old_age_fitness_penalty
         self.species_max_stagnation = species_max_stagnation
+
+    @staticmethod
+    def from_population_config(
+            population_config: Union[PopulationConfig, PopulationSpeciatedConfig],
+            are_individuals_compatible_fn: Optional[Callable[[Individual, Individual], bool]] = None,
+            young_age_threshold: int = DEFAULT_YOUNG_AGE_THRESHOLD,
+            young_age_fitness_boost: float = DEFAULT_YOUNG_AGE_FITNESS_BOOST,
+            old_age_threshold: int = DEFAULT_OLD_AGE_THRESHOLD,
+            old_age_fitness_penalty: float = DEFAULT_OLD_AGE_FITNESS_PENALTY,
+            species_max_stagnation: int = DEFAULT_SPECIES_MAX_STAGNATION) -> PopulationSpeciatedConfig:
+        """
+        Transforms the population config into a population_speciated_config.
+        If the argument `population_config` passed in is already a `PopulationSpeciatedConfig`,
+        nothing happens and the argument is returned as it is.
+
+        :param population_config: PopulationConfig to test and possibly convert
+        :param are_individuals_compatible_fn: parameter for PopulationSpeciatedConfig constructor
+            in case of conversion [refer to constructor for meaning]
+        :param young_age_threshold: parameter for PopulationSpeciatedConfig constructor
+            in case of conversion [refer to constructor for meaning]
+        :param young_age_fitness_boost: parameter for PopulationSpeciatedConfig constructor
+            in case of conversion [refer to constructor for meaning]
+        :param old_age_threshold: parameter for PopulationSpeciatedConfig constructor
+            in case of conversion [refer to constructor for meaning]
+        :param old_age_fitness_penalty: parameter for PopulationSpeciatedConfig constructor
+            in case of conversion [refer to constructor for meaning]
+        :param species_max_stagnation: parameter for PopulationSpeciatedConfig constructor
+            in case of conversion [refer to constructor for meaning]
+        :return: the population config ensured to be of type `PopulationSpeciatedConfig`
+        :raises AttributeError: if the `population_config` param cannot be converted to `PopulationSpeciatedConfig`
+        """
+        if isinstance(population_config, PopulationSpeciatedConfig):
+            return population_config
+        elif isinstance(population_config, PopulationConfig):
+            if are_individuals_compatible_fn is None:
+                raise AttributeError("`PopulationSpeciated` is upgrading to `PopulationSpeciatedConfig` "
+                                     "but the parameter `are_individuals_compatible_fn` is not specified")
+            return PopulationSpeciatedConfig(
+                population_size=population_config.population_size,
+                genotype_constructor=population_config.genotype_constructor,
+                genotype_conf=population_config.genotype_conf,
+                fitness_function=population_config.fitness_function,
+                mutation_operator=population_config.mutation_operator,
+                mutation_conf=population_config.mutation_conf,
+                crossover_operator=population_config.crossover_operator,
+                crossover_conf=population_config.crossover_conf,
+                selection=population_config.selection,
+                parent_selection=population_config.parent_selection,
+                population_management=population_config.population_management,
+                population_management_selector=population_config.population_management_selector,
+                evaluation_time=population_config.evaluation_time,
+                experiment_name=population_config.experiment_name,
+                experiment_management=population_config.experiment_management,
+                offspring_size=population_config.offspring_size,
+                are_individuals_compatible_fn=are_individuals_compatible_fn,
+                young_age_threshold=young_age_threshold,
+                young_age_fitness_boost=young_age_fitness_boost,
+                old_age_threshold=old_age_threshold,
+                old_age_fitness_penalty=old_age_fitness_penalty,
+                species_max_stagnation=species_max_stagnation,
+            )
+        else:
+            raise AttributeError(f"PopulationSpeciatedConfig config cannot be created from {type(population_config)}")
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import os
+import re
 
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.custom_logging.logger import logger
@@ -8,10 +9,11 @@ from pyrevolve.evolution.population.population_config import PopulationConfig
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import List, Optional, Callable
     from pyrevolve.evolution.speciation.species import Species
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
+    from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated, PopulationSpeciatedConfig
 
 
 class Population:
@@ -63,14 +65,16 @@ class Population:
 
     def load_snapshot(self, gen_num: int) -> None:
         """
-        Recovers all genotypes and fitnesses of robots in the lastest selected population
+        Recovers all genotypes and fitnesses of robots in the selected generation
         :param gen_num: number of the generation snapshot to recover
         """
-        data_path = self.config.experiment_management.experiment_folder
-        for r, d, f in os.walk(os.path.join(data_path, f'selectedpop_{gen_num}')):
-            for file in f:
-                if 'body' in file:
-                    _id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
+        extract_id = re.compile(r'^body_(\d+)\.png$')
+        generation_folder = self.config.experiment_management.generation_folder(gen_num)
+        for _, _, files in os.walk(generation_folder):
+            for file in files:
+                test = extract_id.search(file)
+                if test is not None:
+                    _id = test.group(1)
                     self.individuals.append(
                         self.config.experiment_management.load_individual(_id, self.config))
 
@@ -95,9 +99,8 @@ class Population:
             n_robots = population_size + last_snapshot * offspring_size
 
         for robot_id in range(n_robots+1, next_robot_id):
-            #TODO refactor filename
             individuals.append(
-                self.config.experiment_management.load_individual(str(robot_id), self.config)
+                self.config.experiment_management.load_individual(robot_id, self.config)
             )
 
         self.next_robot_id = next_robot_id
@@ -170,6 +173,49 @@ class Population:
         new_population.individuals = new_individuals
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
+        return new_population
+
+    def into_speciated_population(self,
+                                  are_individuals_compatible_fn: Optional[Callable[[Individual, Individual], bool]] = None,
+                                  young_age_threshold: int = None,
+                                  young_age_fitness_boost: float = None,
+                                  old_age_threshold: int = None,
+                                  old_age_fitness_penalty: float = None,
+                                  species_max_stagnation: int = None) -> PopulationSpeciated:
+        """
+        Creates species based on the current population.
+
+        You have to populate the missing parameter for the PopulationSpeciatedConfig in case the
+            `self.config` is not already of type PopulationSpeciatedConfig
+
+        :param are_individuals_compatible_fn: see PopulationSpeciatedConfig
+        :param young_age_threshold: see PopulationSpeciatedConfig
+        :param young_age_fitness_boost: see PopulationSpeciatedConfig
+        :param old_age_threshold: see PopulationSpeciatedConfig
+        :param old_age_fitness_penalty: see PopulationSpeciatedConfig
+        :param species_max_stagnation: see PopulationSpeciatedConfig
+        :return: A new version of the current population, but divided in species.
+        """
+        from pyrevolve.evolution.speciation.population_speciated import PopulationSpeciated, PopulationSpeciatedConfig
+        young_age_threshold = PopulationSpeciatedConfig.DEFAULT_YOUNG_AGE_THRESHOLD if young_age_threshold is None else young_age_threshold
+        young_age_fitness_boost = PopulationSpeciatedConfig.DEFAULT_YOUNG_AGE_FITNESS_BOOST if young_age_fitness_boost is None else young_age_fitness_boost
+        old_age_threshold = PopulationSpeciatedConfig.DEFAULT_OLD_AGE_THRESHOLD if old_age_threshold is None else old_age_threshold
+        old_age_fitness_penalty = PopulationSpeciatedConfig.DEFAULT_OLD_AGE_FITNESS_PENALTY if old_age_fitness_penalty is None else old_age_fitness_penalty
+        species_max_stagnation = PopulationSpeciatedConfig.DEFAULT_SPECIES_MAX_STAGNATION if species_max_stagnation is None else species_max_stagnation
+
+        new_population_config = PopulationSpeciatedConfig \
+            .from_population_config(self.config,
+                                    are_individuals_compatible_fn=are_individuals_compatible_fn,
+                                    young_age_threshold=young_age_threshold,
+                                    young_age_fitness_boost=young_age_fitness_boost,
+                                    old_age_threshold=old_age_threshold,
+                                    old_age_fitness_penalty=old_age_fitness_penalty,
+                                    species_max_stagnation=species_max_stagnation,)
+        new_population = PopulationSpeciated(new_population_config,
+                                             self.simulator_queue,
+                                             self.analyzer_queue,
+                                             self.next_robot_id)
+        new_population.genus.speciate(self.individuals)
         return new_population
 
     async def evaluate(self,
