@@ -118,13 +118,13 @@ def gecko(robot):
         points +=1
 
     if points == 8:
-        path_from ='experiments/karines_experiments/data/rand/data_fullevolution/plane/phenotype_images/body_'\
+        path_from ='experiments/karines_experiments/data/geckos_1/data_fullevolution/plane/phenotype_images/body_'\
               +str(robot.phenotype._id)+'.png'
         path_to ='experiments/karines_experiments/data/geckos/body_'\
               +str(robot.phenotype._id)+'.png'
         shutil.copy(path_from, path_to)
 
-    return points
+    return points * robot.novelty
 
     
 def floor_is_lava(robot_manager, robot, cost=False):

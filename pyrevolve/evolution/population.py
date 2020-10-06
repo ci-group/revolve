@@ -36,6 +36,7 @@ class PopulationConfig:
                  environments,
                  front,
                  run_simulation,
+                 all_settings,
                  offspring_size=None,
                  next_robot_id=1):
         """
@@ -74,6 +75,7 @@ class PopulationConfig:
         self.environments = environments
         self.front = front
         self.run_simulation = run_simulation
+        self.all_settings = all_settings
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
 
@@ -263,29 +265,11 @@ class Population:
             self.conf.experiment_management.export_individual(individual[final_season],
                                                                 final_season)
 
-    def calculate_novelty(self, pool_individuals, new_individuals):
-
-        # saves novelty only in the final season instances of individual:
-        final_season = list(self.conf.environments.keys())[-1]
-
-        # TODO: get param_measures from a file
-        param_measures = ['branching',
-                          'limbs',
-                          'length_of_limbs',
-                          'coverage',
-                          'joints',
-                          'proportion',
-                          'sensors',
-                          'symmetry',
-                          'size'
-                          ]
-        # neighbors
-        k = 3
-        ##
+    def calculate_novelty(self, pool_individuals, environment):
 
         # collecting measures from pop
         pop_measures = []
-        self.collect_measures(pool_individuals, pop_measures, param_measures, final_season)
+        self.collect_measures(pool_individuals, pop_measures, environment)
 
         # pop+archive: complements collection with archive measures
         pop_archive_measures = copy.deepcopy(pop_measures)
@@ -301,34 +285,51 @@ class Population:
         kdt = KDTree(pop_archive_measures, leaf_size=30, metric='euclidean')
 
         # distances from itself and neighbors
-        distances, indexes = kdt.query(pop_measures, k=k+1)
+        distances, indexes = kdt.query(pop_measures, k=self.conf.all_settings.k_novelty+1)
         print('idx',indexes)
         print('dist',distances)
 
         average_distances = []
         for d in range(0, len(distances)):
-            average_distances.append(sum(distances[d])/k)
+            average_distances.append(sum(distances[d])/self.conf.all_settings.k_novelty)
 
         print('avg',average_distances)
 
         for i in range(0, len(pool_individuals)):
-            pool_individuals[i][final_season].novelty = average_distances[i]
-            self.conf.experiment_management.export_novelty(pool_individuals[i][final_season])
+            pool_individuals[i][environment].novelty = average_distances[i]
+            self.conf.experiment_management.export_novelty(pool_individuals[i][environment], environment)
 
-        # adds random new individuals to the novelty archive
-        random_individual = random.randint(0, len(new_individuals)-1)
-        print('rand',random_individual)
-        # TODO: save archive to file and recover it
-        self.collect_measures([new_individuals[random_individual]], self.novelty_archive, param_measures, final_season)
-        print('arch', self.novelty_archive)
+    def collect_measures(self, individuals, pop_measures, environment):
 
-    def collect_measures(self, individuals, pop_measures, param_measures, final_season):
+        # TODO: get param_measures from a file
+        param_measures = ['branching',
+                          'limbs',
+                          'length_of_limbs',
+                          'coverage',
+                          'joints',
+                          'proportion',
+                          'sensors',
+                          'symmetry',
+                          'size'
+                          ]
+
         for individual in individuals:
             pop_measures.append([])
 
             for measure in param_measures:
-                value = individual[final_season].phenotype._morphological_measurements.measurements_to_dict()[measure]
+                value = individual[environment].phenotype._morphological_measurements.measurements_to_dict()[measure]
                 pop_measures[-1].append(value)
+
+    def update_archive(self, new_individuals, environment):
+
+        # adds random new individuals to the novelty archive
+        for individual in new_individuals:
+            p = random.uniform(0, 1)
+            print(p)
+            if p < self.conf.all_settings.p_archive:
+                print('arc add',individual[environment].phenotype._id)
+                self.collect_measures([individual], self.novelty_archive, environment)
+        print('arch', self.novelty_archive)
 
     async def init_pop(self, recovered_individuals=[]):
         """
@@ -343,7 +344,9 @@ class Population:
 
         self.individuals = recovered_individuals + self.individuals
 
-        self.calculate_novelty(self.individuals, self.individuals)
+        for environment in self.conf.environments:
+            self.calculate_novelty(self.individuals, environment)
+            self.update_archive(self.individuals, environment)
 
         if self.conf.run_simulation == 1:
             for environment in self.conf.environments:
@@ -392,7 +395,10 @@ class Population:
         new_individuals = recovered_individuals + new_individuals
         selection_pool = self.individuals + new_individuals
 
-        self.calculate_novelty(selection_pool, new_individuals)
+        for environment in self.conf.environments:
+            self.calculate_novelty(selection_pool, environment)
+
+        self.update_archive(new_individuals, environment)
 
         # evaluate new individuals
         if self.conf.run_simulation == 1:

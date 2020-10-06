@@ -139,6 +139,18 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--p-archive',
+    default=0.3, type=float,
+    help="Probability of adding any new individual to the novelty archive. "
+)
+
+parser.add_argument(
+    '--k-novelty',
+    default=3, type=int,
+    help="K nearest neighbors for calculating novelty. "
+)
+
+parser.add_argument(
     '--evaluation-time',
     default=30, type=float,
     help="In offline evolution, this determines the length of the experiment run."

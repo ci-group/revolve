@@ -8,18 +8,16 @@ library(ggsignif)
 
 base_directory <-paste('data', sep='') 
 
-analysis = 'analysis_journal1_tilted'
+analysis = 'test'
 
 output_directory = paste(base_directory,'/',analysis ,sep='')
 
 #### CHANGE THE PARAMETERS HERE ####
 
 
-experiments_type = c('flat', 'tilted','baseline2') 
+experiments_type = c('novelty')
 
-environments = list( c( 'plane'),
-                     c('tilted5'), 
-                     c( 'plane','tilted5') )
+environments = list( c( 'plane') )
 
 methods = c()
 for (exp in 1:length(experiments_type))
@@ -32,15 +30,11 @@ for (exp in 1:length(experiments_type))
 
 initials =   c( 'bp', 'bt', 'pp', 'pt')
 
-experiments_labels = c( 'Non-S: Flat',   'Non-S: Tilted',
-                        'Seasonal: Flat',   'Seasonal: Tilted')
+experiments_labels = c( 'novelty')
 
-experiments_labels2 = c( 'Non-S: Flat',   'Non-S: Tilted',
-                         'Seasonal',   'Seasonal')
+experiments_labels2 = c( 'novelty')
 
-runs = list(  c(1:20) ,
-              c(1:20) ,  
-              c(1:20) )
+runs = list(  c(1:1))
 
 gens = 100
 pop = 100
@@ -89,7 +83,8 @@ measures_names = c(
   'recurrence',
   'synaptic_reception',
   'fitness',
-  'cons_fitness'
+  'cons_fitness',
+  'novelty'
 )
 
 # add proper labels soon...
@@ -129,7 +124,8 @@ measures_labels = c(
   'recurrence',
   'synaptic_reception',
   'Fitness', 
-  'Number of slaves'
+  'Number of slaves',
+  'Novelty'
 )
 
 

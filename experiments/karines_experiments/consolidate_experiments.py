@@ -12,8 +12,8 @@ environments = {
 
 runs = range(1, 2)
 
-
 # set these variables according to your experiments #
+
 
 def build_headers(path1, path2):
 
@@ -21,6 +21,7 @@ def build_headers(path1, path2):
     file_summary.write('robot_id\t')
 
     behavior_headers = []
+
     behavior_headers.append('velocity')
     file_summary.write(behavior_headers[-1]+'\t')
     behavior_headers.append('displacement_velocity')
@@ -29,14 +30,6 @@ def build_headers(path1, path2):
     file_summary.write(behavior_headers[-1]+'\t')
     behavior_headers.append('head_balance')
     file_summary.write(behavior_headers[-1]+'\t')
-    behavior_headers.append('contacts')
-    file_summary.write(behavior_headers[-1]+'\t')
-    # use this instead? but what if the guy is none?
-    # with open(path + '/data_fullevolution/descriptors/behavior_desc_robot_1.txt') as file:
-    #     for line in file:
-    #         measure, value = line.strip().split(' ')
-    #         behavior_headers.append(measure)
-    #         file_summary.write(measure+'\t')
 
     phenotype_headers = []
     with open(path1 + '/descriptors/phenotype_desc_robot_1.txt') as file:
@@ -44,7 +37,7 @@ def build_headers(path1, path2):
             measure, value = line.strip().split(' ')
             phenotype_headers.append(measure)
             file_summary.write(measure+'\t')
-    file_summary.write('fitness\t cons_fitness\n')
+    file_summary.write('fitness\tcons_fitness\tnovelty\n')
     file_summary.close()
 
     file_summary = open(path2 + "/snapshots_ids.tsv", "w+")
@@ -52,6 +45,7 @@ def build_headers(path1, path2):
     file_summary.close()
 
     return behavior_headers, phenotype_headers
+
 
 for exp in experiments_type:
 
@@ -102,7 +96,12 @@ for exp in experiments_type:
 
                     cf_file = open(path0+'/consolidated_fitness/consolidated_fitness_robot_'+robot_id+'.txt', 'r')
                     cons_fitness = cf_file.read()
-                    file_summary.write(cons_fitness + '\n')
+                    file_summary.write(cons_fitness + '\t')
+
+                    cf_file = open(path1+'/novelty/novelty_robot_'+robot_id+'.txt', 'r')
+                    novelty = cf_file.read()
+                    file_summary.write(novelty + '\n')
+
 
             num_files = len(f)
             list_gens = []

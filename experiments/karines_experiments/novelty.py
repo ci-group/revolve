@@ -25,7 +25,7 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 100
+    num_generations = 1000
     population_size = 100
     offspring_size = 50
     front = None
@@ -68,7 +68,8 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(robot_manager, robot):
-        return fitness.novelty(robot_manager, robot)
+        return fitness.gecko(robot)
+        #return fitness.novelty(robot_manager, robot)
 
     fitness_function = {'plane': fitness_function_plane}
 
@@ -91,7 +92,8 @@ async def run():
         experiment_management=experiment_management,
         environments=environments,
         front=front,
-        run_simulation=settings.run_simulation
+        run_simulation=settings.run_simulation,
+        all_settings=settings,
     )
 
     simulator_queue = {}
