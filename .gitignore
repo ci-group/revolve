@@ -47,6 +47,7 @@ coverage.xml
 *,cover
 experiments/examples/output/
 experiments/IMC/output/
+experiments/IMC/yaml
 test.py
 
 # Translations
