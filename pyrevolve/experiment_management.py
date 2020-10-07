@@ -28,8 +28,8 @@ class ExperimentManagement:
             os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/phenotypes')
             os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/descriptors')
             os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/fitness')
-            os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/phenotype_images')
             os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/novelty')
+            os.mkdir(self.dirpath+'/data_fullevolution/'+environment+'/phenotype_images')
 
     def _experiment_folder(self):
         return self.dirpath
@@ -45,17 +45,17 @@ class ExperimentManagement:
         if self.settings.export_phenotype:
             individual.export_phenotype(self._data_folder()+'/'+environment)
 
-    def export_fitness(self, individual, environment):
+    def export_fitness(self, individual, environment, gen_num):
         folder = os.path.join(self._data_folder(), environment, 'fitness')
-        individual.export_fitness(folder)
+        individual.export_fitness(folder, gen_num)
 
     def export_consolidated_fitness(self, individual):
         folder = os.path.join(self._data_folder(), 'consolidated_fitness')
         individual.export_consolidated_fitness(folder)
 
-    def export_novelty(self, individual, environment):
+    def export_novelty(self, individual, environment, gen_num):
         folder = os.path.join(self._data_folder(), environment, 'novelty')
-        individual.export_novelty(folder)
+        individual.export_novelty(folder, gen_num)
 
     def export_individual(self, individual, environment):
         folder = self._data_folder()+'/'+environment
@@ -67,7 +67,7 @@ class ExperimentManagement:
             if measures is None:
                 f.write(str(None))
             else:
-                for key, val in measures.items():
+                for key, val in measures.items().items():
                     f.write(f"{key} {val}\n")
 
     def export_phenotype_images(self, dirpath, individual):

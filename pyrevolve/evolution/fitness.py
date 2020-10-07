@@ -11,15 +11,19 @@ def random(_robot_manager, robot):
     return py_random.random()
 
 
-def displacement(robot_manager, robot):
-    displacement_vec = measures.displacement(robot_manager)[0]
-    displacement_vec.z = 0
-    return displacement_vec.magnitude()
+def displacement(behavioural_measurements, robot):
+    if behavioural_measurements is not None:
+        displacement_vec = behavioural_measurements['displacement'][0]
+        displacement_vec.z = 0
+        return displacement_vec.magnitude()
+    else:
+        return None
 
-
-def displacement_velocity(robot_manager, robot):
-    return measures.displacement_velocity(robot_manager)
-
+def displacement_velocity(behavioural_measurements, robot):
+    if behavioural_measurements is not None:
+        return behavioural_measurements['displacement_velocity']
+    else:
+        return None
 
 def online_old_revolve(robot_manager):
     """
@@ -58,42 +62,43 @@ def online_old_revolve(robot_manager):
     return v if v <= fitness_limit else 0.0
 
 
-def size_penalty(robot_manager, robot):
+def size_penalty(robot):
     _size_penalty = 1 / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']
 
     return _size_penalty
 
 
-def novelty(robot_manager, robot):
+def novelty(behavioural_measurements, robot):
+    print('insie nov',robot.novelty)
     return robot.novelty
 
 
-def fast_novel_limbic(robot_manager, robot):
+def fast_novel_limbic(behavioural_measurements, robot):
 
-    speed = measures.displacement_velocity_hill(robot_manager)
-    novelty = robot.novelty
-    limbic_penalty = max(0.1, 1 - robot.phenotype._morphological_measurements.measurements_to_dict()['size'])
+    if behavioural_measurements is not None:
+        displacement_velocity_hill = behavioural_measurements['displacement_velocity_hill']
+        novelty = robot.novelty
+        limbic_penalty = max(0.1, 1 - robot.phenotype._morphological_measurements.measurements_to_dict()['size'])
+        print(robot.phenotype._id, displacement_velocity_hill , novelty , limbic_penalty)
+        return displacement_velocity_hill * novelty * limbic_penalty
+    else:
+        return None
 
-    return speed * novelty * limbic_penalty
 
+def displacement_velocity_hill(behavioural_measurements, robot):
 
-def displacement_velocity_hill(robot_manager, robot, cost=False):
-    fitness = measures.displacement_velocity_hill(robot_manager)
+    if behavioural_measurements is not None:
+        fitness = behavioural_measurements['displacement_velocity_hill']
 
-    if fitness == 0 or robot.phenotype._morphological_measurements.measurements_to_dict()['hinge_count'] == 0:
-        fitness = -0.1
+        if fitness == 0 or robot.phenotype._morphological_measurements.measurements_to_dict()['hinge_count'] == 0:
+            fitness = -0.1
 
-    elif fitness < 0:
-        fitness /= 10
+        elif fitness < 0:
+            fitness /= 10
 
-    if cost and fitness != None:
-        _size_penalty = size_penalty(robot_manager, robot) ** 2
-        if fitness >= 0:
-            fitness = fitness * _size_penalty
-        else:
-            fitness = fitness / _size_penalty
-
-    return fitness
+        return fitness
+    else:
+        return None
 
 
 def gecko(robot):
@@ -102,33 +107,36 @@ def gecko(robot):
     # TODO: add sensors zero and joints position/coverage is maybe redundant
     if robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size'] == 13:
         points +=1
-    if robot.phenotype._morphological_measurements.measurements_to_dict()['active_hinges_count'] == 6:
-        points +=1
-    if robot.phenotype._morphological_measurements.measurements_to_dict()['brick_count'] == 6:
-        points +=1
     if robot.phenotype._morphological_measurements.measurements_to_dict()['proportion'] == 1:
         points +=1
     if robot.phenotype._morphological_measurements.measurements_to_dict()['extremities'] == 4:
         points +=1
-    if robot.phenotype._morphological_measurements.measurements_to_dict()['extensiveness'] == 6:
-        points +=1
+
     if robot.phenotype._morphological_measurements.measurements_to_dict()['symmetry'] == 1:
         points +=1
-    if robot.phenotype._morphological_measurements.measurements_to_dict()['coverage'] == 0.52:
-        points +=1
+    # if robot.phenotype._morphological_measurements.measurements_to_dict()['coverage'] == 0.52:
+    #     points +=1
 
-    if points == 8:
-        path_from ='experiments/karines_experiments/data/geckos_1/data_fullevolution/plane/phenotype_images/body_'\
+    # if robot.phenotype._morphological_measurements.measurements_to_dict()['active_hinges_count'] == 6:
+    #     points +=1
+    # if robot.phenotype._morphological_measurements.measurements_to_dict()['brick_count'] == 6:
+    #     points +=1
+    # if robot.phenotype._morphological_measurements.measurements_to_dict()['extensiveness'] == 7:
+    #     points +=1
+
+    test = 'gecko_1'
+    if points == 4:#8:
+        path_from ='experiments/karines_experiments/data/'+test+'/data_fullevolution/plane/phenotype_images/body_'\
               +str(robot.phenotype._id)+'.png'
-        path_to ='experiments/karines_experiments/data/geckos/body_'\
+        path_to ='experiments/karines_experiments/data/'+test+'/body_'\
               +str(robot.phenotype._id)+'.png'
         shutil.copy(path_from, path_to)
 
     return points * robot.novelty
 
     
-def floor_is_lava(robot_manager, robot, cost=False):
-    _displacement_velocity_hill = displacement_velocity_hill(robot_manager, robot, cost)
+def floor_is_lava(behavioural_measurements, robot, cost=False):
+    _displacement_velocity_hill = displacement_velocity_hill(behavioural_measurements, robot, cost)
     _contacts = measures.contacts(robot_manager, robot)
 
     _contacts = max(_contacts, 0.0001)

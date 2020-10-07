@@ -99,7 +99,9 @@ class Population:
         self.analyzer_queue = analyzer_queue
         self.simulator_queue = simulator_queue
         self.next_robot_id = next_robot_id
-        self.novelty_archive = []
+        self.novelty_archive = {}
+        for environment in self.conf.environments:
+            self.novelty_archive[environment] = []
 
     def _new_individual(self, genotype):
 
@@ -134,7 +136,7 @@ class Population:
         individual = {}
         for environment in self.conf.environments:
             try:
-                file_name = os.path.join(path, environment,'individuals','individual_'+id+'.pkl')
+                file_name = os.path.join(path, environment, 'individuals', 'individual_'+id+'.pkl')
                 file = open(file_name, 'rb')
                 individual[environment] = pickle.load(file)
             except EOFError:
@@ -143,6 +145,12 @@ class Population:
                         self.conf.genotype_constructor(self.conf.genotype_conf, id))
 
         return individual
+
+    def load_novelty_archive(self):
+        path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
+        file_name = os.path.join(path, 'novelty_archive.pkl')
+        file = open(file_name, 'rb')
+        self.novelty_archive = pickle.load(file)
 
     async def load_snapshot(self, gen_num):
         """
@@ -176,7 +184,250 @@ class Population:
 
         return individuals
 
+    def calculate_novelty(self, pool_individuals, environment, gen_num):
+
+        # collecting measures from pop
+        pop_measures = []
+        self.collect_measures(pool_individuals, pop_measures, environment)
+
+        # pop+archive: complements collection with archive measures
+        pop_archive_measures = copy.deepcopy(pop_measures)
+        pop_archive_measures = pop_archive_measures + self.novelty_archive[environment]
+
+        pop_measures = np.array(pop_measures)
+        pop_archive_measures = np.array(pop_archive_measures)
+
+        # calculate distances
+        kdt = KDTree(pop_archive_measures, leaf_size=30, metric='euclidean')
+
+        # distances from itself and neighbors
+        distances, indexes = kdt.query(pop_measures, k=self.conf.all_settings.k_novelty+1)
+
+        average_distances = []
+        for d in range(0, len(distances)):
+            average_distances.append(sum(distances[d])/self.conf.all_settings.k_novelty)
+
+        for i in range(0, len(pool_individuals)):
+            pool_individuals[i][environment].novelty = average_distances[i]
+            print('geregerg',pool_individuals[i][environment].phenotype._id,pool_individuals[i][environment].novelty)
+            self.conf.experiment_management.export_novelty(pool_individuals[i][environment], environment, gen_num)
+
+    def collect_measures(self, individuals, pop_measures, environment):
+
+        # TODO: get param_measures from a file
+        param_measures = [
+                          'branching',
+                          'limbs',
+                          'length_of_limbs',
+                          'coverage',
+                          'joints',
+                          'proportion',
+                          'sensors',
+                          'symmetry',
+                          'size'
+                          ]
+
+        for individual in individuals:
+            pop_measures.append([])
+
+            for measure in param_measures:
+                value = individual[environment].phenotype._morphological_measurements.measurements_to_dict()[measure]
+                pop_measures[-1].append(value)
+
+    def update_archive(self, new_individuals):
+
+        # adds random new individuals to the novelty archive
+        for environment in self.conf.environments:
+            for individual in new_individuals:
+                p = random.uniform(0, 1)
+                if p < self.conf.all_settings.p_archive:
+                    self.collect_measures([individual], self.novelty_archive[environment], environment)
+
+        path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
+        f = open(f'{path}/novelty_archive.pkl', "wb")
+        pickle.dump(self.novelty_archive, f)
+        f.close()
+
+    async def init_pop(self, recovered_individuals=[]):
+        """
+        Populates the population (individuals list) with Individual objects that contains their respective genotype.
+        """
+        for i in range(self.conf.population_size-len(recovered_individuals)):
+            individual = self._new_individual(
+                self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+
+            self.individuals.append(individual)
+            self.next_robot_id += 1
+
+        self.individuals = recovered_individuals + self.individuals
+
+        # (possibly) run simulation
+        if self.conf.run_simulation == 1:
+            for environment in self.conf.environments:
+                await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
+
+        # calculate novelty
+        for environment in self.conf.environments:
+            self.calculate_novelty(self.individuals, environment, gen_num=0)
+        self.update_archive(self.individuals)
+
+        # calculate final fitness
+        for environment in self.conf.environments:
+            self.calculate_final_fitness(individuals=self.individuals, gen_num=0, environment=environment)
+        self.consolidate_fitness(self.individuals)
+
+    async def next_gen(self, gen_num, recovered_individuals=[]):
+        """
+        Creates next generation of the population through selection, mutation, crossover
+
+        :param gen_num: generation number
+        :param individuals: recovered offspring
+        :return: new population
+        """
+
+        new_individuals = []
+
+        for _i in range(self.conf.offspring_size-len(recovered_individuals)):
+            # Selection operator (based on fitness)
+            # Crossover
+            if self.conf.crossover_operator is not None:
+                parents = self.conf.parent_selection(self.individuals)
+                child_genotype = self.conf.crossover_operator(self.conf.environments,
+                                                              parents,
+                                                              self.conf.genotype_conf,
+                                                              self.conf.crossover_conf)
+                child = Individual(child_genotype)
+            else:
+                child = self.conf.selection(self.individuals)
+
+            child.genotype.id = self.next_robot_id
+            self.next_robot_id += 1
+
+            # Mutation operator
+            child_genotype = self.conf.mutation_operator(child.genotype,
+                                                         self.conf.mutation_conf)
+
+            # Insert individual in new population
+            individual = self._new_individual(child_genotype)
+            new_individuals.append(individual)
+
+        new_individuals = recovered_individuals + new_individuals
+        selection_pool = self.individuals + new_individuals
+
+        # (possibly) run simulation
+        if self.conf.run_simulation == 1:
+            for environment in self.conf.environments:
+                await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
+
+        # calculate novelty
+        for environment in self.conf.environments:
+            self.calculate_novelty(selection_pool, environment, gen_num)
+        self.update_archive(new_individuals)
+
+        # calculate final fitness
+        for environment in self.conf.environments:
+            self.calculate_final_fitness(individuals=selection_pool, gen_num=gen_num, environment=environment)
+        self.consolidate_fitness(selection_pool)
+
+        # create next population
+        if self.conf.population_management_selector is not None:
+            new_individuals = self.conf.population_management(selection_pool,
+                                                              self.conf.population_management_selector,
+                                                              self.conf)
+        else:
+            new_individuals = self.conf.population_management(self.individuals, new_individuals, self.conf)
+
+        new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
+        new_population.individuals = new_individuals
+        new_population.novelty_archive = self.novelty_archive
+
+        logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
+
+        return new_population
+
+    async def evaluate(self, new_individuals, gen_num, environment, type_simulation = 'evolve'):
+        """
+        Evaluates each individual in the new gen population
+
+        :param new_individuals: newly created population after an evolution iteration
+        :param gen_num: generation number
+        """
+        # Parse command line / file input arguments
+        # await self.simulator_connection.pause(True)
+        robot_futures = []
+        to_evaluate = []
+        for individual in new_individuals:
+            if not individual[environment].evaluated:
+                logger.info(f'Simulating individual (gen {gen_num}) {individual[environment].genotype.id} ...')
+                to_evaluate.append(individual)
+                robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual[environment],
+                                                                                      environment)))
+                individual[environment].evaluated = True
+
+        await asyncio.sleep(1)
+
+        for i, future in enumerate(robot_futures):
+            individual = to_evaluate[i][environment]
+
+            logger.info(f'Simulation of Individual {individual.phenotype.id}')
+            individual.phenotype._behavioural_measurements = await future
+
+            if individual.phenotype._behavioural_measurements is None:
+                assert (individual.phenotype._behavioural_measurements is None)
+
+            if type_simulation == 'evolve':
+                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id,
+                                                                         individual.phenotype._behavioural_measurements,
+                                                                         environment)
+                self.conf.experiment_management.export_individual(individual, environment)
+
+    def calculate_final_fitness(self, individuals, gen_num, environment, type_simulation = 'evolve'):
+        """
+        Evaluates each individual in the new gen population
+
+        :param new_individuals: newly created population after an evolution iteration
+        :param gen_num: generation number
+        """
+        for individual in individuals:
+
+            logger.info(f'Evaluation of Individual {individual[environment].phenotype.id} (gen {gen_num}) ')
+
+            if individual[environment].phenotype._behavioural_measurements is None:
+                behavioural_measurements = None
+            else:
+                behavioural_measurements = individual[environment].phenotype._behavioural_measurements.items()
+            conf = copy.deepcopy(self.conf)
+            print('nov',individual[environment].novelty)
+            print('fit before',individual[environment].fitness)
+            conf.fitness_function = conf.fitness_function[environment]
+            individual[environment].fitness =\
+                conf.fitness_function(behavioural_measurements, individual[environment])
+            print('fit after',individual[environment].fitness)
+            logger.info(f'Individual {individual[environment].phenotype.id} has a fitness of {individual[environment].fitness}')
+
+            if type_simulation == 'evolve':
+                self.conf.experiment_management.export_fitness(individual[environment], environment, gen_num)
+                # again, to update and novelty and fitness
+                self.conf.experiment_management.export_individual(individual[environment], environment)
+
+    async def evaluate_single_robot(self, individual, environment):
+        """
+        :param individual: individual
+        :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
+        """
+        conf = copy.deepcopy(self.conf)
+
+        if self.analyzer_queue is not None:
+            collisions, _bounding_box = await self.analyzer_queue.test_robot(individual,
+                                                                             conf)
+            if collisions > 0:
+                logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
+                return None
+
+        return await self.simulator_queue[environment].test_robot(individual, conf)
+
     def consolidate_fitness(self, individuals):
+
         # saves consolidation only in the final season instances of individual:
         final_season = list(self.conf.environments.keys())[-1]
 
@@ -188,7 +439,6 @@ class Population:
         # if there are multiple seasons (environments)
         else:
             for individual_ref in individuals:
-
                 slaves = 0
                 total_slaves = 0
                 total_masters = 0
@@ -196,11 +446,11 @@ class Population:
 
                 # this BIZARRE logic works only for two seasons! shame on me! fix it later!
                 for individual_comp in individuals:
-
                     equal = 0
                     better = 0
 
                     for environment in self.conf.environments:
+
                         if individual_ref[environment].fitness is None \
                                 and individual_comp[environment].fitness is None:
                             equal += 1
@@ -251,259 +501,17 @@ class Population:
                     if total_masters == 0:
                         individual_ref[final_season].consolidated_fitness = 0
                     else:
-                        individual_ref[final_season].consolidated_fitness = 1/total_masters
+                        individual_ref[final_season].consolidated_fitness = 1 / total_masters
 
                 if self.conf.front == 'masters':
                     if masters == 0:
                         individual_ref[final_season].consolidated_fitness = 0
                     else:
-                        individual_ref[final_season].consolidated_fitness = 1/masters
+                        individual_ref[final_season].consolidated_fitness = 1 / masters
 
         for individual in individuals:
             self.conf.experiment_management.export_consolidated_fitness(individual[final_season])
 
             self.conf.experiment_management.export_individual(individual[final_season],
-                                                                final_season)
+                                                              final_season)
 
-    def calculate_novelty(self, pool_individuals, environment):
-
-        # collecting measures from pop
-        pop_measures = []
-        self.collect_measures(pool_individuals, pop_measures, environment)
-
-        # pop+archive: complements collection with archive measures
-        pop_archive_measures = copy.deepcopy(pop_measures)
-        pop_archive_measures = pop_archive_measures + self.novelty_archive
-
-        pop_measures = np.array(pop_measures)
-        pop_archive_measures = np.array(pop_archive_measures)
-
-        print('pop',pop_measures)
-        print('popchive',pop_archive_measures)
-
-        # calculate distances
-        kdt = KDTree(pop_archive_measures, leaf_size=30, metric='euclidean')
-
-        # distances from itself and neighbors
-        distances, indexes = kdt.query(pop_measures, k=self.conf.all_settings.k_novelty+1)
-        print('idx',indexes)
-        print('dist',distances)
-
-        average_distances = []
-        for d in range(0, len(distances)):
-            average_distances.append(sum(distances[d])/self.conf.all_settings.k_novelty)
-
-        print('avg',average_distances)
-
-        for i in range(0, len(pool_individuals)):
-            pool_individuals[i][environment].novelty = average_distances[i]
-            self.conf.experiment_management.export_novelty(pool_individuals[i][environment], environment)
-
-    def collect_measures(self, individuals, pop_measures, environment):
-
-        # TODO: get param_measures from a file
-        param_measures = ['branching',
-                          'limbs',
-                          'length_of_limbs',
-                          'coverage',
-                          'joints',
-                          'proportion',
-                          'sensors',
-                          'symmetry',
-                          'size'
-                          ]
-
-        for individual in individuals:
-            pop_measures.append([])
-
-            for measure in param_measures:
-                value = individual[environment].phenotype._morphological_measurements.measurements_to_dict()[measure]
-                pop_measures[-1].append(value)
-
-    def update_archive(self, new_individuals, environment):
-
-        # adds random new individuals to the novelty archive
-        for individual in new_individuals:
-            p = random.uniform(0, 1)
-            print(p)
-            if p < self.conf.all_settings.p_archive:
-                print('arc add',individual[environment].phenotype._id)
-                self.collect_measures([individual], self.novelty_archive, environment)
-        print('arch', self.novelty_archive)
-
-    async def init_pop(self, recovered_individuals=[]):
-        """
-        Populates the population (individuals list) with Individual objects that contains their respective genotype.
-        """
-        for i in range(self.conf.population_size-len(recovered_individuals)):
-            individual = self._new_individual(
-                self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
-
-            self.individuals.append(individual)
-            self.next_robot_id += 1
-
-        self.individuals = recovered_individuals + self.individuals
-
-        for environment in self.conf.environments:
-            self.calculate_novelty(self.individuals, environment)
-            self.update_archive(self.individuals, environment)
-
-        if self.conf.run_simulation == 1:
-            for environment in self.conf.environments:
-                await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
-        else:
-            for environment in self.conf.environments:
-                await self.evaluate_non_simulated(new_individuals=self.individuals, gen_num=0, environment=environment)
-
-        self.consolidate_fitness(self.individuals)
-
-    async def next_gen(self, gen_num, recovered_individuals=[]):
-        """
-        Creates next generation of the population through selection, mutation, crossover
-
-        :param gen_num: generation number
-        :param individuals: recovered offspring
-        :return: new population
-        """
-
-        new_individuals = []
-
-        for _i in range(self.conf.offspring_size-len(recovered_individuals)):
-            # Selection operator (based on fitness)
-            # Crossover
-            if self.conf.crossover_operator is not None:
-                parents = self.conf.parent_selection(self.individuals)
-                child_genotype = self.conf.crossover_operator(self.conf.environments,
-                                                              parents,
-                                                              self.conf.genotype_conf,
-                                                              self.conf.crossover_conf)
-                child = Individual(child_genotype)
-            else:
-                child = self.conf.selection(self.individuals)
-
-            child.genotype.id = self.next_robot_id
-            self.next_robot_id += 1
-
-            # Mutation operator
-            child_genotype = self.conf.mutation_operator(child.genotype,
-                                                         self.conf.mutation_conf)
-
-            # Insert individual in new population
-            individual = self._new_individual(child_genotype)
-            new_individuals.append(individual)
-
-        new_individuals = recovered_individuals + new_individuals
-        selection_pool = self.individuals + new_individuals
-
-        for environment in self.conf.environments:
-            self.calculate_novelty(selection_pool, environment)
-
-        self.update_archive(new_individuals, environment)
-
-        # evaluate new individuals
-        if self.conf.run_simulation == 1:
-            for environment in self.conf.environments:
-                await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
-        else:
-            for environment in self.conf.environments:
-                await self.evaluate_non_simulated(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
-
-        self.consolidate_fitness(selection_pool)
-
-        # create next population
-        if self.conf.population_management_selector is not None:
-            new_individuals = self.conf.population_management(selection_pool,
-                                                              self.conf.population_management_selector,
-                                                              self.conf)
-        else:
-            new_individuals = self.conf.population_management(self.individuals, new_individuals, self.conf)
-
-        new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
-        new_population.individuals = new_individuals
-
-        logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
-
-        return new_population
-
-    async def evaluate(self, new_individuals, gen_num, environment, type_simulation = 'evolve'):
-        """
-        Evaluates each individual in the new gen population
-
-        :param new_individuals: newly created population after an evolution iteration
-        :param gen_num: generation number
-        """
-        # Parse command line / file input arguments
-        # await self.simulator_connection.pause(True)
-        robot_futures = []
-        to_evaluate = []
-        for individual in new_individuals:
-            if not individual[environment].evaluated:
-                logger.info(f'Evaluating individual (gen {gen_num}) {individual[environment].genotype.id} ...')
-                to_evaluate.append(individual)
-                robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual[environment],
-                                                                                      environment)))
-                individual[environment].evaluated = True
-
-        await asyncio.sleep(1)
-
-        for i, future in enumerate(robot_futures):
-            individual = to_evaluate[i][environment]
-
-            logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
-
-            if individual.phenotype._behavioural_measurements is None:
-                assert (individual.fitness is None)
-
-            if type_simulation == 'evolve':
-                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id,
-                                                                         individual.phenotype._behavioural_measurements,
-                                                                         environment)
-
-            logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
-            if type_simulation == 'evolve':
-                self.conf.experiment_management.export_fitness(individual, environment)
-                self.conf.experiment_management.export_individual(individual, environment)
-
-    async def evaluate_non_simulated(self, new_individuals, gen_num, environment, type_simulation = 'evolve'):
-        """
-        Evaluates each individual in the new gen population
-
-        :param new_individuals: newly created population after an evolution iteration
-        :param gen_num: generation number
-        """
-        for individual in new_individuals:
-
-            logger.info(f'Evaluation of Individual {individual[environment].phenotype.id} (gen {gen_num}) ')
-
-            conf = copy.deepcopy(self.conf)
-            conf.fitness_function = conf.fitness_function[environment]
-            individual[environment].fitness = conf.fitness_function(None, individual[environment])
-
-            if type_simulation == 'evolve':
-                self.conf.experiment_management.export_behavior_measures(individual[environment].phenotype.id,
-                                                                         individual[environment].phenotype._behavioural_measurements,
-                                                                         environment)
-
-            logger.info(f'Individual {individual[environment].phenotype.id} has a fitness of {individual[environment].fitness}')
-            if type_simulation == 'evolve':
-                self.conf.experiment_management.export_fitness(individual[environment], environment)
-                self.conf.experiment_management.export_individual(individual[environment], environment)
-
-    async def evaluate_single_robot(self, individual, environment):
-        """
-        :param individual: individual
-        :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
-        """
-
-        conf = copy.deepcopy(self.conf)
-        conf.fitness_function = conf.fitness_function[environment]
-
-        if self.analyzer_queue is not None:
-            collisions, _bounding_box = await self.analyzer_queue.test_robot(individual,
-                                                                             conf)
-            if collisions > 0:
-                logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
-                return None, None
-
-        return await self.simulator_queue[environment].test_robot(individual, conf)

@@ -32,15 +32,15 @@ class BehaviouralMeasurements:
             self.contacts = None
 
     def items(self):
-        return {
+        dict = {
             'velocity': self.velocity,
             #'displacement': self.displacement,
             'displacement_velocity': self.displacement_velocity,
             'displacement_velocity_hill': self.displacement_velocity_hill,
             'head_balance': self.head_balance,
             'contacts': self.contacts
-        }.items()
-
+        }
+        return dict
 
 
 def velocity(robot_manager):
@@ -70,6 +70,7 @@ def displacement(robot_manager):
 
 def path_length(robot_manager):
     return robot_manager._dist
+    
     
 def displacement_velocity(robot_manager):
     """

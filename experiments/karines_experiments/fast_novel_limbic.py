@@ -50,6 +50,7 @@ async def run():
 
     # Parse command line / file input arguments
     settings = parser.parse_args()
+
     experiment_management = ExperimentManagement(settings, environments)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
@@ -67,7 +68,7 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(measures, robot):
-        return fitness.displacement_velocity_hill(measures, robot, False)
+        return fitness.fast_novel_limbic(measures, robot)
 
     fitness_function = {'plane': fitness_function_plane}
 
@@ -89,32 +90,33 @@ async def run():
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         environments=environments,
-        front=front
+        front=front,
+        run_simulation=settings.run_simulation,
+        all_settings=settings,
     )
-
-    settings = parser.parse_args()
 
     simulator_queue = {}
     analyzer_queue = None
 
-    previous_port = None
-    for environment in environments:
+    if settings.run_simulation == 1:
+        previous_port = None
+        for environment in environments:
 
-        settings.world = environment
-        settings.z_start = environments[environment]
+            settings.world = environment
+            settings.z_start = environments[environment]
 
-        if previous_port is None:
-            port = settings.port_start
-            previous_port = port
-        else:
-            port = previous_port+settings.n_cores
-            previous_port = port
+            if previous_port is None:
+                port = settings.port_start
+                previous_port = port
+            else:
+                port = previous_port+settings.n_cores
+                previous_port = port
 
-        simulator_queue[environment] = SimulatorQueue(settings.n_cores, settings, port)
-        await simulator_queue[environment].start()
+            simulator_queue[environment] = SimulatorQueue(settings.n_cores, settings, port)
+            await simulator_queue[environment].start()
 
-    analyzer_queue = AnalyzerQueue(1, settings, port+settings.n_cores)
-    await analyzer_queue.start()
+        analyzer_queue = AnalyzerQueue(1, settings, port+settings.n_cores)
+        await analyzer_queue.start()
 
     population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 

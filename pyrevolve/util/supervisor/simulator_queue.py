@@ -148,9 +148,8 @@ class SimulatorQueue:
 
     async def _evaluate_robot(self, simulator_connection, robot, conf):
         if robot.failed_eval_attempt_count == 3:
-            logger.info(f'Robot {robot.phenotype.id} evaluation failed (reached max attempt of 3), fitness set to None.')
-            robot_fitness = None
-            return robot_fitness, None
+            logger.info(f'Robot {robot.phenotype.id} evaluation failed (reached max attempt of 3), behavior set to None.')
+            return None
         else:
             # Change this `max_age` from the command line parameters (--evalution-time)
             max_age = conf.evaluation_time
@@ -163,14 +162,12 @@ class SimulatorQueue:
             elapsed = end-start
             logger.info(f'Time taken: {elapsed}')
 
-            robot_fitness = conf.fitness_function(robot_manager, robot)
-
             simulator_connection.unregister_robot(robot_manager)
             # await simulator_connection.delete_all_robots()
             # await simulator_connection.delete_robot(robot_manager)
             # await simulator_connection.pause(True)
             await simulator_connection.reset(rall=True, time_only=True, model_only=False)
-            return robot_fitness, measures.BehaviouralMeasurements(robot_manager, robot)
+            return measures.BehaviouralMeasurements(robot_manager, robot)
 
     async def _joint(self):
         await self._robot_queue.join()
