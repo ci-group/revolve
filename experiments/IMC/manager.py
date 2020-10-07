@@ -40,7 +40,7 @@ async def run():
             # simulator_args=[""]
             plugins_dir_path=os.path.join('.', 'build', 'lib'),
             models_dir_path=os.path.join('.', 'models'),
-            simulator_name='gzserver'   # /home/fuda/Projects/gazebo/build/gazebo/gzserver
+            simulator_name='/home/fuda/Projects/gazebo/build/gazebo/gzserver'   # /home/fuda/Projects/gazebo/build/gazebo/gzserver
         )
     await simulator_supervisor.launch_simulator(port=settings.port_start)
     await asyncio.sleep(0.1)
@@ -58,8 +58,14 @@ async def run():
     # load robot file
     robot = RevolveBot()
 
-    robot_file_path = "experiments/IMC/yaml/IMCspider.yaml"        #spider
     # robot_file_path = "experiments/IMC/yaml/Single_link.yaml"   #single link testing
+    # robot_file_path = "experiments/IMC/yaml/IMC_667710.yaml"        #sven
+    # robot_file_path = "experiments/IMC/yaml/IMC_babyA4.yaml"
+    # robot_file_path = "experiments/IMC/yaml/IMC_babyB9.yaml"
+    # robot_file_path = "experiments/IMC/yaml/IMC_gecko5.yaml"        #sven8
+    robot_file_path = "experiments/IMC/yaml/IMC_snake1.yaml"        #sven
+    # robot_file_path = "experiments/IMC/yaml/IMC_spider9.yaml"        #spider9
+
 
     robot.load_file(robot_file_path, conf_type='yaml')
     robot.update_substrate()
@@ -67,7 +73,7 @@ async def run():
 
 
     # insert robot into the simulator
-    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.25), life_timeout=None)
+    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.05), life_timeout=None)
     await connection.pause(False)
 
 

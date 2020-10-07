@@ -21,6 +21,7 @@
 
 #include <cmath>
 #include <gazebo/physics/Model.hh>
+#include <revolve/gazebo/motors/JointMotor.h>
 #include <revolve/brains/learner/Evaluator.h>
 
 
@@ -55,6 +56,8 @@ Evaluator::Evaluator(const double evaluation_rate,
   this->start_position_.Reset();
   this->locomotion_type = "directed"; // {turing_left,directed, gait}
   this->path_length = 0.0;
+
+  this->output_dir = "./experiments/IMC/output"+robot->GetName();
 }
 
 /////////////////////////////////////////////////
@@ -71,7 +74,14 @@ void Evaluator::reset()
         auto start_pose = ::ignition::math::Pose3d();
         start_pose.Set(0.0, 0.0, 0.05, 0.0, 0.0, 0.0);
         _robot->SetWorldPose(start_pose);
+        for (const auto& joint_ : _robot->GetJoints()) {
+            std::string joint_name = joint_->GetScopedName();
+            _robot->SetJointPosition(joint_name, 0.0);
+            joint_->SetPosition(0, 0.0);
+
+        }
         _robot->Update();
+        this->current_position_ = start_pose;
     }
 
     this->step_poses.clear(); //cleared to null
@@ -162,9 +172,19 @@ double Evaluator::fitness()
     }
 
     //fitness_direction = dist_projection / (alpha + ksi) - penalty;
-    fitness_direction = std::abs(dist_projection) / path_length *
-                        (dist_projection / (alpha + ksi) - penalty);
+//    fitness_direction = (dist_projection / (alpha + ksi) - penalty);
+    fitness_direction = dist_projection*std::abs(dist_projection) - dist_penalty*dist_penalty;
     fitness_value = fitness_direction;
+
+
+    double tot_dist = std::sqrt(
+              std::pow(dist_projection, 2.0) + std::pow(dist_penalty, 2.0));
+
+    // Write fitness to file
+    std::ofstream fitness_file;
+    fitness_file.open(this->output_dir + "/fitness_decom.txt", std::ios::app);
+    fitness_file << std::fixed<<dist_penalty<<","<<dist_projection<<"," <<tot_dist<<","<< path_length<< ",";
+    fitness_file.close();
   }
   else if(this->locomotion_type == "turing_left") //anticlockwise
   {

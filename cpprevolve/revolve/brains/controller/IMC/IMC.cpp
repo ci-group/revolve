@@ -11,6 +11,7 @@
 #include <memory>
 #include <utility>
 #include "iostream"
+#include <time.h>
 
 const std::string project_root = ".";
 
@@ -48,20 +49,39 @@ IMC::IMC(std::unique_ptr<::revolve::Controller> wrapped_controller,
     this->State_Memory      = torch::ones({long(_actuators.size()*2), params.window_length}, torch::kFloat64)* 0.5;
     this->Reference_Memory  = torch::ones({long(_actuators.size()*2), params.window_length}, torch::kFloat64)* 0.4999/params.window_length;
 
-    if (params.restore_checkpoint) {
-        this->Load_Progress("spider9");
-    }
-
     this->Save_Check = params.save_checkpoint;
+    this->model_name = params.model_name;
 
-    for(int i=0 ; i<int(_actuators.size()); ++i){
-        std::ofstream ofs;
-        ofs.open(project_root+"/experiments/IMC/output/act_inf/A"+std::to_string(i+1)+".log", std::ofstream::out | std::ofstream::trunc);
-        ofs.close();
+    if (params.restore_checkpoint) {
+        std::cout<<"Restore Checkpoint"<<std::endl;
+        this->Load_Progress(params.model_name);
+        bool test_best = false; //retest without learning
+        if(test_best){
+            this->Save_Check = false;
+            for (const auto& param : this->InverseNet->named_parameters()) {
+                param->requires_grad_(false);
+            }
+            for (const auto& param : this->FeedForNet->named_parameters()) {
+                param->requires_grad_(false);
+            }
+            for (int i = 0; i < int(_actuators.size()); ++i) {
+                std::ofstream ofs;
+                ofs.open(project_root + "/experiments/IMC/output" + this->model_name + "/act_info/A" +
+                         std::to_string(i + 1) + ".log", std::ofstream::out | std::ofstream::trunc);
+                ofs.close();
+            }
+        }
     }
-
-
-//    ofs.open(project_root+"/experiments/IMC/output/act_inf.log", std::ofstream::out | std::ofstream::trunc);
+    else {//clear log files for new
+        for (int i = 0; i < int(_actuators.size()); ++i) {
+            std::ofstream ofs;
+            ofs.open(project_root + "/experiments/IMC/output" + this->model_name + "/act_info/A" +
+                     std::to_string(i + 1) + ".log", std::ofstream::out | std::ofstream::trunc);
+            ofs.close();
+        }
+    }
+//    std::ofstream ofs;
+//    ofs.open(project_root+"/experiments/IMC/output"+this->model_name+"/IMC_time.txt", std::ofstream::out | std::ofstream::trunc);
 //    ofs.close();
 
 }
@@ -94,19 +114,18 @@ void IMC::Update_Weights(
     FeedFor_loss.backward();
     this->FeedFor_Optim->step();
 
-//    std::cout<<"\n\n#### State Memory ####\n"<<this->State_Memory.narrow(1,1,4)<< "\n #### Current State ####\n"<<Current_State<<std::endl;
 
-    this->State_Memory      = torch::cat({this->State_Memory.narrow(1,1,this->State_Memory.size(1)-1),Current_State.reshape({Motor_Input.size(0)*2,1})},1);
-    this->Reference_Memory  = torch::cat({this->Reference_Memory.narrow(1,1,this->State_Memory.size(1)-1),this->Reference_state_Prev.reshape({Motor_Input.size(0)*2,1})},1);
-
+    this->State_Memory      = torch::cat({this->State_Memory.narrow(1, 1, this->State_Memory.size(1) - 1).detach(),
+                                          Current_State.reshape({Motor_Input.size(0) * 2, 1})},1);
+    this->Reference_Memory  = torch::cat({this->Reference_Memory.narrow(1,1,this->State_Memory.size(1)-1),
+                                          this->Reference_state_Prev.reshape({Motor_Input.size(0)*2,1})},1);
 
     torch::nn::MSELoss MSE_Inverse_loss;
     torch::Tensor Inverse_loss = MSE_Inverse_loss(this->State_Memory,this->Reference_Memory.detach());
 //    torch::Tensor Inverse_loss = MSE_Inverse_loss(Current_State.narrow(0,0,Motor_Input.size(0)),
-//            this->Reference_state_Prev.narrow(0,0,Motor_Input.size(0)).detach());//.narrow(0,0,Motor_Input.size(0)).detach())
+//            this->Reference_state_Prev.narrow(0,0,Motor_Input.size(0)));//.narrow(0,0,Motor_Input.size(0)).detach())
     Inverse_loss.backward();
     this->Inverse_Optim->step();
-
 
     /// Logging results
     auto mi_a = this->Motor_Input_Prev.accessor<double,1>();
@@ -118,22 +137,13 @@ void IMC::Update_Weights(
 
     for(int i=0 ; i<Motor_Input.size(0); ++i){
         std::ofstream ofs;
-        ofs.open(project_root+"/experiments/IMC/output/act_inf/A"+std::to_string(i+1)+".log", std::ios::app);
-        ofs<<cs_a[0+i] <<","<<cs_a[Motor_Input.size(0)+i]<<","<<rs_a[0+i]<<","<<rs_a[Motor_Input.size(0)+i]<<","
-        <<ps_a[0+i]<<","<<ps_a[Motor_Input.size(0)+i]<<","<<cs_a[0+i] <<","<<cs_a[Motor_Input.size(0)+i]<<","
-        <<FeedFor_loss.template item<float>()<<","<<Inverse_loss.template item<float>()<<","<<mi_a[0]<<","<<fb_a[0]<<"\n";
+        ofs.open(project_root+"/experiments/IMC/output"+this->model_name+"/act_info/A"+std::to_string(i+1)+".log", std::ios::app);
+        ofs<<cs_a[i] <<","<<cs_a[Motor_Input.size(0)+i]<<","
+           <<rs_a[i]<<","<<rs_a[Motor_Input.size(0)+i]<<","
+           <<ps_a[i]<<","<<ps_a[Motor_Input.size(0)+i]<<","
+           <<FeedFor_loss.template item<float>()<<","<<Inverse_loss.template item<float>()<<","<<mi_a[i]<<","<<fb_a[i]<<"\n";
         ofs.close();
     }
-
-//    std::ofstream foutFor;  // Create Object of ofstream
-//    foutFor.open ("/home/fuda/Projects/revolve/experiments/IMC/output/testFor.log" , std::ios::app);
-//    foutFor<<ps_a[0]<<","<<ps_a[Motor_Input.size(0)]<<","<<cs_a[0] <<","<<cs_a[Motor_Input.size(0)]<<","<<FeedFor_loss.template item<float>()<<"\n";
-//    foutFor.close(); // Closing the file
-//
-//    std::ofstream foutInv;  // Create Object of ofstream
-//    foutInv.open ("/home/fuda/Projects/revolve/experiments/IMC/output/testInv.log" , std::ios::app);
-//    foutInv<<rs_a[0]<<","<<rs_a[Motor_Input.size(0)]<<","<<cs_a[0] <<","<<cs_a[Motor_Input.size(0)]<<","<<Inverse_loss.template item<float>()<<","<<mi_a[0]<<","<<fb_a[0]<<"\n";
-//    foutInv.close(); // Closing the file
 }
 
 void IMC::Step(
@@ -142,56 +152,95 @@ void IMC::Step(
         const std::vector<std::shared_ptr<Actuator>> &_actuators,
         double dt)
 {
-    this->Current_State_Prev = current_state.requires_grad_(true);
-    this->Update_Weights(this->Current_State_Prev, this->Motor_Input_Prev);
+    if(false){
+        this->Current_State_Prev = current_state.requires_grad_(true);
+        this->Update_Weights(this->Current_State_Prev, this->Motor_Input_Prev);
 
+        torch::Tensor feedback_error = (this->Predicted_state_Prev-current_state).detach();
+        torch::Tensor motor_input = this->InverseModel(current_state, reference_state + feedback_error).to(torch::kFloat);
 
-    torch::Tensor feedback_error = (this->Predicted_state_Prev-current_state).detach();
-    torch::Tensor motor_input = this->InverseModel(current_state, reference_state + feedback_error);
-    torch::Tensor predicted_state = FeedForModel(current_state, motor_input);
+        torch::Tensor predicted_state = FeedForModel(current_state, motor_input).to(torch::kFloat);
+        torch::Tensor FeedFor_error = (reference_state-predicted_state).detach();
 
-    torch::Tensor denormalize = torch::tensor({{5.235988},{1.0}},torch::kDouble);
+        torch::Tensor feedback = feedback_error+FeedFor_error;
 
-    torch::Tensor prediction_error = (reference_state-predicted_state).detach();
-    motor_input = (motor_input
-            + (torch::mm((feedback_error+prediction_error).reshape({int(_actuators.size()),2}),denormalize))
-            .reshape({int(_actuators.size())})-.5)*dt+.5;
+        motor_input = (motor_input-0.5)*dt+0.5
+                      + (feedback.narrow(0,0,int(_actuators.size()))*5.235988*1.0 //hardcoded normalization
+                         + feedback.narrow(0,int(_actuators.size()),int(_actuators.size()))*1.0)*dt;
 
+        this->Reference_state_Prev = reference_state;
+        this->Predicted_state_Prev = predicted_state;
+        this->Current_State_Prev = current_state;
+        this->Motor_Input_Prev = motor_input.requires_grad_(true);
+        this->Motor_Input_Prev_fb = (feedback.narrow(0,0,int(_actuators.size()))*5.235988*2.0
+                                     + feedback.narrow(0,int(_actuators.size()),int(_actuators.size()))*2.0)*dt+0.5;
 
-    unsigned int p = 0;
-    for (const auto &actuator: _actuators)
-    {   double *output = motor_input[p].data_ptr<double>();
-        actuator->write(output, dt);
-        p += 1;
+        motor_input = motor_input.to(torch::kDouble);
+        unsigned int p = 0;
+        for (const auto &actuator: _actuators)
+        {
+            double *output = motor_input[p].data_ptr<double>();
+            actuator->write(output, dt);
+            p += 1;
+        }
     }
+    else{
+        torch::Tensor motor_input = reference_state.narrow(0,0,_actuators.size());
 
-    this->Reference_state_Prev = reference_state;
-    this->Predicted_state_Prev = predicted_state;
-    this->Current_State_Prev = current_state;
-    this->Motor_Input_Prev = motor_input.requires_grad_(true);
-    this->Motor_Input_Prev_fb = (torch::mm((feedback_error+prediction_error).reshape({int(_actuators.size()),2}),denormalize))
-                                        .reshape({int(_actuators.size())})*dt+0.5;
+        /// Logging results
+        auto mi_a = this->Motor_Input_Prev.accessor<double,1>();
+        auto fb_a = this->Motor_Input_Prev_fb.accessor<double,1>();
+        auto ps_a = this->Predicted_state_Prev.accessor<double,1>();
+        auto cs_a = this->Current_State_Prev.accessor<double,1>();
+        auto rs_a = this->Reference_state_Prev.accessor<double,1>();
 
+        for(int i=0 ; i<int(_actuators.size()); ++i){
+            std::ofstream ofs;
+            ofs.open(project_root+"/experiments/IMC/output"+this->model_name+"/act_info/A"+std::to_string(i+1)+".log", std::ios::app);
+            ofs<<cs_a[i] <<","<<cs_a[motor_input.size(0)+i]<<","
+               <<rs_a[i]<<","<<rs_a[motor_input.size(0)+i]<<","
+               <<ps_a[i]<<","<<ps_a[motor_input.size(0)+i]<<","
+               <<abs(cs_a[i] - rs_a[i])+abs(cs_a[motor_input.size(0)+i]-rs_a[motor_input.size(0)+i])<<","<<cs_a[i] *0.0<<","<<mi_a[i]<<","<<fb_a[i]
+               <<"\n";
+            ofs.close();
+        }
+
+        this->Reference_state_Prev = reference_state;
+        this->Predicted_state_Prev = motor_input*0.0;
+        this->Current_State_Prev = current_state;
+        this->Motor_Input_Prev = motor_input;
+        this->Motor_Input_Prev_fb = motor_input*0.0;
+
+        motor_input = motor_input.to(torch::kDouble);
+        unsigned int p = 0;
+        for (const auto &actuator: _actuators)
+        {
+            double *output = motor_input[p].data_ptr<double>();
+            actuator->write(output, dt);
+            p += 1;
+        }
+    }
 }
 
 void IMC::Save_Progress(std::string model_name)
 {
 //    this->InverseNet->eval();
     std::cout<<"SAVE IMC NETWORK PROGRESS"<<std::endl;
-    torch::save(this->InverseNet, project_root+"/experiments/IMC/output/"+model_name+"_Inverse_network.pt");
-    torch::save(*this->Inverse_Optim, project_root+"/experiments/IMC/output/"+model_name+"_Inverse_optimizer.pt");
+    torch::save(this->InverseNet, project_root+"/experiments/IMC/output"+model_name+"/"+model_name+"_Inverse_network.pt");
+    torch::save(*this->Inverse_Optim, project_root+"/experiments/IMC/output"+model_name+"/"+model_name+"_Inverse_optimizer.pt");
 
-    torch::save(this->FeedForNet, project_root+"/experiments/IMC/output/"+model_name+"_FeedForModel_network.pt");
-    torch::save(*this->FeedFor_Optim, project_root+"/experiments/IMC/output/"+model_name+"_FeedForModel_optimizer.pt");
+    torch::save(this->FeedForNet, project_root+"/experiments/IMC/output"+model_name+"/"+model_name+"_FeedForModel_network.pt");
+    torch::save(*this->FeedFor_Optim, project_root+"/experiments/IMC/output"+model_name+"/"+model_name+"_FeedForModel_optimizer.pt");
 }
 
 void IMC::Load_Progress(std::string model_name)
 {
-    torch::load(this->InverseNet, project_root+"/experiments/IMC/output/"+model_name+"_Inverse_network.pt");
-    torch::load(*this->Inverse_Optim, project_root+"./experiments/IMC/output/"+model_name+"_Inverse_optimizer.pt");
+    std::cout<<"Load previous IMC"<<std::endl;
+    torch::load(this->InverseNet, project_root+"/experiments/IMC/output"+model_name+"/"+model_name+"_Inverse_network.pt");
+    torch::load(*this->Inverse_Optim, project_root+"/experiments/IMC/output"+model_name+"/"+model_name+"_Inverse_optimizer.pt");
 
-    torch::load(this->FeedForNet, project_root+"/experiments/IMC/output/"+model_name+"_FeedForModel_network.pt");
-    torch::load(*this->FeedFor_Optim, project_root+"/experiments/IMC/output/"+model_name+"_FeedForModel_optimizer.pt");
+    torch::load(this->FeedForNet, project_root+"/experiments/IMC/output"+model_name+"/"+model_name+"_FeedForModel_network.pt");
+    torch::load(*this->FeedFor_Optim, project_root+"/experiments/IMC/output"+model_name+"/"+model_name+"_FeedForModel_optimizer.pt");
 }
 
 void IMC::update(
@@ -234,17 +283,23 @@ void IMC::update(
 
     // State you want to go to (controller output)
     torch::Tensor reference_state = torch::tensor(actuator_buffer)/2+.5;
-    if(time<=2*dt){
-        reference_state= (reference_state-.5)*time/(3*dt)+.5;
-    }
 
     torch::Tensor reference_state_dot = ((reference_state-this->Reference_state_Prev.narrow(0,0,actuators.size()))/dt/5.235988+.5).clamp(0,1);
     reference_state = torch::cat({reference_state,reference_state_dot},0);
 
     this->Step(current_state, reference_state, actuators, dt);
 
-//    std::cout<<time<<std::endl;
-    if(int((time)/dt)%int(60/dt) == 0 & this->Save_Check){
-        this->Save_Progress(std::string("spider9"));
+    if((std::fmod(time,60.0) == 0) & this->Save_Check){
+        this->Save_Progress(this->model_name);
+        if(time == 60.0*50){
+            for(const auto& pair : this->InverseNet->named_parameters().pairs()){
+                this->InverseNet->named_parameters().find(pair.first)->
+                        set_requires_grad(pair.first.find("ut") == std::string::npos);
+            }
+            for(const auto& pair : this->InverseNet->named_parameters().pairs()){
+                this->InverseNet->named_parameters().find(pair.first)->
+                        set_requires_grad(pair.first.find("ut") == std::string::npos);
+            }
+        }
     }
 }

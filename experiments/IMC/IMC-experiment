@@ -2,10 +2,10 @@
 
 set -e
 set -x
-runs=1
+runs=5
 runs_start=0
-start_port=15000
-exp_name=IMCspider
+start_port=16000
+exp_name=IMC_spider
 log_suffix=''
 project_folder=experiments/IMC/
 manager="${project_folder}"manager.py
@@ -13,5 +13,13 @@ manager="${project_folder}"manager.py
 for i in $(seq $runs)
 	do
 		run=$((i+runs_start))
-		screen -d -m -S "${exp_name}_${run}" -L -Logfile "${project_folder}${exp_name}${log_suffix}_${run}.log" nice -n19 ./revolve.py --manager $manager --simulator-cmd=/home/fuda/Projects/gazebo/build/gazebo/gzserver --experiment-name $exp_name --n-cores 4 --port-start $((${start_port} + ($run*10))) --run $run
+		if ! [ -d "${project_folder}/output${exp_name}${run}" ]; then
+		  mkdir "${project_folder}/output${exp_name}${run}"
+    fi
+    if ! [ -d "${project_folder}/output${exp_name}${run}/act_info" ]; then
+      mkdir "${project_folder}/output${exp_name}${run}/act_info"
+    fi
+		screen -d -m -S "${exp_name}_${run}" -L -Logfile "${project_folder}${exp_name}${log_suffix}_${run}.log" nice -n19 ./revolve.py --test-robot "${project_folder}/yaml/${exp_name}${run}.yaml" --simulator-cmd=/home/fuda/Projects/gazebo/build/gazebo/gzserver --experiment-name $exp_name --n-cores 1 --pose-update-frequency 5 --port-start $((${start_port} + ($run*10))) --run $run
 	done
+
+date +"%H:%M:%S"

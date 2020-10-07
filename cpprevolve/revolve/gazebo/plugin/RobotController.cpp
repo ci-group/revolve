@@ -223,7 +223,7 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
     //TODO parameters from SDF
     const double evaluation_rate = 60.0;
-    const unsigned int n_learning_evaluations = 250;
+    const unsigned int n_learning_evaluations = 300;
 
     this->evaluator = std::make_unique<::revolve::gazebo::Evaluator>(evaluation_rate, true, this->model_);
 
@@ -248,17 +248,29 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
         }
     } else if ("cpg" == controller_type) {
         controller = std::make_unique<DifferentialCPG>(brain_sdf, motors_);
-    } else if ("cppn-cpg") {
+    } else if ("cppn-cpg" == controller_type) {
         controller = std::make_unique<DifferentialCPPNCPG>(brain_sdf, motors_);
     } else {
         throw std::runtime_error("Robot brain: Controller \"" + controller_type + "\" is not supported.");
     }
-    std::cout << "Initializing IMC" << std::endl;
-    // ================= INITIALIZE IMC ====================
-    IMC::IMCParams imc_params = IMC::IMCParams();
-    controller = std::make_unique<IMC>(std::move(controller), motors_, imc_params);
-    std::cout<<"IMC Parameters: lr:"<< imc_params.learning_rate<<", beta1:"  << imc_params.beta1<<", beta2:"  << imc_params.beta2<<", wd:" << imc_params.weight_decay << std::endl;
-    std::cout<<"IMC has been Loaded"<<std::endl;
+
+    sdf::ElementPtr IMC_sdf = brain_sdf->GetElement("rv:IMC");
+    if( (IMC_sdf->GetAttribute("active")->GetAsString()) == "1"){
+        std::cout << "Initializing IMC" << std::endl;
+        // ================= INITIALIZE IMC ====================
+        IMC::IMCParams imc_params = IMC::IMCParams();
+        imc_params.restore_checkpoint = (IMC_sdf->GetAttribute("restore_checkpoint")->GetAsString() == "1");
+        imc_params.save_checkpoint = (IMC_sdf->GetAttribute("save_checkpoint")->GetAsString() == "1");
+        imc_params.learning_rate = stod(IMC_sdf->GetAttribute("learning_rate")->GetAsString());
+        imc_params.beta1 = stod(IMC_sdf->GetAttribute("beta1")->GetAsString());
+        imc_params.beta2 = stod(IMC_sdf->GetAttribute("beta2")->GetAsString());
+        imc_params.weight_decay = stod(IMC_sdf->GetAttribute("weight_decay")->GetAsString());
+        imc_params.model_name = this->model_->GetName();
+
+        std::cout<<"IMC Parameters: lr:"<< imc_params.learning_rate<<", beta1:"  << imc_params.beta1<<", beta2:"  << imc_params.beta2<<", wd:" << imc_params.weight_decay << std::endl;
+        controller = std::make_unique<IMC>(std::move(controller), motors_, imc_params);
+        std::cout<<"IMC has been Loaded"<<std::endl;
+    }
 
     // SELECT LEARNER ---------------------------------------------------------
     if ("offline" == learner_type) {
@@ -275,7 +287,8 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
                 this->evaluator.get(),
                 this->reporter.get(),
                 evaluation_rate,
-                n_learning_evaluations);
+                n_learning_evaluations,
+                this->model_->GetName());
 //    } else if ("hyperneat" == learner_type) {
 //        NEAT::Parameters neat_params = NEAT::Parameters();
 //

@@ -26,19 +26,20 @@ BayesianOptimizer::BayesianOptimizer(
         Evaluator *evaluator,
         EvaluationReporter *reporter,
         const double evaluation_time,
-        const unsigned int n_learning_evalutions)
-        : Learner(evaluator, reporter, evaluation_time, n_learning_evalutions)
+        const unsigned int n_learning_evaluations,
+        const std::string& model_name)
+        : Learner(evaluator, reporter, evaluation_time, n_learning_evaluations)
         , _controller(std::move(controller))
-        , n_init_samples(1)
+        , n_init_samples(50)
         //, init_method("LHS")
-        , kernel_noise(0.00000001)
+        , kernel_noise(0.001)
         , kernel_optimize_noise("false")
-        , kernel_sigma_sq(1)
+        , kernel_sigma_sq(1.0)
         , kernel_l(0.2)
-        , kernel_squared_exp_ard_k(4)
-        , acqui_gpucb_delta(0.5)
+        , kernel_squared_exp_ard_k(3)
+        , acqui_gpucb_delta(0.1)
         , acqui_ucb_alpha(3.0)
-        , acqui_ei_jitter(0.0)
+        , acqui_ei_jitter(0.5)
         , acquisition_function("UCB")
 {
     assert(this->_controller && "BayesianOptimizer: passed null controller");
@@ -70,13 +71,79 @@ BayesianOptimizer::BayesianOptimizer(
             };
             break;
         default:
-            std::cerr << "Controller not supported" << std::endl;
-            throw std::runtime_error("Controller not supported");
+            std::cerr << "[BO] Controller not supported" << std::endl;
+            throw std::runtime_error("[BO] Controller not supported");
     }
 
-    std::ofstream fitness_file;
-    fitness_file.open("./experiments/examples/IMC/fitnesses.txt", std::ofstream::out | std::ofstream::trunc);
-    fitness_file.close();
+    this->output_dir = "./experiments/IMC/output"+model_name;
+
+    std::ifstream fin(this->output_dir+"/fitnesses.txt");
+    std::ifstream gin(this->output_dir+"/genotype.log");
+    if(fin){ // Continue Learning/test best
+        double fitness;
+        while (fin >> fitness){
+            // Limbo requires fitness value to be of type Eigen::VectorXd
+            Eigen::VectorXd observation = Eigen::VectorXd(1);
+            observation(0) = fitness;
+            // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
+            this->observations.push_back(observation);
+//            std::cout<<fitness<<std::endl;
+        }
+        std::cout<<"[BO] Fitness loaded!"<<std::endl;
+
+        int n_weights = this->vectorize_controller().size();
+        // Initialize Eigen::VectorXd here.
+        Eigen::VectorXd init_sample(n_weights);
+        std::string genome;
+        while (std::getline(gin, genome))
+        {
+            std::stringstream ss_weight(genome);
+            std::string weight;
+            int j =0;
+            while (std::getline(ss_weight, weight, ','))
+            {
+                init_sample(j) = stod(weight);
+                j++;
+            }
+            // Save the initialized weights
+            this->samples.push_back(init_sample);
+        }
+
+        this->evaluation_counter = this->observations.size()-1;
+        int best_index = 1;
+        for (int i=0; i<this->observations.size(); i++){
+            if (this->best_fitness<this->observations[i][0]){
+                this->best_fitness = this->observations[i][0];
+                this->best_sample = this->samples[i];
+                best_index = i;
+            }
+        }
+        std::cout<<"[BO] Observations: "<<this->observations.size()<<" | Samples: "<<this->samples.size()<<std::endl;
+        bool test_best = false; // make this parameter
+        if(test_best){
+            this->observations.clear();
+            this->evaluation_counter = -1;
+
+            auto sec_best = this->samples[best_index - 1];
+            this->devectorize_controller(sec_best);
+            this->samples.clear();
+            this->samples.push_back(this->best_sample);
+//            this->samples.push_back(sec_best);
+            std::cout<<"Retesting sample fitness: "<< this->best_fitness<<std::endl;
+            std::ofstream files;
+            files.open(this->output_dir+"/fitness_decom.txt", std::ofstream::out | std::ofstream::trunc);
+            files.close();
+        }
+    }
+    else{
+        std::cout<<"[BO] Create clean fitness/genotype files"<<std::endl;
+        std::ofstream files;
+        files.open(this->output_dir+"/fitnesses.txt", std::ofstream::out | std::ofstream::trunc);
+        files.open(this->output_dir+"/genotype.log", std::ofstream::out | std::ofstream::trunc);
+        files.open("../ctime.txt", std::ofstream::out | std::ofstream::trunc);
+        files.close();
+    }
+
 }
 
 /**
@@ -177,34 +244,90 @@ BO_DECLARE_DYN_PARAM(double, BayesianOptimizer::params::acqui_ucb, alpha);
 BO_DECLARE_DYN_PARAM(double, BayesianOptimizer::params::kernel_maternfivehalves, sigma_sq);
 BO_DECLARE_DYN_PARAM(double, BayesianOptimizer::params::kernel_maternfivehalves, l);
 
-void BayesianOptimizer::init_first_controller()
-{
-    assert(n_init_samples == 1 and "INIT SAMPLES > 1 not supported");
+void BayesianOptimizer::init_first_controller() {
+//    assert(n_init_samples <= 20 and "INIT SAMPLES > 1 not supported");
+    // Obtain number of weight for LHS
+    int n_weights = this->vectorize_controller().size();
 
-    // Save the initial weights
-    this->samples.push_back(this->vectorize_controller());
+    // Initialize Eigen::VectorXd here.
+    Eigen::VectorXd init_sample(n_weights);
+
+    // Working variable
+    double my_range = 1.f / this->n_init_samples;
+    std::cout<<"[BO] Initialize first "<<this->n_init_samples<<" sample(s)"<<std::endl;
+    // If we have n dimensions, create n such vectors that we will permute
+    std::vector<std::vector<int>> all_dimensions;
+
+    // Fill vectors
+    for (size_t i = 0; i < n_weights; i++) {
+        std::vector<int> one_dimension;
+
+        // Prepare for vector permutation
+        for (size_t j = 0; j < this->n_init_samples; j++) {
+            one_dimension.push_back(j);
+        }
+
+        // Vector permutation
+        std::random_shuffle(one_dimension.begin(), one_dimension.end());
+
+        // Save permuted vector
+        all_dimensions.push_back(one_dimension);
+    }
+
+    // For all samples
+    for (size_t i = 0; i < this->n_init_samples; i++)
+    {
+        // For all dimensions
+        for (size_t j = 0; j < n_weights; j++)
+        {
+            // Take a LHS
+            init_sample(j) = all_dimensions.at(j).at(i) * my_range + ((double) rand() / (RAND_MAX)) * my_range;
+        }
+
+        // Save the initialized weights
+        this->samples.push_back(init_sample);
+    }
+//    // Displaying the 2D vector
+//    for (int i = 0; i < samples.size(); i++)
+//    {
+//        for (int j = 0; j < samples[i].size(); j++)
+//            std::cout << samples[i][j] << " ";
+//        std::cout << std::endl;
+//    }
+
+    if (!this->samples.empty()){
+        this->devectorize_controller(this->samples[0]);
+    }
 }
 
 void BayesianOptimizer::init_next_controller()
 {
-    //TODO are these global variables 😱?
-    params::acqui_ucb::set_alpha(this->acqui_ucb_alpha);
-    params::kernel_maternfivehalves::set_l(this->kernel_l);
-    params::kernel_maternfivehalves::set_sigma_sq(this->kernel_sigma_sq);
+    Eigen::VectorXd x;
+    if (this->samples.size()>this->observations.size()){
+        std::cout<<"[BO] Initialization | "<<this->observations.size()+1<<"/"<< this->samples.size()<<std::endl;
+        x = this->samples[this->observations.size()];
+    }
+    else{
 
-    // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
-    limbo::bayes_opt::BOptimizer<params,
-            limbo::initfun<Init_t>,
-            limbo::modelfun<GP_t>,
-            limbo::acquifun<limbo::acqui::UCB<BayesianOptimizer::params, GP_t >>> boptimizer;
+        //TODO Mare these global variables 😱?
+        params::acqui_ucb::set_alpha(this->acqui_ucb_alpha);
+        params::kernel_maternfivehalves::set_l(this->kernel_l);
+        params::kernel_maternfivehalves::set_sigma_sq(this->kernel_sigma_sq);
 
-    // Optimize. Pass evaluation function and observations .
-    boptimizer.optimize(BayesianOptimizer::evaluation_function(this->samples[0].size()),
-                        this->samples,
-                        this->observations);
+        // Specify bayesian optimizer. TODO: Make attribute and initialize at bo_init
+        limbo::bayes_opt::BOptimizer<params,
+                limbo::initfun<Init_t>,
+                limbo::modelfun<GP_t>,
+                limbo::acquifun<limbo::acqui::UCB<BayesianOptimizer::params, GP_t >>> boptimizer;
 
-    Eigen::VectorXd x = boptimizer.last_sample();
-    this->samples.push_back(x);
+        // Optimize. Pass evaluation function and observations .
+        boptimizer.optimize(BayesianOptimizer::evaluation_function(this->samples[0].size()),
+                            this->samples,
+                            this->observations);
+
+        x = boptimizer.last_sample();
+        this->samples.push_back(x);
+    }
 
     // load into controller
     this->devectorize_controller(x);
@@ -212,12 +335,18 @@ void BayesianOptimizer::init_next_controller()
 
 void BayesianOptimizer::finalize_current_controller(double fitness)
 {
-    // Save connection_weights if it is the best seen so far
+    if(fitness == 0.0){
+        return ; //weird bug when re-running genotype
+    }
+
     if(fitness > this->best_fitness)
     {
         this->best_fitness = fitness;
         this->best_sample = this->samples.back();
     }
+
+    std::cout<<"[BO] Resulting fitness: "<<fitness<<"/"<< this->best_fitness<<std::endl;
+    // Save connection_weights if it is the best seen so far
 
     // Limbo requires fitness value to be of type Eigen::VectorXd
     Eigen::VectorXd observation = Eigen::VectorXd(1);
@@ -226,14 +355,30 @@ void BayesianOptimizer::finalize_current_controller(double fitness)
     // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
     this->observations.push_back(observation);
 
-    std::string directory_name = ".";
-//            ->GetAttribute("output_directory")->GetAsString();
-    // Write fitness to file
+    //  Write fitness to file
     std::ofstream fitness_file;
-    fitness_file.open(directory_name + "/experiments/IMC/output/fitnesses.txt", std::ios::app);
-    fitness_file << std::fixed << fitness << std::endl;
-    fitness_file.flush();
+    fitness_file.open(this->output_dir+"/fitnesses.txt", std::ios::app);
+    fitness_file<< std::setprecision(std::numeric_limits<long double>::digits10 + 1)
+                << fitness << std::endl;
     fitness_file.close();
+
+    // Write genotype to file
+    std::ofstream genolog;
+    genolog.open(this->output_dir+"/genotype.log", std::ios::app);
+    for (long int j = 0; j < this->samples.back().size()-1; j++) {
+        genolog << std::setprecision(std::numeric_limits<long double>::digits10 + 1)
+                <<this->samples.at(this->observations.size()-1)(j)<<",";
+    }
+    genolog<< std::setprecision(std::numeric_limits<long double>::digits10 + 1)
+            <<this->samples.at(this->observations.size()-1)(this->samples.back().size()-1)
+            <<std::endl;
+    genolog.flush();
+    genolog.close();
+
+    std::ofstream decom_file;
+    decom_file.open(this->output_dir+"/fitness_decom.txt", std::ios::app);
+    decom_file << fitness <<std::endl;
+    decom_file.close();
 }
 
 void BayesianOptimizer::load_best_controller()

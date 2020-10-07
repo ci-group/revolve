@@ -18,7 +18,7 @@
 
 #include <cmath>
 #include <string>
-
+#include <random>
 #include "PositionMotor.h"
 
 namespace gz = gazebo;
@@ -86,7 +86,7 @@ double PositionMotor::Current_State(  Actuator::StateType type)
     {
         return this->joint_->GetVelocity(0);
     }
-  else if (type == 2)
+    else if (type == 2)
     {
         return this->joint_->GetForce(0);
     }
@@ -109,11 +109,11 @@ void PositionMotor::write(
   // Note: Don't actually target the full joint range, this way a low update
   // rate won't mess with the joint constraints as much leading to a more
   // stable system.
-  output = std::fmin(std::fmax(1e-5, output), 0.99999);
+  output = std::fmin(std::fmax(1e-5, output), 0.99999)*2-1;
 //  this->positionTarget_ = this->lowerLimit_ +
 //                          (output * (this->upperLimit_ - this->lowerLimit_));
 
-    this->positionTarget_ = output*2*5.235988-5.235988;
+    this->positionTarget_ = output; //*2*5.235988-5.235988;
   // Perform the actual motor update
   this->DoUpdate(this->joint_->GetWorld()->SimTime());
 }
@@ -145,11 +145,22 @@ void PositionMotor::DoUpdate(const ::gazebo::common::Time &_simTime)
     position += (position > 0 ? -2 * M_PI : 2 * M_PI);
   }
 
-//  auto error = (position - this->positionTarget_);
-//  auto cmd = this->pid_.Update(error, stepTime)/stepTime.Double();
-  auto cmd = this->positionTarget_;
+
+  auto error = (position - this->positionTarget_);
+  auto cmd = this->pid_.Update(error, stepTime)/stepTime.Double();
   auto velLimit = joint_->GetVelocityLimit(0);
+
+//  bool add_noise = true; //perturb on the motorinput
+//  if (add_noise){
+//      const double mean = 0.0;
+//      const double stddev = 0.05;
+//      std::default_random_engine generator;
+//      auto dist = std::bind(std::normal_distribution<double>{mean, stddev},
+//                            std::mt19937(std::random_device{}()));
+//      double pert = dist()*velLimit;
+//      cmd = cmd+pert;
+//  }
   cmd = std::fmax(-velLimit,std::fmin(velLimit,cmd));
 
-    this->joint_->SetParam("vel", 0, cmd);
+  this->joint_->SetParam("vel", 0, cmd);
 }

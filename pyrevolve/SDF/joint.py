@@ -58,9 +58,9 @@ class Joint(SDF.Posable):
             servomotor.attrib['coordinates'] = ';'.join(str(i) for i in self._coordinates)
 
         pid = xml.etree.ElementTree.SubElement(servomotor, 'rv:pid')
-        SDF.sub_element_text(pid, 'rv:p', 1.0)
+        SDF.sub_element_text(pid, 'rv:p', 1)
         SDF.sub_element_text(pid, 'rv:i', 0.0)
-        SDF.sub_element_text(pid, 'rv:d', 0.0)
+        SDF.sub_element_text(pid, 'rv:d', 0.00)
         SDF.sub_element_text(pid, 'rv:i_max', 0.0)
         SDF.sub_element_text(pid, 'rv:i_min', 0.0)
         # SDF.sub_element_text(pid, 'rv:cmd_max', 0.0)
