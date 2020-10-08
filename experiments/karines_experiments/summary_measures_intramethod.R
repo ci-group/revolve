@@ -5,19 +5,37 @@ library(dplyr)
 library(trend)
 library(purrr)
 library(ggsignif)
+library(stringr) 
 
-base_directory <-paste('data', sep='') 
+#### compares multiple environments for one particular method ###
 
-analysis = 'test'
-
+#### CHANGE THE PARAMETERS HERE ####
+base_directory <-paste('data', sep='')
+analysis = 'results'
 output_directory = paste(base_directory,'/',analysis ,sep='')
+
+experiments_type = c('method1')
+experiments_labels = c('Method 1')
+runs = list(c(1:20), c(1:20))
+
+environments = list( c( 'plane', 'tilted5') ) # update with desired environment
+environments_labels = c('Plane', 'Tilted5') 
+initials =   c( 'm1p', 'm2p')
+experiments_labels2 = c('Method 1 - Plane', 'Method 1 - Tilted')
+
+gens = 200
+pop = 200
+
+sig = 0.05
+line_size = 30
+show_markers = TRUE # shows statistical tests markers on line plots
+show_legends = TRUE # shows legends on line plots
+
+# one color per item in experiments_labels2, but are not respected if show_legends as on
+experiments_type_colors = c( '#00e700' , '#009900') # light green,dark green
 
 #### CHANGE THE PARAMETERS HERE ####
 
-
-experiments_type = c('novelty')
-
-environments = list( c( 'plane') )
 
 methods = c()
 for (exp in 1:length(experiments_type))
@@ -28,24 +46,6 @@ for (exp in 1:length(experiments_type))
   }
 }
 
-initials =   c( 'bp', 'bt', 'pp', 'pt')
-
-experiments_labels = c( 'novelty')
-
-experiments_labels2 = c( 'novelty')
-
-runs = list(  c(1:1))
-
-gens = 100
-pop = 100
-
-#### CHANGE THE PARAMETERS HERE ####
-
-sig = 0.05
-line_size = 30
-show_markers = FALSE
-show_legends = FALSE 
-experiments_type_colors = c( '#00e700' , '#009900', '#ffb83b', '#fd8a3b')  # DARK:  light green,dark green, light red, dark red
 
 measures_names = c(
   'displacement_velocity_hill',
@@ -83,8 +83,7 @@ measures_names = c(
   'recurrence',
   'synaptic_reception',
   'fitness',
-  'cons_fitness',
-  'novelty'
+  'cons_fitness'
 )
 
 # add proper labels soon...
@@ -124,8 +123,7 @@ measures_labels = c(
   'recurrence',
   'synaptic_reception',
   'Fitness', 
-  'Number of slaves',
-  'Novelty'
+  'Number of slaves'
 )
 
 
@@ -156,6 +154,7 @@ for (exp in 1:length(experiments_type))
       measures_snapshots$displacement_velocity_hill =   measures_snapshots$displacement_velocity_hill*100
       measures_snapshots$run = as.factor(measures_snapshots$run)
       measures_snapshots$method = paste(experiments_type[exp], environments[[exp]][env],sep='_')
+      measures_snapshots$method_label =  experiments_labels2[exp] 
       
       if ( is.null(measures_snapshots_all)){
         measures_snapshots_all = measures_snapshots
@@ -168,44 +167,7 @@ for (exp in 1:length(experiments_type))
 
 
 fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
-
-
-measures_snapshots_all = sqldf("select * from measures_snapshots_all where generation<=99 and cons_fitness IS NOT NULL") 
-
-
-
-
-# densities
-
-measures_snapshots_all_densities = sqldf(paste("select * from measures_snapshots_all where generation=99
-                                         and method !='", methods[length(methods)],"'",sep='' )) 
-
-measures_names_densities = c('length_of_limbs','proportion', 'absolute_size','head_balance','joints', 'limbs')
-measures_labels_densities = c('Rel. Length of Limbs','Proportion', 'Size','Balance','Rel. Number of Joints', 'Rel. Number of Limbs')
-
-for (i in 1:length(measures_names_densities)) 
-{
-  
-  for (j in 1:length(measures_names_densities)) 
-  {
-    
-    if(i != j)
-    {
-      
-      graph <- ggplot(measures_snapshots_all_densities, aes_string(x=measures_names_densities[j], y= measures_names_densities[i]))+ 
-        geom_density_2d(aes(colour = method ), alpha=0.7, size=3 )+
-        scale_color_manual(values = c(experiments_type_colors[4:4], experiments_type_colors[1:2]) )+  
-        labs( x = measures_labels_densities[j], y= measures_labels_densities[i] )+
-        theme(legend.position="bottom" ,   axis.text=element_text(size=21),axis.title=element_text(size=22),
-              plot.subtitle=element_text(size=25 )) +
-        coord_cartesian(ylim = c(0, 1), xlim = c(0, 1))
-      ggsave(paste( output_directory ,'/density_',measures_names_densities[i],'_', measures_names_densities[j],'.png',  sep=''), graph , 
-             device='png', height = 6, width = 6)
-    }
-    
-  }
-}
-
+measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
 
 
 measures_averages_gens_1 = list()
@@ -224,7 +186,7 @@ for (met in 1:length(methods))
     query = paste(query,', avg(',measures_names[i],') as ', methods[met], '_',measures_names[i],'_avg', sep='') 
   }
   query = paste(query,' from measures_snapshots_all 
-                    where method="', methods[met],'" group by run, generation', sep='')
+                where method="', methods[met],'" group by run, generation', sep='')
   
   temp = sqldf(query)
   
@@ -370,7 +332,7 @@ if (aux_m>1)
         )
         
         writeLines(c(
-          paste(methods[m],'VS',methods,measures_names[i],'fin avg wilcox p: ',as.character(round(array_wilcoxon2[[1]][[count_pairs]][[i]]$p.value,4)), sep=' ')
+          paste(methods[m],'VS',methods[m],measures_names[i],'fin avg wilcox p: ',as.character(round(array_wilcoxon2[[1]][[count_pairs]][[i]]$p.value,4)), sep=' ')
           ,paste(methods[m],'VS',methods[m2],measures_names[i],'fin avg wilcox est: ',as.character(round(array_wilcoxon2[[1]][[count_pairs]][[i]]$statistic,4)), sep=' ')
           
         ), file)
@@ -386,8 +348,6 @@ if (aux_m>1)
 }
 
 close(file)
-
-
 
 # plots measures 
 
@@ -431,7 +391,7 @@ for (type_summary in c('means','quants'))
         
       }else{
         if(show_legends == TRUE){
-          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='') , colour=shQuote(experiments_labels[m])   ),size=2 )
+          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='') , colour=shQuote(str_to_title(environments[[1]][m]))   ),size=2 )
         }else{
           graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='')  ),size=2, color = experiments_type_colors[m] )
         }
@@ -489,8 +449,10 @@ for (type_summary in c('means','quants'))
     }
     
     max_y =  0
+    min_y = 0
+    #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
     
-    graph = graph  +  labs( y=measures_labels[i], x="Generation") 
+    graph = graph  +  labs( y=measures_labels[i], x="Generation", title=experiments_labels[1]) 
     if (max_y>0) {
       graph = graph + coord_cartesian(ylim = c(min_y, max_y)) 
     }
@@ -498,7 +460,7 @@ for (type_summary in c('means','quants'))
     if(show_markers == TRUE){
       graph = graph  + labs( y=measures_labels[i], x="Generation", subtitle = paste(tests1,'\n', tests2, '\n', tests3, sep='')) 
     }
-    graph = graph  + theme(legend.position="bottom" ,  legend.text=element_text(size=20), axis.text=element_text(size=30),axis.title=element_text(size=39),
+    graph = graph  + theme(legend.position="bottom" ,  legend.text=element_text(size=20), axis.text=element_text(size=27),axis.title=element_text(size=25),
                            plot.subtitle=element_text(size=25 )) 
     
     ggsave(paste( output_directory,'/',type_summary,'_' ,measures_names[i],'_generations.pdf',  sep=''), graph , device='pdf', height = 10, width = 10)
@@ -512,60 +474,43 @@ for (type_summary in c('means','quants'))
 for (i in 1:length(measures_names)) 
 {
   
-  all_final_values = data.frame()
-  if (measures_names[i] == 'displacement_velocity_hill' || measures_names[i] == 'head_balance') {  fin=length(methods)
-  }else{  fin=length(methods)-1 }
+  max_y =  0
+  min_y = 0
+
+  #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
   
-  for (exp in 1:fin)
+  all_final_values = data.frame()
+  for (exp in 1:length(methods))
   {
     temp = data.frame( c(measures_fin[[exp]][paste(methods[exp],'_',measures_names[i],'_avg', sep='')]))
     colnames(temp) <- 'values'
-    if (measures_names[i] == 'displacement_velocity_hill' || measures_names[i] == 'head_balance')
-      {  temp$type = experiments_labels[exp] 
-    }else{  temp$type = experiments_labels2[exp] }
     
+    temp$type = str_to_title(environments[[1]][exp])
     all_final_values = rbind(all_final_values, temp)
   }
   
-
-  max_y =  max(all_final_values$values) * 1.1
-  
   g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
-    geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) + #notch=TRUE
-    labs( x="Environment", y=measures_labels[i], title="Final generation")
+    geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
+    labs( x="Season", y=measures_labels[i], title=experiments_labels[1])  
   
-  if (measures_names[i] == 'displacement_velocity_hill'  || measures_names[i] == 'head_balance') 
-    {  g1 = g1 +  scale_color_manual(values=experiments_type_colors)  
-  }else{  g1 = g1 +  scale_color_manual(values= c(experiments_type_colors[1:2],experiments_type_colors[4:4])) }
+  g1 = g1 +  scale_color_manual(values=experiments_type_colors)  
   
   g1 = g1 + theme(legend.position="none" , text = element_text(size=45) ,  
                   plot.title=element_text(size=40),  axis.text=element_text(size=45),
                   axis.title=element_text(size=50),
-                  axis.text.x = element_text(angle = 20, hjust = 1 ),
-                  plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  0.9, unit = "cm")
-                  )+ 
+                  axis.text.x = element_text(angle = 20, hjust = 1))+ 
     stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
   
-  if (measures_names[i] == 'displacement_velocity_hill'  || measures_names[i] == 'head_balance') {  comps = list(c("Non-S: Flat", "Seasonal: Flat"),
-                                                                         c("Non-S: Tilted", "Seasonal: Tilted"),
-                                                                         c("Non-S: Tilted", "Non-S: Flat"),
-                                                                         c("Seasonal: Tilted", "Seasonal: Flat"))  
-    aux_width=13
-  }else{  comps = list(c("Non-S: Flat", "Non-S: Tilted"),
-                       c("Non-S: Flat", "Seasonal"),
-                       c("Non-S: Tilted", "Seasonal"))  
-    aux_width=10
-  } 
-  
+  comps = list(environments_labels)   
   
   g1 = g1 + geom_signif( test="wilcox.test", size=2, textsize=22, 
                          comparisons = comps,  
                          map_signif_level=c("***"=0.001,"**"=0.01, "*"=0.05) )
   if (max_y>0) {
-    g1 = g1 + coord_cartesian(ylim = c(0, max_y)) 
+    g1 = g1 + coord_cartesian(ylim = c(min_y, max_y)) 
   }
- 
-  ggsave(paste(output_directory,"/",measures_names[i],"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = aux_width)
+  
+  ggsave(paste(output_directory,"/",measures_names[i],"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
   
 }
 
