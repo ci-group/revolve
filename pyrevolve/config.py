@@ -146,7 +146,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--k-novelty',
-    default=3, type=int,
+    default=15, type=int,
     help="K nearest neighbors for calculating novelty. "
 )
 

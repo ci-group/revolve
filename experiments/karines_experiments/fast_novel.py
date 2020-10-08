@@ -31,7 +31,7 @@ async def run():
     front = None
 
     # environment world and z-start
-    environments = {'plane': 0.03}
+    environments = {'tilted5': 0.1}
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,
@@ -68,7 +68,7 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(measures, robot):
-        return fitness.fast_novel_limbic(measures, robot)
+        return fitness.fast_novel(measures, robot)
 
     fitness_function = {'plane': fitness_function_plane}
 

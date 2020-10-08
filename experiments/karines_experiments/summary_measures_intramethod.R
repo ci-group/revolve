@@ -384,7 +384,7 @@ for (type_summary in c('means','quants'))
       if(type_summary == 'means')
       {
         if(show_legends == TRUE){
-          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep=''), colour=shQuote(experiments_labels[m]) ), size=2)
+          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep=''), colour=shQuote(str_to_title(environments[[1]][m])) ), size=2)
         }else{
           graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep='')   ),size=2, color = experiments_type_colors[m])
         }
