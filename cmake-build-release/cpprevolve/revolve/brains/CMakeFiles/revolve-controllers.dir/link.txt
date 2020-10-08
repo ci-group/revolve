@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -O2 -DNDEBUG  -shared -Wl,-soname,librevolve-controllers.so -o librevolve-controllers.so CMakeFiles/revolve-controllers.dir/controller/DifferentialCPG.cpp.o 

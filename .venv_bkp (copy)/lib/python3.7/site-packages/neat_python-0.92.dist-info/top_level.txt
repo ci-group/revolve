@@ -1,4 +1,0 @@
-neat
-neat/ctrnn
-neat/iznn
-neat/nn
