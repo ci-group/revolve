@@ -23,6 +23,7 @@ environments_labels = c('Plane', 'Tilted5')
 initials =   c( 'm1p', 'm2p')
 experiments_labels2 = c('Method 1 - Plane', 'Method 1 - Tilted')
 
+
 gens = 200
 pop = 200
 
@@ -81,9 +82,8 @@ measures_names = c(
   'avg_inter_dev_params',
   'sensors_reach',
   'recurrence',
-  'synaptic_reception',
-  'fitness',
-  'cons_fitness'
+  'synaptic_reception'
+  #,'cons_fitness'
 )
 
 # add proper labels soon...
@@ -121,9 +121,8 @@ measures_labels = c(
   'avg_inter_dev_params',
   'sensors_reach',
   'recurrence',
-  'synaptic_reception',
-  'Fitness', 
-  'Number of slaves'
+  'synaptic_reception'
+  #,'Number of slaves'
 )
 
 
@@ -167,7 +166,10 @@ for (exp in 1:length(experiments_type))
 
 
 fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
-measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
+#measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
+
+measures_names = c(measures_names, 'novelty', 'fitness')
+measures_labels = c(measures_labels, 'Novelty', 'Fitness')
 
 
 measures_averages_gens_1 = list()
@@ -239,6 +241,7 @@ for (met in 1:length(methods))
     measures_averages_gens = merge(measures_averages_gens, measures_averages_gens_2[[met]], all=TRUE, by = "generation")
   }
 }
+
 
 file <-file(paste(output_directory,'/trends.txt',sep=''), open="w")
 

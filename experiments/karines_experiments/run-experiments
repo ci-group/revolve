@@ -4,8 +4,8 @@
 while true
 	do
          for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/fast_novel_limbic_plane_$i --manager experiments/karines_experiments/fast_novel_limbic_plane.py --port-start 7800;
-                ./revolve.py --experiment-name karines_experiments/data/fast_novel_limbic_tilted_$i --manager experiments/karines_experiments/fast_novel_limbic_tilted.py --port-start 7700;
+                ./revolve.py --experiment-name karines_experiments/data/fast_novel_limbic_plane_$i --run $i --manager experiments/karines_experiments/fast_novel_limbic_plane.py  --n-cores 4 --port-start 11141  --evaluation-time 50;
+                ./revolve.py --experiment-name karines_experiments/data/fast_novel_limbic_tilted_$i --run $i --manager experiments/karines_experiments/fast_novel_limbic_tilted.py  --n-cores 4 --port-start 11241  --evaluation-time 50;
 
                 sleep 5s
 	   done
