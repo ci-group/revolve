@@ -27,10 +27,10 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 100
+    num_generations = 199
     population_size = 100
-    offspring_size = 50
-    front = 'slaves'
+    offspring_size = 100
+    front = 'none'
 
     # environment world and z-start
     environments = {'plane': 0.03#,
@@ -61,11 +61,10 @@ async def run():
 
 
     def fitness_function(robot_manager, robot):
-        #contacts = measures.contacts(robot_manager, robot)
-        #assert(contacts != 0)
-        return fitness.displacement_velocity_hill(robot_manager, robot, False)
+        return 0
 
-    fitness_function = {'plane': fitness_function}
+    fitness_function = {'plane': fitness_function,
+                        'tilted5': fitness_function}
 
     population_conf = PopulationConfig(
         population_size=population_size,
@@ -86,7 +85,8 @@ async def run():
         experiment_management=experiment_management,
         environments=environments,
         front=front,
-        run_simulation=settings.run_simulation
+        run_simulation=settings.run_simulation,
+        all_settings=settings,
     )
 
     settings = parser.parse_args()
@@ -116,7 +116,7 @@ async def run():
     population = Population(population_conf, simulator_queue, analyzer_queue, 1)
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
-    generation = 99
+    generation = 199
     max_best = 5
     await population.load_snapshot(generation)
 
@@ -125,7 +125,10 @@ async def run():
         # define a criteria here
         for environment in environments:
             ind[environment].evaluated = False
-        values.append(ind[list(environments.keys())[-1]].consolidated_fitness)
+        if ind[list(environments.keys())[-1]].consolidated_fitness is not None:
+            values.append(ind[list(environments.keys())[-1]].consolidated_fitness)
+        else:
+            values.append(-float('Inf'))
         #values.append(ind['plane'].phenotype._behavioural_measurements.displacement_velocity_hill)
 
     values = np.array(values)
@@ -140,8 +143,7 @@ async def run():
     #population.individuals = population.individuals[np.argsort(values)[0:max_best]]
 
     for ind in population.individuals:
-        print(ind[list(environments.keys())[-1]].phenotype.id)
-        print('consolidated_fitness', ind[list(environments.keys())[-1]].consolidated_fitness)
+        print(ind[list(environments.keys())[-1]].phenotype.id, ind[list(environments.keys())[-1]].consolidated_fitness)
 
     for environment in environments:
         print('watch in ', environment)

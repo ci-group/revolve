@@ -19,7 +19,6 @@ from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 import sys
 
-
 async def run():
     """
     The main coroutine, which is started below.
@@ -29,10 +28,10 @@ async def run():
     num_generations = 200
     population_size = 100
     offspring_size = 100
-    front = 'none'
+    front = None
 
     # environment world and z-start
-    environments = {'plane': 0.03}
+    environments = {'tilted5': 0.1}
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,
@@ -69,9 +68,9 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(measures, robot):
-        return fitness.novelty(measures, robot)
+        return fitness.fast_novel_limbic(measures, robot)
 
-    fitness_function = {'plane': fitness_function_plane}
+    fitness_function = {'tilted5': fitness_function_plane}
 
     population_conf = PopulationConfig(
         population_size=population_size,
@@ -122,8 +121,6 @@ async def run():
     population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
     if do_recovery:
-
-        population.load_novelty_archive()
 
         if gen_num >= 0:
             # loading a previous state of the experiment

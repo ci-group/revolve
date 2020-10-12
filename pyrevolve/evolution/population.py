@@ -157,6 +157,7 @@ class Population:
         Recovers all genotypes and fitnesses of robots in the latest selected population
         :param gen_num: number of the generation snapshot to recover
         """
+#
         final_season = list(self.conf.environments.keys())[-1]
         path = 'experiments/'+self.conf.experiment_name
         for r, d, f in os.walk(os.path.join(path,'selectedpop_'+

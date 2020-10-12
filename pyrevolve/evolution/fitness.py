@@ -77,12 +77,12 @@ def fast_novel_limbic(behavioural_measurements, robot):
 
     if behavioural_measurements is not None:
         displacement_velocity_hill = behavioural_measurements['displacement_velocity_hill']
-        novelty = max(0.1, robot.novelty)
+        novelty = robot.novelty
         limbic_penalty = max(0.1, 1 - robot.phenotype._morphological_measurements.measurements_to_dict()['length_of_limbs'])
 
         print(robot.phenotype._id, displacement_velocity_hill , novelty , limbic_penalty)
-
-        if fitness >= 0:
+        
+        if displacement_velocity_hill >= 0:
             fitness = displacement_velocity_hill * novelty * limbic_penalty
         else:
             fitness = displacement_velocity_hill / novelty / limbic_penalty
@@ -100,7 +100,7 @@ def fast_novel(behavioural_measurements, robot):
 
         print(robot.phenotype._id, displacement_velocity_hill , novelty)
 
-        if fitness >= 0:
+        if displacement_velocity_hill >= 0:
             fitness = displacement_velocity_hill * noveltyy
         else:
             fitness = displacement_velocity_hill / novelty

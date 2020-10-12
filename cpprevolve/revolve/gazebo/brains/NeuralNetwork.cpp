@@ -379,6 +379,10 @@ void NeuralNetwork::Step(const double _time)
 
         /* set output to be in [0.5 - gain/2, 0.5 + gain/2] */
         nextState->at(i) = (0.5 - (gain / 2.0) + nextState->at(i) * gain);
+
+        // add IN connections to oscillators
+        nextState->at(i) = nextState->at(i)  + curNeuronActivation;
+
       }
         break;
       default:
