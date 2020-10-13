@@ -7,7 +7,7 @@ library(purrr)
 library(ggsignif)
 library(stringr) 
 
-#### compares multiple environments for one particular method ###
+#### this example of parameterization compares multiple seasons using one same type of experiment ###
 
 #### CHANGE THE PARAMETERS HERE ####
 base_directory <-paste('data', sep='')
@@ -18,10 +18,10 @@ experiments_type = c('method1')
 experiments_labels = c('Method 1')
 runs = list(c(1:20), c(1:20))
 
-environments = list( c( 'plane', 'tilted5') ) # update with desired environment
+environments = list( c( 'plane', 'tilted5') ) # update with desired seasons
 environments_labels = c('Plane', 'Tilted5') 
 initials =   c( 'm1p', 'm2p')
-experiments_labels2 = c('Method 1 - Plane', 'Method 1 - Tilted')
+experiments_labels2 = c('Method 1 - Plane', 'Method 1 - Tilted') # use this in 'comps' if having multiple typed of experiments
 
 
 gens = 200
@@ -384,32 +384,39 @@ for (type_summary in c('means','quants'))
     
     for(m in 1:length(methods))
     {
-      if(type_summary == 'means')
+      all_na = colSums(is.na(measures_averages_gens)) == nrow(measures_averages_gens)
+      all_na = all_na[paste(methods[m],'_',measures_names[i],'_avg',sep='')]
+      
+      if (all_na == FALSE)
       {
-        if(show_legends == TRUE){
-          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep=''), colour=shQuote(str_to_title(environments[[1]][m])) ), size=2)
+        
+        if(type_summary == 'means')
+        {
+          if(show_legends == TRUE){
+            graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep=''), colour=shQuote(str_to_title(environments[[1]][m])) ), size=2)
+          }else{
+            graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep='')   ),size=2, color = experiments_type_colors[m])
+          }
+          
         }else{
-          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep='')   ),size=2, color = experiments_type_colors[m])
+          if(show_legends == TRUE){
+            graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='') , colour=shQuote(str_to_title(environments[[1]][m]))   ),size=2 )
+          }else{
+            graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='')  ),size=2, color = experiments_type_colors[m] )
+          }
         }
         
-      }else{
-        if(show_legends == TRUE){
-          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='') , colour=shQuote(str_to_title(environments[[1]][m]))   ),size=2 )
-        }else{
-          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='')  ),size=2, color = experiments_type_colors[m] )
-        }
-      }
-      
-      if (length(array_mann)>0)
-      {
-        if (length(array_mann[[m]])>0)
+        if (length(array_mann)>0)
         {
-          if(!is.na(array_mann[[m]][[i]]$p.value))
+          if (length(array_mann[[m]])>0)
           {
-            if(array_mann[[m]][[i]]$p.value<=sig)
+            if(!is.na(array_mann[[m]][[i]]$p.value))
             {
-              if(array_mann[[m]][[i]]$statistic>0){ direction = "/  "} else { direction = "\\  "}
-              tests1 = paste(tests1, initials[m],direction,sep="") 
+              if(array_mann[[m]][[i]]$p.value<=sig)
+              {
+                if(array_mann[[m]][[i]]$statistic>0){ direction = "/  "} else { direction = "\\  "}
+                tests1 = paste(tests1, initials[m],direction,sep="") 
+              }
             }
           }
         }

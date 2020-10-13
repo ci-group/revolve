@@ -7,7 +7,7 @@ library(purrr)
 library(ggsignif)
 library(stringr) 
 
-#### compares mutiple methods for one particular environment ###
+####  this example of parameterization compares multiple types of experiments using one particular season ###
 
 #### CHANGE THE PARAMETERS HERE ####
 base_directory <-paste('data', sep='')
@@ -82,8 +82,8 @@ measures_names = c(
                      'sensors_reach',
                      'recurrence',
                      'synaptic_reception',
-                     'fitness',
-                     'cons_fitness'
+                     'fitness'
+                    #, 'cons_fitness'
   )
   
   # add proper labels soon...
@@ -122,8 +122,8 @@ measures_names = c(
     'Sensors Reach',
     'Recurrence',
     'synaptic_reception',
-    'Fitness', 
-    'Number of slaves'
+    'Fitness'#, 
+    #'Number of slaves'
   )
   
   
@@ -167,11 +167,10 @@ measures_names = c(
   
   
   fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
+  #measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
   
-  
-  measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
-  
-  
+  measures_names = c(measures_names, 'novelty', 'fitness')
+  measures_labels = c(measures_labels, 'Novelty', 'Fitness')
 
   
   measures_averages_gens_1 = list()
@@ -386,32 +385,39 @@ measures_names = c(
       
       for(m in 1:length(methods))
       {
-        if(type_summary == 'means')
-        {
-        if(show_legends == TRUE){
-          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep=''), colour=shQuote(experiments_labels[m]) ), size=2)
-        }else{
-          graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep='')   ),size=2, color = experiments_type_colors[m])
-        }
-         
-        }else{
-          if(show_legends == TRUE){
-           graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='') , colour=shQuote(experiments_labels[m])   ),size=2 )
-          }else{
-            graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='')  ),size=2, color = experiments_type_colors[m] )
-          }
-        }
+        all_na = colSums(is.na(measures_averages_gens)) == nrow(measures_averages_gens)
+        all_na = all_na[paste(methods[m],'_',measures_names[i],'_avg',sep='')]
         
-        if (length(array_mann)>0)
+        if (all_na == FALSE)
         {
-          if (length(array_mann[[m]])>0)
+            
+          if(type_summary == 'means')
           {
-            if(!is.na(array_mann[[m]][[i]]$p.value))
+          if(show_legends == TRUE){
+            graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep=''), colour=shQuote(experiments_labels[m]) ), size=2)
+          }else{
+            graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_avg',sep='')   ),size=2, color = experiments_type_colors[m])
+          }
+           
+          }else{
+            if(show_legends == TRUE){
+             graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='') , colour=shQuote(experiments_labels[m])   ),size=2 )
+            }else{
+              graph = graph + geom_line(aes_string(y=paste(methods[m],'_',measures_names[i],'_median',sep='')  ),size=2, color = experiments_type_colors[m] )
+            }
+          }
+          
+          if (length(array_mann)>0)
+          {
+            if (length(array_mann[[m]])>0)
             {
-              if(array_mann[[m]][[i]]$p.value<=sig)
+              if(!is.na(array_mann[[m]][[i]]$p.value))
               {
-                if(array_mann[[m]][[i]]$statistic>0){ direction = "/  "} else { direction = "\\  "}
-                tests1 = paste(tests1, initials[m],direction,sep="") 
+                if(array_mann[[m]][[i]]$p.value<=sig)
+                {
+                  if(array_mann[[m]][[i]]$statistic>0){ direction = "/  "} else { direction = "\\  "}
+                  tests1 = paste(tests1, initials[m],direction,sep="") 
+                }
               }
             }
           }
