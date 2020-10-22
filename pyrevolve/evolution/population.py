@@ -132,14 +132,13 @@ class Population:
 
     async def load_individual(self, id):
         path = 'experiments/'+self.conf.experiment_name+'/data_fullevolution'
-
         individual = {}
         for environment in self.conf.environments:
             try:
                 file_name = os.path.join(path, environment, 'individuals', 'individual_'+id+'.pkl')
                 file = open(file_name, 'rb')
                 individual[environment] = pickle.load(file)
-            except EOFError:
+            except:
                 print('bad pickle for robot', id, ' was replaced for new robot with None fitness')
                 individual = self._new_individual(
                         self.conf.genotype_constructor(self.conf.genotype_conf, id))
@@ -198,20 +197,30 @@ class Population:
         pop_measures = np.array(pop_measures)
         pop_archive_measures = np.array(pop_archive_measures)
 
+        self.calculate_distances(pool_individuals, pop_archive_measures, pop_measures, environment, gen_num, 'pop_archive')
+        self.calculate_distances(pool_individuals, pop_measures, pop_measures, environment, gen_num, 'pop')
+
+    def calculate_distances(self, pool_individuals, references, to_compare, environment, gen_num, type):
         # calculate distances
-        kdt = KDTree(pop_archive_measures, leaf_size=30, metric='euclidean')
+        kdt = KDTree(references, leaf_size=30, metric='euclidean')
 
         # distances from itself and neighbors
-        distances, indexes = kdt.query(pop_measures, k=self.conf.all_settings.k_novelty+1)
+        distances, indexes = kdt.query(to_compare, k=self.conf.all_settings.k_novelty+1)
 
         average_distances = []
         for d in range(0, len(distances)):
             average_distances.append(sum(distances[d])/self.conf.all_settings.k_novelty)
 
         for i in range(0, len(pool_individuals)):
-            pool_individuals[i][environment].novelty = average_distances[i]
-            print('geregerg',pool_individuals[i][environment].phenotype._id,pool_individuals[i][environment].novelty)
-            self.conf.experiment_management.export_novelty(pool_individuals[i][environment], environment, gen_num)
+
+            if type == 'pop_archive':
+                pool_individuals[i][environment].novelty = average_distances[i]
+                print('novelty',pool_individuals[i][environment].phenotype._id,pool_individuals[i][environment].novelty)
+                self.conf.experiment_management.export_novelty(pool_individuals[i][environment], environment, gen_num)
+            else:
+                pool_individuals[i][environment].novelty_pop = average_distances[i]
+                print('noveltypop',pool_individuals[i][environment].phenotype._id,pool_individuals[i][environment].novelty_pop)
+                self.conf.experiment_management.export_novelty_pop(pool_individuals[i][environment], environment, gen_num)
 
     def collect_measures(self, individuals, pop_measures, environment):
 
@@ -275,7 +284,7 @@ class Population:
         # calculate final fitness
         for environment in self.conf.environments:
             self.calculate_final_fitness(individuals=self.individuals, gen_num=0, environment=environment)
-        self.consolidate_fitness(self.individuals)
+        self.consolidate_fitness(self.individuals, gen_num=0)
 
     async def next_gen(self, gen_num, recovered_individuals=[]):
         """
@@ -328,7 +337,7 @@ class Population:
         # calculate final fitness
         for environment in self.conf.environments:
             self.calculate_final_fitness(individuals=selection_pool, gen_num=gen_num, environment=environment)
-        self.consolidate_fitness(selection_pool)
+        self.consolidate_fitness(selection_pool, gen_num)
 
         # create next population
         if self.conf.population_management_selector is not None:
@@ -427,7 +436,7 @@ class Population:
 
         return await self.simulator_queue[environment].test_robot(individual, conf)
 
-    def consolidate_fitness(self, individuals):
+    def consolidate_fitness(self, individuals, gen_num):
 
         # saves consolidation only in the final season instances of individual:
         final_season = list(self.conf.environments.keys())[-1]
@@ -511,7 +520,7 @@ class Population:
                         individual_ref[final_season].consolidated_fitness = 1 / masters
 
         for individual in individuals:
-            self.conf.experiment_management.export_consolidated_fitness(individual[final_season])
+            self.conf.experiment_management.export_consolidated_fitness(individual[final_season], gen_num)
 
             self.conf.experiment_management.export_individual(individual[final_season],
                                                               final_season)

@@ -15,6 +15,7 @@ class Individual:
         self.fitness = None
         # novelty is a measure of diversity
         self.novelty = None
+        self.novelty_pop = None
         self.consolidated_fitness = None
         self.evaluated = False
         self.parents = None
@@ -52,13 +53,17 @@ class Individual:
         with open(f'{folder}/fitness_{gen_num}_{self.id}.txt', 'w') as f:
             f.write(str(self.fitness))
 
-    def export_consolidated_fitness(self, folder):
-        with open(f'{folder}/consolidated_fitness_{self.id}.txt', 'w') as f:
+    def export_consolidated_fitness(self, folder, gen_num):
+        with open(f'{folder}/consolidated_fitness_{gen_num}_{self.id}.txt', 'w') as f:
             f.write(str(self.consolidated_fitness))
 
     def export_novelty(self, folder, gen_num):
         with open(f'{folder}/novelty_{gen_num}_{self.id}.txt', 'w') as f:
             f.write(str(self.novelty))
+
+    def export_novelty_pop(self, folder, gen_num):
+        with open(f'{folder}/novelty_pop_{gen_num}_{self.id}.txt', 'w') as f:
+            f.write(str(self.novelty_pop))
 
     def export_individual(self, folder):
         f = open(f'{folder}/individuals/individual_{self.id}.pkl', "wb")

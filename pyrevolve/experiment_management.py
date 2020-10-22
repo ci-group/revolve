@@ -49,13 +49,17 @@ class ExperimentManagement:
         folder = os.path.join(self._data_folder(), environment, 'fitness')
         individual.export_fitness(folder, gen_num)
 
-    def export_consolidated_fitness(self, individual):
+    def export_consolidated_fitness(self, individual, gen_num):
         folder = os.path.join(self._data_folder(), 'consolidated_fitness')
-        individual.export_consolidated_fitness(folder)
+        individual.export_consolidated_fitness(folder, gen_num)
 
     def export_novelty(self, individual, environment, gen_num):
         folder = os.path.join(self._data_folder(), environment, 'novelty')
         individual.export_novelty(folder, gen_num)
+
+    def export_novelty_pop(self, individual, environment, gen_num):
+        folder = os.path.join(self._data_folder(), environment, 'novelty')
+        individual.export_novelty_pop(folder, gen_num)
 
     def export_individual(self, individual, environment):
         folder = self._data_folder()+'/'+environment

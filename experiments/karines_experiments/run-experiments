@@ -13,6 +13,27 @@ done
 
 
 
+while true
+	do
+         for i in {1..1}; do
+                ./revolve.py --experiment-name karines_experiments/data/fnl_plastic_$i --run $i --manager experiments/karines_experiments/fnl_plastic.py  --n-cores 4 --port-start 11145  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
+
+while true
+	do
+         for i in {1..1}; do
+                ./revolve.py --experiment-name karines_experiments/data/fnl_baseline_$i --run $i --manager experiments/karines_experiments/fnl_baseline.py  --n-cores 4 --port-start 11241  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
+
+
 
 while true
 	do

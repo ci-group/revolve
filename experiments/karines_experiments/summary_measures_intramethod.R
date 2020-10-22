@@ -25,7 +25,7 @@ experiments_labels2 = c('Method 1 - Plane', 'Method 1 - Tilted') # use this in '
 
 
 gens = 200
-pop = 200
+pop = 100
 
 sig = 0.05
 line_size = 30
@@ -83,7 +83,6 @@ measures_names = c(
   'sensors_reach',
   'recurrence',
   'synaptic_reception'
-  #,'cons_fitness'
 )
 
 # add proper labels soon...
@@ -122,7 +121,6 @@ measures_labels = c(
   'sensors_reach',
   'recurrence',
   'synaptic_reception'
-  #,'Number of slaves'
 )
 
 
@@ -166,10 +164,11 @@ for (exp in 1:length(experiments_type))
 
 
 fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))
-#measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL") 
+measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL")
 
-measures_names = c(measures_names, 'novelty', 'fitness')
-measures_labels = c(measures_labels, 'Novelty', 'Fitness')
+measures_names = c(measures_names, 'novelty', 'novelty_pop', 'fitness', 'cons_fitness')
+measures_labels = c(measures_labels, 'Novelty', 'Novelty Pop', 'Fitness', 'Number of slaves')
+
 
 
 measures_averages_gens_1 = list()
@@ -258,43 +257,52 @@ array_mann = list()
 
 for (m in 1:length(methods))
 {
-  
+
   array_wilcoxon[[m]] = list()
   array_mann[[m]] = list()
-  
-  for (i in 1:length(measures_names)) 
+
+  for (i in 1:length(measures_names))
   {
-    
+
     writeLines(paste(experiments_type[m],measures_names[i],'ini avg ',as.character(
       mean(c(array(measures_ini[[m]][paste(methods[m],"_",measures_names[i],"_avg",sep='')]) )[[1]]) ) ,sep=" "), file )
-    
-    
+
+
     writeLines(paste(methods[m],measures_names[i],'fin avg ',as.character(
       mean(c(array(measures_fin[[m]][paste(methods[m],"_",measures_names[i],"_avg",sep='')]) )[[1]]) ) ,sep=" "), file )
-    
-    array_wilcoxon[[m]][[i]]  = wilcox.test(c(array(measures_ini[[m]][paste(methods[m],"_",measures_names[i],"_avg",sep='')]))[[1]] ,
-                                            c(array(measures_fin[[m]][paste(methods[m],"_",measures_names[i],"_avg",sep='')]))[[1]]
-    )
-    
-    writeLines(c(
-      paste(methods[m],'iniVSfin',measures_names[i],'wilcox p: ',as.character(round(array_wilcoxon[[m]][[i]]$p.value,4)), sep=' ')
-      ,paste(methods[m],'iniVSfin',measures_names[i],'wilcox est: ',as.character(round(array_wilcoxon[[m]][[i]]$statistic,4)), sep=' ')
-      
-    ), file)
-    
-    
-    #tests  trends
-    array_mann[[m]][[i]] =  mk.test(c(array(measures_averages_gens_2[[m]][paste(methods[m],"_",measures_names[i],'_median',sep='')]) )[[1]],
-                                    continuity = TRUE)
-    
-    
-    writeLines(c(
-      paste(experiments_type[m],measures_names[i], ' Mann-Kendall median p', as.character(round(array_mann[[m]][[i]]$p.value,4)),sep=' '),
-      paste(experiments_type[m],measures_names[i], ' Mann-Kendall median s', as.character(round(array_mann[[m]][[i]]$statistic,4)),sep=' ')
-    ), file)
-    
+
+    set1 = c(array(measures_ini[[m]][paste(methods[m],"_",measures_names[i],"_avg",sep='')]))[[1]]
+    set2 = c(array(measures_fin[[m]][paste(methods[m],"_",measures_names[i],"_avg",sep='')]))[[1]]
+    if (!(is.na(set1)) & !(is.na(set2))) {
+
+      array_wilcoxon[[m]][[i]]  = wilcox.test(set1 , set2)
+
+      writeLines(c(
+        paste(methods[m],'iniVSfin',measures_names[i],'wilcox p: ',as.character(round(array_wilcoxon[[m]][[i]]$p.value,4)), sep=' ')
+        ,paste(methods[m],'iniVSfin',measures_names[i],'wilcox est: ',as.character(round(array_wilcoxon[[m]][[i]]$statistic,4)), sep=' ')
+
+      ), file)
+
+
+      #tests  trends
+      array_mann[[m]][[i]] =  mk.test(c(array(measures_averages_gens_2[[m]][paste(methods[m],"_",measures_names[i],'_median',sep='')]) )[[1]],
+                                      continuity = TRUE)
+
+
+      writeLines(c(
+        paste(experiments_type[m],measures_names[i], ' Mann-Kendall median p', as.character(round(array_mann[[m]][[i]]$p.value,4)),sep=' '),
+        paste(experiments_type[m],measures_names[i], ' Mann-Kendall median s', as.character(round(array_mann[[m]][[i]]$statistic,4)),sep=' ')
+      ), file)
+
+
+    }else{
+      array_wilcoxon[[m]][[i]]  = NA
+      array_mann[[m]][[i]] = NA
+    }
+
+
   }
-  
+
 }
 
 
@@ -305,52 +313,57 @@ aux_m = length(methods)
 
 if (aux_m>1)
 {
-  
+
   # fins
   array_wilcoxon2[[1]] = list()
   array_wilcoxon2[[2]] = list()
-  
+
   aux_m = aux_m -1
   count_pairs = 0
   for(m in 1:aux_m)
   {
     aux = m+1
     for(m2 in aux:length(methods))
-    {  
-      
+    {
+
       count_pairs = count_pairs+1
       array_wilcoxon2[[1]][[count_pairs]] = list()
-      
-      for (i in 1:length(measures_names)) 
+
+      for (i in 1:length(measures_names))
       {
-        
+
         writeLines(paste(methods[m],measures_names[i],'fin avg ',as.character(
           mean(c(array(measures_fin[[m]][paste(methods[m],"_",measures_names[i],"_avg",sep='')]) )[[1]]) ) ,sep=" "), file )
-        
+
         writeLines(paste(methods[m2],measures_names[i],'fin avg ',as.character(
           mean(c(array(measures_fin[[m2]][paste(methods[m2],"_",measures_names[i],"_avg",sep='')]) )[[1]]) ) ,sep=" "), file )
-        
-        array_wilcoxon2[[1]][[count_pairs]][[i]]  = wilcox.test(c(array(measures_fin[[m]][paste(methods[m],"_",measures_names[i],"_avg",sep='')]))[[1]] ,
-                                                                c(array(measures_fin[[m2]][paste(methods[m2],"_",measures_names[i],"_avg",sep='')]))[[1]]
-        )
-        
-        writeLines(c(
-          paste(methods[m],'VS',methods[m],measures_names[i],'fin avg wilcox p: ',as.character(round(array_wilcoxon2[[1]][[count_pairs]][[i]]$p.value,4)), sep=' ')
-          ,paste(methods[m],'VS',methods[m2],measures_names[i],'fin avg wilcox est: ',as.character(round(array_wilcoxon2[[1]][[count_pairs]][[i]]$statistic,4)), sep=' ')
-          
-        ), file)
-        
+
+        set1 = c(array(measures_fin[[m]][paste(methods[m],"_",measures_names[i],"_avg",sep='')]))[[1]]
+        set2 = c(array(measures_fin[[m2]][paste(methods[m2],"_",measures_names[i],"_avg",sep='')]))[[1]]
+
+        if (!(is.na(set1)) & !(is.na(set2))) {
+          array_wilcoxon2[[1]][[count_pairs]][[i]]  = wilcox.test(set1, set2 )
+          writeLines(c(
+            paste(methods[m],'VS',methods[m],measures_names[i],'fin avg wilcox p: ',as.character(round(array_wilcoxon2[[1]][[count_pairs]][[i]]$p.value,4)), sep=' ')
+            ,paste(methods[m],'VS',methods[m2],measures_names[i],'fin avg wilcox est: ',as.character(round(array_wilcoxon2[[1]][[count_pairs]][[i]]$statistic,4)), sep=' ')
+
+          ), file)
+        }else{
+          array_wilcoxon2[[1]][[count_pairs]][[i]]  = NA
+        }
+
+
       }
-      
-      
+
       array_wilcoxon2[[2]][[count_pairs]] = paste(initials[m],initials[m2],sep='')
-      
+
     }
   }
-  
+
 }
 
 close(file)
+
 
 # plots measures 
 

@@ -27,14 +27,14 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 199
+    num_generations = 200
     population_size = 100
     offspring_size = 100
     front = 'none'
 
     # environment world and z-start
-    environments = {'plane': 0.03#,
-                    #'tilted5': 0.1
+    environments = {'plane': 0.03
+                    #,'tilted5': 0.1
                     }
 
     genotype_conf = PlasticodingConfig(
@@ -117,7 +117,7 @@ async def run():
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
     generation = 199
-    max_best = 5
+    max_best = 3
     await population.load_snapshot(generation)
 
     values = []
