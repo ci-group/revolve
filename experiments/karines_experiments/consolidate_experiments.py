@@ -4,22 +4,15 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-    #'fast_novel_limbic_plane',
-    #'fast_novel_limbic_tilted'
-    'fnl_baseline',
-    'fnl_plastic'
+    'noveltysmall2'
 ]
 environments = {
-                 #'fast_novel_limbic_plane': ['plane'],
-                # 'fast_novel_limbic_tilted': ['tilted5']
-    'fnl_baseline': ['plane', 'tilted5'],
-    'fnl_plastic': ['plane', 'tilted5']
+    'noveltysmall2': ['plane']
                  }
 
-runs = range(1, 3+1)
+runs = range(1, 1+1)
 
 # set these variables according to your experiments #
-
 
 def build_headers(path1, path2):
 
@@ -50,7 +43,7 @@ def build_headers(path1, path2):
 
     file_summary = open(path2 + "/snapshots_ids.tsv", "w+")
 
-    file_summary.write('generation\trobot_id\tfitness\tcons_fitness\tnovelty\tnovelty_pop\n')
+    file_summary.write('generation\trobot_id\tfitness\tnovelty\tnovelty_pop\tcons_fitness\n')
     file_summary.close()
 
     return behavior_headers, phenotype_headers
@@ -90,23 +83,13 @@ for exp in experiments_type:
                             file_summary.write('None'+'\t')
 
                     pt_file = path1+'/descriptors/phenotype_desc_robot_'+robot_id+'.txt'
-                    if os.path.isfile(pt_file):
+                    num_lines = sum(1 for line in open(pt_file))
+                    with open(pt_file) as file:
+                        for idx, line in enumerate(file):
 
-                        num_lines = sum(1 for line in open(pt_file))
-                        with open(pt_file) as file:
-                            for idx, line in enumerate(file):
+                            measure, value = line.strip().split(' ')
+                            file_summary.write(value)
 
-                                measure, value = line.strip().split(' ')
-                                file_summary.write(value)
-
-                                if idx < num_lines - 1:
-                                    file_summary.write('\t')
-                                else:
-                                    file_summary.write('\n')
-                                    
-                    else:
-                        for idx,h in enumerate(phenotype_headers):
-                            file_summary.write('None')
                             if idx < num_lines - 1:
                                 file_summary.write('\t')
                             else:
@@ -124,7 +107,7 @@ for exp in experiments_type:
                 gen = list_gens[-1]
             else:
                 gen = -1
-            print(exp, run, num_files, gen, num_files-(gen*100+100))
+            print(exp, env, run, gen, num_files, num_files-(gen*100+100))
 
             file_summary.close()
 
@@ -143,18 +126,26 @@ for exp in experiments_type:
                                     fitness = cf_file.read()
                                     file_summary.write(fitness + '\t')
 
+                                    filen = path1 + '/novelty/novelty_'+gen+'_robot_'+robot_id+'.txt'
+                                    if os.path.isfile(filen):
+                                        cf_file = open(filen, 'r')
+                                        novelty = cf_file.read()
+                                        file_summary.write(novelty + '\t')
+                                    else:
+                                        file_summary.write('None' + '\t')
+
+                                    filen = path1 + '/novelty/novelty_pop_'+gen+'_robot_'+robot_id+'.txt'
+                                    if os.path.isfile(filen):
+                                        cf_file = open(filen, 'r')
+                                        novelty_pop = cf_file.read()
+                                        file_summary.write(novelty_pop + '\t')
+                                    else:
+                                        file_summary.write('None' + '\t')
+
                                     cf_file = open(
                                         path0 + '/consolidated_fitness/consolidated_fitness_'+gen+'_robot_' + robot_id + '.txt', 'r')
                                     cons_fitness = cf_file.read()
-                                    file_summary.write(cons_fitness + '\t')
-
-                                    cf_file = open(path1 + '/novelty/novelty_'+gen+'_robot_'+robot_id+'.txt', 'r')
-                                    novelty = cf_file.read()
-                                    file_summary.write(novelty + '\t')
-
-                                    cf_file = open(path1 + '/novelty/novelty_pop_'+gen+'_robot_'+robot_id+'.txt', 'r')
-                                    novelty_pop = cf_file.read()
-                                    file_summary.write(novelty_pop + '\n')
+                                    file_summary.write(cons_fitness + '\n')
 
             file_summary.close()
 

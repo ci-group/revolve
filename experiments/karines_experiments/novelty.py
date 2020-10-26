@@ -32,7 +32,13 @@ async def run():
     front = 'none'
 
     # environment world and z-start
-    environments = {'plane': 0.03}
+    environments = {'plane': 0.03
+                    }
+
+    # calculation of the measures can be on or off, because they are expensive
+    novelty_on = {'novelty': True,
+                  'novelty_pop': True
+                  }
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,
@@ -91,6 +97,7 @@ async def run():
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         environments=environments,
+        novelty_on=novelty_on,
         front=front,
         run_simulation=settings.run_simulation,
         all_settings=settings,

@@ -69,7 +69,6 @@ def size_penalty(robot):
 
 
 def novelty(behavioural_measurements, robot):
-    print('insie nov',robot.novelty)
     return robot.novelty
 
 

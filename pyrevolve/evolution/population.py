@@ -14,7 +14,7 @@ import os
 import pickle
 import sys
 import random
-
+from datetime import datetime
 
 class PopulationConfig:
     def __init__(self,
@@ -34,6 +34,7 @@ class PopulationConfig:
                  experiment_name,
                  experiment_management,
                  environments,
+                 novelty_on,
                  front,
                  run_simulation,
                  all_settings,
@@ -73,6 +74,7 @@ class PopulationConfig:
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
         self.environments = environments
+        self.novelty_on = novelty_on
         self.front = front
         self.run_simulation = run_simulation
         self.all_settings = all_settings
@@ -186,19 +188,22 @@ class Population:
 
     def calculate_novelty(self, pool_individuals, environment, gen_num):
 
-        # collecting measures from pop
-        pop_measures = []
-        self.collect_measures(pool_individuals, pop_measures, environment)
+        if self.conf.novelty_on['novelty'] or self.conf.novelty_on['novelty_pop']:
+            # collecting measures from pop
+            pop_measures = []
+            self.collect_measures(pool_individuals, pop_measures, environment)
 
-        # pop+archive: complements collection with archive measures
-        pop_archive_measures = copy.deepcopy(pop_measures)
-        pop_archive_measures = pop_archive_measures + self.novelty_archive[environment]
+            # pop+archive: complements collection with archive measures
+            pop_archive_measures = copy.deepcopy(pop_measures)
+            pop_archive_measures = pop_archive_measures + self.novelty_archive[environment]
 
-        pop_measures = np.array(pop_measures)
-        pop_archive_measures = np.array(pop_archive_measures)
+            pop_measures = np.array(pop_measures)
+            pop_archive_measures = np.array(pop_archive_measures)
 
-        self.calculate_distances(pool_individuals, pop_archive_measures, pop_measures, environment, gen_num, 'pop_archive')
-        self.calculate_distances(pool_individuals, pop_measures, pop_measures, environment, gen_num, 'pop')
+            if self.conf.novelty_on['novelty']:
+                self.calculate_distances(pool_individuals, pop_archive_measures, pop_measures, environment, gen_num, 'pop_archive')
+            if self.conf.novelty_on['novelty_pop']:
+                self.calculate_distances(pool_individuals, pop_measures, pop_measures, environment, gen_num, 'pop')
 
     def calculate_distances(self, pool_individuals, references, to_compare, environment, gen_num, type):
         # calculate distances
@@ -215,11 +220,9 @@ class Population:
 
             if type == 'pop_archive':
                 pool_individuals[i][environment].novelty = average_distances[i]
-                print('novelty',pool_individuals[i][environment].phenotype._id,pool_individuals[i][environment].novelty)
                 self.conf.experiment_management.export_novelty(pool_individuals[i][environment], environment, gen_num)
             else:
                 pool_individuals[i][environment].novelty_pop = average_distances[i]
-                print('noveltypop',pool_individuals[i][environment].phenotype._id,pool_individuals[i][environment].novelty_pop)
                 self.conf.experiment_management.export_novelty_pop(pool_individuals[i][environment], environment, gen_num)
 
     def collect_measures(self, individuals, pop_measures, environment):
@@ -407,12 +410,11 @@ class Population:
             else:
                 behavioural_measurements = individual[environment].phenotype._behavioural_measurements.items()
             conf = copy.deepcopy(self.conf)
-            print('nov',individual[environment].novelty)
-            print('fit before',individual[environment].fitness)
+
             conf.fitness_function = conf.fitness_function[environment]
             individual[environment].fitness =\
                 conf.fitness_function(behavioural_measurements, individual[environment])
-            print('fit after',individual[environment].fitness)
+
             logger.info(f'Individual {individual[environment].phenotype.id} has a fitness of {individual[environment].fitness}')
 
             if type_simulation == 'evolve':

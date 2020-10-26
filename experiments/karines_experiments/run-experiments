@@ -34,6 +34,16 @@ while true
 done
 
 
+while true
+	do
+
+                ./revolve.py --experiment-name karines_experiments/data/novelty  --manager experiments/karines_experiments/novelty.py  --run-simulation 0;
+
+                sleep 5s
+done
+
+
+
 
 while true
 	do

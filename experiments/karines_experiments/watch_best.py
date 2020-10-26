@@ -34,7 +34,7 @@ async def run():
 
     # environment world and z-start
     environments = {'plane': 0.03
-                    #,'tilted5': 0.1
+                    ,'tilted5': 0.1
                     }
 
     genotype_conf = PlasticodingConfig(
