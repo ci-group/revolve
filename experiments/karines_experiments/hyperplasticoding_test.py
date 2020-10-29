@@ -27,7 +27,7 @@ async def run():
 
     # experiment params #
     num_generations = 1#200
-    population_size = 3#100
+    population_size = 1#100
     offspring_size = 100
     front = 'none'
 
@@ -41,7 +41,6 @@ async def run():
                   }
 
     genotype_conf = HyperPlasticodingConfig(
-        max_structural_modules=15,
         plastic=False,
     )
 

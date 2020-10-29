@@ -1,18 +1,18 @@
 [NEAT]
 fitness_criterion     = max
-fitness_threshold     = 3.9
+fitness_threshold     = 100
 pop_size              = 150
 reset_on_extinction   = False
 
 [DefaultGenome]
 # node activation options
-activation_default      = sigmoid
+activation_default      = random
 activation_mutate_rate  = 0.5
-activation_options      = exp sin
+activation_options      = sigmoid sin gauss tanh abs inv
 
-# network parameters
+# network parameters. inputs x,y,d. outputs is_module, module_type, parent_slot
 num_hidden              = 0
-num_inputs              = 2
+num_inputs              = 3
 num_outputs             = 3
 
 # connection add/remove rates
