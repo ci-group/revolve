@@ -165,7 +165,7 @@ class WorldManager(manage.WorldManager):
     async def create(
             cls,
             world_address=("127.0.0.1", 11345),
-            pose_update_frequency=10
+            pose_update_frequency=20
     ):
         """
         Coroutine to instantiate a Revolve.Angle WorldManager

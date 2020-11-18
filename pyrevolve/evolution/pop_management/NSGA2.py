@@ -9,19 +9,19 @@ from mpl_toolkits.mplot3d import Axes3D
 from pyrevolve.evolution.population import Population
 
 
-def NSGA2(population: Population, offspring, debug: bool = False):
-    population_size = len(population.individuals)
+def NSGA2(population_individuals, offspring, debug: bool = False):
+    population_size = len(population_individuals)
     offspring_size = len(offspring)
 
     # Preparate the objectives as a matrix of individuals in the rows and fitnesses in the columns.
-    objectives = np.zeros((population_size + offspring_size, max(1, len(population.individuals[0].fitness))))  # TODO fitnesses is 0
+    objectives = np.zeros((population_size + offspring_size, max(1, len(population_individuals[0].objectives))))  # TODO fitnesses is 0
 
     # Fill the objectives with all individual from the population and offspring combined.
-    all_individuals = copy.deepcopy(population.individuals)
+    all_individuals = copy.deepcopy(population_individuals)
     all_individuals.extend(offspring)
     for index, individual in enumerate(all_individuals):
         # Negative fitness due to minimum search, TODO can be changed to be a default maximization NSGA.
-        objectives[index, :] = [-fitness for fitness in individual.fitness]
+        objectives[index, :] = [-objective for objective in individual.objectives]
 
     # Perform the NSGA Algorithm
     front_no, max_front = nd_sort(objectives, np.inf)

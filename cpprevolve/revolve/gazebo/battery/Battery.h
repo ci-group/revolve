@@ -30,6 +30,8 @@ namespace revolve{
       /// \brief current charge of the battery in joules
       double current_charge;
 
+      bool depleted;
+
       /// \brief the time of initiation (for creating data files of battery delete later)
       std::string time_init;
 

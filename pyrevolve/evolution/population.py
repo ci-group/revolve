@@ -108,6 +108,10 @@ class Population:
             data = f.readlines()[0]
             individual.fitness = None if data == 'None' else float(data)
 
+        with open(os.path.join(data_path, 'objectives', f'objectives_{id}.txt')) as f:
+            data = f.readlines()[0]
+            individual.objectives = [0.0, 10.0] if data == 'None' else [float(value) for value in data[1:-1].split(",")] # Todo generalize none initialization
+
         with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')) as f:
             lines = f.readlines()
             if lines[0] == 'None':
@@ -166,6 +170,7 @@ class Population:
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
         for i in range(self.conf.population_size-len(recovered_individuals)):
+            print("create individual")
             individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
             self.individuals.append(individual)
             self.next_robot_id += 1
@@ -245,8 +250,12 @@ class Population:
             # Temporary
             if combined_value is not None:
                 individual.fitness, individual.battery = combined_value
+                individual.objectives = [individual.fitness, individual.battery]
+            else:
+                individual.objectives = [0.0, 10.0]
 
             self.conf.experiment_management.export_battery(individual)
+            self.conf.experiment_management.export_objectives(individual)
 
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)

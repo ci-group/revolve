@@ -16,7 +16,7 @@ from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.custom_logging.logger import logger
-
+from pyrevolve.evolution.pop_management.NSGA2 import NSGA2
 
 async def run():
     """
@@ -69,10 +69,10 @@ async def run():
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
         crossover_conf=crossover_conf,
-        selection=lambda individuals: tournament_selection(individuals, 2),
-        parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
-        population_management=steady_state_population_management,
-        population_management_selector=tournament_selection,
+        selection=lambda individuals: tournament_selection(individuals, 4),
+        parent_selection=lambda individuals: multiple_selection(individuals, 4, tournament_selection),
+        population_management=NSGA2,
+        population_management_selector=None,
         evaluation_time=settings.evaluation_time,
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,

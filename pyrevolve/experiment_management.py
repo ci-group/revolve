@@ -19,13 +19,11 @@ class ExperimentManagement:
             shutil.rmtree(self.experiment_folder)
         os.makedirs(self.experiment_folder)
         os.mkdir(self.data_folder)
-        os.mkdir(os.path.join(self.data_folder, 'genotypes'))
-        os.mkdir(os.path.join(self.data_folder, 'phenotypes'))
-        os.mkdir(os.path.join(self.data_folder, 'descriptors'))
-        os.mkdir(os.path.join(self.data_folder, 'fitness'))
-        os.mkdir(os.path.join(self.data_folder, 'battery'))
-        os.mkdir(os.path.join(self.data_folder, 'phenotype_images'))
-        os.mkdir(os.path.join(self.data_folder, 'failed_eval_robots'))
+
+        folders = ['genotypes', 'phenotypes', 'descriptors', 'objectives', 'fitness',
+                   'battery', 'phenotype_images', 'failed_eval_robots']
+        for folder in folders:
+            os.mkdir(os.path.join(self.data_folder, folder))
 
     @property
     def experiment_folder(self):
@@ -51,6 +49,10 @@ class ExperimentManagement:
     def export_fitness(self, individual):
         folder = os.path.join(self.data_folder, 'fitness')
         individual.export_fitness(folder)
+
+    def export_objectives(self, individual):
+        folder = os.path.join(self.data_folder, 'objectives')
+        individual.export_objectives(folder)
 
     def export_battery(self, individual):
         folder = os.path.join(self.data_folder, 'battery')
@@ -113,6 +115,7 @@ class ExperimentManagement:
             n_robots = 0
 
         robot_ids = []
+
         for r, d, f in os.walk(os.path.join(self.data_folder, 'fitness')):
             for file in f:
                 robot_ids.append(int(file.split('.')[0].split('_')[-1]))

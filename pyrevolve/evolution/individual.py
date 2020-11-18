@@ -13,13 +13,13 @@ class Individual:
         self.phenotype = phenotype
         self.battery = None
         self.fitness = None
+        self.objectives = None
         self.parents = None
         self.failed_eval_attempt_count = 0
 
     def develop(self):
         """
         Develops genotype into a intermediate phenotype
-
         """
         if self.phenotype is None:
             self.phenotype = self.genotype.develop()
@@ -56,11 +56,20 @@ class Individual:
         with open(f'{folder}/battery_{self.id}.txt', 'w') as f:
             f.write(str(self.battery))
 
+    def export_objectives(self, folder):
+        """
+        It's saving the fitness into a file. The fitness can be a floating point number or None
+        :param folder: folder where to save the fitness
+        """
+        with open(f'{folder}/objectives_{self.id}.txt', 'w') as f:
+            f.write(str(self.objectives))
+
     def export(self, folder):
         self.export_genotype(folder)
         self.export_phenotype(folder)
         self.export_fitness(folder)
         self.export_battery(folder)
+        self.export_objectives(folder)
 
     def __repr__(self):
         return f'Individual_{self.id}({self.fitness})'
