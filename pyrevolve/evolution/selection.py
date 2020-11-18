@@ -42,7 +42,10 @@ def multiple_selection(population: List[Individual],
     :param selection_size: amount of individuals to select
     :param selection_function:
     """
-    assert (len(population) >= selection_size)
+    if len(population) < selection_size:
+        print("selection problem: population " + str(len(population)) + " - selection size " + str(selection_size))
+        assert (len(population) >= selection_size)
+
     selected_individuals = []
     for _ in range(selection_size):
         new_individual = False

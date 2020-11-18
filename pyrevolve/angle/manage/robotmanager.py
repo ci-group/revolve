@@ -5,6 +5,7 @@ import numpy as np
 from collections import deque
 
 from pyrevolve.SDF.math import Vector3, Quaternion
+from pyrevolve.revolve_bot.revolve_module import Orientation
 from pyrevolve.util import Time
 import math
 import os
@@ -51,11 +52,12 @@ class RobotManager(object):
         self._dt = deque(maxlen=speed_window)
         self._positions = deque(maxlen=speed_window)
         self._orientations = deque(maxlen=speed_window)
+        self._orientation_vecs = deque(maxlen=speed_window)
         self._contacts = deque(maxlen=speed_window)
         self._seconds = deque(maxlen=speed_window)
         self._times = deque(maxlen=speed_window)
 
-        self._dist = 0
+        self._dist = 0.
         self._time = 0
         self._idx = 0
         self._count = 0
@@ -95,6 +97,17 @@ class RobotManager(object):
         qua = Quaternion(rot.w, rot.x, rot.y, rot.z)
         euler = qua.get_rpy()
         euler = np.array([euler[0], euler[1], euler[2]]) # roll / pitch / yaw
+
+        vec_forward = state.orientation_vecs.vec_forward
+        vec_left = state.orientation_vecs.vec_left
+        vec_back = state.orientation_vecs.vec_back
+        vec_right = state.orientation_vecs.vec_right
+        orientation_vecs = {
+            Orientation.FORWARD: Vector3(vec_forward.x, vec_forward.y, vec_forward.z),
+            Orientation.LEFT: Vector3(vec_left.x, vec_left.y, vec_left.z),
+            Orientation.BACK: Vector3(vec_back.x, vec_back.y, vec_back.z),
+            Orientation.RIGHT: Vector3(vec_right.x, vec_right.y, vec_right.z),
+        }
 
         age = world.age()
 
@@ -143,6 +156,7 @@ class RobotManager(object):
         self._ds.append(ds)
         self._dt.append(dt)
         self._orientations.append(euler)
+        self._orientation_vecs.append(orientation_vecs)
         self._seconds.append(age.sec)
 
     def update_contacts(self, world, module_contacts):

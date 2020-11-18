@@ -156,6 +156,11 @@ class ExperimentManagement:
                 for key, val in measures.items():
                     f.write(f'{key} {val}\n')
 
+    def export_phenotype_ids(self, identifiers : List[int], dirpath : str):
+        with open(dirpath + '/identifiers.txt', 'w') as f:
+            for identifier in identifiers:
+                f.write("%s\n" % identifier)
+
     def export_phenotype_images(self, individual: Individual, dirpath: Optional[str] = None, rename_if_present=False) -> None:
         dirpath = dirpath if dirpath is not None \
             else self._phenotype_images_folder
@@ -204,8 +209,12 @@ class ExperimentManagement:
             if os.path.exists(path):
                 shutil.rmtree(path)
             os.mkdir(path)
+
+            ids = []
             for ind in individuals:
-                self.export_phenotype_images(ind, os.path.join(self.experiment_folder, f'selectedpop_{gen_num}'))
+                self.export_phenotype_images(ind, path)
+                ids.append(ind.id)
+            self.export_phenotype_ids(ids, path)
             logger.info(f'Exported snapshot {gen_num} with {len(individuals)} individuals')
 
     def export_snapshots_species(self, genus: Genus, gen_num: int) -> None:
