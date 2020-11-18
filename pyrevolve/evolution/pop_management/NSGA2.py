@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 
-
-from pyrevolve.evolution.population import Population
+from pyrevolve.evolution.individual import Individual
 
 
 def NSGA2(population_individuals, offspring, debug: bool = False):
@@ -56,9 +55,9 @@ def _visualize(objectives, sorted_fronts, new_individuals, discarded_population)
                         color=colors[index])
 
     for individual in new_individuals:
-        plt.scatter(individual.fitness[0], individual.fitness[1], s=5, color='black')
+        plt.scatter(individual.objectives[0], individual.objectives[1], s=5, color='black')
     for individual in discarded_population:
-        plt.scatter(individual.fitness[0], individual.fitness[1], s=5, color='white')
+        plt.scatter(individual.objectives[0], individual.objectives[1], s=5, color='white')
 
 
 # adapted from https://github.com/ChengHust/NSGA-II/blob/master/nd_sort.py
@@ -164,30 +163,46 @@ def sort_fronts(objectives, front_no, crowd_dis):
 
 
 if __name__ == "__main__":
-    from pyrevolve import parser
     from pyrevolve.evolution import fitness
     from pyrevolve.evolution.selection import multiple_selection, tournament_selection
     from pyrevolve.evolution.population import Population, PopulationConfig
     from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
-    from pyrevolve.experiment_management import ExperimentManagement
     from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
     from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
     from pyrevolve.genotype.plasticoding.initialization import random_initialization
     from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
     from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
     from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
-    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
-    from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
-    from pyrevolve.custom_logging.logger import logger
+
+    class MockPopulation(Population):
+        def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
+            super().__init__(conf, simulator_queue, analyzer_queue, next_robot_id)
+
+        def init_pop(self, recovered_individuals=[]):
+            """
+            Populates the population (individuals list) with Individual objects that contains their respective genotype.
+            """
+            for i in range(self.conf.population_size - len(recovered_individuals)):
+                print("create individual")
+                individual = self._new_individual(
+                    self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+                self.individuals.append(individual)
+                self.next_robot_id += 1
+
+            self.individuals = recovered_individuals + self.individuals
+
+        def _new_individual(self, genotype):
+            individual = Individual(genotype)
+            individual.develop()
+            return individual
 
     # experiment params #
     num_generations = 100
-    population_size = 10
+    population_size = 100
     offspring_size = 10
 
     genotype_conf = PlasticodingConfig(
         max_structural_modules=20,
-        max_joints=10,
     )
 
     mutation_conf = MutationConfig(
@@ -201,11 +216,6 @@ if __name__ == "__main__":
     # experiment params #
 
     # Parse command line / file input arguments
-    settings = parser.parse_args()
-    experiment_management = ExperimentManagement(settings)
-    do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
-
-    logger.info('Activated run ' + settings.run + ' of experiment ' + settings.experiment_name)
 
     gen_num = 0
     next_robot_id = 1
@@ -225,26 +235,20 @@ if __name__ == "__main__":
 
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
-        evaluation_time=settings.evaluation_time,
+        evaluation_time=0,
         offspring_size=offspring_size,
-        experiment_name=settings.experiment_name,
-        experiment_management=experiment_management,
+        experiment_name="test",
+        experiment_management=None,
     )
 
-    n_cores = settings.n_cores
-
-    settings = parser.parse_args()
-    simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)
-
-    analyzer_queue = AnalyzerQueue(1, settings, settings.port_start + n_cores)
-
-    population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
+    population = MockPopulation(population_conf, None, None, next_robot_id)
     population.init_pop()
 
-    population2 = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
-    population2.init_pop()
-
-    offspring = population2.individuals
+    offspring = []
+    for i in range(population_conf.offspring_size):
+        individual = Individual(population_conf.genotype_constructor(population_conf.genotype_conf, 0))
+        individual.develop()
+        offspring.append(individual)
 
     def initialize_fitness(individuals):
         d3_enabled: bool = False
@@ -253,13 +257,13 @@ if __name__ == "__main__":
             omega = np.random.uniform(0, math.pi/2)
             r = np.random.uniform(0.5, 1)
             if d3_enabled:
-                individual.fitness = [r * np.cos(theta) * np.cos(omega), r * np.sin(theta), r * np.cos(theta) * np.sin(omega)]
+                individual.objectives = [r * np.cos(theta) * np.cos(omega), r * np.sin(theta), r * np.cos(theta) * np.sin(omega)]
             else:
-                individual.fitness = [r * np.cos(theta), r * np.sin(theta)]
+                individual.objectives = [r * np.cos(theta), r * np.sin(theta)]
 
     initialize_fitness(population.individuals)
     initialize_fitness(offspring)
 
-    survived_individuals = NSGA2(population, offspring, debug=True)
+    survived_individuals = NSGA2(population.individuals, offspring, debug=True)
 
     plt.show()
