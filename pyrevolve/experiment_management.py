@@ -76,7 +76,7 @@ class ExperimentManagement:
 
     def export_phenotype_images(self, dirpath, individual):
         individual.phenotype.render_body(self._experiment_folder()+'/'+dirpath+f'/body_{individual.phenotype.id}.png')
-        individual.phenotype.render_brain(self._experiment_folder()+'/'+dirpath+f'/brain_{individual.phenotype.id}')
+        #individual.phenotype.render_brain(self._experiment_folder()+'/'+dirpath+f'/brain_{individual.phenotype.id}')
 
     def export_failed_eval_robot(self, individual):
         individual.genotype.export_genotype(f'{self._data_folder()}/failed_eval_robots/genotype_{str(individual.phenotype.id)}.txt')

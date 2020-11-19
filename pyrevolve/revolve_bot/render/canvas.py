@@ -228,7 +228,7 @@ class Canvas:
 		"""Draw all sensors"""
 		for sensor in Canvas.sensors:
 			self.context.rectangle(sensor[0], sensor[1], sensor[2], sensor[3])
-			self.context.set_source_rgb(0.3, 0.3, 0.3)
+			self.context.set_source_rgb(0.6, 0.6, 0.6)
 			self.context.fill_preserve()
 			self.context.set_source_rgb(0, 0, 0)
 			self.context.set_line_width(0.01)

@@ -13,9 +13,7 @@ import math
 import neat
 import os
 import random
-import pprint
-from matplotlib.pyplot import figure
-from matplotlib.ticker import MaxNLocator
+import operator
 
 
 class Alphabet(Enum):
@@ -37,7 +35,7 @@ class HyperPlasticoding:
         self.quantity_modules = 1
         self.cppn_body = None
         self.cppn_brain = None
-        self.substrate = {}
+        self.substrate = []
         self.phenotype = None
 
         local_dir = os.path.dirname(__file__)
@@ -165,6 +163,7 @@ class HyperPlasticoding:
                     self.attach_body(parent_module.children[direction], radius, cppn)
 
     def attach_module(self, parent_module, direction, radius, cppn):
+
         move_coordinates = {
             Orientation.WEST: (-1, 0),
             Orientation.NORTH: (0, 1),
@@ -181,18 +180,16 @@ class HyperPlasticoding:
         if radius >= potential_module_coord[0] >= -radius and radius >= potential_module_coord[1] >= -radius:
 
             # queries potential new module given coordinates
-            is_module, module_type, parent_direction = \
+            module_type = \
                 self.query_body_part(potential_module_coord[0], potential_module_coord[1], radius, cppn)
 
             # if cppn determines there is a module in the coordinate
-            if is_module:
-                potential_parent_coord = tuple(map(sum, zip(potential_module_coord, move_coordinates[parent_direction])))
+            if module_type is not None:
 
-                print('potential parent_coord', potential_parent_coord)
-                # if potential new module points to the parent where the turtle is at
-                print(potential_parent_coord, parent_module.substrate_coordinates)
-                if potential_parent_coord == parent_module.substrate_coordinates:
-                    print('match parent')
+                # move if up later
+                if potential_module_coord not in self.substrate:
+                #if potential_parent_coord == parent_module.substrate_coordinates:
+                    #print('match parent')
                     valid_attachment = True
 
                     # sensors can not be attached to joints
@@ -214,6 +211,7 @@ class HyperPlasticoding:
                             new_module.id = str(self.quantity_modules)
 
                         parent_module.children[direction.value] = new_module
+                        self.substrate.append(potential_module_coord)
                         print('\n##ADD!\n')
                     else:
                         print('invalid')
@@ -224,41 +222,8 @@ class HyperPlasticoding:
         for x in range(-radius, radius + 1):
             # for each row of the column (bottom to top)
             for y in range(-radius, radius + 1):
-                #print(x, y)
+                print(x, y)
                 self.query_body_part(x, y, radius, cppn)
-
-        self.draw_queried_substrate()
-
-    def draw_queried_substrate(self):
-
-        x = []
-        y = []
-        markers = []
-        color = []
-        for point in self.substrate:
-            print(point,self.substrate[point]['parent_direction'])
-            x.append(point[0])
-            y.append(point[1])
-
-            if self.substrate[point]['parent_direction'] == Orientation.SOUTH:
-                markers.append('v')
-            elif self.substrate[point]['parent_direction'] == Orientation.NORTH:
-                markers.append('^')
-            elif self.substrate[point]['parent_direction'] == Orientation.WEST:
-                markers.append('<')
-            elif self.substrate[point]['parent_direction'] == Orientation.EAST:
-                markers.append('>')
-            else:
-                markers.append('o')
-
-            color.append(tuple(self.get_color(self.substrate[point]['module'].info['module_type'])))
-
-        ax = figure().gca()
-        for xp, yp, m, c in zip(x, y, markers, color):
-            ax.scatter([xp], [yp], marker=m, color=c, s=400)
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-        ax.get_figure().savefig('tmp.png')
 
     def place_head(self):
 
@@ -272,8 +237,7 @@ class HyperPlasticoding:
 
         self.phenotype._body = module
         # TODO: experiment with evolvable position for the head
-        self.substrate[(0, 0)] = {'module': module,
-                                  'parent_direction': None}
+        self.substrate.append((0, 0))
 
     def new_module(self, module_type):
 
@@ -309,56 +273,50 @@ class HyperPlasticoding:
         y_norm = self.normalize_value(y, -radius, radius)
 
         d = self.calculate_d(x_norm, y_norm)
-        # print('\n',x_norm, y_norm, d)
+        # print('\n',x_norm, y_norm, d),
 
         outputs = cppn.activate((x_norm, y_norm, d))
-        # print(outputs)
-        outputs = [self.standard_output(item) for item in outputs]
-        # print(outputs)
+        print(outputs)
 
-        is_module = self.get_is_module(outputs[0])
-        module_type = self.get_module_type(outputs[1])
-        parent_direction = self.get_parent_direction(outputs[2])
+        which_module = {
+            'no_module': outputs[0],
+            'b_module': outputs[1],
+            'a1_module': outputs[2],
+            'a2_module': outputs[3],
+            't_module': outputs[4]
+        }
 
-        # ini temporary test! maybe get rid of is_module
-        is_module = True#self.get_is_module(random.uniform(0, 1))
-        module_type = self.get_module_type(random.uniform(0, 1))
-        parent_direction = self.get_parent_direction(random.uniform(0, 1))
-        # end temporary test!
 
-        print('is_module ', is_module, 'module_type ', module_type, 'parent_direction ', parent_direction)
+        # which_module = {
+        #     'no_module': random.uniform(0, 1),
+        #     'b_module': random.uniform(0, 1),
+        #     'a1_module': random.uniform(0, 1),
+        #     'a2_module': random.uniform(0, 1),
+        #     't_module': random.uniform(0, 1)
+        # }
 
-        return is_module, module_type, parent_direction
+        module_type = self.get_module_type(which_module)
 
-    def get_is_module(self, output):
-        is_module = True if output > 0.5 else False
-        return is_module
-
-    def get_module_type(self, output):
-
-        if 0 <= output < 0.25:
-            module_type = Alphabet.JOINT_HORIZONTAL
-        elif 0.25 <= output < 0.5:
-            module_type = Alphabet.JOINT_VERTICAL
-        elif 0.5 <= output < 0.75:
-            module_type = Alphabet.BLOCK
-        elif 0.75 <= output <= 1:
-            module_type = Alphabet.SENSOR
+        print('module_type',module_type)
 
         return module_type
 
-    def get_parent_direction(self, output):
+    def get_module_type(self, which_module):
 
-        if 0 <= output < 0.25:
-            parent_direction = Orientation.SOUTH
-        elif 0.25 <= output < 0.5:
-            parent_direction = Orientation.WEST
-        elif 0.5 <= output < 0.75:
-            parent_direction = Orientation.NORTH
-        elif 0.75 <= output <= 1:
-            parent_direction = Orientation.EAST
+        which_module = max(which_module.items(), key=operator.itemgetter(1))[0]
+        print(which_module)
+        if which_module == 'a1_module':
+            module_type = Alphabet.JOINT_HORIZONTAL
+        elif which_module == 'a2_module':
+            module_type = Alphabet.JOINT_VERTICAL
+        elif which_module == 'b_module':
+            module_type = Alphabet.BLOCK
+        elif which_module == 't_module':
+            module_type = Alphabet.SENSOR
+        else:
+            module_type = None
 
-        return parent_direction
+        return module_type
 
     def get_color(self, module_type):
 
