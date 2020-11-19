@@ -124,11 +124,11 @@ class Population:
             self.conf.experiment_management.export_phenotype_images(os.path.join('data_fullevolution',
                                                                     environment,'phenotype_images'),
                                                                     individual[environment])
-            individual[environment].phenotype.measure_phenotype(self.conf.experiment_name)
-            individual[environment].phenotype.export_phenotype_measurements(self.conf.experiment_name, environment)
-            # because of the bloating in plasticoding, cleans up intermediate phenotype before saving object
-            individual[environment].genotype.intermediate_phenotype = None
-            self.conf.experiment_management.export_individual(individual[environment], environment)
+        #     individual[environment].phenotype.measure_phenotype(self.conf.experiment_name)
+        #     individual[environment].phenotype.export_phenotype_measurements(self.conf.experiment_name, environment)
+        #     # because of the bloating in plasticoding, cleans up intermediate phenotype before saving object
+        #     individual[environment].genotype.intermediate_phenotype = None
+        #     self.conf.experiment_management.export_individual(individual[environment], environment)
 
         return individual
 
@@ -272,22 +272,22 @@ class Population:
             self.individuals.append(individual)
             self.next_robot_id += 1
 
-        self.individuals = recovered_individuals + self.individuals
-
-        # (possibly) run simulation
-        if self.conf.run_simulation == 1:
-            for environment in self.conf.environments:
-                await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
-
-        # calculate novelty
-        for environment in self.conf.environments:
-            self.calculate_novelty(self.individuals, environment, gen_num=0)
-        self.update_archive(self.individuals)
-
-        # calculate final fitness
-        for environment in self.conf.environments:
-            self.calculate_final_fitness(individuals=self.individuals, gen_num=0, environment=environment)
-        self.consolidate_fitness(self.individuals, gen_num=0)
+        # self.individuals = recovered_individuals + self.individuals
+        #
+        # # (possibly) run simulation
+        # if self.conf.run_simulation == 1:
+        #     for environment in self.conf.environments:
+        #         await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
+        #
+        # # calculate novelty
+        # for environment in self.conf.environments:
+        #     self.calculate_novelty(self.individuals, environment, gen_num=0)
+        # self.update_archive(self.individuals)
+        #
+        # # calculate final fitness
+        # for environment in self.conf.environments:
+        #     self.calculate_final_fitness(individuals=self.individuals, gen_num=0, environment=environment)
+        # self.consolidate_fitness(self.individuals, gen_num=0)
 
     async def next_gen(self, gen_num, recovered_individuals=[]):
         """

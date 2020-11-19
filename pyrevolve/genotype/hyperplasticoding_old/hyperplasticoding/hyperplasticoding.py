@@ -97,126 +97,34 @@ class HyperPlasticoding:
 
         # self.query_body(radius, body_cppn)
         # self.attach_body()
+
         self.place_head()
-        self.attach_body(self.phenotype._body, radius, body_cppn)
+        self.query_attach_body(self.phenotype._body, radius, body_cppn)
 
-    def calculate_coordinates(self, parent, slot):
+    def query_attach_body(self, module, radius, cppn):
 
-        # calculate the actual 2d direction and coordinates of new module using relative-to-parent position as reference
+        module.substrate_coordinates
 
-        dic = {Orientation.NORTH.value: 0,
-               Orientation.WEST.value: 1,
-               Orientation.SOUTH.value: 2,
-               Orientation.EAST.value: 3}
+        west = tuple(map(sum, zip(point, (-1, 0))))
+        north = tuple(map(sum, zip(point, (0, 1))))
+        east = tuple(map(sum, zip(point, (1, 0))))
+        south = tuple(map(sum, zip(point, (0, -1))))
 
-        inverse_dic = {0: Orientation.NORTH.value,
-                       1: Orientation.WEST.value,
-                       2: Orientation.SOUTH.value,
-                       3: Orientation.EAST.value}
+        print(west, north, east, south)
 
-        direction = dic[parent.info['turtle_direction'].value] + dic[slot]
-        if direction >= len(dic):
-            direction = direction - len(dic)
+        # if self.substrate[point]['parent_direction'] == Orientation.NORTH:
+        #     parent_point = tuple(map(sum, zip(point, (0, 1))))
+        #
+        # elif self.substrate[point]['parent_direction'] == Orientation.SOUTH:
+        #     parent_point = tuple(map(sum, zip(point, (0, -1))))
+        #
+        # elif self.substrate[point]['parent_direction'] == Orientation.WEST:
+        #     parent_point = tuple(map(sum, zip(point, (-1, 0))))
+        #
+        # elif self.substrate[point]['parent_direction'] == Orientation.EAST:
+        #     parent_point = tuple(map(sum, zip(point, (1, 0))))
 
-        turtle_direction = Orientation(inverse_dic[direction])
-        if turtle_direction == Orientation.WEST:
-            coordinates = (parent.substrate_coordinates[0] - 1,
-                           parent.substrate_coordinates[1])
-        if turtle_direction == Orientation.EAST:
-            coordinates = (parent.substrate_coordinates[0] + 1,
-                           parent.substrate_coordinates[1])
-        if turtle_direction == Orientation.NORTH:
-            coordinates = (parent.substrate_coordinates[0],
-                           parent.substrate_coordinates[1] + 1)
-        if turtle_direction == Orientation.SOUTH:
-            coordinates = (parent.substrate_coordinates[0],
-                           parent.substrate_coordinates[1] - 1)
-        print( coordinates, turtle_direction)
-        return coordinates, turtle_direction
-
-    def attach_body(self, parent_module, radius, cppn):
-
-        # core component is the only module that can grow to the back, because it has no parent
-        if parent_module.info['module_type'] == Alphabet.CORE_COMPONENT:
-            clock_wise_directions = [Orientation.WEST.value,
-                                     Orientation.NORTH.value,
-                                     Orientation.EAST.value,
-                                     Orientation.SOUTH.value]
-        # joints branch out only to the front
-        elif parent_module.info['module_type'] in (Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL):
-            clock_wise_directions = [Orientation.NORTH.value]
-        else:
-            clock_wise_directions = [Orientation.WEST.value,
-                                     Orientation.NORTH.value,
-                                     Orientation.EAST.value]
-
-        print('\n')
-
-        for direction in clock_wise_directions:
-            print('\n  parent_module.coord', parent_module.substrate_coordinates,'direction', direction)
-
-            # queries and (possibly) attaches surroundings modules to module in clock-wise order
-            self.attach_module(parent_module, Orientation(direction), radius, cppn)
-
-            # if managed to attach a potential module, tried to branch out recursively
-            if parent_module.children[direction] is not None:
-                # sensors are terminals and thus do not branch out
-                if parent_module.children[direction].info['module_type'] != Alphabet.SENSOR:
-                    self.attach_body(parent_module.children[direction], radius, cppn)
-
-    def attach_module(self, parent_module, direction, radius, cppn):
-        move_coordinates = {
-            Orientation.WEST: (-1, 0),
-            Orientation.NORTH: (0, 1),
-            Orientation.EAST: (1, 0),
-            Orientation.SOUTH: (0, -1)
-        }
-
-        # calculates coordinates of potential new module
-        potential_module_coord, turtle_direction = self.calculate_coordinates(parent_module, direction.value)
-
-        print('potential_module_coord', potential_module_coord)
-       # print( radius , potential_module_coord[0] ,-radius , radius , potential_module_coord[1] , -radius)
-        # potential new modules crossing the boundaries of the substrate are not even queried
-        if radius >= potential_module_coord[0] >= -radius and radius >= potential_module_coord[1] >= -radius:
-
-            # queries potential new module given coordinates
-            is_module, module_type, parent_direction = \
-                self.query_body_part(potential_module_coord[0], potential_module_coord[1], radius, cppn)
-
-            # if cppn determines there is a module in the coordinate
-            if is_module:
-                potential_parent_coord = tuple(map(sum, zip(potential_module_coord, move_coordinates[parent_direction])))
-
-                print('potential parent_coord', potential_parent_coord)
-                # if potential new module points to the parent where the turtle is at
-                print(potential_parent_coord, parent_module.substrate_coordinates)
-                if potential_parent_coord == parent_module.substrate_coordinates:
-                    print('match parent')
-                    valid_attachment = True
-
-                    # sensors can not be attached to joints
-                    # TODO: maybe allow that in the future?
-                    if parent_module.info['module_type'] in (Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL) \
-                            and module_type == Alphabet.SENSOR:
-                        valid_attachment = False
-
-                    # if attachment constraints are met
-                    if valid_attachment:
-                        new_module = self.new_module(module_type)
-                        new_module.substrate_coordinates = potential_module_coord
-                        new_module.orientation = \
-                            self.get_angle(new_module.info['module_type'], parent_module)
-                        new_module.info['turtle_direction'] = turtle_direction
-
-                        if new_module.info['module_type'] != Alphabet.SENSOR:
-                            self.quantity_modules += 1
-                            new_module.id = str(self.quantity_modules)
-
-                        parent_module.children[direction.value] = new_module
-                        print('\n##ADD!\n')
-                    else:
-                        print('invalid')
+        #self.query_body_part(x, y, radius, cppn)
 
     def query_body(self, radius, cppn):
 
@@ -224,10 +132,65 @@ class HyperPlasticoding:
         for x in range(-radius, radius + 1):
             # for each row of the column (bottom to top)
             for y in range(-radius, radius + 1):
-                #print(x, y)
+                print(x, y)
                 self.query_body_part(x, y, radius, cppn)
 
         self.draw_queried_substrate()
+
+    def attach_body(self):
+
+        for point in self.substrate:
+            valid_attachment = True
+
+            # head has no parent
+            if point == (0, 0):
+                valid_attachment = False
+            else:
+
+                if self.substrate[point]['parent_direction'] == Orientation.NORTH:
+                    parent_point = tuple(map(sum, zip(point, (0, 1))))
+                    parent_slot = Orientation.SOUTH
+
+                elif self.substrate[point]['parent_direction'] == Orientation.SOUTH:
+                    parent_point = tuple(map(sum, zip(point, (0, -1))))
+                    parent_slot = Orientation.NORTH
+
+                elif self.substrate[point]['parent_direction'] == Orientation.WEST:
+                    parent_point = tuple(map(sum, zip(point, (-1, 0))))
+                    parent_slot = Orientation.EAST
+
+                elif self.substrate[point]['parent_direction'] == Orientation.EAST:
+                    parent_point = tuple(map(sum, zip(point, (1, 0))))
+                    parent_slot = Orientation.WEST
+
+                # coordinates candidate to parent are empty or out of substrate
+                if parent_point not in self.substrate.keys():
+                    valid_attachment = False
+                else:
+                    # sensors are terminals and thus can not be parents
+                    if self.substrate[parent_point]['module'].info['module_type'] == Alphabet.SENSOR:
+                        valid_attachment = False
+
+                    # joints do not connect to sensors
+                    # TODO: allow that in the future?
+                    elif self.substrate[parent_point]['module'].info['module_type'] \
+                            in (Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL) \
+                            and self.substrate[point]['module'].info['module_type'] == Alphabet.SENSOR:
+                        valid_attachment = False
+
+            # attaching module to due parent slot
+            if valid_attachment:
+
+                self.substrate[parent_point]['module'].children[parent_slot.value] = self.substrate[point]['module']
+
+                self.substrate[point]['module'].orientation =\
+                    self.get_angle(self.substrate[point]['module'].info['module_type'],
+                                   self.substrate[parent_point]['module'])
+
+                if self.substrate[point]['module'].info['module_type'] != Alphabet.SENSOR:
+                    # TODO: check if it is skipping some cases
+                    self.quantity_modules += 1
+                    self.substrate[point]['module'].id = str(self.quantity_modules)
 
     def draw_queried_substrate(self):
 
@@ -265,7 +228,7 @@ class HyperPlasticoding:
         module_type = Alphabet.CORE_COMPONENT
         module = CoreModule()
         module.id = str(self.quantity_modules)
-        module.info = {'turtle_direction': Orientation.NORTH,
+        module.info = {'orientation': Orientation.NORTH,
                        'module_type': module_type}
         module.orientation = 0
         module.rgb = self.get_color(module_type)
@@ -320,15 +283,15 @@ class HyperPlasticoding:
         module_type = self.get_module_type(outputs[1])
         parent_direction = self.get_parent_direction(outputs[2])
 
-        # ini temporary test! maybe get rid of is_module
+        # ini temporary test!
         is_module = True#self.get_is_module(random.uniform(0, 1))
         module_type = self.get_module_type(random.uniform(0, 1))
-        parent_direction = self.get_parent_direction(random.uniform(0, 1))
+        parent_direction = Orientation.WEST#self.get_parent_direction(random.uniform(0, 1))
         # end temporary test!
 
         print('is_module ', is_module, 'module_type ', module_type, 'parent_direction ', parent_direction)
 
-        return is_module, module_type, parent_direction
+        return is_module, self.new_module(module_type), parent_direction
 
     def get_is_module(self, output):
         is_module = True if output > 0.5 else False
@@ -399,7 +362,7 @@ class HyperPlasticodingConfig:
                  robot_id=0,
                  plastic=False,
                  environmental_conditions=['hill'],
-                 substrate_radius=4
+                 substrate_radius=2#1
                  ):
         self.oscillator_param_min = oscillator_param_min
         self.oscillator_param_max = oscillator_param_max
