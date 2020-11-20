@@ -7,19 +7,18 @@ from pyrevolve.evolution.selection import multiple_selection, tournament_selecti
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.plasticoding.initialization import random_initialization
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+from pyrevolve.genotype.hyperplasticoding_old.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.hyperplasticoding_old.crossover.standard_crossover import standard_crossover
+from pyrevolve.genotype.hyperplasticoding_old.initialization import random_initialization
+from pyrevolve.genotype.hyperplasticoding_old.mutation.mutation import MutationConfig
+from pyrevolve.genotype.hyperplasticoding_old.mutation.standard_mutation import standard_mutation
+from pyrevolve.genotype.hyperplasticoding_old.hyperplasticoding import HyperPlasticodingConfig
 from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 import sys
-import time
-import numpy as np
+
 
 async def run():
     """
@@ -28,13 +27,12 @@ async def run():
 
     # experiment params #
     num_generations = 200
-    population_size = 100
+    population_size = 200
     offspring_size = 100
     front = 'none'
 
     # environment world and z-start
     environments = {'plane': 0.03
-                   # ,'tilted5': 0.1
                     }
 
     # calculation of the measures can be on or off, because they are expensive
@@ -42,8 +40,7 @@ async def run():
                   'novelty_pop': True
                   }
 
-    genotype_conf = PlasticodingConfig(
-        max_structural_modules=15,
+    genotype_conf = HyperPlasticodingConfig(
         plastic=False,
     )
 
@@ -55,21 +52,31 @@ async def run():
     crossover_conf = CrossoverConfig(
         crossover_prob=0.8,
     )
-    # experiment params #load_individual
+    # experiment params #
 
     # Parse command line / file input arguments
     settings = parser.parse_args()
+
     experiment_management = ExperimentManagement(settings, environments)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
     logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
 
+    if do_recovery:
+        gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size,
+                                                                                          offspring_size)
 
-    def fitness_function(robot_manager, robot):
-        return 0
+        if gen_num == num_generations-1:
+            logger.info('Experiment is already complete.')
+            return
+    else:
+        gen_num = 0
+        next_robot_id = 1
 
-    fitness_function = {'plane': fitness_function, 'tilted5': fitness_function
-                        }
+    def fitness_function_plane(measures, robot):
+        return fitness.novelty(measures, robot)
+
+    fitness_function = {'plane': fitness_function_plane}
 
     population_conf = PopulationConfig(
         population_size=population_size,
@@ -95,8 +102,6 @@ async def run():
         all_settings=settings,
     )
 
-    settings = parser.parse_args()
-
     simulator_queue = {}
     analyzer_queue = None
 
@@ -120,43 +125,37 @@ async def run():
         analyzer_queue = AnalyzerQueue(1, settings, port+settings.n_cores)
         await analyzer_queue.start()
 
-    population = Population(population_conf, simulator_queue, analyzer_queue, 1)
+    population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
-    # choose a snapshot here. and the maximum best individuals you wish to watch
-    generation = 199
-    max_best = 3
-    await population.load_snapshot(generation)
+    if do_recovery:
 
-    values = []
-    for ind in population.individuals:
-        # temp if!
-        print(ind[list(environments.keys())[-1]].phenotype.id)
-        #if ind[list(environments.keys())[-1]].phenotype.id == 'robot_19853':
-        #print('fsdfndjgnjkdsfngkdjngkjrngkjrh')
-        # define a criteria here
-        for environment in environments:
-            ind[environment].evaluated = False
-        if ind[list(environments.keys())[-1]].consolidated_fitness is not None:
-            values.append(ind[list(environments.keys())[-1]].consolidated_fitness)
-        else:
-            values.append(-float('Inf'))
-        #values.append(ind['plane'].phenotype._behavioural_measurements.displacement_velocity_hill)
+        population.load_novelty_archive()
 
-    values = np.array(values)
+        if gen_num >= 0:
+            # loading a previous state of the experiment
+            await population.load_snapshot(gen_num)
+            logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
 
-    ini = len(population.individuals)-max_best
-    fin = len(population.individuals)
+        if has_offspring:
+            individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
+            gen_num += 1
+            logger.info('Recovered unfinished offspring '+str(gen_num))
 
-    population.individuals = np.array(population.individuals)
-    # highest
-    population.individuals = population.individuals[np.argsort(values)[ini:fin]]
-    # lowest
-    #population.individuals = population.individuals[np.argsort(values)[0:max_best]]
+            if gen_num == 0:
+                await population.init_pop(individuals)
+            else:
+                population = await population.next_gen(gen_num, individuals)
 
-    for ind in population.individuals:
-        print(ind[list(environments.keys())[-1]].phenotype.id, ind[list(environments.keys())[-1]].consolidated_fitness)
+            experiment_management.export_snapshots(population.individuals, gen_num)
+    else:
+        # starting a new experiment
+        experiment_management.create_exp_folders()
+        await population.init_pop()
+        # experiment_management.export_snapshots(population.individuals, gen_num)
 
-    for environment in environments:
-        print('watch in ', environment)
-        await population.evaluate(new_individuals=population.individuals, gen_num=generation,
-                                  environment=environment, type_simulation='watch')
+    # while gen_num < num_generations-1:
+    #     gen_num += 1
+    #     population = await population.next_gen(gen_num)
+    #     experiment_management.export_snapshots(population.individuals, gen_num)
+
+    # output result after completing all generations...

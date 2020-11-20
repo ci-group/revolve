@@ -14,6 +14,7 @@ import neat
 import os
 import random
 import operator
+from pyrevolve.genotype.hyperplasticoding import visualize
 
 
 class Alphabet(Enum):
@@ -91,12 +92,10 @@ class HyperPlasticoding:
 
         # size of substrate is (substrate_radius*2+1)^2
         radius = self.conf.substrate_radius
-        body_cppn = neat.nn.FeedForwardNetwork.create(self.cppn_body, self.body_config)
+        cppn_body = neat.nn.FeedForwardNetwork.create(self.cppn_body, self.body_config)
 
-        # self.query_body(radius, body_cppn)
-        # self.attach_body()
         self.place_head()
-        self.attach_body(self.phenotype._body, radius, body_cppn)
+        self.attach_body(self.phenotype._body, radius, cppn_body)
 
     def calculate_coordinates(self, parent, slot):
 
@@ -129,7 +128,7 @@ class HyperPlasticoding:
         if turtle_direction == Orientation.SOUTH:
             coordinates = (parent.substrate_coordinates[0],
                            parent.substrate_coordinates[1] - 1)
-        print( coordinates, turtle_direction)
+        print(coordinates, turtle_direction)
         return coordinates, turtle_direction
 
     def attach_body(self, parent_module, radius, cppn):
@@ -164,18 +163,11 @@ class HyperPlasticoding:
 
     def attach_module(self, parent_module, direction, radius, cppn):
 
-        move_coordinates = {
-            Orientation.WEST: (-1, 0),
-            Orientation.NORTH: (0, 1),
-            Orientation.EAST: (1, 0),
-            Orientation.SOUTH: (0, -1)
-        }
-
         # calculates coordinates of potential new module
         potential_module_coord, turtle_direction = self.calculate_coordinates(parent_module, direction.value)
 
         print('potential_module_coord', potential_module_coord)
-       # print( radius , potential_module_coord[0] ,-radius , radius , potential_module_coord[1] , -radius)
+
         # potential new modules crossing the boundaries of the substrate are not even queried
         if radius >= potential_module_coord[0] >= -radius and radius >= potential_module_coord[1] >= -radius:
 
@@ -188,8 +180,6 @@ class HyperPlasticoding:
 
                 # move if up later
                 if potential_module_coord not in self.substrate:
-                #if potential_parent_coord == parent_module.substrate_coordinates:
-                    #print('match parent')
                     valid_attachment = True
 
                     # sensors can not be attached to joints
@@ -215,15 +205,6 @@ class HyperPlasticoding:
                         print('\n##ADD!\n')
                     else:
                         print('invalid')
-
-    def query_body(self, radius, cppn):
-
-        # for each column in the 2d space (left to right)
-        for x in range(-radius, radius + 1):
-            # for each row of the column (bottom to top)
-            for y in range(-radius, radius + 1):
-                print(x, y)
-                self.query_body_part(x, y, radius, cppn)
 
     def place_head(self):
 
@@ -344,9 +325,20 @@ class HyperPlasticoding:
         return d
 
     def export_genotype(self, filepath):
-        # TODO: export cppn
-        pass
 
+        node_names = {-1: 'x',
+                      -2: 'y',
+                      -3: 'd',
+                      0: 'no_module',
+                      1: 'b_module',
+                      2: 'a1_module',
+                      3: 'a2_module',
+                      4: 't_module'}
+
+        visualize.draw_net(self.body_config, self.cppn_body, False, filepath, node_names=node_names)
+        f = open(filepath, "w")
+        f.write(str(self.cppn_body))
+        f.close()
 
 class HyperPlasticodingConfig:
     def __init__(self,

@@ -7,11 +7,11 @@ from pyrevolve.evolution.selection import multiple_selection, tournament_selecti
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
+from pyrevolve.genotype.hyperplasticoding.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.hyperplasticoding.crossover.standard_crossover import standard_crossover
 from pyrevolve.genotype.hyperplasticoding.initialization import random_initialization
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
+from pyrevolve.genotype.hyperplasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.hyperplasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.hyperplasticoding.hyperplasticoding import HyperPlasticodingConfig
 from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
@@ -26,8 +26,8 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 1#200
-    population_size = 1#100
+    num_generations = 200
+    population_size = 100
     offspring_size = 100
     front = 'none'
 
@@ -151,11 +151,11 @@ async def run():
         # starting a new experiment
         experiment_management.create_exp_folders()
         await population.init_pop()
-        # experiment_management.export_snapshots(population.individuals, gen_num)
+        experiment_management.export_snapshots(population.individuals, gen_num)
 
-    # while gen_num < num_generations-1:
-    #     gen_num += 1
-    #     population = await population.next_gen(gen_num)
-    #     experiment_management.export_snapshots(population.individuals, gen_num)
+    while gen_num < num_generations-1:
+        gen_num += 1
+        population = await population.next_gen(gen_num)
+        experiment_management.export_snapshots(population.individuals, gen_num)
 
     # output result after completing all generations...
