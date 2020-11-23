@@ -7,12 +7,12 @@ from pyrevolve.evolution.selection import multiple_selection, tournament_selecti
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.hyperplasticoding_old.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.hyperplasticoding_old.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.hyperplasticoding_old.initialization import random_initialization
-from pyrevolve.genotype.hyperplasticoding_old.mutation.mutation import MutationConfig
-from pyrevolve.genotype.hyperplasticoding_old.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.hyperplasticoding_old.hyperplasticoding import HyperPlasticodingConfig
+from pyrevolve.genotype.hyperplasticoding.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.hyperplasticoding.crossover.standard_crossover import standard_crossover
+from pyrevolve.genotype.hyperplasticoding.initialization2 import random_initialization
+from pyrevolve.genotype.hyperplasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.hyperplasticoding.mutation.standard_mutation import standard_mutation
+from pyrevolve.genotype.hyperplasticoding.hyperplasticoding import HyperPlasticodingConfig
 from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue

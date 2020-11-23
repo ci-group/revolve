@@ -32,9 +32,19 @@ show_markers = TRUE # shows statistical tests markers on line plots
 show_legends = TRUE # shows legends on line plots
 
 # one color per item in experiments_labels2, but are not respected if show_legends as on
-experiments_type_colors = c( '#00e700' , '#009900') # light green,dark green
+experiments_type_colors = c( '#00e700' , '#009900',  '#002200') # light green,dark green
 
 #### CHANGE THE PARAMETERS HERE ####
+
+#TEMP
+analysis = 'analysis_hplastic'
+output_directory = paste(base_directory,'/',analysis ,sep='')
+experiments_type = c('_one', '_mult', 'multsoft')
+experiments_labels = c('one', 'mult', 'multsoft')
+environments = list( c( 'plane'), c( 'plane'), c( 'plane') )
+runs = list(c(1:3), c(1:3), c(1:3))
+gens = 50
+#TEMP
 
 methods = c()
 for (exp in 1:length(experiments_type))
@@ -129,18 +139,16 @@ for (exp in 1:length(experiments_type))
   {
     for (env in 1:length(environments[[exp]]))
     {
-      input_directory  <-  paste(base_directory, '/',
-                                 experiments_type[exp], '_',sep='')
+      measures   = read.table(paste(base_directory,paste(experiments_type[exp], environments[[exp]][env], run,"all_measures.tsv", sep='_'), sep='/'),
+                                    header = TRUE, fill=TRUE)
 
-      measures   = read.table(paste(input_directory, run, '/data_fullevolution/',
-                                    environments[[exp]][env], "/all_measures.tsv", sep=''), header = TRUE, fill=TRUE)
       for( m in 1:length(measures_names))
       {
         measures[measures_names[m]] = as.numeric(as.character(measures[[measures_names[m]]]))
       }
 
-      snapshots   = read.table(paste(input_directory, run,'/selectedpop_',
-                                     environments[[exp]][env],"/snapshots_ids.tsv", sep=''), header = TRUE)
+      snapshots   = read.table(paste(base_directory,paste(experiments_type[exp], environments[[exp]][env], run, "snapshots_ids.tsv", sep='_'), sep='/'),
+                                     header = TRUE)
 
       measures_snapshots = sqldf('select * from snapshots inner join measures using(robot_id) order by generation')
 
@@ -164,7 +172,7 @@ fail_test = sqldf(paste("select method,run,generation,count(*) as c from measure
 measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL")
 
 measures_names = c(measures_names, 'novelty', 'novelty_pop', 'fitness', 'cons_fitness')
-measures_labels = c(measures_labels, 'Novelty', 'Novelty Pop', 'Fitness', 'Number of slaves')
+measures_labels = c(measures_labels, 'Novelty', 'Diversity', 'Fitness', 'Number of slaves')
 
 
 measures_averages_gens_1 = list()

@@ -335,10 +335,13 @@ class HyperPlasticoding:
                       3: 'a2_module',
                       4: 't_module'}
 
-        visualize.draw_net(self.body_config, self.cppn_body, False, filepath, node_names=node_names)
-        f = open(filepath, "w")
+        visualize.draw_net(self.body_config, self.cppn_body, False, filepath + '/images/genotype_' + self.phenotype._id,
+                           node_names=node_names)
+
+        f = open(filepath + '/genotype_' + self.phenotype._id + '.txt', "w")
         f.write(str(self.cppn_body))
         f.close()
+
 
 class HyperPlasticodingConfig:
     def __init__(self,

@@ -19,6 +19,7 @@ class ExperimentManagement:
         os.mkdir(self.dirpath)
         os.mkdir(self.dirpath+'/data_fullevolution')
         os.mkdir(self.dirpath+'/data_fullevolution/genotypes')
+        os.mkdir(self.dirpath+'/data_fullevolution/genotypes/images')
         os.mkdir(self.dirpath+'/data_fullevolution/consolidated_fitness')
         os.mkdir(self.dirpath+'/data_fullevolution/failed_eval_robots')
         for environment in self.environments:
@@ -38,8 +39,7 @@ class ExperimentManagement:
         return os.path.join(self.dirpath, 'data_fullevolution')
 
     def export_genotype(self, individual):
-        if self.settings.recovery_enabled:
-            individual.export_genotype(self._data_folder())
+        individual.export_genotype(self._data_folder())
 
     def export_phenotype(self, individual, environment):
         if self.settings.export_phenotype:
@@ -116,10 +116,10 @@ class ExperimentManagement:
                 if 'selectedpop' in dir:
                     exported_files = len([name for name in os.listdir(os.path.join(path,
                                                                                    dir))
-                                          if os.path.isfile(os.path.join(path, dir, name))])
+                                          if os.path.isfile(os.path.join(path, dir, name)) and name.startswith("body")])
 
                     # snapshot is complete if all body/brain files exist
-                    if exported_files == (population_size * 2):
+                    if exported_files == population_size:
                         snapshots.append(int(dir.split('_')[1]))
 
         if len(snapshots) > 0:

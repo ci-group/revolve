@@ -4,19 +4,24 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-    'noveltysmall2'
+    'multsoft',
+    '_mult',
+    '_one'
 ]
 environments = {
-    'noveltysmall2': ['plane']
+'multsoft': ['plane'],
+'_mult': ['plane'],
+'_one': ['plane']
                  }
 
-runs = range(1, 1+1)
+runs = range(1, 3+1)
 
 # set these variables according to your experiments #
 
-def build_headers(path1, path2):
 
-    file_summary = open(path1 + "/all_measures.tsv", "w+")
+def build_headers(path, path1):
+
+    file_summary = open(path + "_all_measures.tsv", "w+")
     file_summary.write('robot_id\t')
 
     behavior_headers = []
@@ -41,7 +46,7 @@ def build_headers(path1, path2):
     file_summary.write('\n')
     file_summary.close()
 
-    file_summary = open(path2 + "/snapshots_ids.tsv", "w+")
+    file_summary = open(path + "_snapshots_ids.tsv", "w+")
 
     file_summary.write('generation\trobot_id\tfitness\tnovelty\tnovelty_pop\tcons_fitness\n')
     file_summary.close()
@@ -55,47 +60,50 @@ for exp in experiments_type:
 
         for run in runs:
 
-            path0 = dirpath + str(exp) + '_' + str(run) + '/data_fullevolution'
-            path1 = dirpath + str(exp) + '_' + str(run) + '/data_fullevolution/' + env
-            path2 = dirpath + str(exp) + '_' + str(run) + '/selectedpop_' + env
+            path0 = dirpath + exp + '_' + str(run) + '/data_fullevolution'
+            path1 = dirpath + exp + '_' + str(run) + '/data_fullevolution/' + env
+            path2 = dirpath + exp + '_' + str(run) + '/selectedpop_' + env
 
-            behavior_headers, phenotype_headers = build_headers(path1, path2)
+            behavior_headers, phenotype_headers = build_headers(dirpath+exp+'_'+env+'_'+str(run), path1)
 
-            file_summary = open(path1 + "/all_measures.tsv", "a")
+            file_summary = open(dirpath+exp+'_'+env+'_'+str(run)+"_all_measures.tsv", "a")
+
+            num_files = 0
             for r, d, f in os.walk(path0+'/genotypes'):
                 for file in f:
+                    if file.endswith(".txt"):
+                        num_files += 1
 
-                    robot_id = file.split('.')[0].split('_')[-1]
-                    file_summary.write(robot_id+'\t')
+                        robot_id = file.split('.')[0].split('_')[-1]
+                        file_summary.write(robot_id+'\t')
 
-                    bh_file = path1+'/descriptors/behavior_desc_robot_'+robot_id+'.txt'
-                    if os.path.isfile(bh_file):
-                        with open(bh_file) as file:
-                            for line in file:
-                                if line != 'None':
-                                    measure, value = line.strip().split(' ')
-                                    file_summary.write(value+'\t')
+                        bh_file = path1+'/descriptors/behavior_desc_robot_'+robot_id+'.txt'
+                        if os.path.isfile(bh_file):
+                            with open(bh_file) as file:
+                                for line in file:
+                                    if line != 'None':
+                                        measure, value = line.strip().split(' ')
+                                        file_summary.write(value+'\t')
+                                    else:
+                                        for h in behavior_headers:
+                                            file_summary.write('None'+'\t')
+                        else:
+                            for h in behavior_headers:
+                                file_summary.write('None'+'\t')
+
+                        pt_file = path1+'/descriptors/phenotype_desc_robot_'+robot_id+'.txt'
+                        num_lines = sum(1 for line in open(pt_file))
+                        with open(pt_file) as file:
+                            for idx, line in enumerate(file):
+
+                                measure, value = line.strip().split(' ')
+                                file_summary.write(value)
+
+                                if idx < num_lines - 1:
+                                    file_summary.write('\t')
                                 else:
-                                    for h in behavior_headers:
-                                        file_summary.write('None'+'\t')
-                    else:
-                        for h in behavior_headers:
-                            file_summary.write('None'+'\t')
+                                    file_summary.write('\n')
 
-                    pt_file = path1+'/descriptors/phenotype_desc_robot_'+robot_id+'.txt'
-                    num_lines = sum(1 for line in open(pt_file))
-                    with open(pt_file) as file:
-                        for idx, line in enumerate(file):
-
-                            measure, value = line.strip().split(' ')
-                            file_summary.write(value)
-
-                            if idx < num_lines - 1:
-                                file_summary.write('\t')
-                            else:
-                                file_summary.write('\n')
-
-            num_files = len(f)
             list_gens = []
             for r, d, f in os.walk(path2):
                 for dir in d:
@@ -103,15 +111,16 @@ for exp in experiments_type:
                         gen = dir.split('_')[1]
                         list_gens.append(int(gen))
             list_gens.sort()
-            if len(list_gens)>0:
+            if len(list_gens) > 0:
                 gen = list_gens[-1]
             else:
                 gen = -1
-            print(exp, env, run, gen, num_files, num_files-(gen*100+100))
+
+            print('exp', exp, 'env', env, 'run', run, 'gen', gen, 'num_files', num_files)
 
             file_summary.close()
 
-            file_summary = open(path2 + "/snapshots_ids.tsv", "a")
+            file_summary = open(dirpath+exp+'_'+env+'_'+str(run)+"_snapshots_ids.tsv", "a")
             for r, d, f in os.walk(path2):
                 for dir in d:
                     if 'selectedpop' in dir:

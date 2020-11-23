@@ -39,7 +39,7 @@ class Individual:
         return _id
 
     def export_genotype(self, folder):
-        self.genotype.export_genotype(f'{folder}/genotypes/genotype_{self.phenotype.id}.txt')
+        self.genotype.export_genotype(f'{folder}/genotypes')
 
     def export_phenotype(self, folder):
         if self.phenotype is not None:

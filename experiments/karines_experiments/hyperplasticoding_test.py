@@ -26,7 +26,7 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 200
+    num_generations = 50#200
     population_size = 100
     offspring_size = 100
     front = 'none'
@@ -60,12 +60,12 @@ async def run():
     experiment_management = ExperimentManagement(settings, environments)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
+
     logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
 
     if do_recovery:
         gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size,
                                                                                           offspring_size)
-
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
             return

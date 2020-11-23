@@ -7,18 +7,17 @@ from pyrevolve.evolution.selection import multiple_selection, tournament_selecti
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.hyperplasticoding_old.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.hyperplasticoding_old.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.hyperplasticoding_old.initialization import random_initialization
-from pyrevolve.genotype.hyperplasticoding_old.mutation.mutation import MutationConfig
-from pyrevolve.genotype.hyperplasticoding_old.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.hyperplasticoding_old.hyperplasticoding import HyperPlasticodingConfig
+from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
+from pyrevolve.genotype.plasticoding.initialization import random_initialization
+from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
+from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 import sys
-
 
 async def run():
     """
@@ -26,21 +25,22 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 50#200
+    num_generations = 10#200
     population_size = 100
     offspring_size = 100
-    front = 'none'
+    front = 'slaves'
 
     # environment world and z-start
-    environments = {'plane': 0.03
+    # environment world and z-start
+    environments = {'plane': 0.03,
+                    'tilted5': 0.1
                     }
-
-    # calculation of the measures can be on or off, because they are expensive
     novelty_on = {'novelty': True,
                   'novelty_pop': True
                   }
 
-    genotype_conf = HyperPlasticodingConfig(
+    genotype_conf = PlasticodingConfig(
+        max_structural_modules=15,
         plastic=False,
     )
 
@@ -74,9 +74,10 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(measures, robot):
-        return fitness.novelty(measures, robot)
+        return fitness.fast_novel_limbic(measures, robot)
 
-    fitness_function = {'plane': fitness_function_plane}
+    fitness_function = {'plane': fitness_function_plane,
+                        'tilted5': fitness_function_plane}
 
     population_conf = PopulationConfig(
         population_size=population_size,
@@ -128,8 +129,6 @@ async def run():
     population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
     if do_recovery:
-
-        population.load_novelty_archive()
 
         if gen_num >= 0:
             # loading a previous state of the experiment

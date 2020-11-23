@@ -15,9 +15,12 @@ import os
 import random
 import operator
 from pyrevolve.genotype.hyperplasticoding import visualize
+from scipy.special import softmax
+import numpy as np
 
 
 class Alphabet(Enum):
+
     # Modules
     CORE_COMPONENT = 'C'
     JOINT_HORIZONTAL = 'AJ1'
@@ -27,7 +30,7 @@ class Alphabet(Enum):
 
 
 class HyperPlasticoding:
-
+    
     def __init__(self, conf, robot_id):
 
         self.conf = conf
@@ -43,14 +46,14 @@ class HyperPlasticoding:
         if not conf.plastic:
             body_config_path = os.path.join(local_dir, 'config-body-nonplastic')
             brain_config_path = os.path.join(local_dir, 'config-brain-nonplastic')
-
+        
         else:
             body_config_path = os.path.join(local_dir, 'config-body-plastic')
             brain_config_path = os.path.join(local_dir, 'config-brain-plastic')
 
         self.body_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                                       neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                                       body_config_path)
+                           neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                           body_config_path)
 
         # self.brain_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
         #                                neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -66,7 +69,7 @@ class HyperPlasticoding:
         self.cppn_body = self.body_config.genome_type('')
         self.cppn_body.fitness = 0
         self.cppn_body.configure_new(self.body_config.genome_config)
-
+        
         print('\n new genome:\n{!s}'.format(self.cppn_body))
 
     def develop(self, environment):
@@ -80,8 +83,7 @@ class HyperPlasticoding:
         #     hill = True
 
         self.phenotype = RevolveBot()
-        self.phenotype._id = self.id if type(self.id) == str and self.id.startswith("robot") else "robot_{}".format(
-            self.id)
+        self.phenotype._id = self.id if type(self.id) == str and self.id.startswith("robot") else "robot_{}".format(self.id)
         self.phenotype._brain = BrainNN()
 
         self.develop_body()
@@ -150,7 +152,7 @@ class HyperPlasticoding:
         print('\n')
 
         for direction in clock_wise_directions:
-            print('\n  parent_module.coord', parent_module.substrate_coordinates, 'direction', direction)
+            print('\n  parent_module.coord', parent_module.substrate_coordinates,'direction', direction)
 
             # queries and (possibly) attaches surroundings modules to module in clock-wise order
             self.attach_module(parent_module, Orientation(direction), radius, cppn)
@@ -180,8 +182,6 @@ class HyperPlasticoding:
 
                 # move if up later
                 if potential_module_coord not in self.substrate:
-                    # if potential_parent_coord == parent_module.substrate_coordinates:
-                    # print('match parent')
                     valid_attachment = True
 
                     # sensors can not be attached to joints
@@ -256,34 +256,42 @@ class HyperPlasticoding:
         y_norm = self.normalize_value(y, -radius, radius)
 
         d = self.calculate_d(x_norm, y_norm)
-        # print('\n',x_norm, y_norm, d)
+        # print('\n',x_norm, y_norm, d),
 
         outputs = cppn.activate((x_norm, y_norm, d))
         print(outputs)
-        outputs = [self.standard_output(item) for item in outputs]
-        print(outputs)
 
-        module_type = self.get_module_type(outputs[0])
-        print('module_type', module_type)
+        outputs = softmax(np.array(outputs))
+
+        print('soft',outputs)
+
+        which_module = {
+            'no_module': outputs[0],
+            'b_module': outputs[1],
+            'a1_module': outputs[2],
+            'a2_module': outputs[3],
+            't_module': outputs[4]
+        }
+
+        module_type = self.get_module_type(which_module)
+
+        print('module_type',module_type)
 
         return module_type
 
-    def standard_output(self, value):
-        # sigmoid
-        value = 1.0 / (1.0 + math.exp(-value))
-        return value
-    
-    def get_module_type(self, output):
+    def get_module_type(self, which_module):
 
-        if 0 <= output < 0.20:
+        which_module = max(which_module.items(), key=operator.itemgetter(1))[0]
+        print(which_module)
+        if which_module == 'a1_module':
             module_type = Alphabet.JOINT_HORIZONTAL
-        elif 0.20 <= output < 0.4:
+        elif which_module == 'a2_module':
             module_type = Alphabet.JOINT_VERTICAL
-        elif 0.4 <= output < 0.6:
+        elif which_module == 'b_module':
             module_type = Alphabet.BLOCK
-        elif 0.6 <= output <= 0.8:
+        elif which_module == 't_module':
             module_type = Alphabet.SENSOR
-        elif 0.8 <= output <= 1:
+        else:
             module_type = None
 
         return module_type
@@ -314,18 +322,23 @@ class HyperPlasticoding:
         return d
 
     def export_genotype(self, filepath):
+
         node_names = {-1: 'x',
                       -2: 'y',
                       -3: 'd',
-                      0: 'decide'}
+                      0: 'no_module',
+                      1: 'b_module',
+                      2: 'a1_module',
+                      3: 'a2_module',
+                      4: 't_module'}
 
-        visualize.draw_net(self.body_config, self.cppn_body, False, filepath + '/images/genotype_' +  self.phenotype._id ,
+        visualize.draw_net(self.body_config, self.cppn_body, False, filepath+'/images/genotype_'+ self.phenotype._id ,
                            node_names=node_names)
-
-        f = open(filepath + '/genotype_' +  self.phenotype._id  + '.txt', "w")
+       
+        f = open(filepath+'/genotype_'+ self.phenotype._id +'.txt', "w")
         f.write(str(self.cppn_body))
         f.close()
-
+        
 
 class HyperPlasticodingConfig:
     def __init__(self,
