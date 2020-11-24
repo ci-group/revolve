@@ -1,3 +1,5 @@
+from enum import Enum
+from pyrevolve.genotype import Genotype
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.revolve_bot.revolve_module import Orientation
 from pyrevolve.revolve_bot.revolve_module import CoreModule
@@ -8,13 +10,14 @@ from pyrevolve.revolve_bot.brain.brain_nn import BrainNN
 from pyrevolve.revolve_bot.brain.brain_nn import Node
 from pyrevolve.revolve_bot.brain.brain_nn import Connection
 from pyrevolve.revolve_bot.brain.brain_nn import Params
-from enum import Enum
+from ...custom_logging.logger import logger
 import math
 import neat
 import os
 import random
 import operator
 from pyrevolve.genotype.hyperplasticoding import visualize
+import sys
 
 
 class Alphabet(Enum):
@@ -27,16 +30,18 @@ class Alphabet(Enum):
     SENSOR = 'ST'
 
 
-class HyperPlasticoding:
+class HyperPlasticoding(Genotype):
     
     def __init__(self, conf, robot_id):
 
         self.conf = conf
         self.id = str(robot_id)
         self.quantity_modules = 1
+        self.quantity_nodes = 0
         self.cppn_body = None
         self.cppn_brain = None
-        self.substrate = []
+        # the queried substrate
+        self.substrate = {}
         self.phenotype = None
 
         local_dir = os.path.dirname(__file__)
@@ -44,18 +49,18 @@ class HyperPlasticoding:
         if not conf.plastic:
             body_config_path = os.path.join(local_dir, 'config-body-nonplastic')
             brain_config_path = os.path.join(local_dir, 'config-brain-nonplastic')
-        
+
         else:
             body_config_path = os.path.join(local_dir, 'config-body-plastic')
             brain_config_path = os.path.join(local_dir, 'config-brain-plastic')
 
         self.body_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                           neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                           body_config_path)
+                                       neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                       body_config_path)
 
-        # self.brain_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
-        #                                neat.DefaultSpeciesSet, neat.DefaultStagnation,
-        #                                brain_config_path)
+        self.brain_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                        neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                        brain_config_path)
 
     def standard_output(self, value):
         # sigmoid
@@ -67,8 +72,13 @@ class HyperPlasticoding:
         self.cppn_body = self.body_config.genome_type('')
         self.cppn_body.fitness = 0
         self.cppn_body.configure_new(self.body_config.genome_config)
+
+        self.cppn_brain = self.brain_config.genome_type('')
+        self.cppn_brain.fitness = 0
+        self.cppn_brain.configure_new(self.brain_config.genome_config)
         
-        print('\n new genome:\n{!s}'.format(self.cppn_body))
+        print('\n new genome body:\n{!s}'.format(self.cppn_body))
+        print('\n new genome brain:\n{!s}'.format(self.cppn_brain))
 
     def develop(self, environment):
 
@@ -80,22 +90,59 @@ class HyperPlasticoding:
         # if environment == 'tilted5':
         #     hill = True
 
+        radius = self.conf.substrate_radius
+
         self.phenotype = RevolveBot()
         self.phenotype._id = self.id if type(self.id) == str and self.id.startswith("robot") else "robot_{}".format(self.id)
-        self.phenotype._brain = BrainNN()
 
-        self.develop_body()
+        self.develop_body(radius)
+        self.develop_brain(radius)
+
+        logger.info('Robot ' + str(self.id) + ' was late-developed.')
 
         return self.phenotype
 
-    def develop_body(self):
+    def develop_body(self, radius):
 
         # size of substrate is (substrate_radius*2+1)^2
-        radius = self.conf.substrate_radius
         cppn_body = neat.nn.FeedForwardNetwork.create(self.cppn_body, self.body_config)
 
         self.place_head()
         self.attach_body(self.phenotype._body, radius, cppn_body)
+
+    def develop_brain(self, radius):
+        print('brainnnnn')
+        self.phenotype._brain = BrainNN()
+        cppn_brain = neat.nn.FeedForwardNetwork.create(self.cppn_brain, self.brain_config)
+
+        self.query_cpg_params(radius, cppn_brain)
+
+        self.add_imu_nodes()
+
+    def query_cpg_params(self, radius, cppn_brain):
+        for coordinates in self.substrate:
+
+            if self.substrate[coordinates].info['module_type'] in (Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL):
+                joint = self.substrate[coordinates]
+                queried_params = self.query_brain_part(coordinates[0], coordinates[1], radius, cppn_brain)
+                print('queried_params',queried_params)
+                self.quantity_nodes += 1
+
+                node = Node()
+                node.id = 'node' + str(self.quantity_nodes)
+                node.part_id = joint.id
+                node.layer = 'output'
+                node.type = 'Oscillator'
+
+                params = Params()
+                params.period = queried_params['period']
+                params.phase_offset = queried_params['phase_offset']
+                params.amplitude = queried_params['amplitude']
+
+                node.params = params
+
+                self.phenotype._brain.params[node.id] = params
+                self.phenotype._brain.nodes[node.id] = node
 
     def calculate_coordinates(self, parent, slot):
 
@@ -135,24 +182,27 @@ class HyperPlasticoding:
 
         # core component is the only module that can grow to the back, because it has no parent
         if parent_module.info['module_type'] == Alphabet.CORE_COMPONENT:
-            clock_wise_directions = [Orientation.WEST.value,
-                                     Orientation.NORTH.value,
-                                     Orientation.EAST.value,
-                                     Orientation.SOUTH.value]
+            directions = [Orientation.WEST.value,
+                          Orientation.NORTH.value,
+                          Orientation.EAST.value,
+                          Orientation.SOUTH.value]
         # joints branch out only to the front
         elif parent_module.info['module_type'] in (Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL):
-            clock_wise_directions = [Orientation.NORTH.value]
+            directions = [Orientation.NORTH.value]
         else:
-            clock_wise_directions = [Orientation.WEST.value,
-                                     Orientation.NORTH.value,
-                                     Orientation.EAST.value]
+            directions = [Orientation.WEST.value,
+                          Orientation.NORTH.value,
+                          Orientation.EAST.value]
+
+        # order of children-querying is random
+        random.shuffle(directions)
 
         print('\n')
 
-        for direction in clock_wise_directions:
+        for direction in directions:
             print('\n  parent_module.coord', parent_module.substrate_coordinates,'direction', direction)
 
-            # queries and (possibly) attaches surroundings modules to module in clock-wise order
+            # queries and (possibly) attaches surroundings modules to module
             self.attach_module(parent_module, Orientation(direction), radius, cppn)
 
             # if managed to attach a potential module, tried to branch out recursively
@@ -179,7 +229,7 @@ class HyperPlasticoding:
             if module_type is not None:
 
                 # move if up later
-                if potential_module_coord not in self.substrate:
+                if potential_module_coord not in self.substrate.keys():
                     valid_attachment = True
 
                     # sensors can not be attached to joints
@@ -201,7 +251,7 @@ class HyperPlasticoding:
                             new_module.id = str(self.quantity_modules)
 
                         parent_module.children[direction.value] = new_module
-                        self.substrate.append(potential_module_coord)
+                        self.substrate[potential_module_coord] = new_module
                         print('\n##ADD!\n')
                     else:
                         print('invalid')
@@ -218,7 +268,7 @@ class HyperPlasticoding:
 
         self.phenotype._body = module
         # TODO: experiment with evolvable position for the head
-        self.substrate.append((0, 0))
+        self.substrate[(0, 0)] = module
 
     def new_module(self, module_type):
 
@@ -267,20 +317,32 @@ class HyperPlasticoding:
             't_module': outputs[4]
         }
 
-
-        # which_module = {
-        #     'no_module': random.uniform(0, 1),
-        #     'b_module': random.uniform(0, 1),
-        #     'a1_module': random.uniform(0, 1),
-        #     'a2_module': random.uniform(0, 1),
-        #     't_module': random.uniform(0, 1)
-        # }
-
         module_type = self.get_module_type(which_module)
 
         print('module_type',module_type)
 
         return module_type
+
+    def query_brain_part(self, x, y, radius, cppn):
+
+        x_norm = self.normalize_value(x, -radius, radius)
+        y_norm = self.normalize_value(y, -radius, radius)
+
+        d = self.calculate_d(x_norm, y_norm)
+        # print('\n',x_norm, y_norm, d),
+
+        outputs = cppn.activate((x_norm, y_norm, d))
+
+        params = {
+            'period': outputs[0],
+            'phase_offset': outputs[1],
+            'amplitude': outputs[2],
+            'weight': outputs[3]
+        }
+
+        #TODO: apply transformations to outputs
+
+        return params
 
     def get_module_type(self, which_module):
 
@@ -334,13 +396,34 @@ class HyperPlasticoding:
                       2: 'a1_module',
                       3: 'a2_module',
                       4: 't_module'}
-
-        visualize.draw_net(self.body_config, self.cppn_body, False, filepath + '/images/genotype_' + self.phenotype._id,
+        visualize.draw_net(self.body_config, self.cppn_body, False, filepath + '/images/genotype_body_' + self.phenotype._id,
                            node_names=node_names)
-
-        f = open(filepath + '/genotype_' + self.phenotype._id + '.txt', "w")
+        f = open(filepath + '/genotype_body_' + self.phenotype._id + '.txt', "w")
         f.write(str(self.cppn_body))
         f.close()
+
+        node_names = {-1: 'x',
+                      -2: 'y',
+                      -3: 'd',
+                      0: 'period',
+                      1: 'phase_offset',
+                      2: 'amplitude,',
+                      3: 'weight'}
+        visualize.draw_net(self.brain_config, self.cppn_brain, False, filepath + '/images/genotype_brain_' + self.phenotype._id,
+                           node_names=node_names)
+        f = open(filepath + '/genotype_brain_' + self.phenotype._id + '.txt', "w")
+        f.write(str(self.cppn_brain))
+        f.close()
+
+    def add_imu_nodes(self):
+        for p in range(1, 7):
+            id = 'node-core'+str(p)
+            node = Node()
+            node.layer = 'input'
+            node.type = 'Input'
+            node.part_id = self.phenotype._body.id
+            node.id = id
+            self.phenotype._brain.nodes[id] = node
 
 
 class HyperPlasticodingConfig:
@@ -362,4 +445,5 @@ class HyperPlasticodingConfig:
         self.plastic = plastic
         self.environmental_conditions = environmental_conditions
         self.substrate_radius = substrate_radius
+        self.is_hyper = True
 

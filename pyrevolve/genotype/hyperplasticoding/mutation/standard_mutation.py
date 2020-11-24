@@ -16,11 +16,16 @@ def standard_mutation(genotype, mutation_conf):
     :return: modified genotype
     """
     local_dir = os.path.dirname(__file__) + '/../'
-    body_config_path = os.path.join(local_dir, 'config-body-nonplastic')
 
+    body_config_path = os.path.join(local_dir, 'config-body-nonplastic')
     body_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                               neat.DefaultSpeciesSet, neat.DefaultStagnation,
                               body_config_path)
+
+    brain_config_path = os.path.join(local_dir, 'config-brain-nonplastic')
+    brain_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                               neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                               brain_config_path)
 
     mutation_attempt = random.uniform(0.0, 1.0)
     if mutation_attempt > mutation_conf.mutation_prob:
@@ -29,5 +34,6 @@ def standard_mutation(genotype, mutation_conf):
     else:
 
         genotype.cppn_body.mutate(body_config.genome_config)
+        genotype.cppn_brain.mutate(brain_config.genome_config)
 
         return genotype

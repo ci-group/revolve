@@ -15,6 +15,7 @@ import pickle
 import sys
 import random
 from datetime import datetime
+from pathlib import Path
 
 class PopulationConfig:
     def __init__(self,
@@ -150,8 +151,9 @@ class Population:
     def load_novelty_archive(self):
         path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
         file_name = os.path.join(path, 'novelty_archive.pkl')
-        file = open(file_name, 'rb')
-        self.novelty_archive = pickle.load(file)
+        if Path(file_name).is_file():
+            file = open(file_name, 'rb')
+            self.novelty_archive = pickle.load(file)
 
     async def load_snapshot(self, gen_num):
         """
@@ -414,7 +416,11 @@ class Population:
             conf.fitness_function = conf.fitness_function[environment]
             individual[environment].fitness =\
                 conf.fitness_function(behavioural_measurements, individual[environment])
-            individual[environment].genotype.cppn_body.fitness = individual[environment].fitness
+
+            # TODO:find a better solution for this in the future!
+            if self.conf.genotype_conf.is_hyper:
+                individual[environment].genotype.cppn_body.fitness = individual[environment].fitness
+                individual[environment].genotype.cppn_brain.fitness = individual[environment].fitness
 
             logger.info(f'Individual {individual[environment].phenotype.id} has a fitness of {individual[environment].fitness}')
 

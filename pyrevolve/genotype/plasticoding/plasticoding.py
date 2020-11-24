@@ -20,6 +20,7 @@ import itertools
 import sys
 import json
 
+
 class Alphabet(Enum):
 
     # Modules
@@ -765,3 +766,4 @@ class PlasticodingConfig:
         self.plastic = plastic
         self.environmental_conditions = environmental_conditions
         self.logic_operators = logic_operators
+        self.is_hyper = False

@@ -135,24 +135,27 @@ class HyperPlasticoding:
 
         # core component is the only module that can grow to the back, because it has no parent
         if parent_module.info['module_type'] == Alphabet.CORE_COMPONENT:
-            clock_wise_directions = [Orientation.WEST.value,
-                                     Orientation.NORTH.value,
-                                     Orientation.EAST.value,
-                                     Orientation.SOUTH.value]
+            directions = [Orientation.WEST.value,
+                          Orientation.NORTH.value,
+                          Orientation.EAST.value,
+                          Orientation.SOUTH.value]
         # joints branch out only to the front
         elif parent_module.info['module_type'] in (Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL):
-            clock_wise_directions = [Orientation.NORTH.value]
+            directions = [Orientation.NORTH.value]
         else:
-            clock_wise_directions = [Orientation.WEST.value,
-                                     Orientation.NORTH.value,
-                                     Orientation.EAST.value]
+            directions = [Orientation.WEST.value,
+                          Orientation.NORTH.value,
+                          Orientation.EAST.value]
+
+        # order of children-querying is random
+        random.shuffle(directions)
 
         print('\n')
 
-        for direction in clock_wise_directions:
+        for direction in directions:
             print('\n  parent_module.coord', parent_module.substrate_coordinates, 'direction', direction)
 
-            # queries and (possibly) attaches surroundings modules to module in clock-wise order
+            # queries and (possibly) attaches surroundings modules
             self.attach_module(parent_module, Orientation(direction), radius, cppn)
 
             # if managed to attach a potential module, tried to branch out recursively

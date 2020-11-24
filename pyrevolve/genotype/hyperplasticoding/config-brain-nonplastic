@@ -12,10 +12,10 @@ activation_options      = sigmoid sin gauss tanh abs inv
 
 # network parameters.
 # inputs: x,y,d.
-# outputs: no_module, b_module, a1_module, a2_module, t_module
+# outputs: period, phase_offset, amplitude, weight
 num_hidden              = 0
 num_inputs              = 3
-num_outputs             = 5
+num_outputs             = 4
 
 # connection add/remove rates
 conn_add_prob           = 0.5

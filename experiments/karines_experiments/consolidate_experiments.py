@@ -4,17 +4,17 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-    'multsoft',
-    '_mult',
-    '_one'
+    'multisoft_ne',
+    'multi_ne',
+    'one_ne'
 ]
 environments = {
-'multsoft': ['plane'],
-'_mult': ['plane'],
-'_one': ['plane']
+'multisoft_ne': ['plane'],
+'multi_ne': ['plane'],
+'one_ne': ['plane']
                  }
 
-runs = range(1, 3+1)
+runs = range(1, 10+1)
 
 # set these variables according to your experiments #
 

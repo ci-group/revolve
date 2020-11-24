@@ -36,15 +36,6 @@ experiments_type_colors = c( '#00e700' , '#009900',  '#002200') # light green,da
 
 #### CHANGE THE PARAMETERS HERE ####
 
-#TEMP
-analysis = 'analysis_hplastic'
-output_directory = paste(base_directory,'/',analysis ,sep='')
-experiments_type = c('_one', '_mult', 'multsoft')
-experiments_labels = c('one', 'mult', 'multsoft')
-environments = list( c( 'plane'), c( 'plane'), c( 'plane') )
-runs = list(c(1:3), c(1:3), c(1:3))
-gens = 50
-#TEMP
 
 methods = c()
 for (exp in 1:length(experiments_type))
@@ -103,8 +94,8 @@ measures_labels = c(
   'Rel number of limbs',
   'extremities',
   'Rel. Length of Limbs',
-  'extensiveness',
-  'coverage',
+  'Extensiveness',
+  'Coverage',
   'Rel. Number of Joints',
   'hinge_count',
   'active_hinges_count',
@@ -530,6 +521,12 @@ for (i in 1:length(measures_names))
   max_y =  0
   min_y = 0
   #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
+
+  if (measures_names[i] == 'novelty_pop' )  {
+    max_y = 0.6
+    min_y = 0.25
+    }
+
 
   g1 = g1 +  scale_color_manual(values=  experiments_type_colors  )
 
