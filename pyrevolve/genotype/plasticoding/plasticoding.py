@@ -152,6 +152,8 @@ class Plasticoding(Genotype):
                 self.grammar[repleceable_symbol].append([symbol, params])
 
     def export_genotype(self, filepath):
+
+        filepath += '/genotype_bodybrain_'+self.phenotype._id+'.txt'
         f = open(filepath, "w")
         f.write(str(self.grammar))
         f.close()

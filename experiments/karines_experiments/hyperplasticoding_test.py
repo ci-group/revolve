@@ -74,7 +74,7 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(measures, robot):
-        return fitness.novelty(measures, robot)
+        return fitness.displacement_velocity_hill(measures, robot)
 
     fitness_function = {'plane': fitness_function_plane}
 

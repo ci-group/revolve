@@ -99,6 +99,7 @@ class HyperPlasticoding(Genotype):
         self.develop_brain(radius)
 
         logger.info('Robot ' + str(self.id) + ' was late-developed.')
+        print('phenotypephenotypephenotypephenotypephenotypephenotype', self.phenotype)
 
         return self.phenotype
 
@@ -194,11 +195,9 @@ class HyperPlasticoding(Genotype):
                           Orientation.NORTH.value,
                           Orientation.EAST.value]
 
-        # order of children-querying is random
-        random.shuffle(directions)
-
         print('\n')
 
+        # querying clockwise
         for direction in directions:
             print('\n  parent_module.coord', parent_module.substrate_coordinates,'direction', direction)
 
@@ -228,7 +227,7 @@ class HyperPlasticoding(Genotype):
             # if cppn determines there is a module in the coordinate
             if module_type is not None:
 
-                # move if up later
+                # if position in substrate is not already occupied
                 if potential_module_coord not in self.substrate.keys():
                     valid_attachment = True
 
@@ -313,8 +312,8 @@ class HyperPlasticoding(Genotype):
             'no_module': outputs[0],
             'b_module': outputs[1],
             'a1_module': outputs[2],
-            'a2_module': outputs[3],
-            't_module': outputs[4]
+            'a2_module': outputs[3]#,
+            #'t_module': outputs[4]
         }
 
         module_type = self.get_module_type(which_module)

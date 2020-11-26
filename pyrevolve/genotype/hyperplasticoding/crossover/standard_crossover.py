@@ -35,6 +35,11 @@ def standard_crossover(environments, parent_individuals, genotype_conf, crossove
     parent1_brain = parent_genotypes[0].cppn_brain
     parent2_brain = parent_genotypes[1].cppn_brain
 
+    parent1_body.fitness = -float('Inf') if parent1_body.fitness is None else parent1_body.fitness
+    parent2_body.fitness = -float('Inf') if parent2_body.fitness is None else parent2_body.fitness
+    parent1_brain.fitness = -float('Inf') if parent1_brain.fitness is None else parent1_brain.fitness
+    parent2_brain.fitness = -float('Inf') if parent2_brain.fitness is None else parent2_brain.fitness
+
     print('\n\n\ndskjnfsjnds', parent_genotypes[0].id, parent1_body.fitness, parent_genotypes[1].id, parent2_body.fitness)
 
 

@@ -4,17 +4,13 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-    'multisoft_ne',
-    'multi_ne',
-    'one_ne'
+    'prob1_speed_hyper'
 ]
 environments = {
-'multisoft_ne': ['plane'],
-'multi_ne': ['plane'],
-'one_ne': ['plane']
+'prob1_speed_hyper': ['plane']
                  }
 
-runs = range(1, 10+1)
+runs = range(1, 6+1)
 
 # set these variables according to your experiments #
 
@@ -71,7 +67,7 @@ for exp in experiments_type:
             num_files = 0
             for r, d, f in os.walk(path0+'/genotypes'):
                 for file in f:
-                    if file.endswith(".txt"):
+                    if file.endswith(".txt") and file.startswith("genotype_body"):
                         num_files += 1
 
                         robot_id = file.split('.')[0].split('_')[-1]

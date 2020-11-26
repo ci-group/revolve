@@ -420,6 +420,8 @@ class Population:
             # TODO:find a better solution for this in the future!
             if self.conf.genotype_conf.is_hyper:
                 individual[environment].genotype.cppn_body.fitness = individual[environment].fitness
+                print('cppn fit', individual[environment].genotype.cppn_brain.fitness )
+                print( 'ind fit',individual[environment].fitness)
                 individual[environment].genotype.cppn_brain.fitness = individual[environment].fitness
 
             logger.info(f'Individual {individual[environment].phenotype.id} has a fitness of {individual[environment].fitness}')

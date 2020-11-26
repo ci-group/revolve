@@ -26,9 +26,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 200
-    population_size = 100
-    offspring_size = 100
+    num_generations = 1#200
+    population_size = 2#100
+    offspring_size = 2#100
     front = 'none'
 
     # environment world and z-start
@@ -75,7 +75,7 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(measures, robot):
-        return fitness.novelty(mea  sures, robot)
+        return fitness.novelty(measures, robot)
 
     fitness_function = {'plane': fitness_function_plane}
 

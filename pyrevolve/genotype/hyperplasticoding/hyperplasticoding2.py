@@ -183,7 +183,7 @@ class HyperPlasticoding:
             # if cppn determines there is a module in the coordinate
             if module_type is not None:
 
-                # move if up later
+                # if position in substrate is not already occupied
                 if potential_module_coord not in self.substrate:
                     valid_attachment = True
 
@@ -257,14 +257,14 @@ class HyperPlasticoding:
 
         x_norm = self.normalize_value(x, -radius, radius)
         y_norm = self.normalize_value(y, -radius, radius)
-
         d = self.calculate_d(x_norm, y_norm)
-        # print('\n',x_norm, y_norm, d),
+
+        print( x_norm, y_norm, d)
 
         outputs = cppn.activate((x_norm, y_norm, d))
         print(outputs)
 
-        outputs = softmax(np.array(outputs))
+        # outputs = softmax(np.array(outputs))
 
         print('soft',outputs)
 
