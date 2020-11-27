@@ -4,13 +4,15 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-    'prob1_speed_hyper'
+    'hyper_ncross',
+    'hyper_wcross'
 ]
 environments = {
-'prob1_speed_hyper': ['plane']
+'hyper_ncross': ['plane'],
+'hyper_wcross': ['plane']
                  }
 
-runs = range(1, 6+1)
+runs = range(1, 3+1)
 
 # set these variables according to your experiments #
 

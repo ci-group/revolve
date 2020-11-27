@@ -1,4 +1,4 @@
-from pyrevolve.genotype.hyperplasticoding_old.hyperplasticoding import HyperPlasticoding
+from pyrevolve.genotype.hyperplasticoding.hyperplasticoding import HyperPlasticoding
 
 
 def random_initialization(conf, next_robot_id):

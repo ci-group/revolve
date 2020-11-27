@@ -46,6 +46,8 @@ class HyperPlasticoding(Genotype):
 
         local_dir = os.path.dirname(__file__)
 
+        # TODO: this should come from the manager...later...
+
         if not conf.plastic:
             body_config_path = os.path.join(local_dir, 'config-body-nonplastic')
             brain_config_path = os.path.join(local_dir, 'config-brain-nonplastic')
@@ -99,7 +101,6 @@ class HyperPlasticoding(Genotype):
         self.develop_brain(radius)
 
         logger.info('Robot ' + str(self.id) + ' was late-developed.')
-        print('phenotypephenotypephenotypephenotypephenotypephenotype', self.phenotype)
 
         return self.phenotype
 
@@ -117,6 +118,10 @@ class HyperPlasticoding(Genotype):
         cppn_brain = neat.nn.FeedForwardNetwork.create(self.cppn_brain, self.brain_config)
 
         self.query_cpg_params(radius, cppn_brain)
+
+        # TODO: query inputs weights
+        # TODO: query recurrence
+        # TODO: query inter cpg connections
 
         self.add_imu_nodes()
 
@@ -196,6 +201,10 @@ class HyperPlasticoding(Genotype):
                           Orientation.EAST.value]
 
         print('\n')
+
+        # order of children-querying is random
+        # maybe add it back in the future, BUT ONLY IF using a seed
+        # random.shuffle(directions)
 
         # querying clockwise
         for direction in directions:
@@ -345,6 +354,7 @@ class HyperPlasticoding(Genotype):
 
     def get_module_type(self, which_module):
 
+        # choose neuron with highest value
         which_module = max(which_module.items(), key=operator.itemgetter(1))[0]
         print(which_module)
         if which_module == 'a1_module':

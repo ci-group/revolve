@@ -10,10 +10,12 @@ activation_default      = random
 activation_mutate_rate  = 0.5
 activation_options      = sigmoid sin gauss tanh abs inv
 
-# network parameters. inputs: x,y,d. outputs: module
+# network parameters.
+# inputs: x,y,d.
+# outputs: period, phase_offset, amplitude, weight
 num_hidden              = 0
 num_inputs              = 3
-num_outputs             = 1
+num_outputs             = 4
 
 # connection add/remove rates
 conn_add_prob           = 0.5

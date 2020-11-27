@@ -1,34 +1,23 @@
  #!/bin/bash
 
+cd projects/revolve
+source .venv/bin/activate
+
+
+
 
 while true
 	do
-         for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/fast_novel_limbic_plane_$i --run $i --manager experiments/karines_experiments/fast_novel_limbic_plane.py  --n-cores 4 --port-start 11141  --evaluation-time 50;
-                ./revolve.py --experiment-name karines_experiments/data/fast_novel_limbic_tilted_$i --run $i --manager experiments/karines_experiments/fast_novel_limbic_tilted.py  --n-cores 4 --port-start 11241  --evaluation-time 50;
-
+         for i in {1..3}; do
+        ./revolve.py --experiment-name karines_experiments/data/hyper_ncross_plane_$i --run $i --manager experiments/karines_experiments/hyperplasticoding_ncross_plane.py  --n-cores 4 --port-start 8000  --evaluation-time 50;
                 sleep 5s
 	   done
 done
 
-
-
 while true
 	do
-         for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/fnl_plastic_$i --run $i --manager experiments/karines_experiments/fnl_plastic.py  --n-cores 4 --port-start 11145  --evaluation-time 50;
-
-                sleep 5s
-	   done
-done
-
-
-
-while true
-	do
-         for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/fnl_baseline_$i --run $i --manager experiments/karines_experiments/fnl_baseline.py  --n-cores 4 --port-start 11241  --evaluation-time 50;
-
+         for i in {1..3}; do
+        ./revolve.py --experiment-name karines_experiments/data/hyper_ncross_tilted_$i --run $i --manager experiments/karines_experiments/hyperplasticoding_ncross_tilted.py  --n-cores 4 --port-start 8010  --evaluation-time 50;
                 sleep 5s
 	   done
 done
@@ -36,13 +25,29 @@ done
 
 while true
 	do
-
-                ./revolve.py --experiment-name karines_experiments/data/novelty  --manager experiments/karines_experiments/novelty.py  --run-simulation 0;
-
+         for i in {1..3}; do
+                ./revolve.py --experiment-name karines_experiments/data/hyper_wcross_plane_$i --run $i --manager experiments/karines_experiments/hyperplasticoding_wcross_plane.py  --n-cores 4 --port-start 8020  --evaluation-time 50;
                 sleep 5s
+	   done
 done
 
 
+while true
+	do
+         for i in {1..3}; do
+                ./revolve.py --experiment-name karines_experiments/data/hyper_wcross_tilted_$i --run $i --manager experiments/karines_experiments/hyperplasticoding_wcross_tilted.py  --n-cores 4 --port-start 8030  --evaluation-time 50;
+                sleep 5s
+	   done
+done
+
+
+while true
+	do
+         for i in {1..1}; do
+                ./revolve.py --experiment-name karines_experiments/data/plasticoding_seasons_$i --run $i --manager experiments/karines_experiments/baselines/plasticoding_seasons.py  --n-cores 4 --port-start 8040  --evaluation-time 50;
+                sleep 5s
+	   done
+done
 
 
 while true
