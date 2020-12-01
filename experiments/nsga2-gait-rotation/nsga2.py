@@ -1,22 +1,25 @@
+from math import inf
+from typing import List
 import numpy as np
-import copy
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 
+from evolution.individual import Individual
 
-def NSGA2(population_individuals, offspring, debug: bool = False):
+
+def NSGA2(population_individuals: List[Individual], offspring: List[Individual], debug: bool = False):
     population_size = len(population_individuals)
     offspring_size = len(offspring)
     # Preparate the objectives as a matrix of individuals in the rows and fitnesses in the columns.
     objectives = np.zeros(
         (population_size + offspring_size, max(1, len(population_individuals[0].objectives))))  # TODO fitnesses is 0
     # Fill the objectives with all individual from the population and offspring combined.
-    all_individuals = copy.deepcopy(population_individuals)
+    all_individuals = [individual for individual in population_individuals]
     all_individuals.extend(offspring)
     for index, individual in enumerate(all_individuals):
         # Negative fitness due to minimum search, TODO can be changed to be a default maximization NSGA.
-        objectives[index, :] = [-objective for objective in individual.objectives]
+        objectives[index, :] = [inf if objective is None else -objective for objective in individual.objectives]
     # Perform the NSGA Algorithm
     front_no, max_front = nd_sort(objectives, np.inf)
     crowd_dis = crowding_distance(objectives, front_no)
