@@ -245,6 +245,7 @@ class DynamicSimSupervisor(object):
             env[key] = value
         env['GAZEBO_MASTER_URI'] = f'http://{address}:{port}'
 
+        # Search for gazebo dynamic library lookup folder
         process = subprocess.run(['which', self.simulator_cmd[0]], stdout=subprocess.PIPE)
         process.check_returncode()
         gazebo_libraries_path = process.stdout.decode()
@@ -256,10 +257,16 @@ class DynamicSimSupervisor(object):
                 gazebo_libraries_path = _gazebo_libraries_path
                 break
 
+        # Platform dependant environment setup
         if platform.system() == 'Darwin':
             env['DYLD_LIBRARY_PATH'] = gazebo_libraries_path
         else:  # linux
             env['LD_LIBRARY_PATH'] = gazebo_libraries_path
+            # remove screen scaling variables, gazebo does not handle screen scaling really well.
+            del env['QT_AUTO_SCREEN_SCALE_FACTOR']
+            del env['QT_SCREEN_SCALE_FACTORS']
+            # force set x11(xcb) platform, since gazebo on wayland is broken
+            env['QT_QPA_PLATFORM'] = 'xcb'
         self.procs[output_tag] = await self._launch_with_ready_str(
             cmd=gz_args,
             ready_str=ready_str,

@@ -45,6 +45,7 @@ class RevolveBot:
         self.self_collide: bool = self_collide
         self.battery_level: float = 0.0
         self.simulation_boundaries = None
+        self.failed_eval_attempt_count: int = 0
 
     @property
     def id(self) -> int:

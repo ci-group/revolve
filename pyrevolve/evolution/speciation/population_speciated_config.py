@@ -39,7 +39,8 @@ class PopulationSpeciatedConfig(PopulationConfig):
                  old_age_fitness_penalty: float = 0.5,
                  species_max_stagnation: int = 50,
                  offspring_size: Optional[int] = None,
-                 grace_time: float = 0.0):
+                 grace_time: float = 0.0,
+                 objective_functions: Optional[List[Callable[[RobotManager, RevolveBot], float]]] = None):
         """
         Creates a PopulationSpeciatedConfig object that sets the particular configuration for the population with species
 
@@ -48,7 +49,11 @@ class PopulationSpeciatedConfig(PopulationConfig):
             First parameter is the config of the genome.
             Second is the id of the genome
         :param genotype_conf: configuration for genotype constructor
-        :param fitness_function: function that takes in a `RobotManager` as a parameter and produces a fitness for the robot
+        :param fitness_function: function that takes in a `RobotManager` as a parameter and produces a fitness for
+            the robot. Set to `None` if you want to use `objective_functions` instead.
+        :param objective_functions: list of functions that takes in a `RobotManager` as a parameter and produces a
+            fitness for the robot. This parameter is to be instead of the `fitness_function` when using an algorithm
+            that uses multiple objective optimization, like NSGAII.
         :param mutation_operator: operator to be used in mutation
         :param mutation_conf: configuration for mutation operator
         :param crossover_operator: operator to be used in crossover.
@@ -90,11 +95,11 @@ class PopulationSpeciatedConfig(PopulationConfig):
                          experiment_name,
                          experiment_management,
                          offspring_size,
-                         grace_time)
+                         grace_time,
+                         objective_functions)
         self.are_individuals_compatible = are_individuals_compatible_fn  # type: Callable[[Individual, Individual], bool]
         self.young_age_threshold = young_age_threshold
         self.young_age_fitness_boost = young_age_fitness_boost
         self.old_age_threshold = old_age_threshold
         self.old_age_fitness_penalty = old_age_fitness_penalty
         self.species_max_stagnation = species_max_stagnation
-

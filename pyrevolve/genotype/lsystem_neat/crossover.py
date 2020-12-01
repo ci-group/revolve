@@ -31,16 +31,18 @@ def standard_crossover(parents, lsystem_conf, crossover_conf):
     assert len(parents) == 2
 
     parents_body_genotype = [p.genotype._body_genome for p in parents]
-    parents_brain_genotype = [p.genotype._brain_genome for p in parents]
+    parents_brain_genotypes = [pair for pair in zip(parents[0].genotype._brain_genomes, parents[1].genotype._brain_genomes)]
 
     child_genotype = LSystemCPGHyperNEATGenotype()
     Neatconf = NEATCrossoverConf()
 
     new_body = PlasticodingCrossover(parents_body_genotype, lsystem_conf.plasticoding, crossover_conf)
-    new_brain = NEATBrainCrossover(parents_brain_genotype, Neatconf, crossover_conf, lsystem_conf)
+    new_brain = []
+    for g1, g2 in parents_brain_genotypes:
+        new_brain.append(NEATBrainCrossover([g1, g2], Neatconf, crossover_conf, lsystem_conf))
 
     child_genotype._body_genome = new_body
-    child_genotype._brain_genome = new_brain
+    child_genotype._brain_genomes = new_brain
 
     return child_genotype
 

@@ -14,7 +14,7 @@ class PopulationConfig:
                  population_size: int,
                  genotype_constructor: Callable[[object, int], Genotype],
                  genotype_conf: object,
-                 fitness_function: Callable[[RobotManager, RevolveBot], float],
+                 fitness_function: Optional[Callable[[RobotManager, RevolveBot], float]],
                  mutation_operator: Callable[[Genotype, object], Genotype],
                  mutation_conf: object,
                  crossover_operator: Callable[[List[Individual], object, object], Genotype],
@@ -30,7 +30,8 @@ class PopulationConfig:
                  experiment_name: str,
                  experiment_management,
                  offspring_size: Optional[int] = None,
-                 grace_time: float = 0.0):
+                 grace_time: float = 0.0,
+                 objective_functions: Optional[List[Callable[[RobotManager, RevolveBot], float]]] = None):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -39,7 +40,11 @@ class PopulationConfig:
             First parameter is the config of the genome.
             Second is the id of the genome
         :param genotype_conf: configuration for genotype constructor
-        :param fitness_function: function that takes in a `RobotManager` as a parameter and produces a fitness for the robot
+        :param fitness_function: function that takes in a `RobotManager` as a parameter and produces a fitness for
+            the robot. Set to `None` if you want to use `objective_functions` instead.
+        :param objective_functions: list of functions that takes in a `RobotManager` as a parameter and produces a
+            fitness for the robot. This parameter is to be instead of the `fitness_function` when using an algorithm
+            that uses multiple objective optimization, like NSGAII.
         :param mutation_operator: operator to be used in mutation
         :param mutation_conf: configuration for mutation operator
         :param crossover_operator: operator to be used in crossover.
@@ -55,6 +60,11 @@ class PopulationConfig:
         :param offspring_size (optional): size of offspring (for steady state)
         :param grace_time: time to wait before starting the evaluation (experiment_time = grace_time + evaluation_time), default to 0.0
         """
+        # Test if at least one of them is set
+        assert fitness_function is not None or objective_functions is not None
+        # Test if not both of them are set at the same time
+        assert fitness_function is None or objective_functions is None
+
         self.population_size = population_size
         self.genotype_constructor = genotype_constructor
         self.genotype_conf = genotype_conf
@@ -72,3 +82,4 @@ class PopulationConfig:
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
         self.offspring_size = offspring_size
+        self.objective_functions = objective_functions

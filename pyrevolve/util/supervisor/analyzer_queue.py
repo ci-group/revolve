@@ -1,9 +1,13 @@
 import os
+from typing import Callable
 
+from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.gazebo.analyze import BodyAnalyzer
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.supervisor_collision import CollisionSimSupervisor
+from pyrevolve.revolve_bot import RevolveBot
+from pyrevolve.tol.manage.robotmanager import RobotManager
 
 
 class AnalyzerQueue(SimulatorQueue):
@@ -26,11 +30,15 @@ class AnalyzerQueue(SimulatorQueue):
     async def _connect_to_simulator(self, settings, address, port):
         return await BodyAnalyzer.create(address, port)
 
-    async def _evaluate_robot(self, simulator_connection, robot, conf):
+    async def _evaluate_robot(self,
+                              simulator_connection,
+                              robot: RevolveBot,
+                              conf: PopulationConfig,
+                              _fitness_fun: Callable[[RobotManager, RevolveBot], float]):
         if robot.failed_eval_attempt_count == 3:
             logger.info(f'Robot {robot.phenotype.id} analyze failed (reached max attempt of 3), fitness set to None.')
             analyze_result = None
             return analyze_result
         else:
-            analyze_result = await simulator_connection.analyze_robot(robot.phenotype)
+            analyze_result = await simulator_connection.analyze_robot(robot)
             return analyze_result

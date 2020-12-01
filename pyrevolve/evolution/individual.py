@@ -3,14 +3,14 @@ import os
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Optional, List
+    from typing import Optional, List, Union
     from pyrevolve.revolve_bot import RevolveBot
     from pyrevolve.genotype import Genotype
     from pyrevolve.evolution.speciation.species import Species
 
 
 class Individual:
-    def __init__(self, genotype: Genotype, phenotype: Optional[RevolveBot] = None):
+    def __init__(self, genotype: Genotype, phenotype: Optional[Union[RevolveBot, List[RevolveBot]]] = None):
         """
         Creates an Individual object with the given genotype and optionally the phenotype.
 
@@ -18,10 +18,10 @@ class Individual:
         :param phenotype (optional): phenotype of the individual
         """
         self.genotype: Genotype = genotype
-        self.phenotype: RevolveBot = phenotype
+        self.phenotype: Union[RevolveBot, List[RevolveBot]] = phenotype
         self.fitness: Optional[float] = None
         self.parents: Optional[List[Individual]] = None
-        self.failed_eval_attempt_count: int = 0
+        self.objectives = []
 
     def develop(self) -> None:
         """
@@ -34,18 +34,25 @@ class Individual:
     def id(self) -> int:
         _id = None
         if self.phenotype is not None:
-            _id = self.phenotype.id
+            if isinstance(self.phenotype, list):
+                _id = self.phenotype[0].id
+            else:
+                _id = self.phenotype.id
         elif self.genotype.id is not None:
             _id = self.genotype.id
         return _id
 
     def export_genotype(self, folder: str) -> None:
-        self.genotype.export_genotype(os.path.join(folder, f'genotype_{self.phenotype.id}.txt'))
+        self.genotype.export_genotype(os.path.join(folder, f'genotype_{self.id}.txt'))
 
     def export_phenotype(self, folder: str) -> None:
         if self.phenotype is None:
             self.develop()
-        self.phenotype.save_file(os.path.join(folder, f'phenotype_{self.phenotype.id}.yaml'), conf_type='yaml')
+        if isinstance(self.phenotype, list):
+            for i, alternative in enumerate(self.phenotype):
+                alternative.save_file(os.path.join(folder, f'phenotype_{alternative.id}_{i}.yaml'), conf_type='yaml')
+        else:
+            self.phenotype.save_file(os.path.join(folder, f'phenotype_{self.phenotype.id}.yaml'), conf_type='yaml')
 
     def export_phylogenetic_info(self, folder: str) -> None:
         """

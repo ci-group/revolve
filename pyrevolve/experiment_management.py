@@ -142,14 +142,59 @@ class ExperimentManagement:
                 fitness_file.write(fitness_line)
                 self._fitnesses_saved.add(individual.id)
 
-    def export_behavior_measures(self, _id: int, measures: BehaviouralMeasurements) -> None:
+    def export_objectives(self, individual: Individual) -> None:
+        """
+        Exports fitness to the fitness file. If the individual fitness is already present, the value is overridden
+        :param individual: individual which fitness needs "saving"
+        """
+        objectives_string = ','.join([str(o) for o in individual.objectives])
+        fitness_line = f'{individual.id},{objectives_string}\n'
+
+        if individual.id in self._fitnesses_saved:
+            # search and overwrite
+            logger.warning(f'Individual({individual.id}) fitness is going to be overwritten, '
+                           f'normally is not be expected')
+            str_individual_id = str(individual.id)
+            with open(self._fitness_file_path, 'r') as fitness_file:
+                lines = fitness_file.readlines()
+            with open(self._fitness_file_path, 'w') as fitness_file:
+                found = False
+                for line in lines:
+                    splitted_line = line.split(',')
+                    _file_id = splitted_line[0]
+                    _file_fitness = splitted_line[1:]
+
+                    if _file_id == str_individual_id:
+                        logger.warning(f'Individual({individual.id}) fitness overwritten, '
+                                       f'the old value was {_file_fitness}')
+                        fitness_file.write(fitness_line)
+                        found = True
+                    else:
+                        fitness_file.write(line)
+
+                if not found:
+                    logger.error(f"fitness of individual_{str_individual_id} should have been in fitness.csv file but "
+                                 f"was not found, appending at the end")
+                    self._fitnesses_saved.remove(individual.id)
+                    self.export_fitness(individual)
+        else:
+            # append at the end
+            with open(self._fitness_file_path, 'a') as fitness_file:
+                fitness_file.write(fitness_line)
+                self._fitnesses_saved.add(individual.id)
+
+    def export_behavior_measures(self, _id: int, measures: BehaviouralMeasurements, extra_info: Optional[AnyStr]) -> None:
         """
         Exports behavioural measurements of an individual in the correct folder
         :param _id: id of the individual
         :param measures: Behavioral measurements of the individual
         """
-        filename = os.path.join(self._behavioural_desc_folder, f'behavior_desc_{_id}.txt')
-        with open(filename, 'w') as f:
+        if extra_info:
+            filename = f'behavior_desc_{_id}_{extra_info}.txt'
+        else:
+            filename = f'behavior_desc_{_id}.txt'
+        filepath = os.path.join(self._behavioural_desc_folder, filename)
+        with open(filepath, 'w') as f:
             if measures is None:
                 f.write(str(None))
             else:
@@ -162,36 +207,41 @@ class ExperimentManagement:
                 f.write("%s\n" % identifier)
 
     def export_phenotype_images(self, individual: Individual, dirpath: Optional[str] = None, rename_if_present=False) -> None:
+
+        phenotypes = individual.phenotype if isinstance(individual.phenotype, list) else [individual.phenotype]
+
         dirpath = dirpath if dirpath is not None \
             else self._phenotype_images_folder
-        try:
-            # -- Body image --
-            body_filename_part = os.path.join(dirpath, f'body_{individual.phenotype.id}')
-            if rename_if_present and os.path.exists(f'{body_filename_part}.png'):
-                counter = 1
-                while os.path.exists(f'{body_filename_part}_{counter}.png'):
-                    counter += 1
-                os.symlink(f'body_{individual.phenotype.id}.png',
-                           f'{body_filename_part}_{counter}.png',
-                           target_is_directory=False)
-            else:
-                # Write file
-                individual.phenotype.render_body(f'{body_filename_part}.png')
 
-            # -- Brain image --
-            brain_filename_part = os.path.join(dirpath, f'brain_{individual.phenotype.id}')
-            if rename_if_present and os.path.exists(f'{brain_filename_part}.png'):
-                counter = 1
-                while os.path.exists(f'{brain_filename_part}_{counter}.png'):
-                    counter += 1
-                os.symlink(f'brain_{individual.phenotype.id}.png',
-                           f'{brain_filename_part}_{counter}.png',
-                           target_is_directory=False)
-            else:
-                # Write file
-                individual.phenotype.render_brain(os.path.join(dirpath, f'{brain_filename_part}.png'))
-        except Exception as e:
-            logger.warning(f'Error rendering phenotype images: {e}')
+        for i, phenotype in enumerate(phenotypes):
+            try:
+                # -- Body image --
+                body_filename_part = os.path.join(dirpath, f'body_{phenotype.id}_{i}')
+                if rename_if_present and os.path.exists(f'{body_filename_part}.png'):
+                    counter = 1
+                    while os.path.exists(f'{body_filename_part}_{counter}.png'):
+                        counter += 1
+                    os.symlink(f'body_{phenotype.id}_{i}.png',
+                               f'{body_filename_part}_{counter}.png',
+                               target_is_directory=False)
+                else:
+                    # Write file
+                    phenotype.render_body(f'{body_filename_part}.png')
+
+                # -- Brain image --
+                brain_filename_part = os.path.join(dirpath, f'brain_{phenotype.id}_{i}')
+                if rename_if_present and os.path.exists(f'{brain_filename_part}.png'):
+                    counter = 1
+                    while os.path.exists(f'{brain_filename_part}_{counter}.png'):
+                        counter += 1
+                    os.symlink(f'brain_{phenotype.id}_{i}.png',
+                               f'{brain_filename_part}_{counter}.png',
+                               target_is_directory=False)
+                else:
+                    # Write file
+                    phenotype.render_brain(os.path.join(dirpath, f'{brain_filename_part}.png'))
+            except Exception as e:
+                logger.warning(f'Error rendering phenotype images: {e}')
 
     def export_failed_eval_robot(self, individual: Individual) -> None:
         """
@@ -313,7 +363,9 @@ class ExperimentManagement:
         last_id_with_fitness = -1
         with open(self._fitness_file_path, 'r') as fitness_file:
             for line in fitness_file:
-                individual_id, _fitness = line.split(',')
+                line_split = line.split(',')
+                individual_id = line_split[0]
+                _fitness = line_split[1:]
                 individual_id = int(individual_id)
                 self._fitnesses_saved.add(individual_id)
                 if individual_id > last_id_with_fitness:

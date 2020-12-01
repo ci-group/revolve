@@ -1,15 +1,18 @@
 from __future__ import annotations
 import asyncio
 import os
+import math
 
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.population.population_config import PopulationConfig
+from pyrevolve.revolve_bot.revolve_bot import RevolveBot
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import List, Optional, Callable
     from pyrevolve.evolution.speciation.species import Species
+    from pyrevolve.tol.manage.robotmanager import RobotManager
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
 
@@ -49,15 +52,21 @@ class Population:
                         parents: Optional[List[Individual]] = None):
         individual = Individual(genotype)
         individual.develop()
-        individual.phenotype.update_substrate()
+        if isinstance(individual.phenotype, list):
+            for alternative in individual.phenotype:
+                alternative.update_substrate()
+                alternative.measure_phenotype()
+                alternative.export_phenotype_measurements(self.config.experiment_management.data_folder)
+        else:
+            individual.phenotype.update_substrate()
+            individual.phenotype.measure_phenotype()
+            individual.phenotype.export_phenotype_measurements(self.config.experiment_management.data_folder)
         if parents is not None:
             individual.parents = parents
 
         self.config.experiment_management.export_genotype(individual)
         self.config.experiment_management.export_phenotype(individual)
         self.config.experiment_management.export_phenotype_images(individual)
-        individual.phenotype.measure_phenotype()
-        individual.phenotype.export_phenotype_measurements(self.config.experiment_management.data_folder)
 
         return individual
 
@@ -172,6 +181,49 @@ class Population:
 
         return new_population
 
+    async def _evaluate_objectives(self,
+                                  new_individuals: List[Individual],
+                                  gen_num: int) -> None:
+        """
+        Evaluates each individual in the new gen population for each objective
+        :param new_individuals: newly created population after an evolution iteration
+        :param gen_num: generation number
+        """
+        assert isinstance(self.config.objective_functions, list) is True
+        assert self.config.fitness_function is None
+
+        robot_futures = []
+        for individual in new_individuals:
+            individual.develop()
+            individual.objectives = [-math.inf for _ in range(len(self.config.objective_functions))]
+
+            assert len(individual.phenotype) == len(self.config.objective_functions)
+            for objective, robot in enumerate(individual.phenotype):
+                logger.info(f'Evaluating individual (gen {gen_num} - objective {objective}) {robot.id}')
+                objective_fun = self.config.objective_functions[objective]
+                future = asyncio.ensure_future(
+                    self.evaluate_single_robot(individual=individual, fitness_fun=objective_fun, phenotype=robot))
+                robot_futures.append((individual, robot, objective, future))
+
+        await asyncio.sleep(1)
+
+        for individual, robot, objective, future in robot_futures:
+            assert objective < len(self.config.objective_functions)
+
+            logger.info(f'Evaluation of Individual (objective {objective}) {robot.id}')
+            fitness, robot._behavioural_measurements = await future
+            individual.objectives[objective] = fitness
+            logger.info(f'Individual {individual.id} in objective {objective} has a fitness of {fitness}')
+
+            if robot._behavioural_measurements is None:
+                assert fitness is None
+
+            self.config.experiment_management\
+                .export_behavior_measures(robot.id, robot._behavioural_measurements, objective)
+
+        for individual, robot, objective, _ in robot_futures:
+            self.config.experiment_management.export_objectives(individual)
+
     async def evaluate(self,
                        new_individuals: List[Individual],
                        gen_num: int,
@@ -183,12 +235,26 @@ class Population:
         :param gen_num: generation number
         TODO remove `type_simulation`, I have no idea what that is for, but I have a strong feeling it should not be here.
         """
+        if callable(self.config.fitness_function):
+            await self._evaluate_single_fitness(new_individuals, gen_num, type_simulation)
+        elif isinstance(self.config.objective_functions, list):
+            await self._evaluate_objectives(new_individuals, gen_num)
+        else:
+            raise RuntimeError("Fitness function not configured correctly")
+
+    async def _evaluate_single_fitness(self,
+                                       new_individuals: List[Individual],
+                                       gen_num: int,
+                                       type_simulation = 'evolve') -> None:
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
         robot_futures = []
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
+            assert callable(self.config.fitness_function)
+            robot_futures.append(
+                asyncio.ensure_future(
+                    self.evaluate_single_robot(individual=individual, fitness_fun=self.config.fitness_function)))
 
         await asyncio.sleep(1)
 
@@ -201,26 +267,36 @@ class Population:
                 assert (individual.fitness is None)
 
             if type_simulation == 'evolve':
-                self.config.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
+                self.config.experiment_management.export_behavior_measures(individual.phenotype.id,
+                                                                           individual.phenotype._behavioural_measurements)
 
             logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             if type_simulation == 'evolve':
                 self.config.experiment_management.export_fitness(individual)
 
-    async def evaluate_single_robot(self, individual: Individual) -> (float, BehaviouralMeasurements):
+    async def evaluate_single_robot(self,
+                                    individual: Individual,
+                                    fitness_fun: Callable[[RobotManager, RevolveBot], float],
+                                    phenotype: Optional[RevolveBot] = None) -> (float, BehaviouralMeasurements):
         """
         :param individual: individual
+        :param fitness_fun: fitness function
+        :param phenotype: robot phenotype to test [optional]
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
         """
-        if individual.phenotype is None:
-            individual.develop()
+        if phenotype is None:
+            if individual.phenotype is None:
+                individual.develop()
+            phenotype = individual.phenotype
+
+        assert isinstance(phenotype, RevolveBot)
 
         if self.analyzer_queue is not None:
-            collisions, bounding_box = await self.analyzer_queue.test_robot(individual, self.config)
+            collisions, bounding_box = await self.analyzer_queue.test_robot(individual, phenotype, self.config, fitness_fun)
             if collisions > 0:
                 logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
                 return None, None
             else:
-                individual.phenotype.simulation_boundaries = bounding_box
+                phenotype.simulation_boundaries = bounding_box
 
-        return await self.simulator_queue.test_robot(individual, self.config)
+        return await self.simulator_queue.test_robot(individual, phenotype, self.config, fitness_fun)

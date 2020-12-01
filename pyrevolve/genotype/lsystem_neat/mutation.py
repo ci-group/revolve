@@ -26,7 +26,8 @@ def composite_mutation(genotype: LSystemCPGHyperNEATGenotype,
                        brain_mutation: Callable[[NeatBrainGenome], NeatBrainGenome]) -> LSystemCPGHyperNEATGenotype:
     new_genome = genotype.clone()
     new_genome._body_genome = body_mutation(new_genome._body_genome)
-    new_genome._brain_genome = brain_mutation(new_genome._brain_genome)
+    for i in range(len(new_genome._brain_genomes)):
+        new_genome._brain_genomes[i] = brain_mutation(new_genome._brain_genomes[i])
     return new_genome
 
 
