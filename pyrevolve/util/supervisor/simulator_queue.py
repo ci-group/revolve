@@ -148,7 +148,7 @@ class SimulatorQueue:
                     # restart of the simulator happened
                     robot.failed_eval_attempt_count += 1
                     logger.info(f"Robot {robot.id} current failed attempt: {robot.failed_eval_attempt_count}")
-                    await self._robot_queue.put((robot, future, conf))
+                    await self._robot_queue.put((individual, robot, future, conf, fitness_fun))
                     await self._restart_simulator(i)
                     if self._enable_play_pause:
                         await self._connections[i].pause(True)

@@ -263,8 +263,10 @@ class DynamicSimSupervisor(object):
         else:  # linux
             env['LD_LIBRARY_PATH'] = gazebo_libraries_path
             # remove screen scaling variables, gazebo does not handle screen scaling really well.
-            del env['QT_AUTO_SCREEN_SCALE_FACTOR']
-            del env['QT_SCREEN_SCALE_FACTORS']
+            if 'QT_AUTO_SCREEN_SCALE_FACTOR' in env:
+                del env['QT_AUTO_SCREEN_SCALE_FACTOR']
+            if 'QT_SCREEN_SCALE_FACTORS' in env:
+                del env['QT_SCREEN_SCALE_FACTORS']
             # force set x11(xcb) platform, since gazebo on wayland is broken
             env['QT_QPA_PLATFORM'] = 'xcb'
         self.procs[output_tag] = await self._launch_with_ready_str(
