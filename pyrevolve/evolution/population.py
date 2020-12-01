@@ -249,8 +249,12 @@ class Population:
 
             # Temporary
             if combined_value is not None:
-                individual.fitness, individual.battery = combined_value
-                individual.objectives = [individual.fitness, individual.battery]
+                if isinstance(combined_value, tuple):
+                    individual.fitness, individual.battery = combined_value
+                    individual.objectives = [individual.fitness, individual.battery]
+                else:
+                    individual.fitness = combined_value
+                    individual.objectives = [0.0, 0.0]
             else:
                 individual.objectives = [0.0, 10.0]
 

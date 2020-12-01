@@ -15,9 +15,28 @@ def displacement(robot_manager, robot):
     displacement_vec.z = 0
     return (displacement_vec.magnitude(), robot_manager.battery_level)
 
+def limit(value):
+    return max(0.0, min(1.0, value))
+
+def weighted_speed_efficiency(robot_manager, robot):
+    displacement_weight = 0.5
+    normalization_velocity = 0.050
+    normalization_battery = 10
+    return displacement_weight * limit(measures.displacement_velocity(robot_manager) / normalization_velocity) + (1 - displacement_weight) * limit(robot_manager.battery_level / normalization_battery)
+
 
 def displacement_velocity(robot_manager, robot):
     return (measures.displacement_velocity(robot_manager), robot_manager.battery_level)
+
+
+def displacement_efficiency(robot_manager, robot):
+    battery_usage = - robot_manager.battery_level # always negative
+    if battery_usage > 0.0:
+        displacement_vec = measures.displacement(robot_manager)[0]
+        displacement_vec.z = 0
+        return displacement_vec.magnitude() / battery_usage
+    else:
+        return 0.0
 
 
 def battery(robot_manager, robot):
