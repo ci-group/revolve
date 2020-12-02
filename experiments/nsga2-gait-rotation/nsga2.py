@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 
-from evolution.individual import Individual
+from pyrevolve.evolution.individual import Individual
 
 
 def NSGA2(population_individuals: List[Individual], offspring: List[Individual], debug: bool = False):
