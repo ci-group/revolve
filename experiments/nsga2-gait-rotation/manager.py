@@ -44,8 +44,8 @@ async def run():
 
     # experiment params #
     num_generations = 200
-    population_size = 20
-    offspring_size = 10
+    population_size = 100
+    offspring_size = 50
 
     objective_functions = [fitness.displacement_velocity, fitness.panoramic_rotation]
 
@@ -127,7 +127,7 @@ async def run():
         crossover_conf=crossover_conf,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
-        population_management=NSGA2,
+        population_management=lambda pop, offsprings: NSGA2(pop, offsprings, debug=True),
         population_management_selector=None,
         evaluation_time=args.evaluation_time,
         grace_time=args.grace_time,
