@@ -11,10 +11,10 @@ activation_mutate_rate  = 0.5
 activation_options      = sigmoid sin gauss tanh abs inv
 
 # network parameters.
-# inputs: x,y,d.
+# inputs: x origin, y origin, x dest, y dest, d.
 # outputs: period, phase_offset, amplitude, weight
 num_hidden              = 0
-num_inputs              = 3
+num_inputs              = 5
 num_outputs             = 4
 
 # connection add/remove rates

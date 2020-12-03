@@ -1,4 +1,4 @@
-from pyrevolve.genotype.hyperplasticoding.hyperplasticoding import HyperPlasticoding
+from pyrevolve.genotype.hyperplasticoding_tmp.hyperplasticoding import HyperPlasticoding
 import neat
 import random
 from ....custom_logging.logger import genotype_logger

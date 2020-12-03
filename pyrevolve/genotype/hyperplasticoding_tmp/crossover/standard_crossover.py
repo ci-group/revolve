@@ -1,4 +1,4 @@
-from pyrevolve.genotype.hyperplasticoding.hyperplasticoding import HyperPlasticoding, HyperPlasticodingConfig
+from pyrevolve.genotype.hyperplasticoding_tmp.hyperplasticoding import HyperPlasticoding, HyperPlasticodingConfig
 import neat
 from pyrevolve.evolution.individual import Individual
 import random

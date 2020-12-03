@@ -4,15 +4,21 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-    'hyper_ncross',
-    'hyper_wcross'
+    #'hyper_ncross_plane',
+    #'hyper_ncross_tilted',
+   # 'hyper_wcross_plane',
+   # 'hyper_wcross_tilted'
+    'plasticoding_seasons'
 ]
 environments = {
-'hyper_ncross': ['plane'],
-'hyper_wcross': ['plane']
+    #'hyper_ncross_plane': ['plane'],
+   # 'hyper_ncross_tilted': ['tilted5'],
+   # 'hyper_wcross_plane': ['plane'],
+   #'hyper_wcross_tilted': ['tilted5']
+   'plasticoding_seasons': ['plane', 'tilted5']
                  }
 
-runs = range(1, 3+1)
+runs = range(1, 20+1)
 
 # set these variables according to your experiments #
 
@@ -90,17 +96,21 @@ for exp in experiments_type:
                                 file_summary.write('None'+'\t')
 
                         pt_file = path1+'/descriptors/phenotype_desc_robot_'+robot_id+'.txt'
-                        num_lines = sum(1 for line in open(pt_file))
-                        with open(pt_file) as file:
-                            for idx, line in enumerate(file):
+                        if os.path.isfile(pt_file):
+                            num_lines = sum(1 for line in open(pt_file))
+                            with open(pt_file) as file:
+                                for idx, line in enumerate(file):
 
-                                measure, value = line.strip().split(' ')
-                                file_summary.write(value)
+                                    measure, value = line.strip().split(' ')
+                                    file_summary.write(value)
 
-                                if idx < num_lines - 1:
-                                    file_summary.write('\t')
-                                else:
-                                    file_summary.write('\n')
+                                    if idx < num_lines - 1:
+                                        file_summary.write('\t')
+                                    else:
+                                        file_summary.write('\n')
+                        else:
+                            for h in phenotype_headers:
+                                file_summary.write('None'+'\n')
 
             list_gens = []
             for r, d, f in os.walk(path2):

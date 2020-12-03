@@ -33,8 +33,8 @@ async def run():
     front = 'none'
 
     # environment world and z-start
-    environments = {'plane': 0.03
-                   # ,'tilted5': 0.1
+    environments = {'plane': 0.03#,
+                    #'tilted5': 0.1
                     }
 
     # calculation of the measures can be on or off, because they are expensive
@@ -123,20 +123,17 @@ async def run():
     population = Population(population_conf, simulator_queue, analyzer_queue, 1)
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
-    generation = 199
+    generation = 153
     max_best = 3
     await population.load_snapshot(generation)
 
     values = []
     for ind in population.individuals:
-        # temp if!
-        print(ind[list(environments.keys())[-1]].phenotype.id)
-        #if ind[list(environments.keys())[-1]].phenotype.id == 'robot_19853':
-        #print('fsdfndjgnjkdsfngkdjngkjrngkjrh')
         # define a criteria here
         for environment in environments:
             ind[environment].evaluated = False
         if ind[list(environments.keys())[-1]].consolidated_fitness is not None:
+            #if ind[list(environments.keys())[-1]].phenotype.id == 'robot_6948':
             values.append(ind[list(environments.keys())[-1]].consolidated_fitness)
         else:
             values.append(-float('Inf'))

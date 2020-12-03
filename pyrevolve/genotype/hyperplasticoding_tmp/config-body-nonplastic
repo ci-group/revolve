@@ -48,7 +48,7 @@ enabled_default         = True
 enabled_mutate_rate     = 0.01
 
 feed_forward            = True
-#initial_connection      = full
+initial_connection      = full
 
 # node response options
 response_init_mean      = 1.0

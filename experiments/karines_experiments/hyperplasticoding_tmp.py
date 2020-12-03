@@ -27,8 +27,8 @@ async def run():
 
     # experiment params #
     num_generations = 1#200
-    population_size = 15#100
-    offspring_size = 15#100
+    population_size = 100#100
+    offspring_size = 100#100
     front = 'none'
 
     # environment world and z-start
@@ -37,7 +37,7 @@ async def run():
 
     # calculation of the measures can be on or off, because they are expensive
     novelty_on = {'novelty': True,
-                  'novelty_pop': True
+                  'novelty_pop': False
                   }
 
     genotype_conf = HyperPlasticodingConfig(

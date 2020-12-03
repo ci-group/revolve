@@ -208,11 +208,11 @@ class WorldManager(manage.WorldManager):
             self._update_states
         )
 
-        self.contact_subscriber = await self.manager.subscribe(
-            '/gazebo/default/physics/contacts',
-            'gazebo.msgs.Contacts',
-            self._update_contacts
-        )
+        # self.contact_subscriber = await self.manager.subscribe(
+        #     '/gazebo/default/physics/contacts',
+        #     'gazebo.msgs.Contacts',
+        #     self._update_contacts
+        # )
 
         # Awaiting this immediately will lock the program
         update_state_future = self.set_state_update_frequency(
@@ -230,7 +230,7 @@ class WorldManager(manage.WorldManager):
 
         # Wait for connections
         await self.pose_subscriber.wait_for_connection()
-        await self.contact_subscriber.wait_for_connection()
+        #await self.contact_subscriber.wait_for_connection()
         await update_state_future
 
         if self.do_restore:
@@ -239,7 +239,7 @@ class WorldManager(manage.WorldManager):
     async def disconnect(self):
         await super().disconnect()
         await self.pose_subscriber.remove()
-        await self.contact_subscriber.remove()
+        #await self.contact_subscriber.remove()
         await self.battery_handler.stop()
 
     async def create_snapshot(self, pause_when_saving=True):

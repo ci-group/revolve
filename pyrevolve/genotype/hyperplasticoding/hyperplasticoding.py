@@ -348,8 +348,6 @@ class HyperPlasticoding(Genotype):
             'weight': outputs[3]
         }
 
-        #TODO: apply transformations to outputs
-
         return params
 
     def get_module_type(self, which_module):
