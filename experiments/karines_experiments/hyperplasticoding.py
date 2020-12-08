@@ -26,9 +26,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 200
-    population_size = 100
-    offspring_size = 100
+    num_generations = 2#200
+    population_size = 15#00
+    offspring_size = 15#00
     front = 'none'
 
     # environment world and z-start
@@ -50,7 +50,7 @@ async def run():
     )
 
     crossover_conf = CrossoverConfig(
-        crossover_prob=0
+        crossover_prob=0.2
     )
     # experiment params #
 

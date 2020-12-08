@@ -71,6 +71,7 @@ class RevolveBot:
     def measure_phenotype(self, experiment_name):
         self._morphological_measurements = self.measure_body()
         self._brain_measurements = self.measure_brain()
+        print('Robot ' + str(self.id) + ' was measured.')
         logger.info('Robot ' + str(self.id) + ' was measured.')
 
     def measure_body(self):

@@ -11,10 +11,10 @@ activation_mutate_rate  = 0.5
 activation_options      = sigmoid sin gauss tanh abs inv
 
 # network parameters.
-# inputs: x,y,d.
+# inputs: x origin, y origin, x dest, y dest, d.
 # outputs: period, phase_offset, amplitude, weight
 num_hidden              = 0
-num_inputs              = 3
+num_inputs              = 5
 num_outputs             = 4
 
 # connection add/remove rates
@@ -32,9 +32,9 @@ aggregation_options     = sum
 
 # node bias options
 bias_init_mean          = 0.0
-bias_init_stdev         = 1.0
-bias_max_value          = 30.0
-bias_min_value          = -30.0
+bias_init_stdev         = 0
+bias_max_value          = 1
+bias_min_value          = -1
 bias_mutate_power       = 0.5
 bias_mutate_rate        = 0.7
 bias_replace_rate       = 0.1
@@ -53,8 +53,8 @@ initial_connection      = full
 # node response options
 response_init_mean      = 1.0
 response_init_stdev     = 0.0
-response_max_value      = 30.0
-response_min_value      = -30.0
+response_max_value      = 1
+response_min_value      = -1
 response_mutate_power   = 0.0
 response_mutate_rate    = 0.0
 response_replace_rate   = 0.0
@@ -62,8 +62,8 @@ response_replace_rate   = 0.0
 # connection weight options
 weight_init_mean        = 0.0
 weight_init_stdev       = 1.0
-weight_max_value        = 30
-weight_min_value        = -30
+weight_max_value        = 1
+weight_min_value        = -1
 weight_mutate_power     = 0.5
 weight_mutate_rate      = 0.8
 weight_replace_rate     = 0.1

@@ -32,7 +32,7 @@ show_markers = TRUE # shows statistical tests markers on line plots
 show_legends = TRUE # shows legends on line plots
 
 # one color per item in experiments_labels2, but are not respected if show_legends as on
-experiments_type_colors = c( '#00e700' , '#009900',  '#002200') # light green,dark green
+experiments_type_colors = c( '#00e700' , '#009900',  '#002200',  '#005600') # light green,dark green
 
 #### CHANGE THE PARAMETERS HERE ####
 

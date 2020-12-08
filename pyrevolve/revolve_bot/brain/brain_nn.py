@@ -136,6 +136,7 @@ class Node:
         self.layer = None
         self.part_id = None
         self.type = None
+        self.coordinates = None
 
     def load_yaml(self, yaml_object_node):
         self.id = yaml_object_node['id']

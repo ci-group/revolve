@@ -43,8 +43,8 @@ done
 
 while true
 	do
-         for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/plasticoding_seasons_$i --run $i --manager experiments/karines_experiments/baselines/plasticoding_seasons.py  --n-cores 4 --port-start 8040  --evaluation-time 50;
+         for i in {16..20}; do
+                ./revolve.py --experiment-name karines_experiments/data/plasticoding_seasons_$i --run $i --manager experiments/karines_experiments/baselines/plasticoding_seasons.py  --n-cores 4 --port-start 8070  --evaluation-time 50;
                 sleep 5s
 	   done
 done
@@ -52,7 +52,7 @@ done
 
 while true
 	do
-    sleep 900s;
+    sleep 1800s;
     kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
     kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');
     sleep 60s;
