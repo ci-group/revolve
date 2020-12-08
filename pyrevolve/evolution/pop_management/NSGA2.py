@@ -69,7 +69,7 @@ class NSGA2:
         for individual in discarded_population:
             ax.scatter(individual.objectives[0], individual.objectives[1], s=5, color='white')
 
-        nsga_generation_plot_path = self.experiment_management.plot_path(data_folder="NSGA2", filename=f'nsga2_front_{gen_num}.pdf')
+        nsga_generation_plot_path = self.experiment_management.plot_path(data_source="NSGA2", filename='nsga2_front_')
         fig.savefig(nsga_generation_plot_path)
         plt.close(fig)
 

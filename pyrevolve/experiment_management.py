@@ -132,9 +132,9 @@ class ExperimentManagement:
 
         return last_snapshot, has_offspring, last_id+1
 
-    def plot_path(self, data_source: str, formatted_filename: str):
+    def plot_path(self, data_source: str, filename: str, file_extension=".png"):
         data_folder = os.path.join(self._data_folder, data_source)
-        if os.path.exists(data_folder):
+        if not os.path.exists(data_folder):
             os.mkdir(data_folder)
 
-        return os.path.join(data_folder, formatted_filename % self._gen_num)
+        return os.path.join(data_folder, filename + str(self._gen_num) + file_extension)

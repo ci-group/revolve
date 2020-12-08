@@ -5,9 +5,9 @@ set -x
 runs=1
 runs_start=0
 start_port=15000
-exp_name=battery_10_weighted_05
+exp_name=battery_test_visualization
 log_suffix=''
-manager=experiments/battery/manager_reduced_joints_weighted_efficiency.py
+manager=experiments/battery/manager_reduced_joints_NSGA2.py
 
 for i in $(seq $runs)
 do
