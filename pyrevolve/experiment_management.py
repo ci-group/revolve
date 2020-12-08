@@ -13,6 +13,7 @@ class ExperimentManagement:
         manager_folder = os.path.dirname(self.settings.manager)
         self._experiment_folder = os.path.join(manager_folder, 'data', self.settings.experiment_name, self.settings.run)
         self._data_folder = os.path.join(self._experiment_folder, 'data_fullevolution')
+        self._gen_num = 0
 
     def create_exp_folders(self):
         if os.path.exists(self.experiment_folder):
@@ -77,6 +78,7 @@ class ExperimentManagement:
         individual.phenotype.save_file(os.path.join(self.data_folder, 'failed_eval_robots', f'phenotype_{individual.phenotype.id}.sdf'), conf_type='sdf')
 
     def export_snapshots(self, individuals, gen_num):
+        self._gen_num = gen_num
         if self.settings.recovery_enabled:
             path = os.path.join(self.experiment_folder, f'selectedpop_{gen_num}')
             if os.path.exists(path):
@@ -129,3 +131,10 @@ class ExperimentManagement:
             has_offspring = False
 
         return last_snapshot, has_offspring, last_id+1
+
+    def plot_path(self, data_source: str, formatted_filename: str):
+        data_folder = os.path.join(self._data_folder, data_source)
+        if os.path.exists(data_folder):
+            os.mkdir(data_folder)
+
+        return os.path.join(data_folder, formatted_filename % self._gen_num)

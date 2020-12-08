@@ -71,7 +71,7 @@ async def run():
         crossover_conf=crossover_conf,
         selection=lambda individuals: tournament_selection(individuals, 4),
         parent_selection=lambda individuals: multiple_selection(individuals, 4, tournament_selection),
-        population_management=NSGA2,
+        population_management=NSGA2(experiment_management, debug=True),
         population_management_selector=None,
         evaluation_time=settings.evaluation_time,
         offspring_size=offspring_size,
