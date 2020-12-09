@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from pyrevolve import parser
+import os
+import matplotlib
+import matplotlib.pyplot as plt
 
+from pyrevolve import parser
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.population.population import Population
@@ -26,6 +29,8 @@ from pyrevolve.custom_logging.logger import logger
 from pyrevolve.genotype.plasticoding import PlasticodingConfig
 from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig
 
+from .nsga2 import NSGA2
+
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -38,9 +43,11 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 3
-    population_size = 3
-    offspring_size = 2
+    num_generations = 200
+    population_size = 100
+    offspring_size = 50
+
+    objective_functions = [fitness.displacement_velocity, fitness.panoramic_rotation]
 
     body_conf = PlasticodingConfig(
         max_structural_modules=50,
@@ -64,7 +71,7 @@ async def run():
     brain_conf.multineat_params.CompatTresholdModifier = 0.1
     brain_conf.multineat_params.CompatTreshChangeInterval_Generations = 1
     brain_conf.multineat_params.CompatTreshChangeInterval_Evaluations = 1
-    genotype_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)
+    genotype_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf, len(objective_functions))
 
     plasticMutation_conf = plasticMutationConfig(
         mutation_prob=0.8,
@@ -108,23 +115,22 @@ async def run():
     if next_robot_id < 0:
         next_robot_id = 1
 
-    # Experimental selection of fitness function from config fitness argument.
-    fitness_function = getattr(fitness, args.fitness)
-
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=LSystemCPGHyperNEATGenotype,
         genotype_conf=genotype_conf,
-        fitness_function=fitness_function,
+        fitness_function=None,
+        objective_functions=objective_functions,
         mutation_operator=lmutation,
         mutation_conf=lmutation_conf,
         crossover_operator=lcrossover,
         crossover_conf=crossover_conf,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
-        population_management=steady_state_population_management,
-        population_management_selector=tournament_selection,
+        population_management=lambda pop, offsprings: NSGA2(pop, offsprings, debug=True),
+        population_management_selector=None,
         evaluation_time=args.evaluation_time,
+        grace_time=args.grace_time,
         offspring_size=offspring_size,
         experiment_name=args.experiment_name,
         experiment_management=experiment_management,
@@ -132,16 +138,16 @@ async def run():
 
     n_cores = args.n_cores
 
-    simulator_queue = SimulatorQueue(n_cores, args, args.port_start)
-    await simulator_queue.start()
+    # simulator_queue = SimulatorQueue(n_cores, args, args.port_start)
+    # await simulator_queue.start()
 
-    analyzer_queue = AnalyzerQueue(1, args, args.port_start+n_cores)
-    await analyzer_queue.start()
+    # analyzer_queue = AnalyzerQueue(1, args, args.port_start+n_cores)
+    # await analyzer_queue.start()
 
     population = Population(population_conf,
-                            simulator_queue,
-                            analyzer_queue,
-                            next_robot_id)
+                             None,
+                             None,
+                             next_robot_id)
 
     if do_recovery:
         # loading a previous state of the experiment
@@ -154,19 +160,24 @@ async def run():
             logger.info('Recovered unfinished offspring '+str(gen_num))
 
             if gen_num == 0:
-                await population.initialize(individuals)
+                print("await population.initialize(individuals)")
             else:
-                population = await population.next_generation(gen_num, individuals)
+                print("population = await population.next_generation(gen_num, individuals)")
 
-            experiment_management.export_snapshots(population.individuals, gen_num)
+            print("experiment_management.export_snapshots(population.individuals, gen_num)")
     else:
         # starting a new experiment
-        experiment_management.create_exp_folders()
-        await population.initialize()
-        experiment_management.export_snapshots(population.individuals, gen_num)
+        raise RuntimeError("We just want to test the recovery")
+        # experiment_management.create_exp_folders()
+        # await population.initialize()
+        # experiment_management.export_snapshots(population.individuals, gen_num)
 
-    while gen_num < num_generations-1:
-        gen_num += 1
-        population = await population.next_generation(gen_num)
-        logger.info("after next generation\n")
-        experiment_management.export_snapshots(population.individuals, gen_num)
+    # while gen_num < num_generations-1:
+    #     gen_num += 1
+    #     population = await population.next_generation(gen_num)
+    #     experiment_management.export_snapshots(population.individuals, gen_num)
+    #
+    #     # save plot from NSGAII
+    #     generation_folder = experiment_management.generation_folder(gen_num)
+    #     plt.savefig(os.path.join(generation_folder, f'nsga2_front_{gen_num}.pdf'))
+    #     plt.clf()
