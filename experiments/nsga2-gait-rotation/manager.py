@@ -180,3 +180,4 @@ async def run():
         # save plot from NSGAII
         generation_folder = experiment_management.generation_folder(gen_num)
         plt.savefig(os.path.join(generation_folder, f'nsga2_front_{gen_num}.pdf'))
+        plt.clf()
