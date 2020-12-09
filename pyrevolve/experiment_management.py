@@ -7,6 +7,7 @@ import yaml
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.tol.manage import measures
+from pyrevolve.revolve_bot.revolve_bot import RevolveBot
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -189,7 +190,7 @@ class ExperimentManagement:
         :param _id: id of the individual
         :param measures: Behavioral measurements of the individual
         """
-        if extra_info:
+        if extra_info is not None:
             filename = f'behavior_desc_{_id}_{extra_info}.txt'
         else:
             filename = f'behavior_desc_{_id}.txt'
@@ -401,49 +402,69 @@ class ExperimentManagement:
 
         individual = Individual(genotype)
         individual.develop()
-        individual.phenotype.update_substrate()
-        individual.phenotype.measure_phenotype()
+        if isinstance(individual.phenotype, RevolveBot):
+            phenotypes = [individual.phenotype]
+        elif isinstance(individual.phenotype, list):
+            phenotypes = individual.phenotype
+        else:
+            raise RuntimeError(f"individual.phenotype is of wrong type: {type(individual.phenotype)}")
+
+        for phenotype in phenotypes:
+            phenotype.update_substrate()
+            phenotype.measure_phenotype()
 
         # load fitness
         if fitness is None:
             with open(self._fitness_file_path, 'r') as fitness_file:
                 for line in fitness_file:
-                    line_id, line_fitness = line.split(',')
+                    line_split = line.split(',')
+                    line_id = line_split[0]
+                    line_fitness = line_split[1:]  # type List[str]
                     if line_id == _id:
-                        fitness = None if line_fitness.startswith('None') else float(line_fitness)
+                        objectives = [None if line_fitness_v.startswith('None') else float(line_fitness_v) for line_fitness_v in line_fitness]
+                        if len(line_fitness) == 1:
+                            fitness = objectives[0]
+                            objectives = None
                         break
                 else:
                     fitness = None
+                    objectives = None
+        else:
+            fitness = float(fitness)
 
-        individual.fitness = None if fitness is None else float(fitness)
+        individual.fitness = None if fitness is None else fitness
+        individual.objectives = None if objectives is None else objectives
 
-        with open(os.path.join(self._behavioural_desc_folder, f'behavior_desc_{_id}.txt')) as f:
-            lines = f.readlines()
-            if lines[0] == 'None':
-                individual.phenotype._behavioural_measurements = None
-            else:
-                individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
-                for line in lines:
-                    line_split = line.split(' ')
-                    line_0 = line_split[0]
-                    line_1 = line_split[1]
-                    if line_0 == 'velocity':
-                        individual.phenotype._behavioural_measurements.velocity = \
-                            float(line_1) if line_1 != 'None\n' else None
-                    # if line_0 == 'displacement':
-                    #     individual.phenotype._behavioural_measurements.displacement = \
-                    #         float(line_1) if line_1 != 'None\n' else None
-                    elif line_0 == 'displacement_velocity':
-                        individual.phenotype._behavioural_measurements.displacement_velocity = \
-                            float(line_1) if line_1 != 'None\n' else None
-                    elif line_0 == 'displacement_velocity_hill':
-                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = \
-                            float(line_1) if line_1 != 'None\n' else None
-                    elif line_0 == 'head_balance':
-                        individual.phenotype._behavioural_measurements.head_balance = \
-                            float(line_1) if line_1 != 'None\n' else None
-                    elif line_0 == 'contacts':
-                        individual.phenotype._behavioural_measurements.contacts = \
-                            float(line_1) if line_1 != 'None\n' else None
+        for i, phenotype in enumerate(phenotypes):
+            # if there are phenotype alternatives, load with _{i} id postfix
+            full_id = str(phenotype.id) if len(phenotypes) == 1 else f"{phenotype.id}_{i}"
+            with open(os.path.join(self._behavioural_desc_folder, f'behavior_desc_{full_id}.txt')) as f:
+                lines = f.readlines()
+                if lines[0] == 'None':
+                    phenotype._behavioural_measurements = None
+                else:
+                    phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+                    for line in lines:
+                        line_split = line.split(' ')
+                        line_0 = line_split[0]
+                        line_1 = line_split[1]
+                        if line_0 == 'velocity':
+                            phenotype._behavioural_measurements.velocity = \
+                                float(line_1) if line_1 != 'None\n' else None
+                        # if line_0 == 'displacement':
+                        #     phenotype._behavioural_measurements.displacement = \
+                        #         float(line_1) if line_1 != 'None\n' else None
+                        elif line_0 == 'displacement_velocity':
+                            phenotype._behavioural_measurements.displacement_velocity = \
+                                float(line_1) if line_1 != 'None\n' else None
+                        elif line_0 == 'displacement_velocity_hill':
+                            phenotype._behavioural_measurements.displacement_velocity_hill = \
+                                float(line_1) if line_1 != 'None\n' else None
+                        elif line_0 == 'head_balance':
+                            phenotype._behavioural_measurements.head_balance = \
+                                float(line_1) if line_1 != 'None\n' else None
+                        elif line_0 == 'contacts':
+                            phenotype._behavioural_measurements.contacts = \
+                                float(line_1) if line_1 != 'None\n' else None
 
         return individual

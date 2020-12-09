@@ -93,7 +93,7 @@ class LSystemCPGHyperNEATGenotype(Genotype):
             # read the brain genomes
             for brain_i in range(number_of_brain_genomes):
                 i = -number_of_brain_genomes + brain_i
-                self._brain_genome._load_genotype_from(lines[i].strip())
+                self._brain_genomes[brain_i]._load_genotype_from(lines[i].strip())
 
     def clone(self) -> LSystemCPGHyperNEATGenotype:
         clone = LSystemCPGHyperNEATGenotype()
