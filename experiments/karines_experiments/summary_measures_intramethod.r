@@ -51,7 +51,7 @@ for (exp in 1:length(experiments_type))
 measures_names = c(
   'displacement_velocity_hill',
   'head_balance',
-  'contacts', 
+ # 'contacts', 
   'displacement_velocity',
   'branching',
   'branching_modules_count',
@@ -89,7 +89,7 @@ measures_names = c(
 measures_labels = c(
   'Speed (cm/s)',
   'Balance',
-  'Contacts', 
+  #'Contacts', 
   'displacement_velocity',
   'Branching',
   'branching_modules_count',
@@ -124,6 +124,7 @@ measures_labels = c(
 )
 
 
+
 measures_snapshots_all = NULL
 
 for (exp in 1:length(experiments_type))
@@ -132,18 +133,16 @@ for (exp in 1:length(experiments_type))
   {
     for (env in 1:length(environments[[exp]]))
     {
-      input_directory  <-  paste(base_directory, '/', 
-                                 experiments_type[exp], '_',sep='')
+      measures   = read.table(paste(base_directory,paste(experiments_type[exp], environments[[exp]][env], run,"all_measures.tsv", sep='_'), sep='/'),
+                              header = TRUE, fill=TRUE)
       
-      measures   = read.table(paste(input_directory, run, '/data_fullevolution/',
-                                    environments[[exp]][env], "/all_measures.tsv", sep=''), header = TRUE, fill=TRUE)
       for( m in 1:length(measures_names))
-      { 
+      {
         measures[measures_names[m]] = as.numeric(as.character(measures[[measures_names[m]]]))
       }
       
-      snapshots   = read.table(paste(input_directory, run,'/selectedpop_',
-                                     environments[[exp]][env],"/snapshots_ids.tsv", sep=''), header = TRUE)
+      snapshots   = read.table(paste(base_directory,paste(experiments_type[exp], environments[[exp]][env], run, "snapshots_ids.tsv", sep='_'), sep='/'),
+                               header = TRUE)
       
       measures_snapshots = sqldf('select * from snapshots inner join measures using(robot_id) order by generation')
       
@@ -151,7 +150,7 @@ for (exp in 1:length(experiments_type))
       measures_snapshots$displacement_velocity_hill =   measures_snapshots$displacement_velocity_hill*100
       measures_snapshots$run = as.factor(measures_snapshots$run)
       measures_snapshots$method = paste(experiments_type[exp], environments[[exp]][env],sep='_')
-      measures_snapshots$method_label =  experiments_labels2[exp] 
+      measures_snapshots$method_label =  experiments_labels2[exp]
       
       if ( is.null(measures_snapshots_all)){
         measures_snapshots_all = measures_snapshots
@@ -161,6 +160,7 @@ for (exp in 1:length(experiments_type))
     }
   }
 }
+
 
 
 fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",gens," order by 4"))

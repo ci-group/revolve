@@ -40,9 +40,6 @@ def standard_crossover(environments, parent_individuals, genotype_conf, crossove
     parent1_brain.fitness = -float('Inf') if parent1_brain.fitness is None else parent1_brain.fitness
     parent2_brain.fitness = -float('Inf') if parent2_brain.fitness is None else parent2_brain.fitness
 
-    print('\n\n\ndskjnfsjnds', parent_genotypes[0].id, parent1_body.fitness, parent_genotypes[1].id, parent2_body.fitness)
-
-
     crossover_attempt = random.uniform(0.0, 1.0)
     if crossover_attempt > crossover_conf.crossover_prob:
         #TODO: replace this for simply deeply copying one random parent (not sure if would work as expected)

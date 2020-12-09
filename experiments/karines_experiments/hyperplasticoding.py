@@ -26,9 +26,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 2#200
-    population_size = 15#00
-    offspring_size = 15#00
+    num_generations = 10#200
+    population_size = 15#100
+    offspring_size = 15#100
     front = 'none'
 
     # environment world and z-start
@@ -42,6 +42,8 @@ async def run():
 
     genotype_conf = HyperPlasticodingConfig(
         plastic=False,
+        body_config_path='pyrevolve/genotype/hyperplasticoding/config-body-nonplastic',
+        brain_config_path='pyrevolve/genotype/hyperplasticoding/config-brain-nonplastic'
     )
 
     mutation_conf = MutationConfig(
@@ -50,7 +52,7 @@ async def run():
     )
 
     crossover_conf = CrossoverConfig(
-        crossover_prob=0.2
+        crossover_prob=0.8
     )
     # experiment params #
 

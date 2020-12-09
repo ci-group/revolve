@@ -4,46 +4,9 @@ cd projects/revolve
 source .venv/bin/activate
 
 
-
-
 while true
 	do
-         for i in {1..3}; do
-        ./revolve.py --experiment-name karines_experiments/data/hyper_ncross_plane_$i --run $i --manager experiments/karines_experiments/hyperplasticoding_ncross_plane.py  --n-cores 4 --port-start 8000  --evaluation-time 50;
-                sleep 5s
-	   done
-done
-
-while true
-	do
-         for i in {1..3}; do
-        ./revolve.py --experiment-name karines_experiments/data/hyper_ncross_tilted_$i --run $i --manager experiments/karines_experiments/hyperplasticoding_ncross_tilted.py  --n-cores 4 --port-start 8010  --evaluation-time 50;
-                sleep 5s
-	   done
-done
-
-
-while true
-	do
-         for i in {1..3}; do
-                ./revolve.py --experiment-name karines_experiments/data/hyper_wcross_plane_$i --run $i --manager experiments/karines_experiments/hyperplasticoding_wcross_plane.py  --n-cores 4 --port-start 8020  --evaluation-time 50;
-                sleep 5s
-	   done
-done
-
-
-while true
-	do
-         for i in {1..3}; do
-                ./revolve.py --experiment-name karines_experiments/data/hyper_wcross_tilted_$i --run $i --manager experiments/karines_experiments/hyperplasticoding_wcross_tilted.py  --n-cores 4 --port-start 8030  --evaluation-time 50;
-                sleep 5s
-	   done
-done
-
-
-while true
-	do
-         for i in {16..20}; do
+         for i in {1..20}; do
                 ./revolve.py --experiment-name karines_experiments/data/plasticoding_seasons_$i --run $i --manager experiments/karines_experiments/baselines/plasticoding_seasons.py  --n-cores 4 --port-start 8070  --evaluation-time 50;
                 sleep 5s
 	   done

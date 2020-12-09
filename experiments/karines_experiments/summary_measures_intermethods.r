@@ -49,7 +49,7 @@ for (exp in 1:length(experiments_type))
 measures_names = c(
   'displacement_velocity_hill',
   'head_balance',
-  'contacts',
+  #'contacts',
   'displacement_velocity',
   'branching',
   'branching_modules_count',
@@ -87,7 +87,7 @@ measures_names = c(
 measures_labels = c(
   'Speed (cm/s)',
   'Balance',
-  'Contacts',
+  #'Contacts',
   'displacement_velocity',
   'Branching',
   'branching_modules_count',
@@ -479,6 +479,7 @@ for (type_summary in c('means','quants'))
     max_y =  0
     min_y = 0
 
+    
     #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
 
     graph = graph  +  labs( y=measures_labels[i], x="Generation", title=paste(str_to_title(environments[[exp]][env]), "Season"))

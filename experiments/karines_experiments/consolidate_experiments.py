@@ -4,18 +4,10 @@ import math
 # set these variables according to your experiments #
 dirpath = 'data/'
 experiments_type = [
-    #'hyper_ncross_plane',
-    #'hyper_ncross_tilted',
-   # 'hyper_wcross_plane',
-   # 'hyper_wcross_tilted'
-    'plasticoding_seasons'
+    'hyper_full',
 ]
 environments = {
-    #'hyper_ncross_plane': ['plane'],
-   # 'hyper_ncross_tilted': ['tilted5'],
-   # 'hyper_wcross_plane': ['plane'],
-   #'hyper_wcross_tilted': ['tilted5']
-   'plasticoding_seasons': ['plane', 'tilted5']
+    'hyper_full': ['plane'],
                  }
 
 runs = range(1, 20+1)
