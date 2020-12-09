@@ -150,22 +150,21 @@ async def run():
                              next_robot_id)
 
     if do_recovery:
-        raise RuntimeError("TODO recovery not implemented")
-        # # loading a previous state of the experiment
-        # population.load_snapshot(gen_num)
-        # if gen_num >= 0:
-        #     logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
-        # if has_offspring:
-        #     individuals = population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
-        #     gen_num += 1
-        #     logger.info('Recovered unfinished offspring '+str(gen_num))
-        #
-        #     if gen_num == 0:
-        #         await population.initialize(individuals)
-        #     else:
-        #         population = await population.next_generation(gen_num, individuals)
-        #
-        #     experiment_management.export_snapshots(population.individuals, gen_num)
+        # loading a previous state of the experiment
+        population.load_snapshot(gen_num)
+        if gen_num >= 0:
+            logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
+        if has_offspring:
+            individuals = population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
+            gen_num += 1
+            logger.info('Recovered unfinished offspring '+str(gen_num))
+
+            if gen_num == 0:
+                await population.initialize(individuals)
+            else:
+                population = await population.next_generation(gen_num, individuals)
+
+            experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
