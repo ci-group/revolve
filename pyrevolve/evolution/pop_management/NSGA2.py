@@ -52,26 +52,24 @@ class NSGA2:
         if objectives.shape[1] == 3:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
-        else:
-            fig, ax = plt.subplots(nrows=1, ncols=1)
 
         for index, front in enumerate(sorted_fronts):
             if objectives.shape[1] == 3:
                 ax.scatter(objectives[front, 0], objectives[front, 1], objectives[front, 2], s=100,
                            color=colors[index])
             else:
-                ax.scatter(-objectives[front, 0], -objectives[front, 1], s=50,
+                plt.scatter(-objectives[front, 0], -objectives[front, 1], s=50,
                             color=colors[index])
 
         for individual in new_individuals:
-            ax.scatter(individual.objectives[0], individual.objectives[1], s=5, color='black')
+            plt.scatter(individual.objectives[0], individual.objectives[1], s=5, color='black')
 
         for individual in discarded_population:
-            ax.scatter(individual.objectives[0], individual.objectives[1], s=5, color='white')
+            plt.scatter(individual.objectives[0], individual.objectives[1], s=5, color='white')
 
         nsga_generation_plot_path = self.experiment_management.plot_path(data_source="NSGA2", filename='nsga2_front_')
-        fig.savefig(nsga_generation_plot_path)
-        plt.close(fig)
+        plt.savefig(nsga_generation_plot_path)
+        #plt.clf()
 
     # adapted from https://github.com/ChengHust/NSGA-II/blob/master/nd_sort.py
     def nd_sort(self, objectives, n_sort):
