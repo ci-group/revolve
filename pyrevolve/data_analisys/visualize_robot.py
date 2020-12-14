@@ -4,6 +4,7 @@ import sys
 import os
 import math
 import numpy as np
+from typing import List
 
 from pyrevolve import parser
 from pyrevolve.custom_logging import logger
@@ -121,10 +122,17 @@ async def test_robot_run(robot_file_path: str):
     # Parse command line / file input arguments
     settings = parser.parse_args()
 
+    world: str = settings.world
+    if settings.record:
+        # world = "plane.recording.world"
+        _world = world.split('.')  # type: List[str]
+        _world.insert(-1, 'recording')
+        world = '.'.join(_world)
+
     # Start Simulator
     if settings.simulator_cmd != 'debug':
         simulator_supervisor = DynamicSimSupervisor(
-            world_file=settings.world,
+            world_file=world,
             simulator_cmd=settings.simulator_cmd,
             simulator_args=["--verbose"],
             plugins_dir_path=os.path.join('.', 'build', 'lib'),

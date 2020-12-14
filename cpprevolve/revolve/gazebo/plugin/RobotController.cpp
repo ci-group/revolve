@@ -106,7 +106,7 @@ void RobotController::Load(
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Error Loading the Robot Controller, expcetion: " << std::endl
+        std::cerr << "Error Loading the Robot Controller, exception: " << std::endl
                   << e.what() << std::endl;
         throw;
     }

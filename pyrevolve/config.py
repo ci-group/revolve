@@ -99,6 +99,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--record',
+    default=False, type=bool,
+    help="When running with --test-robot argument, records the video of the test run"
+)
+
+parser.add_argument(
     '--plot-test-robot',
     default=False, type=bool,
     help="When testing a robot, plot the data instead of printing it to the terminal. Default False."
