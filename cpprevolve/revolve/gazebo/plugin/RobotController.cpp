@@ -315,7 +315,7 @@ void RobotController::LoadBattery(const sdf::ElementPtr _sdf)
       );
     } catch(std::invalid_argument &e) {
       std::clog << "Initial charge of the robot not set, using 0.0" << std::endl;
-      battery_initial_charge = 0.0;
+      battery_initial_charge = 10.0;
     }
     this->battery_.reset(new ::revolve::gazebo::Battery(battery_initial_charge)); // set initial battery (joules)
     this->battery_->UpdateParameters(batteryElem);
@@ -383,11 +383,11 @@ void RobotController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
             death_sentences_[name] = time - death_sentence_value;
             stateMsg->set_dead(false);
           } else {
-            bool alive = death_sentence_value > time; // && !this->battery_->depleted;
+            bool alive = death_sentence_value > time && !this->battery_->depleted;
             if (death_sentence_value <= time)
                 std::cout << "Time limit reached, battery still " << this->battery_->current_charge << std::endl;
-            //if (this->battery_->depleted)
-            //    std::cout << "Battery limit reached, time still " << (death_sentence_value - time) << std::endl;
+            if (this->battery_->depleted)
+                std::cout << "Battery limit reached, time still " << (death_sentence_value - time) << std::endl;
             stateMsg->set_dead(not alive);
             if (not alive) {
               boost::mutex::scoped_lock lock(this->death_sentences_mutex_);

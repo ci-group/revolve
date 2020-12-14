@@ -19,10 +19,11 @@ def limit(value):
     return max(0.0, min(1.0, value))
 
 def weighted_speed_efficiency(robot_manager, robot):
-    displacement_weight = 0.5
+    displacement_weight = 0.8
     normalization_velocity = 0.050
     normalization_battery = 10
-    return displacement_weight * limit(measures.displacement_velocity(robot_manager) / normalization_velocity) + (1 - displacement_weight) * limit(robot_manager.battery_level / normalization_battery)
+    objectivefunc = displacement_weight * limit(measures.displacement_velocity(robot_manager) / normalization_velocity) + (1 - displacement_weight) * limit(robot_manager.battery_level / normalization_battery)
+    return (objectivefunc, robot_manager.battery_level) #measures.displacement_velocity(robot_manager)
 
 
 def displacement_velocity(robot_manager, robot):
