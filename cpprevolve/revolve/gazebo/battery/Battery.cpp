@@ -19,7 +19,7 @@ void Battery::Update(double global_time, double delta_time)
     this->current_charge += consumer.second * delta_time; // TODO add constant so its linear
     if(this->current_charge <= 0.0){
         this->depleted = true;
-        //break;
+        break;
     }
   }
 

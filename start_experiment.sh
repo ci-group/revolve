@@ -1,11 +1,11 @@
-#!/bin/bash
+q#!/bin/bash
 set -e
 set -x
 
 runs=1
 runs_start=0
 start_port=15000
-exp_name=battery_test_visualization
+exp_name=battery_test_long_visualization3
 log_suffix=''
 manager=experiments/battery/manager_reduced_joints_NSGA2.py
 
