@@ -1,11 +1,16 @@
-#!/bin/bash
+q#!/bin/bash
 set -e
 set -x
 
 runs=1
 runs_start=0
+<<<<<<< HEAD
 start_port=11520
 exp_name=NSGA_BatteryCap_visualizationCum2
+=======
+start_port=15000
+exp_name=battery_test_long_visualization3
+>>>>>>> febbb65969709d667df4b381a319b66c1204f451
 log_suffix=''
 manager=experiments/battery/manager_reduced_joints_NSGA2.py
 

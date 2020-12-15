@@ -27,95 +27,85 @@ class NSGA2:
         # Fill the objectives with all individual from the population and offspring combined.
         all_individuals = copy.deepcopy(population_individuals)
         all_individuals.extend(offspring)
+        print("creating objectives")
         for index, individual in enumerate(all_individuals):
             # Negative fitness due to minimum search, TODO can be changed to be a default maximization NSGA.
             objectives[index, :] = [-objective for objective in individual.objectives]
 
+        print("starting sorting")
         # Perform the NSGA Algorithm
         front_no, max_front = self.nd_sort(objectives, np.inf)
         crowd_dis = self.crowding_distance(objectives, front_no)
         sorted_fronts = self.sort_fronts(objectives, front_no, crowd_dis)
 
+        print("creating new individuals")
         # Select the new individuals based on the population size, since they are sorted we can index them directly.
         new_individuals = [all_individuals[index] for index in sorted_fronts[:population_size]]
         discarded_individuals = [all_individuals[index] for index in sorted_fronts[population_size:]]
 
         if self.debug:
-           self._visualize(objectives, sorted_fronts, new_individuals, discarded_individuals)
+           self._visualize(objectives, sorted_fronts, new_individuals, discarded_individuals, front_no)
 
         return new_individuals
 
-    def _visualize(self, objectives, sorted_fronts, new_individuals, discarded_population):
-        number_of_fronts = len(sorted_fronts)
+    def _visualize(self, objectives, sorted_fronts, new_individuals, discarded_population, front_no):
+        number_of_fronts = int(max(front_no))
         colors = cm.rainbow(np.linspace(1, 0, number_of_fronts))
 
         if objectives.shape[1] == 3:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
+        else:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
 
-        for index, front in enumerate(sorted_fronts):
+        for individual_index in sorted_fronts:
+            front_number = int(front_no[individual_index]) - 1
             if objectives.shape[1] == 3:
-                ax.scatter(objectives[front, 0], objectives[front, 1], objectives[front, 2], s=100,
-                           color=colors[index])
+                ax.scatter(objectives[individual_index, 0], objectives[individual_index, 1], objectives[individual_index, 2], s=10*(number_of_fronts-front_number),
+                           color=colors[front_number])
             else:
-                plt.scatter(-objectives[front, 0], -objectives[front, 1], s=50,
-                            color=colors[index])
+                ax.scatter(-objectives[individual_index, 0], -objectives[individual_index, 1], s=5*(number_of_fronts-front_number),
+                            color=colors[front_number])
 
         for individual in new_individuals:
-            plt.scatter(individual.objectives[0], individual.objectives[1], s=5, color='black')
+            ax.scatter(individual.objectives[0], individual.objectives[1], s=3, color='black')
 
         for individual in discarded_population:
-            plt.scatter(individual.objectives[0], individual.objectives[1], s=5, color='white')
+            ax.scatter(individual.objectives[0], individual.objectives[1], s=2, color='white')
 
         nsga_generation_plot_path = self.experiment_management.plot_path(data_source="NSGA2", filename='nsga2_front_')
-        plt.savefig(nsga_generation_plot_path)
-        #plt.clf()
+        fig.savefig(nsga_generation_plot_path)
+        plt.close()
 
-    # adapted from https://github.com/ChengHust/NSGA-II/blob/master/nd_sort.py
-    def nd_sort(self, objectives, n_sort):
-        """
-        :rtype:
-        :param n_sort:
-        :param pop_obj: objective vectors
-        :return: [FrontNo, MaxFNo]
-        """
-        number_of_individuals, number_of_objectives = np.shape(objectives)
-        _, inverse_sorted_population = np.unique(objectives[:, 0], return_inverse=True)
-
-        # sorted first objective from high to low
-        index = objectives[:, 0].argsort()
-        sorted_objectives = objectives[index, :]
-
-        # Prepare inf front for each entry
-        front_no = np.inf * np.ones(number_of_individuals, dtype=np.int)
-        max_front: int = 0
-
-        # While there are front numbers to assign, continue
-        while np.sum(front_no < np.inf) < min(n_sort, len(inverse_sorted_population)):
-            max_front += 1
-
-            # for each individual in population
-            for current_individual in range(number_of_individuals):
-                # Check that its front number is not assigned yet.
-                if front_no[current_individual] == np.inf:
-                    dominated = False
-
-                    # Count down from the individual index to the last one available.
-                    for other_individual in range(current_individual - 1, -1, -1):
-                        # compare against others with the same front.
-                        if front_no[other_individual] == max_front:
-
-                            # for each objective that is dominating the other candidate
-                            m = np.sum(sorted_objectives[current_individual, :] >= sorted_objectives[other_individual, :])
-                            dominated = m == number_of_objectives
-                            if dominated:
+    # adapted from https://www.programmersought.com/article/6084850621/
+    def nd_sort(self, objectives, max_range):
+        number_of_individuals, number_of_objectives = objectives.shape
+        sorted_matrix = np.lexsort(objectives[:,::-1].T)  # loc1 is the position of the new matrix element in the old matrix, sorted from the first column in order
+        sorted_objectives = objectives[sorted_matrix]
+        inverse_sorted_indexes = sorted_matrix.argsort()  # loc2 is the position of the old matrix element in the new matrix
+        frontno = np.ones(number_of_individuals) * (np.inf)  # Initialize all levels to np.inf
+        maxfno = 0  # 0
+        while (np.sum(frontno < np.inf) < min(max_range, number_of_individuals)):  # The number of individuals assigned to the rank does not exceed the number of individuals to be sorted
+            maxfno = maxfno + 1
+            for i in range(number_of_individuals):
+                if (frontno[i] == np.inf):
+                    dominated = 0
+                    for j in range(i):
+                        if (frontno[j] == maxfno):
+                            m = 0
+                            flag = 0
+                            while (m < number_of_objectives and sorted_objectives[i, m] >= sorted_objectives[j, m]):
+                                if (sorted_objectives[i, m] == sorted_objectives[j, m]):  # does not constitute a dominant relationship
+                                    flag = flag + 1
+                                m = m + 1
+                            if (m >= number_of_objectives and flag < number_of_objectives):
+                                dominated = 1
                                 break
-
-                    # If it is not dominated, set the current front.
-                    if not dominated:
-                        front_no[current_individual] = max_front
-
-        return front_no[inverse_sorted_population], max_front
+                    if dominated == 0:
+                        frontno[i] = maxfno
+        frontno = frontno[inverse_sorted_indexes]
+        return frontno, maxfno
 
     # adapted from https://github.com/ChengHust/NSGA-II/blob/master/crowding_distance.py
     def crowding_distance(self, objectives, front_number):
