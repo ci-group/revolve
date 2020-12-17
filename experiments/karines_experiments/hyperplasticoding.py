@@ -18,6 +18,7 @@ from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 import sys
+import neat
 
 
 async def run():
@@ -26,33 +27,37 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 10#200
-    population_size = 15#100
-    offspring_size = 15#100
+    num_generations = 200
+    population_size = 100
+    offspring_size = 100
     front = 'none'
+    use_neat = True
 
     # environment world and z-start
     environments = {'plane': 0.03
                     }
 
     # calculation of the measures can be on or off, because they are expensive
-    novelty_on = {'novelty': False,
+    novelty_on = {'novelty': True,
                   'novelty_pop': True
                   }
 
+    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic'
+
     genotype_conf = HyperPlasticodingConfig(
         plastic=False,
-        body_config_path='pyrevolve/genotype/hyperplasticoding/config-body-nonplastic',
-        brain_config_path='pyrevolve/genotype/hyperplasticoding/config-brain-nonplastic'
+        cppn_config_path=cppn_config_path
     )
 
     mutation_conf = MutationConfig(
         mutation_prob=0.8,
         genotype_conf=genotype_conf,
+        cppn_config_path=cppn_config_path
     )
 
     crossover_conf = CrossoverConfig(
-        crossover_prob=0.8
+        crossover_prob=0,
+        cppn_config_path=cppn_config_path
     )
     # experiment params #
 
@@ -76,7 +81,7 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(measures, robot):
-        return fitness.displacement_velocity_hill(measures, robot)
+        return fitness.novelty(measures, robot)
 
     fitness_function = {'plane': fitness_function_plane}
 
@@ -129,9 +134,22 @@ async def run():
 
     population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
+    if use_neat:
+        population.neat['reporters'] = neat.reporting.ReporterSet()
+        population.neat['config'] =  neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                     neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                     cppn_config_path)
+        stagnation = population.neat['config'].stagnation_type(
+                                            population.neat['config'].stagnation_config, population.neat['reporters'])
+        population.neat['reproduction'] = population.neat['config'].reproduction_type(population.neat['config'].reproduction_config,
+                                          population.neat['reporters'], stagnation)
+
     if do_recovery:
 
         population.load_novelty_archive()
+
+        if use_neat:
+            population.load_species()
 
         if gen_num >= 0:
             # loading a previous state of the experiment
@@ -144,20 +162,20 @@ async def run():
             logger.info('Recovered unfinished offspring '+str(gen_num))
 
             if gen_num == 0:
-                await population.init_pop(individuals)
+                await population.init_pop_neat(individuals)
             else:
-                population = await population.next_gen(gen_num, individuals)
+                population = await population.next_gen_neat(gen_num, individuals)
 
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-        await population.init_pop()
+        await population.init_pop_neat()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     while gen_num < num_generations-1:
         gen_num += 1
-        population = await population.next_gen(gen_num)
+        population = await population.next_gen_neat(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     # output result after completing all generations...

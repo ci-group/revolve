@@ -3,11 +3,18 @@ import math
 
 # set these variables according to your experiments #
 dirpath = 'data/'
+dirpath = 'link_storage/baselines/nonplastic_plasticoding_static/'
 experiments_type = [
-    'hyper_full',
+    'plasticoding_static_plane',
+    'plasticoding_static_tilted'
+ #  'hyper_revert_miniw',
+  # 'hyper_revert'
 ]
 environments = {
-    'hyper_full': ['plane'],
+    'plasticoding_static_plane': ['plane'],
+    'plasticoding_static_tilted': ['tilted5']
+  #  'hyper_revert_miniw': ['plane'],
+  #  'hyper_revert': ['plane']
                  }
 
 runs = range(1, 20+1)
@@ -68,6 +75,7 @@ for exp in experiments_type:
             for r, d, f in os.walk(path0+'/genotypes'):
                 for file in f:
                     if file.endswith(".txt") and file.startswith("genotype_body"):
+                    #if file.endswith(".txt") and file.startswith("genotype_"):
                         num_files += 1
 
                         robot_id = file.split('.')[0].split('_')[-1]

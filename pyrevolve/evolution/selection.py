@@ -4,9 +4,10 @@ _neg_inf = -float('Inf')
 
 
 def _compare_maj_fitness(indiv_1, indiv_2, environments):
+    final_season = list(environments.keys())[-1]
 
-    fit_1 = indiv_1[list(environments.keys())[-1]].consolidated_fitness
-    fit_2 = indiv_2[list(environments.keys())[-1]].consolidated_fitness
+    fit_1 = indiv_1[final_season].consolidated_fitness
+    fit_2 = indiv_2[final_season].consolidated_fitness
 
     fit_1 = _neg_inf if fit_1 is None else fit_1
     fit_2 = _neg_inf if fit_2 is None else fit_2

@@ -38,34 +38,24 @@ class HyperPlasticoding(Genotype):
         self.id = str(robot_id)
         self.quantity_modules = 1
         self.quantity_nodes = 0
-        self.cppn_body = None
-        self.cppn_brain = None
+        self.cppn = None
         # the queried substrate
         self.substrate = {}
         self.phenotype = None
 
-        self.body_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+        self.cppn_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                        neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                                       conf.body_config_path)
-
-        self.brain_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                                        neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                                        conf.brain_config_path)
+                                       conf.cppn_config_path)
 
     def standard_output(self, value):
         # sigmoid
         value = 1.0 / (1.0 + math.exp(-value))
         return value
 
-    def random_init(self):
+    def random_init(self, cppn):
 
-        self.cppn_body = self.body_config.genome_type('')
-        self.cppn_body.fitness = 0
-        self.cppn_body.configure_new(self.body_config.genome_config)
-
-        self.cppn_brain = self.brain_config.genome_type('')
-        self.cppn_brain.fitness = 0
-        self.cppn_brain.configure_new(self.brain_config.genome_config)
+        self.cppn = cppn
+        self.cppn.fitness = 0
 
     def develop(self, environment):
 
@@ -83,32 +73,31 @@ class HyperPlasticoding(Genotype):
         self.phenotype = RevolveBot()
         self.phenotype._id = self.id if type(self.id) == str and self.id.startswith("robot") else "robot_{}".format(self.id)
 
-        self.develop_body(radius)
-        self.develop_brain(radius)
+        # size of substrate is (substrate_radius*2+1)^2
+        cppn = neat.nn.FeedForwardNetwork.create(self.cppn, self.cppn_config)
+
+        self.develop_body(radius, cppn)
+        self.develop_brain(radius, cppn)
 
         logger.info('Robot ' + str(self.id) + ' was late-developed.')
 
         return self.phenotype
 
-    def develop_body(self, radius):
-
-        # size of substrate is (substrate_radius*2+1)^2
-        cppn_body = neat.nn.FeedForwardNetwork.create(self.cppn_body, self.body_config)
+    def develop_body(self, radius, cppn):
 
         self.place_head()
-        self.attach_body(self.phenotype._body, radius, cppn_body)
+        self.attach_body(self.phenotype._body, radius, cppn)
 
-    def develop_brain(self, radius):
+    def develop_brain(self, radius, cppn):
         self.phenotype._brain = BrainNN()
-        cppn_brain = neat.nn.FeedForwardNetwork.create(self.cppn_brain, self.brain_config)
 
-        self.query_outpt_params(radius, cppn_brain)
-        self.query_input_params(radius, cppn_brain)
+        self.query_outpt_params(radius, cppn)
+        self.query_input_params(radius, cppn)
         # TODO: query inter cpg connections
 
         self.add_imu_nodes()
 
-    def query_input_params(self, radius, cppn_brain):
+    def query_input_params(self, radius, cppn):
 
         for coordinates in self.substrate:
 
@@ -131,9 +120,9 @@ class HyperPlasticoding(Genotype):
                         joint =  self.phenotype._brain.nodes[node]
                         queried_params = self.query_brain_part(sensor.substrate_coordinates[0], sensor.substrate_coordinates[1],
                                                                joint.substrate_coordinates[0], joint.substrate_coordinates[1],
-                                                               radius, cppn_brain)
+                                                               radius, cppn)
 
-                        # TODO: use a better threshold rule (later, try to garantee ther eare no loose inputs)
+                        # TODO: use a better threshold rule (later, try to guarantee there are no loose inputs)
                         if abs(queried_params['weight']) > 0.05:
                             connection = Connection()
                             connection.src = sensor.id
@@ -141,7 +130,7 @@ class HyperPlasticoding(Genotype):
                             connection.weight = queried_params['weight']
                             self.phenotype._brain.connections.append(connection)
 
-    def query_outpt_params(self, radius, cppn_brain):
+    def query_outpt_params(self, radius, cppn):
         for coordinates in self.substrate:
 
             if self.substrate[coordinates].info['module_type'] in (Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL):
@@ -150,7 +139,7 @@ class HyperPlasticoding(Genotype):
                 # querying cpg params
                 queried_params = self.query_brain_part(0, 0,
                                                        coordinates[0], coordinates[1],
-                                                       radius, cppn_brain)
+                                                       radius, cppn)
                 self.quantity_nodes += 1
 
                 node = Node()
@@ -173,7 +162,7 @@ class HyperPlasticoding(Genotype):
                 # querying output recurrence
                 queried_params = self.query_brain_part(coordinates[0], coordinates[1],
                                                        coordinates[0], coordinates[1],
-                                                       radius, cppn_brain)
+                                                       radius, cppn)
                 # TODO: use a better threshold rule
                 if abs(queried_params['weight']) > 0.05:
                     connection = Connection()
@@ -258,7 +247,7 @@ class HyperPlasticoding(Genotype):
 
             # queries potential new module given coordinates
             module_type = \
-                self.query_body_part(potential_module_coord[0], potential_module_coord[1], radius, cppn)
+                self.query_body_part(0, 0, potential_module_coord[0], potential_module_coord[1], radius, cppn)
 
             # if cppn determines there is a module in the coordinate
             if module_type is not None:
@@ -332,14 +321,16 @@ class HyperPlasticoding(Genotype):
                 angle = 270
         return angle
 
-    def query_body_part(self, x, y, radius, cppn):
+    def query_body_part(self, x_origin, y_origin, x_dest, y_dest, radius, cppn):
 
-        x_norm = self.normalize_value(x, -radius, radius)
-        y_norm = self.normalize_value(y, -radius, radius)
+        x_origin_norm = self.normalize_value(x_origin, -radius, radius)
+        y_origin_norm = self.normalize_value(y_origin, -radius, radius)
+        x_dest_norm = self.normalize_value(x_dest, -radius, radius)
+        y_dest_norm = self.normalize_value(y_dest, -radius, radius)
 
-        d = self.calculate_d(x_norm, y_norm)
+        d = self.calculate_d(x_dest_norm, y_dest_norm)
 
-        outputs = cppn.activate((x_norm, y_norm, d))
+        outputs = cppn.activate((x_origin_norm, y_origin_norm, x_dest_norm, y_dest_norm, d))
 
         which_module = {
             'no_module': outputs[0],
@@ -362,13 +353,13 @@ class HyperPlasticoding(Genotype):
 
         d = self.calculate_d(x_dest_norm, y_dest_norm)
 
-        outputs = cppn.activate((x_origin_norm, y_origin_norm, x_dest_norm, y_origin_norm, d))
+        outputs = cppn.activate((x_origin_norm, y_origin_norm, x_dest_norm, y_dest_norm, d))
 
         params = {
-            'period': outputs[0],
-            'phase_offset': outputs[1],
-            'amplitude': outputs[2],
-            'weight': neat.activations.clamped_activation(outputs[3])
+             'period': outputs[5],
+             'phase_offset': outputs[6],
+             'amplitude': outputs[7],
+             'weight': neat.activations.clamped_activation(outputs[8])
         }
 
         return params
@@ -417,33 +408,25 @@ class HyperPlasticoding(Genotype):
 
     def export_genotype(self, filepath):
 
-        node_names = {-1: 'x',
-                      -2: 'y',
-                      -3: 'd',
-                      0: 'no_module',
-                      1: 'b_module',
-                      2: 'a1_module',
-                      3: 'a2_module',
-                      4: 't_module'}
-        visualize.draw_net(self.body_config, self.cppn_body, False, filepath + '/images/genotype_body_' + self.phenotype._id,
-                           node_names=node_names)
-        f = open(filepath + '/genotype_body_' + self.phenotype._id + '.txt', "w")
-        f.write(str(self.cppn_body))
-        f.close()
-
         node_names = {-1: 'x_o',
                       -2: 'y_o',
                       -3: 'x_d',
                       -4: 'y_d',
                       -5: 'd',
-                      0: 'period',
-                      1: 'phase_offset',
-                      2: 'amplitude,',
-                      3: 'weight'}
-        visualize.draw_net(self.brain_config, self.cppn_brain, False, filepath + '/images/genotype_brain_' + self.phenotype._id,
+                      0: 'no_module',
+                      1: 'b_module',
+                      2: 'a1_module',
+                      3: 'a2_module',
+                      4: 't_module',
+                      5: 'period',
+                      6: 'phase_offset',
+                      7: 'amplitude,',
+                      8: 'weight'
+                      }
+        visualize.draw_net(self.cppn_config, self.cppn, False, filepath + '/images/genotype_bodybrain_' + self.phenotype._id,
                            node_names=node_names)
-        f = open(filepath + '/genotype_brain_' + self.phenotype._id + '.txt', "w")
-        f.write(str(self.cppn_brain))
+        f = open(filepath + '/genotype_bodybrain_' + self.phenotype._id + '.txt', "w")
+        f.write(str(self.cppn))
         f.close()
 
     def add_imu_nodes(self):
@@ -463,15 +446,12 @@ class HyperPlasticodingConfig:
                  plastic=False,
                  environmental_conditions=['hill'],
                  substrate_radius=4,
-                 body_config_path='',
-                 brain_config_path=''
+                 cppn_config_path=''
                  ):
         self.robot_id = robot_id
         self.plastic = plastic
         self.environmental_conditions = environmental_conditions
         self.substrate_radius = substrate_radius
-        self.is_hyper = True
-        self.body_config_path = body_config_path
-        self.brain_config_path = brain_config_path
+        self.cppn_config_path = cppn_config_path
 
 

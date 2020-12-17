@@ -16,6 +16,7 @@ import sys
 import random
 from datetime import datetime
 from pathlib import Path
+import neat
 
 class PopulationConfig:
     def __init__(self,
@@ -105,6 +106,7 @@ class Population:
         self.novelty_archive = {}
         for environment in self.conf.environments:
             self.novelty_archive[environment] = []
+        self.neat = {}
 
     def _new_individual(self, genotype):
 
@@ -143,8 +145,13 @@ class Population:
                 individual[environment] = pickle.load(file)
             except:
                 print('bad pickle for robot', id, ' was replaced for new robot with None fitness')
+
+                cppn = self.neat['config'].genome_type('')
+                cppn.fitness = 0
+                cppn.configure_new(self.neat['config'].genome_config)
+                
                 individual = self._new_individual(
-                        self.conf.genotype_constructor(self.conf.genotype_conf, id))
+                        self.conf.genotype_constructor(self.conf.genotype_conf, cppn, id))
 
         return individual
 
@@ -154,6 +161,13 @@ class Population:
         if Path(file_name).is_file():
             file = open(file_name, 'rb')
             self.novelty_archive = pickle.load(file)
+
+    def load_species(self):
+        path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
+        file_name = os.path.join(path, 'species.pkl')
+        if Path(file_name).is_file():
+            file = open(file_name, 'rb')
+            self.neat['species'] = pickle.load(file)
 
     async def load_snapshot(self, gen_num):
         """
@@ -291,6 +305,133 @@ class Population:
             self.calculate_final_fitness(individuals=self.individuals, gen_num=0, environment=environment)
         self.consolidate_fitness(self.individuals, gen_num=0)
 
+    async def init_pop_neat(self, recovered_individuals=[]):
+            """
+            Populates the population (individuals list) with Individual objects that contains their respective genotype.
+            """
+
+            # because we do not have control over neat.reproduction() - with it being all-or-nothing
+            # we recover only if all individuals have been reproduced/exported
+            # in any case, evaluations do not get lost, because they only happen after reproduction is complete
+            if len(recovered_individuals) == self.conf.population_size:
+                self.individuals = recovered_individuals
+            else:
+
+                # initialize
+                cppns_pop = self.neat['reproduction'].create_new(self.neat['config'].genome_type,
+                                                                  self.neat['config'].genome_config,
+                                                                  self.conf.population_size)
+
+                # speciate
+                self.neat['species'] = self.neat['config'].species_set_type(self.neat['config'].species_set_config, self.neat['reporters'])
+                self.neat['species'].speciate(self.neat['config'], cppns_pop, generation=0)
+
+                for cppn_individual in cppns_pop:
+                    individual = self._new_individual(
+                        self.conf.genotype_constructor(self.conf.genotype_conf, cppns_pop[cppn_individual], self.next_robot_id))
+
+                    self.individuals.append(individual)
+                    self.next_robot_id += 1
+                    
+                # if a random break of gazebo happens precisely in this saving, doesvmaybe the whole thing break...?
+                self.save_species()
+
+            # (possibly) run simulation
+            if self.conf.run_simulation == 1:
+                for environment in self.conf.environments:
+                    await self.evaluate(new_individuals=self.individuals, gen_num=0, environment=environment)
+
+            # calculate novelty
+            for environment in self.conf.environments:
+                self.calculate_novelty(self.individuals, environment, gen_num=0)
+            self.update_archive(self.individuals)
+
+            # calculate final fitness for each season
+            for environment in self.conf.environments:
+                self.calculate_final_fitness(individuals=self.individuals, gen_num=0, environment=environment)
+
+            # consolidate seasonal fitnesses
+            self.consolidate_fitness(self.individuals, gen_num=0)
+
+    def save_species(self):
+        path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
+        f = open(f'{path}/species.pkl', "wb")
+        pickle.dump(self.neat['species'], f)
+        f.close()
+
+    async def next_gen_neat(self, gen_num, recovered_individuals=[]):
+            """
+            Creates next generation of the population through selection, mutation, crossover
+
+            :param gen_num: generation number
+            :param individuals: recovered offspring
+            :return: new population
+            """
+            final_season = list(self.conf.environments.keys())[-1]
+
+            if len(recovered_individuals) == self.conf.population_size:
+                new_individuals = recovered_individuals
+
+            else:
+                print(list(self.neat['species'].genome_to_species.keys()))
+                max_id_parents = max(list(self.neat['species'].genome_to_species.keys()))
+
+                # Create the next generation from the current generation.
+                new_cppns_pop = self.neat['reproduction'].reproduce(self.neat['config'], self.neat['species'],
+                                                                    self.conf.population_size, gen_num)
+
+                # Check for complete extinction.
+                if not self.neat['species'].species:
+                        raise Exception("Catastrophe! Extinction!!!")
+
+                # speciate
+                self.neat['species'] = self.neat['config'].species_set_type(self.neat['config'].species_set_config,
+                                                                            self.neat['reporters'])
+                self.neat['species'].speciate(self.neat['config'], new_cppns_pop, generation=gen_num)
+
+                new_individuals = []
+                for individual_id in new_cppns_pop:
+
+                    if individual_id > max_id_parents:
+                        individual = self._new_individual(
+                            self.conf.genotype_constructor(self.conf.genotype_conf, new_cppns_pop[individual_id],
+                                                           self.next_robot_id))
+
+                        self.next_robot_id += 1
+                    else:
+                        for ind in self.individuals:
+                            print(ind)
+                            if int(ind[final_season].genotype.id) == individual_id:
+                                individual = ind
+                                break
+
+                    new_individuals.append(individual)
+
+                self.save_species()
+
+            # (possibly) run simulation
+            if self.conf.run_simulation == 1:
+                for environment in self.conf.environments:
+                    await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
+
+            # calculate novelty
+            for environment in self.conf.environments:
+                self.calculate_novelty(new_individuals, environment, gen_num)
+            self.update_archive(new_individuals)
+
+            # calculate final fitness
+            for environment in self.conf.environments:
+                self.calculate_final_fitness(individuals=new_individuals, gen_num=gen_num, environment=environment)
+            self.consolidate_fitness(new_individuals, gen_num)
+
+            new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
+            new_population.individuals = new_individuals
+            new_population.novelty_archive = self.novelty_archive
+
+            logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
+
+            return new_population
+
     async def next_gen(self, gen_num, recovered_individuals=[]):
         """
         Creates next generation of the population through selection, mutation, crossover
@@ -417,13 +558,6 @@ class Population:
             individual[environment].fitness =\
                 conf.fitness_function(behavioural_measurements, individual[environment])
 
-            # TODO:find a better solution for this in the future!
-            if self.conf.genotype_conf.is_hyper:
-                individual[environment].genotype.cppn_body.fitness = individual[environment].fitness
-                print('cppn fit', individual[environment].genotype.cppn_brain.fitness )
-                print( 'ind fit',individual[environment].fitness)
-                individual[environment].genotype.cppn_brain.fitness = individual[environment].fitness
-
             logger.info(f'Individual {individual[environment].phenotype.id} has a fitness of {individual[environment].fitness}')
 
             if type_simulation == 'evolve':
@@ -449,7 +583,7 @@ class Population:
 
     def consolidate_fitness(self, individuals, gen_num):
 
-        # saves consolidation only in the final season instances of individual:
+        # saves consolidation only in the final season instances of individual (just a convention):
         final_season = list(self.conf.environments.keys())[-1]
 
         if len(self.conf.environments) == 1:
@@ -531,7 +665,17 @@ class Population:
                         individual_ref[final_season].consolidated_fitness = 1 / masters
 
         for individual in individuals:
+
             self.conf.experiment_management.export_consolidated_fitness(individual[final_season], gen_num)
+
+            if len(self.neat) > 0:
+                individual[final_season].genotype.cppn.fitness = individual[final_season].consolidated_fitness
+                for one_species in self.neat['species'].species:
+                    if int(individual[final_season].genotype.id) in list(self.neat['species'].species[one_species].members.keys()):
+                        self.neat['species'].species[one_species].members[int(individual[final_season].genotype.id)].fitness = \
+                                                                        individual[final_season].genotype.cppn.fitness
+                        self.save_species()
+                        break
 
             self.conf.experiment_management.export_individual(individual[final_season],
                                                               final_season)
