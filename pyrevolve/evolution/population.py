@@ -162,12 +162,17 @@ class Population:
             file = open(file_name, 'rb')
             self.novelty_archive = pickle.load(file)
 
-    def load_species(self):
+    def load_neat(self):
         path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
-        file_name = os.path.join(path, 'species.pkl')
+        file_name = os.path.join(path, 'neat.pkl')
         if Path(file_name).is_file():
             file = open(file_name, 'rb')
-            self.neat['species'] = pickle.load(file)
+            self.neat = pickle.load(file)
+
+        print('laoded')
+        for one_species in self.neat['species'].species:
+            for m in self.neat['species'].species[one_species].members:
+                print(one_species, m, self.neat['species'].species[one_species].members[m].fitness)
 
     async def load_snapshot(self, gen_num):
         """
@@ -334,7 +339,7 @@ class Population:
                     self.next_robot_id += 1
                     
                 # if a random break of gazebo happens precisely in this saving, doesvmaybe the whole thing break...?
-                self.save_species()
+                self.save_neat()
 
             # (possibly) run simulation
             if self.conf.run_simulation == 1:
@@ -353,10 +358,12 @@ class Population:
             # consolidate seasonal fitnesses
             self.consolidate_fitness(self.individuals, gen_num=0)
 
-    def save_species(self):
+    # TODO: find better solution -
+    #  pickling this so often is inefficient, but for now i dont trust pickle's address-keeping.
+    def save_neat(self):
         path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
-        f = open(f'{path}/species.pkl', "wb")
-        pickle.dump(self.neat['species'], f)
+        f = open(f'{path}/neat.pkl', "wb")
+        pickle.dump(self.neat, f)
         f.close()
 
     async def next_gen_neat(self, gen_num, recovered_individuals=[]):
@@ -370,10 +377,9 @@ class Population:
             final_season = list(self.conf.environments.keys())[-1]
 
             if len(recovered_individuals) == self.conf.population_size:
-                new_individuals = recovered_individuals
+                all_individuals = recovered_individuals
 
             else:
-                print(list(self.neat['species'].genome_to_species.keys()))
                 max_id_parents = max(list(self.neat['species'].genome_to_species.keys()))
 
                 # Create the next generation from the current generation.
@@ -385,11 +391,11 @@ class Population:
                         raise Exception("Catastrophe! Extinction!!!")
 
                 # speciate
-                self.neat['species'] = self.neat['config'].species_set_type(self.neat['config'].species_set_config,
-                                                                            self.neat['reporters'])
                 self.neat['species'].speciate(self.neat['config'], new_cppns_pop, generation=gen_num)
 
                 new_individuals = []
+                all_individuals = []
+
                 for individual_id in new_cppns_pop:
 
                     if individual_id > max_id_parents:
@@ -398,16 +404,15 @@ class Population:
                                                            self.next_robot_id))
 
                         self.next_robot_id += 1
+                        new_individuals.append(individual)
+                        all_individuals.append(individual)
                     else:
                         for ind in self.individuals:
-                            print(ind)
                             if int(ind[final_season].genotype.id) == individual_id:
                                 individual = ind
-                                break
+                                all_individuals.append(individual)
 
-                    new_individuals.append(individual)
-
-                self.save_species()
+                self.save_neat()
 
             # (possibly) run simulation
             if self.conf.run_simulation == 1:
@@ -416,17 +421,20 @@ class Population:
 
             # calculate novelty
             for environment in self.conf.environments:
-                self.calculate_novelty(new_individuals, environment, gen_num)
+                self.calculate_novelty(all_individuals, environment, gen_num)
             self.update_archive(new_individuals)
 
             # calculate final fitness
             for environment in self.conf.environments:
                 self.calculate_final_fitness(individuals=new_individuals, gen_num=gen_num, environment=environment)
+
+            # consolidate seasonal fitnesses
             self.consolidate_fitness(new_individuals, gen_num)
 
             new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
-            new_population.individuals = new_individuals
+            new_population.individuals = all_individuals
             new_population.novelty_archive = self.novelty_archive
+            new_population.neat = self.neat
 
             logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
@@ -670,11 +678,17 @@ class Population:
 
             if len(self.neat) > 0:
                 individual[final_season].genotype.cppn.fitness = individual[final_season].consolidated_fitness
+                # TODO: find better solution -
+                #  roaming the whole dic is inefficient, but for now i dont trust pickle's address-keeping.
                 for one_species in self.neat['species'].species:
                     if int(individual[final_season].genotype.id) in list(self.neat['species'].species[one_species].members.keys()):
-                        self.neat['species'].species[one_species].members[int(individual[final_season].genotype.id)].fitness = \
-                                                                        individual[final_season].genotype.cppn.fitness
-                        self.save_species()
+                        fitness = -float('Inf') if individual[final_season].genotype.cppn.fitness is None \
+                            else individual[final_season].genotype.cppn.fitness
+
+                        self.neat['species'].species[one_species]. \
+                                members[int(individual[final_season].genotype.id)].fitness = fitness
+
+                        self.save_neat()
                         break
 
             self.conf.experiment_management.export_individual(individual[final_season],

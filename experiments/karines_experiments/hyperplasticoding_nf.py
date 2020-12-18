@@ -27,7 +27,7 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 200#0
+    num_generations = 200
     population_size = 100
     offspring_size = 100
     front = 'none'
@@ -42,7 +42,7 @@ async def run():
                   'novelty_pop': True
                   }
 
-    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic'
+    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic_nf'
 
     genotype_conf = HyperPlasticodingConfig(
         plastic=False,
@@ -134,13 +134,22 @@ async def run():
 
     population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
+    if use_neat:
+        population.neat['reporters'] = neat.reporting.ReporterSet()
+        population.neat['config'] =  neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                     neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                     cppn_config_path)
+        stagnation = population.neat['config'].stagnation_type(
+                                            population.neat['config'].stagnation_config, population.neat['reporters'])
+        population.neat['reproduction'] = population.neat['config'].reproduction_type(population.neat['config'].reproduction_config,
+                                          population.neat['reporters'], stagnation)
 
     if do_recovery:
 
         population.load_novelty_archive()
 
         if use_neat:
-            population.load_neat()
+            population.load_species()
 
         if gen_num >= 0:
             # loading a previous state of the experiment
@@ -159,18 +168,6 @@ async def run():
 
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
-
-        if use_neat:
-            population.neat['reporters'] = neat.reporting.ReporterSet()
-            population.neat['config'] = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                                                    neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                                                    cppn_config_path)
-            stagnation = population.neat['config'].stagnation_type(
-                population.neat['config'].stagnation_config, population.neat['reporters'])
-            population.neat['reproduction'] = population.neat['config'].reproduction_type(
-                population.neat['config'].reproduction_config,
-                population.neat['reporters'], stagnation)
-
         # starting a new experiment
         experiment_management.create_exp_folders()
         await population.init_pop_neat()
