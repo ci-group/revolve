@@ -6,18 +6,24 @@
 #define REVOLVE_FRAMEBUFFER_H
 
 #include <opencv2/opencv.hpp>
+#include <OgrePixelFormat.h>
 
 namespace revolve {
 
-//class FrameBuffer {
-//public:
-//    FrameBuffer();
-//    ~FrameBuffer() = default;
-//};
+class FrameBuffer {
+public:
+    FrameBuffer(const void *buffer, unsigned short width, unsigned short height, unsigned short depth);
+    ~FrameBuffer() = default;
+
+    const cv::Mat &to_opencv() const;
+
+private:
+    cv::Mat cv_frame;
+};
 
 class FrameBufferRef {
 public:
-    FrameBufferRef(const void *buffer, unsigned short width, unsigned short height, unsigned short depth)
+    FrameBufferRef(const void *buffer, unsigned short width, unsigned short height, unsigned short depth, Ogre::PixelFormat)
         : buffer(buffer)
         , width(width)
         , height(height)

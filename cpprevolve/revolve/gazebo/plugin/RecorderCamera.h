@@ -18,17 +18,40 @@ namespace gazebo {
 class RecorderCamera : public gz::CameraPlugin {
 public:
     RecorderCamera();
+    virtual ~RecorderCamera() = default;
 
     void Load(gz::sensors::SensorPtr parent, sdf::ElementPtr sdf) override;
+
+    void Init() override;
+
+    void Reset() override;
 
     void OnNewFrame(const unsigned char *image,
                     unsigned int width,
                     unsigned int height,
                     unsigned int depth,
                     const std::string &format) override;
+
+    std::string SaveFilePath() const;
+
+private:
+    void InitRecorder();
+
 private:
     unsigned int counter;
+    unsigned int total_frames;
+
+    /// \brief Video Recorder object
     std::unique_ptr<::revolve::VideoFileStream> video;
+
+    /// \brief Pointer to the world
+    ::gazebo::physics::WorldPtr world;
+    /// \brief Pointer to the plugin SDF structure
+    sdf::ElementPtr SDF;
+
+    // To print how many FPS the video recorder is doing,
+    // without overwelming the program output
+    float last_fps = -1;
 };
 
 }

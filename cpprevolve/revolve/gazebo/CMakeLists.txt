@@ -45,7 +45,7 @@ endif ()
 find_package(PkgConfig REQUIRED)
 
 # Find Boost
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Find Eigen3 - A lightweight C++ template library for vector and matrix math

@@ -15,10 +15,13 @@ public:
     VideoFileStream(const char *filename, double fps, cv::Size frameSize);
     ~VideoFileStream();
 
+    VideoFileStream& operator<<(const cv::Mat &frame);
+    VideoFileStream& operator<<(const FrameBuffer &frame);
     VideoFileStream& operator<<(const FrameBufferRef frame);
 
 private:
     cv::VideoWriter video;
+    const std::string filename;
 };
 
 }

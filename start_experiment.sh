@@ -5,9 +5,9 @@ set -x
 runs=10
 runs_start=0
 start_port=15000
-exp_name=expStack
-log_suffix='_try2'
-manager=experiments/lsystem-cppn-cpg/manager_stack.py
+exp_name=expNSGA
+log_suffix='_test_tenebra'
+manager=experiments/nsga2-gait-rotation/manager.py
 
 for i in $(seq $runs)
 do

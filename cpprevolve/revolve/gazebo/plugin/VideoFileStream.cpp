@@ -8,7 +8,9 @@
 using namespace revolve;
 
 VideoFileStream::VideoFileStream(const char *filename, double fps, cv::Size frame_size)
-    : video(filename, cv::VideoWriter::fourcc('v','p','9','0'), fps, frame_size, true)
+//    : video(filename, cv::VideoWriter::fourcc('V','P','9','0'), fps, std::move(frame_size), true)
+    : video(filename, cv::VideoWriter::fourcc('h','2','6','4'), fps, std::move(frame_size), true)
+    , filename(filename)
 {
     if (!video.isOpened()) {
         std::ostringstream error_message;
@@ -22,9 +24,19 @@ VideoFileStream::~VideoFileStream()
     video.release();
 }
 
-VideoFileStream &VideoFileStream::operator<<(const FrameBufferRef frame)
+VideoFileStream &VideoFileStream::operator<<(const cv::Mat &framebuffer)
 {
-    video.write(frame.to_opencv());
+    video << framebuffer;
     return *this;
 }
 
+VideoFileStream &VideoFileStream::operator<<(const FrameBuffer &frame)
+{
+    return (*this) << frame.to_opencv();
+}
+
+VideoFileStream &VideoFileStream::operator<<(const FrameBufferRef frame)
+{
+    cv::Mat framebuffer = frame.to_opencv();
+    return (*this) << framebuffer;
+}
