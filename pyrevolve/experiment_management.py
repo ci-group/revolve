@@ -297,7 +297,11 @@ class ExperimentManagement:
 
         return False
 
-    def read_recovery_state(self, population_size: int, offspring_size: int, species=False) -> (int, bool, int):
+    def read_recovery_state(self,
+                            population_size: int,
+                            offspring_size: int,
+                            species=False,
+                            n_developments: int = 1) -> (int, bool, int):
         """
         Read the saved data to determine how many generations have been completed and
         if the last generation has partially started evaluating.
@@ -310,6 +314,7 @@ class ExperimentManagement:
         :param population_size: how many individuals should each generation have
         :param offspring_size: how many offspring to expect for each generation
         :param species: if the data we are about to read is from a speciated population
+        :param n_developments: number of developments for individuals, default 1
         :return: (last complete generation), (the next generation already has some data), (next robot id)
         """
 
@@ -318,16 +323,16 @@ class ExperimentManagement:
         last_species_id = -1
 
         if not species:
-            for folder in os.scandir(self.experiment_folder):
-                if folder.is_dir() and folder.name.startswith('selectedpop_'):
+            for folder in os.scandir(self._generations_folder):
+                if folder.is_dir() and folder.name.startswith('generation_'):
                     # Normal population
                     n_exported_files = 0
                     for file in os.scandir(folder.path):
-                        if file.is_file():
+                        if file.is_file() and file.name.endswith('.png'):
                             n_exported_files += 1
 
-                    if n_exported_files == population_size:
-                        generation_n = folder.name.split('_')[1]
+                    if n_exported_files/n_developments == population_size:
+                        generation_n = int(folder.name.split('_')[1])
                         if generation_n > last_complete_generation:
                             last_complete_generation = generation_n
         else:

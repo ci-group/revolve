@@ -99,7 +99,7 @@ async def run():
 
     if do_recovery:
         gen_num, has_offspring, next_robot_id, next_species_id = \
-            experiment_management.read_recovery_state(population_size, offspring_size, species=False)
+            experiment_management.read_recovery_state(population_size, offspring_size, species=False, n_developments=2)
 
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
@@ -151,13 +151,13 @@ async def run():
 
     if do_recovery:
         # loading a previous state of the experiment
-        population.load_snapshot(gen_num)
+        population.load_snapshot(gen_num, multi_development=True)
         if gen_num >= 0:
-            logger.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
+            logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.individuals)} individuals')
         if has_offspring:
             individuals = population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
-            logger.info('Recovered unfinished offspring '+str(gen_num))
+            logger.info(f'Recovered unfinished offspring {gen_num}')
 
             if gen_num == 0:
                 await population.initialize(individuals)

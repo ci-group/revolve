@@ -94,6 +94,7 @@ class SimulatorQueue:
         logger.error("Restarting simulator")
         logger.error("Restarting simulator... disconnecting")
         try:
+            # timeout is in seconds
             await asyncio.wait_for(self._connections[i].disconnect(), timeout=10.0)
         except asyncio.TimeoutError:
             logger.error("Restarting simulator... disconnecting timeout")

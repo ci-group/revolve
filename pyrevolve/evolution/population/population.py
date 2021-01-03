@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import os
 import math
+import re
 
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.custom_logging.logger import logger
@@ -16,6 +17,9 @@ if TYPE_CHECKING:
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
 
+
+MULTI_DEV_BODY_PNG_REGEX = re.compile('body_(\\d+)_(\\d+)\\.png')
+BODY_PNG_REGEX = re.compile('body_(\\d+)\\.png')
 
 class Population:
     """
@@ -70,16 +74,24 @@ class Population:
 
         return individual
 
-    def load_snapshot(self, gen_num: int) -> None:
+    def load_snapshot(self, gen_num: int, multi_development=False) -> None:
         """
         Recovers all genotypes and fitnesses of robots in the lastest selected population
         :param gen_num: number of the generation snapshot to recover
+        :param multi_development: if multiple developments are created by the same individual
         """
-        data_path = self.config.experiment_management.experiment_folder
-        for r, d, f in os.walk(os.path.join(data_path, f'selectedpop_{gen_num}')):
-            for file in f:
-                if 'body' in file:
-                    _id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
+        data_path = self.config.experiment_management.generation_folder(gen_num)
+        for r, d, f in os.walk(data_path):
+            for filename in f:
+                if 'body' in filename:
+                    if multi_development:
+                        _id = MULTI_DEV_BODY_PNG_REGEX.search(filename)
+                        if int(_id.group(2)) != 0:
+                            continue
+                    else:
+                        _id = BODY_PNG_REGEX.search(filename)
+                    assert _id is not None
+                    _id = _id.group(1)
                     self.individuals.append(
                         self.config.experiment_management.load_individual(_id, self.config))
 
