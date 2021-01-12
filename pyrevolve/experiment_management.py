@@ -3,6 +3,8 @@ import shutil
 import numpy as np
 from pyrevolve.custom_logging.logger import logger
 import sys
+import gzip
+import pickle
 
 
 class ExperimentManagement:
@@ -83,6 +85,11 @@ class ExperimentManagement:
         individual.phenotype.save_file(f'{self._data_folder()}/failed_eval_robots/phenotype_{str(individual.phenotype.id)}.yaml')
         individual.phenotype.save_file(f'{self._data_folder()}/failed_eval_robots/phenotype_{str(individual.phenotype.id)}.sdf', conf_type='sdf')
 
+    def log_species(self, num_species, next_robot_id, gen_num, new_cppns_pop, new_individuals):
+        file = open(f'{self._data_folder()}/log_species.txt', 'a')
+        file.write(f'nS {num_species} Nid {next_robot_id} gen {gen_num} new {new_cppns_pop} offs {new_individuals} \n')
+        file.close()
+
     def export_snapshots(self, individuals, gen_num):
         if self.settings.recovery_enabled:
             for environment in self.environments:
@@ -105,6 +112,21 @@ class ExperimentManagement:
                 return False
 
         return True
+
+    def neat_experiment_is_new(self):
+        if not os.path.exists(self._experiment_folder()):
+            return True, None
+
+        filename = os.path.join(self._data_folder(), 'neat_checkpoint.pkl')
+        if os.path.isfile(filename):
+
+            with gzip.open(filename) as f:
+                neat, individuals = pickle.load(f)
+                checkpoint = {'neat': neat,
+                              'individuals': individuals}
+
+            return False, checkpoint
+        return True, None
 
     def read_recovery_state(self, population_size, offspring_size):
         snapshots = []

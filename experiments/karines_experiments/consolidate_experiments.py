@@ -6,18 +6,15 @@ dirpath = 'data/'
 dirpath = 'link_storage/baselines/nonplastic_plasticoding_static/'
 experiments_type = [
     'plasticoding_static_plane',
-    'plasticoding_static_tilted'
- #  'hyper_revert_miniw',
-  # 'hyper_revert'
+
 ]
 environments = {
     'plasticoding_static_plane': ['plane'],
-    'plasticoding_static_tilted': ['tilted5']
-  #  'hyper_revert_miniw': ['plane'],
-  #  'hyper_revert': ['plane']
+
                  }
 
 runs = range(1, 20+1)
+runs = [5]
 
 # set these variables according to your experiments #
 
@@ -75,7 +72,6 @@ for exp in experiments_type:
             for r, d, f in os.walk(path0+'/genotypes'):
                 for file in f:
                     if file.endswith(".txt") and file.startswith("genotype_body"):
-                    #if file.endswith(".txt") and file.startswith("genotype_"):
                         num_files += 1
 
                         robot_id = file.split('.')[0].split('_')[-1]
@@ -139,9 +135,13 @@ for exp in experiments_type:
                                     robot_id = file.split('.')[0].split('_')[-1]
                                     file_summary.write(gen+'\t'+robot_id+'\t')
 
-                                    cf_file = open(path1 + '/fitness/fitness_'+gen+'_robot_'+robot_id+'.txt', 'r')
-                                    fitness = cf_file.read()
-                                    file_summary.write(fitness + '\t')
+                                    filen = path1 + '/fitness/fitness_' + gen + '_robot_' + robot_id + '.txt'
+                                    if os.path.isfile(filen):
+                                        cf_file = open(filen, 'r')
+                                        fitness = cf_file.read()
+                                        file_summary.write(fitness + '\t')
+                                    else:
+                                        file_summary.write('None' + '\t')
 
                                     filen = path1 + '/novelty/novelty_'+gen+'_robot_'+robot_id+'.txt'
                                     if os.path.isfile(filen):
@@ -159,10 +159,13 @@ for exp in experiments_type:
                                     else:
                                         file_summary.write('None' + '\t')
 
-                                    cf_file = open(
-                                        path0 + '/consolidated_fitness/consolidated_fitness_'+gen+'_robot_' + robot_id + '.txt', 'r')
-                                    cons_fitness = cf_file.read()
-                                    file_summary.write(cons_fitness + '\n')
+                                    filen = path0 + '/consolidated_fitness/consolidated_fitness_'+gen+'_robot_' + robot_id + '.txt'
+                                    if os.path.isfile(filen):
+                                        cf_file = open(filen, 'r')
+                                        cons_fitness = cf_file.read()
+                                        file_summary.write(cons_fitness + '\n')
+                                    else:
+                                        file_summary.write('None' + '\n')
 
             file_summary.close()
 

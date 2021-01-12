@@ -36,6 +36,12 @@ show_legends = TRUE # shows legends on line plots
 experiments_type_colors = c( '#00e700' , '#009900') # light green,dark green
 
 #### CHANGE THE PARAMETERS HERE ####
+#TEMP
+analysis = 'plasticoding_seasons_analysis'
+output_directory = paste(base_directory,'/',analysis ,sep='')
+experiments_type = c('plasticoding_seasons')
+experiments_labels = c('plasticoding_seasons')
+#TEMP
 
 
 methods = c()
@@ -474,6 +480,9 @@ for (type_summary in c('means','quants'))
     max_y =  0
     min_y = 0
     #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
+    if (measures_names[i] == 'displacement_velocity_hill' )  {  
+      max_y = 3
+      min_y = -0.5}
     
     graph = graph  +  labs( y=measures_labels[i], x="Generation", title=experiments_labels[1]) 
     if (max_y>0) {
@@ -501,6 +510,9 @@ for (i in 1:length(measures_names))
   min_y = 0
 
   #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
+  if (measures_names[i] == 'displacement_velocity_hill' )  {  
+    max_y = 5 
+    min_y = -0.5}
   
   all_final_values = data.frame()
   for (exp in 1:length(methods))

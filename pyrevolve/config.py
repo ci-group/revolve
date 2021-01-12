@@ -79,6 +79,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--use-neat',
+    default=False, type=str_to_bool,
+    help="Use neat full speciation."
+)
+
+
+parser.add_argument(
     '--run',
     default='1', type=str,
     help="Run of repetition of an experiment. Default to \"1\"."
