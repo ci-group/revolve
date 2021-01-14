@@ -12,7 +12,6 @@ from pyrevolve.revolve_bot.revolve_bot import RevolveBot
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import List, Optional, Callable
-    from pyrevolve.evolution.speciation.species import Species
     from pyrevolve.tol.manage.robotmanager import RobotManager
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
@@ -20,6 +19,7 @@ if TYPE_CHECKING:
 
 MULTI_DEV_BODY_PNG_REGEX = re.compile('body_(\\d+)_(\\d+)\\.png')
 BODY_PNG_REGEX = re.compile('body_(\\d+)\\.png')
+
 
 class Population:
     """
@@ -155,12 +155,17 @@ class Population:
         for _i in range(self.config.offspring_size-len(recovered_individuals)):
             # Selection operator (based on fitness)
             # Crossover
+            parents: Optional[List[Individual]] = None
             if self.config.crossover_operator is not None:
                 parents = self.config.parent_selection(self.individuals)
                 child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf, self.config.crossover_conf)
+                # temporary individual that will be used for mutation
                 child = Individual(child_genotype)
+                child.parents = parents
             else:
+                # fake child
                 child = self.config.selection(self.individuals)
+                parents = [child]
 
             child.genotype.id = self.next_robot_id
             self.next_robot_id += 1
@@ -168,7 +173,7 @@ class Population:
             # Mutation operator
             child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
             # Insert individual in new population
-            individual = self._new_individual(child_genotype)
+            individual = self._new_individual(child_genotype, parents)
 
             new_individuals.append(individual)
 
@@ -280,7 +285,8 @@ class Population:
 
             if type_simulation == 'evolve':
                 self.config.experiment_management.export_behavior_measures(individual.phenotype.id,
-                                                                           individual.phenotype._behavioural_measurements)
+                                                                           individual.phenotype._behavioural_measurements,
+                                                                           None)
 
             logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             if type_simulation == 'evolve':

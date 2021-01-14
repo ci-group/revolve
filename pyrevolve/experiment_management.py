@@ -184,7 +184,7 @@ class ExperimentManagement:
                 fitness_file.write(fitness_line)
                 self._fitnesses_saved.add(individual.id)
 
-    def export_behavior_measures(self, _id: int, measures: BehaviouralMeasurements, extra_info: Optional[AnyStr]) -> None:
+    def export_behavior_measures(self, _id: int, measures: BehaviouralMeasurements, extra_info: Optional[AnyStr] = None) -> None:
         """
         Exports behavioural measurements of an individual in the correct folder
         :param _id: id of the individual
@@ -202,7 +202,7 @@ class ExperimentManagement:
                 for key, val in measures.items():
                     f.write(f'{key} {val}\n')
 
-    def export_phenotype_ids(self, identifiers : List[int], dirpath : str):
+    def export_phenotype_ids(self, identifiers: List[int], dirpath : str):
         with open(dirpath + '/identifiers.txt', 'w') as f:
             for identifier in identifiers:
                 f.write("%s\n" % identifier)
