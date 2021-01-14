@@ -35,7 +35,7 @@ async def run():
     front = 'none'
 
     # environment world and z-start
-    environments = {'plane': 0.03
+    environments = {'tilted5': 0.03
                     }
 
     #TODO: move it to config!
@@ -44,7 +44,7 @@ async def run():
                   'novelty_pop': True
                   }
 
-    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic-2'
+    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic-3'
 
     genotype_conf = HyperPlasticodingConfig(
         plastic=False,
@@ -95,7 +95,7 @@ async def run():
     def fitness_function_plane(measures, robot):
         return fitness.displacement_velocity_hill(measures, robot)
 
-    fitness_function = {'plane': fitness_function_plane}
+    fitness_function = {'tilted5': fitness_function_plane}
 
     population_conf = PopulationConfig(
         population_size=population_size,

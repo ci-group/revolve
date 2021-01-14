@@ -39,12 +39,13 @@ experiments_type_colors = c( '#00e700' , '#009900',  '#002200',  '#005600') # li
 #TEMP
 analysis = 'analysis'
 output_directory = paste(base_directory,'/',analysis ,sep='')
-experiments_type = c('hyper')
-experiments_labels = c('hyper')
-environments = list( c( 'plane'))
-runs = list(c(1:2))
-gens=199
+experiments_type = c('plasticoding_static_plane')
+experiments_labels = c('plasticoding_static_plane')
+environments = list( c( 'plane', 'tilted5'))
+runs = list(c(1:20))
+gens=200
 #TEMP
+
 
 methods = c()
 for (exp in 1:length(experiments_type))
@@ -490,9 +491,6 @@ for (type_summary in c('means','quants'))
 
     
     #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
-    if (measures_names[i] == 'displacement_velocity_hill' )  {  
-      max_y = 6 
-      min_y = -0.5}
     
     graph = graph  +  labs( y=measures_labels[i], x="Generation", title=paste(str_to_title(environments[[exp]][env]), "Season"))
     if (max_y>0) {
@@ -534,10 +532,6 @@ for (i in 1:length(measures_names))
   max_y =  0
   min_y = 0
   #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
-
-  if (measures_names[i] == 'displacement_velocity_hill' )  {  
-    max_y = 6 
-    min_y = -0.5}
 
   g1 = g1 +  scale_color_manual(values=  experiments_type_colors  )
 

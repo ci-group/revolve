@@ -20,9 +20,23 @@ gens = 200
 pop = 100
 num_top = 3
 
-analysis = 'plasticoding_seasons_analysis'
+analysis = 'analysis'
 
 ##### change paths/labels/params here #####
+
+
+#### CHANGE THE PARAMETERS HERE ####
+
+#TEMP
+base_directory <- paste('link_storage/baselines/nonplastic_plasticoding_static/', sep='')
+paths = c( 'plasticoding_static_plane' , 'plasticoding_static_tilted' )
+
+environments = list(
+  c( 'plane') ,
+  c('tilted5')
+)
+
+#TEMP
 
 output_directory = paste(base_directory,analysis, sep='')
 

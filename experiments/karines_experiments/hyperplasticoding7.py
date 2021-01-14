@@ -44,7 +44,7 @@ async def run():
                   'novelty_pop': True
                   }
 
-    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic-2'
+    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic-7'
 
     genotype_conf = HyperPlasticodingConfig(
         plastic=False,

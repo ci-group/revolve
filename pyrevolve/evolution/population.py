@@ -162,8 +162,11 @@ class Population:
         path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
         file_name = os.path.join(path, 'novelty_archive.pkl')
         if Path(file_name).is_file():
-            file = open(file_name, 'rb')
-            self.novelty_archive = pickle.load(file)
+            try:
+                file = open(file_name, 'rb')
+                self.novelty_archive = pickle.load(file)
+            except:
+                print('bad pickle for archiive')
 
     async def load_snapshot(self, gen_num):
         """
@@ -216,6 +219,8 @@ class Population:
                 self.calculate_distances(pool_individuals, pop_archive_measures, pop_measures, environment, gen_num, 'pop_archive')
             if self.conf.novelty_on['novelty_pop']:
                 self.calculate_distances(pool_individuals, pop_measures, pop_measures, environment, gen_num, 'pop')
+
+            print('> Finished novelty calculation.')
 
     def calculate_distances(self, pool_individuals, references, to_compare, environment, gen_num, type):
         # calculate distances
@@ -344,7 +349,7 @@ class Population:
                               self.neat['species'].species[one_species].members[member].fitness)
 
                 self.neat['latest_offspring'] = 0
-                self.save_neat()
+                self.save_neat(0)
 
             # (possibly) run simulation
             if self.conf.run_simulation == 1:
@@ -370,7 +375,7 @@ class Population:
 
             self.neat['latest_snapshot'] = 0
             self.conf.experiment_management.export_snapshots(self.individuals, 0)
-            self.save_neat()
+            self.save_neat(0)
 
             # temp
             # for ind in self.individuals:
@@ -384,9 +389,9 @@ class Population:
 
     # TODO: find better solution -
     #  pickling this so often is inefficient, but for now i dont trust pickle's address-keeping.
-    def save_neat(self):
+    def save_neat(self, gen_num):
         path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
-        filename = f'{path}/neat_checkpoint.pkl'
+        filename = f'{path}/neat_checkpoint_{gen_num}.pkl'
         with gzip.open(filename, 'w', compresslevel=5) as f:
             data = (self.neat, self.individuals)
             pickle.dump(data, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -423,7 +428,8 @@ class Population:
                 # speciate
                 self.neat['species'].speciate(self.neat['config'], self.neat['new_cppns_pop'], generation=gen_num)
 
-                new_individuals = []
+                all_individuals = []
+                new_individuals = 0
 
                 for cppn_individual in self.neat['new_cppns_pop']:
 
@@ -437,20 +443,21 @@ class Population:
                         individual[final_season].genotype = genotype
 
                         self.next_robot_id += 1
-                        new_individuals.append(individual)
+                        all_individuals.append(individual)
+                        new_individuals += 1
 
                     else:
                         for individual in self.individuals:
                             if int(individual[final_season].genotype.id) == cppn_individual:
-                                new_individuals.append(individual)
+                                all_individuals.append(individual)
 
-                self.conf.experiment_management.log_species(len(self.neat['species'].species),
-                                                            self.next_robot_id, gen_num,
-                                                            len(self.neat['new_cppns_pop']),
-                                                            len(new_individuals))
-                self.individuals = new_individuals
+                self.conf.experiment_management.log_species(gen_num,
+                                                            len(self.neat['species'].species),
+                                                            len(all_individuals),
+                                                            new_individuals)
+                self.individuals = all_individuals
                 self.neat['latest_offspring'] = gen_num
-                self.save_neat()
+                self.save_neat(gen_num)
 
             # (possibly) run simulation
             if self.conf.run_simulation == 1:
@@ -477,7 +484,7 @@ class Population:
 
             self.neat['latest_snapshot'] = gen_num
             self.conf.experiment_management.export_snapshots(self.individuals, gen_num)
-            self.save_neat()
+            self.save_neat(gen_num)
 
             logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
@@ -592,7 +599,7 @@ class Population:
                                                                          individual.phenotype._behavioural_measurements,
                                                                          environment)
                 if self.conf.all_settings.use_neat:
-                    self.save_neat()
+                    self.save_neat(gen_num)
                 else:
                     self.conf.experiment_management.export_individual(individual, environment)
 
@@ -737,4 +744,6 @@ class Population:
             else:
                 self.conf.experiment_management.export_individual(individual[final_season],
                                                                   final_season)
+
+        print('> Finished fitness consolidation.')
 

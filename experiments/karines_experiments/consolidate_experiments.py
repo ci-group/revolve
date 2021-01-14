@@ -3,18 +3,38 @@ import math
 
 # set these variables according to your experiments #
 dirpath = 'data/'
-dirpath = 'link_storage/baselines/nonplastic_plasticoding_static/'
+#dirpath = 'link_storage/baselines/nonplastic_plasticoding_static/'
 experiments_type = [
-    'plasticoding_static_plane',
-
+   # 'plasticoding_static_plane'#,
+    #'hyperplasticoding',
+#     'hyperplasticoding_2',
+# 'hyperplasticoding_3',
+# 'hyperplasticoding_4',
+# 'hyperplasticoding_5',
+#      'hyperplasticoding_6',
+#      'hyperplasticoding_7',
+#      'hyperplasticoding_8',
+#      'hyperplasticoding_9',
+#     'hyperplasticoding_3_t',
+    'hyperplasticoding_noneatspeed'
 ]
 environments = {
-    'plasticoding_static_plane': ['plane'],
-
+   # 'plasticoding_static_plane': ['plane']#,
+#'hyperplasticoding': ['plane'],
+# 'hyperplasticoding_2': ['plane'],
+# 'hyperplasticoding_3': ['plane'],
+# 'hyperplasticoding_4': ['plane'],
+# 'hyperplasticoding_5': ['plane']
+#  'hyperplasticoding_6': ['plane'],
+#  'hyperplasticoding_7': ['plane'],
+#  'hyperplasticoding_8': ['plane'],
+#  'hyperplasticoding_9': ['plane'],
+# 'hyperplasticoding_3_t': ['tilted5'],
+'hyperplasticoding_noneatspeed': ['plane']
                  }
 
 runs = range(1, 20+1)
-runs = [5]
+runs = [1]
 
 # set these variables according to your experiments #
 
