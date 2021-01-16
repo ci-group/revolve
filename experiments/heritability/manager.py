@@ -10,16 +10,14 @@ from pyrevolve.evolution.population.population import Population
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.evolution.population.population_management import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.lsystem_neat.crossover import CrossoverConfig as lCrossoverConfig
-from pyrevolve.genotype.lsystem_neat.crossover import standard_crossover as lcrossover
-from pyrevolve.genotype.lsystem_neat.mutation import LSystemNeatMutationConf as lMutationConfig
-from pyrevolve.genotype.lsystem_neat.mutation import standard_mutation as lmutation
-from pyrevolve.genotype.lsystem_neat.lsystem_neat_genotype import LSystemCPGHyperNEATGenotype, LSystemCPGHyperNEATGenotypeConfig
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig as plasticMutationConfig
+from pyrevolve.genotype.direct_tree.direct_tree_crossover import DirectTreeCrossoverConfig, Crossover
+from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenomeConfig
+from pyrevolve.genotype.direct_tree.direct_tree_neat_genotype import DirectTreeNEATGenotypeConfig, \
+    DirectTreeNEATGenotype
+from pyrevolve.genotype.direct_tree.tree_mutation import DirectTreeNEATMutationConfig, DirectTreeMutationConfig, Mutator
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.custom_logging.logger import logger
-from pyrevolve.genotype.plasticoding import PlasticodingConfig
 from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig
 
 
@@ -38,14 +36,10 @@ async def run():
     population_size = 100
     offspring_size = 50
 
-    body_conf = PlasticodingConfig(
-        max_structural_modules=50,
-        allow_vertical_brick=True,
-        use_movement_commands=True,
-        use_rotation_commands=False,
-        use_movement_stack=False,
-        allow_joint_joint_attachment=False,
+    body_conf = DirectTreeGenomeConfig(
+
     )
+
     brain_conf = NeatBrainGenomeConfig()
     brain_conf.multineat_params.DisjointCoeff = 0.3
     brain_conf.multineat_params.ExcessCoeff = 0.3
@@ -60,21 +54,24 @@ async def run():
     brain_conf.multineat_params.CompatTresholdModifier = 0.1
     brain_conf.multineat_params.CompatTreshChangeInterval_Generations = 1
     brain_conf.multineat_params.CompatTreshChangeInterval_Evaluations = 1
-    genotype_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)
+    genotype_conf = DirectTreeNEATGenotypeConfig(body_conf, brain_conf)
 
-    plasticMutation_conf = plasticMutationConfig(
-        mutation_prob=0.8,
-        genotype_conf=body_conf
+    tree_mutation_conf = DirectTreeMutationConfig(
+
     )
 
-    lmutation_conf = lMutationConfig(
-        plasticoding_mutation_conf=plasticMutation_conf,
+    genotype_mutation_conf = DirectTreeNEATMutationConfig(
+        tree_mutation_conf=tree_mutation_conf,
         neat_conf=brain_conf,
     )
 
-    crossover_conf = lCrossoverConfig(
-        crossover_prob=1.0,
+    mutation = Mutator()  # TODO
+
+    crossover_conf = DirectTreeCrossoverConfig(
+
     )
+
+    crossover = Crossover()  # TODO
 
     # experiment params #
 
@@ -106,13 +103,13 @@ async def run():
 
     population_conf = PopulationConfig(
         population_size=population_size,
-        genotype_constructor=LSystemCPGHyperNEATGenotype,
+        genotype_constructor=DirectTreeNEATGenotype,
         genotype_conf=genotype_conf,
         fitness_function=fitness.displacement_velocity,
         objective_functions=None,
-        mutation_operator=lmutation,
-        mutation_conf=lmutation_conf,
-        crossover_operator=lcrossover,
+        mutation_operator=mutation.mutate,
+        mutation_conf=genotype_mutation_conf,
+        crossover_operator=crossover.crossover,
         crossover_conf=crossover_conf,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
@@ -133,10 +130,7 @@ async def run():
     analyzer_queue = AnalyzerQueue(1, args, args.port_start+n_cores)
     await analyzer_queue.start()
 
-    population = Population(population_conf,
-                             simulator_queue,
-                             analyzer_queue,
-                             next_robot_id)
+    population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
     if do_recovery:
         # loading a previous state of the experiment

@@ -10,7 +10,7 @@ from .implementation import ParamSpec
 from .implementation import NormalDistParamSpec
 from .implementation import default_neural_net
 
-from .msgs import *
+#from .msgs import *
 
 from .validate import BodyValidator
 from .validate import NeuralNetValidator

@@ -18,7 +18,6 @@ class CrossoverConfig:
         self.crossover_prob = crossover_prob
 
 
-
 def standard_crossover(parents, lsystem_conf, crossover_conf):
     """
     Creates an child (individual) through crossover with two parents
