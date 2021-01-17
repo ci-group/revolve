@@ -10,11 +10,6 @@ from pyrevolve.spec.msgs import Neuron, Robot, BodyPart
 from pyrevolve.util import decide
 
 
-class DirectTreeMutationConfig:
-    def __init__(self):
-        pass
-
-
 class Mutator(object):
     """
     Parameter mutation class. Mutation is achieved by generating

@@ -1,8 +1,8 @@
 from typing import Callable
 
+from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeMutationConfig
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenome
 from pyrevolve.genotype.direct_tree.direct_tree_neat_genotype import DirectTreeNEATGenotype
-from pyrevolve.genotype.direct_tree.tree_mutation import DirectTreeMutationConfig
 from pyrevolve.genotype.neat_brain_genome import NeatBrainGenomeConfig, NeatBrainGenome
 
 
