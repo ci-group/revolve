@@ -42,6 +42,7 @@ async def run():
     genotype_conf = PlasticodingConfig(
         max_structural_modules=81,
         plastic=False,
+        e_max_groups=3,
     )
 
     mutation_conf = MutationConfig(

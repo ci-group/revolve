@@ -252,9 +252,9 @@ class Population:
                           'coverage',
                           'joints',
                           'proportion',
-                          'sensors',
-                          'symmetry',
-                          'size'
+                         # 'sensors',
+                          'symmetry'#,
+                          #'size'
                           ]
 
         for individual in individuals:
