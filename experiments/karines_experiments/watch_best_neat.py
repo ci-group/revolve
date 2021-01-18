@@ -2,43 +2,36 @@
 import asyncio
 
 from pyrevolve import parser
-from pyrevolve.evolution import fitness
-from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.plasticoding.initialization import random_initialization
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
-from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.custom_logging.logger import logger
 import sys
+import neat
+import pprint
 import time
 import numpy as np
+
 
 async def run():
     """
     The main coroutine, which is started below.
     """
-
     # environment world and z-start
-    environments = {'plane': 0.03#,
-                    #'tilted5': 0.1
+    environments = {'plane': 0.03
                     }
 
     settings = parser.parse_args()
-    experiment_management = ExperimentManagement(settings, environments)
 
-    logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
+    experiment_management = ExperimentManagement(settings, environments)
+    neat_experiment_is_new, neat_checkpoint = experiment_management.neat_experiment_is_new()
+
+    logger.info('Activated run ' + settings.run + ' of experiment ' + settings.experiment_name)
 
     population_conf = PopulationConfig(
         population_size=None,
-        genotype_constructor=random_initialization,
+        genotype_constructor=None,
         genotype_conf=None,
         fitness_function=None,
         mutation_operator=None,
@@ -60,8 +53,6 @@ async def run():
         all_settings=settings,
     )
 
-    settings = parser.parse_args()
-
     simulator_queue = {}
     analyzer_queue = None
 
@@ -76,21 +67,22 @@ async def run():
                 port = settings.port_start
                 previous_port = port
             else:
-                port = previous_port+settings.n_cores
+                port = previous_port + settings.n_cores
                 previous_port = port
 
             simulator_queue[environment] = SimulatorQueue(settings.n_cores, settings, port)
             await simulator_queue[environment].start()
 
-        analyzer_queue = AnalyzerQueue(1, settings, port+settings.n_cores)
+        analyzer_queue = AnalyzerQueue(1, settings, port + settings.n_cores)
         await analyzer_queue.start()
 
-    population = Population(population_conf, simulator_queue, analyzer_queue, 1)
+    population = Population(population_conf, simulator_queue, analyzer_queue)
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
-    generation = 199
+    generation = 99
     max_best = 5
-    await population.load_snapshot(generation)
+
+    population.individuals = neat_checkpoint['individuals']
 
     values = []
     for ind in population.individuals:
@@ -98,7 +90,6 @@ async def run():
         for environment in environments:
             ind[environment].evaluated = False
         if ind[list(environments.keys())[-1]].consolidated_fitness is not None:
-            #if ind[list(environments.keys())[-1]].phenotype.id == 'robot_6948':
             values.append(ind[list(environments.keys())[-1]].consolidated_fitness)
         else:
             values.append(-float('Inf'))

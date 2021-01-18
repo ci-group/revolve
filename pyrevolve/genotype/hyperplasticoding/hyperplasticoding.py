@@ -21,7 +21,6 @@ import sys
 
 
 class Alphabet(Enum):
-
     # Modules
     CORE_COMPONENT = 'C'
     JOINT_HORIZONTAL = 'AJ1'
@@ -31,11 +30,13 @@ class Alphabet(Enum):
 
 
 class HyperPlasticoding(Genotype):
-    
+
     def __init__(self, conf, robot_id):
 
         self.conf = conf
         self.id = str(robot_id)
+        self.development_seed = None
+        self.random = None
         self.quantity_modules = 1
         self.quantity_nodes = 0
         self.cppn = None
@@ -52,10 +53,14 @@ class HyperPlasticoding(Genotype):
         value = 1.0 / (1.0 + math.exp(-value))
         return value
 
-    def random_init(self, cppn):
+    def random_init(self):
 
-        self.cppn = cppn
+        self.cppn = self.cppn_config.genome_type('')
         self.cppn.fitness = 0
+        self.cppn.configure_new(self.cppn_config.genome_config)
+        # TODO make a seed random and heritable
+        # self.development_seed = 239482
+        #self.random = random.Random()
 
     def develop(self, environment):
 
@@ -71,7 +76,8 @@ class HyperPlasticoding(Genotype):
         radius = self.conf.substrate_radius
 
         self.phenotype = RevolveBot()
-        self.phenotype._id = self.id if type(self.id) == str and self.id.startswith("robot") else "robot_{}".format(self.id)
+        self.phenotype._id = self.id if type(self.id) == str and self.id.startswith("robot") else "robot_{}".format(
+            self.id)
 
         # size of substrate is (substrate_radius*2+1)^2
         cppn = neat.nn.FeedForwardNetwork.create(self.cppn, self.cppn_config)
@@ -117,9 +123,11 @@ class HyperPlasticoding(Genotype):
                 for node in self.phenotype._brain.nodes:
 
                     if self.phenotype._brain.nodes[node].layer == 'output':
-                        joint =  self.phenotype._brain.nodes[node]
-                        queried_params = self.query_brain_part(sensor.substrate_coordinates[0], sensor.substrate_coordinates[1],
-                                                               joint.substrate_coordinates[0], joint.substrate_coordinates[1],
+                        joint = self.phenotype._brain.nodes[node]
+                        queried_params = self.query_brain_part(sensor.substrate_coordinates[0],
+                                                               sensor.substrate_coordinates[1],
+                                                               joint.substrate_coordinates[0],
+                                                               joint.substrate_coordinates[1],
                                                                radius, cppn)
 
                         # TODO: use a better threshold rule (later, try to guarantee there are no loose inputs)
@@ -221,15 +229,14 @@ class HyperPlasticoding(Genotype):
                           Orientation.NORTH.value,
                           Orientation.EAST.value]
 
-        # order of children-querying is random
-        # maybe add it back in the future, BUT ONLY IF using a seed
-        # random.shuffle(directions)
+        # order of children-querying is random (use heritable seed)
+        #self.random.shuffle(directions)
 
         # querying clockwise
-        for direction in directions:
+        for idx_direction, direction in enumerate(directions):
 
             # queries and (possibly) attaches surroundings modules to module
-            self.attach_module(parent_module, Orientation(direction), radius, cppn)
+            self.attach_module(parent_module, Orientation(direction), radius, cppn, idx_direction)
 
             # if managed to attach a potential module, tried to branch out recursively
             if parent_module.children[direction] is not None:
@@ -237,7 +244,7 @@ class HyperPlasticoding(Genotype):
                 if parent_module.children[direction].info['module_type'] != Alphabet.SENSOR:
                     self.attach_body(parent_module.children[direction], radius, cppn)
 
-    def attach_module(self, parent_module, direction, radius, cppn):
+    def attach_module(self, parent_module, direction, radius, cppn, idx_direction):
 
         # calculates coordinates of potential new module
         potential_module_coord, turtle_direction = self.calculate_coordinates(parent_module, direction.value)
@@ -249,32 +256,30 @@ class HyperPlasticoding(Genotype):
             module_type = \
                 self.query_body_part(0, 0, potential_module_coord[0], potential_module_coord[1], radius, cppn)
 
-            # if cppn determines there is a module in the coordinate
-            if module_type is not None:
+            # if position in substrate is not already occupied
+            if potential_module_coord not in self.substrate.keys():
+                valid_attachment = True
 
-                # if position in substrate is not already occupied
-                if potential_module_coord not in self.substrate.keys():
-                    valid_attachment = True
+                # sensors can not be attached to joints
+                # TODO: maybe allow that in the future?
+                if parent_module.info['module_type'] in (Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL) \
+                        and module_type == Alphabet.SENSOR:
+                    valid_attachment = False
 
-                    # sensors can not be attached to joints
-                    # TODO: maybe allow that in the future?
-                    if parent_module.info['module_type'] in (Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL) \
-                            and module_type == Alphabet.SENSOR:
-                        valid_attachment = False
+                # if attachment constraints are met
+                if valid_attachment:
 
-                    # if attachment constraints are met
-                    if valid_attachment:
+                    if self.conf.tackle_bias:
+                        # print('\n b',module_type)
+                        module_type = self.development_bias_tackling(module_type, parent_module, idx_direction,
+                                                                     direction)
+                        # print('a',module_type)
 
-                        if module_type == Alphabet.JOINT_VERTICAL and parent_module.info['module_type'] == Alphabet.JOINT_VERTICAL:
-                            module_type = Alphabet.BLOCK
-
-                        if module_type == Alphabet.JOINT_HORIZONTAL and parent_module.info['module_type'] == Alphabet.JOINT_HORIZONTAL:
-                            module_type = Alphabet.BLOCK
-
-                        if module_type == Alphabet.BLOCK and parent_module.info['module_type'] == Alphabet.BLOCK:
-                            module_type = random.choice([Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL])
+                    # if cppn determines there is a module in the coordinate
+                    if module_type is not None:
 
                         new_module = self.new_module(module_type)
+
                         new_module.substrate_coordinates = potential_module_coord
                         new_module.orientation = \
                             self.get_angle(new_module.info['module_type'], parent_module)
@@ -288,6 +293,21 @@ class HyperPlasticoding(Genotype):
 
                         parent_module.children[direction.value] = new_module
                         self.substrate[potential_module_coord] = new_module
+
+    def development_bias_tackling(self, module_type, parent_module, idx_direction, direction):
+
+        ### spider and blob bias
+        if module_type == Alphabet.JOINT_VERTICAL and parent_module.info['module_type'] == Alphabet.JOINT_VERTICAL:
+            module_type = Alphabet.BLOCK
+
+        if module_type == Alphabet.JOINT_HORIZONTAL and parent_module.info['module_type'] == Alphabet.JOINT_HORIZONTAL:
+            module_type = Alphabet.BLOCK
+
+        if module_type == Alphabet.BLOCK and parent_module.info['module_type'] == Alphabet.BLOCK:
+            #module_type = self.random.choice([Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL])
+            module_type = Alphabet.JOINT_HORIZONTAL
+
+        return module_type
 
     def place_head(self):
 
@@ -366,10 +386,10 @@ class HyperPlasticoding(Genotype):
         outputs = cppn.activate((x_origin_norm, y_origin_norm, x_dest_norm, y_dest_norm, d))
 
         params = {
-             'period': outputs[5],
-             'phase_offset': outputs[6],
-             'amplitude': outputs[7],
-             'weight': neat.activations.clamped_activation(outputs[8])
+            'period': outputs[5],
+            'phase_offset': outputs[6],
+            'amplitude': outputs[7],
+            'weight': neat.activations.clamped_activation(outputs[8])
         }
 
         return params
@@ -433,7 +453,8 @@ class HyperPlasticoding(Genotype):
                       7: 'amplitude,',
                       8: 'weight'
                       }
-        visualize.draw_net(self.cppn_config, self.cppn, False, filepath + '/images/genotype_bodybrain_' + self.phenotype._id,
+        visualize.draw_net(self.cppn_config, self.cppn, False,
+                           filepath + '/images/genotype_bodybrain_' + self.phenotype._id,
                            node_names=node_names)
         f = open(filepath + '/genotype_bodybrain_' + self.phenotype._id + '.txt', "w")
         f.write(str(self.cppn))
@@ -441,7 +462,7 @@ class HyperPlasticoding(Genotype):
 
     def add_imu_nodes(self):
         for p in range(1, 7):
-            id = 'node-core'+str(p)
+            id = 'node-core' + str(p)
             node = Node()
             node.layer = 'input'
             node.type = 'Input'
@@ -456,12 +477,14 @@ class HyperPlasticodingConfig:
                  plastic=False,
                  environmental_conditions=['hill'],
                  substrate_radius=4,
-                 cppn_config_path=''
+                 cppn_config_path='',
+                 tackle_bias=False
                  ):
         self.robot_id = robot_id
         self.plastic = plastic
         self.environmental_conditions = environmental_conditions
         self.substrate_radius = substrate_radius
         self.cppn_config_path = cppn_config_path
+        self.tackle_bias = tackle_bias
 
 

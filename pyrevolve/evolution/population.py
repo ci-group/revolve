@@ -311,11 +311,6 @@ class Population:
             Populates the population (individuals list) with Individual objects that contains their respective genotype.
             """
 
-            # temp
-            for ind in self.individuals:
-                print('ind ', ind[list(self.conf.environments.keys())[-1]].genotype.id,
-                      ind[list(self.conf.environments.keys())[-1]].consolidated_fitness,  ind[list(self.conf.environments.keys())[-1]].evaluated)
-
             # because we do not have control over neat.reproduction() - with it being all-or-nothing
             # we recover only if all individuals have been reproduced/exported
             # in any case, evaluations do not get lost, because they only happen after reproduction is complete
@@ -368,24 +363,9 @@ class Population:
             # consolidate seasonal fitnesses
             self.consolidate_fitness(self.individuals, gen_num=0)
 
-            for one_species in self.neat['species'].species:
-                for member in self.neat['species'].species[one_species].members:
-                    print('member', self.neat['species'].species[one_species].members[member].key,
-                          self.neat['species'].species[one_species].members[member].fitness)
-
             self.neat['latest_snapshot'] = 0
             self.conf.experiment_management.export_snapshots(self.individuals, 0)
             self.save_neat(0)
-
-            # temp
-            # for ind in self.individuals:
-            #     print('ind ',ind[list(self.conf.environments.keys())[-1]].genotype.id, ind[list(self.conf.environments.keys())[-1]].consolidated_fitness)
-            #
-            # for one_species in self.neat['species'].species:
-            #     for member in self.neat['species'].species[one_species].members:
-            #
-            #         print('member', self.neat['species'].species[one_species].members[member].key,
-            #               self.neat['species'].species[one_species].members[member].fitness)
 
     # TODO: find better solution -
     #  pickling this so often is inefficient, but for now i dont trust pickle's address-keeping.
@@ -405,11 +385,6 @@ class Population:
             :return: new population
             """
             final_season = list(self.conf.environments.keys())[-1]
-
-            # temp
-            for ind in self.individuals:
-                print('ind ', ind[list(self.conf.environments.keys())[-1]].genotype.id,
-                      ind[list(self.conf.environments.keys())[-1]].consolidated_fitness,  ind[list(self.conf.environments.keys())[-1]].evaluated)
 
             if self.neat['latest_offspring'] < gen_num:
 
@@ -571,9 +546,6 @@ class Population:
         robot_futures = []
         to_evaluate = []
         for individual in new_individuals:
-
-            print('######## EVAL ######', individual[environment].genotype.id, individual[environment].evaluated)
-
             if not individual[environment].evaluated:
                 logger.info(f'Simulating individual (gen {gen_num}) {individual[environment].genotype.id} ...')
                 to_evaluate.append(individual)
@@ -592,9 +564,8 @@ class Population:
                 assert (individual.phenotype._behavioural_measurements is None)
 
             if type_simulation == 'evolve':
+                
                 individual.evaluated = True
-                print('######## then EVAL ######', individual.genotype.id, individual.evaluated)
-
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id,
                                                                          individual.phenotype._behavioural_measurements,
                                                                          environment)

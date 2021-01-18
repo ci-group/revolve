@@ -5,36 +5,18 @@ import math
 dirpath = 'data/'
 #dirpath = 'link_storage/baselines/nonplastic_plasticoding_static/'
 experiments_type = [
-   # 'plasticoding_static_plane'#,
-    #'hyperplasticoding',
-#     'hyperplasticoding_2',
-# 'hyperplasticoding_3',
-# 'hyperplasticoding_4',
-# 'hyperplasticoding_5',
-#      'hyperplasticoding_6',
-#      'hyperplasticoding_7',
-#      'hyperplasticoding_8',
-#      'hyperplasticoding_9',
-#     'hyperplasticoding_3_t',
-    'hyperplasticoding_noneatspeed'
+      'hyperplasticoding_alt',
+      'hyperplasticoding_altcross',
+      'hyperplasticoding_altmaxmut'
 ]
 environments = {
-   # 'plasticoding_static_plane': ['plane']#,
-#'hyperplasticoding': ['plane'],
-# 'hyperplasticoding_2': ['plane'],
-# 'hyperplasticoding_3': ['plane'],
-# 'hyperplasticoding_4': ['plane'],
-# 'hyperplasticoding_5': ['plane']
-#  'hyperplasticoding_6': ['plane'],
-#  'hyperplasticoding_7': ['plane'],
-#  'hyperplasticoding_8': ['plane'],
-#  'hyperplasticoding_9': ['plane'],
-# 'hyperplasticoding_3_t': ['tilted5'],
-'hyperplasticoding_noneatspeed': ['plane']
+  'hyperplasticoding_alt': ['plane'],
+  'hyperplasticoding_altcross': ['plane'],
+  'hyperplasticoding_altmaxmut': ['plane']
                  }
 
 runs = range(1, 20+1)
-runs = [1]
+runs = [1,2,3]
 
 # set these variables according to your experiments #
 
@@ -99,14 +81,20 @@ for exp in experiments_type:
 
                         bh_file = path1+'/descriptors/behavior_desc_robot_'+robot_id+'.txt'
                         if os.path.isfile(bh_file):
-                            with open(bh_file) as file:
-                                for line in file:
-                                    if line != 'None':
-                                        measure, value = line.strip().split(' ')
-                                        file_summary.write(value+'\t')
-                                    else:
-                                        for h in behavior_headers:
-                                            file_summary.write('None'+'\t')
+
+                            if os.stat(bh_file).st_size > 0:
+                                with open(bh_file) as file:
+                                    for line in file:
+                                        if line != 'None':
+                                            measure, value = line.strip().split(' ')
+                                            file_summary.write(value+'\t')
+                                        else:
+                                            for h in behavior_headers:
+                                                file_summary.write('None'+'\t')
+                            else:
+                                print(f'robot {robot_id} has empty behavior file!')
+                                for h in behavior_headers:
+                                    file_summary.write('None' + '\t')
                         else:
                             for h in behavior_headers:
                                 file_summary.write('None'+'\t')

@@ -1,10 +1,9 @@
 from pyrevolve.genotype.hyperplasticoding.hyperplasticoding import HyperPlasticoding
 
 
-def random_initialization(conf, cppn, next_robot_id):
-
+def random_initialization(conf, next_robot_id):
     genotype = HyperPlasticoding(conf, next_robot_id)
 
-    genotype.random_init(cppn)
-    
+    genotype.random_init()
+
     return genotype

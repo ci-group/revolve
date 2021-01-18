@@ -1,81 +1,18 @@
  #!/bin/bash
 
-cd projects/revolve
-source .venv/bin/activate
-
-
-while true
-	do
-         for i in {1..20}; do
-                ./revolve.py --experiment-name karines_experiments/data/plasticoding_seasons_$i --run $i --manager experiments/karines_experiments/baselines/plasticoding_seasons.py  --n-cores 4 --port-start 5070  --evaluation-time 50;
-                sleep 5s
-	   done
-done
-
-
 
 cd projects/revolve
 source .venv/bin/activate
-while true
-	do
-         for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/hyperplasticoding_2_aneat_$i  --run $i --use-neat True --manager experiments/karines_experiments/hyperplasticoding2.py  --n-cores 4 --port-start 4005  --evaluation-time 50;
-                sleep 5s
-	   done
-done
-
-cd projects/revolve
-source .venv/bin/activate
-while true
-	do
-         for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/hyperplasticoding_3_aneat_$i  --run $i --use-neat True --manager experiments/karines_experiments/hyperplasticoding3.py  --n-cores 4 --port-start 4010  --evaluation-time 50;
-                sleep 5s
-	   done
-done
-
-cd projects/revolve
-source .venv/bin/activate
-while true
-	do
-         for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/hyperplasticoding_8_aneat_$i  --run $i --use-neat True --manager experiments/karines_experiments/hyperplasticoding8.py  --n-cores 4 --port-start 4015  --evaluation-time 50;
-                sleep 5s
-	   done
-done
-
-cd projects/revolve
-source .venv/bin/activate
-while true
-	do
-         for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/hyperplasticoding_10_aneat_$i  --run $i --use-neat True --manager experiments/karines_experiments/hyperplasticoding10.py  --n-cores 4 --port-start 4020  --evaluation-time 50;
-                sleep 5s
-	   done
-done
 
 
-
-cd projects/revolve
-source .venv/bin/activate
-while true
-	do
-         for i in {1..1}; do
-                ./revolve.py --experiment-name karines_experiments/data/hyperplasticoding_3_t_$i  --run $i --use-neat True --manager experiments/karines_experiments/hyperplasticoding3_t.py  --n-cores 4 --port-start 8170  --evaluation-time 50;
-                sleep 5s
-	   done
-done
-
-
-cd projects/revolve
-source .venv/bin/activate
 while true
 do
  for i in {1..1}; 	do
- ./revolve.py --experiment-name karines_experiments/data/hyperplasticoding_noneatspeed_$i  --manager experiments/karines_experiments/hyperplasticoding_noneat.py   --n-cores 4 --port-start 7870  --evaluation-time 50;
+                ./revolve.py --experiment-name karines_experiments/data/plasticoding_seasons_$i  --run $i  --manager experiments/karines_experiments/baselines/plasticoding_seasons.py    --n-cores 4 --port-start 4000  --evaluation-time 50;
        sleep 5s
 	   done
 done
+
 
 
 

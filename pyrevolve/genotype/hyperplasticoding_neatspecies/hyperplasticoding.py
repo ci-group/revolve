@@ -16,7 +16,7 @@ import neat
 import os
 import random
 import operator
-from pyrevolve.genotype.hyperplasticoding import visualize
+from pyrevolve.genotype.hyperplasticoding_neatspecies import visualize
 import sys
 
 
@@ -52,12 +52,10 @@ class HyperPlasticoding(Genotype):
         value = 1.0 / (1.0 + math.exp(-value))
         return value
 
-    def random_init(self):
+    def random_init(self, cppn):
 
-        self.cppn = self.cppn_config.genome_type('')
+        self.cppn = cppn
         self.cppn.fitness = 0
-        self.cppn.configure_new(self.cppn_config.genome_config)
-        print(self.cppn)
 
     def develop(self, environment):
 
@@ -267,15 +265,6 @@ class HyperPlasticoding(Genotype):
                     # if attachment constraints are met
                     if valid_attachment:
 
-                        if module_type == Alphabet.JOINT_VERTICAL and parent_module.info['module_type'] == Alphabet.JOINT_VERTICAL:
-                            module_type = Alphabet.BLOCK
-
-                        if module_type == Alphabet.JOINT_HORIZONTAL and parent_module.info['module_type'] == Alphabet.JOINT_HORIZONTAL:
-                            module_type = Alphabet.BLOCK
-
-                        if module_type == Alphabet.BLOCK and parent_module.info['module_type'] == Alphabet.BLOCK:
-                            module_type = random.choice([Alphabet.JOINT_VERTICAL, Alphabet.JOINT_HORIZONTAL])
-
                         new_module = self.new_module(module_type)
                         new_module.substrate_coordinates = potential_module_coord
                         new_module.orientation = \
@@ -344,7 +333,6 @@ class HyperPlasticoding(Genotype):
 
         outputs = cppn.activate((x_origin_norm, y_origin_norm, x_dest_norm, y_dest_norm, d))
 
-        print(outputs)
         which_module = {
             'no_module': outputs[0],
             'b_module': outputs[1],
@@ -354,7 +342,6 @@ class HyperPlasticoding(Genotype):
         }
 
         module_type = self.get_module_type(which_module)
-        print(module_type)
 
         return module_type
 

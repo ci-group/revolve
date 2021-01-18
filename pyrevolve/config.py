@@ -158,6 +158,12 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--early-death',
+    default=False, type=str_to_bool,
+    help="If individuals of the offspring can die in the first season. "
+)
+
+parser.add_argument(
     '--evaluation-time',
     default=30, type=float,
     help="In offline evolution, this determines the length of the experiment run."
