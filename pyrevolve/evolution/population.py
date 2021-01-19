@@ -123,6 +123,7 @@ class Population:
 
             if len(individual) == 1:
                 self.conf.experiment_management.export_genotype(individual[environment])
+                self.conf.experiment_management.export_parents(individual[environment])
 
         for environment in self.conf.environments:
 
@@ -244,18 +245,7 @@ class Population:
 
     def collect_measures(self, individuals, pop_measures, environment):
 
-        # TODO: get param_measures from a file
-        param_measures = [
-                          'branching',
-                          'limbs',
-                          'length_of_limbs',
-                          'coverage',
-                          'joints',
-                          'proportion',
-                         # 'sensors',
-                          'symmetry'#,
-                          #'size'
-                          ]
+        param_measures = self.conf.novelty_on['measures']
 
         for individual in individuals:
             pop_measures.append([])
@@ -338,11 +328,6 @@ class Population:
                     self.individuals.append(individual)
                     self.next_robot_id += 1
 
-                for one_species in self.neat['species'].species:
-                    for member in self.neat['species'].species[one_species].members:
-                        print('member', self.neat['species'].species[one_species].members[member].key,
-                              self.neat['species'].species[one_species].members[member].fitness)
-
                 self.neat['latest_offspring'] = 0
                 self.save_neat(0)
 
@@ -367,8 +352,6 @@ class Population:
             self.conf.experiment_management.export_snapshots(self.individuals, 0)
             self.save_neat(0)
 
-    # TODO: find better solution -
-    #  pickling this so often is inefficient, but for now i dont trust pickle's address-keeping.
     def save_neat(self, gen_num):
         path = 'experiments/' + self.conf.experiment_name + '/data_fullevolution'
         filename = f'{path}/neat_checkpoint_{gen_num}.pkl'

@@ -2,21 +2,18 @@ import os
 import math
 
 # set these variables according to your experiments #
-dirpath = 'data/'
+dirpath = 'data/lsys_vs_cppn/'
 #dirpath = 'link_storage/baselines/nonplastic_plasticoding_static/'
 experiments_type = [
-      'hyperplasticoding_alt',
-      'hyperplasticoding_altcross',
-      'hyperplasticoding_altmaxmut'
+      'hyperplasticoding',
+      'plasticoding'
 ]
 environments = {
-  'hyperplasticoding_alt': ['plane'],
-  'hyperplasticoding_altcross': ['plane'],
-  'hyperplasticoding_altmaxmut': ['plane']
+  'hyperplasticoding': ['plane'],
+  'plasticoding': ['plane']
                  }
 
 runs = range(1, 20+1)
-runs = [1,2,3]
 
 # set these variables according to your experiments #
 

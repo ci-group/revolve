@@ -44,6 +44,9 @@ class ExperimentManagement:
     def export_genotype(self, individual):
         individual.export_genotype(self._data_folder())
 
+    def export_parents(self, individual):
+        individual.export_parents(self._data_folder())
+
     def export_phenotype(self, individual, environment):
         if self.settings.export_phenotype:
             individual.export_phenotype(self._data_folder()+'/'+environment)

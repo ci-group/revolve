@@ -43,6 +43,7 @@ class HyperPlasticoding(Genotype):
         # the queried substrate
         self.substrate = {}
         self.phenotype = None
+        self.parents_ids = []
 
         self.cppn_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                        neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -270,10 +271,8 @@ class HyperPlasticoding(Genotype):
                 if valid_attachment:
 
                     if self.conf.tackle_bias:
-                        # print('\n b',module_type)
-                        module_type = self.development_bias_tackling(module_type, parent_module, idx_direction,
-                                                                     direction)
-                        # print('a',module_type)
+                        module_type = self.development_bias_tackling(module_type, parent_module,
+                                                                     idx_direction, direction)
 
                     # if cppn determines there is a module in the coordinate
                     if module_type is not None:
@@ -458,6 +457,17 @@ class HyperPlasticoding(Genotype):
                            node_names=node_names)
         f = open(filepath + '/genotype_bodybrain_' + self.phenotype._id + '.txt', "w")
         f.write(str(self.cppn))
+        f.close()
+
+    def export_parents(self, filepath):
+
+        filepath += '/genotypes_parents.txt'
+        f = open(filepath, "a")
+        line = self.phenotype._id+'\t'
+        for parent in self.parents_ids:
+            line += str(parent) + ' '
+
+        f.write(line+'\n')
         f.close()
 
     def add_imu_nodes(self):

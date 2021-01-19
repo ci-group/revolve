@@ -41,6 +41,9 @@ class Individual:
     def export_genotype(self, folder):
         self.genotype.export_genotype(f'{folder}/genotypes')
 
+    def export_parents(self, folder):
+        self.genotype.export_parents(f'{folder}')
+
     def export_phenotype(self, folder):
         if self.phenotype is not None:
             self.phenotype.save_file(f'{folder}/phenotypes/{self.phenotype.id}.yaml', conf_type='yaml')

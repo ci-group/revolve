@@ -29,18 +29,27 @@ def standard_crossover(environments, parent_individuals, genotype_conf, crossove
     parent1.fitness = -float('Inf') if parent1.fitness is None else parent1.fitness
     parent2.fitness = -float('Inf') if parent2.fitness is None else parent2.fitness
 
+    parent_ids = []
     crossover_attempt = random.uniform(0.0, 1.0)
     if crossover_attempt > crossover_conf.crossover_prob:
+
+        parent_ids.append(parent_genotypes[0].id)
+
         #TODO: replace this for simply deeply copying one random parent (not sure if would work as expected)
         new_cppn = cppn_config.genome_type(0)
         new_cppn.configure_crossover(parent1, parent1, cppn_config.genome_config)
 
     else:
+
+        for parent in parent_genotypes:
+            parent_ids.append(parent.id)
+
         new_cppn = cppn_config.genome_type(0)
         new_cppn.configure_crossover(parent1, parent2, cppn_config.genome_config)
 
     new_genotype.cppn = new_cppn
+    new_genotype.parents_ids = parent_ids
 
     genotype_logger.info(
-        f'crossover: for genome {new_genotype.id} - p1: {parent_genotypes[0].id} p2: {parent_genotypes[1].id}.')
+        f'crossover: for genome {new_genotype.id} is done.')
     return new_genotype

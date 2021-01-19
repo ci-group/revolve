@@ -13,10 +13,19 @@ def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
     :return: child genotype
     """
     grammar = {}
+    parent_ids = []
+
     crossover_attempt = random.uniform(0.0, 1.0)
     if crossover_attempt > crossover_conf.crossover_prob:
+
+        parent_ids.append(parent_genotypes[0].id)
         grammar = parent_genotypes[0].grammar
+        
     else:
+
+        for parent in parent_genotypes:
+            parent_ids.append(parent.id)
+
         for letter in Alphabet.modules():
             parent = random.randint(0, 1)
             # gets the production rule for the respective letter
@@ -24,6 +33,8 @@ def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
 
     genotype = Plasticoding(genotype_conf, 'tmp')
     genotype.grammar = grammar
+    genotype.parents_ids = parent_ids
+    
     return genotype.clone()
 
 
@@ -41,5 +52,5 @@ def standard_crossover(environments, parent_individuals, genotype_conf, crossove
 
     #TODO what if you have more than 2 parents? fix log
     genotype_logger.info(
-        f'crossover: for genome {new_genotype.id} - p1: {parent_genotypes[0].id} p2: {parent_genotypes[1].id}.')
+        f'crossover: for genome {new_genotype.id} done.')
     return new_genotype

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+runs=20
+runs_start=0
+start_port=9000
+
+experiments_path=karines_experiments/data/lsys_vs_cppn/
+managers_path=experiments/karines_experiments/
+
+# TODO: get experiments length instead
+# num_exps-1
+num_exps=1
+experiments=("plasticoding" "hyperplasticoding")
+managers=("lsys_vs_cppn/plasticoding_speed" "lsys_vs_cppn/hyperplasticoding_speed")
+
+
+for i in $(seq $runs)
+do
+    run=$(($i+runs_start))
+
+    for j in $(seq 0 $num_exps);
+    do
+      echo ""
+      screen -d -m -S "${experiments[j]}_${run}" -L -Logfile "${experiments[j]}_${run}.log" nice -n19 ./revolve.sh --manager "${managers_path}${managers[j]}.py" --experiment-name "${experiments_path}${experiments[j]}_${run}" --n-cores 4 --port-start $((${start_port} + ($run*10))) --run $run
+
+    done
+done
+
+
+
+# to reattach:
+# screen -r  "${experiments[j]}_${run}" 

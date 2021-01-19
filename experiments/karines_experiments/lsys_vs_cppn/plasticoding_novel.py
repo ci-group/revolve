@@ -36,7 +36,14 @@ async def run():
 
     # calculation of the measures can be on or off, because they are expensive
     novelty_on = {'novelty': True,
-                  'novelty_pop': True
+                  'novelty_pop': True,
+                  'measures' : ['branching',
+                                'limbs',
+                                'length_of_limbs',
+                                'coverage',
+                                'joints',
+                                'proportion',
+                                'symmetry']
                   }
 
     genotype_conf = PlasticodingConfig(
@@ -51,7 +58,7 @@ async def run():
     )
 
     crossover_conf = CrossoverConfig(
-        crossover_prob=0,
+        crossover_prob=0.8,
     )
     # experiment params #
 

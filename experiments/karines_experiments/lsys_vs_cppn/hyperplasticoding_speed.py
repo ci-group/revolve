@@ -32,13 +32,20 @@ async def run():
     front = 'none'
 
     # environment world and z-start
-    environments = {'plane': 0.03
-                    }
+    environments = {'plane': 0.03 }
 
     # calculation of the measures can be on or off, because they are expensive
     novelty_on = {'novelty': False,
-                  'novelty_pop': True
+                  'novelty_pop': True,
+                  'measures': ['branching',
+                               'limbs',
+                               'length_of_limbs',
+                               'coverage',
+                               'joints',
+                               'proportion',
+                               'symmetry']
                   }
+
     cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic'
 
     genotype_conf = HyperPlasticodingConfig(

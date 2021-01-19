@@ -113,6 +113,7 @@ class Plasticoding(Genotype):
         self.conf = conf
         self.id = str(robot_id)
         self.grammar = {}
+        self.parents_ids = []
 
         # Auxiliary variables
         self.substrate_coordinates_all = {(0, 0): '1'}
@@ -156,6 +157,17 @@ class Plasticoding(Genotype):
         filepath += '/genotype_bodybrain_'+self.phenotype._id+'.txt'
         f = open(filepath, "w")
         f.write(str(self.grammar))
+        f.close()
+
+    def export_parents(self, filepath):
+
+        filepath += '/genotypes_parents.txt'
+        f = open(filepath, "a")
+        line = self.phenotype._id+'\t'
+        for parent in self.parents_ids:
+            line += str(parent) + ' '
+
+        f.write(line+'\n')
         f.close()
 
     def load_and_develop(self, load, genotype_path='', id_genotype=None):
