@@ -15,53 +15,50 @@ base_directory <-paste('data', sep='')
 analysis = 'analysis'
 output_directory = paste(base_directory,'/',analysis ,sep='')
 
-experiments_type = c('hyperplasticoding', 'plasticoding')
-experiments_labels = c( 'hyperplasticoding', 'plasticoding')
-runs = list(c(1:20), c(1:20))
-environments = list( c( 'plane'), c( 'plane') )
+experiments_type = c('hyperplasticoding',
+                     'plasticoding')
+experiments_labels = c( 'hyperplasticoding',
+                        'plasticoding')
+runs = list(c(1:20),
+            c(1:20))
+environments = list( c( 'plane'),
+                     c( 'plane') )
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
-methods_labels = c('CPPN', 'L-System')
-experiments_type_colors = c('#EE8610','#009900') # orange, green
+methods_labels = c('CPPN',
+                   'L-System')
+experiments_type_colors = c('#EE8610', # orange
+                            '#009900') # green
 
-#aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
-aggregations = c( 'Q25','mean', 'median', 'Q75')
+aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
+#aggregations = c( 'Q25', 'median', 'Q75')
+
+#gens_box_comparisons = c(149)
+gens_box_comparisons = c(0, 49, 149)
 
 gens = 150
 pop = 100
-
-#### CHANGE THE PARAMETERS HERE ####
-
-
-methods = c()
-for (exp in 1:length(experiments_type))
-{
-  for (env in 1:length(environments[[exp]]))
-  {
-    methods = c(methods, paste(experiments_type[exp], environments[[exp]][env], sep='_'))
-  }
-}
 
 measures_names = c(
   'displacement_velocity_hill',
   'head_balance',
   'branching',
-  'branching_modules_count',
+  #'branching_modules_count',
   'limbs',
-  'extremities',
+  #'extremities',
   'length_of_limbs',
-  'extensiveness',
+  #'extensiveness',
   'coverage',
   'joints',
-  'hinge_count',
-  'active_hinges_count',
-  'brick_count',
-  'touch_sensor_count',
-  'brick_sensor_count',
+  #'hinge_count',
+  #'active_hinges_count',
+  #'brick_count',
+  #'touch_sensor_count',
+  #'brick_sensor_count',
   'proportion',
-  'width',
-  'height',
+  #'width',
+  #'height',
   'absolute_size',
   'sensors',
   'symmetry',
@@ -83,37 +80,63 @@ measures_labels = c(
   'Speed (cm/s)',
   'Balance',
   'Branching',
-  'branching_modules_count',
+  #'branching_modules_count',
   'Rel number of limbs',
-  'extremities',
+  #'extremities',
   'Rel. Length of Limbs',
-  'Extensiveness',
+  #'Extensiveness',
   'Coverage',
   'Rel. Number of Joints',
-  'hinge_count',
-  'active_hinges_count',
-  'brick_count',
-  'touch_sensor_count',
-  'brick_sensor_count',
+  #'hinge_count',
+  #'active_hinges_count',
+  #'brick_count',
+  #'touch_sensor_count',
+  #'brick_sensor_count',
   'Proportion',
-  'width',
-  'height',
+  #'width',
+  #'height',
   'Size',
   'Sensors',
   'Symmetry',
   'Average Period',
-  'dev_period',
-  'avg_phase_offset',
-  'dev_phase_offset',
-  'avg_amplitude',
-  'dev_amplitude',
-  'avg_intra_dev_params',
-  'avg_inter_dev_params',
+  'Dev Period',
+  'Avg phase offset',
+  'Dev phase offset',
+  'Avg Amplitude',
+  'Dev amplitude',
+  'Avg intra dev params',
+  'Avg inter dev params',
   'Sensors Reach',
   'Recurrence',
-  'synaptic_reception'
+  'Synaptic reception'
 )
 
+more_measures_names = c(
+                       # 'novelty',
+                        'novelty_pop',
+                        'fitness'#,
+                        #'cons_fitness'
+                        )
+
+more_measures_labels = c(
+                         #'Novelty',
+                         'Diversity',
+                         'Fitness'#,
+                         #'Number of slaves'
+                         )
+
+#### CHANGE THE PARAMETERS HERE ####
+
+
+
+methods = c()
+for (exp in 1:length(experiments_type))
+{
+  for (env in 1:length(environments[[exp]]))
+  {
+    methods = c(methods, paste(experiments_type[exp], environments[[exp]][env], sep='_'))
+  }
+}
 
 measures_snapshots_all = NULL
 
@@ -155,9 +178,7 @@ for (exp in 1:length(experiments_type))
 fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",pop," order by 4"))
 measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL")
 
-more_measures_names = c('novelty', 'novelty_pop', 'fitness', 'cons_fitness')
 measures_names = c(measures_names, more_measures_names)
-more_measures_labels = c('Novelty', 'Diversity', 'Fitness', 'Number of slaves')
 measures_labels = c(measures_labels, more_measures_labels)
 
 for( m in 1:length(more_measures_names))
@@ -168,9 +189,6 @@ for( m in 1:length(more_measures_names))
 
 measures_averages_gens_1 = list()
 measures_averages_gens_2 = list()
-
-measures_ini = list()
-measures_fin = list()
 
 for (met in 1:length(methods))
 {
@@ -211,8 +229,6 @@ for (met in 1:length(methods))
 
   inner_measures$generation = as.numeric(inner_measures$generation)
 
-  measures_ini[[met]] = sqldf(paste("select * from inner_measures where generation=0"))
-  measures_fin[[met]] = sqldf(paste("select * from inner_measures where generation=",gens-1))
   measures_aux = c()
   query = 'select generation'
   for (i in 1:length(measures_names))
@@ -307,56 +323,77 @@ for (i in 1:length(measures_names))
 
 
 
-   # box plots
-   outliers = c('nout', '')
+   # creates one box plot per measure, and one extra in case outlier removal is needeed
+   outliers = c('full', 'filtered')
    for (out in outliers)
    {
+      has_outliers = FALSE
 
-      all_final_values = data.frame()
-      for (exp in 1:length(methods))
-      {
-        temp = data.frame( c(measures_fin[[exp]][paste(methods[exp],'_',measures_names[i],'_', aggregations[a], sep='')]))
-        colnames(temp) <- 'values'
+     for(gc in gens_box_comparisons)
+     {
 
-        if (out == 'nout'){
-            upperl <- quantile(temp$values)[4] + 1.5*IQR(temp$values)
-            lowerl <- quantile(temp$values)[2] - 1.5*IQR(temp$values)
-            temp = temp %>% filter(values <= upperl & values >= lowerl )
-        }
+          all_final_values = data.frame()
+          for (met in 1:length(methods))
+          {
 
-        temp$type = methods_labels[exp]
-        all_final_values = rbind(all_final_values, temp)
+            met_measures = measures_averages_gens_1[[met]]
+            gen_measures = sqldf(paste("select * from met_measures where generation=", gc, sep=''))
+
+            temp = data.frame( c(gen_measures[paste(methods[met],'_',measures_names[i],'_', aggregations[a], sep='')]))
+            colnames(temp) <- 'values'
+
+            if (out == 'filtered'){
+              if (!all(is.na(temp$values))){
+
+                num_rows_before = nrow(temp)
+                upperl <- quantile(temp$values)[4] + 1.5*IQR(temp$values)
+                lowerl <- quantile(temp$values)[2] - 1.5*IQR(temp$values)
+                temp = temp %>% filter(values <= upperl & values >= lowerl )
+
+                if (num_rows_before > nrow(temp)){
+                  has_outliers = TRUE
+                }
+              }
+            }
+
+            temp$type = methods_labels[met]
+            all_final_values = rbind(all_final_values, temp)
+          }
+
+          g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
+            geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
+            labs( x="Method", y=measures_labels[i], title=str_to_title(aggregations[a]))
+
+          g1 = g1 +  scale_color_manual(values=  experiments_type_colors  )
+
+          g1 = g1 + theme(legend.position="none" , text = element_text(size=50) ,
+                          plot.title=element_text(size=50),  axis.text=element_text(size=50),
+                          axis.title=element_text(size=55),
+                          axis.text.x = element_text(angle = 20, hjust = 0.9),
+                          plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  1.3, unit = "cm"))+
+            stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
+
+          # in this list, use the desired pairs names from methods_labels
+          comps = list( methods_labels )
+
+          #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
+          if (max_y>0) {
+            graph = graph + coord_cartesian(ylim = c(min_y, max_y))
+          }
+
+          g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=18,
+                                 comparisons = comps,
+                                 map_signif_level=c("0.001"=0.001,"0.01"=0.01, "0.05"=0.05) )
+
+          if (out == 'full' || (out == 'filtered' &&  has_outliers == TRUE) ){
+            ggsave(paste(output_directory,"/",measures_names[i],"_",gc,"_", aggregations[a],'_', out,"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
+          }
+
+       }
+
       }
 
-      g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
-        geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
-        labs( x="Method", y=measures_labels[i], title=str_to_title(aggregations[a]))
+   }
 
-      g1 = g1 +  scale_color_manual(values=  experiments_type_colors  )
-
-      g1 = g1 + theme(legend.position="none" , text = element_text(size=50) ,
-                      plot.title=element_text(size=50),  axis.text=element_text(size=50),
-                      axis.title=element_text(size=55),
-                      axis.text.x = element_text(angle = 20, hjust = 0.9),
-                      plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  1.3, unit = "cm"))+
-        stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
-
-      # in this list, use the desired pairs names from methods_labels
-      comps = list( methods_labels )
-
-      #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
-      if (max_y>0) {
-        graph = graph + coord_cartesian(ylim = c(min_y, max_y))
-      }
-
-      g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=18,
-                             comparisons = comps,
-                             map_signif_level=c("0.001"=0.001,"0.01"=0.01, "0.05"=0.05) )
-
-      ggsave(paste(output_directory,"/",measures_names[i],"_", aggregations[a],'_', out,"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
-
-    }
-
-  }
 }
 
