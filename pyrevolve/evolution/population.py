@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 import neat
 import gzip
+from pyrevolve.evolution.selection import ranking_selection
 
 
 class PopulationConfig:
@@ -499,6 +500,18 @@ class Population:
         # calculate final fitness
         for environment in self.conf.environments:
             self.calculate_final_fitness(individuals=selection_pool, gen_num=gen_num, environment=environment)
+
+        # early death selection: allow death in the first season
+        # for the sake of simplicity all fitness were calculated already
+        # so non-surviving individuals will have their fitness calculations for the second season wasted
+        if self.conf.all_settings.early_death:
+            individuals_survived = ranking_selection(self.individuals, new_individuals,
+                                                     environment=list(self.conf.environments.keys())[-1])
+            self.conf.experiment_management.export_early_death(str(gen_num), str(len(individuals_survived)))
+
+            selection_pool = self.individuals + individuals_survived
+
+        # consolidate fitness among seasons
         self.consolidate_fitness(selection_pool, gen_num)
 
         # create next population

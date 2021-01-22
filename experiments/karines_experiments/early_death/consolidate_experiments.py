@@ -1,16 +1,19 @@
 import os
 import math
+import sys
 
 # set these variables according to your experiments #
-dirpath = 'data/lsys_vs_cppn/'
-#dirpath = 'link_storage/baselines/nonplastic_plasticoding_static/'
+
+# run from karine_experiments
+dirpath = 'data/lsystem_cppn/'
+
 experiments_type = [
-      'hyperplasticoding',
-      'plasticoding'
+      'plane_death',
+      'tilted_death'
 ]
 environments = {
-  'hyperplasticoding': ['plane'],
-  'plasticoding': ['plane']
+  'plane_death': ['plane', 'tilted5'],
+  'tilted_death': ['plane', 'tilted5']
                  }
 
 runs = range(1, 20+1)
@@ -37,12 +40,20 @@ def build_headers(path, path1):
     file_summary.write(behavior_headers[-1]+'\t')
 
     phenotype_headers = []
-    with open(path1 + '/descriptors/phenotype_desc_robot_1.txt') as file:
-        for line in file:
+    pt_file = path1 + '/descriptors/phenotype_desc_robot_1.txt'
+    num_lines = sum(1 for line in open(pt_file))
+
+    with open(pt_file) as file:
+        for idx, line in enumerate(file):
             measure, value = line.strip().split(' ')
             phenotype_headers.append(measure)
-            file_summary.write(measure+'\t')
-    file_summary.write('\n')
+            file_summary.write(measure)
+
+            if idx < num_lines - 1:
+                file_summary.write('\t')
+            else:
+                file_summary.write('\n')
+
     file_summary.close()
 
     file_summary = open(path + "_snapshots_ids.tsv", "w+")
@@ -110,8 +121,7 @@ for exp in experiments_type:
                                     else:
                                         file_summary.write('\n')
                         else:
-                            for h in phenotype_headers:
-                                file_summary.write('None'+'\n')
+                            file_summary.write('None'+'\n')
 
             list_gens = []
             for r, d, f in os.walk(path2):

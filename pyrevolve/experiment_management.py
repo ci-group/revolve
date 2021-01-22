@@ -80,6 +80,13 @@ class ExperimentManagement:
                 for key, val in measures.items().items():
                     f.write(f"{key} {val}\n")
 
+    def export_early_death(self, generation, individuals_survived):
+        filename = os.path.join(self._data_folder() + '/individuals_early_survived.txt')
+        f = open(filename, "a")
+        f.write(generation+'\t'+individuals_survived+'\n')
+        f.close()
+
+
     def export_phenotype_images(self, dirpath, individual):
         individual.phenotype.render_body(self._experiment_folder()+'/'+dirpath+f'/body_{individual.phenotype.id}.png')
         individual.phenotype.render_brain(self._experiment_folder()+'/'+dirpath+f'/brain_{individual.phenotype.id}')

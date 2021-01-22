@@ -26,16 +26,17 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 50
+    num_generations = 200
     population_size = 100
     offspring_size = 100
-    front = 'none'
+    front = 'slaves'
 
     # environment world and z-start
-    environments = {'plane': 0.03 }
+    environments = {'plane': 0.03,
+                    'tilted5': 0.1}
 
     # calculation of the measures can be on or off, because they are expensive
-    novelty_on = {'novelty': True,
+    novelty_on = {'novelty': False,
                   'novelty_pop': True,
                   'measures' : ['branching',
                                 'limbs',
@@ -43,13 +44,14 @@ async def run():
                                 'coverage',
                                 'joints',
                                 'proportion',
-                                'symmetry']
+                                'symmetry',
+                                'sensors',
+                                'size']
                   }
 
     genotype_conf = PlasticodingConfig(
-        max_structural_modules=81,
-        plastic=False,
-        e_max_groups=3,
+        max_structural_modules=15,
+        plastic=True,
     )
 
     mutation_conf = MutationConfig(
@@ -82,9 +84,10 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(measures, robot):
-        return fitness.novelty(measures, robot)
+        return fitness.displacement_velocity_hill(measures, robot)
 
-    fitness_function = {'plane': fitness_function_plane}
+    fitness_function = {'plane': fitness_function_plane,
+                        'tilted5': fitness_function_plane} # same function
 
     population_conf = PopulationConfig(
         population_size=population_size,

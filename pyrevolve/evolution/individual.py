@@ -20,6 +20,7 @@ class Individual:
         self.evaluated = False
         self.parents = None
         self.failed_eval_attempt_count = 0
+        self.early_survival_probability = 0
 
     def develop(self, environment):
         """

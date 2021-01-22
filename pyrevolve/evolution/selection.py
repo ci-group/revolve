@@ -1,4 +1,4 @@
-from random import randint
+import random
 
 _neg_inf = -float('Inf')
 
@@ -22,7 +22,7 @@ def tournament_selection(population, environments, k=2):
     """
     best_individual = None
     for _ in range(k):
-        individual = population[randint(0, len(population) - 1)]
+        individual = population[random.randint(0, len(population) - 1)]
         if (best_individual is None) or (_compare_maj_fitness(individual, best_individual, environments)):
             best_individual = individual
     return best_individual
@@ -45,3 +45,32 @@ def multiple_selection(population, selection_size, selection_function, environme
                 selected_individuals.append(selected_individual)
                 new_individual = True
     return selected_individuals
+
+def ranking_selection(old_population, offspring, environment):
+
+    old_pop_filtered = [individual for individual in old_population
+                        if individual[environment].fitness is not None]
+    offspring_filtered = [individual for individual in offspring
+                          if individual[environment].fitness is not None]
+    population = old_pop_filtered + offspring_filtered
+
+    ranked_population = sorted(population, key=lambda x: x[environment].fitness)
+
+    def linear_ranking(_rank, pop_size):
+        if _rank == 0:
+            return 0
+        else:
+            rank_range = sum(list(range(0, pop_size , 1)))
+            return _rank / rank_range
+
+    probabilities = []
+    for rank, individual in enumerate(ranked_population):
+        individual[environment].early_survival_probability = linear_ranking(rank, len(ranked_population))
+        probabilities.append(individual[environment].early_survival_probability)
+
+    selected_offspring = []
+    for individual in offspring:
+        if individual[environment].early_survival_probability >= random.uniform(min(probabilities), max(probabilities)):
+            selected_offspring.append(individual)
+
+    return selected_offspring

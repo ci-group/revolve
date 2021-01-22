@@ -753,7 +753,7 @@ class PlasticodingConfig:
                  weight_max=1,
                  axiom_w=Alphabet.CORE_COMPONENT,
                  i_iterations=3,
-                 max_structural_modules=100,
+                 max_structural_modules=15,
                  robot_id=0,
                  move_to_new=False,
                  max_clauses=2,

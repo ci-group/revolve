@@ -50,7 +50,8 @@ async def run():
 
     genotype_conf = HyperPlasticodingConfig(
         plastic=False,
-        cppn_config_path=cppn_config_path
+        cppn_config_path=cppn_config_path,
+        max_structural_modules = 100,
     )
 
     mutation_conf = MutationConfig(

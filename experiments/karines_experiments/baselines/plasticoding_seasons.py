@@ -41,6 +41,8 @@ async def run():
                   'novelty_pop': True
                   }
 
+    # novelty used 'branching', 'limbs','length_of_limbs','coverage','joints','proportion', 'symmetry', 'sensors','size'
+
     genotype_conf = PlasticodingConfig(
         max_structural_modules=15,
         plastic=True,
