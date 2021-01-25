@@ -12,7 +12,6 @@ from pyrevolve.tol.manage import World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 from pyrevolve.evolution import fitness
 
-
 async def run():
     """
     The main coroutine, which is started below.

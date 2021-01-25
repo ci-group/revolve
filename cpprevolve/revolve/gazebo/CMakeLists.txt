@@ -2,9 +2,10 @@
 # _____________________________________________________________________________
 
 # CMake flag to help local projects find the build dir
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
+set(CMAKE_RARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/lib")
 
 include_directories(${CMAKE_SOURCE_DIR}/cpprevolve)
 
@@ -57,6 +58,13 @@ pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
 include_directories(${NLOpt_INCLUDE_DIRS})
 link_directories(${NLOpt_LIBRARY_DIRS})
 
+# Find SimpleAmqpClient
+find_library(SimpleAmqpClient REQUIRED libSimpleAmqpClient)
+include_directories(${SimpleAmqpClient_INCLUDE_DIRS})
+
+# Find json
+find_package(jsoncpp CONFIG REQUIRED)
+
 # Find Limbo - LIbrary for Model-Based Optimization
 set(LIMBO_DIR ${CMAKE_SOURCE_DIR}/thirdparty/limbo)
 set(LIMBO_DEFINES USE_NLOPT)
@@ -78,7 +86,7 @@ if (LOCAL_GAZEBO_DIR)
             NO_DEFAULT_PATH)
     message(WARNING "Using local Gazebo @ ${gazebo_DIR}")
 else()
-    find_package(gazebo 9 REQUIRED)
+    find_package(gazebo 10 REQUIRED)
 endif()
 include_directories(${GAZEBO_INCLUDE_DIRS})
 link_directories(${GAZEBO_LIBRARY_DIRS})
@@ -205,6 +213,8 @@ target_link_libraries(
         ${GSL_LIBRARIES}
         ${YAML_CPP_LIBRARIES}
         ${NLOpt_LIBRARIES}
+        jsoncpp_lib
+        SimpleAmqpClient
 )
 
 target_compile_definitions(
@@ -222,6 +232,20 @@ target_link_libraries(
         WorldControlPlugin
         revolve-gazebo
         revolve-proto
+        ${GAZEBO_LIBRARIES}
+)
+
+# Create Celery World plugin
+add_library(
+        CeleryWorldControlPlugin SHARED
+        plugin/CeleryWorldController.cpp
+        plugin/register_celeryworld_plugin.cpp
+)
+
+target_link_libraries(
+        CeleryWorldControlPlugin
+        revolve-gazebo
+	      revolve-proto
         ${GAZEBO_LIBRARIES}
 )
 
@@ -243,6 +267,7 @@ add_library(TorusWorldPlugin SHARED
         plugin/TorusWorld.cpp
         plugin/register_torus_world_plugin.cpp
 )
+
 target_link_libraries(TorusWorldPlugin
         revolve-gazebo
         ${GAZEBO_LIBRARIES}

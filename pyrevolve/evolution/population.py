@@ -3,11 +3,13 @@
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
+from pycelery.converter import dic_to_measurements
+from celery.result import ResultSet
 from ..custom_logging.logger import logger
 import time
 import asyncio
 import os
-
+import celery
 
 class PopulationConfig:
     def __init__(self,
@@ -27,7 +29,9 @@ class PopulationConfig:
                  experiment_name,
                  experiment_management,
                  offspring_size=None,
-                 next_robot_id=1):
+                 next_robot_id=1,
+                 celery = False,
+                 celery_reboot = False):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -63,7 +67,15 @@ class PopulationConfig:
         self.experiment_management = experiment_management
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
+        self.celery = celery
+        self.celery_reboot = celery_reboot
 
+        # For analyzing speed up
+        self.generation_time = []
+        self.generation_init = []
+        self.analyzer_time = []
+        self.generational_fin = []
+        self.robot_size = []
 
 class Population:
     def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
@@ -165,10 +177,15 @@ class Population:
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
+
+        start = time.time()
         for i in range(self.conf.population_size-len(recovered_individuals)):
             individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
             self.individuals.append(individual)
             self.next_robot_id += 1
+        end = time.time()
+
+        self.conf.generation_init.append(end-start)
 
         await self.evaluate(self.individuals, 0)
         self.individuals = recovered_individuals + self.individuals
@@ -181,6 +198,7 @@ class Population:
         :param individuals: recovered offspring
         :return: new population
         """
+        g1 = time.time()
 
         new_individuals = []
 
@@ -199,16 +217,20 @@ class Population:
 
             # Mutation operator
             child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
+
             # Insert individual in new population
             individual = self._new_individual(child_genotype)
 
             new_individuals.append(individual)
 
+        g2 = time.time()
+        self.conf.generation_init.append(g2-g1)
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
 
         new_individuals = recovered_individuals + new_individuals
 
+        f1 = time.time()
         # create next population
         if self.conf.population_management_selector is not None:
             new_individuals = self.conf.population_management(self.individuals, new_individuals,
@@ -219,6 +241,9 @@ class Population:
         new_population.individuals = new_individuals
         logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
 
+        f2 = time.time()
+        self.conf.generational_fin.append(f2-f1)
+
         return new_population
 
     async def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve'):
@@ -228,22 +253,42 @@ class Population:
         :param new_individuals: newly created population after an evolution iteration
         :param gen_num: generation number
         """
+        b2 = time.time()
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
         robot_futures = []
+
         for individual in new_individuals:
             logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
+
+            if self.conf.celery: # ADDED THIS FOR CELERY -Sam
+                robot_futures.append(await self.evaluate_single_robot(individual))
+            else:
+                robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
+
+        """Do export here so celery workers can work parallel to the export!"""
+        if gen_num > 0 and self.conf.celery:
+            self.conf.experiment_management.export_snapshots(self.individuals, gen_num-1)
 
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
+
+            if self.conf.celery: # ADDED THIS FOR CELERY -Sam
+                try:
+                    individual.fitness, measurements = await asyncio.wait_for(future.get(timeout=150), timeout=150)
+                    individual.phenotype._behavioural_measurements = dic_to_measurements(measurements)
+                except TimeoutError:
+                    logger.info(f"Individual's get request timed out. Either cores are saturated, celery has an error or analyzer is stuck. Consider restarting.")
+                    self.conf.celery_reboot = True
+                    individual.fitness, individual.phenotype._behavioural_measurements = None, None
+            else:
+                individual.fitness, individual.phenotype._behavioural_measurements = await future
 
             if individual.phenotype._behavioural_measurements is None:
-                assert (individual.fitness is None)
+                 assert (individual.fitness is None)
 
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
@@ -251,6 +296,9 @@ class Population:
             logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
             if type_simulation == 'evolve':
                 self.conf.experiment_management.export_fitness(individual)
+
+        e2 = time.time()
+        self.conf.generation_time.append(e2-b2)
 
     async def evaluate_single_robot(self, individual):
         """

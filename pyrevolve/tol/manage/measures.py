@@ -23,6 +23,7 @@ class BehaviouralMeasurements:
             self.displacement_velocity_hill = displacement_velocity_hill(robot_manager)
             self.head_balance = head_balance(robot_manager)
             self.contacts = contacts(robot_manager, robot)
+
         else:
             self.velocity = None
             self.displacement = None
@@ -81,17 +82,19 @@ def displacement_velocity(robot_manager):
     :return:
     """
     dist, time = displacement(robot_manager)
-    if time.is_zero():
+    try:
+        return np.sqrt(dist.x ** 2 + dist.y ** 2) / float(time)
+    except:
+        # divided by zero
         return 0.0
-    return np.sqrt(dist.x ** 2 + dist.y ** 2) / float(time)
-
 
 def displacement_velocity_hill(robot_manager):
     dist, time = displacement(robot_manager)
-    if time.is_zero():
+    try:
+        return dist.y / float(time)
+    except:
+        # divided by zero
         return 0.0
-    return dist.y / float(time)
-
 
 def head_balance(robot_manager):
     """
@@ -129,7 +132,9 @@ def contacts(robot_manager, robot):
     avg_contacts = 0
     for c in robot_manager._contacts:
         avg_contacts += c
+
     avg_contacts = avg_contacts / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']
+
     return avg_contacts
 
 

@@ -3,11 +3,15 @@ import os
 import sys
 import asyncio
 import importlib
+import time
+import subprocess
+from subprocess import *
 
 from pyrevolve.data_analisys.visualize_robot import test_robot_run
 from pyrevolve.data_analisys.check_robot_collision import test_collision_robot
 from pyrevolve import parser
 from experiments.examples import only_gazebo
+from pycelery import tasks
 
 here = os.path.dirname(os.path.abspath(__file__))
 rvpath = os.path.abspath(os.path.join(here, '..', 'revolve'))
@@ -15,6 +19,11 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
 def run(loop, arguments):
+    n_cores = 1
+
+    if arguments.n_cores is not None:
+        n_cores = arguments.n_cores
+
     if arguments.test_robot is not None:
         return loop.run_until_complete(test_robot_run(arguments.test_robot))
 
@@ -27,6 +36,7 @@ def run(loop, arguments):
         manager_lib = '.'.join(manager_lib.split('/'))
         manager = importlib.import_module(manager_lib).run
         return loop.run_until_complete(manager())
+
     else:
         # no test robot, no manager -> just run gazebo
         loop.run_until_complete(only_gazebo.run())
@@ -59,13 +69,16 @@ def main():
         arguments = parser.parse_args()
         loop = asyncio.get_event_loop()
         loop.set_exception_handler(handler)
+
         run(loop, arguments)
+
     except KeyboardInterrupt:
         print("Got CtrlC, shutting down.")
 
-
 if __name__ == '__main__':
+    begin = time.time()
     print("STARTING")
-    main()
-    print("FINISHED")
 
+    main()
+    end = time.time()
+    print(f"FINISHED IN {end-begin} SECONDS TOTAL!")

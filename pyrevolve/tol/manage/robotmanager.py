@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 from __future__ import division
 
-from pyrevolve.SDF.math import Vector3
+import numpy as np
+from pyrevolve.SDF.math import Vector3, Quaternion
+import math
 
 from pyrevolve.angle import RobotManager as RvRobotManager
 from pyrevolve.util import Time
@@ -55,6 +57,52 @@ class RobotManager(RvRobotManager):
         self.size = robot.size()
         self.battery_level = battery_level
         self.initial_charge = battery_level
+
+    def update_from_celery(self, msg, world):
+        """Celery messages are json and not robot manager. This function is called by
+        the celery converter function msg_to_robotmanager() inside the converter.py.
+        :param msg: a celery result message"""
+
+        self.dead = True # if we are here robot is already done.
+
+        if self.starting_time is None:
+            self.starting_time = msg["times"][0]
+            self.last_update = msg["times"][0]
+            self.last_position = Vector3(msg["x"][0],msg["y"][0],msg["z"][0])
+
+        # update states
+        for i in range(len(msg["x"])):
+            position = Vector3(msg["x"][i],msg["y"][i],msg["z"][i])
+            euler = np.array([msg["roll"][i],msg["pitch"][i], msg["yaw"][i]])
+
+            # Please note that age is currently corrupted. Because the robot might not have been
+            # simulated in the world created by this thread! TO DO: Change age, get it somehow or delete it.
+            age = world.age()
+
+            last = self.last_position
+            ds = ds = np.sqrt((position.x - last.x)**2 + (position.y - last.y)**2)
+            dt = float(msg["times"][i] - self.last_update)
+
+            self._dist += ds
+            self._time += dt
+
+            if len(self._dt) >= self.speed_window:
+                # Subtract oldest values if we're about to override it
+                self._dist -= self._ds[-1]
+                self._time -= self._dt[-1]
+
+            self.last_position = position
+            self.last_update = msg["times"][i]
+
+            self._positions.append(position)
+            self._times.append(msg["times"][i])
+            self._ds.append(ds)
+            self._dt.append(dt)
+            self._orientations.append(euler)
+            self._seconds.append(age.sec)
+
+        # update contacts
+        self._contacts = msg["contacts"]
 
     def will_mate_with(self, other):
         """

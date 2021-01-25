@@ -16,7 +16,6 @@
 * Date: June 6, 2015
 *
 */
-
 #include <string>
 
 #include "WorldController.h"
