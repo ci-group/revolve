@@ -5,18 +5,23 @@ require('magick')
 ##### change paths/labels/params here #####
 
 
-paths = c( 'plasticoding_seasons'  )
+paths = c('hyperplasticoding',
+          'plasticoding' )
 
 environments = list(
-  c( 'plane', 'tilted5') 
+  c( 'plane') ,
+  c( 'plane')
 )
 
-colors = list( c( '#B3FFBF', '#FFDD99'), c( '#B3FFBF','#FFDD99'))
+print(getwd())
 
-base_directory <- paste('data/', sep='')
+colors = list( c( '#ffffff'),
+               c('#ffffff') )
+
+base_directory <- paste('../data/lsystem_cppn/', sep='')
 
 runs = list( c(1:20), c(1:20))
-gens = 200
+gens = 150
 pop = 100
 num_top = 3
 
@@ -24,19 +29,6 @@ analysis = 'analysis'
 
 ##### change paths/labels/params here #####
 
-
-#### CHANGE THE PARAMETERS HERE ####
-
-#TEMP
-base_directory <- paste('link_storage/baselines/nonplastic_plasticoding_static/', sep='')
-paths = c( 'plasticoding_static_plane' , 'plasticoding_static_tilted' )
-
-environments = list(
-  c( 'plane') ,
-  c('tilted5')
-)
-
-#TEMP
 
 output_directory = paste(base_directory,analysis, sep='')
 
@@ -72,7 +64,7 @@ for(m in 1:length(paths))
       
       writeLines( paste(paths[m],'exp',exp,bests[b,'robot_id'] ,bests[b,'cons_fitness'] ), file )
       print( paste(paths[m],'exp',exp,bests[b,'robot_id'] ,bests[b,'cons_fitness'] ))
-      
+
       phenotype= bests[b,'robot_id'] 
       
       for (env in 1:length(environments[[m]]))
@@ -82,7 +74,9 @@ for(m in 1:length(paths))
         body <- list.files(patha, paste("body_robot_",phenotype,".png$",sep=""), full.names = TRUE)
         body = image_read(body)
         body = image_scale(body, "100x100")
-        body = image_border(image_background(body, colors[[m]][env]), "white", "5x5")
+        #body = image_annotate(body, paste(round(bests[b,'cons_fitness']*100,2), '(cm/s)'), size = 20,    location = "+5+13" )
+
+        body = image_border(image_background(body, colors[[m]][env] ), "transparent", "5x5")
         
         if(b == 1 && env == 1)
         {

@@ -5,7 +5,8 @@ library(dplyr)
 library(trend)
 library(purrr)
 library(ggsignif)
-library(stringr) 
+library(stringr)
+library(reshape)
 
 ####  this example of parameterization compares multiple types of experiments using one particular season ###
 
@@ -31,14 +32,14 @@ methods_labels = c('CPPN',
 experiments_type_colors = c('#EE8610', # orange
                             '#009900') # green
 
-aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
-#aggregations = c( 'Q25', 'median', 'Q75')
-
-#gens_box_comparisons = c(149)
-gens_box_comparisons = c(0, 49, 149)
+#aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
+aggregations = c( 'Q25', 'median', 'Q75')
 
 gens = 150
 pop = 100
+
+gens_box_comparisons = c(gens-1)
+#gens_box_comparisons = c(0, 49, 149)
 
 measures_names = c(
   'displacement_velocity_hill',
@@ -46,7 +47,7 @@ measures_names = c(
   'branching',
   #'branching_modules_count',
   'limbs',
-  #'extremities',
+  'extremities',
   'length_of_limbs',
   #'extensiveness',
   'coverage',
@@ -82,7 +83,7 @@ measures_labels = c(
   'Branching',
   #'branching_modules_count',
   'Rel number of limbs',
-  #'extremities',
+  'Number of Limbs',
   'Rel. Length of Limbs',
   #'Extensiveness',
   'Coverage',
@@ -186,6 +187,60 @@ for( m in 1:length(more_measures_names))
     measures_snapshots_all[more_measures_names[m]] = as.numeric(as.character(measures_snapshots_all[[more_measures_names[m]]]))
 }
 
+
+
+#####
+# heatmap
+all_runs = FALSE
+
+for (i in 1:length(measures_names)){
+
+  query = paste("select method_label,'Run '||run as run, generation, robot_id, ",
+                 measures_names[i]," as value from measures_snapshots_all ")
+  if (!all_runs){
+    query = paste(query, "where run in (1,2, 3) " )
+  }
+
+  measures_heat = sqldf(query)
+  measures_heat = measures_heat %>%
+    group_by(method_label, run, generation) %>%
+    mutate(rank = order(order(value)))
+
+  heat <-ggplot(measures_heat, aes(generation, rank, fill=value))+
+    geom_tile(color= "white",size=0.1) +
+    scale_fill_viridis(option ="C")
+  heat <-heat + facet_grid(method_label~run)
+  heat <-heat + scale_y_continuous(breaks =c())
+  heat <-heat + scale_x_continuous(breaks =c(0, 50, 149))
+  heat <-heat + labs(title=measures_labels[i], x="Generations", y="Robots", fill=measures_labels[i])
+  heat <-heat + theme(legend.position = "none")+
+    theme(legend.key.size = unit(1.5, 'cm'))+
+    theme(plot.title=element_text(size=37))+
+    theme(axis.text.y=element_text(size=31)) +
+    theme(axis.text.x=element_text(size=28)) +
+    theme(axis.title=element_text(size=35)) +
+    theme(strip.text.y=element_text(size=38)) +
+    theme(strip.text.x=element_text(size=30)) +
+    theme(strip.background = element_rect(colour="white"))+
+    theme(plot.title=element_text(hjust=0))+
+    theme(axis.ticks=element_blank())+
+    theme(legend.title=element_text(size=36))+
+    theme(legend.text=element_text(size=36))+
+    removeGrid()
+
+  if (!all_runs){
+    ggsave(paste(output_directory,"/",measures_names[i],"_heat.png",sep = ""), heat, device = "png", height=10, width = 20)
+  }else{
+    ggsave(paste(output_directory,"/",measures_names[i],"_heat.png",sep = ""), heat, device = "png", height=10, width = 140, limitsize = FALSE)
+  }
+
+}
+
+
+
+
+
+####
 
 measures_averages_gens_1 = list()
 measures_averages_gens_2 = list()
