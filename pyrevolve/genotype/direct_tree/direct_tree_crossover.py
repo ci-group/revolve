@@ -1,5 +1,6 @@
 import random
 
+from pyrevolve.angle import Tree
 from pyrevolve.angle.robogen.spec import RobogenTreeGenerator
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenome
 from pyrevolve.genotype.direct_tree.tree_helper import _renumber, _node_list
@@ -44,7 +45,7 @@ class Crossover(object):
         a = parents[0]._body_genome
         b = parents[1]._body_genome
 
-        result = a.root.copy()
+        result = a.root.root.copy()
 
         # All nodes except the root node
         crossover_points = _node_list(result)[1:]
@@ -52,7 +53,7 @@ class Crossover(object):
 
         # Create list of valid crossover points from `b`
         # Get the total list of nodes excluding the root
-        b_nodes = _node_list(b.root, root=False)
+        b_nodes = _node_list(b.root.root, root=False)
 
         # Determine the current robot statistics, subtracting
         # everything after the crossover point.
@@ -121,5 +122,6 @@ class Crossover(object):
         start_node.set_connection(from_slot, to_slot, r, parent=True)
 
         genotype = DirectTreeGenome(genotype_conf, None)
-        genotype.root = result
+        genotype.root = Tree(result)
+        print("results ", result)
         return genotype.clone()

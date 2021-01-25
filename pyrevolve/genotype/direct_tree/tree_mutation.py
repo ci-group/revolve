@@ -64,8 +64,8 @@ class Mutator(object):
         """
         tree = genotype._body_genome
 
-        root = tree.root if in_place else tree.root.copy()
-
+        root = tree.root.root if in_place else tree.root.root.copy()
+        print(root)
         # First, we delete a random subtree (this might create some space)
         _, avg_del_len = self.delete_random_subtree(root)
 
@@ -157,7 +157,7 @@ class Mutator(object):
         _renumber(root)
 
         new_genotype = genotype.clone()
-        new_genotype._body_genome.root = tree #if in_place else Tree(root)
+        new_genotype._body_genome.root = tree if in_place else Tree(root)
 
         return new_genotype
 

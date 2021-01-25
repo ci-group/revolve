@@ -23,6 +23,22 @@ def _create_subtree(body_part, brain, body_spec):
     return node
 
 
+def _create_body_subtree(body_part, body_spec):
+    """
+    :param body_part:
+    :param brain:
+    :param body_spec:
+    :return:
+    """
+    # Gather neurons for this part
+    node = Node(body_part, [], body_spec)
+    for conn in body_part.child:
+        subtree = _create_body_subtree(conn.part, body_spec)
+        node.set_connection(conn.src_slot, conn.dst_slot, subtree)
+
+    return node
+
+
 class Tree(object):
     """
     A tree to represent a robot that can be used for evolution.
@@ -43,6 +59,7 @@ class Tree(object):
 
         # Maps node IDs to nodes for looked up nodes
         self._nodes = {}
+        self._explore_tree(self.root)
 
     def to_protobot(self, robot_id=0):
         """
@@ -110,6 +127,39 @@ class Tree(object):
                     weight=conn.weight)
 
         return tree
+
+    @staticmethod
+    def from_body(body, body_spec):
+        """
+        Creates a tree from a body and a brain. Every neuron will need
+        to have an assigned part ID in order for this to work.
+
+        :param body:
+        :type body: Body
+        :param brain:
+        :type brain: NeuralNetwork
+        :type body_spec: BodyImplementation
+        :param body_spec:
+        :return:
+        """
+        # Generate neuron map, make sure every neuron is assigned to a part
+        neuron_map = {}
+
+        # Create the tree without neural net connections
+        root = _create_body_subtree(
+            body_part=body.root,
+            body_spec=body_spec
+        )
+        tree = Tree(root)
+
+        return tree
+
+    def _explore_tree(self, root):
+        key = root.part.id
+        if key not in self._nodes:
+            self._nodes[key] = root
+        for child in root.child_connections():
+            self._explore_tree(child.node)
 
     def get_node(self, node_id):
         """
@@ -204,6 +254,9 @@ class Node(object):
         self._paths = {}
         self._len = -1
         self._io = None
+
+    def __repr__(self):
+        return " " + str(self.part.id) + " " + str(self.part.type) + " " + str(self.part.orientation)
 
     @property
     def id(self):

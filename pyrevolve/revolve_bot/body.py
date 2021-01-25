@@ -102,11 +102,7 @@ class BodyGenerator(object):
         max_parts = self.max_parts if self.fix_parts \
             else self.choose_max_parts()
 
-        root_part_type = self.choose_part(
-                parts=self.root_parts,
-                parent_part=None,
-                root_part=None,
-                root=True)
+        root_part_type = self.choose_part(self.root_parts, None, None, True)
         root_part = root_specs[root_part_type]
         body.root.id = "bodygen-root"
         body.root.type = root_part_type

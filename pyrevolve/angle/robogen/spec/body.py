@@ -2,10 +2,10 @@ from __future__ import absolute_import
 
 import random
 
+from .. import Config
 from ....revolve_bot.revolve_module import CoreModule, ActiveHingeModule, BrickModule, TouchSensorModule
 from ....revolve_bot.body import FixedOrientationBodyGenerator
 from ....spec import BodyImplementation, PartSpec, ParamSpec
-from ..body_parts import *
 
 # A utility function to generate color property parameters. Note that color
 # parameters do not mutate.
@@ -65,7 +65,7 @@ class BodyGenerator(FixedOrientationBodyGenerator):
     Body generator for ToL with some additions
     """
 
-    def __init__(self, conf):
+    def __init__(self, conf: Config):
         """
         """
         body_spec = get_body_spec(conf)

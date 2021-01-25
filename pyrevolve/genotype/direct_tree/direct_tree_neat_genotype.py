@@ -6,6 +6,7 @@ from .. import Genotype
 from typing import TYPE_CHECKING
 
 from ..neat_brain_genome import NeatBrainGenome, NeatBrainGenomeConfig
+from ...angle.robogen import Config
 
 if TYPE_CHECKING:
     from typing import Optional, List, Union
@@ -14,11 +15,11 @@ if TYPE_CHECKING:
 
 class DirectTreeNEATGenotypeConfig:
     def __init__(self,
-                 tree_conf: DirectTreeGenomeConfig,
+                 tree_conf: Config,
                  cppn_conf: NeatBrainGenomeConfig,
                  number_of_brains: int = 1):
         assert number_of_brains > 0
-        self.body: DirectTreeGenomeConfig = tree_conf
+        self.body: Config = tree_conf
         self.brain: NeatBrainGenomeConfig = cppn_conf
         self.number_of_brains: int = number_of_brains
 

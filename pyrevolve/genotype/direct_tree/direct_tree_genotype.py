@@ -1,5 +1,7 @@
 from typing import Optional, List
 
+from pyrevolve.angle import Tree
+from pyrevolve.angle.robogen import Config
 from pyrevolve.angle.robogen.spec import RobogenTreeGenerator
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.tol.spec import get_tree_generator
@@ -11,17 +13,17 @@ class DirectTreeGenomeConfig(object):
 
 class DirectTreeGenome(object):
 
-    def __init__(self, conf: DirectTreeGenomeConfig, robot_id: Optional[int]):
+    def __init__(self, conf: Config, robot_id: Optional[int]):
         """
         :param conf: configurations for l-system
         :param robot_id: unique id of the robot
         :type conf: PlasticodingConfig
         """
-        self.conf: DirectTreeGenomeConfig = conf
+        self.conf: Config = conf
         assert robot_id is None or str(robot_id).isdigit()
         self.id: int = int(robot_id) if robot_id is not None else -1
 
-        self.root = None
+        self.root: Tree = None
 
         # Auxiliary variables
         self.valid: bool = False
@@ -32,8 +34,8 @@ class DirectTreeGenome(object):
         _id = self.id if self.id >= 0 else None
         other = DirectTreeGenome(self.conf, _id)
         other.valid = self.valid
-        # other.intermediate_phenotype = self.intermediate_phenotype
-        # other.phenotype = self.phenotype
+        other.root = self.root
+        other.phenotype = self.phenotype
         return other
 
     def load_genotype(self, genotype_filename: str) -> None:
