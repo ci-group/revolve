@@ -56,10 +56,10 @@
                     </camera>
                     <always_on>1</always_on>
                     <update_rate>30</update_rate>
-                    <!--plugin name='RecordingCameraController' filename='libRecorderCameraPlugin.so'>
+                    <plugin name='RecordingCameraController' filename='libRecorderCameraPlugin.so'>
                         <movie_length seconds="30.0" />
-                        <save_file_path>/tmp/camera_save_tutorial/movie.mkv</save_file_path>
-                    </plugin-->
+                        <save_file_path>/tmp/robot.mkv</save_file_path>
+                    </plugin>
                 </sensor>
             </link>
         </model>

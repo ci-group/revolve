@@ -87,6 +87,9 @@ void rvgz::RecorderCamera::OnNewFrame(const unsigned char *image,
         ::gazebo::common::Console::msg() << "Video finished, closing the plugin" << std::endl;
         video.reset(nullptr);
         this->camera->Fini();
+        lock_physics.release();
+        ::gazebo::common::Console::msg() << "EXIT" << std::endl;
+        std::exit(0);
         //this->parentSensor->Fini();
     }
 }
