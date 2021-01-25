@@ -64,5 +64,5 @@ class DirectTreeGenome(object):
 
     def random_initialization(self):
         generator: RobogenTreeGenerator = get_tree_generator(self.conf)
-        generator.generate_tree()
+        self.root = generator.generate_tree()
         return self

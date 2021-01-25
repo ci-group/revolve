@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 import random
 
-#from ....generate import FixedOrientationBodyGenerator
 from ....revolve_bot.revolve_module import CoreModule, ActiveHingeModule, BrickModule, TouchSensorModule
+from ....revolve_bot.body import FixedOrientationBodyGenerator
 from ....spec import BodyImplementation, PartSpec, ParamSpec
 from ..body_parts import *
 
@@ -60,7 +60,7 @@ def get_body_spec(conf):
     return BodyImplementation(parts)
 
 
-class BodyGenerator:
+class BodyGenerator(FixedOrientationBodyGenerator):
     """
     Body generator for ToL with some additions
     """

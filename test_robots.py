@@ -8,7 +8,7 @@ from pyrevolve.tol.manage import World
 async def run():
 
 	settings = parser.parse_args()
-	yaml_file = 'experiments/'+ settings.experiment_name +'/data_fullevolution/phenotypes/'+'phenotype_'+settings.test_robot+'.yaml'
+	yaml_file = 'experiments/'+ settings.experiment_name + '/data_fullevolution/phenotypes/'+'phenotype_'+settings.test_robot+'.yaml'
 
 	r = RevolveBot(_id=settings.test_robot)
 	r.load_file(yaml_file, conf_type='yaml')
