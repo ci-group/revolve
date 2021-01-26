@@ -38,8 +38,8 @@ aggregations = c( 'Q25', 'median', 'Q75')
 gens = 150
 pop = 100
 
-gens_box_comparisons = c(gens-1)
-#gens_box_comparisons = c(0, 49, 149)
+#gens_box_comparisons = c(gens-1)
+gens_box_comparisons = c(0, 49, 149)
 
 measures_names = c(
   'displacement_velocity_hill',
@@ -113,18 +113,18 @@ measures_labels = c(
 )
 
 more_measures_names = c(
-                       # 'novelty',
-                        'novelty_pop',
-                        'fitness'#,
-                        #'cons_fitness'
-                        )
+  # 'novelty',
+  'novelty_pop',
+  'fitness'#,
+  #'cons_fitness'
+)
 
 more_measures_labels = c(
-                         #'Novelty',
-                         'Diversity',
-                         'Fitness'#,
-                         #'Number of slaves'
-                         )
+  #'Novelty (+archive)',
+  'Novelty',
+  'Fitness'#,
+  #'Number of slaves'
+)
 
 #### CHANGE THE PARAMETERS HERE ####
 
@@ -182,11 +182,9 @@ measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_
 measures_names = c(measures_names, more_measures_names)
 measures_labels = c(measures_labels, more_measures_labels)
 
-for( m in 1:length(more_measures_names))
-{
-    measures_snapshots_all[more_measures_names[m]] = as.numeric(as.character(measures_snapshots_all[[more_measures_names[m]]]))
+for( m in 1:length(more_measures_names)){
+  measures_snapshots_all[more_measures_names[m]] = as.numeric(as.character(measures_snapshots_all[[more_measures_names[m]]]))
 }
-
 
 
 #####
@@ -196,9 +194,10 @@ all_runs = FALSE
 for (i in 1:length(measures_names)){
 
   query = paste("select method_label,'Run '||run as run, generation, robot_id, ",
-                 measures_names[i]," as value from measures_snapshots_all ")
+                measures_names[i]," as value from measures_snapshots_all ")
   if (!all_runs){
-    query = paste(query, "where run in (1,2, 3) " )
+    random_runs = paste('(', paste(sample(runs[[1]], 3), collapse=', ' ), ')')
+    query = paste(query, "where run in ",random_runs)
   }
 
   measures_heat = sqldf(query)
@@ -236,11 +235,80 @@ for (i in 1:length(measures_names)){
 
 }
 
-
-
-
-
 ####
+
+# density maps
+
+#pairs = list(
+ # c('head_balance', 'limbs') ,
+ # c('head_balance', 'symmetry') ,
+ # c('head_balance', 'proportion'),
+ # c('displacement_velocity_hill', 'limbs') ,
+ # c('displacement_velocity_hill', 'symmetry') ,
+ # c('displacement_velocity_hill', 'proportion'),
+  #c('displacement_velocity_hill', 'head_balance' )
+  #)
+
+#for (pair in 1:length(pairs))
+ # {
+
+  #measures_snapshots_all_final = sqldf(paste("select method_label, ",
+       #                                      pairs[[pair]][1],",",
+        #                                     pairs[[pair]][2],"
+                   #                          from measures_snapshots_all where generation=", gens-1) )
+
+  #graph <- ggplot(measures_snapshots_all_final, aes_string(x=pairs[[pair]][1], y=pairs[[pair]][2]))+
+  #  geom_density_2d(aes(colour = method_label ), alpha=0.7, size=3 )+
+  #  scale_color_manual(values = experiments_type_colors )+
+  #  labs( x = pairs[[pair]][1], y= pairs[[pair]][2] )+
+  #  theme(legend.position="bottom" ,   axis.text=element_text(size=21),axis.title=element_text(size=22),  plot.subtitle=element_text(size=25 ))
+  #ggsave(paste( output_directory ,'/density_',pairs[[pair]][1],'_', pairs[[pair]][2],'.png',  sep=''), graph , device='png', height = 6, width = 6)
+
+
+  #graph = ggplot(measures_snapshots_all_final, aes_string(x=pairs[[pair]][1], y=pairs[[pair]][2], colour="method_label"))+
+   # geom_point(alpha=0.7, size=3)+
+   ## labs(x=pairs[[pair]][1], y=pairs[[pair]][2])+
+   # theme(legend.position="bottom" ,   axis.text=element_text(size=21),axis.title=element_text(size=22),  plot.subtitle=element_text(size=25 )) +
+   # scale_color_manual(values = experiments_type_colors )
+  #ggsave(paste( output_directory ,'/scatter_',pairs[[pair]][1],'_', pairs[[pair]][2],'.png',  sep=''), graph , device='png', height = 6, width = 6)
+
+
+#}
+
+pairs = list(
+  c('head_balance', 'limbs', 0.6, 1, 0, 1) ,
+  c('head_balance', 'symmetry', 0.6, 1, 0, 1) ,
+  c('head_balance', 'proportion', 0.6, 1, 0, 1),
+  c('displacement_velocity_hill', 'limbs', 0, 8, 0, 1) ,
+  c('displacement_velocity_hill', 'symmetry', 0, 8, 0, 1) ,
+  c('displacement_velocity_hill', 'proportion', 0, 8, 0, 1),
+  c('displacement_velocity_hill', 'head_balance', 0, 8, 0.6, 1)
+)
+
+for (pair in 1:length(pairs))
+{
+
+  for (met in 1:length(methods))
+  {
+    measures_snapshots_all_final = sqldf(paste("select method, ",
+                                               pairs[[pair]][1],",",
+                                               pairs[[pair]][2],"
+                                               from measures_snapshots_all where generation=", gens-1,
+                                               " and method='", methods[met], "'", sep='') )
+
+    graph <- ggplot(measures_snapshots_all_final, aes_string(x=pairs[[pair]][1], y=pairs[[pair]][2]))+
+      geom_density_2d(aes(colour = method ), alpha=0.7, size=3 )+
+      scale_color_manual(values = experiments_type_colors[met] )+
+      labs( x = pairs[[pair]][1], y= pairs[[pair]][2] )+
+      theme(legend.position="none" ,   axis.text=element_text(size=21),axis.title=element_text(size=22),  plot.subtitle=element_text(size=25 )) +
+      coord_cartesian(xlim = c( as.numeric(pairs[[pair]][3]),  as.numeric(pairs[[pair]][4])),
+                      ylim = c( as.numeric(pairs[[pair]][5]),  as.numeric(pairs[[pair]][6])))
+    ggsave(paste( output_directory ,'/density_',methods[met],'_',pairs[[pair]][1],'_', pairs[[pair]][2],'.png',  sep=''), graph , device='png', height = 6, width = 6)
+  }
+}
+
+
+###
 
 measures_averages_gens_1 = list()
 measures_averages_gens_2 = list()
@@ -272,8 +340,8 @@ for (met in 1:length(methods))
                            summarize_at(vars(  measures_aux), funs(!!!p_funs)) )
   for (i in 1:length(measures_names)){
     for(q in c('Q25', 'Q75')){
-        variable =  paste(measures_names[i], q, sep='_')
-        names(quantiles)[names(quantiles) == variable] <- paste(methods[met], '_',variable, sep='')
+      variable =  paste(measures_names[i], q, sep='_')
+      names(quantiles)[names(quantiles) == variable] <- paste(methods[met], '_',variable, sep='')
     }
   }
   inner_measures = sqldf('select * from inner_measures inner join quantiles using (run, generation)')
@@ -356,12 +424,12 @@ for (i in 1:length(measures_names))
 
       if (is_all_na == FALSE) {
 
-          graph = graph + geom_ribbon(aes_string(ymin=paste(methods[m],'_',measures_names[i],'_', aggregations[a],'_Q25',sep=''),
-                                                   ymax=paste(methods[m],'_',measures_names[i],'_', aggregations[a],'_Q75',sep='') ),
-                                                   fill=experiments_type_colors[m], alpha=0.2, size=0)
+        graph = graph + geom_ribbon(aes_string(ymin=paste(methods[m],'_',measures_names[i],'_', aggregations[a],'_Q25',sep=''),
+                                               ymax=paste(methods[m],'_',measures_names[i],'_', aggregations[a],'_Q75',sep='') ),
+                                    fill=experiments_type_colors[m], alpha=0.2, size=0)
 
-          graph = graph + geom_line(aes_q(y = as.name(paste(methods[m],'_',measures_names[i],'_', aggregations[a], '_median', sep='')) ,
-                                  colour=paste(methods_labels[m], aggregations[a], sep='_')), size=1)
+        graph = graph + geom_line(aes_q(y = as.name(paste(methods[m],'_',measures_names[i],'_', aggregations[a], '_median', sep='')) ,
+                                        colour=paste(methods_labels[m], aggregations[a], sep='_')), size=1)
       }
     }
 
@@ -378,77 +446,78 @@ for (i in 1:length(measures_names))
 
 
 
-   # creates one box plot per measure, and one extra in case outlier removal is needeed
-   outliers = c('full', 'filtered')
-   for (out in outliers)
-   {
+    # creates one box plot per measure, and one extra in case outlier removal is needeed
+    outliers = c('full', 'filtered')
+    for (out in outliers)
+    {
       has_outliers = FALSE
 
-     for(gc in gens_box_comparisons)
-     {
+      for(gc in gens_box_comparisons)
+      {
 
-          all_final_values = data.frame()
-          for (met in 1:length(methods))
-          {
+        all_final_values = data.frame()
+        for (met in 1:length(methods))
+        {
 
-            met_measures = measures_averages_gens_1[[met]]
-            gen_measures = sqldf(paste("select * from met_measures where generation=", gc, sep=''))
+          met_measures = measures_averages_gens_1[[met]]
+          gen_measures = sqldf(paste("select * from met_measures where generation=", gc, sep=''))
 
-            temp = data.frame( c(gen_measures[paste(methods[met],'_',measures_names[i],'_', aggregations[a], sep='')]))
-            colnames(temp) <- 'values'
+          temp = data.frame( c(gen_measures[paste(methods[met],'_',measures_names[i],'_', aggregations[a], sep='')]))
+          colnames(temp) <- 'values'
 
-            if (out == 'filtered'){
-              if (!all(is.na(temp$values))){
+          if (out == 'filtered'){
+            if (!all(is.na(temp$values))){
 
-                num_rows_before = nrow(temp)
-                upperl <- quantile(temp$values)[4] + 1.5*IQR(temp$values)
-                lowerl <- quantile(temp$values)[2] - 1.5*IQR(temp$values)
-                temp = temp %>% filter(values <= upperl & values >= lowerl )
+              num_rows_before = nrow(temp)
+              upperl <- quantile(temp$values)[4] + 1.5*IQR(temp$values)
+              lowerl <- quantile(temp$values)[2] - 1.5*IQR(temp$values)
+              temp = temp %>% filter(values <= upperl & values >= lowerl )
 
-                if (num_rows_before > nrow(temp)){
-                  has_outliers = TRUE
-                }
+              if (num_rows_before > nrow(temp)){
+                has_outliers = TRUE
               }
             }
-
-            temp$type = methods_labels[met]
-            all_final_values = rbind(all_final_values, temp)
           }
 
-          g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
-            geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
-            labs( x="Method", y=measures_labels[i], title=str_to_title(aggregations[a]))
+          temp$type = methods_labels[met]
+          all_final_values = rbind(all_final_values, temp)
+        }
 
-          g1 = g1 +  scale_color_manual(values=  experiments_type_colors  )
+        g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
+          geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
+          labs( x="Method", y=measures_labels[i], title=str_to_title(aggregations[a]))
 
-          g1 = g1 + theme(legend.position="none" , text = element_text(size=50) ,
-                          plot.title=element_text(size=50),  axis.text=element_text(size=50),
-                          axis.title=element_text(size=55),
-                          axis.text.x = element_text(angle = 20, hjust = 0.9),
-                          plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  1.3, unit = "cm"))+
-            stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
+        g1 = g1 +  scale_color_manual(values=  experiments_type_colors  )
 
-          # in this list, use the desired pairs names from methods_labels
-          comps = list( methods_labels )
+        g1 = g1 + theme(legend.position="none" , text = element_text(size=50) ,
+                        plot.title=element_text(size=50),  axis.text=element_text(size=50),
+                        axis.title=element_text(size=55),
+                        axis.text.x = element_text(angle = 20, hjust = 0.9),
+                        plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  1.3, unit = "cm"))+
+          stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
 
-          #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
-          if (max_y>0) {
-            graph = graph + coord_cartesian(ylim = c(min_y, max_y))
-          }
+        # in this list, use the desired pairs names from methods_labels
+        comps = list( methods_labels )
 
-          g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=18,
-                                 comparisons = comps,
-                                 map_signif_level=c("0.001"=0.001,"0.01"=0.01, "0.05"=0.05) )
+        max_y =  0
+        #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
+        if (max_y>0) {
+          graph = graph + coord_cartesian(ylim = c(min_y, max_y))
+        }
 
-          if (out == 'full' || (out == 'filtered' &&  has_outliers == TRUE) ){
-            ggsave(paste(output_directory,"/",measures_names[i],"_",gc,"_", aggregations[a],'_', out,"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
-          }
+        g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=18,
+                               comparisons = comps,
+                               map_signif_level=c() )
 
-       }
+        if (out == 'full' || (out == 'filtered' &&  has_outliers == TRUE) ){
+          ggsave(paste(output_directory,"/",measures_names[i],"_",gc,"_", aggregations[a],'_', out,"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
+        }
 
       }
 
-   }
+    }
+
+  }
 
 }
 
