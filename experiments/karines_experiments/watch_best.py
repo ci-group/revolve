@@ -27,6 +27,7 @@ async def run():
     """
 
     # environment world and z-start
+    realtime = True
     environments = {'plane': 0.03#,
                     #'tilted5': 0.1
                     }
@@ -69,7 +70,10 @@ async def run():
         previous_port = None
         for environment in environments:
 
-            settings.world = environment
+            if realtime:
+                settings.world = environment+'.realtime'
+            else:
+                settings.world = environment
             settings.z_start = environments[environment]
 
             if previous_port is None:
@@ -110,9 +114,9 @@ async def run():
 
     population.individuals = np.array(population.individuals)
     # highest
-    population.individuals = population.individuals[np.argsort(values)[ini:fin]]
+    population.individuals = population.individuals[np.argsort(-1*values)[0:max_best]]
     # lowest
-    #population.individuals = population.individuals[np.argsort(values)[0:max_best]]
+    #population.individuals = population.individuals[np.argsort(-1*values)[(len(population.individuals)-max_best):len(population.individuals)]]
 
     for ind in population.individuals:
         print(ind[list(environments.keys())[-1]].phenotype.id, ind[list(environments.keys())[-1]].consolidated_fitness)

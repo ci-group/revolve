@@ -7,12 +7,13 @@ library(purrr)
 library(ggsignif)
 library(stringr)
 library(reshape)
+library(viridis)
 
 ####  this example of parameterization compares multiple types of experiments using one particular season ###
 
 #### CHANGE THE PARAMETERS HERE ####
 
-base_directory <-paste('data', sep='')
+base_directory <-paste('lsystem_cppn', sep='')
 analysis = 'analysis'
 output_directory = paste(base_directory,'/',analysis ,sep='')
 
@@ -206,7 +207,7 @@ for (i in 1:length(measures_names)){
     mutate(rank = order(order(value)))
 
   heat <-ggplot(measures_heat, aes(generation, rank, fill=value))+
-    geom_tile(color= "white",size=0.1) +
+    geom_tile(color= "white",size=0.1)+
     scale_fill_viridis(option ="C")
   heat <-heat + facet_grid(method_label~run)
   heat <-heat + scale_y_continuous(breaks =c())
@@ -224,8 +225,8 @@ for (i in 1:length(measures_names)){
     theme(plot.title=element_text(hjust=0))+
     theme(axis.ticks=element_blank())+
     theme(legend.title=element_text(size=36))+
-    theme(legend.text=element_text(size=36))+
-    removeGrid()
+    theme(legend.text=element_text(size=36))#+
+    #removeGrid()
 
   if (!all_runs){
     ggsave(paste(output_directory,"/",measures_names[i],"_heat.png",sep = ""), heat, device = "png", height=10, width = 20)

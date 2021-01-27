@@ -1,6 +1,7 @@
 import random as py_random
 from pyrevolve.tol.manage import measures
 import shutil
+import statistics
 
 
 def stupid(_robot_manager, robot):
@@ -70,6 +71,25 @@ def size_penalty(robot):
 
 def novelty(behavioural_measurements, robot):
     return robot.novelty
+
+
+def diverse_cppn_output(behavioural_measurements, robot):
+    values = []
+    for count in robot.genotype.outputs_count:
+        values.append(robot.genotype.outputs_count[count])
+
+    dev = statistics.stdev(values)
+    suma = sum(values)
+    if dev > 0:
+        value = (1/dev)*suma
+    #TODO: remove useless clause
+    elif dev == 0 and suma == 0:
+        value = 0
+    else:
+        value = 1 * suma
+    print(values)
+    print(value)
+    return value
 
 
 def fast_novel_limbic(behavioural_measurements, robot):
