@@ -286,6 +286,9 @@ class ActiveHingeModule(RevolveModule):
     def __init__(self):
         super().__init__()
         self.children = {1: None}
+        self.oscillator_phase = None
+        self.oscillator_period = None
+        self.oscillator_amplitude = None
 
     def iter_children(self):
         return self.children.items()

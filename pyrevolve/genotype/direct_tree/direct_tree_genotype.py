@@ -1,10 +1,12 @@
 from typing import Optional, List
 
-from pyrevolve.angle import Tree
-from pyrevolve.angle.robogen import Config
-from pyrevolve.angle.robogen.spec import RobogenTreeGenerator
+# from pyrevolve.angle import Tree
+# from pyrevolve.angle.robogen import Config
+# from pyrevolve.angle.robogen.spec import RobogenTreeGenerator
 from pyrevolve.revolve_bot import RevolveBot
-from pyrevolve.tol.spec import get_tree_generator
+# from pyrevolve.tol.spec import get_tree_generator
+from revolve_bot.brain import BrainNN
+from revolve_bot.revolve_module import CoreModule
 
 
 class DirectTreeGenomeConfig(object):
@@ -23,7 +25,7 @@ class DirectTreeGenome(object):
         assert robot_id is None or str(robot_id).isdigit()
         self.id: int = int(robot_id) if robot_id is not None else -1
 
-        self.root: Tree = None
+        self.root: RevolveBot = RevolveBot()
 
         # Auxiliary variables
         self.valid: bool = False
@@ -61,7 +63,12 @@ class DirectTreeGenome(object):
             self.valid = True
 
     def develop(self) -> RevolveBot:
-        # TODO
+        # TODO develop from self.root into self.phenotype
+        if self.phenotype is None:
+            self.phenotype = RevolveBot(self.id)
+            self.phenotype._body = self.root
+            self.phenotype._brain = BrainNN()
+            # TODO generate brain from oscillators
         return self.phenotype
 
     def random_initialization(self):
