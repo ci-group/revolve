@@ -1,13 +1,12 @@
 library(sqldf)
 require('magick')
 
-#base_directory <-paste('data', sep='')
-base_directory <-paste('/storage/karine/lsystem_cppn/lsystem_cppn', sep='')
+base_directory <-paste('data', sep='')
 
 analysis = 'analysis/parents'
 environment = 'plane'
 experiments = c('hyperplasticoding_1', 'plasticoding_1')
-max_gens = 10
+max_gens = 5
 base_gen = 59
 examples = 100
 
