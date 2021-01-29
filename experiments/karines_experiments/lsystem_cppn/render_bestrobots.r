@@ -18,7 +18,7 @@ colors = list( c( '#ffffff'),
 
 base_directory <- paste('lsystem_cppn/', sep='')
 
-analysis = 'analysis/images'
+analysis = 'analysis/2dimages'
 
 runs = list( c(1:20), c(1:20))
 pop = 100

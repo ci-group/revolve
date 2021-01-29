@@ -191,13 +191,14 @@ for( m in 1:length(more_measures_names)){
 #####
 # heatmap
 all_runs = FALSE
+random_runs = paste('(', paste(sample(runs[[1]], 3), collapse=', ' ), ')')
+
 
 for (i in 1:length(measures_names)){
 
   query = paste("select method_label,'Run '||run as run, generation, robot_id, ",
                 measures_names[i]," as value from measures_snapshots_all ")
   if (!all_runs){
-    random_runs = paste('(', paste(sample(runs[[1]], 3), collapse=', ' ), ')')
     query = paste(query, "where run in ",random_runs)
   }
 
@@ -226,7 +227,7 @@ for (i in 1:length(measures_names)){
     theme(axis.ticks=element_blank())+
     theme(legend.title=element_text(size=36))+
     theme(legend.text=element_text(size=36))#+
-    #removeGrid()
+  #removeGrid()
 
   if (!all_runs){
     ggsave(paste(output_directory,"/",measures_names[i],"_heat.png",sep = ""), heat, device = "png", height=10, width = 20)
@@ -235,6 +236,7 @@ for (i in 1:length(measures_names)){
   }
 
 }
+
 
 ####
 

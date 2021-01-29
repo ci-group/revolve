@@ -1,6 +1,7 @@
 #!/bin/bash
 
 runs=20
+
 num_terminals=5
 start_port=8000
 final_gen=199

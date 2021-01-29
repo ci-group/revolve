@@ -36,7 +36,14 @@ async def run():
 
     # calculation of the measures can be on or off, because they are expensive
     novelty_on = {'novelty': False,
-                  'novelty_pop': True
+                  'novelty_pop': True,
+                  'measures': ['branching',
+                               'limbs',
+                               'length_of_limbs',
+                               'coverage',
+                               'joints',
+                               'proportion',
+                               'symmetry']
                   }
 
     genotype_conf = PlasticodingConfig(

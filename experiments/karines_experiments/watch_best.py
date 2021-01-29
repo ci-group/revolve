@@ -92,8 +92,8 @@ async def run():
     population = Population(population_conf, simulator_queue, analyzer_queue, 1)
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
-    generation = 149
-    max_best = 1
+    generation = 71#149
+    max_best = 10
     await population.load_snapshot(generation)
 
     values = []

@@ -44,6 +44,12 @@ class HyperPlasticoding(Genotype):
         self.substrate = {}
         self.phenotype = None
         self.parents_ids = []
+        self.outputs_count = {
+            'no_module': 0,
+            'b_module':  0,
+            'a1_module': 0,
+            'a2_module': 0,
+            't_module':  0}
 
         self.cppn_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                        neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -397,6 +403,9 @@ class HyperPlasticoding(Genotype):
 
         # choose neuron with highest value
         which_module = max(which_module.items(), key=operator.itemgetter(1))[0]
+
+        self.outputs_count[which_module] += 1
+
         if which_module == 'a1_module':
             module_type = Alphabet.JOINT_HORIZONTAL
         elif which_module == 'a2_module':

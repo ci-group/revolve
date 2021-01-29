@@ -7,12 +7,12 @@ from pyrevolve.evolution.selection import multiple_selection, tournament_selecti
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.hyperplasticoding_test.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.hyperplasticoding_test.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.hyperplasticoding_test.initialization import random_initialization
-from pyrevolve.genotype.hyperplasticoding_test.mutation.mutation import MutationConfig
-from pyrevolve.genotype.hyperplasticoding_test.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.hyperplasticoding_test.hyperplasticoding import HyperPlasticodingConfig
+from pyrevolve.genotype.hyperplasticoding.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.hyperplasticoding.crossover.standard_crossover import standard_crossover
+from pyrevolve.genotype.hyperplasticoding.initialization import random_initialization
+from pyrevolve.genotype.hyperplasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.hyperplasticoding.mutation.standard_mutation import standard_mutation
+from pyrevolve.genotype.hyperplasticoding.hyperplasticoding import HyperPlasticodingConfig
 from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
@@ -26,9 +26,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 150#50
-    population_size = 100
-    offspring_size = 50
+    num_generations = 5
+    population_size = 15
+    offspring_size = 15
     front = 'none'
 
     # environment world and z-start
@@ -46,7 +46,7 @@ async def run():
                                'symmetry']
                   }
     
-    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding_test/config-nonplastic'
+    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic'
 
     genotype_conf = HyperPlasticodingConfig(
         plastic=False,
