@@ -9,7 +9,7 @@ require('magick')
 #### CHANGE THE PARAMETERS HERE ####
 
 base_directory <-paste('data', sep='')
-base_directory <-paste('/storage/karine/lsystem_cppn/lsystem_cppn', sep='')
+base_directory <-paste('/storage/karine/lsystem_cppn/lsystem_cppn/', sep='')
 
 analysis = 'analysis/cubes'
 output_directory = paste(base_directory,'/',analysis ,sep='')

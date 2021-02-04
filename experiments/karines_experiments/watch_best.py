@@ -27,7 +27,7 @@ async def run():
     """
 
     # environment world and z-start
-    realtime = True
+    realtime = False
     environments = {'plane': 0.03#,
                     #'tilted5': 0.1
                     }
@@ -92,8 +92,8 @@ async def run():
     population = Population(population_conf, simulator_queue, analyzer_queue, 1)
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
-    generation = 71#149
-    max_best = 10
+    generation = 149
+    max_best = 100
     await population.load_snapshot(generation)
 
     values = []
@@ -109,9 +109,6 @@ async def run():
 
     values = np.array(values)
 
-    ini = len(population.individuals)-max_best
-    fin = len(population.individuals)
-
     population.individuals = np.array(population.individuals)
     # highest
     population.individuals = population.individuals[np.argsort(-1*values)[0:max_best]]
@@ -124,4 +121,4 @@ async def run():
     for environment in environments:
         print('watch in ', environment)
         await population.evaluate(new_individuals=population.individuals, gen_num=generation,
-                                  environment=environment, type_simulation='watch')
+                                  environment=environment, type_simulation=settings.watch_type)

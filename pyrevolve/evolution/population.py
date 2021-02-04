@@ -559,6 +559,11 @@ class Population:
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.phenotype._behavioural_measurements is None)
 
+            if type_simulation == 'log':
+                self.conf.experiment_management.stability_export(self.conf.all_settings.experiment_name,
+                                                                 self.conf.all_settings.evaluation_time,
+                                                                 individual.phenotype._behavioural_measurements.items())
+
             if type_simulation == 'evolve':
                 
                 individual.evaluated = True

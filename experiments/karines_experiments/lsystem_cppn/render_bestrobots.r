@@ -17,14 +17,16 @@ colors = list( c( '#ffffff'),
                c('#ffffff') )
 
 base_directory <- paste('lsystem_cppn/', sep='')
+base_directory <-paste('/storage/karine/lsystem_cppn/lsystem_cppn/', sep='')
 
 analysis = 'analysis/2dimages'
 
 runs = list( c(1:20), c(1:20))
 pop = 100
 num_top = 1
-gens = c(0, 49, 149)
-criteria = c('random', 'random', 'desc')
+
+gens = c(0, 49, 149, 149)
+criteria = c('random', 'random', 'desc', 'asc')
 
 ##### change paths/labels/params here #####
 

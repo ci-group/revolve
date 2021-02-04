@@ -130,6 +130,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--watch-type',
+    default='watch', type=str,
+    help="Uae 'watch' for just watching robots, or 'log' watch and log."
+)
+
+
+parser.add_argument(
     '--world',
     default='worlds/plane.world', type=str,
     help="Determine which world gazebo should use."
