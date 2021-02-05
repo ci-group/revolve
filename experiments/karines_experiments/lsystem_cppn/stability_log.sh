@@ -15,7 +15,7 @@ do
 
         for time in "${times[@]}"
         do
-               ./revolve.py --watch-type log --evaluation-time $time --experiment-name link_storage/lsystem_cppn/lsystem_cppn/${experiment}_$i  --manager experiments/karines_experiments/watch_best.py
+               ./revolve.py --watch-type log --n-cores 4 --evaluation-time $time --experiment-name link_storage/lsystem_cppn/lsystem_cppn/${experiment}_$i  --manager experiments/karines_experiments/watch_best.py
 
         done
     done

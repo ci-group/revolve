@@ -562,6 +562,7 @@ class Population:
             if type_simulation == 'log':
                 self.conf.experiment_management.stability_export(self.conf.all_settings.experiment_name,
                                                                  self.conf.all_settings.evaluation_time,
+                                                                 individual.phenotype.id,
                                                                  individual.phenotype._behavioural_measurements.items())
 
             if type_simulation == 'evolve':

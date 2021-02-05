@@ -47,10 +47,10 @@ class ExperimentManagement:
     def export_parents(self, individual):
         individual.export_parents(self._data_folder())
 
-    def stability_export(self, experiment_name, evaluation_time, measures):
+    def stability_export(self, experiment_name, evaluation_time, id, measures):
         filepath = 'stability.txt'
         f = open(os.path.join(self.dirpath, 'data_fullevolution', filepath), "a")
-        f.write(experiment_name+'\t'+str(evaluation_time)+'\t'+str(measures['displacement_velocity_hill'])+'\n')
+        f.write(experiment_name+'\t'+str(evaluation_time)+'\t'+id+'\t'+str(measures['displacement_velocity_hill'])+'\n')
         f.close()
 
     def export_phenotype(self, individual, environment):

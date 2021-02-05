@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+set -x
 
 runs=20
 
@@ -10,12 +12,12 @@ managers_sulfix=("" "")
 experiments_path=karines_experiments/data/early_death/
 managers_path=experiments/karines_experiments/early_death/
 
-while true
-	do
+#while true
+#	do
 
     echo "killing all processes..."
-    kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
-    kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');
+    #kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
+    #kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');
 
     echo "restarting all processes..."
 
@@ -59,9 +61,9 @@ while true
          start_port=$((${start_port}+10))
     done
 
-    sleep 1800s;
+    #sleep 1800s;
 
-done
+#done
 
 
 # killall screen
