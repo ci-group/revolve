@@ -33,9 +33,12 @@ public:
                     const std::string &format) override;
 
     std::string SaveFilePath() const;
+    std::string SaveFileName() const;
 
 private:
     void InitRecorder();
+    ::gazebo::physics::ModelPtr SearchForRobotModel() const;
+    void RobotModelFound();
 
 private:
     unsigned int counter;
@@ -46,6 +49,10 @@ private:
 
     /// \brief Pointer to the world
     ::gazebo::physics::WorldPtr world;
+    /// \brief Pointer to the Recording Model
+    ::gazebo::physics::ModelPtr camera_model;
+    /// \brief Pointer to the robot
+    ::gazebo::physics::ModelPtr robot;
     /// \brief Pointer to the plugin SDF structure
     sdf::ElementPtr SDF;
 
