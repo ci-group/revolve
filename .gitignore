@@ -11,6 +11,7 @@ __pycache__/
 env/
 /build/
 cmake-build-*/
+cmake-multineat-*/
 /output*/
 develop-eggs/
 dist/

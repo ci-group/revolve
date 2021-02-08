@@ -200,7 +200,7 @@ class RevolveModule:
         Sensor SDF element may be None.
         """
         name = 'component_{}_{}__box'.format(tree_depth, self.TYPE)
-        visual = SDF.Visual(name, self.rgb)
+        visual = SDF.Visual(name, self.color())
         geometry = SDF.MeshGeometry(self.VISUAL_MESH)
         visual.append(geometry)
 
@@ -308,7 +308,7 @@ class ActiveHingeModule(RevolveModule):
         name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
         name_servo2 = 'component_{}_{}__servo2'.format(tree_depth, self.TYPE)
 
-        visual_frame = SDF.Visual(name_frame, self.rgb)
+        visual_frame = SDF.Visual(name_frame, self.color())
         geometry = SDF.MeshGeometry(self.VISUAL_MESH_FRAME)
         visual_frame.append(geometry)
 
@@ -316,7 +316,7 @@ class ActiveHingeModule(RevolveModule):
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_FRAME)
         collision_frame.append(geometry)
 
-        visual_servo = SDF.Visual(name_servo, self.rgb)
+        visual_servo = SDF.Visual(name_servo, self.color())
         geometry = SDF.MeshGeometry(self.VISUAL_MESH_SERVO)
         visual_servo.append(geometry)
 
