@@ -2,12 +2,15 @@ import math
 import random
 
 from pyrevolve.angle import Tree, Node
+from pyrevolve.angle.representation import BodyPart, NeuralConnection, Robot, Neuron
 from pyrevolve.angle.robogen.spec import RobogenTreeGenerator
 from pyrevolve.genotype.direct_tree.compound_mutation import DirectTreeNEATMutationConfig
+from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeMutationConfig
 from pyrevolve.genotype.direct_tree.direct_tree_neat_genotype import DirectTreeNEATGenotype
 from pyrevolve.genotype.direct_tree.tree_helper import _node_list, _renumber, _delete_subtree
-from pyrevolve.spec.msgs import Neuron, Robot, BodyPart
 from pyrevolve.util import decide
+from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
+
 
 
 class Mutator(object):
@@ -38,8 +41,8 @@ class Mutator(object):
         self.p_delete_hidden_neuron = p_delete_hidden_neuron
         self.robogen_tree_generator: RobogenTreeGenerator = robogen_tree_generator
 
-    def mutate(self, genotype: DirectTreeNEATGenotype,
-               mutation_conf: DirectTreeNEATMutationConfig, in_place=True):
+    def mutate(self, genotype: DirectTreeGenotype,
+               mutation_conf: DirectTreeMutationConfig, in_place=False):
         """
         Mutates the robot tree. This performs the following operations:
         - Body parameters are mutated
@@ -62,9 +65,9 @@ class Mutator(object):
         :param in_place:
         :return:
         """
-        tree = genotype._body_genome
-
-        root = tree.root.root if in_place else tree.root.root.copy()
+        tree = genotype.representation
+        print(tree.root.__class__)
+        root = tree.root if in_place else tree.root.copy()
         print(root)
         # First, we delete a random subtree (this might create some space)
         _, avg_del_len = self.delete_random_subtree(root)
@@ -157,7 +160,7 @@ class Mutator(object):
         _renumber(root)
 
         new_genotype = genotype.clone()
-        new_genotype._body_genome.root = tree if in_place else Tree(root)
+        new_genotype.representation = tree if in_place else Tree(root)
 
         return new_genotype
 
@@ -240,7 +243,7 @@ class Mutator(object):
         # generate it here
         robot = Robot()
         _renumber(root)
-        root.build(robot.body.root, robot.brain)
+        root.build(robot.body, robot.brain)
 
         attach_node, attach_slot = self.robogen_tree_generator.body_gen.choose_attachment(
                 attachments=attachments,

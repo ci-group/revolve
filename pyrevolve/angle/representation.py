@@ -1,9 +1,57 @@
 from __future__ import absolute_import
 
 import copy
+from typing import List
 
-from ..spec.msgs import Robot
-from ..spec.msgs import BodyPart
+
+class Robot(object):
+    def __init__(self):
+        self.id: int = None
+        self.body: BodyPart = BodyPart()
+        self.brain: NeuralNetwork = NeuralNetwork()
+
+
+class Neuron(object):
+    def __init__(self):
+        self.id: str = ""
+        self.layer: str = ""
+        self.type: str = ""
+        self.partId: str = ""
+        self.param = {}
+
+    def CopyFrom(self, other):
+        self.id = other.id
+        self.layer = other.layer
+        self.type = other.type
+        self.partId = other.partId
+        self.param = other.param
+
+
+class NeuralNetwork(object):
+
+    def __init__(self):
+        self.neuron: List[Neuron] = []
+        self.connection: List[NeuralConnection] = []
+
+
+class BodyPart(object):
+    def __init__(self):
+        self.id = None
+        self.type = None
+        self.orientation = None
+        self.child = None
+        self.x = None
+        self.y = None
+        self.param = {}
+
+    def CopyFrom(self, other):
+        self.id = other.id
+        self.type = other.type
+        self.orientation = other.orientation
+        self.x = other.x
+        self.y = other.y
+        self.child = other.child
+        self.params = other.params
 
 
 def _create_subtree(body_part, brain, body_spec):
@@ -97,7 +145,7 @@ class Tree(object):
         # Generate neuron map, make sure every neuron is assigned to a part
         neuron_map = {}
         for neuron in brain.neuron:
-            if not neuron.HasField("partId"):
+            if neuron.partId is None:
                 raise Exception("Neuron {} not associated with any "
                                 "part.".format(neuron.id))
 
@@ -228,12 +276,12 @@ class Node(object):
         self.part.x = part.x
         self.part.y = part.y
 
-        if part.HasField("label"):
-            self.part.label = part.label
+        #if part.HasField("label"):
+        #    self.part.label = part.label
 
-        for param in part.param:
-            new_param = self.part.param.add()
-            new_param.CopyFrom(param)
+        #for param in part.param:
+        #    new_param = self.part.param.add()
+        #    new_param.CopyFrom(param)
 
         # Maps slot ids to other nodes
         self.connections = {}
@@ -248,6 +296,7 @@ class Node(object):
         inputs = sum(1 for n in neurons if n.layer == "input")
         outputs = sum(1 for n in neurons if n.layer == "output")
         if inputs != self.spec.inputs or outputs != self.spec.outputs:
+            print(inputs, outputs, self.spec.inputs, self.spec.outputs)
             raise Exception("Part input / output mismatch.")
 
         # Performance caches

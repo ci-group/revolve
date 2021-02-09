@@ -1,7 +1,7 @@
 from typing import Callable
 
 from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeMutationConfig
-from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenome
+from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
 from pyrevolve.genotype.direct_tree.direct_tree_neat_genotype import DirectTreeNEATGenotype
 from pyrevolve.genotype.neat_brain_genome import NeatBrainGenomeConfig, NeatBrainGenome
 
@@ -15,7 +15,7 @@ class DirectTreeNEATMutationConfig:
 
 
 def composite_mutation(genotype: DirectTreeNEATGenotype,
-                       body_mutation: Callable[[DirectTreeGenome], DirectTreeGenome],
+                       body_mutation: Callable[[DirectTreeGenotype], DirectTreeGenotype],
                        brain_mutation: Callable[[NeatBrainGenome], NeatBrainGenome]) -> DirectTreeNEATGenotype:
     new_genome = genotype.clone()
     new_genome._body_genome = body_mutation(new_genome._body_genome)

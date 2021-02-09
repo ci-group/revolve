@@ -4,16 +4,18 @@ import os
 import math
 import re
 
+from pyrevolve.evolution import fitness
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.revolve_bot.revolve_bot import RevolveBot
+from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import List, Optional, Callable
     from pyrevolve.tol.manage.robotmanager import RobotManager
-    from pyrevolve.tol.manage.measures import BehaviouralMeasurements
+
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
 
 
@@ -317,4 +319,11 @@ class Population:
             else:
                 phenotype.simulation_boundaries = bounding_box
 
-        return await self.simulator_queue.test_robot(individual, phenotype, self.config, fitness_fun)
+        if self.simulator_queue is not None:
+            return await self.simulator_queue.test_robot(individual, phenotype, self.config, fitness_fun)
+        else:
+            print("MOCKING SIMULATION")
+            return await self._mock_simulation()
+
+    async def _mock_simulation(self):
+        return fitness.random(None, None), BehaviouralMeasurements()

@@ -441,12 +441,16 @@ class Parameterizable(object):
         :return: Mutated parameters
         :rtype: dict|list
         """
+
         if not isinstance(params, dict):
             params = self.unserialize_params(params)
 
         nw_params = {}
         for name, (_, spec) in list(self.parameters.items()):
+            if name in ['red', 'green', 'blue']:
+                continue
             epsilon = spec.epsilon
+
             nw_params[name] = \
                 (1.0 - epsilon) * \
                 params[name] + epsilon * \
@@ -460,13 +464,7 @@ class Parameterizable(object):
         :param container: Protobuf parameter container
         :param params: Serialized or listed parameters
         """
-        if isinstance(params, dict):
-            params = self.serialize_params(params)
-
-        del container[:]
-        for param in params:
-            p = container.add()
-            p.value = param
+        container = params
 
 
 class PartSpec(Parameterizable):

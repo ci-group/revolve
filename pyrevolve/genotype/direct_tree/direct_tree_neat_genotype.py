@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .direct_tree_genotype import DirectTreeGenomeConfig, DirectTreeGenome
+from .direct_tree_genotype import DirectTreeGenomeConfig, DirectTreeGenotype
 from .. import Genotype
 
 from typing import TYPE_CHECKING
@@ -34,7 +34,7 @@ class DirectTreeNEATGenotype(Genotype):
             self._body_genome = None
         else:
             assert robot_id is not None
-            self._body_genome: DirectTreeGenome = DirectTreeGenome(conf.body, robot_id).random_initialization()
+            self._body_genome: DirectTreeGenotype = DirectTreeGenotype(conf.body, robot_id).random_initialization()
             for _ in range(conf.number_of_brains):
                 self._brain_genomes.append(NeatBrainGenome(conf.brain, robot_id))
 

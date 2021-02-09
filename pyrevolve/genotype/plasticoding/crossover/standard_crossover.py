@@ -34,7 +34,7 @@ def standard_crossover(parent_individuals, genotype_conf, crossover_conf):
     :param parent_individuals: parent individuals to be used for crossover
     :return: genotype result of the crossover
     """
-    parent_genotypes = [p.genotype for p in parent_individuals]
+    parent_genotypes = [p.representation for p in parent_individuals]
     new_genotype = generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf)
     #TODO what if you have more than 2 parents? fix log
     genotype_logger.info(
