@@ -6,6 +6,7 @@
 #include <gazebo/rendering/Camera.hh>
 #include <gazebo/physics/PhysicsIface.hh>
 #include <gazebo/physics/World.hh>
+#include <gazebo/physics/Model.hh>
 #include <gazebo/physics/PhysicsEngine.hh>
 #include <gazebo/sensors/CameraSensor.hh>
 #include <sstream>
@@ -26,8 +27,9 @@ void  rvgz::RecorderCamera::Load(gz::sensors::SensorPtr parent, sdf::ElementPtr 
 
     std::string world_name = parent->WorldName();
     this->world = gz::physics::get_world(world_name);
-
     this->SDF = pluginSDF;
+    this->camera_model = world->ModelByName("Recording");
+    assert(camera_model);
 
     sdf::ElementPtr MovieLength = pluginSDF->GetElement("movie_length");
     double movie_length_seconds = std::stod(MovieLength->GetAttribute("seconds")->GetAsString());
@@ -35,7 +37,6 @@ void  rvgz::RecorderCamera::Load(gz::sensors::SensorPtr parent, sdf::ElementPtr 
     std::cerr << "movie length seconds = " << movie_length_seconds << std::endl
               << "update rate          = " << parentSensor->UpdateRate() << std::endl
               << "total frames         = " << total_frames << std::endl;
-//    this->world = parent->GetWorld();
 }
 
 void rvgz::RecorderCamera::OnNewFrame(const unsigned char *image,
@@ -52,10 +53,40 @@ void rvgz::RecorderCamera::OnNewFrame(const unsigned char *image,
         std::cerr << "FINI: counter > total_frames: " << counter << " > " << total_frames << std::endl;
         return;
     }
+
+    // Here we lock the physics so we are sure not to lose any frame for the video
+    gz::physics::PhysicsEnginePtr physicsEngine = world->Physics();
+    boost::recursive_mutex::scoped_lock lock_physics(*physicsEngine->GetPhysicsUpdateMutex());
+
+    if (!robot) {
+        robot = SearchForRobotModel();
+        if (!robot) {
+            // search again in the next frame, after the camera is moved on top of the robot
+            return;
+        }
+        std::cerr << "MODEL FOUND! " << robot->GetName() << std::endl;
+        // MODEL IS FINALLY FOUND
+        this->RobotModelFound();
+        // skip the first frame
+        image = nullptr;
+    }
     if (world->IsPaused()) {
         // don't capture frames if it's paused
         return;
     }
+
+    assert(video);
+
+    // reposition camera on top of the robot.
+    // This code effectively makes the camera follow the robot
+    ignition::math::Pose3d robot_pose = robot->WorldPose();
+    ignition::math::Pose3d camera_pose = camera_model->WorldPose();
+    camera_pose.Pos()[0] = robot_pose.Pos()[0] - 1.8;
+    camera_pose.Pos()[1] = robot_pose.Pos()[1];
+//    camera_pose.Pos()[2] = robot_pose.Pos()[2] + 2;
+
+    camera_model->SetWorldPose(camera_pose);
+
 
     if (image == nullptr)
     {
@@ -63,10 +94,6 @@ void rvgz::RecorderCamera::OnNewFrame(const unsigned char *image,
         ::gazebo::common::Console::err(__FILE__, __LINE__) << "Can't save an empty image for camera: " << camera_name << std::endl;
         return;
     }
-
-    // Here we lock the physics so we are sure not to lose any frame for the video
-    gz::physics::PhysicsEnginePtr physicsEngine = world->Physics();
-    boost::recursive_mutex::scoped_lock lock_physics(*physicsEngine->GetPhysicsUpdateMutex());
 
     counter++;
 
@@ -87,6 +114,9 @@ void rvgz::RecorderCamera::OnNewFrame(const unsigned char *image,
         ::gazebo::common::Console::msg() << "Video finished, closing the plugin" << std::endl;
         video.reset(nullptr);
         this->camera->Fini();
+        lock_physics.release();
+        ::gazebo::common::Console::msg() << "EXIT" << std::endl;
+        std::exit(0);
         //this->parentSensor->Fini();
     }
 }
@@ -97,31 +127,32 @@ void revolve::gazebo::RecorderCamera::Init()
     SensorPlugin::Init();
     //this->parentSensor->ConnectUpdated()
 
-    // Camera follows target?
-    // Programmatically, I think it should be possible to emit gui::Events::follow(<modelName>). And gui::Events::follow("") to stop following.
-    //this->parentSensor->Camera()->SetTrackUseModelFrame(true);
-    InitRecorder();
+    //InitRecorder(); recorder is lazy-inited when the robot is found in the environemnt
+    robot.reset();
+    video.reset();
 }
 
 void revolve::gazebo::RecorderCamera::Reset()
 {
     SensorPlugin::Reset();
-    this->InitRecorder();
+    robot.reset();
+    video.reset();
 }
 
 void revolve::gazebo::RecorderCamera::InitRecorder()
 {
-    std::string filename = this->SaveFilePath();
+    std::string filename = this->SaveFileName();
+    std::string filepath = this->SaveFilePath() + filename;
 
     // make sure path exists
-    boost::filesystem::path folder_path = filename;
+    boost::filesystem::path folder_path = filepath;
     folder_path.remove_filename();
     boost::filesystem::create_directory(folder_path);
 
-    ::gazebo::common::Console::msg() << "Saving video recording in \"" << filename << "\"\n";
+    ::gazebo::common::Console::msg() << "Saving video recording in \"" << filepath << "\"\n";
 
     video = std::make_unique<::revolve::VideoFileStream>(
-            filename.c_str(),
+            filepath.c_str(),
             parentSensor->UpdateRate(),
             cv::Size(parentSensor->ImageWidth(),parentSensor->ImageHeight())
     );
@@ -132,3 +163,32 @@ std::string revolve::gazebo::RecorderCamera::SaveFilePath() const
     return SDF->Get<std::string>("save_file_path");
 }
 
+std::string revolve::gazebo::RecorderCamera::SaveFileName() const
+{
+    return this->robot->GetName() + ".mp4";
+}
+
+
+::gazebo::physics::ModelPtr revolve::gazebo::RecorderCamera::SearchForRobotModel() const
+{
+    namespace gzp = ::gazebo::physics;
+    gzp::Model_V models = world->Models();
+    ::gazebo::common::Console::msg() << "Searching for robot:" << std::endl;
+
+    gzp::ModelPtr robot_model;
+    for (gzp::ModelPtr &model_ : models) {
+        std::string model_name = model_->GetName();
+        //std::string::rfind("string", 0) is a way of testing "starts_with"
+        if (model_name.rfind("robot_", 0) == 0) {
+            ::gazebo::common::Console::msg() << "ROBOT " << model_name << " FOUND!" << std::endl;
+            robot_model = model_;
+            break;
+        }
+    }
+    return robot_model;
+}
+
+void revolve::gazebo::RecorderCamera::RobotModelFound()
+{
+    this->InitRecorder();
+}
