@@ -1,13 +1,14 @@
 #!/bin/bash
 
-runs=20
+#20
+runs=19
 final_gen=149
 num_terminals=8
 start_port=8000
-experiments=("plasticoding" "hyperplasticoding")
+experiments=("plasticoding_rep" "hyperplasticoding_rep")
 managers_sulfix=("_speed" "_speed")
 experiments_path=karines_experiments/data/lsystem_cppn/
-managers_path=experiments/karines_experiments/lsystem_cppn/
+managers_path=experiments/karines_experiments/lsystem_cppn/exps_part2/
 
 while true
 	do

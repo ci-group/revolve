@@ -80,6 +80,17 @@ class HyperPlasticoding(Genotype):
         # if environment == 'tilted5':
         #     hill = True
 
+        self.quantity_modules = 1
+        self.quantity_nodes = 0
+        # the queried substrate
+        self.substrate = {}
+        self.outputs_count = {
+            'no_module': 0,
+            'b_module':  0,
+            'a1_module': 0,
+            'a2_module': 0,
+            't_module':  0}
+
         radius = self.conf.substrate_radius
 
         self.phenotype = RevolveBot()

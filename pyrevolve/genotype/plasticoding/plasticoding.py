@@ -187,6 +187,18 @@ class Plasticoding(Genotype):
             self.valid = True
 
     def develop(self, environment):
+
+        self.substrate_coordinates_all = {(0, 0): '1'}
+        self.valid = False
+        self.morph_mounting_container = None
+        self.mounting_reference = None
+        self.mounting_reference_stack = []
+        self.quantity_modules = 1
+        self.quantity_nodes = 0
+        self.inputs_stack = []
+        self.outputs_stack = []
+        self.edges = {}
+
         self.early_development(environment)
         phenotype = self.late_development()
         return phenotype

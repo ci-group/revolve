@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# run this bash first, and later run run-experiments-speed.sh
+
 runs=20
 runs_start=0
 start_port=15000
@@ -11,7 +13,7 @@ managers_path=experiments/karines_experiments/
 # num_exps-1
 num_exps=1
 experiments=("plasticoding" "hyperplasticoding")
-managers=("lsystem_cppn/plasticoding_novel" "lsystem_cppn/hyperplasticoding_novel")
+managers=("lsystem_cppn/exps_part1/plasticoding_novel" "lsystem_cppn/exps_part1/hyperplasticoding_novel")
 
 for i in $(seq $runs)
 do

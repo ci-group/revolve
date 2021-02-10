@@ -7,12 +7,12 @@ from pyrevolve.evolution.selection import multiple_selection, tournament_selecti
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.hyperplasticoding.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.hyperplasticoding.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.hyperplasticoding.initialization import random_initialization
-from pyrevolve.genotype.hyperplasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.hyperplasticoding.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.hyperplasticoding.hyperplasticoding import HyperPlasticodingConfig
+from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
+from pyrevolve.genotype.plasticoding.initialization import random_initialization
+from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
+from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
@@ -26,16 +26,16 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 5
-    population_size = 15
-    offspring_size = 15
+    num_generations = 150
+    population_size = 100
+    offspring_size = 50
     front = 'none'
 
     # environment world and z-start
     environments = {'plane': 0.03 }
 
     # calculation of the measures can be on or off, because they are expensive
-    novelty_on = {'novelty': True,
+    novelty_on = {'novelty': False,
                   'novelty_pop': True,
                   'measures': ['branching',
                                'limbs',
@@ -45,25 +45,21 @@ async def run():
                                'proportion',
                                'symmetry']
                   }
-    
-    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding/config-nonplastic'
 
-    genotype_conf = HyperPlasticodingConfig(
+    genotype_conf = PlasticodingConfig(
+        max_structural_modules=81,
         plastic=False,
-        cppn_config_path=cppn_config_path,
+        e_max_groups=3,
     )
 
     mutation_conf = MutationConfig(
-        mutation_prob=0.8,
+        mutation_prob=1,
         genotype_conf=genotype_conf,
-        cppn_config_path=cppn_config_path
     )
 
     crossover_conf = CrossoverConfig(
         crossover_prob=0,
-        cppn_config_path=cppn_config_path
     )
-
     # experiment params #
 
     # Parse command line / file input arguments
@@ -72,12 +68,12 @@ async def run():
     experiment_management = ExperimentManagement(settings, environments)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
-
     logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
 
     if do_recovery:
         gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size,
                                                                                           offspring_size)
+
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
             return
@@ -86,7 +82,6 @@ async def run():
         next_robot_id = 1
 
     def fitness_function_plane(measures, robot):
-        #return fitness.diverse_cppn_output(measures, robot)
         return fitness.displacement_velocity_hill(measures, robot)
 
     fitness_function = {'plane': fitness_function_plane}

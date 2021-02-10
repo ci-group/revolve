@@ -5,6 +5,8 @@ set -x
 experiments=("plasticoding" "hyperplasticoding")
 runs=20
 times=(30 60)
+#generation = 149
+#max_best = 100
 
 for i in $(seq $runs)
 do

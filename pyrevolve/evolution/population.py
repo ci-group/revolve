@@ -18,7 +18,9 @@ from datetime import datetime
 from pathlib import Path
 import neat
 import gzip
+import math
 from pyrevolve.evolution.selection import ranking_selection
+import pprint
 
 
 class PopulationConfig:
@@ -449,6 +451,60 @@ class Population:
 
             return new_population
 
+    def sample_competing_children(self, parents):
+
+        # TODO: works only for a single season. make it dynamic!
+
+        children_distances = {}
+        #print('parent',parents[0][list(self.conf.environments.keys())[-1]].genotype.id)
+
+        # samples n children and compare their morphology to their parents
+        for c in range(0, self.conf.all_settings.n_competing_children):
+            child = self.conf.crossover_operator(self.conf.environments,
+                                                                parents,
+                                                                self.conf.genotype_conf,
+                                                                self.conf.crossover_conf)
+            child = self.conf.mutation_operator(child,
+                                                self.conf.mutation_conf)
+
+            individual = Individual(child)
+            individual.develop(list(self.conf.environments.keys())[-1])
+            individual.phenotype.measure_phenotype('')
+
+
+           # individual.phenotype.render_body( os.path.join('experiments',
+                                                   #        self.conf.all_settings.experiment_name) + '/'  + f'/body_{parents[0][list(self.conf.environments.keys())[-1]].genotype.id+"_"+str(c)}.png')
+
+            #print('---', c)
+            euclidean = 0
+            for measure in self.conf.novelty_on['measures']:
+                child_value = individual.phenotype._morphological_measurements.measurements_to_dict()[measure]
+                #print(measure, child_value)
+                parent_value = parents[0][list(self.conf.environments.keys())[-1]].phenotype._morphological_measurements.measurements_to_dict()[measure]
+                euclidean += math.pow(child_value - parent_value, 2)
+            euclidean = math.sqrt(euclidean)
+            children_distances[child] = euclidean
+            #print('dist', euclidean)
+
+        # get child with lowest difference, but above zero
+        children_distances_filtered = [(k,v) for k,v in sorted(children_distances.items(), key=lambda item: item[1]) if v > 0]
+        filter(lambda k: k > 0, children_distances.keys())
+
+        #pp = pprint.PrettyPrinter(width=41, compact=True)
+        #pp.pprint(children_distances)
+
+        #pp = pprint.PrettyPrinter(width=41, compact=True)
+        #pp.pprint(children_distances_filtered)
+
+        if len(children_distances_filtered) > 0:
+            child = next(iter(children_distances_filtered))
+        else:
+            child = (next(iter(children_distances)), 0)
+       # print(child)
+       # print(child[0])
+
+        return child[0]
+
     async def next_gen(self, gen_num, recovered_individuals=[]):
         """
         Creates next generation of the population through selection, mutation, crossover
@@ -461,24 +517,26 @@ class Population:
         new_individuals = []
 
         for _i in range(self.conf.offspring_size-len(recovered_individuals)):
-            # Selection operator (based on fitness)
-            # Crossover
-            if self.conf.crossover_operator is not None:
-                parents = self.conf.parent_selection(self.individuals)
+
+            parents = self.conf.parent_selection(self.individuals)
+
+            if self.conf.all_settings.n_competing_children == 0:
+
+                # Crossover
                 child_genotype = self.conf.crossover_operator(self.conf.environments,
                                                               parents,
                                                               self.conf.genotype_conf,
                                                               self.conf.crossover_conf)
-                child = Individual(child_genotype)
+
+                # Mutation operator
+                child_genotype = self.conf.mutation_operator(child_genotype,
+                                                             self.conf.mutation_conf)
+
             else:
-                child = self.conf.selection(self.individuals)
+                child_genotype = self.sample_competing_children(parents)
 
-            child.genotype.id = self.next_robot_id
+            child_genotype.id = self.next_robot_id
             self.next_robot_id += 1
-
-            # Mutation operator
-            child_genotype = self.conf.mutation_operator(child.genotype,
-                                                         self.conf.mutation_conf)
 
             # Insert individual in new population
             individual = self._new_individual(child_genotype)

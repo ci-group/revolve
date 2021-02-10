@@ -170,6 +170,7 @@ parser.add_argument(
     help="If individuals of the offspring can die in the first season. "
 )
 
+
 parser.add_argument(
     '--evaluation-time',
     default=30, type=float,
@@ -177,6 +178,13 @@ parser.add_argument(
     # For old_online_fitness:
     #   "The size of the `speed window` for each robot, i.e. the number of "
     #   "past (simulation) seconds over which its speed is evaluated."
+)
+
+
+parser.add_argument(
+    '--n-competing-children',
+    default=0, type=int,
+    help="Number of children to sample when looking for a child close to its parent. If zero, uses stand reproduction."
 )
 
 parser.add_argument(
