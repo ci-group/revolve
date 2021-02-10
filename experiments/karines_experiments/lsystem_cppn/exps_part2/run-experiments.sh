@@ -1,11 +1,12 @@
 #!/bin/bash
 
-#20
-runs=19
+set -x
+
+runs=20
 final_gen=149
 num_terminals=8
 start_port=8000
-experiments=("plasticoding_rep" "hyperplasticoding_rep")
+experiments=("plasticoding-rep" "hyperplasticoding-rep")
 managers_sulfix=("_speed" "_speed")
 experiments_path=karines_experiments/data/lsystem_cppn/
 managers_path=experiments/karines_experiments/lsystem_cppn/exps_part2/
@@ -55,7 +56,7 @@ while true
     for experiment in "${to_do[@]}"
     do
          echo ""
-         screen -d -m -S "${experiment}" -L -Logfile "${experiment}.log" nice -n19 ./revolve.sh --manager "${managers_path}$(cut -d'_' -f1 <<<"$experiment")${managers_sulfix}.py" --experiment-name "${experiments_path}${experiment}" --n-cores 4 --port-start $start_port
+         screen -d -m -S "${experiment}" -L -Logfile "${experiment}.log" nice -n19 ./revolve.sh --manager "${managers_path}$(cut -d'_' -f1 <<<"$experiment")${managers_sulfix}.py" --experiment-name "${experiments_path}${experiment}"   --n-competing-children 50 --n-cores 4 --port-start $start_port
          start_port=$((${start_port}+10))
     done
 

@@ -8,12 +8,12 @@ import sys
 dirpath = 'data/lsystem_cppn/'
 
 experiments_type = [
-      'hyperplasticoding_rep',
-      'plasticoding_rep'
+      'hyperplasticoding-rep',
+      'plasticoding-rep'
 ]
 environments = {
-  'hyperplasticoding_rep': ['plane'],
-  'plasticoding_rep': ['plane']
+  'hyperplasticoding-rep': ['plane'],
+  'plasticoding-rep': ['plane']
                  }
 
 runs = range(1, 20+1)

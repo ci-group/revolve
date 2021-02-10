@@ -2,7 +2,7 @@
 
 runs=20
 final_gen=149
-experiments=("plasticoding" "hyperplasticoding")
+experiments=("plasticoding-rep" "hyperplasticoding-rep")
 
 
 for i in $(seq $runs)

@@ -1,13 +1,26 @@
-set -e
-set -x
+#set -e
+#set -x
 
-runs=(14 15 16 17 18 19 20)
-  for experiment in "${runs[@]}"
+runs=20
+experiments=("plane-death"  "tilted-death")
+experiments2=("planedeath"  "tilteddeath")
+exps=1
+
+
+
+for i in $(seq $runs)
 do
+      for j in $(seq 0 $exps)
+        do
 
-  cp -r experiments/karines_experiments/data/early_death/plane-death_$experiment;
-   cp plane-death_$experiment.log  /storage/karine/early_death;
-  cp -r experiments/karines_experiments/data/early_death/tilted-death_$experiment  /storage/karine/early_death;
-   cp tilted-death_$experiment.log  /storage/karine/early_death;
+       #    mv /storage/karine/early_death/"${experiments[j]}_${i}"_all_measures.tsv /storage/karine/early_death/"${experiments2[j]}_${i}"_all_measures.tsv
+       #     mv /storage/karine/early_death/"${experiments[j]}_${i}"_snapshots_ids.tsv /storage/karine/early_death/"${experiments2[j]}_${i}"_snapshots_ids.tsv
+       # mv /storage/karine/early_death/"${experiments[j]}_${i}".log /storage/karine/early_death/"${experiments2[j]}_${i}".log
+
+
+
+        #     mv /storage/karine/early_death/"${experiments[j]}_${i}" /storage/karine/early_death/"${experiments2[j]}_${i}"
+
+    done
 
 done
