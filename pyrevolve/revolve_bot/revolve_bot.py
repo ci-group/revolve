@@ -276,10 +276,10 @@ class RevolveBot:
 
             self._update_substrate(raise_for_intersections, module, slot_rotation, substrate_coordinates_map)
 
-    def _iter_all_elements(self) -> RevolveModule:
+    def iter_all_elements(self) -> RevolveModule:
         to_process = deque([self._body])
         while len(to_process) > 0:
-            elem = to_process.popleft()
+            elem: RevolveModule = to_process.popleft()
             for _i, child in elem.iter_children():
                 if child is not None:
                     to_process.append(child)

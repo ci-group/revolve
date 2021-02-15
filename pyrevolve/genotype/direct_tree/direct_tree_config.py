@@ -1,5 +1,5 @@
 
-class DirectTreeGenomeConfig(object):
+class DirectTreeGenotypeConfig(object):
     def __init__(self):
         self.init: RandomGenerateConfig = RandomGenerateConfig()
         self.max_parts: int = 50

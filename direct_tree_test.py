@@ -1,13 +1,34 @@
-from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenomeConfig, DirectTreeGenome
+from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
+from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
 
 if __name__ == "__main__":
 
-    conf = DirectTreeGenomeConfig()
+    conf = DirectTreeGenotypeConfig()
 
-    genome1 = DirectTreeGenome(conf, 1)
+    genome1 = DirectTreeGenotype(conf, 1)
     genome1.random_initialization()
     genome1.export_genotype("/tmp/test.yaml")
     robot1 = genome1.develop()
+
+    # TEST LOAD AND SAVE
+    genome2 = DirectTreeGenotype(conf, 1)
+    genome2.load_genotype("/tmp/test.yaml")
+    genome2.export_genotype("/tmp/test2.yaml")
+
+    g1_file = None
+    g2_file = None
+    with open('/tmp/test.yaml') as f:
+        g1_file = f.read()
+    with open('/tmp/test2.yaml') as f:
+        g2_file = f.read()
+
+    assert g1_file == g2_file
+
+    # TEST MUTATION
+    genome1.mutate()
+
+    # TEST CROSSOVER
+    genome2.crossover(genome1)
 
     # # create two robot genomes (direct + neat brain)
     # genome1 = DirectTreeNEATGenotype(genome_config, 2)

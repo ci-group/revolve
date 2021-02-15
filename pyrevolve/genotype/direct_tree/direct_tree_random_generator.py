@@ -2,12 +2,12 @@ import random
 import math
 import queue
 
-from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenomeConfig
+from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.revolve_bot.revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, Orientation
 
 
-def generate_tree(core: CoreModule, config: DirectTreeGenomeConfig) -> CoreModule:
+def generate_tree(core: CoreModule, config: DirectTreeGenotypeConfig) -> CoreModule:
     assert isinstance(core, CoreModule)
     robot = RevolveBot()
     robot._body = core
