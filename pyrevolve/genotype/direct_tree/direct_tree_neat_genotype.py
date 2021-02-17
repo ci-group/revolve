@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .direct_tree_genotype import DirectTreeGenomeConfig, DirectTreeGenotype
+from .direct_tree_genotype import DirectTreeGenotype
 from .. import Genotype
 
 from typing import TYPE_CHECKING

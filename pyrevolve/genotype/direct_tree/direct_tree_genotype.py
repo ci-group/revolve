@@ -107,3 +107,7 @@ class DirectTreeGenotype(Genotype):
     def random_initialization(self):
         self.representation = direct_tree_random_generator.generate_tree(self.representation, config=self.conf)
         return self
+
+    def mutate(self):
+        from pyrevolve.genotype.direct_tree.tree_mutation import mutate
+        return mutate(self, self.conf, in_place=False)

@@ -3,7 +3,10 @@ from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenoty
 
 if __name__ == "__main__":
 
-    conf = DirectTreeGenotypeConfig()
+    conf = DirectTreeGenotypeConfig(
+        min_parts=1,
+        mutation_p_delete_subtree=1,
+    )
 
     genome1 = DirectTreeGenotype(conf, 1)
     genome1.random_initialization()
@@ -25,7 +28,8 @@ if __name__ == "__main__":
     assert g1_file == g2_file
 
     # TEST MUTATION
-    genome1.mutate()
+    genome3 = genome1.mutate()
+    genome3.export_genotype("/tmp/test3.yaml")
 
     # TEST CROSSOVER
     genome2.crossover(genome1)
