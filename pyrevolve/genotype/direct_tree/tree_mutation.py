@@ -46,15 +46,23 @@ def mutate(genotype: DirectTreeGenotype,
 
     # delete_random_subtree
     if decide(genotype_conf.mutation.p_delete_subtree):
-        delete_random_subtree(tree, genotype_conf)
+        r, n = delete_random_subtree(tree, genotype_conf)
+        if r is not None:
+            print(f"DELETED {n} ELEMENTS")
+
+    # TODO generate random subtree
+
+    # TODO random rotate modules
 
     # duplicate random subtree
     if decide(genotype_conf.mutation.p_duplicate_subtree):
-        duplicate_random_subtree(tree, genotype_conf)
+        if duplicate_random_subtree(tree, genotype_conf):
+            print("DUPLICATED")
 
     # swap random subtree
     if decide(genotype_conf.mutation.p_swap_subtree):
-        pass  # TODO
+        if swap_random_subtree(tree):
+            print("SWAPPED")
 
     # mutate oscillators
     if decide(genotype_conf.mutation.p_mutate_oscillators):
@@ -77,10 +85,10 @@ def delete_random_subtree(root: RevolveModule,
     max_remove_list = robot_size - genotype_conf.min_parts
 
     module_list = []
-    for parent, module, depth in recursive_iterate_modules(root):
-        _subtree_size = subtree_size(module)
+    for parent, parent_slot, module, depth in recursive_iterate_modules(root):
         if parent is None:
             continue
+        _subtree_size = subtree_size(module)
         # This line of code above it's slow, because it's recalculated for each subtree.
         # But I don't care at the moment. You can speed it up if you want.
         if _subtree_size > max_remove_list:
@@ -101,12 +109,13 @@ def delete_random_subtree(root: RevolveModule,
     return subtree_root, _subtree_size
 
 
-def duplicate_random_subtree(root: RevolveModule, conf: DirectTreeGenotypeConfig) -> None:
+def duplicate_random_subtree(root: RevolveModule, conf: DirectTreeGenotypeConfig) -> bool:
     """
     Picks a random subtree that can be duplicated within the robot
     boundaries, copies it and attaches it to a random free slot.
     :param root: root of the robot tree
     :param conf: direct tree genotype configuration
+    :return: True if duplication happened
     """
     robotsize = subtree_size(root)
     max_add_size = conf.max_parts - robotsize
@@ -114,7 +123,7 @@ def duplicate_random_subtree(root: RevolveModule, conf: DirectTreeGenotypeConfig
     # Create a list of subtrees that is not larger than max_add_size
     module_list: List[Tuple[RevolveModule, RevolveModule, int]] = []
     empty_slot_list: List[Tuple[RevolveModule, int]] = []
-    for parent, module, depth in recursive_iterate_modules(root):
+    for parent, parent_slot, module, depth in recursive_iterate_modules(root):
         # Create empty slot list
         for slot, child in module.iter_children():
             # allow back connection only for core block, not others
@@ -136,9 +145,9 @@ def duplicate_random_subtree(root: RevolveModule, conf: DirectTreeGenotypeConfig
         module_list.append((parent, module, _subtree_size))
 
     if not module_list:
-        return
+        return False
     if not empty_slot_list:
-        return
+        return False
 
     # choose random tree to duplicate
     parent, subtree_root, _subtree_size = random.choice(module_list)
@@ -149,3 +158,35 @@ def duplicate_random_subtree(root: RevolveModule, conf: DirectTreeGenotypeConfig
     subtree_root = duplicate_subtree(subtree_root)
     # and attach it
     target_parent.children[target_empty_slot] = subtree_root
+
+    return True
+
+
+def swap_random_subtree(root: RevolveModule) -> bool:
+    """
+    Picks to random subtrees (which are not parents / children of each
+    other) and swaps them.
+    :param root: root of the robot tree
+    :return: True if swapping happened
+    """
+    module_list: List[Tuple[RevolveModule, int, RevolveModule]] = []
+    for parent, parent_slot, module, depth in recursive_iterate_modules(root):
+        if parent is None:
+            continue
+        module_list.append((parent, parent_slot, module))
+
+    parent_a, parent_a_slot, a = random.choice(module_list)
+    a_module_set = set()
+    for _, _, module, _ in recursive_iterate_modules(a):
+        a_module_set.add(module)
+
+    unrelated_module_list = [e for e in module_list if e[2] not in a_module_set]
+    if not unrelated_module_list:
+        return False
+
+    parent_b, parent_b_slot, b = random.choice(unrelated_module_list)
+
+    parent_b.children[parent_b_slot] = a
+    parent_a.children[parent_a_slot] = b
+
+    return True

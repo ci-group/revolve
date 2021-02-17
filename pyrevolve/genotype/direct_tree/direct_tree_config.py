@@ -10,8 +10,8 @@ class DirectTreeGenotypeConfig(object):
                  init_prob_child_active_joint: float = 0.4,
                  init_prob_child_block: float = 0.5,
                  mutation_p_duplicate_subtree: float = 0.05,
-                 mutation_p_swap_subtree: float = 0.05,
                  mutation_p_delete_subtree: float = 0.05,
+                 mutation_p_swap_subtree: float = 0.05,
                  mutation_p_mutate_oscillators: float = 0.05,
                  ):
         self.max_parts: int = max_parts
@@ -28,8 +28,8 @@ class DirectTreeGenotypeConfig(object):
 
         self.mutation: DirectTreeMutationConfig = DirectTreeMutationConfig(
             p_duplicate_subtree=mutation_p_duplicate_subtree,
-            p_swap_subtree=mutation_p_swap_subtree,
             p_delete_subtree=mutation_p_delete_subtree,
+            p_swap_subtree=mutation_p_swap_subtree,
             p_mutate_oscillators=mutation_p_mutate_oscillators,
         )
 
@@ -56,6 +56,6 @@ class DirectTreeMutationConfig:
                  p_duplicate_subtree,
                  p_mutate_oscillators):
         self.p_duplicate_subtree: float = p_duplicate_subtree
-        self.p_swap_subtree: float = p_swap_subtree
         self.p_delete_subtree: float = p_delete_subtree
+        self.p_swap_subtree: float = p_swap_subtree
         self.p_mutate_oscillators: float = p_mutate_oscillators

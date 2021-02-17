@@ -7,22 +7,24 @@ from pyrevolve.revolve_bot import RevolveModule
 
 def recursive_iterate_modules(module: RevolveModule,
                               parent: Optional[RevolveModule] = None,
+                              parent_slot: Optional[int] = None,
                               depth: int = 1) \
-        -> Iterable[Tuple[Optional[RevolveModule], RevolveModule, int]]:
+        -> Iterable[Tuple[Optional[RevolveModule], Optional[int], RevolveModule, int]]:
     """
-    Iterate all modules, depth search first, yielding parent, module and depth, starting from root_depth=1.
+    Iterate all modules, depth search first, yielding parent, parent slot, module and depth, starting from root_depth=1.
     Uses recursion.
     :param module: starting module to expand
     :param parent: for internal recursiveness, parent module. leave default
+    :param parent_slot: for internal recursiveness, parent module slot. leave default
     :param depth: for internal recursiveness, depth of the module passed in. leave default
-    :return: iterator for all modules with (parent,module,depth)
+    :return: iterator for all modules with (parent, parent_slot, module, depth)
     """
     assert module is not None
-    for _, child in module.iter_children():
+    for slot, child in module.iter_children():
         if child is not None:
-            for _next in recursive_iterate_modules(child, module, depth+1):
+            for _next in recursive_iterate_modules(child, module, slot, depth+1):
                 yield _next
-    yield parent, module, depth
+    yield parent, parent_slot, module, depth
 
 
 def subtree_size(module: RevolveModule) -> int:

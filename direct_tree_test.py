@@ -6,8 +6,8 @@ if __name__ == "__main__":
     conf = DirectTreeGenotypeConfig(
         min_parts=1,
         mutation_p_delete_subtree=0,
-        mutation_p_swap_subtree=0,
-        mutation_p_duplicate_subtree=1,
+        mutation_p_duplicate_subtree=0,
+        mutation_p_swap_subtree=1,
         mutation_p_mutate_oscillators=0,
     )
 
@@ -32,8 +32,7 @@ if __name__ == "__main__":
 
     # TEST MUTATION
     genome3 = genome1.clone()
-    for i in range(20):
-        genome3 = genome3.mutate()
+    genome3 = genome3.mutate()
     genome3.export_genotype("/tmp/test3.yaml")
 
     # TEST CROSSOVER
