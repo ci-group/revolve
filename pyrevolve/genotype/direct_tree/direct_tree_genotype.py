@@ -1,5 +1,6 @@
 from typing import Optional
 
+from pyrevolve.genotype.direct_tree.direct_tree_utils import duplicate_subtree
 from pyrevolve.genotype import Genotype
 from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
 
@@ -35,9 +36,9 @@ class DirectTreeGenotype(Genotype):
 
         other = DirectTreeGenotype(self.conf, _id)
         other.valid = self.valid
-        other.representation = self.representation
+        other.representation = duplicate_subtree(self.representation)
 
-        other.phenotype = self.phenotype
+        other.phenotype = None
         return other
 
     def load_genotype(self, genotype_filename: str) -> None:

@@ -5,7 +5,10 @@ if __name__ == "__main__":
 
     conf = DirectTreeGenotypeConfig(
         min_parts=1,
-        mutation_p_delete_subtree=1,
+        mutation_p_delete_subtree=0,
+        mutation_p_swap_subtree=0,
+        mutation_p_duplicate_subtree=1,
+        mutation_p_mutate_oscillators=0,
     )
 
     genome1 = DirectTreeGenotype(conf, 1)
@@ -28,11 +31,13 @@ if __name__ == "__main__":
     assert g1_file == g2_file
 
     # TEST MUTATION
-    genome3 = genome1.mutate()
+    genome3 = genome1.clone()
+    for i in range(20):
+        genome3 = genome3.mutate()
     genome3.export_genotype("/tmp/test3.yaml")
 
     # TEST CROSSOVER
-    genome2.crossover(genome1)
+    # genome2.crossover(genome1)
 
     # # create two robot genomes (direct + neat brain)
     # genome1 = DirectTreeNEATGenotype(genome_config, 2)
