@@ -1,6 +1,6 @@
 import math
 import random
-from typing import Callable, List, Any, Optional, Iterable, Tuple
+from typing import Callable, List, Any, Optional, Iterable, Tuple, Union
 
 from pyrevolve.genotype.direct_tree.direct_tree_utils import subtree_size, recursive_iterate_modules, duplicate_subtree
 from pyrevolve.genotype.direct_tree.compound_mutation import DirectTreeNEATMutationConfig
@@ -9,7 +9,7 @@ from pyrevolve.genotype.direct_tree.direct_tree_neat_genotype import DirectTreeN
 from pyrevolve.util import decide
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
 from pyrevolve.revolve_bot import RevolveBot
-from pyrevolve.revolve_bot.revolve_module import CoreModule, RevolveModule, Orientation
+from pyrevolve.revolve_bot.revolve_module import CoreModule, RevolveModule, Orientation, ActiveHingeModule
 
 
 def mutate(genotype: DirectTreeGenotype,
@@ -66,7 +66,7 @@ def mutate(genotype: DirectTreeGenotype,
 
     # mutate oscillators
     if decide(genotype_conf.mutation.p_mutate_oscillators):
-        pass  # TODO
+        mutate_oscillators(tree, genotype_conf)
 
     return genotype
 
@@ -190,3 +190,39 @@ def swap_random_subtree(root: RevolveModule) -> bool:
     parent_a.children[parent_a_slot] = b
 
     return True
+
+
+def mutate_oscillators(root: RevolveModule, conf: DirectTreeGenotypeConfig) -> None:
+    """
+    Mutates oscillation
+    :param root: root of the robot tree
+    :param conf: genotype config for mutation probabilities
+    """
+
+    for _, _, module, _ in recursive_iterate_modules(root):
+        if isinstance(module, ActiveHingeModule):
+            if decide(conf.mutation.p_mutate_oscillator):
+                module.oscillator_amplitude += random.gauss(0, conf.mutation.mutate_oscillator_amplitude_sigma)
+                module.oscillator_period += random.gauss(0, conf.mutation.mutate_oscillator_period_sigma)
+                module.oscillator_phase += random.gauss(0, conf.mutation.mutate_oscillator_phase_sigma)
+
+                # amplitude is clamped between 0 and 1
+                module.oscillator_amplitude = clamp(module.oscillator_amplitude, 0, 1)
+                # phase and period are periodically repeating every max_oscillation,
+                #  so we bound the value between [0,conf.max_oscillation] for convenience
+                module.oscillator_phase = module.oscillator_phase % conf.max_oscillation
+                module.oscillator_period = module.oscillator_period % conf.max_oscillation
+
+
+def clamp(value: Union[float, int],
+          minvalue: Union[float, int],
+          maxvalue: Union[float, int]) \
+        -> Union[float, int]:
+    """
+    Clamps the value to a minimum and maximum
+    :param value: source value
+    :param minvalue: min possible value
+    :param maxvalue: max possible value
+    :return: clamped value
+    """
+    return min(max(minvalue, value), maxvalue)

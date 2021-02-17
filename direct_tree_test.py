@@ -7,8 +7,9 @@ if __name__ == "__main__":
         min_parts=1,
         mutation_p_delete_subtree=0,
         mutation_p_duplicate_subtree=0,
-        mutation_p_swap_subtree=1,
-        mutation_p_mutate_oscillators=0,
+        mutation_p_swap_subtree=0,
+        mutation_p_mutate_oscillators=1,
+        mutation_p_mutate_oscillator=1,
     )
 
     genome1 = DirectTreeGenotype(conf, 1)

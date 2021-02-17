@@ -13,6 +13,10 @@ class DirectTreeGenotypeConfig(object):
                  mutation_p_delete_subtree: float = 0.05,
                  mutation_p_swap_subtree: float = 0.05,
                  mutation_p_mutate_oscillators: float = 0.05,
+                 mutation_p_mutate_oscillator: float = 0.05,
+                 mutate_oscillator_amplitude_sigma: float = 0.1,
+                 mutate_oscillator_period_sigma: float = 0.1,
+                 mutate_oscillator_phase_sigma: float = 0.1,
                  ):
         self.max_parts: int = max_parts
         self.min_parts: int = min_parts
@@ -31,6 +35,10 @@ class DirectTreeGenotypeConfig(object):
             p_delete_subtree=mutation_p_delete_subtree,
             p_swap_subtree=mutation_p_swap_subtree,
             p_mutate_oscillators=mutation_p_mutate_oscillators,
+            p_mutate_oscillator=mutation_p_mutate_oscillator,
+            mutate_oscillator_amplitude_sigma=mutate_oscillator_amplitude_sigma,
+            mutate_oscillator_period_sigma=mutate_oscillator_period_sigma,
+            mutate_oscillator_phase_sigma=mutate_oscillator_phase_sigma,
         )
 
 
@@ -54,8 +62,20 @@ class DirectTreeMutationConfig:
                  p_delete_subtree,
                  p_swap_subtree,
                  p_duplicate_subtree,
-                 p_mutate_oscillators):
+                 p_mutate_oscillators,
+                 p_mutate_oscillator,
+                 mutate_oscillator_amplitude_sigma,
+                 mutate_oscillator_period_sigma,
+                 mutate_oscillator_phase_sigma,
+                 ):
         self.p_duplicate_subtree: float = p_duplicate_subtree
         self.p_delete_subtree: float = p_delete_subtree
         self.p_swap_subtree: float = p_swap_subtree
+        # global probability if to mutate oscillators at all
         self.p_mutate_oscillators: float = p_mutate_oscillators
+        # probability tested for each single oscillator
+        self.p_mutate_oscillator: float = p_mutate_oscillator
+        # how much variance to mutate each of the oscillator parameters
+        self.mutate_oscillator_amplitude_sigma: float = mutate_oscillator_amplitude_sigma
+        self.mutate_oscillator_period_sigma: float = mutate_oscillator_period_sigma
+        self.mutate_oscillator_phase_sigma: float = mutate_oscillator_phase_sigma
