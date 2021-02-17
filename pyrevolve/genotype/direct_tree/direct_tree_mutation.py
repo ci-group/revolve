@@ -24,14 +24,6 @@ def mutate(genotype: DirectTreeGenotype,
     - Two subtrees might be swapped
     - Subtrees are duplicated at random
     - Body parts are added at random
-    Mutation operations are designed to make changes to the robot
-    whilst keeping it at roughly the same complexity. This means that:
-    - The probability of a new body part being added is proportional
-      to the average number of body parts being removed in a single
-      step.
-    - The number of newly created hidden neurons and neural connections
-      equals the average number of neurons and connections removed in
-      each step.
     :param genotype:
     :param genotype_conf:
     :param in_place:
@@ -43,6 +35,8 @@ def mutate(genotype: DirectTreeGenotype,
 
     revolvebot = RevolveBot(genotype.id)
     revolvebot._body = tree
+
+    # TODO change colors
 
     # delete_random_subtree
     if decide(genotype_conf.mutation.p_delete_subtree):

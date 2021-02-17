@@ -1,127 +1,68 @@
 import random
+import sys
+from typing import List, Tuple
 
-from pyrevolve.angle import Tree
-from pyrevolve.angle.robogen.spec import RobogenTreeGenerator
+from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
+from pyrevolve.genotype.direct_tree.direct_tree_utils import recursive_iterate_modules, subtree_size, duplicate_subtree
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
-from pyrevolve.genotype.direct_tree.tree_helper import _renumber, _node_list
+from pyrevolve.revolve_bot import RevolveModule
 
 
-class DirectTreeCrossoverConfig():
-
-    def __init__(self):
-        pass
-
-
-class Crossover(object):
+def crossover(parent_a: DirectTreeGenotype,
+              parent_b: DirectTreeGenotype,
+              conf: DirectTreeGenotypeConfig,
+              new_id: int) \
+        -> DirectTreeGenotype:
     """
-    Crossover class. Its working part is the `crossover` function, see
-    there for a detailed description.
+    Performs actual crossover between two robot trees, parent_a and parent_b. This
+    works as follows:
+    - Robot `a` is copied
+    - A random node `q` is picked from this copied robot. This may
+      be anything but the root node.
+    - We generate a list of nodes from robot b which, when replacing `q`,
+      would not violate the robot's specifications. If this list is empty,
+      crossover is not performed.
+    - We pick a random node `r` from this list
+    :return: New genotype
     """
-    def __init__(self, robogen_tree_generator: RobogenTreeGenerator):
-        """
-        Although the crossover class does not perform parameter mutations, robot
-        limits are still required knowledge for crossover choices. It is because
-        of this the body / brain generators are passed here.
+    parent_a_size = subtree_size(parent_a.representation)
+    child = parent_a.clone()
+    module_list_a: List[Tuple[RevolveModule, int, RevolveModule]] = []
+    for module_parent, module_parent_slot, module, depth in recursive_iterate_modules(child.representation):
+        if module_parent is None:
+            continue
+        module_list_a.append((module_parent, module_parent_slot, module))
 
-        :return:
-        """
-        self.robogen_tree_generator: RobogenTreeGenerator = robogen_tree_generator
+    module_list_b: List[Tuple[RevolveModule, int]] = []
+    for module_parent, _, module, _ in recursive_iterate_modules(parent_b.representation):
+        if module_parent is None:
+            continue
+        module_size = subtree_size(module)
+        module_list_b.append((module, module_size))
 
-    def crossover(self, parents, genotype_conf, crossover_conf):
-        """
-        Performs actual crossover between two robot trees, a and b. This
-        works as follows:
-        - Robot `a` is copied
-        - A random node `q` is picked from this copied robot. This may
-          be anything but the root node.
-        - We generate a list of nodes from robot b which, when replacing `q`,
-          would not violate the robot's specifications. If this list is empty,
-          crossover is not performed.
-        - We pick a random node `r` from this list
+    crossover_point_found = False
+    n_tries = 100
+    while not crossover_point_found and n_tries > 0:
+        n_tries -= 1
+        module_parent_a, module_parent_a_slot, module_a = random.choice(module_list_a)
+        module_a_size = subtree_size(module_a)
 
-        :return:
-        :rtype: tuple(bool, Tree)
-        """
-        a = parents[0].genotype.representation
-        b = parents[1].genotype.representation
-        print(a.__class__, b.__class__)
-        result = a.root.copy()
+        def compatible(module_b: RevolveModule, module_b_size: int) -> bool:
+            new_size = parent_a_size - module_a_size + module_b_size
+            return conf.min_parts <= new_size <= conf.max_parts
 
-        # All nodes except the root node
-        crossover_points = _node_list(result)[1:]
-        q = random.choice(crossover_points)
+        unrelated_module_list = [e for e in module_list_b if compatible(*e)]
+        if not unrelated_module_list:
+            continue
 
-        # Create list of valid crossover points from `b`
-        # Get the total list of nodes excluding the root
-        b_nodes = _node_list(b.root, root=False)
+        module_b, _ = random.choice(unrelated_module_list)
 
-        # Determine the current robot statistics, subtracting
-        # everything after the crossover point.
-        inputs, outputs, hidden = result.io_count()
-        num_nodes = len(result)
+        module_parent_a.children[module_parent_a_slot] = duplicate_subtree(module_b)
+        crossover_point_found = True
 
-        c_i, c_o, c_h = q.io_count()
-        inputs -= c_i
-        outputs -= c_o
-        hidden -= c_h
-        num_nodes -= len(q)
+    if not crossover_point_found:
+        print(f'Crossover between genomes {parent_a.id} and {parent_b.id} was not successful after 100 trials,'
+              f' returning a clone of {parent_a.id} unchanged', file=sys.stderr)
 
-        replace_nodes = []
-        max_parts = self.robogen_tree_generator.body_gen.max_parts
-        max_inputs = self.robogen_tree_generator.body_gen.max_inputs
-        max_outputs = self.robogen_tree_generator.body_gen.max_outputs
-        max_hidden = self.robogen_tree_generator.brain_gen.max_hidden
-
-        for node in b_nodes:
-            n_nodes = len(node)
-            if num_nodes + n_nodes > max_parts:
-                # Using this node would result in too many parts
-                continue
-
-            n_i, n_o, n_h = node.io_count()
-            t_i, t_o, t_h = n_i + inputs, n_o + outputs, n_h + hidden
-            if t_i > max_inputs or t_o > max_outputs or t_h > max_hidden:
-                continue
-
-            replace_nodes.append(node)
-
-        if not replace_nodes:
-            # No possible replacement nodes - no crossover
-            genotype = DirectTreeGenotype(genotype_conf, None)
-            genotype.root = result
-            return genotype.clone()
-
-        # Pick `r` from list.
-        r = random.choice(replace_nodes)
-
-        # Replace the subtree starting at `q` with `r`
-        # Determine the connection slots. Slots are always relative to
-        # the node defining the connection. We thus need the `to_slot`
-        # of the parent connection of the original node, and connect it
-        # to the `from_slot` on the new node.
-        conn = q.parent_connection()
-        start_node = conn.node
-        from_slot = conn.to_slot
-        to_slot = r.parent_connection().from_slot
-
-        # Remove the existing connection. `set_connection` will also do this,
-        # but this way we make sure the trees never contain duplicate IDs
-        # and that seems desireable somehow.
-        start_node.remove_connection(from_slot)
-
-        # We don't want to modify `b`, so copy `r` without parent
-        r = r.copy(copy_parent=False)
-
-        # Update node IDs, duplicates are quite likely at this point
-        base = _renumber(result)
-        _renumber(r, base)
-
-        # Set the actual connection and return the tree
-        # Note that we have already correctly renumbered both the root tree
-        # and the child above.
-        start_node.set_connection(from_slot, to_slot, r, parent=True)
-
-        genome = DirectTreeGenotype(genotype_conf, None)
-        genome.representation = Tree(result)
-        print("results ", result)
-        return genome.clone()
+    child.id = new_id
+    return child

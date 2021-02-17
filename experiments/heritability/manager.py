@@ -14,7 +14,7 @@ from pyrevolve.genotype.direct_tree.direct_tree_crossover import DirectTreeCross
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenomeConfig
 from pyrevolve.genotype.direct_tree.direct_tree_neat_genotype import DirectTreeNEATGenotypeConfig, \
     DirectTreeNEATGenotype
-from pyrevolve.genotype.direct_tree.tree_mutation import DirectTreeNEATMutationConfig, DirectTreeMutationConfig, Mutator
+from pyrevolve.genotype.direct_tree.direct_tree_mutation import DirectTreeNEATMutationConfig, DirectTreeMutationConfig, Mutator
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.custom_logging.logger import logger

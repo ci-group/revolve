@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional
 
 from pyrevolve.genotype.direct_tree.direct_tree_utils import duplicate_subtree
@@ -110,5 +111,9 @@ class DirectTreeGenotype(Genotype):
         return self
 
     def mutate(self):
-        from pyrevolve.genotype.direct_tree.tree_mutation import mutate
+        from pyrevolve.genotype.direct_tree.direct_tree_mutation import mutate
         return mutate(self, self.conf, in_place=False)
+
+    def crossover(self, other: DirectTreeGenotype, new_id: int):
+        from pyrevolve.genotype.direct_tree.direct_tree_crossover import crossover
+        return crossover(self, other, self.conf, new_id)
