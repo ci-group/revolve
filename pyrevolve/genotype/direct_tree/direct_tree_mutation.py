@@ -1,7 +1,8 @@
 import math
 import random
-from typing import Callable, List, Any, Optional, Iterable, Tuple, Union
+from typing import Callable, List, Any, Optional, Iterable, Tuple, Union, Type
 
+from pyrevolve.genotype.direct_tree.direct_tree_random_generator import generate_new_module
 from pyrevolve.genotype.direct_tree.direct_tree_utils import subtree_size, recursive_iterate_modules, duplicate_subtree
 from pyrevolve.genotype.direct_tree.compound_mutation import DirectTreeNEATMutationConfig
 from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeMutationConfig, DirectTreeGenotypeConfig
@@ -9,7 +10,7 @@ from pyrevolve.genotype.direct_tree.direct_tree_neat_genotype import DirectTreeN
 from pyrevolve.util import decide
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
 from pyrevolve.revolve_bot import RevolveBot
-from pyrevolve.revolve_bot.revolve_module import CoreModule, RevolveModule, Orientation, ActiveHingeModule
+from pyrevolve.revolve_bot.revolve_module import CoreModule, RevolveModule, Orientation, ActiveHingeModule, BrickModule
 
 
 def mutate(genotype: DirectTreeGenotype,
@@ -44,7 +45,11 @@ def mutate(genotype: DirectTreeGenotype,
         if r is not None:
             print(f"DELETED {n} ELEMENTS")
 
-    # TODO generate random subtree
+    # generate random new module
+    if decide(genotype_conf.mutation.p_generate_subtree):
+        r = generate_random_new_module(tree, genotype_conf)
+        if r is not None:
+            print(f"GENERATED NEW SUBTREE of size {subtree_size(r)}")
 
     # TODO random rotate modules
 
@@ -101,6 +106,52 @@ def delete_random_subtree(root: RevolveModule,
         # break was not reached, module not found about children
         raise RuntimeError("Subtree not found in the parent module!")
     return subtree_root, _subtree_size
+
+
+def generate_random_new_module(root: RevolveModule,
+                               genotype_conf: DirectTreeGenotypeConfig) \
+        -> Optional[RevolveModule]:
+    """
+    Generates a new random module at a random position. It fails if the robot is already too big.
+    Could generate an invalid robot.
+    :param root: root of the robot tree
+    :param genotype_conf: genotype configuration
+    :return: reference to the new module, None if no insertion was possible
+    """
+    robotsize: int = subtree_size(root)
+    if genotype_conf.max_parts == robotsize:
+        return None
+
+    empty_slot_list: List[Tuple[RevolveModule, int]] = []
+    for parent, parent_slot, module, depth in recursive_iterate_modules(root):
+        # Create empty slot list
+        for slot, child in module.iter_children():
+            # allow back connection only for core block, not others
+            _slot = Orientation(slot)
+            if _slot is Orientation.BACK and not isinstance(child, CoreModule):
+                continue
+            if child is None:
+                empty_slot_list.append((module, slot))
+
+    if not empty_slot_list:
+        return None
+
+    # choose random empty slot to where the duplication is created
+    target_parent, target_empty_slot = random.choice(empty_slot_list)  # type: (RevolveModule, int)
+
+    possible_children_probs: List[float] = [
+        0,
+        genotype_conf.init.prob_child_block,
+        genotype_conf.init.prob_child_active_joint,
+    ]
+
+    new_module = generate_new_module(target_parent, target_empty_slot, possible_children_probs, genotype_conf)
+
+    if new_module is None:
+        # randomly chose to close this slot, not enabled
+        return None
+
+    target_parent.children[target_empty_slot] = new_module
 
 
 def duplicate_random_subtree(root: RevolveModule, conf: DirectTreeGenotypeConfig) -> bool:
@@ -164,7 +215,7 @@ def swap_random_subtree(root: RevolveModule) -> bool:
     :return: True if swapping happened
     """
     module_list: List[Tuple[RevolveModule, int, RevolveModule]] = []
-    for parent, parent_slot, module, depth in recursive_iterate_modules(root):
+    for parent, parent_slot, module, depth in recursive_iterate_modules(root, include_none_child=True):
         if parent is None:
             continue
         module_list.append((parent, parent_slot, module))

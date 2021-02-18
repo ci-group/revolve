@@ -11,6 +11,7 @@ class DirectTreeGenotypeConfig(object):
                  init_prob_child_block: float = 0.5,
                  mutation_p_duplicate_subtree: float = 0.05,
                  mutation_p_delete_subtree: float = 0.05,
+                 mutation_p_generate_subtree: float = 0.05,
                  mutation_p_swap_subtree: float = 0.05,
                  mutation_p_mutate_oscillators: float = 0.05,
                  mutation_p_mutate_oscillator: float = 0.05,
@@ -33,6 +34,7 @@ class DirectTreeGenotypeConfig(object):
         self.mutation: DirectTreeMutationConfig = DirectTreeMutationConfig(
             p_duplicate_subtree=mutation_p_duplicate_subtree,
             p_delete_subtree=mutation_p_delete_subtree,
+            p_generate_subtree=mutation_p_generate_subtree,
             p_swap_subtree=mutation_p_swap_subtree,
             p_mutate_oscillators=mutation_p_mutate_oscillators,
             p_mutate_oscillator=mutation_p_mutate_oscillator,
@@ -60,6 +62,7 @@ class RandomGenerateConfig:
 class DirectTreeMutationConfig:
     def __init__(self,
                  p_delete_subtree,
+                 p_generate_subtree,
                  p_swap_subtree,
                  p_duplicate_subtree,
                  p_mutate_oscillators,
@@ -68,6 +71,7 @@ class DirectTreeMutationConfig:
                  mutate_oscillator_period_sigma,
                  mutate_oscillator_phase_sigma,
                  ):
+        self.p_generate_subtree: float = p_generate_subtree
         self.p_duplicate_subtree: float = p_duplicate_subtree
         self.p_delete_subtree: float = p_delete_subtree
         self.p_swap_subtree: float = p_swap_subtree

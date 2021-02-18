@@ -8,7 +8,8 @@ from pyrevolve.revolve_bot import RevolveModule
 def recursive_iterate_modules(module: RevolveModule,
                               parent: Optional[RevolveModule] = None,
                               parent_slot: Optional[int] = None,
-                              depth: int = 1) \
+                              depth: int = 1,
+                              include_none_child: bool = False) \
         -> Iterable[Tuple[Optional[RevolveModule], Optional[int], RevolveModule, int]]:
     """
     Iterate all modules, depth search first, yielding parent, parent slot, module and depth, starting from root_depth=1.
@@ -17,13 +18,14 @@ def recursive_iterate_modules(module: RevolveModule,
     :param parent: for internal recursiveness, parent module. leave default
     :param parent_slot: for internal recursiveness, parent module slot. leave default
     :param depth: for internal recursiveness, depth of the module passed in. leave default
+    :param include_none_child: if to include also None modules (consider empty as leaves)
     :return: iterator for all modules with (parent, parent_slot, module, depth)
     """
-    assert module is not None
-    for slot, child in module.iter_children():
-        if child is not None:
-            for _next in recursive_iterate_modules(child, module, slot, depth+1):
-                yield _next
+    if module is not None:
+        for slot, child in module.iter_children():
+            if include_none_child or child is not None:
+                for _next in recursive_iterate_modules(child, module, slot, depth+1):
+                    yield _next
     yield parent, parent_slot, module, depth
 
 

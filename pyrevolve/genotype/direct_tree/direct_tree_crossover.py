@@ -6,6 +6,7 @@ from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotype
 from pyrevolve.genotype.direct_tree.direct_tree_utils import recursive_iterate_modules, subtree_size, duplicate_subtree
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
 from pyrevolve.revolve_bot import RevolveModule
+from pyrevolve.revolve_bot.revolve_module import Orientation, CoreModule
 
 
 def crossover(parent_a: DirectTreeGenotype,
@@ -26,12 +27,15 @@ def crossover(parent_a: DirectTreeGenotype,
     :return: New genotype
     """
     parent_a_size = subtree_size(parent_a.representation)
-    child = parent_a.clone()
-    module_list_a: List[Tuple[RevolveModule, int, RevolveModule]] = []
-    for module_parent, module_parent_slot, module, depth in recursive_iterate_modules(child.representation):
-        if module_parent is None:
-            continue
-        module_list_a.append((module_parent, module_parent_slot, module))
+    genotype_child = parent_a.clone()
+    empty_slot_list_a: List[Tuple[RevolveModule, int, RevolveModule]] = []  # parent, slot, child
+    for _, _, module, _ in recursive_iterate_modules(genotype_child.representation):
+        for slot, child in module.iter_children():
+            # allow back connection only for core block, not others
+            _slot = Orientation(slot)
+            if _slot is Orientation.BACK and not isinstance(child, CoreModule):
+                continue
+            empty_slot_list_a.append((module, slot, child))
 
     module_list_b: List[Tuple[RevolveModule, int]] = []
     for module_parent, _, module, _ in recursive_iterate_modules(parent_b.representation):
@@ -44,7 +48,7 @@ def crossover(parent_a: DirectTreeGenotype,
     n_tries = 100
     while not crossover_point_found and n_tries > 0:
         n_tries -= 1
-        module_parent_a, module_parent_a_slot, module_a = random.choice(module_list_a)
+        module_parent_a, module_parent_a_slot, module_a = random.choice(empty_slot_list_a)
         module_a_size = subtree_size(module_a)
 
         def compatible(module_b: RevolveModule, module_b_size: int) -> bool:
@@ -63,6 +67,8 @@ def crossover(parent_a: DirectTreeGenotype,
     if not crossover_point_found:
         print(f'Crossover between genomes {parent_a.id} and {parent_b.id} was not successful after 100 trials,'
               f' returning a clone of {parent_a.id} unchanged', file=sys.stderr)
+    else:
+        print(f'Removing {module_a_size} modules and adding {subtree_size(module_b)} modules')
 
-    child.id = new_id
-    return child
+    genotype_child.id = new_id
+    return genotype_child

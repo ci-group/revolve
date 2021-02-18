@@ -107,7 +107,11 @@ class DirectTreeGenotype(Genotype):
         return brain
 
     def random_initialization(self):
-        self.representation = direct_tree_random_generator.generate_tree(self.representation, config=self.conf)
+        self.representation = direct_tree_random_generator.generate_tree(self.representation,
+                                                                         max_parts=self.conf.max_parts,
+                                                                         n_parts_mu=self.conf.init.n_parts_mu,
+                                                                         n_parts_sigma=self.conf.init.n_parts_sigma,
+                                                                         config=self.conf)
         return self
 
     def mutate(self):
