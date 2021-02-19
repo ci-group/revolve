@@ -9,10 +9,15 @@ from pyrevolve.revolve_bot import RevolveModule
 from pyrevolve.revolve_bot.revolve_module import Orientation, CoreModule
 
 
+def crossover_list(parents: List[DirectTreeGenotype], conf: DirectTreeGenotypeConfig):
+    assert len(parents) == 2
+    return crossover(parents[0], parents[1], conf, None)
+
+
 def crossover(parent_a: DirectTreeGenotype,
               parent_b: DirectTreeGenotype,
               conf: DirectTreeGenotypeConfig,
-              new_id: int) \
+              new_id: int = -1) \
         -> DirectTreeGenotype:
     """
     Performs actual crossover between two robot trees, parent_a and parent_b. This

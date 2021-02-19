@@ -23,7 +23,7 @@ from .measure.measure_brain import MeasureBrain
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Optional, AnyStr, Union, Dict
+    from typing import Optional, AnyStr, Union, Dict, Iterable
     from .revolve_module import RevolveModule
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 
@@ -276,7 +276,7 @@ class RevolveBot:
 
             self._update_substrate(raise_for_intersections, module, slot_rotation, substrate_coordinates_map)
 
-    def iter_all_elements(self) -> RevolveModule:
+    def iter_all_elements(self) -> Iterable[RevolveModule]:
         to_process = deque([self._body])
         while len(to_process) > 0:
             elem: RevolveModule = to_process.popleft()

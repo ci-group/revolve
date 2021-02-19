@@ -133,7 +133,8 @@ class Population:
         recovered_individuals = [] if recovered_individuals is None else recovered_individuals
 
         for i in range(self.config.population_size-len(recovered_individuals)):
-            individual = self._new_individual(self.config.genotype_constructor(self.config.genotype_conf, self.next_robot_id))
+            new_genotype = self.config.genotype_constructor(self.config.genotype_conf, self.next_robot_id)
+            individual = self._new_individual(new_genotype)
             self.individuals.append(individual)
             self.next_robot_id += 1
 

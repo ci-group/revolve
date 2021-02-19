@@ -14,7 +14,7 @@ from pyrevolve.revolve_bot.revolve_module import CoreModule
 
 class DirectTreeGenotype(Genotype):
 
-    def __init__(self, conf: DirectTreeGenotypeConfig, robot_id: Optional[int]):
+    def __init__(self, conf: DirectTreeGenotypeConfig, robot_id: Optional[int], random_init=True):
         """
         :param conf: configurations for l-system
         :param robot_id: unique id of the robot
@@ -24,7 +24,13 @@ class DirectTreeGenotype(Genotype):
         assert robot_id is None or str(robot_id).isdigit()
         self.id: int = int(robot_id) if robot_id is not None else -1
 
-        self.representation: CoreModule = CoreModule()
+        if random_init:
+            assert robot_id is not None
+            assert conf is not None
+            self.representation: CoreModule = CoreModule()
+            self.random_initialization()
+        else:
+            self.representation = None
 
         # Auxiliary variables
         self.valid: bool = False
@@ -35,7 +41,7 @@ class DirectTreeGenotype(Genotype):
         # Cannot use deep clone for this genome, because it is bugged sometimes
         _id = self.id if self.id >= 0 else None
 
-        other = DirectTreeGenotype(self.conf, _id)
+        other = DirectTreeGenotype(self.conf, _id, random_init=False)
         other.valid = self.valid
         other.representation = duplicate_subtree(self.representation)
 

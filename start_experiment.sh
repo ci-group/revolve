@@ -5,9 +5,9 @@ set -x
 runs=10
 runs_start=0
 start_port=15000
-exp_name=expHeritability
+exp_name=expHeritabilityDirect
 log_suffix='_tenebra'
-manager=experiments/heritability/manager.py
+manager=experiments/heritability/manager_direct.py
 
 for i in $(seq $runs)
 do
