@@ -5,8 +5,8 @@ require('magick')
 ##### change paths/labels/params here #####
 
 
-paths = c('hyper3',
-          'plast3' )
+paths = c('plasticodingrep',
+          'hyperplasticodingrep' )
 
 environments = list(
   c( 'plane') ,
@@ -16,13 +16,14 @@ environments = list(
 colors = list( c( '#ffffff'),
                c('#ffffff') )
 
-base_directory <- paste('data/', sep='')
+base_directory <- 'consolidated_files/'
+base_directory2 = 'lsystem_cppn_2/'
 
-analysis = 'analysis'
+analysis = 'images'
 
-runs = list( c(1:1), c(1:1))
+runs = list( c(1:20), c(1:20))
 pop = 100
-num_top = 3
+num_top = 1
 
 gens = c(149)
 criteria = c('desc')
@@ -41,7 +42,7 @@ for(m in 1:length(paths))
   # for each repetition
   for (exp in runs[[m]])
   {
-    input_directory2  <-    paste(base_directory, paths[m],'_',exp, '/selectedpop_', sep='')
+    input_directory2  <-    paste(base_directory2, paths[m],'_',exp, '/selectedpop_', sep='')
     
     # highest in criteria in gen
     for (g in 1:length(gens))

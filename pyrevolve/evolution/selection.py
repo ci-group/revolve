@@ -57,11 +57,7 @@ def ranking_selection(old_population, offspring, environment):
     ranked_population = sorted(population, key=lambda x: x[environment].fitness)
 
     def linear_ranking(_rank, pop_size):
-        if _rank == 0:
-            return 0
-        else:
-            rank_range = sum(list(range(0, pop_size , 1)))
-            return _rank / rank_range
+        return _rank / (pop_size-1)
 
     probabilities = []
     for rank, individual in enumerate(ranked_population):
@@ -70,7 +66,37 @@ def ranking_selection(old_population, offspring, environment):
 
     selected_offspring = []
     for individual in offspring:
-        if individual[environment].early_survival_probability >= random.uniform(min(probabilities), max(probabilities)):
+        if individual[environment].early_survival_probability >= random.uniform(0, 1):
             selected_offspring.append(individual)
 
     return selected_offspring
+
+
+# def ranking_selection(old_population, offspring, environment):
+#
+#     old_pop_filtered = [individual for individual in old_population
+#                         if individual[environment].fitness is not None]
+#     offspring_filtered = [individual for individual in offspring
+#                           if individual[environment].fitness is not None]
+#     population = old_pop_filtered + offspring_filtered
+#
+#     ranked_population = sorted(population, key=lambda x: x[environment].fitness)
+#
+#     def linear_ranking(_rank, pop_size):
+#         if _rank == 0:
+#             return 0
+#         else:
+#             rank_range = sum(list(range(0, pop_size , 1)))
+#             return _rank / rank_range
+#
+#     probabilities = []
+#     for rank, individual in enumerate(ranked_population):
+#         individual[environment].early_survival_probability = linear_ranking(rank, len(ranked_population))
+#         probabilities.append(individual[environment].early_survival_probability)
+#
+#     selected_offspring = []
+#     for individual in offspring:
+#         if individual[environment].early_survival_probability >= random.uniform(min(probabilities), max(probabilities)):
+#             selected_offspring.append(individual)
+#
+#     return selected_offspring

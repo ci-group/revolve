@@ -80,6 +80,8 @@ def diverse_cppn_output(behavioural_measurements, robot):
 
     dev = statistics.stdev(values)
     suma = sum(values)
+
+    # relative to body size, so that the magnitude of the deviation wont matter
     if dev > 0:
         value = (1/dev)*suma
     #TODO: remove useless clause
@@ -87,8 +89,7 @@ def diverse_cppn_output(behavioural_measurements, robot):
         value = 0
     else:
         value = 1 * suma
-    print(values)
-    print(value)
+
     return value
 
 

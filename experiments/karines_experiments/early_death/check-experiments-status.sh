@@ -2,7 +2,7 @@
 
 runs=20
 final_gen=199
-experiments=("plane-death" "tilted-death")
+experiments=("planedeath" "tilteddeath")
 
 
 for i in $(seq $runs)

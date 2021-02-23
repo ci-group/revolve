@@ -8,7 +8,7 @@ set -x
 runs=20
 runs_start=0
 
-experiments_path=karines_experiments/data/lsystem_cppn/
+experiments_path=karines_experiments/data/lsystem_cppn_2/
 managers_path=experiments/karines_experiments/
 
 # TODO: get experiments length instead

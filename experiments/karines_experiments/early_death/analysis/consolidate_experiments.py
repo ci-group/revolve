@@ -8,12 +8,12 @@ import sys
 dirpath = '/storage/karine/early_death/'
 
 experiments_type = [
-      'plane-death',
-      'tilted-death'
+      'planedeath',
+      'tilteddeath'
 ]
 environments = {
-  'plane-death': ['plane', 'tilted5'],
-  'tilted-death': ['plane', 'tilted5']
+  'planedeath': ['plane', 'tilted5'],
+  'tilteddeath': ['plane', 'tilted5']
                  }
 
 runs = range(1, 20+1)

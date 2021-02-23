@@ -27,9 +27,9 @@ async def run():
     """
 
     # environment world and z-start
-    realtime = False
-    environments = {'plane': 0.03#,
-                    #'tilted5': 0.1
+    realtime = True
+    environments = {'plane': 0.03,
+                    'tilted5': 0.1
                     }
 
     settings = parser.parse_args()
@@ -92,8 +92,8 @@ async def run():
     population = Population(population_conf, simulator_queue, analyzer_queue, 1)
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
-    generation = 149
-    max_best = 100
+    generation = 199
+    max_best = 3
     await population.load_snapshot(generation)
 
     values = []

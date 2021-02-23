@@ -8,13 +8,14 @@ require('magick')
 
 #### CHANGE THE PARAMETERS HERE ####
 
-base_directory <-paste('data', sep='')
+base_directory <-paste('/storage/karine/lsystem_cppn/consolidated_files', sep='')
+base_directory2 <-paste('/storage/karine/lsystem_cppn/lsystem_cppn_2', sep='')
 
-analysis = 'analysis'
+analysis = 'cubes'
 output_directory = paste(base_directory,'/',analysis ,sep='')
 
-experiments_type = c('plast3', 'hyper3')
-runs = list(c(1:1),c(1:1))
+experiments_type = c('plasticodingrep', 'hyperplasticodingrep')
+runs = list(c(1:20), c(1:20))
 environments = list( c( 'plane'),c( 'plane') )
 
 max_gen = 49
@@ -82,7 +83,7 @@ for (exp in 1:length(experiments_type))
         for (r in 1:nrow(top_bins_robots))
         {
 
-          patha = paste(base_directory, '/',experiments_type[exp],'_',run, "/data_fullevolution/", environments[[exp]][env], "/phenotype_images", sep='')
+          patha = paste(base_directory2, '/',experiments_type[exp],'_',run, "/data_fullevolution/", environments[[exp]][env], "/phenotype_images", sep='')
           body = list.files(patha, paste("body_robot_", top_bins_robots$robot_id[r],".png",sep=""), full.names = TRUE)
           body = image_read(body)
           body = image_scale(body, "100x100")

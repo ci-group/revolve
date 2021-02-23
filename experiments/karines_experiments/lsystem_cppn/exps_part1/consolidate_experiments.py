@@ -5,7 +5,7 @@ import sys
 # set these variables according to your experiments #
 
 # run from karine_experiments
-dirpath = 'data/lsystem_cppn/'
+dirpath = '/storage/karine/lsystem_cppn/lsystem_cppn_1/'
 
 experiments_type = [
       'hyperplasticoding',

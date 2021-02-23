@@ -8,7 +8,7 @@ num_terminals=8
 start_port=8000
 experiments=("plasticoding-rep" "hyperplasticoding-rep")
 managers_sulfix=("_speed" "_speed")
-experiments_path=karines_experiments/data/lsystem_cppn/
+experiments_path=karines_experiments/data/lsystem_cppn_2/
 managers_path=experiments/karines_experiments/lsystem_cppn/exps_part2/
 
 while true

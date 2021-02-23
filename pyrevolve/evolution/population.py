@@ -563,8 +563,12 @@ class Population:
         # for the sake of simplicity all fitness were calculated already
         # so non-surviving individuals will have their fitness calculations for the second season wasted
         if self.conf.all_settings.early_death:
-            individuals_survived = ranking_selection(self.individuals, new_individuals,
-                                                     environment=list(self.conf.environments.keys())[-1])
+
+            individuals_survived = []
+            for i, environment in enumerate(self.conf.environments):
+                if i == 0:
+                    individuals_survived = ranking_selection(self.individuals, new_individuals, environment=environment)
+
             self.conf.experiment_management.export_early_death(str(gen_num), str(len(individuals_survived)))
 
             selection_pool = self.individuals + individuals_survived

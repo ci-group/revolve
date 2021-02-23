@@ -13,14 +13,14 @@ library(viridis)
 
 #### CHANGE THE PARAMETERS HERE ####
 
-base_directory <-paste('lsystem_cppn', sep='')
-analysis = 'analysis'
+base_directory <-paste('consolidated_files', sep='')
+analysis = 'analysis_2_hyper'
 output_directory = paste(base_directory,'/',analysis ,sep='')
 
 experiments_type = c('hyperplasticoding',
-                     'plasticoding')
-experiments_labels = c( 'hyperplasticoding',
-                        'plasticoding')
+                     'hyperplasticodingrep')
+experiments_labels = c( 'Experiment 1',
+                        'Experiment 2')
 runs = list(c(1:20),
             c(1:20))
 environments = list( c( 'plane'),
@@ -28,8 +28,8 @@ environments = list( c( 'plane'),
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
-methods_labels = c('CPPN',
-                   'L-System')
+methods_labels = c('Experiment 1',
+                   'Experiment 2')
 experiments_type_colors = c('#EE8610', # orange
                             '#009900') # green
 
@@ -39,8 +39,8 @@ aggregations = c( 'Q25', 'median', 'Q75')
 gens = 150
 pop = 100
 
-#gens_box_comparisons = c(gens-1)
-gens_box_comparisons = c(0, 49, 149)
+gens_box_comparisons = c(gens-1)
+
 
 measures_names = c(
   'displacement_velocity_hill',
@@ -62,19 +62,19 @@ measures_names = c(
   #'width',
   #'height',
   'absolute_size',
-  'sensors',
-  'symmetry',
-  'avg_period',
-  'dev_period',
-  'avg_phase_offset',
-  'dev_phase_offset',
-  'avg_amplitude',
-  'dev_amplitude',
-  'avg_intra_dev_params',
-  'avg_inter_dev_params',
-  'sensors_reach',
-  'recurrence',
-  'synaptic_reception'
+  #'sensors',
+  'symmetry'#,
+  #'avg_period',
+  #'dev_period',
+  #'avg_phase_offset',
+  #'dev_phase_offset',
+  #'avg_amplitude',
+  #'dev_amplitude',
+  #'avg_intra_dev_params',
+  #'avg_inter_dev_params',
+  #'sensors_reach',
+  #'recurrence',
+  #'synaptic_reception'
 )
 
 # add proper labels soon...
@@ -98,19 +98,19 @@ measures_labels = c(
   #'width',
   #'height',
   'Size',
-  'Sensors',
-  'Symmetry',
-  'Average Period',
-  'Dev Period',
-  'Avg phase offset',
-  'Dev phase offset',
-  'Avg Amplitude',
-  'Dev amplitude',
-  'Avg intra dev params',
-  'Avg inter dev params',
-  'Sensors Reach',
-  'Recurrence',
-  'Synaptic reception'
+  #'Sensors',
+  'Symmetry'#,
+  #'Average Period',
+  #'Dev Period',
+  #'Avg phase offset',
+  #'Dev phase offset',
+  #'Avg Amplitude',
+  #'Dev amplitude',
+  #'Avg intra dev params',
+  #'Avg inter dev params',
+  #'Sensors Reach',
+  #'Recurrence',
+  #'Synaptic reception'
 )
 
 more_measures_names = c(
@@ -188,130 +188,7 @@ for( m in 1:length(more_measures_names)){
 }
 
 
-#####
-# heatmap
-all_runs = FALSE
-random_runs = paste('(', paste(sample(runs[[1]], 3), collapse=', ' ), ')')
 
-
-for (i in 1:length(measures_names)){
-
-  query = paste("select method_label,'Run '||run as run, generation, robot_id, ",
-                measures_names[i]," as value from measures_snapshots_all ")
-  if (!all_runs){
-    query = paste(query, "where run in ",random_runs)
-  }
-
-  measures_heat = sqldf(query)
-  measures_heat = measures_heat %>%
-    group_by(method_label, run, generation) %>%
-    mutate(rank = order(order(value)))
-
-  heat <-ggplot(measures_heat, aes(generation, rank, fill=value))+
-    geom_tile(color= "white",size=0.1)+
-    scale_fill_viridis(option ="C")
-  heat <-heat + facet_grid(method_label~run)
-  heat <-heat + scale_y_continuous(breaks =c())
-  heat <-heat + scale_x_continuous(breaks =c(0, 50, 149))
-  heat <-heat + labs(title=measures_labels[i], x="Generations", y="Robots", fill=measures_labels[i])
-  heat <-heat + theme(legend.position = "none")+
-    theme(legend.key.size = unit(1.5, 'cm'))+
-    theme(plot.title=element_text(size=37))+
-    theme(axis.text.y=element_text(size=31)) +
-    theme(axis.text.x=element_text(size=28)) +
-    theme(axis.title=element_text(size=35)) +
-    theme(strip.text.y=element_text(size=38)) +
-    theme(strip.text.x=element_text(size=30)) +
-    theme(strip.background = element_rect(colour="white"))+
-    theme(plot.title=element_text(hjust=0))+
-    theme(axis.ticks=element_blank())+
-    theme(legend.title=element_text(size=36))+
-    theme(legend.text=element_text(size=36))#+
-  #removeGrid()
-
-  if (!all_runs){
-    ggsave(paste(output_directory,"/",measures_names[i],"_heat.png",sep = ""), heat, device = "png", height=10, width = 20)
-  }else{
-    ggsave(paste(output_directory,"/",measures_names[i],"_heat.png",sep = ""), heat, device = "png", height=10, width = 140, limitsize = FALSE)
-  }
-
-}
-
-
-####
-
-# density maps
-
-#pairs = list(
- # c('head_balance', 'limbs') ,
- # c('head_balance', 'symmetry') ,
- # c('head_balance', 'proportion'),
- # c('displacement_velocity_hill', 'limbs') ,
- # c('displacement_velocity_hill', 'symmetry') ,
- # c('displacement_velocity_hill', 'proportion'),
-  #c('displacement_velocity_hill', 'head_balance' )
-  #)
-
-#for (pair in 1:length(pairs))
- # {
-
-  #measures_snapshots_all_final = sqldf(paste("select method_label, ",
-       #                                      pairs[[pair]][1],",",
-        #                                     pairs[[pair]][2],"
-                   #                          from measures_snapshots_all where generation=", gens-1) )
-
-  #graph <- ggplot(measures_snapshots_all_final, aes_string(x=pairs[[pair]][1], y=pairs[[pair]][2]))+
-  #  geom_density_2d(aes(colour = method_label ), alpha=0.7, size=3 )+
-  #  scale_color_manual(values = experiments_type_colors )+
-  #  labs( x = pairs[[pair]][1], y= pairs[[pair]][2] )+
-  #  theme(legend.position="bottom" ,   axis.text=element_text(size=21),axis.title=element_text(size=22),  plot.subtitle=element_text(size=25 ))
-  #ggsave(paste( output_directory ,'/density_',pairs[[pair]][1],'_', pairs[[pair]][2],'.png',  sep=''), graph , device='png', height = 6, width = 6)
-
-
-  #graph = ggplot(measures_snapshots_all_final, aes_string(x=pairs[[pair]][1], y=pairs[[pair]][2], colour="method_label"))+
-   # geom_point(alpha=0.7, size=3)+
-   ## labs(x=pairs[[pair]][1], y=pairs[[pair]][2])+
-   # theme(legend.position="bottom" ,   axis.text=element_text(size=21),axis.title=element_text(size=22),  plot.subtitle=element_text(size=25 )) +
-   # scale_color_manual(values = experiments_type_colors )
-  #ggsave(paste( output_directory ,'/scatter_',pairs[[pair]][1],'_', pairs[[pair]][2],'.png',  sep=''), graph , device='png', height = 6, width = 6)
-
-
-#}
-
-pairs = list(
-  c('head_balance', 'limbs', 0.6, 1, 0, 1) ,
-  c('head_balance', 'symmetry', 0.6, 1, 0, 1) ,
-  c('head_balance', 'proportion', 0.6, 1, 0, 1),
-  c('displacement_velocity_hill', 'limbs', 0, 8, 0, 1) ,
-  c('displacement_velocity_hill', 'symmetry', 0, 8, 0, 1) ,
-  c('displacement_velocity_hill', 'proportion', 0, 8, 0, 1),
-  c('displacement_velocity_hill', 'head_balance', 0, 8, 0.6, 1)
-)
-
-for (pair in 1:length(pairs))
-{
-
-  for (met in 1:length(methods))
-  {
-    measures_snapshots_all_final = sqldf(paste("select method, ",
-                                               pairs[[pair]][1],",",
-                                               pairs[[pair]][2],"
-                                               from measures_snapshots_all where generation=", gens-1,
-                                               " and method='", methods[met], "'", sep='') )
-
-    graph <- ggplot(measures_snapshots_all_final, aes_string(x=pairs[[pair]][1], y=pairs[[pair]][2]))+
-      geom_density_2d(aes(colour = method ), alpha=0.7, size=3 )+
-      scale_color_manual(values = experiments_type_colors[met] )+
-      labs( x = pairs[[pair]][1], y= pairs[[pair]][2] )+
-      theme(legend.position="none" ,   axis.text=element_text(size=21),axis.title=element_text(size=22),  plot.subtitle=element_text(size=25 )) +
-      coord_cartesian(xlim = c( as.numeric(pairs[[pair]][3]),  as.numeric(pairs[[pair]][4])),
-                      ylim = c( as.numeric(pairs[[pair]][5]),  as.numeric(pairs[[pair]][6])))
-    ggsave(paste( output_directory ,'/density_',methods[met],'_',pairs[[pair]][1],'_', pairs[[pair]][2],'.png',  sep=''), graph , device='png', height = 6, width = 6)
-  }
-}
-
-
-###
 
 measures_averages_gens_1 = list()
 measures_averages_gens_2 = list()
@@ -403,20 +280,6 @@ for (i in 1:length(measures_names))
 
   #  line plots
 
-
-  # finding values for scaling
-  max_y =  0
-  min_y = 10000000
-  for(a in 1:length(aggregations)){
-    for(m in 1:length(methods)){
-      max_value = max(measures_averages_gens[paste(methods[m],'_',measures_names[i],'_', aggregations[a], '_Q75',sep='')], na.rm = TRUE)
-      min_value = min(measures_averages_gens[paste(methods[m],'_',measures_names[i],'_', aggregations[a], '_Q25',sep='')], na.rm = TRUE)
-      if(max_value > max_y){ max_y = max_value }
-      if(min_value < min_y){ min_y = min_value }
-    }
-  }
-  #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
-
   for(a in 1:length(aggregations)){
 
     graph <- ggplot(data=measures_averages_gens, aes(x=generation))
@@ -436,9 +299,7 @@ for (i in 1:length(measures_names))
       }
     }
 
-    if (max_y>0) {
-      graph = graph + coord_cartesian(ylim = c(min_y, max_y))
-    }
+
     graph = graph  +  labs(y=measures_labels[i], x="Generation", title="")
 
     graph = graph +   scale_color_manual(values=experiments_type_colors)
@@ -501,6 +362,25 @@ for (i in 1:length(measures_names))
 
         # in this list, use the desired pairs names from methods_labels
         comps = list( methods_labels )
+
+        max_y =  0
+        if (measures_names[i] == 'displacement_velocity_hill' )  {
+          min_y = 0
+          max_y = 7.9}
+        if (measures_names[i] == 'absolute_size' )  {
+          min_y = 13
+          max_y = 39}
+        if (measures_names[i] == 'limbs' )  {
+          min_y = 0.05
+          max_y = 0.62}
+        if (measures_names[i] == 'proportion' )  {
+          min_y = 0
+          max_y = 1.1}
+
+
+        if (max_y>0) {
+          g1 = g1 + coord_cartesian(ylim = c(min_y, max_y))
+        }
 
         g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=18,
                                comparisons = comps,

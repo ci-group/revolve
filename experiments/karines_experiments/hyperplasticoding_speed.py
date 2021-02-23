@@ -7,12 +7,12 @@ from pyrevolve.evolution.selection import multiple_selection, tournament_selecti
 from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
-from pyrevolve.genotype.plasticoding.initialization import random_initialization
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+from pyrevolve.genotype.hyperplasticoding_v2.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.hyperplasticoding_v2.crossover.standard_crossover import standard_crossover
+from pyrevolve.genotype.hyperplasticoding_v2.initialization import random_initialization
+from pyrevolve.genotype.hyperplasticoding_v2.mutation.mutation import MutationConfig
+from pyrevolve.genotype.hyperplasticoding_v2.mutation.standard_mutation import standard_mutation
+from pyrevolve.genotype.hyperplasticoding_v2.hyperplasticoding import HyperPlasticodingConfig
 from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
@@ -26,15 +26,13 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 200
-    population_size = 100
-    offspring_size = 100
-    front = 'slaves'
+    num_generations = 1#150
+    population_size = 100#100
+    offspring_size = 10#50
+    front = 'none'
 
     # environment world and z-start
-    environments = {'plane': 0.03,
-                    'tilted5': 0.1
-                    }
+    environments = {'plane': 0.03 }
 
     # calculation of the measures can be on or off, because they are expensive
     novelty_on = {'novelty': False,
@@ -45,25 +43,27 @@ async def run():
                                'coverage',
                                'joints',
                                'proportion',
-                               'size',
                                'symmetry']
                   }
 
-    # novelty used 'branching', 'limbs','length_of_limbs','coverage','joints','proportion', 'symmetry', 'sensors','size'
+    cppn_config_path = 'pyrevolve/genotype/hyperplasticoding_v2/config-nonplastic'
 
-    genotype_conf = PlasticodingConfig(
-        max_structural_modules=15,
-        plastic=True,
+    genotype_conf = HyperPlasticodingConfig(
+        plastic=False,
+        cppn_config_path=cppn_config_path
     )
 
     mutation_conf = MutationConfig(
         mutation_prob=0.8,
         genotype_conf=genotype_conf,
+        cppn_config_path=cppn_config_path
     )
 
     crossover_conf = CrossoverConfig(
-        crossover_prob=0.8,
+        crossover_prob=0,
+        cppn_config_path=cppn_config_path
     )
+
     # experiment params #
 
     # Parse command line / file input arguments
@@ -72,12 +72,12 @@ async def run():
     experiment_management = ExperimentManagement(settings, environments)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
+
     logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
 
     if do_recovery:
         gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size,
                                                                                           offspring_size)
-
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
             return
@@ -88,8 +88,7 @@ async def run():
     def fitness_function_plane(measures, robot):
         return fitness.displacement_velocity_hill(measures, robot)
 
-    fitness_function = {'plane': fitness_function_plane,
-                        'tilted5': fitness_function_plane} # same function
+    fitness_function = {'plane': fitness_function_plane}
 
     population_conf = PopulationConfig(
         population_size=population_size,
