@@ -31,8 +31,6 @@
 #include <revolve/brains/learner/HyperNEAT.h>
 #include <multineat/Genome.h>
 #include <multineat/Population.h>
-#include <revolve/brains/controller/IMC/IMC.h>
-#include <torch/torch.h>
 
 #include "RobotController.h"
 
@@ -216,7 +214,6 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
     auto brain_sdf = _sdf->GetElement("rv:brain");
     auto controller_type = brain_sdf->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
-//    auto IMC_params = brain_sdf->GetElement("rv:IMC")->GetElement("rv:params");
     auto learner_type = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
     std::cout << "Loading controller " << controller_type << " and learner " << learner_type << std::endl;
 
@@ -252,24 +249,6 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
         controller = std::make_unique<DifferentialCPPNCPG>(brain_sdf, motors_);
     } else {
         throw std::runtime_error("Robot brain: Controller \"" + controller_type + "\" is not supported.");
-    }
-
-    sdf::ElementPtr IMC_sdf = brain_sdf->GetElement("rv:IMC");
-    if( (IMC_sdf->GetAttribute("active")->GetAsString()) == "1"){
-        std::cout << "Initializing IMC" << std::endl;
-        // ================= INITIALIZE IMC ====================
-        IMC::IMCParams imc_params = IMC::IMCParams();
-        imc_params.restore_checkpoint = (IMC_sdf->GetAttribute("restore_checkpoint")->GetAsString() == "1");
-        imc_params.save_checkpoint = (IMC_sdf->GetAttribute("save_checkpoint")->GetAsString() == "1");
-        imc_params.learning_rate = stod(IMC_sdf->GetAttribute("learning_rate")->GetAsString());
-        imc_params.beta1 = stod(IMC_sdf->GetAttribute("beta1")->GetAsString());
-        imc_params.beta2 = stod(IMC_sdf->GetAttribute("beta2")->GetAsString());
-        imc_params.weight_decay = stod(IMC_sdf->GetAttribute("weight_decay")->GetAsString());
-        imc_params.model_name = this->model_->GetName();
-
-        std::cout<<"IMC Parameters: lr:"<< imc_params.learning_rate<<", beta1:"  << imc_params.beta1<<", beta2:"  << imc_params.beta2<<", wd:" << imc_params.weight_decay << std::endl;
-        controller = std::make_unique<IMC>(std::move(controller), motors_, imc_params);
-        std::cout<<"IMC has been Loaded"<<std::endl;
     }
 
     // SELECT LEARNER ---------------------------------------------------------
