@@ -10,7 +10,11 @@ set(LEARNER_SRCS
     learner/Learner.cpp
     learner/BayesianOptimizer.cpp
     learner/HyperNEAT.cpp
-)
+    learner/EA.cpp
+    learner/NIPES.cpp
+    learner/DifferentialEvo.cpp
+        learner/EA_misc/RandNum.cpp
+        learner/EA_misc/Novelty.cpp)
 
 # PKG-CONFIG
 find_package(PkgConfig REQUIRED)
@@ -21,6 +25,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 # Find Eigen3 - A lightweight C++ template library for vector and matrix math
 find_package(Eigen3 REQUIRED)
 find_package(MultiNEAT REQUIRED)
+find_package(libcmaes REQUIRED)
 
 # These dependencies are required for the AngleToTargetDetector Sensor
 find_package(OpenCV REQUIRED)
@@ -48,12 +53,15 @@ target_include_directories(revolve-learners
         PUBLIC ${NLOpt_INCLUDE_DIRS})
 
 target_compile_definitions(revolve-learners
-        PUBLIC USE_NLOPT=1)
+        PUBLIC USE_NLOPT=1
+        PUBLIC CMAES)
 
 target_link_libraries(revolve-controllers
         PUBLIC MultiNEAT::MultiNEAT
         ${OpenCV_LIBS}
-        PUBLIC torch)
+        PUBLIC torch
+        PUBLIC libcmaes::cmaes
+        )
 
 target_link_libraries(revolve-learners
         revolve-controllers
@@ -62,17 +70,3 @@ target_link_libraries(revolve-learners
 install(TARGETS revolve-controllers revolve-learners
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
-
-if (${CUDA})
-#    set(Torch_DIR "/home/fuda/Projects/pytorch/libtorch_cuda/share/cmake/Torch")
-    set(Torch_DIR "${CMAKE_SOURCE_DIR}/thirdparty/libtorch/share/cmake/Torch")
-else ()
-#    set(Torch_DIR "/home/fuda/Projects/pytorch/libtorch/share/cmake/Torch")
-    set(Torch_DIR "${CMAKE_SOURCE_DIR}/thirdparty/libtorch/share/cmake/Torch")
-endif()
-
-find_package(Torch REQUIRED)
-target_include_directories(revolve-controllers
-        PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/libtorch/include/torch/csrc/api/include/)
-target_include_directories(revolve-controllers
-        PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/libtorch/include/)

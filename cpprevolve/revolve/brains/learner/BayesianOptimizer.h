@@ -20,7 +20,8 @@ public:
             Evaluator *evaluator,
             EvaluationReporter *reporter,
             double evaluation_time,
-            unsigned int n_learning_evalutions);
+            unsigned int n_learning_evaluations,
+            const std::string& model_name);
 
     /// \brief Destructor
     ~BayesianOptimizer() = default;
@@ -97,5 +98,8 @@ protected:
 
     /// \brief Sample corresponding to best fitness
     Eigen::VectorXd best_sample;
+
+    /// \brief Output root directory
+    std::string output_dir;
 };
 }

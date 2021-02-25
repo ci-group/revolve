@@ -28,6 +28,8 @@ class Brain(object):
             brain = Brain()
 
         brain.learner = Learner.from_yaml(yaml_brain['learner'])
+        if 'IMC' in yaml_brain:
+            brain.IMC = brains.BrainIMC.from_yaml(yaml_brain['IMC'])
         return brain
 
     def to_yaml(self):

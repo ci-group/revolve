@@ -31,7 +31,7 @@ class Evaluator : public ::revolve::Evaluator
 public:
     /// \brief Constructor
     Evaluator(double _evaluationRate,
-              bool reset_robot_position = false,
+              bool reset_robot_position = true,
               const ::gazebo::physics::ModelPtr &robot = nullptr,
               double step_saving_rate = 0.1);
 
@@ -79,6 +79,7 @@ protected:
 
     const bool reset_robot_position;
     const boost::weak_ptr<::gazebo::physics::Model> robot;
+    std::string output_dir;
 };
 
 }

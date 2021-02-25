@@ -223,13 +223,13 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
     //TODO parameters from SDF
     const double evaluation_rate = 60.0;
-    const unsigned int n_learning_evaluations = 250;
+    const unsigned int n_learning_evaluations = 300;
 
     this->evaluator = std::make_unique<::revolve::gazebo::Evaluator>(evaluation_rate, true, this->model_);
 
     // aggregated reporter
     std::unique_ptr<AggregatedReporter> aggregated_reporter(new AggregatedReporter(this->model_->GetName()));
-    // std::cout reporter
+
     aggregated_reporter->create<::revolve::PrintReporter>();
     // gazebo network publisher reporter
     this->gazebo_reporter.reset(new GazeboReporter(aggregated_reporter->robot_id, this->node_));
@@ -248,17 +248,29 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
         }
     } else if ("cpg" == controller_type) {
         controller = std::make_unique<DifferentialCPG>(brain_sdf, motors_);
-    } else if ("cppn-cpg") {
+    } else if ("cppn-cpg" == controller_type) {
         controller = std::make_unique<DifferentialCPPNCPG>(brain_sdf, motors_);
     } else {
         throw std::runtime_error("Robot brain: Controller \"" + controller_type + "\" is not supported.");
     }
-    std::cout << "Initializing IMC" << std::endl;
-    // ================= INITIALIZE IMC ====================
-    IMC::IMCParams imc_params = IMC::IMCParams();
-    controller = std::make_unique<IMC>(std::move(controller), motors_, imc_params);
-    std::cout<<"IMC Parameters: lr:"<< imc_params.learning_rate<<", beta1:"  << imc_params.beta1<<", beta2:"  << imc_params.beta2<<", wd:" << imc_params.weight_decay << std::endl;
-    std::cout<<"IMC has been Loaded"<<std::endl;
+
+    sdf::ElementPtr IMC_sdf = brain_sdf->GetElement("rv:IMC");
+    if( IMC_sdf->GetAttribute("active")->GetAsString() == "1"){
+        std::cout << "Initializing IMC" << std::endl;
+        // ================= INITIALIZE IMC ====================
+        IMC::IMCParams imc_params = IMC::IMCParams();
+        imc_params.restore_checkpoint = (IMC_sdf->GetAttribute("restore_checkpoint")->GetAsString() == "1");
+        imc_params.save_checkpoint = (IMC_sdf->GetAttribute("save_checkpoint")->GetAsString() == "1");
+        imc_params.learning_rate = stod(IMC_sdf->GetAttribute("learning_rate")->GetAsString());
+        imc_params.beta1 = stod(IMC_sdf->GetAttribute("beta1")->GetAsString());
+        imc_params.beta2 = stod(IMC_sdf->GetAttribute("beta2")->GetAsString());
+        imc_params.weight_decay = stod(IMC_sdf->GetAttribute("weight_decay")->GetAsString());
+        imc_params.model_name = this->model_->GetName();
+
+        std::cout<<"IMC Parameters: lr:"<< imc_params.learning_rate<<", beta1:"  << imc_params.beta1<<", beta2:"  << imc_params.beta2<<", wd:" << imc_params.weight_decay << std::endl;
+        controller = std::make_unique<IMC>(std::move(controller), motors_, imc_params);
+        std::cout<<"IMC has been Loaded"<<std::endl;
+    }
 
     // SELECT LEARNER ---------------------------------------------------------
     if ("offline" == learner_type) {
@@ -275,7 +287,57 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
                 this->evaluator.get(),
                 this->reporter.get(),
                 evaluation_rate,
-                n_learning_evaluations);
+                n_learning_evaluations,
+                this->model_->GetName());
+    } else if ("nipes" == learner_type) {
+        NIPES::NIPES_Parameters params = NIPES::NIPES_Parameters();
+
+        EA::Parameters EA_params = EA::Parameters();
+        params.EA_params = EA_params;
+        params.EA_params.verbose = (brain_sdf->GetElement("rv:learner")->GetAttribute("verbose")->GetAsString() == "1");
+        params.EA_params.population_size = stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("population_size")->GetAsString());
+        params.EA_params.max_eval = std::min(int(n_learning_evaluations), stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("max_eval")->GetAsString()));
+
+        auto dist = std::bind(std::uniform_int_distribution<int>(),
+                              std::mt19937(std::random_device{}()));
+
+        learner = std::make_unique<NIPES>(
+                std::move(controller),
+                this->evaluator.get(),
+                this->reporter.get(),
+                params,
+                dist(),
+                evaluation_rate,
+                params.EA_params.max_eval,
+                this->model_->GetName());
+    } else if ("de"==learner_type) {
+        DifferentialEvo::DE_Parameters params = DifferentialEvo::DE_Parameters();
+        params.type = brain_sdf->GetElement("rv:learner")->GetAttribute("subtype")->GetAsString();
+        params.CR = stod(brain_sdf->GetElement("rv:learner")->GetAttribute("CR")->GetAsString());
+        params.F =  stod(brain_sdf->GetElement("rv:learner")->GetAttribute("F")->GetAsString());
+        params.n_parents =  stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("n_parents")->GetAsString());;
+        if (params.type == "dex3"){
+            params.n_parents = 7;
+        }
+
+        EA::Parameters EA_params = EA::Parameters();
+        params.EA_params = EA_params;
+        params.EA_params.verbose = (brain_sdf->GetElement("rv:learner")->GetAttribute("verbose")->GetAsString() == "1");
+        params.EA_params.population_size = stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("population_size")->GetAsString());
+        params.EA_params.max_eval = std::min(int(n_learning_evaluations), stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("max_eval")->GetAsString()));
+
+        auto dist = std::bind(std::uniform_int_distribution<int>(),
+                              std::mt19937(std::random_device{}()));
+
+        learner = std::make_unique<DifferentialEvo>(
+                std::move(controller),
+                this->evaluator.get(),
+                this->reporter.get(),
+                params,
+                dist(),
+                evaluation_rate,
+                n_learning_evaluations,
+                this->model_->GetName());
 //    } else if ("hyperneat" == learner_type) {
 //        NEAT::Parameters neat_params = NEAT::Parameters();
 //

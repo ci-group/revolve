@@ -291,6 +291,14 @@ def _sdf_brain_plugin_conf(
     else:
         robot_brain_sdf.append(robot_controller)
 
+    try:
+        robot_IMC = robot_brain.IMC.controller_sdf()
+    except:
+        print("IMC in-active!")
+        xml.etree.ElementTree.SubElement(robot_brain_sdf, 'rv:IMC', {'active': 'false'})
+    else:
+        robot_brain_sdf.append(robot_IMC)
+
     # sensors
     sensors_elem = xml.etree.ElementTree.SubElement(robot_brain_sdf, 'rv:sensors')
     for sensor in sensors:
