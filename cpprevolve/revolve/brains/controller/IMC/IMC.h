@@ -24,7 +24,11 @@ public:
         double weight_decay = 0.001;
         int window_length = 60;
         bool restore_checkpoint = false;
+<<<<<<< HEAD
         bool save_checkpoint = false;
+=======
+        bool save_checkpoint = true;
+>>>>>>> 1b077afcba9df8d1c45154780b47411c13e9973c
         std::string model_name;
         };
     /// \brief Constructor
@@ -118,6 +122,7 @@ protected:
     torch::Tensor State_Memory;
     torch::Tensor Reference_Memory;
     bool Save_Check;
+    std::string model_name;
 
     std::string model_name;
 

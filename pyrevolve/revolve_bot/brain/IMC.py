@@ -12,9 +12,9 @@ class BrainIMC(Brain):
 
     def __init__(self):
         # CPG hyper-parameters
-        self.active = "true"
-        self.restore_checkpoint = "true"
-        self.save_checkpoint = "true"
+        self.active = None
+        self.restore_checkpoint = None
+        self.save_checkpoint = None
         self.learning_rate = None
         self.beta1 = None
         self.beta2 = None
@@ -31,6 +31,12 @@ class BrainIMC(Brain):
                     print(f"Couldn't set {key}, {value}")
         except:
             print("No IMC")
+
+        for key in vars(BIMC):
+            if getattr(BIMC, key) is None:
+                print(f"Didn't load IMC param {key}")
+                raise RuntimeError(f"Didn't load IMC paramater: {key}")
+
         return BIMC
 
     def to_yaml(self):

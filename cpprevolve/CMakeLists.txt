@@ -4,6 +4,7 @@ cmake_minimum_required (VERSION 3.7.0)
 # Project name
 project (Revolve)
 set (CMAKE_CXX_STANDARD 14)
+find_package(Torch REQUIRED)
 
 # Include cmake subdirectories
 add_subdirectory(revolve/brains)

@@ -229,7 +229,7 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
 
     // aggregated reporter
     std::unique_ptr<AggregatedReporter> aggregated_reporter(new AggregatedReporter(this->model_->GetName()));
-    // std::cout reporter
+
     aggregated_reporter->create<::revolve::PrintReporter>();
     // gazebo network publisher reporter
     this->gazebo_reporter.reset(new GazeboReporter(aggregated_reporter->robot_id, this->node_));
@@ -255,7 +255,7 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
     }
 
     sdf::ElementPtr IMC_sdf = brain_sdf->GetElement("rv:IMC");
-    if( (IMC_sdf->GetAttribute("active")->GetAsString()) == "1"){
+    if( IMC_sdf->GetAttribute("active")->GetAsString() == "1"){
         std::cout << "Initializing IMC" << std::endl;
         // ================= INITIALIZE IMC ====================
         IMC::IMCParams imc_params = IMC::IMCParams();
@@ -286,6 +286,55 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
                 std::move(controller),
                 this->evaluator.get(),
                 this->reporter.get(),
+                evaluation_rate,
+                n_learning_evaluations,
+                this->model_->GetName());
+    } else if ("nipes" == learner_type) {
+        NIPES::NIPES_Parameters params = NIPES::NIPES_Parameters();
+
+        EA::Parameters EA_params = EA::Parameters();
+        params.EA_params = EA_params;
+        params.EA_params.verbose = (brain_sdf->GetElement("rv:learner")->GetAttribute("verbose")->GetAsString() == "1");
+        params.EA_params.population_size = stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("population_size")->GetAsString());
+        params.EA_params.max_eval = std::min(int(n_learning_evaluations), stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("max_eval")->GetAsString()));
+
+        auto dist = std::bind(std::uniform_int_distribution<int>(),
+                              std::mt19937(std::random_device{}()));
+
+        learner = std::make_unique<NIPES>(
+                std::move(controller),
+                this->evaluator.get(),
+                this->reporter.get(),
+                params,
+                dist(),
+                evaluation_rate,
+                params.EA_params.max_eval,
+                this->model_->GetName());
+    } else if ("de"==learner_type) {
+        DifferentialEvo::DE_Parameters params = DifferentialEvo::DE_Parameters();
+        params.type = brain_sdf->GetElement("rv:learner")->GetAttribute("subtype")->GetAsString();
+        params.CR = stod(brain_sdf->GetElement("rv:learner")->GetAttribute("CR")->GetAsString());
+        params.F =  stod(brain_sdf->GetElement("rv:learner")->GetAttribute("F")->GetAsString());
+        params.n_parents =  stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("n_parents")->GetAsString());;
+        if (params.type == "dex3"){
+            params.n_parents = 7;
+        }
+
+        EA::Parameters EA_params = EA::Parameters();
+        params.EA_params = EA_params;
+        params.EA_params.verbose = (brain_sdf->GetElement("rv:learner")->GetAttribute("verbose")->GetAsString() == "1");
+        params.EA_params.population_size = stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("population_size")->GetAsString());
+        params.EA_params.max_eval = std::min(int(n_learning_evaluations), stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("max_eval")->GetAsString()));
+
+        auto dist = std::bind(std::uniform_int_distribution<int>(),
+                              std::mt19937(std::random_device{}()));
+
+        learner = std::make_unique<DifferentialEvo>(
+                std::move(controller),
+                this->evaluator.get(),
+                this->reporter.get(),
+                params,
+                dist(),
                 evaluation_rate,
                 n_learning_evaluations,
                 this->model_->GetName());

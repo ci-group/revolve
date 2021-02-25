@@ -79,7 +79,6 @@ protected:
 
     const bool reset_robot_position;
     const boost::weak_ptr<::gazebo::physics::Model> robot;
-
     std::string output_dir;
 };
 
