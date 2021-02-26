@@ -31,6 +31,7 @@ def standard_crossover(environments, parent_individuals, genotype_conf, crossove
 
     parent_ids = []
     crossover_attempt = random.uniform(0.0, 1.0)
+    # no crossover
     if crossover_attempt > crossover_conf.crossover_prob:
 
         parent_ids.append(parent_genotypes[0].id)
@@ -39,6 +40,7 @@ def standard_crossover(environments, parent_individuals, genotype_conf, crossove
         new_cppn = cppn_config.genome_type(0)
         new_cppn.configure_crossover(parent1, parent1, cppn_config.genome_config)
 
+    # do crossover
     else:
 
         for parent in parent_genotypes:
@@ -49,6 +51,10 @@ def standard_crossover(environments, parent_individuals, genotype_conf, crossove
 
     new_genotype.cppn = new_cppn
     new_genotype.parents_ids = parent_ids
+    # copy seed from one pf the parents
+    # TODO: combine parents seed
+    new_genotype.querying_seed = parent_genotypes[0].querying_seed
+
 
     genotype_logger.info(
         f'crossover: for genome {new_genotype.id} is done.')

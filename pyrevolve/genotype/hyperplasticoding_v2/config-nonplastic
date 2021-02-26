@@ -7,23 +7,24 @@ reset_on_extinction   = False
 [DefaultGenome]
 # node activation options
 activation_default      = random
-activation_mutate_rate  = 0.5
+activation_mutate_rate  = 0.1
 activation_options      = sigmoid sin gauss tanh abs inv
 
 # network parameters.
-# inputs: x dest, y dest, d.
-# outputs: b_module, b2_module, a1_module, a2_module, period, phase_offset, amplitude,weight
+# inputs: x dest, y dest
+# outputs: b_module, b2_module, a1_module, a2_module, period, phase_offset, amplitude
 num_hidden              = 0
+#num_hidden              = 2
 num_inputs              = 2
 num_outputs             = 7
 
 # connection add/remove rates
-conn_add_prob           = 0.5
-conn_delete_prob        = 0.5
+conn_add_prob           = 0.2
+conn_delete_prob        = 0.2
 
 # node add/remove rates
-node_add_prob           = 0.2
-node_delete_prob        = 0.2
+node_add_prob           = 0.1
+node_delete_prob        = 0.1
 
 # node aggregation options
 aggregation_default     = sum
@@ -49,7 +50,7 @@ enabled_mutate_rate     = 0.01
 
 feed_forward            = True
 initial_connection      = full
-#partial_nodirect 0.5
+#initial_connection      = full_direct
 
 # node response options
 response_init_mean      = 1.0

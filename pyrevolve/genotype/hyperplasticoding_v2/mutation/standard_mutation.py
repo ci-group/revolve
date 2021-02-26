@@ -20,12 +20,16 @@ def standard_mutation(genotype, mutation_conf):
                               neat.DefaultSpeciesSet, neat.DefaultStagnation,
                               mutation_conf.cppn_config_path)
 
+    # mutate cppn
     mutation_attempt = random.uniform(0.0, 1.0)
-    if mutation_attempt > mutation_conf.mutation_prob:
-        return genotype
-
-    else:
-
+    if mutation_attempt <= mutation_conf.mutation_prob:
         genotype.cppn.mutate(cppn_config.genome_config)
 
-        return genotype
+    # TODO: mutate querying seed
+    #mutation_attempt = 1#random.uniform(0.0, 1.0)
+    #if mutation_attempt <= mutation_conf.mutation_prob:
+        #print('parent seed',  genotype.querying_seed)
+        #genotype.querying_seed+= blabla
+        #print('child seed',  genotype.querying_seed)
+
+    return genotype

@@ -5,18 +5,18 @@ import sys
 # set these variables according to your experiments #
 
 # run from karine_experiments
-dirpath = 'data/'
+dirpath = 'data/hyper_big/'
 
 experiments_type = [
-      'hyper3',
-      'plast3'
+      'hyperplasticoding_t',
+      'hyperplasticoding_p'
 ]
 environments = {
-  'hyper3': ['plane'],
-  'plast3': ['plane']
+   'hyperplasticoding_t': ['tilted5'],
+   'hyperplasticoding_p': ['plane']
                  }
 
-runs = range(1, 1+1)
+runs = range(1, 10+1)
 
 # set these variables according to your experiments #
 

@@ -16,12 +16,16 @@ library(viridis)
 base_directory <- c('/storage/karine/baselines/plasticoding_seasons',
                     '/storage/karine/early_death',
                     '/storage/karine/early_death')
+base_directory <- c('data', 'data', 'data')
+
+
+
 analysis = 'analysis_tilted'
 output_directory = paste(base_directory[2],'/',analysis ,sep='')
 
 experiments_type = c('plasticoding_seasons',
-                     'planedeath',
-                     'tilteddeath')
+                     'tilteddeath',
+                     'planedeath')
 runs = list(c(1:20),
             c(1:20),
             c(1:20))
@@ -33,20 +37,20 @@ environments = list( c('tilted5'),
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
 methods_labels = c( 'Baseline',
                     'Plane death',
-                    'Tilted death')
+                    'Tilted death') # note that labels of Plane death and Tilted death are INVERTED on purpose, to fix the mistake done when naming the experiments.
 
 experiments_type_colors = c('#009900',
                             '#EE8610',
                             '#0000ff')
 
 #aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
-aggregations = c( 'Q25', 'median', 'Q75')
+aggregations = c( 'Q25', 'median', 'Q75','mean')
 
 gens = 200
 pop = 100
 num_heatmaps = 3
 
-gens_box_comparisons = c(gens-1)
+gens_box_comparisons = c(50, 75, gens-1)
 
 measures_names = c(
   'displacement_velocity_hill',
@@ -70,17 +74,17 @@ measures_names = c(
   'absolute_size',
   'sensors',
   'symmetry',
-  'avg_period',
-  'dev_period',
-  'avg_phase_offset',
-  'dev_phase_offset',
-  'avg_amplitude',
-  'dev_amplitude',
-  'avg_intra_dev_params',
-  'avg_inter_dev_params',
-  'sensors_reach',
-  'recurrence',
-  'synaptic_reception'
+  'avg_period'#,
+  #  'dev_period',
+  #  'avg_phase_offset',
+  # 'dev_phase_offset',
+  # 'avg_amplitude',
+  # 'dev_amplitude',
+  # 'avg_intra_dev_params',
+  #'avg_inter_dev_params',
+  #'sensors_reach',
+  #'recurrence',
+  # 'synaptic_reception'
 )
 
 # add proper labels soon...
@@ -106,18 +110,19 @@ measures_labels = c(
   'Size',
   'Sensors',
   'Symmetry',
-  'Average Period',
-  'Dev Period',
-  'Avg phase offset',
-  'Dev phase offset',
-  'Avg Amplitude',
-  'Dev amplitude',
-  'Avg intra dev params',
-  'Avg inter dev params',
-  'Sensors Reach',
-  'Recurrence',
-  'Synaptic reception'
+  'Average Period'#,
+  # 'Dev Period',
+  #'Avg phase offset',
+  #'Dev phase offset',
+  #'Avg Amplitude',
+  # 'Dev amplitude',
+  #'Avg intra dev params',
+  # 'Avg inter dev params',
+  # 'Sensors Reach',
+  # 'Recurrence',
+  # 'Synaptic reception'
 )
+
 
 more_measures_names = c(
   # 'novelty',
@@ -192,58 +197,6 @@ measures_labels = c(measures_labels, more_measures_labels)
 for( m in 1:length(more_measures_names)){
   measures_snapshots_all[more_measures_names[m]] = as.numeric(as.character(measures_snapshots_all[[more_measures_names[m]]]))
 }
-
-
-#####
-# heatmap
-all_runs = FALSE
-random_runs = paste('(', paste(sample(runs[[1]], num_heatmaps), collapse=', ' ), ')')
-
-
-for (i in 1:length(measures_names)){
-
-  query = paste("select method_label,'Run '||run as run, generation, robot_id, ",
-                measures_names[i]," as value from measures_snapshots_all ")
-  if (!all_runs){
-    query = paste(query, "where run in ",random_runs)
-  }
-
-  measures_heat = sqldf(query)
-  measures_heat = measures_heat %>%
-    group_by(method_label, run, generation) %>%
-    mutate(rank = order(order(value)))
-
-  heat <-ggplot(measures_heat, aes(generation, rank, fill=value))+
-    geom_tile(color= "white",size=0.1)+
-    scale_fill_viridis(option ="C")
-  heat <-heat + facet_grid(method_label~run)
-  heat <-heat + scale_y_continuous(breaks =c())
-  heat <-heat + scale_x_continuous(breaks =c(0, 50, 149))
-  heat <-heat + labs(title=measures_labels[i], x="Generations", y="Robots", fill=measures_labels[i])
-  heat <-heat + theme(legend.position = "none")+
-    theme(legend.key.size = unit(1.5, 'cm'))+
-    theme(plot.title=element_text(size=37))+
-    theme(axis.text.y=element_text(size=31)) +
-    theme(axis.text.x=element_text(size=28)) +
-    theme(axis.title=element_text(size=35)) +
-    theme(strip.text.y=element_text(size=38)) +
-    theme(strip.text.x=element_text(size=30)) +
-    theme(strip.background = element_rect(colour="white"))+
-    theme(plot.title=element_text(hjust=0))+
-    theme(axis.ticks=element_blank())+
-    theme(legend.title=element_text(size=36))+
-    theme(legend.text=element_text(size=36))#+
-  #removeGrid()
-
-  if (!all_runs){
-    ggsave(paste(output_directory,"/",measures_names[i],"_heat.png",sep = ""), heat, device = "png", height=10, width = 20)
-  }else{
-    ggsave(paste(output_directory,"/",measures_names[i],"_heat.png",sep = ""), heat, device = "png", height=10, width = 140, limitsize = FALSE)
-  }
-
-}
-
-###
 
 measures_averages_gens_1 = list()
 measures_averages_gens_2 = list()
@@ -335,20 +288,6 @@ for (i in 1:length(measures_names))
 
   #  line plots
 
-
-  # finding values for scaling
-  max_y =  0
-  min_y = 10000000
-  for(a in 1:length(aggregations)){
-    for(m in 1:length(methods)){
-      max_value = max(measures_averages_gens[paste(methods[m],'_',measures_names[i],'_', aggregations[a], '_Q75',sep='')], na.rm = TRUE)
-      min_value = min(measures_averages_gens[paste(methods[m],'_',measures_names[i],'_', aggregations[a], '_Q25',sep='')], na.rm = TRUE)
-      if(max_value > max_y){ max_y = max_value }
-      if(min_value < min_y){ min_y = min_value }
-    }
-  }
-  #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
-
   for(a in 1:length(aggregations)){
 
     graph <- ggplot(data=measures_averages_gens, aes(x=generation))
@@ -367,6 +306,25 @@ for (i in 1:length(measures_names))
                                         colour=paste(methods_labels[m], aggregations[a], sep='_')), size=1)
       }
     }
+
+
+    # finding values for scaling
+    max_y =  0
+    if (measures_names[i] == 'displacement_velocity_hill' )  {
+      max_y = 6
+      min_y = -0.5 }
+    if (measures_names[i] == 'head_balance' )  {
+      max_y = 1.3
+      min_y = 0.55 }
+    if (measures_names[i] == 'absolute_size' )  {
+      max_y = 19.5
+      min_y = 1 }
+    if (measures_names[i] == 'proportion' )  {
+      max_y = 1.35
+      min_y = 0 }
+    if (measures_names[i] == 'limbs' )  {
+      max_y = 1
+      min_y = 0 }
 
     if (max_y>0) {
       graph = graph + coord_cartesian(ylim = c(min_y, max_y))
@@ -433,19 +391,17 @@ for (i in 1:length(measures_names))
 
         # in this list, use the desired pairs names from methods_labels
         comps = list( c( 'Plane death', 'Baseline') ,
-                      c( 'Plane death', 'Tilted death'),
                       c( 'Baseline',  'Tilted death')
         )
 
-        max_y =  0
-        #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
+
         if (max_y>0) {
-          graph = graph + coord_cartesian(ylim = c(min_y, max_y))
+          g1 = g1 + coord_cartesian(ylim = c(min_y, max_y))
         }
 
-        g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=14,
+        g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=14 , step_increase=0.1, margin_top=0.15,
                                comparisons = comps,
-                               map_signif_level=c() )
+                               map_signif_level=c("***"=0.001,"**"=0.01, "*"=0.05)  )
 
         if (out == 'full' || (out == 'filtered' &&  has_outliers == TRUE) ){
           ggsave(paste(output_directory,"/",measures_names[i],"_",gc,"_", aggregations[a],'_', out,"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)

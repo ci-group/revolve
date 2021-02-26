@@ -4,13 +4,12 @@
 
 runs=10
 
-num_terminals=5
+num_terminals=8
 start_port=8000
-final_gen=199
-experiments=("tilteddeath")
-managers_sulfix=("" "")
-experiments_path=karines_experiments/data/early_death/
-managers_path=experiments/karines_experiments/early_death/
+final_gen=149
+experiments=("hyperplasticoding_p" "hyperplasticoding_t")
+experiments_path=karines_experiments/data/hyper_small/
+managers_path=experiments/karines_experiments/
 
 while true
 	do
@@ -56,8 +55,9 @@ while true
     to_do=(${to_do[@]:0:$num_terminals})
     for experiment in "${to_do[@]}"
     do
+
          echo ""
-         screen -d -m -S "${experiment}" -L -Logfile "${experiment}.log" nice -n19 ./revolve.sh --manager "${managers_path}$(cut -d'_' -f1 <<<"$experiment")${managers_sulfix}.py" --experiment-name "${experiments_path}${experiment}"  --early-death True --evaluation-time 50 --n-cores 4 --port-start $start_port
+         screen -d -m -S "${experiment}" -L -Logfile "${experiment}.log" nice -n19 ./revolve.sh --manager "${managers_path}$(cut -d'_' -f1 <<<"$experiment")_$(cut -d'_' -f2 <<<"$experiment").py" --experiment-name "${experiments_path}${experiment}" --evaluation-time 50 --n-cores 4 --port-start $start_port
          start_port=$((${start_port}+10))
     done
 

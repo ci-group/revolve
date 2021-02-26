@@ -26,13 +26,13 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 1#150
-    population_size = 100#100
-    offspring_size = 10#50
+    num_generations = 150
+    population_size = 100
+    offspring_size = 50
     front = 'none'
 
     # environment world and z-start
-    environments = {'plane': 0.03 }
+    environments = { 'tilted5': 0.1 }
 
     # calculation of the measures can be on or off, because they are expensive
     novelty_on = {'novelty': False,
@@ -54,7 +54,7 @@ async def run():
     )
 
     mutation_conf = MutationConfig(
-        mutation_prob=0.8,
+        mutation_prob=1,
         genotype_conf=genotype_conf,
         cppn_config_path=cppn_config_path
     )
@@ -88,7 +88,7 @@ async def run():
     def fitness_function_plane(measures, robot):
         return fitness.displacement_velocity_hill(measures, robot)
 
-    fitness_function = {'plane': fitness_function_plane}
+    fitness_function = {'tilted5': fitness_function_plane}
 
     population_conf = PopulationConfig(
         population_size=population_size,

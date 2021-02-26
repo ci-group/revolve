@@ -28,7 +28,7 @@ async def run():
 
     # environment world and z-start
     realtime = True
-    environments = {'plane': 0.03,
+    environments = {#'plane': 0.03#,
                     'tilted5': 0.1
                     }
 
@@ -88,11 +88,11 @@ async def run():
 
         analyzer_queue = AnalyzerQueue(1, settings, port+settings.n_cores)
         await analyzer_queue.start()
-
+ 
     population = Population(population_conf, simulator_queue, analyzer_queue, 1)
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
-    generation = 199
+    generation = 20
     max_best = 3
     await population.load_snapshot(generation)
 
@@ -101,6 +101,7 @@ async def run():
         # define a criteria here
         for environment in environments:
             ind[environment].evaluated = False
+            
         if ind[list(environments.keys())[-1]].consolidated_fitness is not None:
             values.append(ind[list(environments.keys())[-1]].consolidated_fitness)
         else:

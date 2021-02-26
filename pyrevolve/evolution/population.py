@@ -456,7 +456,6 @@ class Population:
         # TODO: works only for a single season. make it dynamic!
 
         children_distances = {}
-        #print('parent',parents[0][list(self.conf.environments.keys())[-1]].genotype.id)
 
         # samples n children and compare their morphology to their parents
         for c in range(0, self.conf.all_settings.n_competing_children):
@@ -471,37 +470,22 @@ class Population:
             individual.develop(list(self.conf.environments.keys())[-1])
             individual.phenotype.measure_phenotype('')
 
-
-           # individual.phenotype.render_body( os.path.join('experiments',
-                                                   #        self.conf.all_settings.experiment_name) + '/'  + f'/body_{parents[0][list(self.conf.environments.keys())[-1]].genotype.id+"_"+str(c)}.png')
-
-            #print('---', c)
             euclidean = 0
             for measure in self.conf.novelty_on['measures']:
                 child_value = individual.phenotype._morphological_measurements.measurements_to_dict()[measure]
-                #print(measure, child_value)
                 parent_value = parents[0][list(self.conf.environments.keys())[-1]].phenotype._morphological_measurements.measurements_to_dict()[measure]
                 euclidean += math.pow(child_value - parent_value, 2)
             euclidean = math.sqrt(euclidean)
             children_distances[child] = euclidean
-            #print('dist', euclidean)
 
         # get child with lowest difference, but above zero
         children_distances_filtered = [(k,v) for k,v in sorted(children_distances.items(), key=lambda item: item[1]) if v > 0]
         filter(lambda k: k > 0, children_distances.keys())
 
-        #pp = pprint.PrettyPrinter(width=41, compact=True)
-        #pp.pprint(children_distances)
-
-        #pp = pprint.PrettyPrinter(width=41, compact=True)
-        #pp.pprint(children_distances_filtered)
-
         if len(children_distances_filtered) > 0:
             child = next(iter(children_distances_filtered))
         else:
             child = (next(iter(children_distances)), 0)
-       # print(child)
-       # print(child[0])
 
         return child[0]
 
