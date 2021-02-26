@@ -8,7 +8,7 @@ from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.population.population import Population
 from pyrevolve.evolution.population.population_config import PopulationConfig
-from pyrevolve.evolution.population.population_management import steady_state_population_management
+from pyrevolve.evolution.population.population_management import generational_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype, DirectTreeGenotypeConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
@@ -29,7 +29,7 @@ async def run():
     # experiment params #
     num_generations = 50
     population_size = 100
-    offspring_size = 50
+    offspring_size = 100
 
     genotype_conf: DirectTreeGenotypeConfig = DirectTreeGenotypeConfig(
         max_parts=50,
@@ -89,8 +89,8 @@ async def run():
         crossover_conf=genotype_conf,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
-        population_management=steady_state_population_management,
-        population_management_selector=tournament_selection,
+        population_management=generational_population_management,
+        population_management_selector=None,  # must be none for generational management function
         evaluation_time=args.evaluation_time,
         grace_time=args.grace_time,
         offspring_size=offspring_size,
