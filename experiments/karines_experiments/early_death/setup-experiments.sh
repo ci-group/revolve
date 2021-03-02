@@ -2,7 +2,7 @@
 #set -e
 #set -x
 
-runs=10
+runs=20
 
 num_terminals=5
 start_port=8000
