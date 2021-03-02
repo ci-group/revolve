@@ -61,7 +61,7 @@ async def run():
 
     if do_recovery:
         gen_num, has_offspring, next_robot_id, next_species_id = \
-            experiment_management.read_recovery_state(population_size, offspring_size, species=False, n_developments=2)
+            experiment_management.read_recovery_state(population_size, offspring_size, species=False)
 
         if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
