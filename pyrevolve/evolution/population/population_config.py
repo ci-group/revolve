@@ -25,7 +25,7 @@ class PopulationConfig:
                      [List[Individual], List[Individual], Callable[[List[Individual]], Individual]],
                      List[Individual]
                  ],
-                 population_management_selector: Callable[[List[Individual]], Individual],
+                 population_management_selector: Optional[Callable[[List[Individual]], Individual]],
                  evaluation_time: float,
                  experiment_name: str,
                  experiment_management,
