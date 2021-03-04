@@ -20,6 +20,7 @@ class Brain(object):
         elif brain_type == brains.BrainCPGBO.TYPE:
             brain = brains.BrainCPGBO.from_yaml(yaml_brain)
         elif brain_type == brains.BrainCPG.TYPE:
+            # @JLO We are using this entry to create a brain
             brain = brains.BrainCPG.from_yaml(yaml_brain)
         elif brain_type == brains.BrainCPPNCPG.TYPE:
             brain = brains.BrainCPPNCPG.from_yaml(yaml_brain)
@@ -27,7 +28,9 @@ class Brain(object):
             print("No matching brain type defined in yaml file.")
             brain = Brain()
 
-        brain.learner = Learner.from_yaml(yaml_brain['learner'])
+        if 'learner' in yaml_brain:
+            brain.learner = Learner.from_yaml(yaml_brain['learner'])
+
         if 'IMC' in yaml_brain:
             brain.IMC = brains.BrainIMC.from_yaml(yaml_brain['IMC'])
         return brain
@@ -35,7 +38,7 @@ class Brain(object):
     def to_yaml(self):
         return {
             'type': self.TYPE,
-            'learner': self.learner.to_yaml()
+            'learner': self.learner.to_yaml(),
         }
 
     def learner_sdf(self):

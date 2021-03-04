@@ -1,4 +1,7 @@
 # [(G,P), (G,P), (G,P), (G,P), (G,P)]
+from typing import List
+
+import numpy as np
 
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.SDF.math import Vector3
@@ -269,3 +272,81 @@ class Population:
                 individual.phenotype.simulation_boundaries = bounding_box
 
         return await self.simulator_queue.test_robot(individual, self.conf)
+
+
+class DummyPopulation(Population):
+
+    def __init__(self, conf: PopulationConfig, next_robot_id=1):
+
+        super().__init__(conf, None, None, next_robot_id)
+
+    def init_pop(self, recovered_individuals: List = []):
+        """
+        Populates the population (individuals list) with Individual objects that contains their respective genotype.
+        """
+        for i in range(self.conf.population_size):
+            individual = self._new_individual(
+                self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+            self.individuals.append(individual)
+            self.next_robot_id += 1
+
+        self.evaluate(self.individuals, 0)
+
+    def next_gen(self, gen_num, recovered_individuals: List = []):
+        new_individuals = []
+
+        for _i in range(self.conf.offspring_size):
+            # Selection operator (based on fitness)
+            # Crossover
+            if self.conf.crossover_operator is not None:
+                parents = self.conf.parent_selection(self.individuals)
+                child_genotype = self.conf.crossover_operator(parents, self.conf.genotype_conf,
+                                                              self.conf.crossover_conf)
+                child = Individual(child_genotype)
+            else:
+                child = self.conf.selection(self.individuals)
+
+            child.genotype.id = self.next_robot_id
+            self.next_robot_id += 1
+
+            # Mutation operator
+            child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
+            # Insert individual in new population
+            individual = self._new_individual(child_genotype)
+
+            new_individuals.append(individual)
+
+        new_individuals = new_individuals
+
+        # create next population
+        if self.conf.population_management_selector is not None:
+            new_individuals = self.conf.population_management(self.individuals, new_individuals,
+                                                              self.conf.population_management_selector)
+        else:
+            new_individuals = self.conf.population_management(self.individuals, new_individuals)
+
+        new_population = DummyPopulation(self.conf, self.next_robot_id)
+        new_population.individuals = new_individuals
+
+        logger.info(f'Population selected in dummy generation with {len(new_population.individuals)} individuals...')
+
+        return new_population
+
+    def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve'):
+        """
+        Evaluates each individual in the new gen population
+
+        :param new_individuals: newly created population after an evolution iteration
+        :param gen_num: generation number
+        """
+        for individual in new_individuals:
+
+            if individual.phenotype is None:
+                individual.develop()
+
+            logger.info(f'Evaluation of Individual {individual.phenotype.id}')
+            individual.fitness = np.random.random()
+
+            logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
+            if type_simulation == 'evolve':
+                self.conf.experiment_management.export_fitness(individual)

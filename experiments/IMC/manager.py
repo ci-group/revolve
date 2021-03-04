@@ -13,9 +13,6 @@ from pyrevolve.tol.manage.single_robot_world import SingleRobotWorld as World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 
 
-
-
-
 async def run():
     """
     The main coroutine, which is started below
@@ -54,7 +51,6 @@ async def run():
 
     # initialization finished
 
-
     # load robot file
     robot = RevolveBot()
 
@@ -63,20 +59,16 @@ async def run():
     # robot_file_path = "experiments/IMC/yaml/IMC_babyA4.yaml"
     # robot_file_path = "experiments/IMC/yaml/IMC_babyB9.yaml"
     # robot_file_path = "experiments/IMC/yaml/IMC_gecko5.yaml"        #sven8
-    robot_file_path = "experiments/IMC/yaml/IMC_snake1.yaml"        #sven
+    robot_file_path = "experiments/IMC/yaml/IMCspider.yaml"        #sven
     # robot_file_path = "experiments/IMC/yaml/IMC_spider9.yaml"        #spider9
-
 
     robot.load_file(robot_file_path, conf_type='yaml')
     robot.update_substrate()
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
 
-
     # insert robot into the simulator
     robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.05), life_timeout=None)
     await connection.pause(False)
-
-
 
     # Start the main life loop
     while True:
@@ -84,6 +76,7 @@ async def run():
         best_fitness = None if robot_manager.best_evaluation is None else robot_manager.best_evaluation.fitness
         log.info(f"status: {status} - Robot fitness: {best_fitness}")
         await asyncio.sleep(5.0)
+
 
 def main():
     def handler(loop, context):

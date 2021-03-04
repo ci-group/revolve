@@ -4,14 +4,14 @@ import time
 
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.population import PopulationConfig
-from pyrevolve.tol.manage import World
+from pyrevolve.tol.manage.single_robot_world import SingleRobotWorld as World
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import measures
 
 
 class SimulatorQueue:
-    EVALUATION_TIMEOUT = 120  # seconds
+    EVALUATION_TIMEOUT = 30  # seconds
 
     def __init__(self, n_cores: int, settings, port_start=11345, simulator_cmd=None):
         assert (n_cores > 0)
@@ -49,6 +49,9 @@ class SimulatorQueue:
             return
         future_launches = []
         future_connections = []
+
+        print("starting simulators")
+
         for i in range(self._n_cores):
             simulator_supervisor = self._simulator_supervisor(
                 simulator_name_postfix=i
@@ -58,16 +61,24 @@ class SimulatorQueue:
             future_launches.append(simulator_future_launch)
             self._supervisors.append(simulator_supervisor)
 
+        print("waiting simulators")
+
         await asyncio.sleep(5)
+
+        print("starting connections")
 
         for i, future_launch in enumerate(future_launches):
             await future_launch
             connection_future = self._connect_to_simulator(self._settings, "127.0.0.1", self._port_start+i)
             future_connections.append(connection_future)
 
+        print("awaiting connections")
+
         for i, future_conn in enumerate(future_connections):
             self._connections.append(await future_conn)
             self._workers.append(asyncio.ensure_future(self._simulator_queue_worker(i)))
+
+        print("finished connections")
 
         await asyncio.sleep(1)
 
@@ -157,7 +168,7 @@ class SimulatorQueue:
             pose_z = self._settings.z_start
             if robot.phenotype.simulation_boundaries is not None:
                 pose_z -= robot.phenotype.simulation_boundaries.min.z
-            robot_manager = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, pose_z), max_age)
+            robot_manager = await simulator_connection.insert_robot(robot.phenotype, Vector3(0, 0, 0.05), life_timeout=None)
             start = time.time()
             # Start a run loop to do some stuff
             while not robot_manager.dead:  # robot_manager.age() < max_age:

@@ -54,10 +54,16 @@ Evaluator::Evaluator(const double evaluation_rate,
   this->current_position_.Reset();
   this->previous_position_.Reset();
   this->start_position_.Reset();
-  this->locomotion_type = "directed"; // {turing_left,directed, gait}
+  this->locomotion_type = "gait"; // {turing_left,directed, gait}
   this->path_length = 0.0;
 
-  this->output_dir = "./experiments/IMC/output"+robot->GetName();
+  std::string model_name = robot->GetName();
+  this->output_dir = "./experiments/IMC/output"+model_name;
+
+//  std::ofstream decom_file;
+//  decom_file.open(this->output_dir+"/fitness_decom.txt", std::ofstream::out | std::ofstream::trunc);
+//  decom_file.close();
+  std::cout<<"Loading evaluator with task: "+this->locomotion_type<<std::endl;
 }
 
 /////////////////////////////////////////////////
@@ -72,14 +78,13 @@ void Evaluator::reset()
         ::gazebo::physics::ModelPtr _robot = robot.lock();
         _robot->ResetPhysicsStates();
         auto start_pose = ::ignition::math::Pose3d();
-        start_pose.Set(0.0, 0.0, 0.05, 0.0, 0.0, 0.0);
-        _robot->SetWorldPose(start_pose);
-        for (const auto& joint_ : _robot->GetJoints()) {
+        start_pose.Set(0.0, 0.0, 0.005, 0.0, 0.0, -.1);
+        for (const auto &joint_ : _robot->GetJoints()) {
             std::string joint_name = joint_->GetScopedName();
             _robot->SetJointPosition(joint_name, 0.0);
             joint_->SetPosition(0, 0.0);
-
         }
+        _robot->SetWorldPose(start_pose);
         _robot->Update();
         this->current_position_ = start_pose;
     }
@@ -97,11 +102,21 @@ double Evaluator::fitness()
   if(this->locomotion_type == "gait")
   {
     double dS;
-    dS = std::sqrt(std::pow(this->previous_position_.Pos().X() -
+    dS = std::sqrt(std::pow(this->start_position_.Pos().X() -
                             this->current_position_.Pos().X(), 2) +
-                   std::pow(this->previous_position_.Pos().Y() -
+                   std::pow(this->start_position_.Pos().Y() -
                             this->current_position_.Pos().Y(), 2));
     fitness_value = dS / this->evaluation_rate_;
+    if(fitness_value > 5e-11){
+        std::ofstream fitness_file;
+        fitness_file.open(this->output_dir + "/fitness_decom.txt", std::ios::app);
+        fitness_file << std::fixed
+                     <<fitness_value
+                     <<","<<std::sqrt(std::pow(this->start_position_.Pos().X() - this->current_position_.Pos().X(), 2))
+                     <<","<<std::sqrt(std::pow(this->start_position_.Pos().Y() - this->current_position_.Pos().Y(), 2))
+                     <<std::endl;
+        fitness_file.close();
+      }
   }
   else if (this->locomotion_type == "directed")
   {
@@ -183,7 +198,13 @@ double Evaluator::fitness()
     // Write fitness to file
     std::ofstream fitness_file;
     fitness_file.open(this->output_dir + "/fitness_decom.txt", std::ios::app);
-    fitness_file << std::fixed<<dist_penalty<<","<<dist_projection<<"," <<tot_dist<<","<< path_length<< ",";
+    fitness_file << std::fixed
+                 << fitness_value
+                 <<","<<dist_penalty
+                 <<","<<dist_projection
+                 <<","<<tot_dist
+                 <<","<<path_length
+                 <<std::endl;
     fitness_file.close();
   }
   else if(this->locomotion_type == "turing_left") //anticlockwise
