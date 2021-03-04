@@ -31,6 +31,13 @@ async def run():
     population_size = 100
     offspring_size = 100
 
+    morph_single_mutation_prob = 0.2
+    morph_no_single_mutation_prob = 1-morph_single_mutation_prob  # 0.8
+    morph_no_all_mutation_prob = morph_no_single_mutation_prob**4  # 0.4096
+    morph_at_least_one_mutation_prob = 1 - morph_no_all_mutation_prob  # 0.5904
+
+    brain_single_mutation_prob = 0.5
+
     genotype_conf: DirectTreeGenotypeConfig = DirectTreeGenotypeConfig(
         max_parts=50,
         min_parts=10,
@@ -40,15 +47,15 @@ async def run():
         init_prob_no_child=0.1,
         init_prob_child_block=0.4,
         init_prob_child_active_joint=0.5,
-        mutation_p_duplicate_subtree=0.05,
-        mutation_p_delete_subtree=0.05,
-        mutation_p_generate_subtree=0.05,
-        mutation_p_swap_subtree=0.05,
-        mutation_p_mutate_oscillators=0.05,
-        mutation_p_mutate_oscillator=0.05,
-        mutate_oscillator_amplitude_sigma=0.1,
-        mutate_oscillator_period_sigma=0.1,
-        mutate_oscillator_phase_sigma=0.1,
+        mutation_p_duplicate_subtree=morph_single_mutation_prob,
+        mutation_p_delete_subtree=morph_single_mutation_prob,
+        mutation_p_generate_subtree=morph_single_mutation_prob,
+        mutation_p_swap_subtree=morph_single_mutation_prob,
+        mutation_p_mutate_oscillators=brain_single_mutation_prob,
+        mutation_p_mutate_oscillator=0.5,
+        mutate_oscillator_amplitude_sigma=0.3,
+        mutate_oscillator_period_sigma=0.3,
+        mutate_oscillator_phase_sigma=0.3,
     )
 
     # Parse command line / file input arguments
