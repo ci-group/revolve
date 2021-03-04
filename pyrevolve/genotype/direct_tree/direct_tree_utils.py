@@ -1,4 +1,5 @@
 import copy
+import uuid
 from collections import deque
 from typing import Optional, Iterable, Tuple
 
@@ -67,4 +68,8 @@ def duplicate_subtree(root: RevolveModule) -> RevolveModule:
     :return: new duplicated subtree
     """
     assert root is not None
-    return copy.deepcopy(root)
+    dup_root = copy.deepcopy(root)
+    # generate new ids for duplicated items
+    for _, _, module, _ in recursive_iterate_modules(dup_root, include_none_child=False):
+        module.id = str(uuid.uuid1())
+    return dup_root

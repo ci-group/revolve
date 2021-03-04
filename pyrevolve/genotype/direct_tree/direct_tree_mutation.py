@@ -67,6 +67,11 @@ def mutate(genotype: DirectTreeGenotype,
     if decide(genotype_conf.mutation.p_mutate_oscillators):
         mutate_oscillators(tree, genotype_conf)
 
+    module_ids = set()
+    for _, _, module, _ in recursive_iterate_modules(genotype.representation, include_none_child=False):
+        assert module.id not in module_ids
+        module_ids.add(module.id)
+
     return genotype
 
 

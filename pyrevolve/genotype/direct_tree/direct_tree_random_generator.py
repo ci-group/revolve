@@ -1,8 +1,10 @@
 import random
 import math
 import queue
+import uuid
 from typing import Tuple, List, Optional, Type
 
+from pyrevolve.genotype.direct_tree.direct_tree_utils import recursive_iterate_modules
 from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.revolve_bot.revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, Orientation
@@ -99,6 +101,11 @@ def generate_tree(core: CoreModule,
         append_new_empty_slots(new_child_module)
         count_parts += 1
 
+    module_ids = set()
+    for _, _, module, _ in recursive_iterate_modules(core, include_none_child=False):
+        assert module.id not in module_ids
+        module_ids.add(module.id)
+
     return core
 
 
@@ -135,7 +142,8 @@ def generate_new_module(parent: RevolveModule,
 
     # generate module ID
     short_mod_type = module_short_name_conversion[new_child_module_class]
-    new_child_module.id = f'{parent.id}{Orientation(parent_free_slot).short_repr()}_{short_mod_type}'
+    # new_child_module.id = f'{parent.id}{Orientation(parent_free_slot).short_repr()}_{short_mod_type}'
+    new_child_module.id = str(uuid.uuid1())
     new_child_module.rgb = module_color
 
     # if is active, add oscillator parameters

@@ -76,4 +76,10 @@ def crossover(parent_a: DirectTreeGenotype,
         print(f'Removing {module_a_size} modules and adding {subtree_size(module_b)} modules')
 
     genotype_child.id = new_id
+
+    module_ids = set()
+    for _, _, module, _ in recursive_iterate_modules(genotype_child.representation, include_none_child=False):
+        assert module.id not in module_ids
+        module_ids.add(module.id)
+
     return genotype_child

@@ -60,6 +60,7 @@ class DirectTreeGenotype(Genotype):
 
         module_map = {}
         for module in revolvebot.iter_all_elements():
+            assert module.id not in module_map
             module_map[module.id] = module
 
         for node_id, oscillator in brain.params.items():
@@ -67,6 +68,11 @@ class DirectTreeGenotype(Genotype):
             module_map[node.part_id].oscillator_amplitude = oscillator.amplitude
             module_map[node.part_id].oscillator_period = oscillator.period
             module_map[node.part_id].oscillator_phase = oscillator.phase_offset
+
+        for module in revolvebot.iter_all_elements():
+            assert module_map[module.id] == module
+
+        return
 
     def export_genotype(self, filepath: str) -> None:
         self.develop()
