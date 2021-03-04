@@ -11,8 +11,8 @@ class Learner(object):
 
         if brain_type == learners.bo.BOLearner.TYPE:
             return learners.bo.BOLearner.from_yaml(yaml_learner)
-        if brain_type == learners.revde.RevDE.TYPE:
-            return learners.revde.RevDE.from_yaml(yaml_learner)
+        if brain_type == learners.RevDELearner.TYPE:
+            return learners.RevDELearner.from_yaml(yaml_learner)
         if brain_type == learners.hyperneat.HyperNEATLearner.TYPE:
             return learners.hyperneat.HyperNEATLearner.from_yaml(yaml_learner)
         else:

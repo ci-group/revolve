@@ -1,4 +1,4 @@
-from .. import Genotype
+ from .. import Genotype
 from pyrevolve.genotype.plasticoding.plasticoding import Alphabet
 from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenome

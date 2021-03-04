@@ -42,7 +42,7 @@ async def run():
 
     plasticoding_config = PlasticodingConfig(
         max_structural_modules=20,
-        allow_vertical_brick=True,
+        allow_vertical_brick=False,
         use_movement_commands=True,
         use_rotation_commands=False,
         use_movement_stack=True

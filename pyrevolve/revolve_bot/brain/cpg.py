@@ -7,11 +7,8 @@ parameters.
 import xml.etree.ElementTree
 from typing import Dict, List
 
-import numpy as np
-
 from .base import Brain
-from .learner import Learner
-from ..revolve_module import ActiveHingeModule
+from .learner import RevDELearner
 
 
 class BrainIMC:
@@ -26,6 +23,21 @@ class BrainIMC:
         self.restore_checkpoint = "false"
         self.save_checkpoint = "false"
 
+    @staticmethod
+    def from_yaml(yaml_object):
+        imc = BrainIMC()
+        for yaml_params in ["active", "learning_rate", "beta1", "beta2", "weight_decay", "window_length", "restore_checkpoint", "save_checkpoint"]:
+            try:
+                for key, value in yaml_object.items():
+                    try:
+                        setattr(imc, key, value)
+                    except:
+                        print("Couldn't set {}, {}", format(key, value))
+            except:
+                print("Didn't load {} parameters".format(yaml_params))
+
+        return imc
+
     def to_yaml(self):
         return {
             'active': self.active,
@@ -37,43 +49,6 @@ class BrainIMC:
             'restore_checkpoint': self.restore_checkpoint,
             'save_checkpoint': self.save_checkpoint,
         }
-
-
-class RevDELearner(Learner):
-    TYPE = 'revde'
-
-    def __init__(self):
-        self.subtype = "revde"
-        self.CR = 0.9
-        self.F = 0.5
-        self.n_parents = 3
-        self.verbose = "false"
-        self.population_size = 20
-        self.max_eval = 100
-
-    def to_yaml(self):
-        return {
-            'type': self.TYPE,
-            'subtype': self.subtype,
-            'CR': self.CR,
-            'F': self.F,
-            'n_parents': self.n_parents,
-            'verbose': self.verbose,
-            'population_size': self.population_size,
-            'max_eval': self.max_eval,
-        }
-
-    def learner_sdf(self):
-        return xml.etree.ElementTree.Element('rv:learner', {
-            'type': self.TYPE,
-            'subtype': str(self.subtype),
-            'CR': str(self.CR),
-            'F': str(self.F),
-            'n_parents': str(self.n_parents),
-            'verbose': str(self.verbose),
-            'population_size': str(self.population_size),
-            'max_eval': str(self.max_eval),
-        })
 
 
 class BrainCPGMeta:
@@ -88,6 +63,22 @@ class BrainCPGMeta:
         self.output_directory = ""  # /home/admin/output_learners
         self.verbose = 0
         self.startup_time = 0
+
+    @staticmethod
+    def from_yaml(yaml_object):
+        meta = BrainCPGMeta(0)
+        print(yaml_object)
+        for yaml_params in ["robot_size", "run_analytics", "n_learning_iterations", "n_cooldown_iterations", "reset_robot_position", "evaluation_rate", "output_directory", "verbose", "startup_time"]:
+            try:
+                for key, value in yaml_object.items():
+                    try:
+                        setattr(meta, key, value)
+                    except:
+                        print("Couldn't set {}, {}", format(key, value))
+            except:
+                print("Didn't load {} parameters".format(yaml_params))
+
+        return meta
 
     def to_yaml(self):
         return {
@@ -119,6 +110,21 @@ class BrainCPGController:
         self.init_neuron_state = 0.707
         self.weights = weights
 
+    @staticmethod
+    def from_yaml(yaml_object):
+        controller = BrainCPGController([])
+        for yaml_params in ["reset_neuron_random", "use_frame_of_reference", "signal_factor_all", "signal_factor_mid", "signal_factor_left_right", "abs_output_bound", "range_ub", "init_neuron_state", "weights"]:
+            try:
+                for key, value in yaml_object.items():
+                    try:
+                        setattr(controller, key, value)
+                    except:
+                        print("Couldn't set {}, {}", format(key, value))
+            except:
+                print("Didn't load {} parameters".format(yaml_params))
+
+        return controller
+
     def to_yaml(self):
         return {
             'reset_neuron_random': self.reset_neuron_random,
@@ -139,6 +145,15 @@ class BrainCPG(Brain):
 
         super().__init__()
 
+        # Various
+        self.range_lb = 0.0
+        self.load_brain = None
+        self.reset_neuron_state_bool = None
+        self.reset_neuron_random = None
+
+        if revolve_bot is None:
+            return
+
         size = self._count_modules(revolve_bot.body)
         weights = self._get_neural_weights(revolve_bot._brain)
         print("%s body brain %d %d" % (revolve_bot.id, size, len(weights)))
@@ -146,12 +161,6 @@ class BrainCPG(Brain):
         self.controller = BrainCPGController(weights)
         self.learner = RevDELearner()
         self.imc = BrainIMC()
-
-        # Various
-        self.range_lb = 0.0
-        self.load_brain = None
-        self.reset_neuron_state_bool = None
-        self.reset_neuron_random = None
 
     def _get_neural_weights(self, brain):
         weights = []
@@ -180,6 +189,27 @@ class BrainCPG(Brain):
                 count = self._count_modules(child, count)
 
         return count + 1
+
+    @staticmethod
+    def from_yaml(yaml_object):
+        CPG = BrainCPG(None)
+
+        for my_type in ["controller", "learner", "meta", "IMC"]:
+            try:
+                my_object = yaml_object[my_type]
+                print("loading ", my_type)
+                if my_type == "meta":
+                    CPG.meta = BrainCPGMeta.from_yaml(my_object)
+                elif my_type == "learner":
+                    CPG.learner = RevDELearner.from_yaml(my_object)
+                elif my_type == "controller":
+                    CPG.controller = BrainCPGController.from_yaml(my_object)
+                elif my_type == "IMC":
+                    CPG.imc = BrainIMC.from_yaml(my_object)
+            except:
+                print("Didn't load {} parameters".format(my_type))
+
+        return CPG
 
     def to_yaml(self):
         return {

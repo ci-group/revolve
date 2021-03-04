@@ -33,7 +33,6 @@
 #include "revolve/brains/controller/actuators/Actuator.h"
 #include <revolve/gazebo/brains/GazeboReporter.h>
 
-#include "revolve/brains/learner/NIPES.h"
 #include "revolve/brains/learner/DifferentialEvo.h"
 
 namespace revolve {
