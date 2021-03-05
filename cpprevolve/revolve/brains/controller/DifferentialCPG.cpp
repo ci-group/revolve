@@ -93,7 +93,6 @@ DifferentialCPG::DifferentialCPG(
         , angle_to_target_sensor(std::move(angle_to_target_sensor))
         , connection_weights(actuators.size(), 0)
 {
-    std::cout << "Creating Differential CPG" << std::endl;
     this->init_params_and_connections(params, actuators);
 
     this->load_genome_to_controller(gen);

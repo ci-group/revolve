@@ -85,6 +85,12 @@ void Evaluator::reset()
             joint_->SetPosition(0, 0.0);
         }
         _robot->SetWorldPose(start_pose);
+        for (const auto& joint_ : _robot->GetJoints()) {
+            std::string joint_name = joint_->GetScopedName();
+            _robot->SetJointPosition(joint_name, 0.0);
+            joint_->SetPosition(0, 0.0);
+
+        }
         _robot->Update();
         this->current_position_ = start_pose;
     }
@@ -205,6 +211,7 @@ double Evaluator::fitness()
                  <<","<<tot_dist
                  <<","<<path_length
                  <<std::endl;
+
     fitness_file.close();
   }
   else if(this->locomotion_type == "turing_left") //anticlockwise

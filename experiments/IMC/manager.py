@@ -37,7 +37,6 @@ async def run():
             # simulator_args=[""]
             plugins_dir_path=os.path.join('.', 'build', 'lib'),
             models_dir_path=os.path.join('.', 'models'),
-            simulator_name='/home/fuda/Projects/gazebo/build/gazebo/gzserver'   # /home/fuda/Projects/gazebo/build/gazebo/gzserver
         )
     await simulator_supervisor.launch_simulator(port=settings.port_start)
     await asyncio.sleep(0.1)

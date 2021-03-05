@@ -2,12 +2,19 @@ set (CMAKE_CXX_STANDARD 14)
 
 set(CONTROLLER_SRCS
     controller/DifferentialCPG.cpp
+    controller/IMC/IMC.cpp
+    controller/IMC/FeedForwardNetwork.cpp
+    controller/IMC/InverseNetwork.cpp
 )
 set(LEARNER_SRCS
     learner/Learner.cpp
     learner/BayesianOptimizer.cpp
     learner/HyperNEAT.cpp
-)
+    learner/EA.cpp
+    learner/NIPES.cpp
+    learner/DifferentialEvo.cpp
+        learner/EA_misc/RandNum.cpp
+        learner/EA_misc/Novelty.cpp)
 
 # PKG-CONFIG
 find_package(PkgConfig REQUIRED)
@@ -18,6 +25,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 # Find Eigen3 - A lightweight C++ template library for vector and matrix math
 find_package(Eigen3 REQUIRED)
 find_package(MultiNEAT REQUIRED)
+find_package(libcmaes REQUIRED)
 
 # These dependencies are required for the AngleToTargetDetector Sensor
 find_package(OpenCV REQUIRED)
@@ -45,11 +53,15 @@ target_include_directories(revolve-learners
         PUBLIC ${NLOpt_INCLUDE_DIRS})
 
 target_compile_definitions(revolve-learners
-        PUBLIC USE_NLOPT=1)
+        PUBLIC USE_NLOPT=1
+        PUBLIC CMAES)
 
 target_link_libraries(revolve-controllers
         PUBLIC MultiNEAT::MultiNEAT
-        ${OpenCV_LIBS})
+        ${OpenCV_LIBS}
+        PUBLIC torch
+        PUBLIC libcmaes::cmaes
+        )
 
 target_link_libraries(revolve-learners
         revolve-controllers

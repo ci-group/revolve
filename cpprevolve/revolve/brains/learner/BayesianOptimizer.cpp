@@ -72,14 +72,81 @@ BayesianOptimizer::BayesianOptimizer(
             };
             break;
         default:
-            std::cerr << "Controller not supported" << std::endl;
-            throw std::runtime_error("Controller not supported");
+            std::cerr << "[BO] Controller not supported" << std::endl;
+            throw std::runtime_error("[BO] Controller not supported");
     }
 
     this->output_dir = "./experiments/IMC/output"+model_name;
 
     std::ifstream fin(this->output_dir+"/fitnesses.txt");
     std::ifstream gin(this->output_dir+"/genotype.log");
+    if(fin){ // Continue Learning/test best
+        double fitness;
+        while (fin >> fitness){
+            // Limbo requires fitness value to be of type Eigen::VectorXd
+            Eigen::VectorXd observation = Eigen::VectorXd(1);
+            observation(0) = fitness;
+            // Save fitness to std::vector. This fitness corresponds to the solution of the previous iteration
+            this->observations.push_back(observation);
+//            std::cout<<fitness<<std::endl;
+        }
+        std::cout<<"[BO] Fitness loaded!"<<std::endl;
+
+        int n_weights = this->vectorize_controller().size();
+        // Initialize Eigen::VectorXd here.
+        Eigen::VectorXd init_sample(n_weights);
+        std::string genome;
+        while (std::getline(gin, genome))
+        {
+            std::stringstream ss_weight(genome);
+            std::string weight;
+            int j =0;
+            while (std::getline(ss_weight, weight, ','))
+            {
+                init_sample(j) = stod(weight);
+                j++;
+            }
+            // Save the initialized weights
+            this->samples.push_back(init_sample);
+        }
+
+        this->evaluation_counter = this->observations.size()-1;
+        int best_index = 1;
+        for (int i=0; i<this->observations.size(); i++){
+            if (this->best_fitness<this->observations[i][0]){
+                this->best_fitness = this->observations[i][0];
+                this->best_sample = this->samples[i];
+                best_index = i;
+            }
+        }
+        std::cout<<"[BO] Observations: "<<this->observations.size()<<" | Samples: "<<this->samples.size()<<std::endl;
+        bool test_best = false; // make this parameter
+        if(test_best){
+            this->observations.clear();
+            this->evaluation_counter = -1;
+
+            auto sec_best = this->samples[best_index - 1];
+            this->devectorize_controller(sec_best);
+            this->samples.clear();
+            this->samples.push_back(this->best_sample);
+//            this->samples.push_back(sec_best);
+            std::cout<<"Retesting sample fitness: "<< this->best_fitness<<std::endl;
+            std::ofstream files;
+            files.open(this->output_dir+"/fitness_decom.txt", std::ofstream::out | std::ofstream::trunc);
+            files.close();
+        }
+    }
+    else{
+        std::cout<<"[BO] Create clean fitness/genotype files"<<std::endl;
+        std::ofstream files;
+        files.open(this->output_dir+"/fitnesses.txt", std::ofstream::out | std::ofstream::trunc);
+        files.open(this->output_dir+"/genotype.log", std::ofstream::out | std::ofstream::trunc);
+        files.open("../ctime.txt", std::ofstream::out | std::ofstream::trunc);
+        files.close();
+    }
+
+    this->output_dir = "./experiments/IMC/output"+model_name;
+
     if(gin){ // Continue Learning
         double fitness;
         while (fin >> fitness){
@@ -238,6 +305,7 @@ BO_DECLARE_DYN_PARAM(double, BayesianOptimizer::params::acqui_ucb, alpha);
 BO_DECLARE_DYN_PARAM(double, BayesianOptimizer::params::kernel_maternfivehalves, sigma_sq);
 BO_DECLARE_DYN_PARAM(double, BayesianOptimizer::params::kernel_maternfivehalves, l);
 
+
 void BayesianOptimizer::init_first_controller()
 {
 //    assert(n_init_samples == 1 and "INIT SAMPLES > 1 not supported");
@@ -324,6 +392,7 @@ void BayesianOptimizer::init_next_controller()
 
 void BayesianOptimizer::finalize_current_controller(double fitness)
 {
+
     if(fitness <= 5e-11){ // when reloading brain this can cause an error
         std::cout<<"Continue experiment"<<std::endl;
         return ;
@@ -334,6 +403,9 @@ void BayesianOptimizer::finalize_current_controller(double fitness)
         this->best_fitness = fitness;
         this->best_sample = this->samples.back();
     }
+
+    std::cout<<"[BO] Resulting fitness: "<<fitness<<"/"<< this->best_fitness<<std::endl;
+    // Save connection_weights if it is the best seen so far
 
     // Limbo requires fitness value to be of type Eigen::VectorXd
     Eigen::VectorXd observation(1);

@@ -99,7 +99,7 @@ protected:
     /// \brief Sample corresponding to best fitness
     Eigen::VectorXd best_sample;
 
-    /// \brief Output root directory
+    /// \brief root output directory
     std::string output_dir;
 };
 }

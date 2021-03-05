@@ -21,15 +21,12 @@ EA::EA(std::unique_ptr<Controller> controller,
 //        , params(params)
 //        , population(nullptr)
 {
-    std::cout << "EA algorithm constructor" << std::endl;
     max_learning_evaluations = int(n_learning_evaluations);
     EA_Params = params;
     this->output_dir = "./experiments/IMC/output"+model_name;
 
     revolve::RandNum rn(seed);
     this->set_randomNum(std::make_shared<revolve::RandNum>(rn));
-
-    std::cout << "EA initial intialization" << std::endl;
 
     assert(this->_controller && "EA: passed null controller");
     switch (this->_controller->controller_type)
@@ -63,8 +60,6 @@ EA::EA(std::unique_ptr<Controller> controller,
             std::cerr << "Controller not supported" << std::endl;
             throw std::runtime_error("Controller not supported");
     }
-
-    std::cout << "EA initialized" << std::endl;
 }
 
 void EA::init_first_controller()

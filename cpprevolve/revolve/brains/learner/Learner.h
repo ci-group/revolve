@@ -26,7 +26,7 @@ public:
         , n_evaluations(n_evaluations)
         , evaluator(evaluator)
         , evaluation_reporter(reporter)
-    {std::cout << "Learner algorithm constructor" << std::endl;}
+    {}
 
     /// \brief Deconstructor
     virtual ~Learner() = default;
