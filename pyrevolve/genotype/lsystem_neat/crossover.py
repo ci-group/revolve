@@ -29,8 +29,8 @@ def standard_crossover(parents, lsystem_conf, crossover_conf):
     """
     assert len(parents) == 2
 
-    parents_body_genotype = [p.representation._body_genome for p in parents]
-    parents_brain_genotypes = [pair for pair in zip(parents[0].representation._brain_genomes, parents[1].representation._brain_genomes)]
+    parents_body_genotype = [p.genotype._body_genome for p in parents]
+    parents_brain_genotypes = [pair for pair in zip(parents[0].genotype._brain_genomes, parents[1].genotype._brain_genomes)]
 
     child_genotype = LSystemCPGHyperNEATGenotype()
     Neatconf = NEATCrossoverConf()
