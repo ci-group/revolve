@@ -19,7 +19,6 @@
 
 //#include "../plugin/RobotController.h"
 
-#include "IMC.h"
 #include "torch/torch.h"
 
 #include "revolve/brains/learner/EvaluationReporter.h"

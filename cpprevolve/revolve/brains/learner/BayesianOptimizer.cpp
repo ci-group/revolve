@@ -147,6 +147,8 @@ BayesianOptimizer::BayesianOptimizer(
 
     this->output_dir = "./experiments/IMC/output"+model_name;
 
+    std::ifstream fin(this->output_dir+"/fitnesses.txt");
+    std::ifstream gin(this->output_dir+"/genotype.log");
     if(gin){ // Continue Learning
         double fitness;
         while (fin >> fitness){

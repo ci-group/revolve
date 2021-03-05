@@ -10,6 +10,8 @@
 #include "Evaluator.h"
 #include "EA.h"
 
+#include <libcmaes/cmaes.h>
+
 namespace cma = libcmaes;
 using geno_pheno_t = cma::GenoPheno<cma::pwqBoundStrategy>;
 using cov_update_t = cma::CovarianceUpdate;

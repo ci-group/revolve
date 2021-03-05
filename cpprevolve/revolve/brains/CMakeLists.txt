@@ -2,7 +2,6 @@ set (CMAKE_CXX_STANDARD 14)
 
 set(CONTROLLER_SRCS
     controller/DifferentialCPG.cpp
-    controller/IMC/IMC.cpp
     controller/IMC/FeedForwardNetwork.cpp
     controller/IMC/InverseNetwork.cpp
 )
