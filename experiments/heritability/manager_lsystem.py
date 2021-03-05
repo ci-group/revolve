@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+from pyrevolve.genotype.lsystem_neat import LSystemCPGHyperNEATGenotypeConfig, LSystemCPGHyperNEATGenotype
+from pyrevolve.genotype.neat_brain_genome import NeatBrainGenomeConfig
+from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import BrainType
 from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding import PlasticodingConfig, random_initialization
@@ -16,6 +19,11 @@ from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 from pyrevolve.custom_logging.logger import logger
+from pyrevolve.genotype.lsystem_neat.crossover import CrossoverConfig as lCrossoverConfig
+from pyrevolve.genotype.lsystem_neat.crossover import standard_crossover as lcrossover
+from pyrevolve.genotype.lsystem_neat.mutation import LSystemNeatMutationConf as lMutationConfig
+from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig as plasticMutationConfig
+from pyrevolve.genotype.lsystem_neat.mutation import standard_mutation as lmutation
 
 
 from typing import TYPE_CHECKING
@@ -40,7 +48,7 @@ async def run():
 
     brain_single_mutation_prob = 0.5
 
-    genotype_conf: PlasticodingConfig = PlasticodingConfig(
+    body_conf: PlasticodingConfig = PlasticodingConfig(
         allow_joint_joint_attachment=False,
         e_max_groups=3,
         oscillator_param_min=0,
@@ -55,13 +63,33 @@ async def run():
         use_rotation_commands=False,
         use_movement_stack=False,
     )
+    brain_conf = NeatBrainGenomeConfig(brain_type=BrainType.CPG)
+    brain_conf.multineat_params.DisjointCoeff = 0.3
+    brain_conf.multineat_params.ExcessCoeff = 0.3
+    brain_conf.multineat_params.WeightDiffCoeff = 0.3
+    brain_conf.multineat_params.ActivationADiffCoeff = 0.3
+    brain_conf.multineat_params.ActivationBDiffCoeff = 0.3
+    brain_conf.multineat_params.TimeConstantDiffCoeff = 0.3
+    brain_conf.multineat_params.BiasDiffCoeff = 0.3
+    brain_conf.multineat_params.ActivationFunctionDiffCoeff = 0.3
+    brain_conf.multineat_params.CompatTreshold = 3.0
+    brain_conf.multineat_params.MinCompatTreshold = 3.0
+    brain_conf.multineat_params.CompatTresholdModifier = 0.1
+    brain_conf.multineat_params.CompatTreshChangeInterval_Generations = 1
+    brain_conf.multineat_params.CompatTreshChangeInterval_Evaluations = 1
+    genotype_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)
 
-    mutation_conf: MutationConfig = MutationConfig(
+    plasticMutation_conf: MutationConfig = plasticMutationConfig(
         mutation_prob=morph_at_least_one_mutation_prob,
-        genotype_conf=genotype_conf,
+        genotype_conf=body_conf,
     )
 
-    crossover_conf: CrossoverConfig = CrossoverConfig(
+    lmutation_conf = lMutationConfig(
+        plasticoding_mutation_conf=plasticMutation_conf,
+        neat_conf=brain_conf,
+    )
+
+    crossover_conf = lCrossoverConfig(
         crossover_prob=1.0,
     )
 
@@ -93,13 +121,13 @@ async def run():
 
     population_conf = PopulationConfig(
         population_size=population_size,
-        genotype_constructor=lambda conf, _id: random_initialization(conf, _id),
+        genotype_constructor=lambda conf, _id: LSystemCPGHyperNEATGenotype(conf, _id),
         genotype_conf=genotype_conf,
         fitness_function=fitness.displacement_velocity,
         objective_functions=None,
-        mutation_operator=lambda genotype, gen_conf: standard_mutation(genotype, gen_conf),
-        mutation_conf=mutation_conf,
-        crossover_operator=lambda parents, gen_conf, cross_conf: standard_crossover(parents, gen_conf, cross_conf),
+        mutation_operator=lambda genotype, gen_conf: lmutation(genotype, gen_conf),
+        mutation_conf=lmutation_conf,
+        crossover_operator=lambda parents, gen_conf, cross_conf: lcrossover(parents, gen_conf, cross_conf),
         crossover_conf=crossover_conf,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
