@@ -31,7 +31,6 @@
 #include <revolve/brains/learner/HyperNEAT.h>
 #include <multineat/Genome.h>
 #include <multineat/Population.h>
-#include <torch/torch.h>
 
 #include "RobotController.h"
 
@@ -269,27 +268,6 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
                 this->reporter.get(),
                 evaluation_rate,
                 n_learning_evaluations,
-                this->model_->GetName());
-    } else if ("nipes" == learner_type) {
-        NIPES::NIPES_Parameters params = NIPES::NIPES_Parameters();
-
-        EA::Parameters EA_params = EA::Parameters();
-        params.EA_params = EA_params;
-        params.EA_params.verbose = (brain_sdf->GetElement("rv:learner")->GetAttribute("verbose")->GetAsString() == "1");
-        params.EA_params.population_size = stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("population_size")->GetAsString());
-        params.EA_params.max_eval = std::min(int(n_learning_evaluations), stoi(brain_sdf->GetElement("rv:learner")->GetAttribute("max_eval")->GetAsString()));
-
-        auto dist = std::bind(std::uniform_int_distribution<int>(),
-                              std::mt19937(std::random_device{}()));
-
-        learner = std::make_unique<NIPES>(
-                std::move(controller),
-                this->evaluator.get(),
-                this->reporter.get(),
-                params,
-                dist(),
-                evaluation_rate,
-                params.EA_params.max_eval,
                 this->model_->GetName());
     } else if ("de"==learner_type) {
         DifferentialEvo::DE_Parameters params = DifferentialEvo::DE_Parameters();

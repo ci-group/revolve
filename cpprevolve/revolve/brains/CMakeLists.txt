@@ -2,15 +2,12 @@ set (CMAKE_CXX_STANDARD 14)
 
 set(CONTROLLER_SRCS
     controller/DifferentialCPG.cpp
-    controller/IMC/FeedForwardNetwork.cpp
-    controller/IMC/InverseNetwork.cpp
 )
 set(LEARNER_SRCS
     learner/Learner.cpp
     learner/BayesianOptimizer.cpp
     learner/HyperNEAT.cpp
     learner/EA.cpp
-    learner/NIPES.cpp
     learner/DifferentialEvo.cpp
         learner/EA_misc/RandNum.cpp
         learner/EA_misc/Novelty.cpp)
@@ -58,7 +55,6 @@ target_compile_definitions(revolve-learners
 target_link_libraries(revolve-controllers
         PUBLIC MultiNEAT::MultiNEAT
         ${OpenCV_LIBS}
-        PUBLIC torch
         PUBLIC libcmaes::cmaes
         )
 

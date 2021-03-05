@@ -149,67 +149,12 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
         j++;
     }
 
-    // Add connections between neighbouring neurons
-    size_t i = j;
-    for (const std::shared_ptr<Actuator> &actuator: actuators)
-    {
-        // Get name and x,y-coordinates of all neurons.
-        const double x = actuator->coordinate_x();
-        const double y = actuator->coordinate_y();
-        const double z = actuator->coordinate_z();
-
-        // Continue to next iteration in case there is already a connection between the 1 and -1 neuron.
-        // These checks feel a bit redundant.
-        // if A->B connection exists.
-        if (this->connections.count({x, y, z, 1, x, y, z, -1}) > 0)
-        {
-            continue;
-        }
-        // if B->A connection exists:
-        if (this->connections.count({x, y, z, -1, x, y, z, 1}) > 0)
-        {
-            continue;
-        }
-
-        // Loop over all positions. We call it neighbours, but we still need to check if they are a neighbour.
-        for (const std::shared_ptr<Actuator> &neighbour: actuators)
-        {
-            // Get information of this neuron (that we call neighbour).
-            const double near_x = neighbour->coordinate_x();
-            const double near_y = neighbour->coordinate_y();
-            const double near_z = neighbour->coordinate_z();
-
-            // If there is a node that is a Moore neighbour, we set it to be a neighbour for their A-nodes.
-            // Thus the connections list only contains connections to the A-neighbourhood, and not the
-            // A->B and B->A for some node (which makes sense).
-            const double dist_x = std::fabs(x - near_x);
-            const double dist_y = std::fabs(y - near_y);
-
-            // TODO: Verify for non-spiders
-            if (std::fabs(dist_x + dist_y - 2) < 0.01)
-            {
-                if(this->connections.count({x, y, z, 1, near_x, near_y, near_z, 1}) == 0 and
-                   this->connections.count({near_x, near_y, near_z, 1, x, y, z, 1}) == 0)
-                {
-#ifdef DifferentialCPG_PRINT_INFO
-                    std::cout << "Creating connnection ["
-                              << x << ';' << y << ';' << z << ';' << 1 << '-'
-                              << near_x << ';' << near_y << ';' << near_z << ';' << 1
-                              << "] to connection_weights[" << i << ']' << std::endl;
-#endif
-                    this->connections[{x, y, z, 1, near_x, near_y, near_z, 1}] = i;
-                    //this->connections[{near_x, near_y, near_z, 1, x, y, z, 1}] = i;
-                    i++;
-                }
-            }
-        }
-    }
-
     // Initialise array of neuron states for Update() method
     this->next_state = new double[this->neurons.size()];
 
     // the size is: external connection weights + internal CPG weights
-    this->n_weights = (int)(this->connections.size()) + this->n_motors;
+    this->n_weights = this->n_motors;
+    std::cout << "weights" << this->n_weights << std::endl;
 }
 
 /**
