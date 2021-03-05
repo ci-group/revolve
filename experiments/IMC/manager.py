@@ -59,7 +59,7 @@ async def run():
     # robot_file_path = "experiments/IMC/yaml/IMC_babyA4.yaml"
     # robot_file_path = "experiments/IMC/yaml/IMC_babyB9.yaml"
     # robot_file_path = "experiments/IMC/yaml/IMC_gecko5.yaml"        #sven8
-    robot_file_path = "experiments/IMC/yaml/robot_1.yaml"        #sven
+    robot_file_path = "experiments/IMC/yaml/robot_9.yaml"        #sven
     # robot_file_path = "experiments/IMC/yaml/IMC_spider9.yaml"        #spider9
 
     robot.load_file(robot_file_path, conf_type='yaml')

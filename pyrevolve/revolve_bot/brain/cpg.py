@@ -133,6 +133,7 @@ class BrainCPGController:
             'signal_factor_mid': self.signal_factor_mid,
             'signal_factor_left_right': self.signal_factor_left_right,
             'abs_output_bound': self.abs_output_bound,
+            'init_neuron_state': self.init_neuron_state,
             'range_ub': self.range_ub,
             'weights': self.weights,
         }
