@@ -137,7 +137,6 @@ void WorldController::Reset()
 /////////////////////////////////////////////////
 void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info)
 {
-    boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
 
     if (model_remove_mutex.try_lock()) {
         for (const auto &model: this->models_to_remove) {
@@ -170,8 +169,7 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
     }
     else if (request_type == "insert_sdf")
     {
-        std::cout << "Processing insert model request ID `" << request->id() << "`."
-                  << std::endl;
+        std::cout << "Processing insert model request ID `" << request->id() << "`." << std::endl;
         sdf::SDF robotSDF;
         robotSDF.SetFromString(request->data());
 
@@ -185,13 +183,12 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
             boost::mutex::scoped_lock lock(this->insertMutex_);
             this->insertMap_[name] = request->id();
         }
-
         // insert here, it's better. Here you can insert when the world is paused
         {
-            boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+            //boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
+            boost::mutex::scoped_lock lock(this->model_remove_mutex);
             this->world_->InsertModelString(robotSDF.ToString());
         }
-
         // Don't leak memory
         // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
         robotSDF.Root()->Reset();

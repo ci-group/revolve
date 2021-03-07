@@ -11,7 +11,7 @@ from pyrevolve.tol.manage import measures
 
 
 class SimulatorQueue:
-    EVALUATION_TIMEOUT = 30  # seconds
+    EVALUATION_TIMEOUT = 300  # seconds
 
     def __init__(self, n_cores: int, settings, port_start=11345, simulator_cmd=None):
         assert (n_cores > 0)

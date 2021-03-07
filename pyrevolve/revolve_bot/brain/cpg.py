@@ -56,7 +56,7 @@ class BrainCPGMeta:
     def __init__(self, size: int):
         self.robot_size = size
         self.run_analytics = "true"
-        self.n_learning_iterations = 100
+        self.n_learning_iterations = 10
         self.n_cooldown_iterations = 1
         self.reset_robot_position = "false"
         self.evaluation_rate = 30
@@ -67,7 +67,6 @@ class BrainCPGMeta:
     @staticmethod
     def from_yaml(yaml_object):
         meta = BrainCPGMeta(0)
-        print(yaml_object)
         for yaml_params in ["robot_size", "run_analytics", "n_learning_iterations", "n_cooldown_iterations", "reset_robot_position", "evaluation_rate", "output_directory", "verbose", "startup_time"]:
             try:
                 for key, value in yaml_object.items():
@@ -157,7 +156,6 @@ class BrainCPG(Brain):
 
         size = self._count_modules(revolve_bot.body)
         weights = self._get_neural_weights(revolve_bot._brain)
-        print("%s body brain %d %d" % (revolve_bot.id, size, len(weights)))
         self.meta = BrainCPGMeta(size)
         self.controller = BrainCPGController(weights)
         self.learner = RevDELearner()
@@ -170,7 +168,6 @@ class BrainCPG(Brain):
         return weights
 
     def _count_modules(self, body, count = 0):
-        print("module ", body.__class__, body)
         if body.children is None:
             return count + 1
 
@@ -178,7 +175,6 @@ class BrainCPG(Brain):
             for child in body.children:
                 if child is None:
                     continue
-                print(child.id, count)
                 count = self._count_modules(child, count)
 
         if isinstance(body.children, Dict):
@@ -186,7 +182,6 @@ class BrainCPG(Brain):
                 child = body.children[key]
                 if child is None:
                     continue
-                print(child.id, count)
                 count = self._count_modules(child, count)
 
         return count + 1
@@ -198,7 +193,6 @@ class BrainCPG(Brain):
         for my_type in ["controller", "learner", "meta", "IMC"]:
             try:
                 my_object = yaml_object[my_type]
-                print("loading ", my_type)
                 if my_type == "meta":
                     CPG.meta = BrainCPGMeta.from_yaml(my_object)
                 elif my_type == "learner":
@@ -234,6 +228,8 @@ class BrainCPG(Brain):
             'init_neuron_state': str(self.controller.init_neuron_state),
             'output_directory': str(self.meta.output_directory),
             'verbose': str(self.meta.verbose),
+            'n_learning_iterations': str(self.meta.n_learning_iterations),
+            'evaluation_rate': str(self.meta.evaluation_rate),
             'range_lb': str(self.range_lb),
             'range_ub': str(self.controller.range_ub),
             'signal_factor_all': str(self.controller.signal_factor_all),

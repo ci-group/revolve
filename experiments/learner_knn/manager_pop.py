@@ -109,23 +109,16 @@ async def run():
 
     population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
     # starting a new experiment
-    experiment_management.create_exp_folders()
-    await population.init_pop()
-
-    while gen_num < num_generations - 1:
-        gen_num += 1
-        population = population.next_gen(gen_num)
-
-    """
     if do_recovery:
         # loading a previous state of the experiment
         await population.load_snapshot(gen_num)
         if gen_num >= 0:
-            log.info('Recovered snapshot '+str(gen_num)+', pop with ' + str(len(population.individuals))+' individuals')
+            log.info('Recovered snapshot ' + str(gen_num) + ', pop with ' + str(
+                len(population.individuals)) + ' individuals')
         if has_offspring:
             individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
-            log.info('Recovered unfinished offspring '+str(gen_num))
+            log.info('Recovered unfinished offspring ' + str(gen_num))
 
             if gen_num == 0:
                 await population.init_pop(individuals)
@@ -139,6 +132,12 @@ async def run():
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
+    while gen_num < num_generations - 1:
+        gen_num += 1
+        population = await population.next_gen(gen_num)
+
+    """
+    
     while gen_num < num_generations-1:
         gen_num += 1
         population = await population.next_gen(gen_num)

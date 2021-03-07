@@ -78,7 +78,7 @@ void Evaluator::reset()
         ::gazebo::physics::ModelPtr _robot = robot.lock();
         _robot->ResetPhysicsStates();
         auto start_pose = ::ignition::math::Pose3d();
-        start_pose.Set(0.0, 0.0, 0.005, 0.0, 0.0, -.1);
+        start_pose.Set(0.0, 0.0, 0.1, 0.0, 0.0, -.1);
         for (const auto &joint_ : _robot->GetJoints()) {
             std::string joint_name = joint_->GetScopedName();
             _robot->SetJointPosition(joint_name, 0.0);

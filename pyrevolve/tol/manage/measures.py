@@ -42,13 +42,12 @@ class BehaviouralMeasurements:
         }.items()
 
 
-
 def velocity(robot_manager):
     """
     Returns the velocity over the maintained window
     :return:
     """
-    return robot_manager._dist / robot_manager._time if robot_manager._time > 0 else 0
+    return robot_manager._dist / float(robot_manager._time) if float(robot_manager._time) > 0.0 else 0.0
 
 
 def displacement(robot_manager):

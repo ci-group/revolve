@@ -1,5 +1,5 @@
 from pyrevolve.util import Time
-from pyrevolve.SDF.math import Vector3
+from pyrevolve.SDF.math import Vector3, Quaternion
 from pyrevolve.spec.msgs.robot_states_learning_pb2 import LearningRobotStates, BehaviourData
 
 
@@ -16,14 +16,13 @@ class Evaluation:
         self.behaviour_data = behaviour
 
     def times(self):
-        def extract_time(step: BehaviourData):
-            return step.time
-        return map(extract_time, self.behaviour_data)
+        return [Time(data.time.sec, data.time.nsec) for data in self.behaviour_data]
 
     def poses(self):
-        def extract_poses(step: BehaviourData):
-            return step.pose
-        return map(extract_poses, self.behaviour_data)
+        return [Vector3.from_vector3d(data.pose.position) for data in self.behaviour_data]
+
+    def orientations(self):
+        return [Quaternion.from_quaternion(data.pose.orientation) for data in self.behaviour_data]
 
 
 class LearningRobotManager(object):
@@ -51,7 +50,11 @@ class LearningRobotManager(object):
         self.start_position = start_position
         self.program_arguments = program_arguments
         self.size = robot.size()
-
+        self._positions = []
+        self._times = []
+        self._time = 0.0
+        self._dist = 0.0
+        self._contacts = []
         self.dead = False
         self.last_fitness = None
         self.evaluations = []
@@ -74,6 +77,12 @@ class LearningRobotManager(object):
             fitness=report.fitness,
             behaviour=report.behaviour,
         )
+        self._positions = evaluation.poses()
+        self._orientations = evaluation.orientations()
+        self._dist = (self._positions[-1] - self._positions[0]).magnitude()
+        self._times = evaluation.times()
+        self._time = self._times[-1] - self._times[0]
+
         self.evaluations.append(evaluation)
 
         if self.best_evaluation is None or report.fitness > self.best_evaluation.fitness:

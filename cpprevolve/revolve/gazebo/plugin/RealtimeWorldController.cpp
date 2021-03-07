@@ -140,6 +140,7 @@ void RealtimeWorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &
         {
             boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
             for (const auto &model : this->world_->Models()) {
+                std::cout << "updating models" << std::endl;
                 if (model->IsStatic()) {
                     // Ignore static models such as the ground and obstacles
                     continue;

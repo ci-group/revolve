@@ -154,7 +154,6 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
 
     // the size is: external connection weights + internal CPG weights
     this->n_weights = this->n_motors;
-    std::cout << "weights" << this->n_weights << std::endl;
 }
 
 /**

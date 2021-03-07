@@ -175,6 +175,16 @@ class SingleRobotWorld(WorldManager):
 
         self.robot_managers[robot_manager.name] = robot_manager
 
+    def unregister_robot(self, robot_manager):
+        """
+        Unregisters the robot with the given ID, usually happens when
+        it is deleted.
+        :param robot_manager:
+        :type robot_manager: RobotManager
+        """
+        logger.info("Unregistering robot {}.".format(robot_manager.name))
+        del self.robot_managers[robot_manager.name]
+
     def _process_learning_state(self, msg):
         """
         Handles the pose info message by updating robot positions.

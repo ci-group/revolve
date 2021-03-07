@@ -309,6 +309,10 @@ class Vector3(VectorBase):
             return AssertionError("Vector is not an instance of Vector3")
         return abs(self.normalized().dot(b.normalized())) <= EPSILON
 
+    @staticmethod
+    def from_vector3d(vector3d):
+        return Vector3(vector3d.x, vector3d.y, vector3d.z)
+
 
 class Quaternion(VectorBase):
     """
@@ -412,6 +416,10 @@ class Quaternion(VectorBase):
         :return:
         """
         return Quaternion(quaternion_from_euler(roll, pitch, yaw, 'sxyz'))
+
+    @staticmethod
+    def from_quaternion(quaternion):
+        return Quaternion(quaternion.w, quaternion.x, quaternion.y, quaternion.z)
 
 
 class RotationMatrix(object):

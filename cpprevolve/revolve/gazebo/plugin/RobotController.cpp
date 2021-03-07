@@ -218,10 +218,10 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
     auto learner_type = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
     std::cout << "Loading controller " << controller_type << " and learner " << learner_type << std::endl;
 
-
     //TODO parameters from SDF
-    const double evaluation_rate = 60.0;
-    const unsigned int n_learning_evaluations = 300;
+    const double evaluation_rate = stoi(brain_sdf->GetElement("rv:controller")->GetAttribute("evaluation_rate")->GetAsString());
+    const unsigned int n_learning_evaluations = stoi(brain_sdf->GetElement("rv:controller")->GetAttribute("n_learning_iterations")->GetAsString());
+    std::cout << "iterations " << n_learning_evaluations << std::endl;
 
     this->evaluator = std::make_unique<::revolve::gazebo::Evaluator>(evaluation_rate, true, this->model_);
 
@@ -245,7 +245,9 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
             controller = std::make_unique<RLPower>(this->model_, brain_sdf, motors_, sensors_);
         }
     } else if ("cpg" == controller_type) {
-        controller = std::make_unique<DifferentialCPG>(brain_sdf, motors_);
+        if (not motors_.empty()) {
+            controller = std::make_unique<DifferentialCPG>(brain_sdf, motors_);
+        }
     } else if ("cppn-cpg" == controller_type) {
         controller = std::make_unique<DifferentialCPPNCPG>(brain_sdf, motors_);
     } else {
@@ -288,72 +290,22 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
         auto dist = std::bind(std::uniform_int_distribution<int>(),
                               std::mt19937(std::random_device{}()));
 
-        learner = std::make_unique<DifferentialEvo>(
-                std::move(controller),
-                this->evaluator.get(),
-                this->reporter.get(),
-                params,
-                dist(),
-                evaluation_rate,
-                n_learning_evaluations,
-                this->model_->GetName());
-//    } else if ("hyperneat" == learner_type) {
-//        NEAT::Parameters neat_params = NEAT::Parameters();
-//
-//        const sdf::ElementPtr learner_sdf = brain_sdf->GetElement("rv:learner")->GetElement("rv:params");
-//
-//#define WRITE_DOUBLE_PARAM(x)   std::cout << #x << " is set to: " << learner_sdf->GetAttribute(#x)->GetAsString() << std::endl; neat_params.x = stod(learner_sdf->GetAttribute(#x)->GetAsString());
-//#define CHECK_PARAM(x)   {stod(std::to_string(neat_params.x))==stod(learner_sdf->GetAttribute(#x)->GetAsString()) ? std::cout << std::left <<#x << " is set to: Default" << std::endl : WRITE_DOUBLE_PARAM(x)}
-//        CHECK_PARAM(PopulationSize)
-//        CHECK_PARAM(WeightDiffCoeff)
-//        CHECK_PARAM(CompatTreshold)
-//        CHECK_PARAM(YoungAgeTreshold)
-//        CHECK_PARAM(OldAgeTreshold)
-//        CHECK_PARAM(MinSpecies)
-//        CHECK_PARAM(MaxSpecies)
-//        CHECK_PARAM(RouletteWheelSelection)
-//        CHECK_PARAM(RecurrentProb)
-//        CHECK_PARAM(OverallMutationRate)
-//        CHECK_PARAM(ArchiveEnforcement)
-//        CHECK_PARAM(MutateWeightsProb)
-//        CHECK_PARAM(WeightMutationMaxPower)
-//        CHECK_PARAM(WeightReplacementMaxPower)
-//        CHECK_PARAM(MutateWeightsSevereProb)
-//        CHECK_PARAM(WeightMutationRate)
-//        CHECK_PARAM(WeightReplacementRate)
-//        CHECK_PARAM(MaxWeight)
-//        CHECK_PARAM(MutateAddNeuronProb)
-//        CHECK_PARAM(MutateAddLinkProb)
-//        CHECK_PARAM(MutateRemLinkProb)
-//        CHECK_PARAM(MinActivationA)
-//        CHECK_PARAM(MaxActivationA)
-//        CHECK_PARAM(ActivationFunction_SignedSigmoid_Prob)
-//        CHECK_PARAM(ActivationFunction_UnsignedSigmoid_Prob)
-//        CHECK_PARAM(ActivationFunction_Tanh_Prob)
-//        CHECK_PARAM(ActivationFunction_SignedStep_Prob)
-//        CHECK_PARAM(CrossoverRate)
-//        CHECK_PARAM(MultipointCrossoverRate)
-//        CHECK_PARAM(SurvivalRate)
-//        CHECK_PARAM(MutateNeuronTraitsProb)
-//        CHECK_PARAM(MutateLinkTraitsProb)
-//#undef CHECK_PARAM
-//#undef WRITE_DOUBLE_PARAM
-//
-//        neat_params.DynamicCompatibility = (learner_sdf->GetAttribute("DynamicCompatibility")->GetAsString() == "true");
-//        neat_params.NormalizeGenomeSize = (learner_sdf->GetAttribute("NormalizeGenomeSize")->GetAsString() == "true");
-//        neat_params.AllowLoops = (learner_sdf->GetAttribute("AllowLoops")->GetAsString() == "true");
-//        neat_params.AllowClones = (learner_sdf->GetAttribute("AllowClones")->GetAsString() == "true");
-//
-//        int seed = 0;
-//
-//        learner = std::make_unique<HyperNEAT>(
-//                std::move(controller),
-//                this->evaluator.get(),
-//                this->reporter.get(),
-//                neat_params,
-//                seed,
-//                evaluation_rate,
-//                n_learning_evaluations);
+        if (motors_.empty()) {
+            std::cout << "Motors empty, stopping" << std::endl;
+            this->reporter->report(1, true, 0.0);
+            this->evaluator->reset();
+        } else {
+            std::cout << "Start learners" << std::endl;
+            learner = std::make_unique<DifferentialEvo>(
+                    std::move(controller),
+                    this->evaluator.get(),
+                    this->reporter.get(),
+                    params,
+                    dist(),
+                    evaluation_rate,
+                    n_learning_evaluations,
+                    this->model_->GetName());
+        }
     } else {
         throw std::runtime_error("Robot brain: Learner \"" + learner_type + "\" is not supported.");
     }
