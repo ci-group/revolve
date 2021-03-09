@@ -79,7 +79,10 @@ class LearningRobotManager(object):
         )
         self._positions = evaluation.poses()
         self._orientations = evaluation.orientations()
-        self._dist = (self._positions[-1] - self._positions[0]).magnitude()
+        if len(self._positions) > 0:
+            self._dist = (self._positions[-1] - self._positions[0]).magnitude()
+        else:
+            self._dist = 0.0
         self._times = evaluation.times()
         self._time = self._times[-1] - self._times[0]
 

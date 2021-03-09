@@ -113,24 +113,26 @@ class Population:
 
         with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')) as f:
             lines = f.readlines()
-            if lines[0] == 'None':
+            if 'None' in lines[0]:
                 individual.phenotype._behavioural_measurements = None
             else:
                 individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
                 for line in lines:
-                    if line.split(' ')[0] == 'velocity':
-                        individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-                    #if line.split(' ')[0] == 'displacement':
-                     #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity':
-                        individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity_hill':
-                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'head_balance':
-                        individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'contacts':
-                        individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
-
+                    try:
+                        if line.split(' ')[0] == 'velocity':
+                            individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
+                        #if line.split(' ')[0] == 'displacement':
+                         #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'displacement_velocity':
+                            individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'displacement_velocity_hill':
+                            individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'head_balance':
+                            individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
+                        if line.split(' ')[0] == 'contacts':
+                            individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+                    except:
+                        pass
         return individual
 
     async def load_snapshot(self, gen_num):
