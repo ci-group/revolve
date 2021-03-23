@@ -374,6 +374,10 @@ for (i in 1:length(measures_names))
         if (measures_names[i] == 'proportion' )  {
           min_y = 0
           max_y = 1.1}
+        if (measures_names[i] == 'joints' )  {
+          min_y = 0
+          max_y = 1.1}
+
 
         if (max_y>0) {
           g1 = g1 + coord_cartesian(ylim = c(min_y, max_y))

@@ -4,11 +4,11 @@
 
 runs=10
 
-num_terminals=8
+num_terminals=5
 start_port=8000
 final_gen=149
-experiments=("hyperplasticoding_p" "hyperplasticoding_t")
-experiments_path=karines_experiments/data/hyper_small/
+experiments=("hyperplasticodingseasons")
+experiments_path=karines_experiments/data/
 managers_path=experiments/karines_experiments/
 
 while true
@@ -57,7 +57,7 @@ while true
     do
 
          echo ""
-         screen -d -m -S "${experiment}" -L -Logfile "${experiment}.log" nice -n19 ./revolve.sh --manager "${managers_path}$(cut -d'_' -f1 <<<"$experiment")_$(cut -d'_' -f2 <<<"$experiment").py" --experiment-name "${experiments_path}${experiment}" --evaluation-time 50 --n-cores 4 --port-start $start_port
+         screen -d -m -S "${experiment}" -L -Logfile "${experiment}.log" nice -n19 ./revolve.sh --manager "${managers_path}$(cut -d'_' -f1 <<<"$experiment").py" --experiment-name "${experiments_path}${experiment}" --evaluation-time 50 --n-cores 4 --port-start $start_port
          start_port=$((${start_port}+10))
     done
 

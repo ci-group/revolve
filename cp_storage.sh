@@ -2,8 +2,8 @@
 #set -x
 
 runs=20
-experiments=("plane-death"  "tilted-death")
-experiments2=("planedeath"  "tilteddeath")
+experiments=("hyperplasticoding-rep"  "plasticoding-rep")
+experiments2=("hyperplasticodingrep"  "plasticodingrep")
 exps=1
 
 
@@ -13,13 +13,9 @@ do
       for j in $(seq 0 $exps)
         do
 
-       #    mv /storage/karine/early_death/"${experiments[j]}_${i}"_all_measures.tsv /storage/karine/early_death/"${experiments2[j]}_${i}"_all_measures.tsv
-       #     mv /storage/karine/early_death/"${experiments[j]}_${i}"_snapshots_ids.tsv /storage/karine/early_death/"${experiments2[j]}_${i}"_snapshots_ids.tsv
-       # mv /storage/karine/early_death/"${experiments[j]}_${i}".log /storage/karine/early_death/"${experiments2[j]}_${i}".log
 
 
-
-        #     mv /storage/karine/early_death/"${experiments[j]}_${i}" /storage/karine/early_death/"${experiments2[j]}_${i}"
+             mv  /storage/karine/lsystem_cppn/lsystem_cppn_2/"${experiments[j]}_${i}"  /storage/karine/lsystem_cppn/lsystem_cppn_2/"${experiments2[j]}_${i}"
 
     done
 

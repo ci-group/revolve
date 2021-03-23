@@ -5,22 +5,25 @@ require('magick')
 ##### change paths/labels/params here #####
 
 
-paths = c('hyperplasticoding_p',
-          'hyperplasticoding_t' )
+paths = c('hyperplasticodingt4',
+          'hyperplasticodingoldt4',
+          'hyperplasticodingoldt3')
 
 environments = list(
-  c( 'plane') ,
-  c( 'tilted5')
+  c( 'tilted4'),
+  c( 'tilted4'),
+  c( 'tilted3')#,
+  #c( 'tilted5')
 )
 
-colors = list( c('#ffffff'),
+colors = list( c('#ffffff'),c('#ffffff'),
                c('#ffffff') )
 
-base_directory <- paste('data/hyper_big/', sep='')
+base_directory <- paste('data/', sep='')
 
-analysis = 'analysis'
+analysis = 'analysis_t3'
 
-runs = list( c(1:10), c(1:10))
+runs = list( c(1:10),c(1:10),c(1:10))
 pop = 100
 num_top = 3
 

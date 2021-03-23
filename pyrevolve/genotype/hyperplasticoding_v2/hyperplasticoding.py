@@ -48,6 +48,7 @@ class HyperPlasticoding(Genotype):
             'b2_module': 0,
             'a1_module': 0,
             'a2_module': 0 }
+        self.environmental_conditions = {}
 
         self.cppn_config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                                        neat.DefaultSpeciesSet, neat.DefaultStagnation,
@@ -67,14 +68,16 @@ class HyperPlasticoding(Genotype):
 
     def develop(self, environment):
 
-        # simulates sensing of environmental conditions
-        # if self.conf.plastic
-        # ( it is a shortcut to save computational time,
-        # but imu sensors could for sure tell if it is hill or not)
-        # if environment == 'plane':
-        #     hill = False
-        # if environment == 'tilted5':
-        #     hill = True
+        print('\n', environment)
+         # Applyies regulation according to environmental conditions.
+        if self.conf.plastic:
+
+            # This check-block is a shortcut to save computational time,
+            # but the imu sensors could for sure tell if the floor is inclined=1 or not_inclined=0.
+            if environment == 'plane':
+                self.environmental_conditions['inclined'] = 0
+            if environment == 'tilted3':
+                self.environmental_conditions['inclined'] = 1
 
         self.random = random.Random(self.querying_seed)
 
@@ -291,8 +294,7 @@ class HyperPlasticoding(Genotype):
 
     def query_body_part(self, x_dest, y_dest, cppn):
 
-        outputs = cppn.activate(( x_dest, y_dest))
-
+        outputs = cppn.activate(( self.environmental_conditions['inclined'], x_dest, y_dest))
         which_module = {
 
             'b_module': outputs[0],
@@ -307,8 +309,7 @@ class HyperPlasticoding(Genotype):
 
     def query_brain_part(self, x_dest, y_dest, cppn):
 
-        outputs = cppn.activate(( x_dest, y_dest))
-
+        outputs = cppn.activate(( self.environmental_conditions['inclined'], x_dest, y_dest))
         params = {
             'period': outputs[4],
             'phase_offset': outputs[5],
@@ -391,18 +392,14 @@ class HyperPlasticodingConfig:
     def __init__(self,
                  robot_id=0,
                  plastic=False,
-                 environmental_conditions=['hill'],
-                 substrate_radius=5,#15, do it 14!
+                 substrate_radius=14,
                  cppn_config_path='',
-                 tackle_bias=False,
                  max_queries=14,
                  ):
         self.robot_id = robot_id
         self.plastic = plastic
-        self.environmental_conditions = environmental_conditions
         self.substrate_radius = substrate_radius
         self.cppn_config_path = cppn_config_path
-        self.tackle_bias = tackle_bias
         self.max_queries = max_queries
 
 
