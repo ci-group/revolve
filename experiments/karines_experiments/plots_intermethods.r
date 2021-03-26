@@ -13,43 +13,37 @@ library(viridis)
 
 #### CHANGE THE PARAMETERS HERE ####
 
-base_directory <- c('data/hyper_big',
-                    'data', 'data', 'data', 'data')
+base_directory <- c(
+                    '/storage/karine/hyper_big',  'data', '/storage/karine/hyper_big')
 
-analysis = 'analysis_t3'
+analysis = 'analysis'
 output_directory = paste(base_directory[2],'/',analysis ,sep='')
 
 experiments_type = c('hyperplasticoding_p',
-                     'hyperplasticodingt3',
-                     'hyperplasticodingt4',
-                     'hyperplasticodingoldt3',
-                     'hyperplasticodingoldt4' )
-runs = list(c(1:10),
-            c(1:10) ,
-            c(1:10),
-            c(1:10),
-            c(1:10))
+
+                     'hyperplasticodingseasons',  'hyperplasticodingt3' )
+runs = list(c(1:5),
+            c(1:5) ,
+            c(1:5))
 environments = list( c('plane'),
-                     c('tilted3') ,
-                     c('tilted4'),
-                     c('tilted3') ,
-                     c('tilted4')
+
+                     c('plane', 'tilted3'),
+                     c('tilted3')
                      
                      )
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
-methods_labels = c( 'hyperplasticoding_p',
-                    'hyperplasticodingt3',
-                    'hyperplasticodingt4',
-                    'hyperplasticodingoldt3',
-                    'hyperplasticodingoldt4') # note that labels of Plane death and Tilted death are INVERTED on purpose, to fix the mistake done when naming the experiments.
+methods_labels = c( 'plane',
+                    'plastic plane',
+                     'plastic tilted',
+                      'tilted'
+                     ) # note that labels of Plane death and Tilted death are INVERTED on purpose, to fix the mistake done when naming the experiments.
 
 experiments_type_colors = c('#009900',
                             '#EE8610',
                             '#7550ff',
-                            '#EE8245',
-                            '#8760ff')
+                            '#876044' )
 
 #aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
 aggregations = c('median')
@@ -328,7 +322,7 @@ for (i in 1:length(measures_names))
     graph = graph  +  labs(y=measures_labels[i], x="Generation", title="")
 
     graph = graph +   scale_color_manual(values=experiments_type_colors)
-    graph = graph  + theme(legend.position="bottom" ,  legend.text=element_text(size=25), axis.text=element_text(size=32), axis.title=element_text(size=30),
+    graph = graph  + theme(legend.position="right" ,  legend.text=element_text(size=25), axis.text=element_text(size=32), axis.title=element_text(size=30),
                            plot.subtitle=element_text(size=30 ), plot.title=element_text(size=30 ))
 
     ggsave(paste( output_directory,'/',measures_names[i], '_', aggregations[a], '_lines.pdf',  sep=''), graph , device='pdf', height = 10, width = 10)
@@ -396,7 +390,8 @@ for (i in 1:length(measures_names))
 
         g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=14, step_increase=0.15,
                                comparisons = comps,
-                               map_signif_level=c("***"=0.001,"**"=0.01, "*"=0.05)  )
+                               #map_signif_level=c("***"=0.001,"**"=0.01, "*"=0.05)  )
+                               map_signif_level=c( )  )
 
         if (out == 'full' || (out == 'filtered' &&  has_outliers == TRUE) ){
           ggsave(paste(output_directory,"/",measures_names[i],"_",gc,"_", aggregations[a],'_', out,"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)

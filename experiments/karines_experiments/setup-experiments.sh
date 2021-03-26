@@ -2,12 +2,12 @@
 #set -e
 #set -x
 
-runs=10
+runs=5
 
-num_terminals=5
+num_terminals=6
 start_port=8000
-final_gen=149
-experiments=("hyperplasticodingseasons")
+final_gen=199
+experiments=("hyperplasticodingseasonsI15" "hyperplasticodingp" "hyperplasticodingt3")
 experiments_path=karines_experiments/data/
 managers_path=experiments/karines_experiments/
 

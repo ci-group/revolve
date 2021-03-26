@@ -68,7 +68,6 @@ class HyperPlasticoding(Genotype):
 
     def develop(self, environment):
 
-        print('\n', environment)
          # Applyies regulation according to environmental conditions.
         if self.conf.plastic:
 
@@ -77,7 +76,7 @@ class HyperPlasticoding(Genotype):
             if environment == 'plane':
                 self.environmental_conditions['inclined'] = 0
             if environment == 'tilted3':
-                self.environmental_conditions['inclined'] = 1
+                self.environmental_conditions['inclined'] = 15
 
         self.random = random.Random(self.querying_seed)
 
@@ -294,7 +293,11 @@ class HyperPlasticoding(Genotype):
 
     def query_body_part(self, x_dest, y_dest, cppn):
 
-        outputs = cppn.activate(( self.environmental_conditions['inclined'], x_dest, y_dest))
+        if self.conf.plastic:
+            outputs = cppn.activate(( self.environmental_conditions['inclined'], x_dest, y_dest))
+        else:
+            outputs = cppn.activate(( x_dest, y_dest))
+
         which_module = {
 
             'b_module': outputs[0],
@@ -309,7 +312,11 @@ class HyperPlasticoding(Genotype):
 
     def query_brain_part(self, x_dest, y_dest, cppn):
 
-        outputs = cppn.activate(( self.environmental_conditions['inclined'], x_dest, y_dest))
+        if self.conf.plastic:
+            outputs = cppn.activate(( self.environmental_conditions['inclined'], x_dest, y_dest))
+        else:
+            outputs = cppn.activate(( x_dest, y_dest))
+
         params = {
             'period': outputs[4],
             'phase_offset': outputs[5],

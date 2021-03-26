@@ -5,27 +5,22 @@ require('magick')
 ##### change paths/labels/params here #####
 
 
-paths = c('hyperplasticodingt4',
-          'hyperplasticodingoldt4',
-          'hyperplasticodingoldt3')
+paths = c('hyperplasticodingseasons' )
 
 environments = list(
-  c( 'tilted4'),
-  c( 'tilted4'),
-  c( 'tilted3')#,
-  #c( 'tilted5')
+  c('plane', 'tilted3')
+
 )
 
-colors = list( c('#ffffff'),c('#ffffff'),
-               c('#ffffff') )
+colors = list( c('#ffffff','#ffff44')  )
 
 base_directory <- paste('data/', sep='')
 
-analysis = 'analysis_t3'
+analysis = 'analysis'
 
-runs = list( c(1:10),c(1:10),c(1:10))
+runs = list( c(1:5),c(1:10),c(1:10))
 pop = 100
-num_top = 3
+num_top = 20
 
 gens = c(149)
 criteria = c('desc')

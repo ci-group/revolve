@@ -1,8 +1,8 @@
 #!/bin/bash
 
-runs=10
-final_gen=149
-experiments=("hyperplasticodingseasons")
+runs=5
+final_gen=199
+experiments=("hyperplasticodingseasonsI15" "hyperplasticodingp" "hyperplasticodingt3")
 
 
 for i in $(seq $runs)
