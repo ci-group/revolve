@@ -21,7 +21,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 # Find Eigen3 - A lightweight C++ template library for vector and matrix math
 find_package(Eigen3 REQUIRED)
 find_package(MultiNEAT REQUIRED)
-find_package(libcmaes REQUIRED)
+#find_package(libcmaes REQUIRED)
 
 # These dependencies are required for the AngleToTargetDetector Sensor
 find_package(OpenCV REQUIRED)
@@ -50,12 +50,12 @@ target_include_directories(revolve-learners
 
 target_compile_definitions(revolve-learners
         PUBLIC USE_NLOPT=1
-        PUBLIC CMAES)
+        #PUBLIC CMAES)
 
 target_link_libraries(revolve-controllers
         PUBLIC MultiNEAT::MultiNEAT
         ${OpenCV_LIBS}
-        PUBLIC libcmaes::cmaes
+        #PUBLIC libcmaes::cmaes
         )
 
 target_link_libraries(revolve-learners
