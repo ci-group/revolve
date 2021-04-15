@@ -46,37 +46,24 @@ If you want to have an overview of all possible Revolve commands, run `./revolve
 *See [Installation Instructions for Revolve](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Revolve)
 for detailed instructions, and how to build from source.*
 
-#### *To run the evolution_only experiment*
-cd $SIM_HOME/revolve
-source .venv/bin/activate
-(.venv) ./revolve.py --simulator-cmd=gazebo --manager=experiments/examples/manager_pop.py
-
 #### *To run the evolution_learning experiment*
+```bash
 cd $SIM_HOME/revolve
 source .venv/bin/activate
 (.venv) ./revolve.py --simulator-cmd=gazebo --manager=experiments/learner_knn/manager_pop.py
+```
+#### *Parameters you may want to change for your own experiment*
+* In experiments/learner_knn/manager_pop.py, you can change the experiment params, such as num_generations, population_size and offspring_size.
+* In pyrevolve/revolve_bot/brain/cpg.py, you can change the the number of the learning trials (n_learning_iterations).
+* In pyrevolve/util/supervisor/simulator_queue.py, you can change the evaluation timeout in the simulator queue (EVALUATION_TIMEOUT).
 
-## Contribution guidelines
-
-If you want to contribute to Revolve, be sure to review the [contribution
-guidelines](CONTRIBUTING.md). By participating, you are expected to
-uphold this code.
-
-We use [GitHub issues](https://github.com/ci-group/revolve/issues) for
-tracking requests and bugs.
-
-The Revolve project strives to abide by generally accepted best practices in open-source software development:
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/2520/badge)](https://bestpractices.coreinfrastructure.org/projects/2520)
-[![CircleCI](https://circleci.com/gh/ci-group/revolve.svg?style=svg)](https://circleci.com/gh/ci-group/revolve)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5443e24ddd4d413b897206b546d5600e)](https://www.codacy.com/app/ci-group/revolve?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ci-group/revolve/&amp;utm_campaign=Badge_Grade)
-
-## Contributors
-
-We would like to thank all contributors of Revolve project!
-
-Special thanks to [Elte Hupkes](https://github.com/ElteHupkes/) who designed the codebase and professor [Gusz Eiben](https://www.cs.vu.nl/~gusz/) whose energy is pushing the project forward.
-Many thanks to [Milan Jelisavcic](https://github.com/milanjelisavcic/) and [Matteo De Carlo](https://github.com/portaloffreedom/) for redesigning and simplifying the codebase.
-For the complete list of contributors see [AUTHORS](AUTHORS).
+#### *To run the evolution_only experiment* Switch to the main branch
+```bash
+git checkout master
+cd $SIM_HOME/revolve
+source .venv/bin/activate
+(.venv) ./revolve.py --simulator-cmd=gazebo --manager=experiments/examples/manager_pop.py
+```
 
 ## For more information
 
