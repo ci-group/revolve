@@ -23,7 +23,7 @@ EA::EA(std::unique_ptr<Controller> controller,
 {
     max_learning_evaluations = int(n_learning_evaluations);
     EA_Params = params;
-    this->output_dir = "./experiments/learner_knn/output"+model_name;
+    this->output_dir = "./experiments/learner_knn/"+model_name;
 
     revolve::RandNum rn(seed);
     this->set_randomNum(std::make_shared<revolve::RandNum>(rn));
