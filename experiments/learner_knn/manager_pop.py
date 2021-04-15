@@ -36,12 +36,12 @@ async def run():
     log.setLevel(logging.DEBUG)
 
     # experiment params #
-    num_generations = 10
-    population_size = 10
-    offspring_size = 5
+    num_generations = 30
+    population_size = 50
+    offspring_size = 25
 
     plasticoding_config = PlasticodingConfig(
-        max_structural_modules=20,
+        max_structural_modules=50,
         allow_vertical_brick=False,
         use_movement_commands=True,
         use_rotation_commands=False,
@@ -135,11 +135,4 @@ async def run():
     while gen_num < num_generations - 1:
         gen_num += 1
         population = await population.next_gen(gen_num)
-
-    """
-    
-    while gen_num < num_generations-1:
-        gen_num += 1
-        population = await population.next_gen(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)
-    """
