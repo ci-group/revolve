@@ -56,7 +56,7 @@ class BrainCPGMeta:
     def __init__(self, size: int):
         self.robot_size = size
         self.run_analytics = "true"
-        self.n_learning_iterations = 10
+        self.n_learning_iterations = 100
         self.n_cooldown_iterations = 1
         self.reset_robot_position = "false"
         self.evaluation_rate = 30
