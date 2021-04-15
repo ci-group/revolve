@@ -125,6 +125,7 @@ void EA::finalize_current_controller(double fitness)
 
     //  Write fitness to file
     std::ofstream fitness_file;
+    std::cout << "Fitness output folder " << this->output_dir << std::endl;
     fitness_file.open(this->output_dir+"/fitnesses.txt", std::ios::app);
     fitness_file<< std::setprecision(std::numeric_limits<long double>::digits10 +1)
                 <<fitness << std::endl;
