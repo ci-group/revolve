@@ -57,7 +57,7 @@ source .venv/bin/activate
 * In pyrevolve/revolve_bot/brain/cpg.py, you can change the the number of the learning trials (n_learning_iterations).
 * In pyrevolve/util/supervisor/simulator_queue.py, you can change the evaluation timeout in the simulator queue (EVALUATION_TIMEOUT).
 
-#### *To run the evolution_only experiment* Switch to the main branch
+#### *To run the evolution_only experiment. Switch to the main branch*
 ```bash
 git checkout master
 cd $SIM_HOME/revolve
