@@ -50,7 +50,8 @@ target_include_directories(revolve-learners
 
 target_compile_definitions(revolve-learners
         PUBLIC USE_NLOPT=1
-        #PUBLIC CMAES)
+        #PUBLIC CMAES
+        )
 
 target_link_libraries(revolve-controllers
         PUBLIC MultiNEAT::MultiNEAT
