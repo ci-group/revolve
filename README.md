@@ -8,21 +8,31 @@ Revolve was originally developed and is maintained by researchers and engineers 
 ## Installation
 
 The current system is supported for Linux and Mac OS X platforms.
-If all [pre-requirements](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Gazebo) are satisfied, to install the current release run:
+If all [pre-requirements](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Gazebo) are satisfied, to install J Lo's learning branch:
+
 
 ```bash
-git clone https://github.com/ci-group/revolve.git
+git clone https://github.com/ci-group/revolve.git --recursive -b experiments/jlo_learning
 export SIM_HOME=`pwd` && cd $SIM_HOME/revolve
 mkdir -p build && cd build
-cmake ..
-make -j4
+cmake .. -DCMAKE_BUILD_TYPE="Release"
+make -j8
 ```
-
-Within the `revolve/` root directory create Python virtual environment:
 
 ```bash
 cd $SIM_HOME/revolve
-virtualenv --python python3 .venv
+mkdir cmake-build-multineat
+cd cmake-build-multineat
+cmake ../thirdparty/MultiNEAT -DCMAKE_BUILD_TYPE="Release"
+make -j8
+make install
+```
+
+Within the `revolve/` root directory create Python virtual environment(change v3.9 to your own python version) :
+
+```bash
+cd $SIM_HOME/revolve
+virtualenv --python python3.9 .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -36,30 +46,15 @@ If you want to have an overview of all possible Revolve commands, run `./revolve
 *See [Installation Instructions for Revolve](https://github.com/ci-group/revolve/wiki/Installation-Instructions-for-Revolve)
 for detailed instructions, and how to build from source.*
 
-#### *Try your first Revolve program*
-
-While `./revolve.py` is running, in another terminal window start the same virtual environment:
-```shell
-cd ./revolve/
+#### *To run the evolution_only experiment*
+cd $SIM_HOME/revolve
 source .venv/bin/activate
-(.venv) python
-```
+(.venv) ./revolve.py --simulator-cmd=gazebo --manager=experiments/examples/manager_pop.py
 
-```python
->>> import asyncio
->>> from pyrevolve.gazebo.manage import WorldManager as World
->>> async def run():
-...     world = await World.create()
-...     await world.pause(True)
-...     print("Hello Revolve! I paused Gazebo.")
-... 
->>> loop = asyncio.get_event_loop()
->>> loop.run_until_complete(run())
-Hello Revolve! I paused Gazebo.
-```
-
-Learn more examples about how to do specific tasks in Revolve at the
-[tutorials page of Revolve wiki](https://github.com/ci-group/revolve/wiki#tutorials).
+#### *To run the evolution_learning experiment*
+cd $SIM_HOME/revolve
+source .venv/bin/activate
+(.venv) ./revolve.py --simulator-cmd=gazebo --manager=experiments/learner_knn/manager_pop.py
 
 ## Contribution guidelines
 
