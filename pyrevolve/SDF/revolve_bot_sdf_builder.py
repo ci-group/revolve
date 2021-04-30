@@ -1,11 +1,12 @@
 import math
 import xml.etree.ElementTree
+from typing import AnyStr
 
 from pyrevolve import SDF
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, Orientation, BoxSlot
 
 
-def revolve_bot_to_sdf(robot, robot_pose, nice_format, self_collide=True):
+def revolve_bot_to_sdf(robot, robot_pose, nice_format, self_collide=True) -> AnyStr:
     from xml.etree import ElementTree
     from pyrevolve import SDF
 

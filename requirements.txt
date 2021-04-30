@@ -12,6 +12,11 @@ joblib
 pandas
 neat-python>=0.92
 python-dateutil>=2.8.0
+# Rabbitmq and celery
+celery=5.0.5
+# Database
+sqlalchemy>=1.3.23
+psycopg2>=2.8.6
 
 # Non PIP packages
 -e git+https://github.com/ci-group/pygazebo.git@master#egg=pygazebo

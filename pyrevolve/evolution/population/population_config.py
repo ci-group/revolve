@@ -77,8 +77,8 @@ class PopulationConfig:
         self.selection = selection
         self.population_management = population_management
         self.population_management_selector = population_management_selector
-        self.evaluation_time = evaluation_time
-        self.grace_time = grace_time
+        self.evaluation_time: float = evaluation_time
+        self.grace_time: float = grace_time
         self.experiment_name = experiment_name
         self.experiment_management = experiment_management
         self.offspring_size = offspring_size

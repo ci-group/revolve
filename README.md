@@ -5,6 +5,14 @@ simulate and manage robots in the Gazebo general-purpose robot simulator. Given 
 
 Revolve was originally developed and is maintained by researchers and engineers working at the Computational Intelligence Group within Vrije Universiteit Amsterdam for the purposes of conducting robot body and brain evolutionary-related research. The system is general enough to be applicable in a wide variety of other domains, as well.
 
+## Requirements
+
+- `python` 3.7+
+- python libraries requirements in `requirements.txt`
+- custom `gazebo` 10 from https://github.com/ci-group/gazebo/tree/gazebo10-revolve
+- cmake and gcc (or equivalent c++ compiler)
+- c++11
+
 ## Installation
 
 The current system is supported for Linux and Mac OS X platforms.
