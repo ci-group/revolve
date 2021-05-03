@@ -21,7 +21,11 @@
 #include <string>
 #include "iostream"
 
+// libtorch has some nasty defines that break libcmaes, remove them after each inclusion
 #include "torch/torch.h"
+#undef LOG_IF
+#undef LOG
+
 
 class FeedForwardNetworkImpl : public torch::nn::Module {
     /// \brief Constructor

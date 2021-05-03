@@ -15,7 +15,6 @@
 * Author: Fuda van Diggelen
 *
 */
-#include "torch/torch.h"
 #include "FeedForwardNetwork.h"
 
 

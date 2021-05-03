@@ -25,7 +25,7 @@ std::map<int, std::string> IPOPCMAStrategy::scriterias = {{cma::CONT,         "O
                                                           {cma::FTARGET,      "[Success] The objective function target value has been reached"}};
 
 bool IPOPCMAStrategy::reach_ftarget() {
-    cma::CMAES_LOG_IF(cma::INFO, !_parameters.quiet()) << "Best fitness : " << best_fitnesses.back() << std::endl;
+    cma::LOG_IF(cma::INFO, !_parameters.quiet()) << "Best fitness : " << best_fitnesses.back() << std::endl;
 
     if (_parameters.get_ftarget() != std::numeric_limits<double>::infinity()) {
         if (best_fitnesses.back() <= _parameters.get_ftarget()) {
@@ -33,7 +33,7 @@ bool IPOPCMAStrategy::reach_ftarget() {
             sstr << "stopping criteria fTarget => fvalue=" << best_fitnesses.back() << " / ftarget="
                  << _parameters.get_ftarget();
             log_stopping_criterias.push_back(sstr.str());
-            cma::CMAES_LOG_IF(cma::INFO, !_parameters.quiet()) << sstr.str() << std::endl;
+            cma::LOG_IF(cma::INFO, !_parameters.quiet()) << sstr.str() << std::endl;
             return true;
         }
     }
@@ -64,7 +64,7 @@ bool IPOPCMAStrategy::pop_desc_stagnation() {
         sstr << "Stopping : standard deviation of the descriptor population is smaller than " << pop_stag_thres
              << " : " << stddev;
         log_stopping_criterias.push_back(sstr.str());
-        cma::CMAES_LOG_IF(cma::INFO, !_parameters.quiet()) << sstr.str() << std::endl;
+        cma::LOG_IF(cma::INFO, !_parameters.quiet()) << sstr.str() << std::endl;
     }
     return stop;
 }
@@ -85,13 +85,13 @@ bool IPOPCMAStrategy::pop_fit_stagnation() {
         stddev += (fv - mean) * (fv - mean);
 
     stddev = sqrt(stddev / static_cast<double>(fvalues.size() - 1));
-    cma::CMAES_LOG_IF(cma::INFO, !_parameters.quiet()) << "pop standard deviation : " << stddev << std::endl;
+    cma::LOG_IF(cma::INFO, !_parameters.quiet()) << "pop standard deviation : " << stddev << std::endl;
 
     if (stddev <= pop_stag_thres) {
         std::stringstream sstr;
         sstr << "Stopping : standard deviation of the population is smaller than 0.05 : " << stddev;
         log_stopping_criterias.push_back(sstr.str());
-        cma::CMAES_LOG_IF(cma::INFO, !_parameters.quiet()) << sstr.str() << std::endl;
+        cma::LOG_IF(cma::INFO, !_parameters.quiet()) << sstr.str() << std::endl;
         return true;
     } else return false;
 }
@@ -116,7 +116,7 @@ bool IPOPCMAStrategy::best_sol_stagnation() {
         sstr << "Stopping : standard deviation of the last " << len_of_stag
              << " best fitnesses is smaller than 0.05 : " << stddev;
         log_stopping_criterias.push_back(sstr.str());
-        cma::CMAES_LOG_IF(cma::INFO, !_parameters.quiet()) << sstr.str() << std::endl;
+        cma::LOG_IF(cma::INFO, !_parameters.quiet()) << sstr.str() << std::endl;
         return true;
     } else return false;
 }

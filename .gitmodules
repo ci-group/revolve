@@ -4,3 +4,9 @@
 [submodule "thirdparty/MultiNEAT"]
 	path = thirdparty/MultiNEAT
 	url = https://github.com/ci-group/MultiNEAT.git
+[submodule "thirdparty/pytorch"]
+	path = thirdparty/pytorch
+	url = https://github.com/pytorch/pytorch.git
+[submodule "thirdparty/libcmaes"]
+	path = thirdparty/libcmaes
+	url = https://github.com/CMA-ES/libcmaes.git

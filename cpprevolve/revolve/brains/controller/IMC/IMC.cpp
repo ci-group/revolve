@@ -5,7 +5,6 @@
 #include "../sensors/Sensor.h"
 #include "../actuators/Actuator.h"
 #include "../Controller.h"
-#include "torch/torch.h"
 
 #include <map>
 #include <memory>

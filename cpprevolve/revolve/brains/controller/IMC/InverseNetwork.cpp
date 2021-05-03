@@ -16,7 +16,6 @@
 *
 */
 
-#include "torch/torch.h"
 #include "InverseNetwork.h"
 
 

@@ -6,11 +6,14 @@
 #include "../sensors/Sensor.h"
 #include "../actuators/Actuator.h"
 #include "../Controller.h"
-#include "torch/torch.h"
 #include "FeedForwardNetwork.h"
 #include "InverseNetwork.h"
 #include "../DifferentialCPG.h"
 
+// libtorch has some nasty defines that break libcmaes, remove them after each inclusion
+#include "torch/torch.h"
+#undef LOG_IF
+#undef LOG
 
 namespace revolve {
 
