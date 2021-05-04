@@ -4,3 +4,6 @@
 [submodule "thirdparty/MultiNEAT"]
 	path = thirdparty/MultiNEAT
 	url = https://github.com/ci-group/MultiNEAT.git
+[submodule "thirdparty/SimpleAmqpClient"]
+	path = thirdparty/SimpleAmqpClient
+	url = https://github.com/alanxz/SimpleAmqpClient.git

@@ -3,7 +3,7 @@
 //
 
 #include <gazebo/gazebo.hh>
-#include "TorusWorld.h"
+#include "CeleryWorker.h"
 
 using namespace gazebo;
-GZ_REGISTER_WORLD_PLUGIN(revolve::gazebo::TorusWorld)
+GZ_REGISTER_WORLD_PLUGIN(revolve::gazebo::CeleryWorker)

@@ -23,6 +23,23 @@ class Individual:
         self.parents: Optional[List[Individual]] = None
         self.objectives = []
 
+    def clone(self) -> Individual:
+        """
+        Creates a cloned copy of this individual
+        :return: a cloned copy of the individual
+        """
+        cloned_phenotype = None if self.genotype is None else self.genotype.clone()
+
+        other = Individual(
+            genotype=self.genotype.clone(),
+            phenotype=cloned_phenotype,
+        )
+
+        other.fitness = self.fitness
+        other.parents = self.parents
+
+        return other
+
     def develop(self) -> None:
         """
         Develops genotype into a intermediate phenotype
