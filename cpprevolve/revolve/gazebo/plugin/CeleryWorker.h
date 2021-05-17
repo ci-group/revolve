@@ -29,15 +29,35 @@ public:
     virtual void OnUpdateEnd();
 
 private:
-    void _check_for_messages();
+    void _robot_work(const ::gazebo::common::UpdateInfo &info);
+    void _saveRobotState(const ::gazebo::common::UpdateInfo &info);
+    void _check_for_messages(const ::gazebo::common::UpdateInfo &info);
     void _reply(const std::string &reply_to, const std::string &task_id, Json::Value result);
 
 private:
+    // RabbitMQ stuff
+    volatile std::atomic<bool> task_running = ATOMIC_FLAG_INIT;
+    /// optional tuple containing < Robot name, robot model pointer (may be null), deadline >
+    boost::optional<std::tuple<std::string, ::gazebo::physics::ModelPtr, double>> _task_robot;
     AmqpClient::Channel::ptr_t channel;
     std::string consumer_tag;
-    Json::StreamWriterBuilder builder;
+    Json::CharReaderBuilder readerBuilder;
+    Json::StreamWriterBuilder writerBuilder;
+    std::string _reply_to;
+    std::string _task_id;
 
-    // Pointer to the update event connection
+    // Postgresql stuff
+    /// Update frequency for the robot states to be uploaded into the simulator
+    unsigned int _robotStatesUpdateFreq = 0;
+    double _lastRobotStatesUpdateTime = 0;
+    //TODO
+
+    // Gazebo stuff
+    ::gazebo::physics::WorldPtr _world;
+    std::string last_robot_analyzed;
+
+    ::gazebo::physics::PhysicsEnginePtr _physics;
+    // Pointer to the update event connection, keep here to keep alive
     ::gazebo::event::ConnectionPtr onBeginUpdateConnection;
     ::gazebo::event::ConnectionPtr onEndUpdateConnection;
 };
