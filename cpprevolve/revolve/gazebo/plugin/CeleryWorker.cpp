@@ -62,6 +62,9 @@ void CeleryWorker::Load(::gazebo::physics::WorldPtr world, sdf::ElementPtr sdf)
             1 // no buffering
     );
     std::cout << "Started Gazebo worker with tag: " << consumer_tag << std::endl;
+
+    // Connection to the database
+    database = std::make_unique<Database>("pythoncpptest");
 }
 
 void CeleryWorker::OnUpdateBegin(const ::gazebo::common::UpdateInfo &info)
@@ -114,7 +117,7 @@ void CeleryWorker::_robot_work(const ::gazebo::common::UpdateInfo &info)
         double fitness = rand();
 
         std::cout << "Robot evaluation finished with fitness: " << fitness << std::endl;
-        this->_reply(_reply_to, _task_id, fitness);
+        this->_reply(_reply_to, _task_id, _database_robot_id);
         _reply_to.resize(0);
         _task_id.resize(0);
         _task_robot.reset();
@@ -130,7 +133,8 @@ void CeleryWorker::_saveRobotState(const ::gazebo::common::UpdateInfo &info)
     double secs = 1.0 / _robotStatesUpdateFreq;
     double time = info.simTime.Double();
     if ((time - this->_lastRobotStatesUpdateTime) >= secs) {
-        //TODO collect data of the current time step
+        database->start_work();
+        // collect data of the current time step
         {
             boost::recursive_mutex::scoped_lock lock_physics(*_physics->GetPhysicsUpdateMutex());
             for (const boost::shared_ptr<::gazebo::physics::Model> &model : this->_world->Models()) {
@@ -142,14 +146,14 @@ void CeleryWorker::_saveRobotState(const ::gazebo::common::UpdateInfo &info)
                 auto id = model->GetId();
                 auto pose = model->WorldPose();
                 //TODO orientation vectors
-
                 const std::string &name = model->GetName();
 
+                database->add_state(_database_robot_id, _evaluation_id, time, pose);
             }
         }
-        //TODO send the collected data to the database
         //TODO buffer the states data in less postgres commands to increase performance
         // at the cost of a few seconds of data loss
+        database->commit();
 
         _lastRobotStatesUpdateTime = time;
     }
@@ -253,6 +257,9 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
 
     double deadline = info.simTime.Double() + lifetime;
     _task_robot = std::make_tuple(name, nullptr, deadline);
+
+    _database_robot_id = database->add_robot(name);
+    database->add_evaluation(_database_robot_id, _evaluation_id, -1);
 
     // Don't leak memory
     // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element

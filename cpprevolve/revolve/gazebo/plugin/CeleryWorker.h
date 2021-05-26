@@ -11,6 +11,7 @@
 #include <gazebo/msgs/msgs.hh>
 #include <SimpleAmqpClient/SimpleAmqpClient.h>
 #include <json/json.h>
+#include "database/Database.h"
 
 
 namespace revolve {
@@ -50,7 +51,9 @@ private:
     /// Update frequency for the robot states to be uploaded into the simulator
     unsigned int _robotStatesUpdateFreq = 0;
     double _lastRobotStatesUpdateTime = 0;
-    //TODO
+    std::unique_ptr<Database> database = nullptr;
+    unsigned int _database_robot_id = 0;
+    unsigned int _evaluation_id = 1;
 
     // Gazebo stuff
     ::gazebo::physics::WorldPtr _world;

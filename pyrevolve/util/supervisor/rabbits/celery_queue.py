@@ -1,8 +1,12 @@
+import random
+import uuid
+
 import asyncio
-from typing import AnyStr, Callable, Any, Tuple, Optional
+from typing import AnyStr, Callable, Any, Tuple, Optional, Iterable
 
 import celery
 import celery.exceptions
+import math
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.custom_logging.logger import logger
@@ -10,6 +14,9 @@ from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
+from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
+from pyrevolve.util.supervisor.rabbits import RobotState
+from pyrevolve.util import Time
 
 app = celery.Celery('CeleryQueue', backend='rpc://', broker='pyamqp://guest@localhost//')
 
@@ -27,6 +34,8 @@ class CeleryQueue:
         self._queue_name: AnyStr = queue_name
         self._n_workers: int = n_workers
         self._args = args
+        self._dbname: AnyStr = str(uuid.uuid1())
+        self._db: PostgreSQLDatabase = PostgreSQLDatabase(dbname=self._dbname, address='localhost')
 
     def change_n_workers(self, n: int):
         raise NotImplementedError("Cannot change the number of workers yet")
@@ -35,7 +44,14 @@ class CeleryQueue:
         # TODO kill some workers
 
     async def start(self):
-        pass
+        # TODO start workers
+        self._db.start()
+        self._db.init_db(first_time=False)
+
+    async def stop(self):
+        # TODO STOP workers
+        self._db.disconnect()
+        self._db.destroy()
 
     async def _wait_for_response(self, celery_task) -> Tuple[Optional[float], Optional[BehaviouralMeasurements]]:
         """
@@ -89,16 +105,35 @@ class CeleryQueue:
             logger.info("Request sent to rabbitmq: ", str(r))
 
             try:
-                fitness: float = await asyncio.create_task(self._wait_for_response(r))
+                robot_id: int = await asyncio.create_task(self._wait_for_response(r))
             except celery.exceptions.TimeoutError:
                 logger.warning(f'Giving up on robot {robot_name} after {self.EVALUATION_TIMEOUT} seconds.')
                 if attempt < self.MAX_ATTEMPTS:
                     logger.warning(f'Retrying')
                 continue
 
-            # TODO get DB_ID from rabbitmq and retrieve result from database
-            # behaviour = session.query(DBBehaviour)
-            # fitness: float = fitness_fun(behaviour, robot)
+            # DB_ID from rabbitmq and retrieve result from database
+            with self._db.session() as session:
+                # behaviour = [s for s in session.query(RobotState).filter(RobotState.evaluation_robot_id == robot_id)]
+                behaviour_query: Iterable[RobotState] = session.query(RobotState).filter(RobotState.evaluation_robot_id == robot_id)
+                first_pos: Optional[Vector3] = None
+                first_time: Time
+                last_pos: Optional[Vector3] = None
+                last_time: Time
+                for state in behaviour_query:
+                    state: RobotState = state
+                    print(f"STATE of robot {state.robot.name}: ({state.pos_x};{state.pos_y};{state.pos_z})"
+                          f" - ({state.rot_quaternion_x};{state.rot_quaternion_y};{state.rot_quaternion_z};{state.rot_quaternion_w})")
+                    last_time = Time(sec=state.time_sec, nsec=state.time_nsec)
+                    last_pos = Vector3(state.pos_x, state.pos_y, state.pos_z)
+                    if first_pos is None:
+                        first_time = last_time
+                        first_pos = last_pos.copy()
+
+                # TODO fitness: float = fitness_fun(behaviour, robot)
+                distance: Vector3 = last_pos - first_pos
+                distance_size: float = math.sqrt(distance.x*distance.x + distance.y*distance.y)
+                fitness: float = distance_size / float(last_time - first_time)
 
             return fitness, BehaviouralMeasurements()
 

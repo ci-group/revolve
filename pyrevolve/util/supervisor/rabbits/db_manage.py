@@ -123,7 +123,7 @@ class PostgreSQLDatabase:
         # CREATE Database user
         if first_time:
             logger.info(f'Creating DB user: {self._username}')
-            r = os.system(f'createuser {self._username} --echo --createdb --login --no-createrole --no-superuser --no-replication')
+            r = os.system(f'createuser {self._username} --echo --createdb --login --no-createrole --no-superuser --no-replication --no-password')
             if r != 0:
                 logger.error(f'Error creating Postgres user "{self._username}"')
 

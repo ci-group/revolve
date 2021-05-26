@@ -117,6 +117,7 @@ find_package( OpenCV REQUIRED )
 
 pkg_check_modules(JSONCPP REQUIRED jsoncpp>1.7)
 pkg_check_modules(AMQP REQUIRED libSimpleAmqpClient>2.6)
+pkg_check_modules(PQXX REQUIRED libpqxx>6.4)
 
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
@@ -248,19 +249,23 @@ target_link_libraries(
 # Create Torus World plugin
 add_library(CeleryWorkerPlugin SHARED
         plugin/CeleryWorker.cpp
+        plugin/database/Database.cpp
         plugin/register_celery_worker_world_plugin.cpp
 )
 target_link_libraries(CeleryWorkerPlugin
         PUBLIC ${GAZEBO_LIBRARIES}
         PUBLIC ${AMQP_LIBRARIES}
+        PUBLIC ${PQXX_LIBRARIES}
         PRIVATE ${JSONCPP_LIBRARIES}
 )
 target_link_directories(CeleryWorkerPlugin
         PUBLIC ${AMQP_LIBRARY_DIRS}
+        PUBLIC ${PQXX_LIBRARY_DIRS}
         PRIVATE ${JSONCPP_LIBRARY_DIRS}
 )
 target_include_directories(CeleryWorkerPlugin
         PUBLIC ${AMQP_INCLUDE_DIRS}
+        PUBLIC ${PQXX_INCLUDE_DIRS}
         PRIVATE ${JSONCPP_INCLUDE_DIRS}
 )
 
