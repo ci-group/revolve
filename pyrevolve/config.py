@@ -124,6 +124,18 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--celery-worker',
+    default=False, action='store_true',
+    help="Run a Gazebo Celery Worker",
+)
+
+parser.add_argument(
+    '--gui',
+    default=False, action='store_true',
+    help="Whether to run the simulator with the GUI enabled or not"
+)
+
+parser.add_argument(
     '--n-cores',
     default=1, type=int,
     help="Number of simulators to use at the same time. Default to \"1\"."

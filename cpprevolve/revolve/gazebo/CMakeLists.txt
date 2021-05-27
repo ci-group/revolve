@@ -18,7 +18,8 @@ add_definitions(-pedantic -Wno-long-long -Wall -Wextra -Wformat=2
         -Wswitch-enum -Wuninitialized
         -Wswitch-default -Winit-self -Wfloat-equal -fPIC )
 
-set (CMAKE_CXX_STANDARD 11)
+# need c++17 for libSimpleAmqpClient >= 7.something
+set (CMAKE_CXX_STANDARD 17)
 
 # Debug Flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")

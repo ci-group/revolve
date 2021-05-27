@@ -26,7 +26,7 @@ Database::Database(const char *dbname,
 }
 
 Database::~Database() {
-    postgres->disconnect();
+    postgres->close();
 }
 
 unsigned long Database::add_robot(const std::string &robot_name) {
