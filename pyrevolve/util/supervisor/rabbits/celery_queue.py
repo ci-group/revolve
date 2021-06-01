@@ -41,12 +41,13 @@ class CeleryQueue:
     EVALUATION_TIMEOUT = 360  # REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
     MAX_ATTEMPTS = 3
 
-    def __init__(self, args, queue_name: AnyStr = 'celery', dbname: Optional[AnyStr] = None):
+    def __init__(self, args, queue_name: AnyStr = 'celery', dbname: Optional[AnyStr] = None, urdf: bool = False):
         self._queue_name: AnyStr = queue_name
         self._args = args
         self._dbname: AnyStr = str(uuid.uuid1()) if dbname is None else dbname
         self._db: PostgreSQLDatabase = PostgreSQLDatabase(dbname=self._dbname, address='localhost', username='matteo')
         self._process_pool_executor = ProcessPoolExecutor(args.n_cores*2 + 20)
+        self._use_urdf: bool = urdf
         atexit.register(
             lambda: asyncio.get_event_loop().run_until_complete(self.stop(wait=False))
         )
@@ -104,7 +105,10 @@ class CeleryQueue:
             if robot.simulation_boundaries is not None:
                 pose_z -= robot.simulation_boundaries.min.z
             pose: Vector3 = Vector3(0.0, 0.0, pose_z)
-            robot_sdf: AnyStr = robot.to_sdf(pose)
+            if self._use_urdf:
+                robot_sdf: AnyStr = robot.to_urdf(pose)
+            else:
+                robot_sdf: AnyStr = robot.to_sdf(pose)
             max_age: float = conf.evaluation_time + conf.grace_time
 
             import xml.dom.minidom
