@@ -4,24 +4,40 @@
 
 #include "Database.h"
 #include <sstream>
+#include <revolve/utils/Address.h>
 
 using namespace revolve::gazebo;
 
-Database::Database(const char *dbname,
-                   const char *username,
-                   const char *password,
-                   const char *address,
+
+Database::Database(const std::string &dbname,
+                   const std::string &username,
+                   const std::string &password,
+                   const std::string &address,
                    unsigned int port)
 {
-    std::ostringstream connection_str;
-    connection_str << "dbname = " << dbname
-                   << " user = " << username
-                   << " password = " << password
-                   << " hostaddr = " << address
-                   << " port = " << port;
-    postgres = std::make_unique<pqxx::connection>(connection_str.str());
+    // Translate address in ip address
+    ::revolve::utils::Address resolved_address(address, utils::Address::EITHER);
+
+    for (const std::string &addr: resolved_address.get_ips_str()) {
+        // Create connection string
+        std::ostringstream connection_str;
+        connection_str << "dbname = " << dbname
+                       << " user = " << username
+                       << " hostaddr = " << addr
+                       << " port = " << port;
+        std::cout << "Trying connection with " << connection_str.str() << std::endl;
+        connection_str << " password = " << password;
+
+        postgres = std::make_unique<pqxx::connection>(connection_str.str());
+        if (postgres->is_open()) {
+            break;
+        }
+    }
+
     if (!postgres->is_open()) {
         throw std::runtime_error("Could not open connection to postgresql!");
+    } else {
+        std::cout << "Connection to Database established" << std::endl;
     }
 }
 

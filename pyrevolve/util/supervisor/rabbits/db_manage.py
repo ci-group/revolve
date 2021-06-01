@@ -1,8 +1,9 @@
 import os
-from typing import AnyStr
+from typing import AnyStr, Optional
 
 import sqlalchemy.orm
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 from pyrevolve.util.services import Service
@@ -10,13 +11,13 @@ from pyrevolve.util.supervisor.rabbits import db_data
 from pyrevolve.custom_logging.logger import logger
 
 
-def _engine(type: AnyStr, username='username', password='password', address='localhost', dbname='pythoncpptest'):
+def _engine(type: AnyStr, username='username', password='password', address='localhost', dbname='pythoncpptest') -> Engine:
     # if _engine_type == type and _engine is not None:
     #     return _engine
     if type == 'sqlite':
-        _engine = create_engine(f'sqlite:///{dbname}.db')
+        _engine: Engine = create_engine(f'sqlite:///{dbname}.db')
     elif type == 'postgresql':
-        _engine = create_engine(
+        _engine: Engine = create_engine(
             # The PostgreSQL dialect uses psycopg2 as the default DBAPI. pg8000 is also available as a pure-Python substitute
             f'postgresql://{username}:{password}@{address}/{dbname}'
         )
@@ -26,7 +27,7 @@ def _engine(type: AnyStr, username='username', password='password', address='loc
 
 
 class PostgreSQLDatabase:
-    def __init__(self, username='username', password='password', address='localhost', dbname='pythoncpptest'):
+    def __init__(self, username='revolve', password='revolve', address='localhost', dbname='revolve'):
         assert(address == 'localhost' or address == '127.0.0.1' or address == '::1')
 
         self._username = username.strip()
@@ -36,7 +37,7 @@ class PostgreSQLDatabase:
 
         self.postgres_service: Service = Service('PostgreSQL')
 
-        self._engine = None
+        self._engine: Optional[Engine] = None
         self._sessionmaker: sessionmaker = None
 
     def check_running(self) -> bool:
@@ -52,7 +53,7 @@ class PostgreSQLDatabase:
         """
         await self.postgres_service.start()
 
-        self._engine = create_engine(
+        self._engine: Engine = create_engine(
             # The PostgreSQL dialect uses psycopg2 as the default DBAPI. pg8000 is also available as a pure-Python substitute
             f'postgresql://{self._username}:{self._password}@{self._address}/{self._dbname}'
         )
@@ -106,8 +107,9 @@ class PostgreSQLDatabase:
         Kind of an explicit deconstructor if needed (e.g. before destroying)
         """
         self._sessionmaker = None
-        self._engine.dispose()
-        self._engine = None
+        if self._engine is not None:
+            self._engine.dispose()
+            self._engine: Optional[Engine] = None
 
     def destroy(self) -> bool:
         """

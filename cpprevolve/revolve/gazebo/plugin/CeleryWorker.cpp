@@ -1,7 +1,22 @@
-//
-// Created by matteo on 6/19/19.
-//
-
+/*
+ * Copyright (C) 2015-2021 Vrije Universiteit Amsterdam
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Author: Matteo De Carlo
+ * Date: May 28, 2021
+ *
+ */
 #include <cassert>
 #include <gazebo/common/Events.hh>
 #include <gazebo/gazebo.hh>
@@ -27,11 +42,49 @@ CeleryWorker::~CeleryWorker()
 
 }
 
+template <typename T>
+T getAttribute(const sdf::ElementPtr &_elem, const std::string &_key, const T& _default) {
+    sdf::ParamPtr attribute = _elem->GetAttribute(_key);
+    if (attribute == nullptr) {
+        return _default;
+    }
+    T value;
+    bool conversion_successful = attribute->Get<T>(value);
+    if (conversion_successful) {
+        return value;
+    } else {
+        return _default;
+    }
+}
+
+template <>
+std::string getAttribute<std::string>(const sdf::ElementPtr &_elem, const std::string &_key, const std::string& _default) {
+    sdf::ParamPtr attribute = _elem->GetAttribute(_key);
+    if (attribute == nullptr) {
+        return _default;
+    }
+    std::string value = attribute->GetAsString();
+    if (value.empty()) {
+        return _default;
+    } else {
+        return value;
+    }
+}
+
 void CeleryWorker::Load(::gazebo::physics::WorldPtr world, sdf::ElementPtr sdf)
 {
     this->_world = world;
     _physics = world->Physics();
     assert(_physics != nullptr);
+
+    if (sdf->HasElement("rv:database")) {
+        const sdf::ElementPtr SDF_database = sdf->GetElement("rv:database");
+        this->_dbname = getAttribute<std::string>(SDF_database, "dbname", "revolve");
+        this->_dbusername = getAttribute<std::string>(SDF_database, "username", "revolve");
+        this->_dbpassword = getAttribute<std::string>(SDF_database, "password", "revolve");
+        this->_dbaddress = getAttribute<std::string>(SDF_database, "address", "localhost");
+        this->_dbport = getAttribute<unsigned int>(SDF_database, "port", 5432);
+    }
 
     // Turn on threading
 //    physicsEngine->SetParam("thread_position_correlation", true);
@@ -64,22 +117,28 @@ void CeleryWorker::Load(::gazebo::physics::WorldPtr world, sdf::ElementPtr sdf)
     std::cout << "Started Gazebo worker with tag: " << consumer_tag << std::endl;
 
     // Connection to the database
-    database = std::make_unique<Database>("pythoncpptest");
+    database = std::make_unique<Database>(_dbname, _dbusername, _dbpassword, _dbaddress, _dbport);
 }
 
 void CeleryWorker::OnUpdateBegin(const ::gazebo::common::UpdateInfo &info)
 {
     // here we know what time is it in the simulator
-    this->_robot_work(info);
-    this->_saveRobotState(info);
+    bool alive = this->_robot_work(info);
+    if (alive) {
+        // Update the DB only if the robot is alive.
+        // Sometimes it can enter in a ghost state because it's already dead
+        // but we haven't received a valid pointer to the model yet.
+        // Which speaks lots for the quality of gazebo
+        this->_saveRobotState(info);
+    }
     this->_check_for_messages(info);
 }
 
-void CeleryWorker::_robot_work(const ::gazebo::common::UpdateInfo &info)
+bool CeleryWorker::_robot_work(const ::gazebo::common::UpdateInfo &info)
 {
     if (not task_running.load(std::memory_order_seq_cst)) {
-        // A task is already running, do not check for new tasks
-        return;
+        // A task is not running, there is no robot work to do
+        return false;
     }
 
     assert(_task_robot.has_value());
@@ -90,11 +149,11 @@ void CeleryWorker::_robot_work(const ::gazebo::common::UpdateInfo &info)
 
     if (not robot_model) {
         ::gazebo::physics::ModelPtr model = _world->ModelByName(name);
-        std::cout << "Model added, pointer is " << model.get() << std::endl;
         if (model) {
+            std::cout << "Model added, pointer is " << model.get() << std::endl;
             std::cout << "\tname: " << model->GetName() << std::endl;
         } else {
-            std::clog << "ADDED MODEL DOES NOT HAVE A POINTER!" << std::endl;
+//            std::clog << "ADDED MODEL DOES NOT HAVE A POINTER!" << std::endl;
         }
         robot_model.swap(model);
     }
@@ -110,20 +169,20 @@ void CeleryWorker::_robot_work(const ::gazebo::common::UpdateInfo &info)
         if (model) {
             this->_world->RemoveModel(model);
         } else {
-            std::cerr << "Cannot remove robot, model pointer not valid!" << std::endl;
-            return;
+//            std::cerr << "Cannot remove robot, model pointer not valid!" << std::endl;
+            return false;
         }
 
-        double fitness = rand();
-
-        std::cout << "Robot evaluation finished with fitness: " << fitness << std::endl;
-        this->_reply(_reply_to, _task_id, _database_robot_id);
+        std::cout << "Robot evaluation finished: " << std::get<0>(*_task_robot) << std::endl;
+        this->_reply(_reply_to, _task_id, _correlation_id, _database_robot_id);
         _reply_to.resize(0);
         _task_id.resize(0);
         _task_robot.reset();
         last_robot_analyzed = name;
         task_running.store(false, std::memory_order_seq_cst);
     }
+
+    return alive;
 }
 
 void CeleryWorker::_saveRobotState(const ::gazebo::common::UpdateInfo &info)
@@ -170,7 +229,7 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
         // A task is already running, do not check for new tasks
         return;
     }
-    std::cout << "Checking for celery task" << std::endl;
+//    std::cout << "Checking for celery task" << std::endl;
     AmqpClient::Envelope::ptr_t envelope;
     auto message_received = channel->BasicConsumeMessage(
             consumer_tag,
@@ -183,12 +242,15 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
     task_running.store(true, std::memory_order_seq_cst);
     auto message = envelope->Message();
     _reply_to = message->ReplyTo();
+    _correlation_id = message->CorrelationId();
 
     const std::string task_name = message->HeaderTable().at("task").GetString();
     //TODO set task name from SDF
-    if (task_name != "test_worker.test_robot") {
+    if (task_name != this->TASK_NAME) {
+        channel->BasicAck(envelope);
         channel->BasicReject(envelope, true);
         task_running.store(false, std::memory_order_seq_cst);
+        return;
     }
 
     const std::string &body_string = message->Body();
@@ -230,6 +292,7 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
         lifetime = params[1].asDouble();
     } catch (const Json::LogicError &e) {
         // reject and remove task from the queue
+        channel->BasicAck(envelope);
         channel->BasicReject(envelope, false);
         std::cerr << "Error parsing json for incoming task: " << std::endl
                   << e.what() << std::endl;
@@ -245,12 +308,15 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
     std::string name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
             ->GetAsString();
     if (name == last_robot_analyzed) {
-        channel->BasicReject(envelope, true);
-        channel->BasicAck(envelope);
-        std::cerr << "Inserting the previous robot immediately could cause problems in the simulation." << std::endl
-                  << "Rejecting the task and sending it to the next worker" << std::endl;
-        task_running.store(false, std::memory_order_seq_cst);
-        return;
+        // TODO handle this better, this does not work and locks the simulator!
+        std::chrono::milliseconds twoseconds(2000);
+        std::this_thread::sleep_for(twoseconds);
+
+//        channel->BasicReject(envelope, false);
+//        std::cerr << "Inserting the previous robot immediately could cause problems in the simulation." << std::endl
+//                  << "Rejecting the task and sending it to the next worker" << std::endl;
+//        task_running.store(false, std::memory_order_seq_cst);
+//        return;
     }
     //_world->InsertModelString(SDFtext)
     _world->InsertModelSDF(robotSDF);
@@ -258,17 +324,22 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
     double deadline = info.simTime.Double() + lifetime;
     _task_robot = std::make_tuple(name, nullptr, deadline);
 
-    _database_robot_id = database->add_robot(name);
-    database->add_evaluation(_database_robot_id, _evaluation_id, -1);
+    try {
+        _database_robot_id = database->add_robot(name);
+        database->add_evaluation(_database_robot_id, _evaluation_id, -1);
+    } catch (const std::runtime_error& e) {
+        // TODO handle this better, replace the last run with this one.
+        std::cerr << "Error adding robot " << name << " to the Database: " << e.what() << std::endl;
+        channel->BasicReject(envelope, false);
+    }
 
     // Don't leak memory
     // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
     //robotSDF.Root()->Reset();
 }
 
-void CeleryWorker::_reply(const std::string &reply_to, const std::string &task_id, Json::Value result) {
+void CeleryWorker::_reply(const std::string &reply_to, const std::string &task_id, const std::string &correlation_id, Json::Value result) {
     const std::string &routing_key = reply_to;
-    const std::string &correlation_id = task_id;
     const char *state = "SUCCESS";
 
     Json::Value msg;
@@ -284,10 +355,11 @@ void CeleryWorker::_reply(const std::string &reply_to, const std::string &task_i
     auto return_msg = AmqpClient::BasicMessage::Create(serialized);
     return_msg->ContentType("application/json");
     return_msg->ContentEncoding("utf-8");
-    //return_msg->HeaderTable({
-    //                         {"id", "3149beef-be66-4b0e-ba47-2fc46e4edac3"},
-    //                         {"task", "test_worker.add"}
-    //                 });
+    return_msg->CorrelationId(correlation_id);
+    return_msg->HeaderTable({
+                             {"id", task_id },
+                             {"task", TASK_NAME }
+                     });
 
     channel->BasicPublish("", routing_key, return_msg);
 }
@@ -336,5 +408,7 @@ void print_table_value(const AmqpClient::TableValue &value) {
         case AmqpClient::TableValue::VT_void:
             std::cout << "null";
             break;
+        default:
+            throw std::runtime_error("Invalid `AmqpClient::TableValue` value" + std::to_string(value.GetType()));
     }
 }

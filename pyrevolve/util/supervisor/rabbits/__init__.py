@@ -26,7 +26,6 @@ async def celery_runner_command():
     )
 
     await celery_worker.launch_simulator(port=arguments.port_start)
-    await asyncio.sleep(20)
 
     await celery_worker.wait()
     # database.disconnect()

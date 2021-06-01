@@ -254,6 +254,7 @@ add_library(CeleryWorkerPlugin SHARED
         plugin/register_celery_worker_world_plugin.cpp
 )
 target_link_libraries(CeleryWorkerPlugin
+        PRIVATE revolve-utils
         PUBLIC ${GAZEBO_LIBRARIES}
         PUBLIC ${AMQP_LIBRARIES}
         PUBLIC ${PQXX_LIBRARIES}

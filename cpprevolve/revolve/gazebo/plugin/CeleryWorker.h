@@ -1,7 +1,22 @@
-//
-// Created by matteo on 6/19/19.
-//
-
+/*
+ * Copyright (C) 2015-2021 Vrije Universiteit Amsterdam
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Author: Matteo De Carlo
+ * Date: May 28, 2021
+ *
+ */
 #ifndef REVOLVE_CELERYWORKER_H
 #define REVOLVE_CELERYWORKER_H
 
@@ -30,13 +45,14 @@ public:
     virtual void OnUpdateEnd();
 
 private:
-    void _robot_work(const ::gazebo::common::UpdateInfo &info);
+    bool _robot_work(const ::gazebo::common::UpdateInfo &info);
     void _saveRobotState(const ::gazebo::common::UpdateInfo &info);
     void _check_for_messages(const ::gazebo::common::UpdateInfo &info);
-    void _reply(const std::string &reply_to, const std::string &task_id, Json::Value result);
+    void _reply(const std::string &reply_to, const std::string &task_id, const std::string &correlation_id, Json::Value result);
 
 private:
     // RabbitMQ stuff
+    const char *const TASK_NAME = "pyrevolve.util.supervisor.rabbits.celery_queue.evaluate_robot";
     volatile std::atomic<bool> task_running = ATOMIC_FLAG_INIT;
     /// optional tuple containing < Robot name, robot model pointer (may be null), deadline >
     boost::optional<std::tuple<std::string, ::gazebo::physics::ModelPtr, double>> _task_robot;
@@ -45,12 +61,18 @@ private:
     Json::CharReaderBuilder readerBuilder;
     Json::StreamWriterBuilder writerBuilder;
     std::string _reply_to;
+    std::string _correlation_id;
     std::string _task_id;
 
     // Postgresql stuff
     /// Update frequency for the robot states to be uploaded into the simulator
     unsigned int _robotStatesUpdateFreq = 0;
     double _lastRobotStatesUpdateTime = 0;
+    std::string _dbname = "revolve";
+    std::string _dbusername = "revolve";
+    std::string _dbpassword = "revolve";
+    std::string _dbaddress = "localhost";
+    unsigned int _dbport = 5432;
     std::unique_ptr<Database> database = nullptr;
     unsigned int _database_robot_id = 0;
     unsigned int _evaluation_id = 1;
