@@ -42,7 +42,8 @@ Database::Database(const std::string &dbname,
 }
 
 Database::~Database() {
-    postgres->close();
+    // postgres connection is automatically destroyed
+//    postgres->close();
 }
 
 unsigned long Database::add_robot(const std::string &robot_name) {
