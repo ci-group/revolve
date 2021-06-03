@@ -33,7 +33,7 @@ public:
 private:
     std::string _hostname;
     IPVersion _ip_version;
-    addrinfo *_addrinfo;
+    addrinfo *_addrinfo = nullptr;
 
 public:
     explicit Address(std::string hostname, IPVersion ipVersion = EITHER);
