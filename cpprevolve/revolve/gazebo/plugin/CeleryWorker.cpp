@@ -37,10 +37,7 @@ CeleryWorker::CeleryWorker()
     writerBuilder.settings_["indentation"] = "";
 }
 
-CeleryWorker::~CeleryWorker()
-{
-
-}
+CeleryWorker::~CeleryWorker() = default;
 
 template <typename T>
 T getAttribute(const sdf::ElementPtr &_elem, const std::string &_key, const T& _default) {
@@ -192,7 +189,7 @@ void CeleryWorker::_saveRobotState(const ::gazebo::common::UpdateInfo &info)
     double secs = 1.0 / _robotStatesUpdateFreq;
     double time = info.simTime.Double();
     if ((time - this->_lastRobotStatesUpdateTime) >= secs) {
-        database->start_work();
+        database->start_state_work();
         // collect data of the current time step
         {
             boost::recursive_mutex::scoped_lock lock_physics(*_physics->GetPhysicsUpdateMutex());
@@ -212,7 +209,7 @@ void CeleryWorker::_saveRobotState(const ::gazebo::common::UpdateInfo &info)
         }
         //TODO buffer the states data in less postgres commands to increase performance
         // at the cost of a few seconds of data loss
-        database->commit();
+        database->commit_state_work();
 
         _lastRobotStatesUpdateTime = time;
     }
@@ -224,12 +221,21 @@ void CeleryWorker::OnUpdateEnd()
 
 void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
 {
-    //TOFO improve performance by choosing the correct memory order
+    //TODO improve performance by choosing the correct memory order
     if (task_running.load(std::memory_order_seq_cst)) {
         // A task is already running, do not check for new tasks
         return;
     }
-//    std::cout << "Checking for celery task" << std::endl;
+
+    if (_world->ModelByName(this->last_robot_analyzed) != nullptr) {
+        // A robot is not running, but the model is still present in the
+        // data structure of the simulator, we wait that gazebo re-syncs before
+        // inserting a new one. Because high-quality unnecessarely network-based Gazebo.
+        std::cout << "Cleaning up from previous robot" << std::endl;
+        return;
+    }
+
+    // std::cout << "Checking for celery task" << std::endl;
     AmqpClient::Envelope::ptr_t envelope;
     auto message_received = channel->BasicConsumeMessage(
             consumer_tag,
@@ -309,15 +315,17 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
             ->GetAsString();
     if (name == last_robot_analyzed) {
         // TODO handle this better, this does not work and locks the simulator!
-        std::chrono::milliseconds twoseconds(2000);
+        std::chrono::milliseconds twoseconds(100);
         std::this_thread::sleep_for(twoseconds);
-
-//        channel->BasicReject(envelope, false);
-//        std::cerr << "Inserting the previous robot immediately could cause problems in the simulation." << std::endl
-//                  << "Rejecting the task and sending it to the next worker" << std::endl;
-//        task_running.store(false, std::memory_order_seq_cst);
-//        return;
+        if (_world->ModelByName(name)) {
+            channel->BasicReject(envelope, true);
+            std::cerr << "Inserting the previous robot immediately could cause problems in the simulation." << std::endl
+                      << "Rejecting the task and sending it to the next worker" << std::endl;
+            task_running.store(false, std::memory_order_seq_cst);
+            return;
+        }
     }
+
     //_world->InsertModelString(SDFtext)
     _world->InsertModelSDF(robotSDF);
 
@@ -325,8 +333,8 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
     _task_robot = std::make_tuple(name, nullptr, deadline);
 
     try {
-        _database_robot_id = database->add_robot(name);
-        database->add_evaluation(_database_robot_id, _evaluation_id, -1);
+        _database_robot_id = database->add_or_get_robot(name);
+        database->add_or_recreate_evaluation(_database_robot_id, _evaluation_id, -1);
     } catch (const std::runtime_error& e) {
         // TODO handle this better, replace the last run with this one.
         std::cerr << "Error adding robot " << name << " to the Database: " << e.what() << std::endl;

@@ -25,13 +25,12 @@
 #include <ignition/math/Pose3.hh>
 #include <gazebo/common/Time.hh>
 
-namespace revolve {
-namespace gazebo {
+namespace revolve::gazebo {
 
 class Database {
 private:
     std::unique_ptr<pqxx::connection> postgres = nullptr;
-    std::unique_ptr<pqxx::work> pending_work = nullptr;
+    std::unique_ptr<pqxx::work> pending_state_work = nullptr;
 public:
     explicit Database(const std::string &dbname,
                       const std::string &username,
@@ -41,14 +40,19 @@ public:
 
     ~Database();
 
-    void start_work();
-    void commit();
+    void start_state_work();
+    void commit_state_work();
 
     unsigned long add_robot(const std::string &robot_name);
-    pqxx::result add_evaluation(unsigned int robot_id, unsigned int n, double fitness);
-    pqxx::result add_state(unsigned int robot_id, unsigned int eval_id, const ::gazebo::common::Time& time, const ignition::math::Pose3d &pose);
+    unsigned long get_robot(const std::string &robot_name);
+    unsigned long update_robot(unsigned long robot_id, const std::string &robot_name);
+    unsigned long add_or_get_robot(const std::string &robot_name);
+    pqxx::result add_evaluation(unsigned long robot_id, unsigned long n, double fitness);
+    pqxx::result update_evaluation(unsigned long robot_id, unsigned long n, double fitness);
+    pqxx::result add_or_recreate_evaluation(unsigned long robot_id, unsigned long n, double fitness);
+    pqxx::result drop_evaluation(unsigned long robot_id, unsigned long n);
+    pqxx::result add_state(unsigned long robot_id, unsigned long eval_id, const ::gazebo::common::Time& time, const ignition::math::Pose3d &pose);
 };
-}
 }
 
 #endif //REVOLVE_DATABASE_H

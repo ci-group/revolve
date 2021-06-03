@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-import uuid
+from typing import List
 
 from pyrevolve.genotype.direct_tree.direct_tree_crossover import crossover_list
 from pyrevolve.genotype.direct_tree.direct_tree_mutation import mutate
@@ -16,15 +16,11 @@ from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype, DirectTreeGenotypeConfig
 from pyrevolve.util.supervisor import CeleryQueue
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
-from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase, GazeboCeleryWorkerSupervisor
-from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
+from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor
 from pyrevolve.custom_logging.logger import logger
 
 
-from typing import TYPE_CHECKING, List
-
-if TYPE_CHECKING:
-    from pyrevolve.evolution.individual import Individual
+INTERNAL_WORKERS = False
 
 
 async def run():
@@ -122,21 +118,24 @@ async def run():
 
     # CELERY GAZEBO WORKER
     celery_workers: List[GazeboCeleryWorkerSupervisor] = []
-    for n in range(n_cores):
-        celery_worker = GazeboCeleryWorkerSupervisor(
-            world_file='worlds/plane.celery.world',
-            gui=args.gui,
-            simulator_args=['--verbose'],
-            plugins_dir_path=os.path.join('.', 'build', 'lib'),
-            models_dir_path=os.path.join('.', 'models'),
-            simulator_name=f'GazeboCeleryWorker_{n}',
-            process_terminated_callback=worker_crash,
-        )
-        await celery_worker.launch_simulator(port=args.port_start+n)
-        celery_workers.append(celery_worker)
+    if INTERNAL_WORKERS:
+        for n in range(n_cores):
+            celery_worker = GazeboCeleryWorkerSupervisor(
+                world_file='worlds/plane.celery.world',
+                gui=args.gui,
+                simulator_args=['--verbose'],
+                plugins_dir_path=os.path.join('.', 'build', 'lib'),
+                models_dir_path=os.path.join('.', 'models'),
+                simulator_name=f'GazeboCeleryWorker_{n}',
+                process_terminated_callback=worker_crash,
+            )
+            await celery_worker.launch_simulator(port=args.port_start+n)
+            celery_workers.append(celery_worker)
 
     # ANALYZER CONNECTION
-    analyzer_queue = AnalyzerQueue(1, args, args.port_start+n_cores)
+    analyzer_port = args.port_start \
+                    + n_cores if INTERNAL_WORKERS else 0
+    analyzer_queue = AnalyzerQueue(1, args, analyzer_port)
     await analyzer_queue.start()
 
     # INITIAL POPULATION OBJECT
