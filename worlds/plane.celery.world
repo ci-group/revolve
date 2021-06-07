@@ -38,7 +38,7 @@
             <uri>model://tol_ground</uri>
         </include>
 
-        <plugin name="revolve-world" filename="libCeleryWorkerPlugin.so">
+        <plugin name="revolve-world" filename="libCeleryRobotWorkerPlugin.so">
             <rv:database dbname="revolve" username="matteo" password="password" address="localhost" port="5432" />
         </plugin>
     </world>

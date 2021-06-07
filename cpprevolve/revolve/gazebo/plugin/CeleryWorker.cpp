@@ -29,8 +29,9 @@ using namespace revolve::gazebo;
 
 void print_table_value(const AmqpClient::TableValue &value);
 
-CeleryWorker::CeleryWorker()
-    : _world(nullptr)
+CeleryWorker::CeleryWorker(std::string task_name)
+    : TASK_NAME(std::move(task_name))
+    , _world(nullptr)
     , _physics(nullptr)
 {
     _task_robot.reset();
@@ -119,100 +120,8 @@ void CeleryWorker::Load(::gazebo::physics::WorldPtr world, sdf::ElementPtr sdf)
 
 void CeleryWorker::OnUpdateBegin(const ::gazebo::common::UpdateInfo &info)
 {
-    // here we know what time is it in the simulator
-    bool alive = this->_robot_work(info);
-    if (alive) {
-        // Update the DB only if the robot is alive.
-        // Sometimes it can enter in a ghost state because it's already dead
-        // but we haven't received a valid pointer to the model yet.
-        // Which speaks lots for the quality of gazebo
-        this->_saveRobotState(info);
-    }
+    this->_simulator_work(info);
     this->_check_for_messages(info);
-}
-
-bool CeleryWorker::_robot_work(const ::gazebo::common::UpdateInfo &info)
-{
-    if (not task_running.load(std::memory_order_seq_cst)) {
-        // A task is not running, there is no robot work to do
-        return false;
-    }
-
-    assert(_task_robot.has_value());
-    std::tuple<std::string, ::gazebo::physics::ModelPtr, double> &tuple_task = _task_robot.value();
-    const std::string &name = std::get<0>(tuple_task);
-    ::gazebo::physics::ModelPtr &robot_model = std::get<1>(tuple_task);
-    double death_sentence = std::get<2>(tuple_task);
-
-    if (not robot_model) {
-        ::gazebo::physics::ModelPtr model = _world->ModelByName(name);
-        if (model) {
-            std::cout << "Model added, pointer is " << model.get() << std::endl;
-            std::cout << "\tname: " << model->GetName() << std::endl;
-        } else {
-//            std::clog << "ADDED MODEL DOES NOT HAVE A POINTER!" << std::endl;
-        }
-        robot_model.swap(model);
-    }
-
-    double time = info.simTime.Double();
-    bool alive = death_sentence > time;
-
-    if (not alive) {
-        // The robot just died, let's finish the task
-
-        // remove model
-        ::gazebo::physics::ModelPtr model = std::get<1>(*_task_robot);
-        if (model) {
-            this->_world->RemoveModel(model);
-        } else {
-//            std::cerr << "Cannot remove robot, model pointer not valid!" << std::endl;
-            return false;
-        }
-
-        std::cout << "Robot evaluation finished: " << std::get<0>(*_task_robot) << std::endl;
-        this->_reply(_reply_to, _task_id, _correlation_id, _database_robot_id);
-        _reply_to.resize(0);
-        _task_id.resize(0);
-        _task_robot.reset();
-        last_robot_analyzed = name;
-        task_running.store(false, std::memory_order_seq_cst);
-    }
-
-    return alive;
-}
-
-void CeleryWorker::_saveRobotState(const ::gazebo::common::UpdateInfo &info)
-{
-    if (not this->_robotStatesUpdateFreq) return;
-
-    double secs = 1.0 / _robotStatesUpdateFreq;
-    double time = info.simTime.Double();
-    if ((time - this->_lastRobotStatesUpdateTime) >= secs) {
-        database->start_state_work();
-        // collect data of the current time step
-        {
-            boost::recursive_mutex::scoped_lock lock_physics(*_physics->GetPhysicsUpdateMutex());
-            for (const boost::shared_ptr<::gazebo::physics::Model> &model : this->_world->Models()) {
-                if (model->IsStatic()) {
-                    // Ignore static models such as the ground and obstacles
-                    continue;
-                }
-
-                auto id = model->GetId();
-                auto pose = model->WorldPose();
-                //TODO orientation vectors
-                const std::string &name = model->GetName();
-
-                database->add_state(_database_robot_id, _evaluation_id, time, pose);
-            }
-        }
-        //TODO buffer the states data in less postgres commands to increase performance
-        // at the cost of a few seconds of data loss
-        database->commit_state_work();
-
-        _lastRobotStatesUpdateTime = time;
-    }
 }
 
 void CeleryWorker::OnUpdateEnd()
@@ -275,6 +184,7 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
     bool error = reader->parse(start, end, &body, &err);
     if (error) {
         std::cerr << "error parsing json" << err << std::endl;
+        channel->BasicAck(envelope);
         channel->BasicReject(envelope, false);
         //channel->BasicCancel(consumer_tag);
         task_running.store(false, std::memory_order_seq_cst);
@@ -286,64 +196,7 @@ void CeleryWorker::_check_for_messages(const ::gazebo::common::UpdateInfo &info)
 
     std::cout << "working on task: " << _task_id << std::endl;
 
-    //extract the robot SDF and the robot lifetime from the request
-    //    @app.task
-    //    def evaluate_robot(robot_sdf: AnyStr, life_timeout: float):
-    Json::Value params;
-    const char * SDFtext;
-    double lifetime;
-    try {
-        params = body[0];
-        SDFtext = params[0].asCString();
-        lifetime = params[1].asDouble();
-    } catch (const Json::LogicError &e) {
-        // reject and remove task from the queue
-        channel->BasicAck(envelope);
-        channel->BasicReject(envelope, false);
-        std::cerr << "Error parsing json for incoming task: " << std::endl
-                  << e.what() << std::endl;
-        task_running.store(false, std::memory_order_seq_cst);
-        return;
-    }
-    channel->BasicAck(envelope);
-
-
-    // Insert the robot in the simulation
-    sdf::SDF robotSDF;
-    robotSDF.SetFromString(SDFtext);
-    std::string name = robotSDF.Root()->GetElement("model")->GetAttribute("name")
-            ->GetAsString();
-    if (name == last_robot_analyzed) {
-        // TODO handle this better, this does not work and locks the simulator!
-        std::chrono::milliseconds twoseconds(100);
-        std::this_thread::sleep_for(twoseconds);
-        if (_world->ModelByName(name)) {
-            channel->BasicReject(envelope, true);
-            std::cerr << "Inserting the previous robot immediately could cause problems in the simulation." << std::endl
-                      << "Rejecting the task and sending it to the next worker" << std::endl;
-            task_running.store(false, std::memory_order_seq_cst);
-            return;
-        }
-    }
-
-    //_world->InsertModelString(SDFtext)
-    _world->InsertModelSDF(robotSDF);
-
-    double deadline = info.simTime.Double() + lifetime;
-    _task_robot = std::make_tuple(name, nullptr, deadline);
-
-    try {
-        _database_robot_id = database->add_or_get_robot(name);
-        database->add_or_recreate_evaluation(_database_robot_id, _evaluation_id, -1);
-    } catch (const std::runtime_error& e) {
-        // TODO handle this better, replace the last run with this one.
-        std::cerr << "Error adding robot " << name << " to the Database: " << e.what() << std::endl;
-        channel->BasicReject(envelope, false);
-    }
-
-    // Don't leak memory
-    // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element
-    //robotSDF.Root()->Reset();
+    _message_received(info, std::move(envelope), body);
 }
 
 void CeleryWorker::_reply(const std::string &reply_to, const std::string &task_id, const std::string &correlation_id, Json::Value result) {

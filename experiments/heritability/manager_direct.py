@@ -19,7 +19,6 @@ from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor
 from pyrevolve.custom_logging.logger import logger
 
-
 INTERNAL_WORKERS = False
 
 
@@ -34,8 +33,8 @@ async def run():
     offspring_size = 100
 
     morph_single_mutation_prob = 0.2
-    morph_no_single_mutation_prob = 1-morph_single_mutation_prob  # 0.8
-    morph_no_all_mutation_prob = morph_no_single_mutation_prob**4  # 0.4096
+    morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8
+    morph_no_all_mutation_prob = morph_no_single_mutation_prob ** 4  # 0.4096
     morph_at_least_one_mutation_prob = 1 - morph_no_all_mutation_prob  # 0.5904
 
     brain_single_mutation_prob = 0.5
@@ -72,7 +71,7 @@ async def run():
         gen_num, has_offspring, next_robot_id, next_species_id = \
             experiment_management.read_recovery_state(population_size, offspring_size, species=False)
 
-        if gen_num == num_generations-1:
+        if gen_num == num_generations - 1:
             logger.info('Experiment is already complete.')
             return
     else:
@@ -129,14 +128,14 @@ async def run():
                 simulator_name=f'GazeboCeleryWorker_{n}',
                 process_terminated_callback=worker_crash,
             )
-            await celery_worker.launch_simulator(port=args.port_start+n)
+            await celery_worker.launch_simulator(port=args.port_start + n)
             celery_workers.append(celery_worker)
 
     # ANALYZER CONNECTION
-    analyzer_port = args.port_start \
-                    + n_cores if INTERNAL_WORKERS else 0
-    analyzer_queue = AnalyzerQueue(1, args, analyzer_port)
-    await analyzer_queue.start()
+    # analyzer_port = args.port_start + (n_cores if INTERNAL_WORKERS else 0)
+    # analyzer_queue = AnalyzerQueue(1, args, port_start=analyzer_port)
+    # await analyzer_queue.start()
+    analyzer_queue = None
 
     # INITIAL POPULATION OBJECT
     population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
@@ -163,7 +162,7 @@ async def run():
         await population.initialize()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
-    while gen_num < num_generations-1:
+    while gen_num < num_generations - 1:
         gen_num += 1
         population = await population.next_generation(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)

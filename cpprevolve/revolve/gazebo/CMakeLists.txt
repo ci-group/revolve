@@ -248,10 +248,9 @@ target_link_libraries(
 )
 
 # Create Torus World plugin
-add_library(CeleryWorkerPlugin SHARED
+add_library(CeleryWorkerPlugin STATIC
         plugin/CeleryWorker.cpp
         plugin/database/Database.cpp
-        plugin/register_celery_worker_world_plugin.cpp
 )
 target_link_libraries(CeleryWorkerPlugin
         PRIVATE revolve-utils
@@ -270,6 +269,16 @@ target_include_directories(CeleryWorkerPlugin
         PUBLIC ${PQXX_INCLUDE_DIRS}
         PRIVATE ${JSONCPP_INCLUDE_DIRS}
 )
+
+add_library(CeleryRobotWorkerPlugin SHARED
+        plugin/CeleryRobotWorker.cpp
+        plugin/register_celery_robot_worker_world_plugin.cpp)
+target_link_libraries(CeleryRobotWorkerPlugin PUBLIC CeleryWorkerPlugin)
+
+#add_library(CeleryAnalyzerWorkerPlugin SHARED
+#        plugin/CeleryAnalyzerWorker.cpp
+#        plugin/register_celery_analyzer_worker_world_plugin.cpp)
+#target_link_libraries(CeleryAnalyzerWorkerPlugin PUBLIC CeleryWorkerPlugin)
 
 # Create RecorderCamera plugin
 add_library(RecorderCameraPlugin SHARED

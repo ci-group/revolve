@@ -30,15 +30,16 @@ def evaluate_robot(robot_sdf: AnyStr, life_timeout: float):
 
 def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, timeout: float) -> int:
     r = evaluate_robot.delay(robot_sdf, max_age)
-    logger.info(f'Request sent to rabbitmq: {str(r)} for "{robot_name}"')
+    logger.info(f'Request SENT to rabbitmq: {str(r)} for "{robot_name}"')
 
     robot_id: int = r.get(timeout=timeout)
+    logger.info(f'Request RECEIVED : {str(r)} for "{robot_name}"')
     assert(type(robot_id) == int)
     return robot_id
 
 
 class CeleryQueue:
-    EVALUATION_TIMEOUT = 360  # REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
+    EVALUATION_TIMEOUT = 60  # REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
     MAX_ATTEMPTS = 3
 
     def __init__(self, args, queue_name: AnyStr = 'celery', dbname: Optional[AnyStr] = None, urdf: bool = False):
@@ -46,7 +47,7 @@ class CeleryQueue:
         self._args = args
         self._dbname: AnyStr = str(uuid.uuid1()) if dbname is None else dbname
         self._db: PostgreSQLDatabase = PostgreSQLDatabase(dbname=self._dbname, address='localhost', username='matteo')
-        self._process_pool_executor = ProcessPoolExecutor(args.n_cores*2 + 20)
+        self._process_pool_executor = ProcessPoolExecutor()
         self._use_urdf: bool = urdf
         atexit.register(
             lambda: asyncio.get_event_loop().run_until_complete(self.stop(wait=False))

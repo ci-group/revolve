@@ -6,4 +6,4 @@
 #include "CeleryWorker.h"
 
 using namespace gazebo;
-GZ_REGISTER_WORLD_PLUGIN(revolve::gazebo::CeleryWorker)
+GZ_REGISTER_WORLD_PLUGIN(revolve::gazebo::CeleryAnalyzerWorker)

@@ -29,12 +29,11 @@
 #include "database/Database.h"
 
 
-namespace revolve {
-namespace gazebo {
+namespace revolve::gazebo {
 
 class CeleryWorker : public ::gazebo::WorldPlugin {
 public:
-    CeleryWorker();
+    explicit CeleryWorker(std::string task_name);
     ~CeleryWorker() override;
 
     virtual void Load(
@@ -44,15 +43,16 @@ public:
     virtual void OnUpdateBegin(const ::gazebo::common::UpdateInfo &_info);
     virtual void OnUpdateEnd();
 
-private:
-    bool _robot_work(const ::gazebo::common::UpdateInfo &info);
-    void _saveRobotState(const ::gazebo::common::UpdateInfo &info);
+protected:
     void _check_for_messages(const ::gazebo::common::UpdateInfo &info);
     void _reply(const std::string &reply_to, const std::string &task_id, const std::string &correlation_id, Json::Value result);
 
-private:
+    virtual void _simulator_work(const ::gazebo::common::UpdateInfo &info) = 0;
+    virtual void _message_received(const ::gazebo::common::UpdateInfo &info, AmqpClient::Envelope::ptr_t envelope, const Json::Value &message_body) = 0;
+
+protected:
     // RabbitMQ stuff
-    const char *const TASK_NAME = "pyrevolve.util.supervisor.rabbits.celery_queue.evaluate_robot";
+    const std::string TASK_NAME; // e.g. "pyrevolve.util.supervisor.rabbits.celery_queue.evaluate_robot";
     volatile std::atomic<bool> task_running = ATOMIC_FLAG_INIT;
     /// optional tuple containing < Robot name, robot model pointer (may be null), deadline >
     boost::optional<std::tuple<std::string, ::gazebo::physics::ModelPtr, double>> _task_robot;
@@ -87,7 +87,6 @@ private:
     ::gazebo::event::ConnectionPtr onEndUpdateConnection;
 };
 
-}
 }
 
 
