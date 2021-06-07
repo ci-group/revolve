@@ -10,7 +10,7 @@
             <max_step_size>0.005</max_step_size>
 
             <!-- Run as fast as possible -->
-            <real_time_update_rate>200</real_time_update_rate>
+            <real_time_update_rate>0</real_time_update_rate>
 
             <ode>
                 <constraints>
