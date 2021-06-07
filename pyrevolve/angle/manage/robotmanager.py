@@ -132,8 +132,8 @@ class RobotManager(object):
 
         if len(self._dt) >= self.speed_window:
             # Subtract oldest values if we're about to override it
-            self._dist -= self._ds[-1]
-            self._time -= self._dt[-1]
+            self._dist -= self._ds[0]
+            self._time -= self._dt[0]
 
         self.last_position = position
         self.last_update = time
