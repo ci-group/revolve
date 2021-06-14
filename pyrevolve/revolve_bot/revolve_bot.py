@@ -207,6 +207,8 @@ class RevolveBot:
             robot = self.to_yaml()
         elif 'sdf' == conf_type:
             robot = self.to_sdf(nice_format=True)
+        elif 'urdf' == conf_type:
+            robot = self.to_urdf(nice_format=True)
         else:
             raise NotImplementedError(f'Config type {conf_type} not supported')
 
