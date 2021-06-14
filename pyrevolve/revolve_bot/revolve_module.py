@@ -6,6 +6,7 @@ from collections import OrderedDict
 from enum import Enum
 import numpy as np
 
+from pyrevolve import URDF
 from pyrevolve import SDF
 
 
@@ -97,8 +98,8 @@ class RevolveModule:
     @staticmethod
     def FromYaml(yaml_object):
         """
-        From a yaml object, creates a data struture of interconnected body modules. 
-        Standard names for modules are: 
+        From a yaml object, creates a data struture of interconnected body modules.
+        Standard names for modules are:
         CoreComponent
         ActiveHinge
         FixedBrick
@@ -210,6 +211,31 @@ class RevolveModule:
 
         return visual, collision, None
 
+    def to_urdf(self, tree_depth='', parent_link=None, child_link=None):
+        """
+        Transform the module in urdf elements.
+
+        IMPORTANT: It does not append VISUAL and COLLISION elements to the parent link
+        automatically. It does append automatically the SENSOR element.
+        TODO: make the append automatic for VISUAL AND COLLISION AS WELL.
+
+        :param tree_depth: current tree depth as string (for naming)
+        :param parent_link: link of the parent (may be needed for certain modules)
+        :param child_link: link of the child (may be needed for certain modules, like hinges)
+        :return: visual SDF element, collision SDF element, sensor SDF element.
+        Sensor SDF element may be None.
+        """
+        name = 'component_{}_{}__box'.format(tree_depth, self.TYPE)
+        visual = URDF.Visual(name, self.rgb)
+        geometry = URDF.MeshGeometry(self.VISUAL_MESH)
+        visual.append(geometry)
+
+        collision = URDF.Collision(name, self.MASS)
+        geometry = URDF.BoxGeometry(self.COLLISION_BOX)
+        collision.append(geometry)
+
+        return visual, collision, None
+
     def boxslot(self, orientation=None):
         orientation = Orientation.BACK if orientation is None else orientation
         return BoxSlot(self.possible_slots(), orientation)
@@ -262,6 +288,12 @@ class CoreModule(RevolveModule):
     def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
         imu_sensor = SDF.IMUSensor('core-imu_sensor', parent_link, self)
         visual, collision, _ = super().to_sdf(tree_depth, parent_link, child_link)
+        parent_link.append(imu_sensor)
+        return visual, collision, imu_sensor
+
+    def to_urdf(self, tree_depth='', parent_link=None, child_link=None):
+        imu_sensor = URDF.IMUSensor('core-imu_sensor', parent_link, self)
+        visual, collision, _ = super().to_urdf(tree_depth, parent_link, child_link)
         parent_link.append(imu_sensor)
         return visual, collision, imu_sensor
 
@@ -337,6 +369,52 @@ class ActiveHingeModule(RevolveModule):
                           motorized=True)
 
         joint.set_position(SDF.math.Vector3(-0.0299, 0, 0))
+
+        return visual_frame, \
+               [collision_frame], \
+               visual_servo, \
+               [collision_servo, collision_servo_2], \
+               joint
+
+    def to_urdf(self, tree_depth='', parent_link=None, child_link=None):
+        assert(parent_link is not None)
+        assert(child_link is not None)
+        name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
+        name_joint = 'component_{}_{}__joint'.format(tree_depth, self.TYPE)
+        name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
+        name_servo2 = 'component_{}_{}__servo2'.format(tree_depth, self.TYPE)
+
+        visual_frame = URDF.Visual(name_frame, self.rgb)
+        geometry = URDF.MeshGeometry(self.VISUAL_MESH_FRAME)
+        visual_frame.append(geometry)
+
+        collision_frame = URDF.Collision(name_frame, self.MASS_FRAME)
+        geometry = URDF.BoxGeometry(self.COLLISION_BOX_FRAME)
+        collision_frame.append(geometry)
+
+        visual_servo = URDF.Visual(name_servo, self.rgb)
+        geometry = URDF.MeshGeometry(self.VISUAL_MESH_SERVO)
+        visual_servo.append(geometry)
+
+        collision_servo = URDF.Collision(name_servo, self.MASS_SERVO)
+        collision_servo.translate(URDF.math.Vector3(-0.018, 0, 0))
+        geometry = URDF.BoxGeometry(self.COLLISION_BOX_SERVO)
+        collision_servo.append(geometry)
+
+        collision_servo_2 = URDF.Collision(name_servo2, 0)
+        collision_servo_2.translate(URDF.math.Vector3(0.02815, 0, 0))
+        geometry = URDF.BoxGeometry(self.COLLISION_BOX_SERVO_2)
+        collision_servo_2.append(geometry)
+
+        joint = URDF.Joint(self.id,
+                          name_joint,
+                          parent_link,
+                          child_link,
+                          axis=URDF.math.Vector3(0, 1, 0),
+                          coordinates=self.substrate_coordinates,
+                          motorized=True)
+
+        joint.set_position(URDF.math.Vector3(-0.0299, 0, 0))
 
         return visual_frame, \
                [collision_frame], \
@@ -464,6 +542,25 @@ class TouchSensorModule(RevolveModule):
 
         return visual, collision, sensor
 
+    def to_urdf(self, tree_depth='', parent_link=None, child_link=None):
+        assert(parent_link is not None)
+        name = 'component_{}_{}'.format(tree_depth, self.TYPE)
+        name_sensor = 'sensor_{}_{}'.format(tree_depth, self.TYPE)
+
+        visual = URDF.Visual(name, self.rgb)
+        geometry = URDF.MeshGeometry(self.VISUAL_MESH)
+        visual.append(geometry)
+
+        collision = URDF.Collision(name, self.MASS)
+        geometry = URDF.BoxGeometry(self.COLLISION_BOX)
+        # collision.translate(SDF.math.Vector3(0.01175, 0.001, 0))
+        collision.append(geometry)
+
+        sensor = URDF.TouchSensor(name_sensor, collision, parent_link, self)
+        parent_link.append(sensor)
+
+        return visual, collision, sensor
+
 
 class BoxSlot:
     """
@@ -474,6 +571,7 @@ class BoxSlot:
         self.pos = self._calculate_box_slot_pos(boundaries, orientation)
         self.normal = self.pos.normalized()
         self.tangent = self._calculate_box_slot_tangent(orientation)
+        print("Ey! ", self.tangent)
 
     def _calculate_box_slot_pos(self, boundaries, slot: Orientation):
         # boundaries = collision_elem.boundaries

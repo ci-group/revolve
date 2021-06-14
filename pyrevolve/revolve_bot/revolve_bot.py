@@ -8,6 +8,7 @@ from collections import OrderedDict
 from collections import deque
 import numpy as np
 
+from pyrevolve import URDF
 from pyrevolve import SDF
 
 from .revolve_module import CoreModule, TouchSensorModule, Orientation
@@ -166,6 +167,11 @@ class RevolveBot:
             nice_format = '\t' if nice_format else None
         return SDF.revolve_bot_to_sdf(self, pose, nice_format, self_collide=self.self_collide)
 
+    def to_urdf(self, pose=SDF.math.Vector3(0, 0, 0.25), nice_format=None):
+        if type(nice_format) is bool:
+            nice_format = '\t' if nice_format else None
+        return URDF.revolve_bot_to_urdf(self, pose, nice_format, self_collide=self.self_collide)
+
     def to_yaml(self):
         """
         Converts robot data structure to yaml
@@ -192,6 +198,8 @@ class RevolveBot:
             robot = self.to_yaml()
         elif 'sdf' == conf_type:
             robot = self.to_sdf(nice_format=True)
+        elif 'urdf' == conf_type:
+            robot = self.to_urdf(nice_format=True)
 
         with open(path, 'w') as robot_file:
             robot_file.write(robot)
