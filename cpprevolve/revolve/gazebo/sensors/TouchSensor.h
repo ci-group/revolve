@@ -24,6 +24,7 @@
 #include <string>
 
 #include <revolve/gazebo/sensors/Sensor.h>
+#include <gazebo/common/CommonTypes.hh>
 
 namespace revolve
 {
@@ -49,7 +50,7 @@ namespace revolve
       /// \brief The touch sensor is boolean; it is either touching something
       /// or it is not. Since the NN works with floats, we return 0.0 or 1.0.
       /// \brief[in,out] _input Input value to write on
-      public: virtual void Read(double *_input);
+      public: void read(double *_input) override;
 
       /// \brief  Called when the camera sensor is updated
       public: void OnUpdate();

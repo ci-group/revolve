@@ -30,6 +30,7 @@
 #include <boost/thread/mutex.hpp>
 #include <gazebo/gazebo.hh>
 
+#include <revolve/brains/controller/Controller.h>
 #include <revolve/msgs/spline_policy.pb.h>
 
 #include "Evaluator.h"
@@ -39,8 +40,7 @@ namespace revolve
 {
   namespace gazebo
   {
-    class RLPower
-            : public Brain
+    class RLPower : public ::revolve::Controller
     {
       typedef const std::shared_ptr<revolve::msgs::ModifyPolicy const>
           ConstModifyPolicyPtr;
@@ -82,7 +82,7 @@ namespace revolve
       /// \param[in] _sensors: vector list of robot's sensors
       /// \param[in] _time:
       /// \param[in] _step:
-      public: void Update(
+      public: void update(
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors,
           double _time,

@@ -21,15 +21,17 @@
 #define REVOLVE_GAZEBO_SENSORS_SENSOR_H_
 
 #include <string>
+#include <gazebo/physics/PhysicsTypes.hh>
+#include <gazebo/sensors/SensorTypes.hh>
+#include <sdf/Element.hh>
 
-#include <revolve/gazebo/sensors/VirtualSensor.h>
+#include <revolve/brains/controller/sensors/Sensor.h>
 
 namespace revolve
 {
   namespace gazebo
   {
-    class Sensor
-            : public VirtualSensor
+    class Sensor: public ::revolve::Sensor
     {
       /// \brief Constructor
       /// \brief[in] _model Model identifier
@@ -44,11 +46,23 @@ namespace revolve
           std::string _sensorId,
           unsigned int _inputs);
 
-      /// \brief Destructor
-      public: virtual ~Sensor();
+        /// \return The part ID
+    public: const std::string& PartId() const { return partId_; };
 
-      /// \return The attached Gazebo sensor
-      public: ::gazebo::sensors::SensorPtr GzSensor();
+        /// \return The ID of the sensor
+    public: const std::string& SensorId() const { return sensorId_; };
+
+        /// \return The attached Gazebo sensor
+    public: const ::gazebo::sensors::SensorPtr& GzSensor() const { return sensor_; };
+
+        /// \brief The model this sensor is part of
+    protected: ::gazebo::physics::ModelPtr model_;
+
+        /// \brief ID of the body part the motor belongs to
+    protected: std::string partId_;
+
+        /// \brief ID of the sensor
+    protected: std::string sensorId_;
 
       /// \brief The actual sensor object this sensor is receiving input from
       protected: ::gazebo::sensors::SensorPtr sensor_;

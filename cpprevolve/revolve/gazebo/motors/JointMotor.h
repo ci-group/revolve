@@ -42,7 +42,8 @@ namespace revolve
           const std::string &_partId,
           const std::string &_motorId,
           sdf::ElementPtr _motor,
-          const unsigned int _outputs);
+          const unsigned int _outputs,
+          const std::string &_coordinates);
 
       /// \brief Destructor
       public: virtual ~JointMotor();
@@ -52,6 +53,9 @@ namespace revolve
 
       /// \brief  Scoped name of the controlled joint
       protected: std::string jointName_;
+
+
+      public: void write(const double *output, double step){throw std::logic_error("write() not implemented");}
     };
   } /* namespace gazebo */
 } /* namespace revolve */

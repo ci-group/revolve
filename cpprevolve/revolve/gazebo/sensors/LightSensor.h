@@ -24,6 +24,7 @@
 #include <string>
 
 #include <revolve/gazebo/sensors/Sensor.h>
+#include <gazebo/common/CommonTypes.hh>
 
 namespace revolve
 {
@@ -43,12 +44,9 @@ namespace revolve
           std::string _partId,
           std::string _sensorId);
 
-      /// \brief Destructor
-      public: virtual ~LightSensor();
-
       /// \brief Returns a float intensity between 0 and 1
       /// \brief[in,out] _input Input value to write on
-      public: virtual void Read(double *_input);
+      public: void read(double *_input) override;
 
       /// \brief Called when the camera sensor is updated
       public: void OnUpdate();

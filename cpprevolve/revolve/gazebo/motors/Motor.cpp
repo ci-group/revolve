@@ -20,22 +20,36 @@
 #include <string>
 
 #include <revolve/gazebo/motors/Motor.h>
+#include <boost/algorithm/string.hpp>
 
 namespace gz = gazebo;
 
 using namespace revolve::gazebo;
 
 /////////////////////////////////////////////////
-Motor::Motor(
+::revolve::gazebo::Motor::Motor (
     ::gazebo::physics::ModelPtr _model,
     const std::string &_partId,
     const std::string &_motorId,
-    const unsigned int outputNeurons)
-    : model_(_model)
+    const unsigned int outputNeurons,
+    const std::string &_coordinates)
+    : revolve::Actuator(outputNeurons, 0, 0, 0)
+    , model_(std::move(_model))
     , partId_(_partId)
     , motorId_(_motorId)
-    , outputs_(outputNeurons)
 {
+    // TODO conversion crashes if coordinates string is empty
+    std::vector<std::string> coordinates;
+    double d_coordinates[3] = {0,0,0};
+
+    boost::split(coordinates, _coordinates, boost::is_any_of(";"));
+
+    for(int i=0; i<coordinates.size(); i++)
+    {
+        d_coordinates[i] = std::stod(coordinates[i]);
+    }
+
+    this->coordinates = std::tuple<double, double, double>{d_coordinates[0], d_coordinates[1], d_coordinates[2]};
 }
 
 /////////////////////////////////////////////////
@@ -50,7 +64,7 @@ std::string Motor::PartId()
 /////////////////////////////////////////////////
 unsigned int Motor::Outputs()
 {
-  return this->outputs_;
+  return this->n_outputs();
 }
 
 /////////////////////////////////////////////////

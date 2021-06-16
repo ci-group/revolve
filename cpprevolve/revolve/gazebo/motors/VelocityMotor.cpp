@@ -30,8 +30,9 @@ VelocityMotor::VelocityMotor(
       ::gazebo::physics::ModelPtr _model,
       const std::string &_partId,
       const std::string &_motorId,
-      sdf::ElementPtr _motor)
-    : JointMotor(_model, _partId, _motorId, _motor, 1)
+      sdf::ElementPtr _motor,
+      const std::string &_coordinates)
+    : JointMotor(_model, _partId, _motorId, _motor, 1, _coordinates)
     , velocityTarget_(0)
     , noise_(0)
 {
@@ -66,7 +67,19 @@ VelocityMotor::~VelocityMotor()
 {
 }
 
-void VelocityMotor::Update(
+double VelocityMotor::Current_State(  Actuator::StateType type) {
+    if (type == 0) {
+        return this->joint_->Position(0);
+    } else if (type == 1) {
+        return this->joint_->GetVelocity(0);
+    }
+    else if (type == 2)
+    {
+    return this->joint_->GetForce(0);
+    }
+}
+
+void VelocityMotor::write(
     const double *outputs,
     double /*step*/)
 {
@@ -89,4 +102,12 @@ void VelocityMotor::DoUpdate(const ::gazebo::common::Time &/*simTime*/)
   // I'm caving for now and am setting ODE parameters directly.
   // See https://tinyurl.com/y7he7y8l
   this->joint_->SetParam("vel", 0, this->velocityTarget_);
+//  this->pid_.S
+  this->model_->GetJointController()->SetVelocityPID(
+        this->joint_->GetScopedName(),this->pid_);
+
+  this->model_->GetJointController()->SetVelocityTarget(
+          this->joint_->GetScopedName(),this->velocityTarget_);
+
+
 }

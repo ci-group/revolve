@@ -20,6 +20,8 @@
 #include <string>
 
 #include <revolve/gazebo/sensors/Sensor.h>
+#include <gazebo/physics/Model.hh>
+#include <gazebo/sensors/sensors.hh>
 
 namespace gz = gazebo;
 
@@ -32,7 +34,10 @@ Sensor::Sensor(
     std::string _partId,
     std::string _sensorId,
     unsigned int _inputs)
-    : VirtualSensor(_model, _partId, _sensorId, _inputs)
+    : ::revolve::Sensor(_inputs)
+    , partId_(_partId)
+    , sensorId_(_sensorId)
+    , sensor_(nullptr)
 {
   if (not _sensor->HasAttribute("sensor") or not _sensor->HasAttribute("link"))
   {
@@ -61,13 +66,4 @@ Sensor::Sensor(
               << "' could not be found." << std::endl;
     throw std::runtime_error("Sensor error");
   }
-}
-
-/////////////////////////////////////////////////
-Sensor::~Sensor() = default;
-
-/////////////////////////////////////////////////
-::gazebo::sensors::SensorPtr Sensor::GzSensor()
-{
-  return sensor_;
 }

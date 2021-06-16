@@ -35,6 +35,7 @@ ThymioBrain::ThymioBrain(
     sdf::ElementPtr /* _node */,
     std::vector< MotorPtr > &/* _motors */,
     std::vector< SensorPtr > &/* _sensors */)
+    : Brain()
 {
   std::cout << "Hello!" << std::endl;
   this->robot_ = _model;
@@ -66,7 +67,7 @@ void ThymioBrain::Update(
   auto p = 0;
   for (const auto &motor: _motors)
   {
-    motor->Update(&output[p], _step);
-    p += motor->Outputs();
+    motor->write(&output[p], _step);
+    p += motor->n_outputs();
   }
 }

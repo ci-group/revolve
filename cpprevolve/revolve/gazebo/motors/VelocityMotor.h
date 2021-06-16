@@ -26,67 +26,67 @@
 
 #include <revolve/gazebo/motors/JointMotor.h>
 
-namespace revolve
-{
-  namespace gazebo
-  {
-    class VelocityMotor
-            : public JointMotor
-    {
-      public:
-      /// \brief Constructor
-      /// \param model The model the motor is contained in
-      /// \param The joint driven by the motor
-      /// \param partId The part ID the motor belongs to
-      /// \param motorId Whether the motor is velocity driven (the
-      /// alternative is position driven)
-      /// \param motor The derivative gain of the motor's PID controller
-      public: VelocityMotor(
+namespace revolve {
+namespace gazebo {
+class VelocityMotor : public JointMotor {
+public:
+    /// \brief Constructor
+    /// \param model The model the motor is contained in
+    /// \param The joint driven by the motor
+    /// \param partId The part ID the motor belongs to
+    /// \param motorId Whether the motor is velocity driven (the
+    /// alternative is position driven)
+    /// \param motor The derivative gain of the motor's PID controller
+    VelocityMotor(
             ::gazebo::physics::ModelPtr _model,
             const std::string &_partId,
             const std::string &_motorId,
-            sdf::ElementPtr _motor);
+            sdf::ElementPtr _motor,
+            const std::string &_coordinates);
 
-      /// \brief Destructor
-      public: virtual ~VelocityMotor();
+    /// \brief Destructor
+    ~VelocityMotor() override;
 
-      /// \brief The velocity motor update action takes an output between 0
-      /// and 1 and converts it to a velocity target between the minimum and
-      /// maximum velocity set by the motor.
-      /// \param[in,out] outputs
-      /// \param[in] step
-      virtual void Update(
-          const double *outputs,
-          double step);
+    /// \brief The velocity motor update action takes an output between 0
+    /// and 1 and converts it to a velocity target between the minimum and
+    /// maximum velocity set by the motor.
+    /// \param[in,out] outputs
+    /// \param[in] step
+    void write(
+            const double *outputs,
+            double step) override;
 
-      /// \brief World update event function
-//    protected: void OnUpdate(const ::gazebo::common::UpdateInfo info);
+    double Current_State(Actuator::StateType type) override;
 
-      /// \brief Perform the actual update given the step size
-      protected: void DoUpdate(const ::gazebo::common::Time &simTime);
+protected:
+/// \brief World update event function
+//    void OnUpdate(const ::gazebo::common::UpdateInfo info);
 
-      /// \brief Store update event pointer
-//    protected: ::gazebo::event::ConnectionPtr updateConnection_;
+    /// \brief Perform the actual update given the step size
+    void DoUpdate(const ::gazebo::common::Time &simTime);
 
-      /// \brief Last update time, used to determine update step time
-      protected: ::gazebo::common::Time prevUpdateTime_;
+    /// \brief Store update event pointer
+//    ::gazebo::event::ConnectionPtr updateConnection_;
 
-      /// \brief The current velocity target
-      protected: double velocityTarget_;
+    /// \brief Last update time, used to determine update step time
+    ::gazebo::common::Time prevUpdateTime_;
 
-      /// \brief Velocity limits
-      protected: double minVelocity_;
+    /// \brief The current velocity target
+    double velocityTarget_;
 
-      /// \brief
-      protected: double maxVelocity_;
+    /// \brief Velocity limits
+    double minVelocity_;
 
-      /// \brief Motor noise
-      protected: double noise_;
+    /// \brief
+    double maxVelocity_;
 
-      /// \brief PID for this velocity motor
-      protected: ::gazebo::common::PID pid_;
-    };
-  }  // namespace gazebo
+    /// \brief Motor noise
+    double noise_;
+
+    /// \brief PID for this velocity motor
+    ::gazebo::common::PID pid_;
+};
+}  // namespace gazebo
 }  // namespace revolve
 
 #endif  // REVOLVE_VELOCITYMOTOR_H

@@ -13,6 +13,8 @@ class Brain(object):
             return pyrevolve.revolve_bot.brain.BrainRLPowerSplines.from_yaml(yaml_brain)
         elif brain_type == pyrevolve.revolve_bot.brain.BrainCPGBO.TYPE:
             return pyrevolve.revolve_bot.brain.BrainCPGBO.from_yaml(yaml_brain)
+        elif brain_type == pyrevolve.revolve_bot.brain.BrainCPG.TYPE:
+            return pyrevolve.revolve_bot.brain.BrainCPG.from_yaml(yaml_brain)
         else:
             return Brain()
 

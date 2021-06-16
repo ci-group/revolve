@@ -19,6 +19,7 @@
 
 #include <cstring>
 #include <string>
+#include <gazebo/sensors/ImuSensor.hh>
 
 #include "ImuSensor.h"
 
@@ -70,7 +71,7 @@ void ImuSensor::OnUpdate()
 }
 
 /////////////////////////////////////////////////
-void ImuSensor::Read(double *_input)
+void ImuSensor::read(double *_input)
 {
   // Copy our values to the input array
   memcpy(_input, this->lastValues_, sizeof(this->lastValues_));
