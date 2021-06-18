@@ -14,6 +14,11 @@ public:
     float detect_angle() override;
 
 protected:
+    void get_image(cv::Mat &image) override {
+        throw std::runtime_error("Should never call this");
+    }
+
+protected:
     const ::gazebo::physics::ModelPtr robot;
     const ignition::math::Vector3d target;
 };

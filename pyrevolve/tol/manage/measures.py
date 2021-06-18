@@ -1,16 +1,17 @@
 import numpy as np
+import math
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.util import Time
-import math
-import sys
+from pyrevolve.angle.manage.robotmanager import RobotManager as RvRobotManager
+from pyrevolve.revolve_bot.revolve_bot import RevolveBot
 
 
 class BehaviouralMeasurements:
     """
         Calculates all the measurements and saves them in one object
     """
-    def __init__(self, robot_manager = None, robot = None):
+    def __init__(self, robot_manager: RvRobotManager = None, robot: RevolveBot = None):
         """
         :param robot_manager: Revolve Manager that holds the life of the robot
         :param robot: Revolve Bot for measurements relative to the robot morphology and brain
@@ -43,7 +44,7 @@ class BehaviouralMeasurements:
 
 
 
-def velocity(robot_manager):
+def velocity(robot_manager: RvRobotManager):
     """
     Returns the velocity over the maintained window
     :return:
@@ -51,7 +52,7 @@ def velocity(robot_manager):
     return robot_manager._dist / robot_manager._time if robot_manager._time > 0 else 0
 
 
-def displacement(robot_manager):
+def displacement(robot_manager: RvRobotManager):
     """
     Returns a tuple of the displacement in both time and space
     between the first and last registered element in the speed
@@ -68,11 +69,11 @@ def displacement(robot_manager):
     )
 
 
-def path_length(robot_manager):
+def path_length(robot_manager: RvRobotManager):
     return robot_manager._dist
 
 
-def displacement_velocity(robot_manager):
+def displacement_velocity(robot_manager: RvRobotManager):
     """
     Returns the displacement velocity, i.e. the velocity
     between the first and last recorded position of the
@@ -86,14 +87,14 @@ def displacement_velocity(robot_manager):
     return np.sqrt(dist.x ** 2 + dist.y ** 2) / float(time)
 
 
-def displacement_velocity_hill(robot_manager):
+def displacement_velocity_hill(robot_manager: RvRobotManager):
     dist, time = displacement(robot_manager)
     if time.is_zero():
         return 0.0
     return dist.y / float(time)
 
 
-def head_balance(robot_manager):
+def head_balance(robot_manager: RvRobotManager):
     """
     Returns the average rotation of teh head in the roll and pitch dimensions.
     :return:
@@ -115,7 +116,7 @@ def head_balance(robot_manager):
     return balance
 
 
-def contacts(robot_manager, robot):
+def contacts(robot_manager: RvRobotManager, robot: RevolveBot):
     """
     Measures the average number of contacts with the floor relative to the body size
 
@@ -129,11 +130,14 @@ def contacts(robot_manager, robot):
     avg_contacts = 0
     for c in robot_manager._contacts:
         avg_contacts += c
-    avg_contacts = avg_contacts / robot.phenotype._morphological_measurements.measurements_to_dict()['absolute_size']
+    #TODO remove this IF, it's ugly as hell
+    if robot._morphological_measurements is None:
+        robot._morphological_measurements = robot.measure_body()
+    avg_contacts = avg_contacts / robot._morphological_measurements.absolute_size
     return avg_contacts
 
 
-def logs_position_orientation(robot_manager, o, evaluation_time, robotid, path):
+def logs_position_orientation(robot_manager: RvRobotManager, o, evaluation_time, robotid, path):
     with open(path + '/data_fullevolution/descriptors/positions_' + robotid + '.txt', "a+") as f:
         if robot_manager.second <= evaluation_time:
             robot_manager.avg_roll += robot_manager._orientations[o][0]

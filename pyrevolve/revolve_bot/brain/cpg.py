@@ -15,9 +15,7 @@ class BrainCPG(Brain):
         # CPG hyper-parameters
         self.abs_output_bound = None
         self.use_frame_of_reference = "false"
-        self.signal_factor_all = ""
-        self.signal_factor_mid = None
-        self.signal_factor_left_right = None
+        self.output_signal_factor = ""
         self.range_lb = None
         self.range_ub = None
         self.init_neuron_state = None
@@ -39,15 +37,16 @@ class BrainCPG(Brain):
     @staticmethod
     def from_yaml(yaml_object):
         BCPG = BrainCPG()
-        try:
-            my_object = yaml_object["controller"]
-            for key, value in my_object.items():
-                try:
-                    setattr(BCPG, key, value)
-                except:
-                    print(f"Couldn't set {key}, {value}")
-        except:
-            print("Didn't load \"controller\" parameters")
+        for my_type in ["controller", "learner"]:  #, "meta"]:
+            try:
+                my_object = yaml_object[my_type]
+                for key, value in my_object.items():
+                    try:
+                        setattr(BCPG, key, value)
+                    except:
+                        print("Couldn't set {}, {}", format(key, value))
+            except:
+                print("Didn't load {} parameters".format(my_type))
 
         return BCPG
 
@@ -67,13 +66,16 @@ class BrainCPG(Brain):
                 'verbose': self.verbose,
                 'range_lb': self.range_lb,
                 'range_ub': self.range_ub,
-                'signal_factor_all': self.signal_factor_all,
-                'signal_factor_mid': self.signal_factor_mid,
-                'signal_factor_left_right': self.signal_factor_left_right,
+                'output_signal_factor': self.output_signal_factor,
                 'startup_time': self.startup_time,
                 'weights': self.weights,
             }
         }
+
+    def learner_sdf(self):
+        return xml.etree.ElementTree.Element('rv:learner', {
+            'type': 'offline',
+        })
 
     def controller_sdf(self):
         return xml.etree.ElementTree.Element('rv:controller', {
@@ -90,10 +92,7 @@ class BrainCPG(Brain):
             'verbose': str(self.verbose),
             'range_lb': str(self.range_lb),
             'range_ub': str(self.range_ub),
-            'signal_factor_all': str(self.signal_factor_all),
-            'signal_factor_mid': str(self.signal_factor_mid),
-            'signal_factor_left_right': str(self.signal_factor_left_right),
+            'output_signal_factor': str(self.output_signal_factor),
             'startup_time': str(self.startup_time),
             'weights': ';'.join(str(x) for x in self.weights)
         })
-

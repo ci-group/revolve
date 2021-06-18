@@ -145,4 +145,15 @@ body:
                     blue: 0.72
                   orientation : 0
 brain:
-  type: bo-cpg
+  type: cppn-cpg
+  learner:
+    type: none
+  controller:
+    reset_neuron_random: false;
+    use_frame_of_reference: false;
+    init_neuron_state: 0.707;
+    range_ub: 1.0;
+    signal_factor_all: 4.0;
+    signal_factor_mid: 2.5;
+    signal_factor_left_right: 2.5;
+    abs_output_bound: 1.0;

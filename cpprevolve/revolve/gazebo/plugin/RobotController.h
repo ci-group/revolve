@@ -29,6 +29,8 @@
 #include <gazebo/msgs/msgs.hh>
 
 #include <revolve/gazebo/Types.h>
+#include "revolve/brains/controller/sensors/Sensor.h"
+#include "revolve/brains/controller/actuators/Actuator.h"
 
 namespace revolve
 {

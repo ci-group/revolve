@@ -26,9 +26,13 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <iomanip>
 #include <memory>
+#include <map>
 #include <random>
 #include <tuple>
+
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <multineat/Genome.h>
 
@@ -139,7 +143,7 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
         {
             frame_of_reference = -1;
         }
-        // We are a right neuron
+            // We are a right neuron
         else if (coord_x > 0)
         {
             frame_of_reference = 1;
@@ -237,7 +241,7 @@ void DifferentialCPG::load_genome_to_controller(const NEAT::Genome &genome)
     // build the NN according to the genome
     NEAT::NeuralNetwork net;
     genome.BuildPhenotype(net);
-    unsigned int net_depth =99999;// net.CalculateNetworkDepth();
+    unsigned int net_depth = net.CalculateNetworkDepth();
 
     // get weights for each connection
     // assuming that connections are distinct for each direction
@@ -342,7 +346,7 @@ void DifferentialCPG::set_ode_matrix()
         matrix.emplace_back(row);
     }
 
-    // Process A<->B connections
+    // Process A<->A connections
     int index = 0;
     for (const Neuron &neuron: neurons)
     {
@@ -368,7 +372,7 @@ void DifferentialCPG::set_ode_matrix()
         index+=2;
     }
 
-    // A<->A connections
+    // A<->B connections
     index++;
     int k = 0;
     std::vector<std::string> connections_seen;

@@ -18,7 +18,8 @@ add_definitions(-pedantic -Wno-long-long -Wall -Wextra -Wformat=2
         -Wswitch-enum -Wuninitialized
         -Wswitch-default -Winit-self -Wfloat-equal -fPIC )
 
-set (CMAKE_CXX_STANDARD 11)
+# need c++17 for libSimpleAmqpClient >= 7.something
+set (CMAKE_CXX_STANDARD 17)
 
 # Debug Flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
@@ -45,7 +46,7 @@ endif ()
 find_package(PkgConfig REQUIRED)
 
 # Find Boost
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Find Eigen3 - A lightweight C++ template library for vector and matrix math
@@ -111,6 +112,13 @@ include_directories(
         ${PROTOBUF_INCLUDE_DIRS}
         ${GAZEBO_PROTO_INCLUDE}
 )
+
+# Find OpenCV
+find_package( OpenCV REQUIRED )
+
+pkg_check_modules(JSONCPP REQUIRED jsoncpp>1.7)
+pkg_check_modules(AMQP REQUIRED libSimpleAmqpClient>2.6)
+pkg_check_modules(PQXX REQUIRED libpqxx>6.4)
 
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
@@ -241,14 +249,53 @@ target_link_libraries(
 )
 
 # Create Torus World plugin
-add_library(TorusWorldPlugin SHARED
-        plugin/TorusWorld.cpp
-        plugin/register_torus_world_plugin.cpp
+add_library(CeleryWorkerPlugin STATIC
+        plugin/CeleryWorker.cpp
+        plugin/database/Database.cpp
 )
-target_link_libraries(TorusWorldPlugin
+target_link_libraries(CeleryWorkerPlugin
+        PRIVATE revolve-utils
+        PUBLIC ${GAZEBO_LIBRARIES}
+        PUBLIC ${AMQP_LIBRARIES}
+        PUBLIC ${PQXX_LIBRARIES}
+        PRIVATE ${JSONCPP_LIBRARIES}
+)
+target_link_directories(CeleryWorkerPlugin
+        PUBLIC ${AMQP_LIBRARY_DIRS}
+        PUBLIC ${PQXX_LIBRARY_DIRS}
+        PRIVATE ${JSONCPP_LIBRARY_DIRS}
+)
+target_include_directories(CeleryWorkerPlugin
+        PUBLIC ${AMQP_INCLUDE_DIRS}
+        PUBLIC ${PQXX_INCLUDE_DIRS}
+        PRIVATE ${JSONCPP_INCLUDE_DIRS}
+)
+
+add_library(CeleryRobotWorkerPlugin SHARED
+        plugin/CeleryRobotWorker.cpp
+        plugin/register_celery_robot_worker_world_plugin.cpp)
+target_link_libraries(CeleryRobotWorkerPlugin PUBLIC CeleryWorkerPlugin)
+
+#add_library(CeleryAnalyzerWorkerPlugin SHARED
+#        plugin/CeleryAnalyzerWorker.cpp
+#        plugin/register_celery_analyzer_worker_world_plugin.cpp)
+#target_link_libraries(CeleryAnalyzerWorkerPlugin PUBLIC CeleryWorkerPlugin)
+
+# Create RecorderCamera plugin
+add_library(RecorderCameraPlugin SHARED
+        plugin/RecorderCamera.cpp
+        plugin/register_recorder_camera_plugin.cpp
+        plugin/FrameBuffer.cpp
+        plugin/VideoFileStream.cpp
+)
+target_link_libraries(RecorderCameraPlugin
         revolve-gazebo
         ${GAZEBO_LIBRARIES}
+        CameraPlugin #Gazebo-cmake being crap
+        ${OpenCV_LIBS}
 )
+target_include_directories(RecorderCameraPlugin
+        PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 # Create Robot plugin
 add_library(

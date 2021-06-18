@@ -21,8 +21,9 @@
 
 #include "WorldController.h"
 
-namespace gz = gazebo;
+//#define USE_MARKERS
 
+namespace gz = gazebo;
 using namespace revolve::gazebo;
 
 /////////////////////////////////////////////////
@@ -122,8 +123,91 @@ void WorldController::Reset()
     this->lastRobotStatesUpdateTime_ = 0; //this->world_->SimTime().Double();
 }
 
+
+enum Orientation {
+    FORWARD = 0,
+    LEFT = 1,
+    BACK = 2,
+    RIGHT = 3,
+};
+
+ignition::math::Pose3d generateMarkerPose(const Orientation index, const ignition::math::Pose3d &robotPose)
+{
+    static const std::array<ignition::math::Vector3d,4> markerOffset {
+            ignition::math::Vector3d { 0 , -1, 0}, // Forward
+            ignition::math::Vector3d { 1 ,  0, 0}, // Left
+            ignition::math::Vector3d { 0 ,  1, 0}, // Backwards
+            ignition::math::Vector3d {-1 ,  0, 0}, // Right
+    };
+
+    assert(index < 4);
+    return ignition::math::Pose3d(
+            robotPose.CoordPositionAdd(markerOffset[index]),
+            ignition::math::Quaterniond::Identity
+    );
+
+}
+
+
+void fillMessages(const Orientation orientation,
+        const ignition::math::Pose3d &worldPose,
+        ignition::msgs::Marker &markerMsg,
+        ::revolve::msgs::Orientation* orientationVecs,
+        bool materials = false)
+{
+    ignition::math::Pose3d markerPose = generateMarkerPose(orientation, worldPose);
+    ignition::math::Vector3d orientation_vec = markerPose.Pos() - worldPose.Pos();
+
+    switch (orientation) {
+        case FORWARD:
+            gz::msgs::Set(orientationVecs->mutable_vec_forward(), orientation_vec);
+            break;
+        case LEFT:
+            gz::msgs::Set(orientationVecs->mutable_vec_left(), orientation_vec);
+            break;
+        case BACK:
+            gz::msgs::Set(orientationVecs->mutable_vec_back(), orientation_vec);
+            break;
+        case RIGHT:
+            gz::msgs::Set(orientationVecs->mutable_vec_right(), orientation_vec);
+            break;
+        default:
+            assert(false);
+    }
+
+#ifdef USE_MARKERS
+    // absolute position
+    //ignition::msgs::Set(markerMsg.mutable_pose(), markerPose);
+    // relative vector
+    ignition::msgs::Set(markerMsg.mutable_pose(),
+                        ignition::math::Pose3d(orientation_vec, ignition::math::Quaterniond::Identity));
+
+    if (materials) {
+        ignition::msgs::Material *matMsg = markerMsg.mutable_material();
+        switch (orientation) {
+            case FORWARD:
+                matMsg->mutable_script()->set_name("Gazebo/BlueLaser");
+                break;
+            case LEFT:
+                matMsg->mutable_script()->set_name("Gazebo/Red");
+                break;
+            case BACK:
+                matMsg->mutable_script()->set_name("Gazebo/Yellow");
+                break;
+            case RIGHT:
+                matMsg->mutable_script()->set_name("Gazebo/Green");
+                break;
+            default:
+                assert(false);
+        }
+    }
+#endif
+}
+
+
 /////////////////////////////////////////////////
-void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
+void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info)
+{
     if (not this->robotStatesPubFreq_) {
         return;
     }
@@ -136,9 +220,17 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
         msgs::RobotStates msg;
         gz::msgs::Set(msg.mutable_time(), _info.simTime);
 
+        // MARKER MESSAGE
+        ignition::msgs::Marker markerMsg;
+#ifdef USE_MARKERS
+        ::ignition::transport::Node ignNode;
+        markerMsg.set_ns("revolve");
+        markerMsg.set_action(ignition::msgs::Marker::ADD_MODIFY);
+#endif
+
         {
             boost::recursive_mutex::scoped_lock lock_physics(*this->world_->Physics()->GetPhysicsUpdateMutex());
-            for (const auto &model : this->world_->Models()) {
+            for (const boost::shared_ptr<gz::physics::Model> &model : this->world_->Models()) {
                 if (model->IsStatic()) {
                     // Ignore static models such as the ground and obstacles
                     continue;
@@ -150,9 +242,61 @@ void WorldController::OnBeginUpdate(const ::gazebo::common::UpdateInfo &_info) {
                 stateMsg->set_id(model->GetId());
 
                 auto poseMsg = stateMsg->mutable_pose();
-                auto relativePose = model->RelativePose();
+                // relative pose and world pose are the same because the robot is relative to the world directly
+                //auto relativePose = model->RelativePose();
+                auto worldPose = model->WorldPose();
+                ::revolve::msgs::Orientation* orientationVecs = stateMsg->mutable_orientation_vecs();
 
-                gz::msgs::Set(poseMsg, relativePose);
+                // UPDATE/GENERATE MARKERS
+
+                std::map<gz::physics::Model*, std::array<uint64_t,4>>::iterator model_markers = markers_.find(model.get());
+                if (model_markers == markers_.end()) {
+                    std::array<uint64_t, 4> new_marker_ids {
+                            markers_ids_,
+                            markers_ids_+1,
+                            markers_ids_+2,
+                            markers_ids_+3
+                    };
+                    markers_ids_ += 4;
+#ifdef USE_MARKERS
+                    markerMsg.set_type(ignition::msgs::Marker::SPHERE);
+
+                    const double MARKER_SCALE = 0.05;
+                    ignition::msgs::Set(markerMsg.mutable_scale(),
+                            ignition::math::Vector3d(MARKER_SCALE,MARKER_SCALE,MARKER_SCALE));
+#endif
+
+                    int i = 0;
+                    for (uint64_t marker_id : new_marker_ids) {
+                        Orientation orientation = Orientation(i);
+                        fillMessages(orientation, worldPose, markerMsg, orientationVecs, true);
+#ifdef USE_MARKERS
+                        markerMsg.set_id(marker_id);
+                        assert(ignNode.Request("/marker", markerMsg));
+#endif
+                        i++;
+                    }
+
+                    bool success;
+                    std::tie(model_markers, success) = markers_.emplace(
+                            model.get(),
+                            new_marker_ids
+                    );
+                    assert(success);
+                } else {
+                    int i = 0;
+                    for (uint64_t marker_id : model_markers->second) {
+                        Orientation orientation = Orientation(i);
+                        fillMessages(orientation, worldPose, markerMsg, orientationVecs);
+#ifdef USE_MARKERS
+                        markerMsg.set_id(marker_id);
+                        assert(ignNode.Request("/marker", markerMsg));
+#endif
+                        i++;
+                    }
+                }
+
+                gz::msgs::Set(poseMsg, worldPose);
 
                 // Death sentence check
                 const std::string name = model->GetName();
@@ -331,11 +475,15 @@ void WorldController::HandleRequest(ConstRequestPtr &request)
 
     {
       boost::mutex::scoped_lock lock(this->insertMutex_);
-      this->insertMap_[name] = std::make_tuple(request->id(), robotSDF.ToString(), true);
+      this->world_->InsertModelString(robotSDF.ToString());
+      bool operation_pending = false;
+      this->insertMap_[name] = std::make_tuple(
+              request->id(),
+              robotSDF.ToString(),
+              operation_pending);
     }
 
     //TODO insert here, it's better
-    //this->world_->InsertModelString(robotSDF.ToString());
 
     // Don't leak memory
     // https://bitbucket.org/osrf/sdformat/issues/104/memory-leak-in-element

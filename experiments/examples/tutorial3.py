@@ -57,4 +57,3 @@ async def run():
         status = 'dead' if robot_manager.dead else 'alive'
         print(f"Robot fitness ({status}) is: {fitness.displacement(robot_manager, robot)} \n")
         await asyncio.sleep(1.0)
-

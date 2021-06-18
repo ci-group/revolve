@@ -25,6 +25,7 @@
 #include <revolve/gazebo/sensors/SensorFactory.h>
 #include <revolve/gazebo/sensors/GZAngleToTargetDetector.h>
 #include <revolve/gazebo/brains/Brains.h>
+#include <revolve/gazebo/brains/FixedAngleController.h>
 
 #include "RobotController.h"
 
@@ -103,8 +104,11 @@ void RobotController::Load(
 
         // Call startup function which decides on actuation
         this->Startup(_parent, _sdf);
-    } catch (const std::exception &error) {
-        std::cerr << "Failed to load Plugin. Error:\n\t- " << error.what() << std::endl;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error Loading the Robot Controller, exception: " << std::endl
+                  << e.what() << std::endl;
         throw;
     }
 }
@@ -204,35 +208,56 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
     return;
   }
 
-  auto brain = _sdf->GetElement("rv:brain");
-  auto controller = brain->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
-  auto learner = brain->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
-  std::cout << "Loading controller " << controller << " and learner " << learner << std::endl;
+  auto brain_sdf = _sdf->GetElement("rv:brain");
+  auto controller_type = brain_sdf->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
+  auto learner = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
+  std::cout << "Loading controller " << controller_type << " and learner " << learner << std::endl;
 
-  if ("offline" == learner and "ann" == controller)
+  if ("offline" == learner and "ann" == controller_type)
   {
-    brain_.reset(new NeuralNetwork(this->model_, brain, motors_, sensors_));
+    brain_.reset(new NeuralNetwork(this->model_, brain_sdf, motors_, sensors_));
   }
-  else if ("rlpower" == learner and "spline" == controller)
+  else if ("rlpower" == learner and "spline" == controller_type)
   {
     if (not motors_.empty()) {
-        brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
+        brain_.reset(new RLPower(this->model_, brain_sdf, motors_, sensors_));
     }
   }
-  else if ("bo" == learner and "cpg" == controller)
+  else if ("bo" == learner and "cpg" == controller_type)
   {
+      //WARNING! not doing BO any more
       brain_.reset(new DifferentialCPG(_sdf, motors_));
   }
-  else if ("None" == learner and "cpg" == controller)
+  else if ("target" == learner and "cpg" == controller_type)
   {
       std::shared_ptr <revolve::AngleToTargetDetector> fake_target_sensor(
               new GZAngleToTargetDetector(this->model_, ignition::math::Vector3d(0, 10, 0)));
-      brain_.reset(new DifferentialCPG(brain, motors_, fake_target_sensor));
+      brain_.reset(new DifferentialCPGClean(brain_sdf, motors_, fake_target_sensor));
+  }
+  else if ("target" == learner and "cppn-cpg" == controller_type)
+  {
+      std::shared_ptr <revolve::AngleToTargetDetector> fake_target_sensor(
+              new GZAngleToTargetDetector(this->model_, ignition::math::Vector3d(0, 10, 0)));
+      brain_.reset(new DifferentialCPPNCPG(brain_sdf, motors_, fake_target_sensor));
+  }
+  else if ("offline" == learner and "cpg" == controller_type)
+  {
+      brain_.reset(new DifferentialCPGClean(brain_sdf, motors_));
+  }
+  else if ("offline" == learner and "cppn-cpg" == controller_type)
+  {
+      brain_.reset(new DifferentialCPPNCPG(brain_sdf, motors_));
+  }
+  else if ("offline" == learner and "fixed-angle" == controller_type)
+  {
+    double angle = std::stod(
+            brain_sdf->GetElement("rv:controller")->GetAttribute("angle")->GetAsString());
+    brain_.reset(new FixedAngleController(angle));
   }
   else
   {
       std::ostringstream message;
-      message << "Robot brain is not defined. (learner='" << learner << "', controller='" << controller << "')";
+      message << "Robot brain is not defined. (learner='" << learner << "', controller='" << controller_type << "')";
       throw std::runtime_error(message.str());
   }
 }

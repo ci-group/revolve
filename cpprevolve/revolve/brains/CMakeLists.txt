@@ -31,8 +31,10 @@ find_package(MultiNEAT REQUIRED)
 # find_package(libcmaes REQUIRED)
 
 # These dependencies are required for the AngleToTargetDetector Sensor
-# find_package(OpenCV REQUIRED)
+find_package(OpenCV REQUIRED)
 #find_package(raspicam REQUIRED) #only on the raspberry side
+
+find_package(MultiNEAT REQUIRED)
 
 # Find NLOpt - Non Linear Optimization
 pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
@@ -47,7 +49,7 @@ add_library(revolve-learners SHARED ${LEARNER_SRCS})
 target_include_directories(revolve-controllers
         PUBLIC ${EIGEN3_INCLUDE_DIR}
         PUBLIC ${Boost_INCLUDE_DIRS}
-#        PUBLIC ${OpenCV_INCLUDE_DIRS}
+        PUBLIC ${OpenCV_INCLUDE_DIRS}
 )
 
 target_include_directories(revolve-learners
@@ -63,7 +65,7 @@ target_compile_definitions(revolve-learners
 
 target_link_libraries(revolve-controllers
         PUBLIC MultiNEAT::MultiNEAT
-#        ${OpenCV_LIBS}
+        ${OpenCV_LIBS}
 #        PUBLIC torch
 #        PUBLIC libcmaes::cmaes
         )

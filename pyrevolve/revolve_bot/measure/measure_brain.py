@@ -2,8 +2,8 @@ import numpy as np
 import math
 # belong to TODO
 import fnmatch
-from ..brain.brain_nn import BrainNN
-from ...custom_logging.logger import logger
+from pyrevolve.revolve_bot.brain.brain_nn import BrainNN
+from pyrevolve.custom_logging.logger import logger
 
 
 class MeasureBrain:

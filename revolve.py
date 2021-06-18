@@ -6,6 +6,7 @@ import importlib
 
 from pyrevolve.data_analisys.visualize_robot import test_robot_run
 from pyrevolve.data_analisys.check_robot_collision import test_collision_robot
+from pyrevolve.util.supervisor.rabbits import celery_runner_command
 from pyrevolve import parser
 from experiments.examples import only_gazebo
 
@@ -20,6 +21,9 @@ def run(loop, arguments):
 
     if arguments.test_robot_collision is not None:
         return loop.run_until_complete(test_collision_robot(arguments.test_robot_collision))
+
+    if arguments.celery_worker:
+        return loop.run_until_complete(celery_runner_command())
 
     if arguments.manager is not None:
         # this split will give errors on windows
@@ -68,4 +72,3 @@ if __name__ == '__main__':
     print("STARTING")
     main()
     print("FINISHED")
-

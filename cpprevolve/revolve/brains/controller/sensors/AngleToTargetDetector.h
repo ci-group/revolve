@@ -6,7 +6,7 @@
 #define REVOLVE_ANGLETOTARGETDETECTOR_H
 
 #include "Sensor.h"
-//#include <opencv2/core/core.hpp>
+#include <opencv2/core/core.hpp>
 
 namespace revolve {
 
@@ -16,17 +16,17 @@ public:
     virtual ~AngleToTargetDetector() = default;
 
     void read(double *input) override;
-    virtual float detect_angle() = 0;
+    virtual float detect_angle();
 
-//private:
-//    virtual void get_image(cv::Mat &image) = 0;
+protected:
+    virtual void get_image(cv::Mat &image) = 0;
 
 protected:
     const bool show_image;
     const unsigned int shrink_factor;
     double angle;
-//    cv::Mat raw_image, image;
-//    cv::Mat image_blur, image_hsv, image_blue, image_green1, image_green2, image_green;
+    cv::Mat raw_image, image;
+    cv::Mat image_blur, image_hsv, image_blue, image_green1, image_green2, image_green;
 };
 
 }

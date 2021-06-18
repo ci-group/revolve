@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from ... import TreeGenerator
+from ... import TreeGenerator, Tree
 
 
 class RobogenTreeGenerator(TreeGenerator):
@@ -15,7 +15,7 @@ class RobogenTreeGenerator(TreeGenerator):
         self.conf = conf
         super(RobogenTreeGenerator, self).__init__(body_gen, brain_gen)
 
-    def generate_tree(self):
+    def generate_tree(self) -> Tree:
         """
         Overrides `generate_tree` to force robot planarity. Robots
         without output neurons are also discarded because we can be

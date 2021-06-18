@@ -1,8 +1,8 @@
 import cairo
 from .canvas import Canvas
 from .grid import Grid
-from ..revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, TouchSensorModule, BrickSensorModule
-from ...custom_logging.logger import logger
+from pyrevolve.revolve_bot.revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, TouchSensorModule, BrickSensorModule
+from pyrevolve.custom_logging.logger import logger
 
 
 class Render:
@@ -95,5 +95,5 @@ class Render:
             cv.reset_canvas()
             self.grid.reset_grid()
 
-        except Exception as e:
-            logger.exception('Could not render robot and save image file')
+        except Exception:
+            logger.exception(f'Could not render robot and save image file {image_path}')

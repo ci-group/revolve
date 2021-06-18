@@ -3,7 +3,7 @@ asyncio==3.4.3
 futures==3.0.2
 numpy>=1.9.2
 PyYAML>=3.11
-protobuf>=3.0.0
+protobuf>=3.12.0
 psutil==5.6.6
 matplotlib
 pycairo>=1.18.0
@@ -12,5 +12,14 @@ joblib
 pandas
 neat-python>=0.92
 python-dateutil>=2.8.0
+# Rabbitmq and celery
+celery==5.0.5
+brotli # Otherwise it may cause importing issue because high quality python quirks
+# Database
+sqlalchemy>=1.3.23
+psycopg2>=2.8.6
+dbus-python
 
+# Non PIP packages
 -e git+https://github.com/ci-group/pygazebo.git@master#egg=pygazebo
+thirdparty/MultiNEAT

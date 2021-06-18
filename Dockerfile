@@ -11,9 +11,12 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
                        libcairo2-dev        \
                        graphviz             \
                        libeigen3-dev        \
-                       libnlopt-dev      && \
+                       libnlopt-dev         \
+                       libboost-python-dev  \
+                       libboost-numpy-dev &&\
     apt-get clean  && \
     rm -rf /var/lib/apt/lists/*
 
 ADD . /revolve
+RUN /revolve/docker/build_install_multineat.sh
 RUN /revolve/docker/build_revolve.sh

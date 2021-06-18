@@ -1,7 +1,7 @@
-from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet, PlasticodingConfig
-from pyrevolve.evolution.individual import Individual
 import random
-from ....custom_logging.logger import genotype_logger
+
+from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet
+from pyrevolve.custom_logging.logger import genotype_logger
 
 
 def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
@@ -17,12 +17,12 @@ def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
     if crossover_attempt > crossover_conf.crossover_prob:
         grammar = parent_genotypes[0].grammar
     else:
-        for letter in Alphabet.modules():
+        for letter in Alphabet.wordify(Alphabet.modules(genotype_conf.allow_vertical_brick)):
             parent = random.randint(0, 1)
             # gets the production rule for the respective letter
             grammar[letter[0]] = parent_genotypes[parent].grammar[letter[0]]
 
-    genotype = Plasticoding(genotype_conf, 'tmp')
+    genotype = Plasticoding(genotype_conf, None)
     genotype.grammar = grammar
     return genotype.clone()
 
@@ -31,10 +31,10 @@ def standard_crossover(parent_individuals, genotype_conf, crossover_conf):
     """
     Creates an child (individual) through crossover with two parents
 
-    :param parent_genotypes: genotypes of the parents to be used for crossover
+    :param parent_individuals: parent individuals to be used for crossover
     :return: genotype result of the crossover
     """
-    parent_genotypes = [p.genotype for p in parent_individuals]
+    parent_genotypes = [p.representation for p in parent_individuals]
     new_genotype = generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf)
     #TODO what if you have more than 2 parents? fix log
     genotype_logger.info(

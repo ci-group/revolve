@@ -4,6 +4,10 @@ from __future__ import print_function
 import atexit
 import subprocess
 import os
+from typing import AnyStr
+
+from asyncio.subprocess import Process
+
 import psutil
 import sys
 import asyncio
@@ -11,23 +15,21 @@ import platform
 
 from datetime import datetime
 
-from ...custom_logging.logger import create_logger
-from ...custom_logging.logger import logger as revolve_logger
+from pyrevolve.custom_logging.logger import create_logger, logger as revolve_logger
 
-from .stream import PrettyStreamReader
+from .stream import PrettyStreamReader, StreamEnded
 
 mswindows = (sys.platform == "win32")
 
 
-def terminate_process(proc):
+def terminate_process(proc: Process) -> None:
     """
     Recursively kills a process and all of its children
-    :param proc: Result of `subprocess.Popen`
+    :param proc: Async process to recursively kill
 
     Inspired by http://stackoverflow.com/a/25134985/358873
 
     TODO Check if terminate fails and kill instead?
-    :return:
     """
     process = psutil.Process(proc.pid)
     for child in process.children(recursive=True):
@@ -116,7 +118,7 @@ class DynamicSimSupervisor(object):
 
         # Terminate all processes when the supervisor exits
         atexit.register(lambda:
-                        asyncio.get_event_loop().run_until_complete(self._terminate_all())
+                        asyncio.get_event_loop().run_until_complete(self.stop())
                         )
 
         # Set plugins dir path for Gazebo
@@ -144,10 +146,10 @@ class DynamicSimSupervisor(object):
         self._logger.info("Created Supervisor with:"
                           f"\n\t- simulator command: {simulator_cmd} {simulator_args}"
                           f"\n\t- world file: {world_file}"
-                          f"\n\t- GAZEBO_PLUGIN_PATH: {plugins_dir_path}"
-                          f"\n\t- GAZEBO_MODEL_PATH: {models_dir_path}")
+                          f"\n\t- export GAZEBO_PLUGIN_PATH={plugins_dir_path}"
+                          f"\n\t- export GAZEBO_MODEL_PATH={models_dir_path}")
 
-    async def launch_simulator(self, address='localhost', port=11345):
+    async def launch_simulator(self, address='localhost', port=11345) -> None:
         """
         Launches the simulator process
         :param address:
@@ -156,7 +158,7 @@ class DynamicSimSupervisor(object):
         await self._launch_simulator(output_tag=self._simulator_name, address=address, port=port)
         self._enable_process_terminate_callbacks()
 
-    async def relaunch(self, sleep_time=1, address='localhost', port=11345):
+    async def relaunch(self, sleep_time=1, address='localhost', port=11345) -> None:
         """
         Stops and restarts the process, waiting `sleep_time` in between
         :param sleep_time:
@@ -167,14 +169,14 @@ class DynamicSimSupervisor(object):
         await asyncio.sleep(sleep_time)
         await self.launch_simulator(address=address, port=port)
 
-    async def stop(self):
+    async def stop(self) -> None:
         """
         Stops the simulator and all other process (companion and children processes)
         """
         self._disable_process_terminate_callbacks()
         await self._terminate_all()
 
-    async def _terminate_all(self):
+    async def _terminate_all(self) -> None:
         """
         Terminates all running processes and sub-processes
         """
@@ -184,7 +186,7 @@ class DynamicSimSupervisor(object):
                 if proc.returncode is None:
                     terminate_process(proc)
             except psutil.NoSuchProcess:
-                self._logger.debug(f'Cannot terminate already dead process "{proc}"')
+                self._logger.debug(f'Cannot terminate already dead process "{proc}" (PID: {proc.pid})')
 
         # flush output of all processes
         await self._flush_output_streams()
@@ -195,7 +197,7 @@ class DynamicSimSupervisor(object):
 
         self.procs = {}
 
-    async def _flush_output_streams(self):
+    async def _flush_output_streams(self) -> None:
         """
         Waits until all streams in this supervisor are at EOF
         """
@@ -203,7 +205,7 @@ class DynamicSimSupervisor(object):
             await out
             await err
 
-    def _add_output_stream(self, name):
+    def _add_output_stream(self, name: AnyStr) -> None:
         """
         Creates an async stream reader for the process with
         the given name, and adds it to the streams that are passed
@@ -225,10 +227,17 @@ class DynamicSimSupervisor(object):
             asyncio.ensure_future(poll_output(stderr, self._logger.error)),
         )
 
-    async def _launch_simulator(self, ready_str="World plugin loaded", output_tag="simulator", address='localhost',
-                          port=11345):
+    async def _launch_simulator(self,
+                                ready_str: AnyStr = "World plugin loaded",
+                                output_tag: AnyStr = "simulator",
+                                address: AnyStr = 'localhost',
+                                port: int = 11345) -> None:
         """
-        Launches the simulator
+        Launches the simulator and waits for the plugin to be loaded.
+        :param ready_str: Message from the plugin to wait for.
+        :param output_tag: "name" of the simulator in the log
+        :param address: address the simulator should listen on
+        :param port: port the simulator should listen on
         """
 
         self._logger.info("Launching the simulator...")
@@ -245,27 +254,44 @@ class DynamicSimSupervisor(object):
             env[key] = value
         env['GAZEBO_MASTER_URI'] = f'http://{address}:{port}'
 
+        # Search for gazebo dynamic library lookup folder
         process = subprocess.run(['which', self.simulator_cmd[0]], stdout=subprocess.PIPE)
         process.check_returncode()
         gazebo_libraries_path = process.stdout.decode()
         gazebo_libraries_path = os.path.dirname(gazebo_libraries_path)
         for lib_f in ['lib', 'lib64']:
             _gazebo_libraries_path = os.path.join(gazebo_libraries_path, '..', lib_f)
-            if os.path.isfile(os.path.join(_gazebo_libraries_path, 'libgazebo_common.so')):
+            lib_postfix = 'dylib' if platform.system() == 'Darwin' else 'so'
+            if os.path.isfile(os.path.join(_gazebo_libraries_path, f'libgazebo_common.{lib_postfix}')):
                 gazebo_libraries_path = _gazebo_libraries_path
                 break
 
+        # Platform dependant environment setup
         if platform.system() == 'Darwin':
             env['DYLD_LIBRARY_PATH'] = gazebo_libraries_path
         else:  # linux
             env['LD_LIBRARY_PATH'] = gazebo_libraries_path
+            # remove screen scaling variables, gazebo does not handle screen scaling really well.
+            if 'QT_AUTO_SCREEN_SCALE_FACTOR' in env:
+                del env['QT_AUTO_SCREEN_SCALE_FACTOR']
+            if 'QT_SCREEN_SCALE_FACTORS' in env:
+                del env['QT_SCREEN_SCALE_FACTORS']
+            # force set x11(xcb) platform, since gazebo on wayland is broken
+            env['QT_QPA_PLATFORM'] = 'xcb'
+
+        # Preparations ready, starting the simulator
         self.procs[output_tag] = await self._launch_with_ready_str(
             cmd=gz_args,
             ready_str=ready_str,
             env=env)
+
+        # Add output streams
         self._add_output_stream(output_tag)
 
-    def _enable_process_terminate_callbacks(self):
+    def _enable_process_terminate_callbacks(self) -> None:
+        """
+        Enables callbacks for when one of the processes exits (normally or not)
+        """
         for proc in self.procs.values():
             dead_process_future = asyncio.ensure_future(proc.wait())
 
@@ -278,14 +304,18 @@ class DynamicSimSupervisor(object):
             dead_process_future.add_done_callback(create_callback(proc))
             self._process_terminated_futures.append(dead_process_future)
 
-    def _disable_process_terminate_callbacks(self):
+    def _disable_process_terminate_callbacks(self) -> None:
+        """
+        Disable callbacks for when processes exit.
+        Useful in case the simulator is about to get closed on purpose.
+        """
         for dead_process_future in self._process_terminated_futures:
             dead_process_future.cancel()
         self._process_terminated_futures.clear()
 
-    async def _launch_with_ready_str(self, cmd, ready_str, env):
+    async def _launch_with_ready_str(self, cmd, ready_str, env) -> Process:
 
-        process = await asyncio.create_subprocess_exec(
+        process: Process = await asyncio.create_subprocess_exec(
             cmd[0],
             *cmd[1:],
             env=env,
@@ -303,29 +333,46 @@ class DynamicSimSupervisor(object):
 
         async def read_stdout():
             while not ready_str_found.done():
-                if process.returncode is None:
-                    ready_str_found.set_exception(SimulatorEnded())
-                out = await stdout.readline()
-                self._logger.info(f'[starting] {out}')
-                if ready_str in out:
-                    ready_str_found.set_result(None)
+                try:
+                    if process.returncode is not None:
+                        ready_str_found.set_exception(SimulatorEnded())
+                        return
+                    out = await stdout.readline()
+                    self._logger.info(f'[starting] {out}')
+                    if ready_str in out:
+                        ready_str_found.set_result(out)
+                except StreamEnded as e:
+                    ready_str_found.set_exception(e)
+                    return
 
         async def read_stderr():
             while not ready_str_found.done() and process.returncode is None:
-                err = await stderr.readline()
-                if err:
-                    self._logger.error(f'[starting] {err}')
+                try:
+                    err = await stderr.readline()
+                    if err:
+                        self._logger.error(f'[starting] {err}')
+                except StreamEnded as e:
+                    ready_str_found.set_exception(e)
+                    return
 
         stdout_async = asyncio.ensure_future(read_stdout())
         stderr_async = asyncio.ensure_future(read_stderr())
 
         try:
             await ready_str_found
-        except SimulatorEnded:
-            pass
-        finally:
-            await stdout_async
+        except (SimulatorEnded, StreamEnded):
+            await asyncio.sleep(0.1)
+
+        stderr_async.cancel()
+        stdout_async.cancel()
+        try:
             await stderr_async
+        except (asyncio.CancelledError, StreamEnded):
+            await asyncio.sleep(0.1)
+        try:
+            await stdout_async
+        except (asyncio.CancelledError, StreamEnded):
+            await asyncio.sleep(0.1)
 
         if process.returncode is not None:
             await process.wait()
