@@ -1,0 +1,12 @@
+*Installation*
+virtualenv --python python3 .venv
+source .venv/bin/activate
+(.venv) pip install -r requirements.txt
+
+Once installed:
+source .venv/bin/activate
+
+./revolve.py --n-cores=8 --simulator-cmd=gzserver --manager=experiments/examples/tutorial5.py
+./revolve.py --n-cores=8 --simulator-cmd=gzserver --manager=experiments/examples/manager_dir_loc.py
+
+./revolve.py --n-cores=1 --simulator-cmd=gazebo --manager=experiments/examples/manager_dir_loc.py
