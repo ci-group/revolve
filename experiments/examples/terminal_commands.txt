@@ -10,3 +10,5 @@ source .venv/bin/activate
 ./revolve.py --n-cores=8 --simulator-cmd=gzserver --manager=experiments/examples/manager_dir_loc.py
 
 ./revolve.py --n-cores=1 --simulator-cmd=gazebo --manager=experiments/examples/manager_dir_loc.py
+
+./revolve.py --simulator-cmd gazebo --test-robot /Users/robyx2/projects/Emiel_revolve/experiments/examples/yaml/spider9-cpg.yaml
