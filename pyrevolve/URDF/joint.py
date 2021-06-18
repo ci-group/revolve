@@ -12,6 +12,10 @@ class Joint(URDF.Posable):
                  parent_link: URDF.Link,
                  child_link: URDF.Link,
                  axis: URDF.math.Vector3,
+                 lower_limit: float,
+                 upper_limit: float,
+                 effort_limit: float,
+                 velocity_limit: float,
                  coordinates=None,
                  motorized=False,
                  position=None,
@@ -34,7 +38,12 @@ class Joint(URDF.Posable):
 
         xml.etree.ElementTree.SubElement(self, 'parent', {'link': parent_link.name})
         xml.etree.ElementTree.SubElement(self, 'child', {'link': child_link.name})
-        self.axis = JointAxis(axis)
+        self.axis = JointAxis(axis,
+                              lower_limit,
+                              upper_limit,
+                              effort_limit,
+                              velocity_limit,
+        )
         self.append(self.axis)
 
     def is_motorized(self):
@@ -45,7 +54,6 @@ class Joint(URDF.Posable):
 
         servomotor = xml.etree.ElementTree.Element('rv:servomotor', {
             'type': 'position',
-            # 'type': 'velocity',
             'id': "{}__rotate".format(self._id),
             'part_id': self._id,
             'part_name': self._name,
@@ -71,15 +79,19 @@ class Joint(URDF.Posable):
 
 
 class JointAxis(xml.etree.ElementTree.Element):
-    def __init__(self, axis: URDF.math.Vector3):
+    def __init__(self, axis: URDF.math.Vector3,
+                 lower_limit: float,
+                 upper_limit: float,
+                 effort_limit: float,
+                 velocity_limit: float):
         xml.etree.ElementTree.SubElement(self, 'axis', {'xyz': '{:e} {:e} {:e}'.format(axis[0], axis[1], axis[2])})
         URDF.sub_element_text(self, 'use_parent_model_frame', '0')
 
         # TODO calibrate this (load from configuration?)
-        xml.etree.ElementTree.SubElement(self, 'limit', {'lower': str(-pi/2),
-                                                         'upper': str(pi/2),
-                                                         'effort': str(9.4 * 9.8e-02),
-                                                         'velocity': str(5.235988e-00)})
+        xml.etree.ElementTree.SubElement(self, 'limit', {'lower': str(lower_limit),
+                                                         'upper': str(upper_limit),
+                                                         'effort': str(effort_limit),
+                                                         'velocity': str(velocity_limit)})
 
     def set_xyz(self, xyz: URDF.math.Vector3):
         self.xyz.text = '{:e} {:e} {:e}'.format(xyz[0], xyz[1], xyz[2])
