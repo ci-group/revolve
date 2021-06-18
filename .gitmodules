@@ -7,3 +7,6 @@
 [submodule "thirdparty/SimpleAmqpClient"]
 	path = thirdparty/SimpleAmqpClient
 	url = https://github.com/alanxz/SimpleAmqpClient.git
+[submodule "thirdparty/reversible_de"]
+	path = thirdparty/reversible_de
+	url = https://github.com/jmtomczak/reversible-de.git
