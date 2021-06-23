@@ -152,7 +152,7 @@ async def run():
     # Create a Population object that initialises:
     #   individuals in the population with an empty list,
     #   and stores the configuration of the system to the conf variable.
-    population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
+    population: Population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
     # Create the next generation based on a current population by:
     #   Loading the last generation/offspring of a previous experiment (after a crash),
@@ -183,7 +183,7 @@ async def run():
     # Start the while loop that produces new generations based on previous one
     while gen_num < num_generations - 1:
         gen_num += 1
-        population = await population.next_gen(gen_num)
+        population = await population.next_generation(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     # output result after completing all generations...
