@@ -561,7 +561,7 @@ void DifferentialCPG::step(
     double slow_down_factor = 1.0;
     if (use_frame_of_reference) {
         angle_difference = angle_to_target_sensor->detect_angle();
-        std::cout << "Angle detected " << angle_difference << std::endl;
+//        std::cout << "Angle detected " << angle_difference << std::endl;
         const double frame_of_reference_slower_power = 7.0;
         slow_down_factor = std::pow(
                 (180.0 - std::abs(angle_difference))/180.0, frame_of_reference_slower_power);

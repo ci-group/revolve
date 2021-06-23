@@ -14,7 +14,7 @@ class BrainCPG(Brain):
     def __init__(self):
         # CPG hyper-parameters
         self.abs_output_bound = None
-        self.use_frame_of_reference = "false"
+        self.use_frame_of_reference = "basbsab"
         self.output_signal_factor = ""
         self.range_lb = None
         self.range_ub = None
@@ -74,7 +74,7 @@ class BrainCPG(Brain):
 
     def learner_sdf(self):
         return xml.etree.ElementTree.Element('rv:learner', {
-            'type': 'offline',
+            'type': 'target',
         })
 
     def controller_sdf(self):

@@ -12,17 +12,26 @@ from pyrevolve import parser
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
-from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.evolution.pop_management.steady_state import steady_state_population_management
+from pyrevolve.evolution.population.population import Population
+from pyrevolve.evolution.population.population_config import PopulationConfig
+from pyrevolve.evolution.population.population_management import steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
+from pyrevolve.genotype.neat_brain_genome import NeatBrainGenomeConfig
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
 from pyrevolve.genotype.plasticoding.crossover.standard_crossover import standard_crossover
+from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import BrainType
 from pyrevolve.genotype.plasticoding.initialization import random_initialization
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
 from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+from pyrevolve.genotype.plasticoding import PlasticodingConfig
+from pyrevolve.genotype.lsystem_neat.crossover import CrossoverConfig as lCrossoverConfig
+from pyrevolve.genotype.lsystem_neat.crossover import standard_crossover as lcrossover
+from pyrevolve.genotype.lsystem_neat.mutation import LSystemNeatMutationConf as lMutationConfig
+from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig as plasticMutationConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
+from pyrevolve.genotype.lsystem_neat import LSystemCPGHyperNEATGenotypeConfig, LSystemCPGHyperNEATGenotype
+from pyrevolve.genotype.lsystem_neat.mutation import standard_mutation as lmutation
 
 
 async def run():
@@ -32,18 +41,52 @@ async def run():
     population_size = 100
     offspring_size = 50
 
-    # Define the maximum number of structural modules per robot
-    genotype_conf = PlasticodingConfig(
-        max_structural_modules=100,
+    # Using L-system encoding
+    body_conf: PlasticodingConfig = PlasticodingConfig(
+        allow_joint_joint_attachment=False,
+        e_max_groups=3,
+        oscillator_param_min=0,
+        oscillator_param_max=5,
+        weight_param_min=0,
+        weight_param_max=0,
+        weight_min=0,
+        weight_max=0,
+        max_structural_modules=50,
+        allow_vertical_brick=True,
+        use_movement_commands=True,
+        use_rotation_commands=False,
+        use_movement_stack=False,
     )
+    brain_conf = NeatBrainGenomeConfig(brain_type=BrainType.CPG)
+    brain_conf.multineat_params.DisjointCoeff = 0.3
+    brain_conf.multineat_params.ExcessCoeff = 0.3
+    brain_conf.multineat_params.WeightDiffCoeff = 0.3
+    brain_conf.multineat_params.ActivationADiffCoeff = 0.3
+    brain_conf.multineat_params.ActivationBDiffCoeff = 0.3
+    brain_conf.multineat_params.TimeConstantDiffCoeff = 0.3
+    brain_conf.multineat_params.BiasDiffCoeff = 0.3
+    brain_conf.multineat_params.ActivationFunctionDiffCoeff = 0.3
+    brain_conf.multineat_params.CompatTreshold = 3.0
+    brain_conf.multineat_params.MinCompatTreshold = 3.0
+    brain_conf.multineat_params.CompatTresholdModifier = 0.1
+    brain_conf.multineat_params.CompatTreshChangeInterval_Generations = 1
+    brain_conf.multineat_params.CompatTreshChangeInterval_Evaluations = 1
+    genotype_conf = LSystemCPGHyperNEATGenotypeConfig(body_conf, brain_conf)
+
+    # prob of mutation for new individual
+    plasticMutation_conf: MutationConfig = plasticMutationConfig(
+        mutation_prob=0.6,
+        genotype_conf=body_conf,
+    )
+
     # Define the mutation probability
-    mutation_conf = MutationConfig(
-        mutation_prob=0.8,
-        genotype_conf=genotype_conf,
+    lmutation_conf = lMutationConfig(
+        plasticoding_mutation_conf=plasticMutation_conf,
+        neat_conf=brain_conf,
     )
-    # Define the Crossover probability
-    crossover_conf = CrossoverConfig(
-        crossover_prob=0.8,
+
+    crossover_conf = lCrossoverConfig(
+        crossover_prob=1.0,
     )
 
     # # Define fitness evaluation
@@ -62,10 +105,10 @@ async def run():
     # Loading the generation count of a previous experiment (after a crash),
     #   or initialize the generation count for a new experiment
     if do_recovery:
-        gen_num, has_offspring, next_robot_id = experiment_management.read_recovery_state(population_size,
-                                                                                          offspring_size)
+        gen_num, has_offspring, next_robot_id, next_species_id = \
+            experiment_management.read_recovery_state(population_size, offspring_size, species=False)
 
-        if gen_num == num_generations - 1:
+        if gen_num == num_generations-1:
             logger.info('Experiment is already complete.')
             return
     else:
@@ -75,13 +118,13 @@ async def run():
     # Insert the population parameters PopulationConfig:
     population_conf = PopulationConfig(
         population_size=population_size,
-        genotype_constructor=random_initialization,
+        genotype_constructor=lambda conf, _id: LSystemCPGHyperNEATGenotype(conf, _id),
         genotype_conf=genotype_conf,
         fitness_function=fitness.directed_locomotion,
         # fitness_function=lambda manager, robot: fitness.directed_locomotion(robot, target_direction=0.0, weight=0.01),
-        mutation_operator=standard_mutation,
-        mutation_conf=mutation_conf,
-        crossover_operator=standard_crossover,
+        mutation_operator=lambda genotype, gen_conf: lmutation(genotype, gen_conf),
+        mutation_conf=lmutation_conf,
+        crossover_operator=lambda parents, gen_conf, cross_conf: lcrossover(parents, gen_conf, cross_conf),
         crossover_conf=crossover_conf,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
@@ -116,25 +159,24 @@ async def run():
     #   or initializing a first generation for a new experiment
     if do_recovery:
         # loading a previous state of the experiment
-        await population.load_snapshot(gen_num)
+        population.load_snapshot(gen_num, multi_development=True)
         if gen_num >= 0:
-            logger.info('Recovered snapshot ' + str(gen_num) + ', pop with ' + str(
-                len(population.individuals)) + ' individuals')
+            logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.individuals)} individuals')
         if has_offspring:
-            individuals = await population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
+            individuals = population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
-            logger.info('Recovered unfinished offspring ' + str(gen_num))
+            logger.info(f'Recovered unfinished offspring {gen_num}')
 
             if gen_num == 0:
-                await population.init_pop(individuals)
+                await population.initialize(individuals)
             else:
-                population = await population.next_gen(gen_num, individuals)
+                population = await population.next_generation(gen_num, individuals)
 
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-        await population.init_pop()
+        await population.initialize()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     ################################## RUN THE REST OF THE EXPERIMENT ##################################

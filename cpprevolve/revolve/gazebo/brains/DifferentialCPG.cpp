@@ -54,7 +54,7 @@ revolve::DifferentialCPG::ControllerParams DifferentialCPG::load_params_from_sdf
     std::clog << "USE_FRAME_OF_REFERENCE: " << controller_sdf->GetAttribute("use_frame_of_reference")->GetAsString() << std::endl;
     params.init_neuron_state = stod(controller_sdf->GetAttribute("init_neuron_state")->GetAsString());
     params.range_ub = stod(controller_sdf->GetAttribute("range_ub")->GetAsString());
-    params.output_signal_factor = stod(controller_sdf->GetAttribute("signal_factor_all")->GetAsString());
+    params.output_signal_factor = stod(controller_sdf->GetAttribute("output_signal_factor")->GetAsString());
     params.abs_output_bound = stod(controller_sdf->GetAttribute("abs_output_bound")->GetAsString());
 
     // Get the weights from the sdf:

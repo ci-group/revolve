@@ -23,9 +23,13 @@ revolve::DifferentialCPG::ControllerParams DifferentialCPGClean::load_params_fro
     // Get all params from the sdf
     // TODO: Add exception handling
     sdf::ElementPtr controller_sdf = brain_sdf->GetElement("rv:controller");
+    std::clog << "USE_FRAME_OF_REFERENCE: " << controller_sdf->GetAttribute("use_frame_of_reference")->GetAsString() << std::endl;
     revolve::DifferentialCPG::ControllerParams params;
-    params.reset_neuron_random = (controller_sdf->GetAttribute("reset_neuron_random")->GetAsString() == "true");
-    params.use_frame_of_reference = (controller_sdf->GetAttribute("use_frame_of_reference")->GetAsString() == "true");
+    // params.reset_neuron_random =
+            (controller_sdf->GetAttribute("reset_neuron_random")->Get<bool>(params.reset_neuron_random));
+    // params.use_frame_of_reference =
+            (controller_sdf->GetAttribute("use_frame_of_reference")->Get<bool>(params.use_frame_of_reference));
+            params.use_frame_of_reference = true;
     params.init_neuron_state = stod(controller_sdf->GetAttribute("init_neuron_state")->GetAsString());
     params.range_ub = stod(controller_sdf->GetAttribute("range_ub")->GetAsString());
     params.output_signal_factor = stod(controller_sdf->GetAttribute("output_signal_factor")->GetAsString());

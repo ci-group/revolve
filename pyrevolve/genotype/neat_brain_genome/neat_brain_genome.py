@@ -38,9 +38,7 @@ class NeatBrainGenomeConfig:
         self.use_frame_of_reference = False
         self.init_neuron_state = 0.707
         self.range_ub = 1.0
-        self.signal_factor_all = 4.0
-        self.signal_factor_mid = 2.5
-        self.signal_factor_left_right = 2.5
+        self.output_signal_factor = 1.0
         self.abs_output_bound = 1.0
 
     @property
@@ -232,9 +230,7 @@ class NeatBrainGenome(Genotype):
             brain.use_frame_of_reference = False
             brain.init_neuron_state = 0.707
             brain.range_ub = 1.0
-            brain.signal_factor_all = 4.0
-            brain.signal_factor_mid = 2.5
-            brain.signal_factor_left_right = 2.5
+            brain.output_signal_factor = 1.0
             brain.abs_output_bound = 1.0
         else:
             raise NotImplementedError(f"{self._brain_type} brain not implemented yet")

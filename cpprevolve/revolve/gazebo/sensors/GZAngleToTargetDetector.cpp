@@ -38,7 +38,7 @@ float GZAngleToTargetDetector::detect_angle()
     const double angle_robot_target = std::atan2(y_t, x_t);
     const double angle = angle_robot_forward - angle_robot_target;
 
-    std::cout << "Detected angle to target: " << angle << std::endl;
+//    std::cout << "Detected angle to target: " << angle << std::endl;
 
     return angle;
 }

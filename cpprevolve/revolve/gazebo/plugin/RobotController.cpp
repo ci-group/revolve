@@ -260,6 +260,7 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
       message << "Robot brain is not defined. (learner='" << learner << "', controller='" << controller_type << "')";
       throw std::runtime_error(message.str());
   }
+  std::cout << "Loaded controller " << controller_type << " and learner " << learner << std::endl;
 }
 
 /////////////////////////////////////////////////

@@ -231,7 +231,10 @@ async def test_robot_run(robot_file_path: str):
             # Print robot fitness every second
             if not settings.record:
                 status = 'dead' if robot_manager.dead else 'alive'
-                print(f"Robot fitness ({status}) is \n"
-                      f" OLD:     {fitness.directed_locomotion(robot_manager, robot)}\n")
+                try:
+                    print(f"Robot fitness ({status}) is \n"
+                          f" DIRECTED LOCOMOTION:     {fitness.directed_locomotion(robot_manager, robot)}\n")
+                except:
+                    pass
 
             await asyncio.sleep(1.0)

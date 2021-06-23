@@ -55,7 +55,7 @@ class Alphabet(Enum):
             Alphabet.JOINT_HORIZONTAL,
             Alphabet.JOINT_VERTICAL,
             Alphabet.BLOCK,
-            Alphabet.SENSOR,
+            # Alphabet.SENSOR,
         ]
         if allow_vertical_brick:
             modules.append(Alphabet.BLOCK_VERTICAL)
