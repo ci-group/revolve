@@ -23,3 +23,4 @@ psycopg2>=2.8.6
 # Non PIP packages
 -e git+https://github.com/ci-group/pygazebo.git@master#egg=pygazebo
 thirdparty/MultiNEAT
+thirdparty/isaacgym/python

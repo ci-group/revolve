@@ -1,0 +1,2 @@
+go to: https://developer.nvidia.com/isaac-gym/download
+unpack isaacsim

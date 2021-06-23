@@ -19,13 +19,15 @@ from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
 from pyrevolve.util.supervisor.rabbits import RobotState
 from pyrevolve.util import Time
+import manage_isaac
 
 app = celery.Celery('CeleryQueue', backend='rpc://', broker='pyamqp://guest@localhost//')
 
 
 @app.task
 def evaluate_robot(robot_sdf: AnyStr, life_timeout: float):
-    raise NotImplementedError("Evaluating a robot is implemented in C++, inside gazebo")
+    manage_isaac.simulator(robot_sdf, life_timeout)
+    #raise NotImplementedError("Evaluating a robot is implemented in C++, inside gazebo")
 
 
 def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, timeout: float) -> int:
