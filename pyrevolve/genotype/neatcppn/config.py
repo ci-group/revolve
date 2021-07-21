@@ -1,14 +1,26 @@
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 import multineat
+from pyrevolve.genotype.neatcppn.genotype import NeatcppnGenotype
+from pyrevolve.revolve_bot import RevolveBot
 
 
 class NeatcppnGenotypeConfig:
-    def __init__(self):
-        self.brain_multineat_params = self.generate_multineat_params()
-        self.brain_n_inputs = 1
-        self.brain_n_outputs = 1
-        self.brain_cpg_settings = self.generate_brain_cpg_settings()
+    def __init__(
+        self,
+        n_inputs: int,
+        n_outputs: int,
+        develop_function: Callable[[object, int, multineat.Genome], RevolveBot],
+        develop_userdata: object,
+    ):
+        self.multineat_params = self.generate_multineat_params()
+        self._n_inputs = n_inputs
+        self._n_outputs = n_outputs
+        self._develop_function = develop_function
+        self._develop_userdata = develop_userdata
+
+        # TODO move
+        self.cpg_settings = self.generate_brain_cpg_settings()
 
     @staticmethod
     def generate_multineat_params():

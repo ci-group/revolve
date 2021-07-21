@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import multineat
 from pyrevolve.genotype import Genotype
-from pyrevolve.genotype.hyperneat.config import NeatcppnGenotypeConfig
+from pyrevolve.genotype.neatcppn.config import NeatcppnGenotypeConfig
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.revolve_bot.brain import BrainCPPNCPG
 
@@ -10,12 +10,12 @@ from pyrevolve.revolve_bot.brain import BrainCPPNCPG
 class NeatcppnGenotype(Genotype):
     _id: int
     _config: NeatcppnGenotypeConfig
-    _brain_genome: multineat.Genome
+    _multineat_genome: multineat.Genome
 
     def __init__(self, config: NeatcppnGenotypeConfig, robot_id: int):
         self._id = robot_id
 
-        self._brain_genome = multineat.Genome(
+        self._multineat_genome = multineat.Genome(
             0,  # ID
             config.brain_n_inputs,
             0,  # n_hidden
@@ -31,9 +31,13 @@ class NeatcppnGenotype(Genotype):
     def clone(self) -> NeatcppnGenotype:
         new = NeatcppnGenotype.__new___(NeatcppnGenotype)
         new._id = self._id
-        new._brain_genome = multineat.Genome(self._brain_genome)
+        new._multineat_genome = multineat.Genome(self._brain_genome)
 
     def develop(self) -> RevolveBot:
+        return self._config._develop_function(
+            self._config._develop_userdata, self._id, self._multineat_genome
+        )
+        """
         brain = BrainCPPNCPG(self._neat_genome) # TODO convert CPPN to CPG weights and use CPG brain class
         for key, value in self._config.items():
             setattr(brain, key, value)
@@ -43,3 +47,4 @@ class NeatcppnGenotype(Genotype):
         phenotype._brain = brain
 
         return phenotype
+        """
