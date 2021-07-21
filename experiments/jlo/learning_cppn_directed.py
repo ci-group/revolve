@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 
+import multineat
 from pyrevolve import parser
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
@@ -14,23 +15,118 @@ from pyrevolve.genotype.bodybrain_composition.config import BodybrainComposition
 from pyrevolve.genotype.bodybrain_composition.crossover import (
     bodybrain_composition_crossover,
 )
-from pyrevolve.genotype.bodybrain_composition.genotype import BodybrainComposition
+from pyrevolve.genotype.bodybrain_composition.genotype import (
+    BodybrainCompositionGenotype,
+)
 from pyrevolve.genotype.bodybrain_composition.mutation import (
     bodybrain_composition_mutate,
 )
+from pyrevolve.genotype.neatcppn_body.crossover import neatcppn_body_crossover
+from pyrevolve.genotype.neatcppn_body.develop import neatcppn_body_develop
+from pyrevolve.genotype.neatcppn_body.genotype import NeatcppnBodyGenotype
+from pyrevolve.genotype.neatcppn_body.mutation import neatcppn_body_mutate
+from pyrevolve.genotype.neatcppn_cpg_brain.config import NeatcppnCpgBrainConfig
+from pyrevolve.genotype.neatcppn_cpg_brain.crossover import neatcppn_cpg_brain_crossover
+from pyrevolve.genotype.neatcppn_cpg_brain.develop import neatcppn_cpg_brain_develop
+from pyrevolve.genotype.neatcppn_cpg_brain.genotype import NeatcppnCpgBrainGenotype
+from pyrevolve.genotype.neatcppn_cpg_brain.mutation import neatcppn_cpg_brain_mutate
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
-"""
-from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.plasticoding.crossover.standard_crossover import (
-    standard_crossover,
-)
-from pyrevolve.genotype.plasticoding.initialization import random_initialization
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
-"""
+
+def create_random_genotype(
+    config: BodybrainCompositionConfig, id: int
+) -> BodybrainCompositionGenotype:
+    # body settings
+    body_n_inputs = 4
+    body_n_ouputs = 3
+
+    body_multineat_params = multineat.Parameters()
+
+    body_multineat_params.MutateRemLinkProb = 0.02
+    body_multineat_params.RecurrentProb = 0.0
+    body_multineat_params.OverallMutationRate = 0.15
+    body_multineat_params.MutateAddLinkProb = 0.08
+    body_multineat_params.MutateAddNeuronProb = 0.01
+    body_multineat_params.MutateWeightsProb = 0.90
+    body_multineat_params.MaxWeight = 8.0
+    body_multineat_params.WeightMutationMaxPower = 0.2
+    body_multineat_params.WeightReplacementMaxPower = 1.0
+    body_multineat_params.MutateActivationAProb = 0.0
+    body_multineat_params.ActivationAMutationMaxPower = 0.5
+    body_multineat_params.MinActivationA = 0.05
+    body_multineat_params.MaxActivationA = 6.0
+
+    body_multineat_params.MutateNeuronActivationTypeProb = 0.03
+
+    body_multineat_params.ActivationFunction_SignedSigmoid_Prob = 0.0
+    body_multineat_params.ActivationFunction_UnsignedSigmoid_Prob = 0.0
+    body_multineat_params.ActivationFunction_Tanh_Prob = 1.0
+    body_multineat_params.ActivationFunction_TanhCubic_Prob = 0.0
+    body_multineat_params.ActivationFunction_SignedStep_Prob = 1.0
+    body_multineat_params.ActivationFunction_UnsignedStep_Prob = 0.0
+    body_multineat_params.ActivationFunction_SignedGauss_Prob = 1.0
+    body_multineat_params.ActivationFunction_UnsignedGauss_Prob = 0.0
+    body_multineat_params.ActivationFunction_Abs_Prob = 0.0
+    body_multineat_params.ActivationFunction_SignedSine_Prob = 1.0
+    body_multineat_params.ActivationFunction_UnsignedSine_Prob = 0.0
+    body_multineat_params.ActivationFunction_Linear_Prob = 1.0
+
+    body_multineat_params.MutateNeuronTraitsProb = 0.0
+    body_multineat_params.MutateLinkTraitsProb = 0.0
+
+    body_multineat_params.AllowLoops = False
+
+    # brain settings
+    brain_n_inputs = 4
+    brain_n_outputs = 1
+
+    brain_multineat_params = multineat.Parameters()
+
+    brain_multineat_params.MutateRemLinkProb = 0.02
+    brain_multineat_params.RecurrentProb = 0.0
+    brain_multineat_params.OverallMutationRate = 0.15
+    brain_multineat_params.MutateAddLinkProb = 0.08
+    brain_multineat_params.MutateAddNeuronProb = 0.01
+    brain_multineat_params.MutateWeightsProb = 0.90
+    brain_multineat_params.MaxWeight = 8.0
+    brain_multineat_params.WeightMutationMaxPower = 0.2
+    brain_multineat_params.WeightReplacementMaxPower = 1.0
+    brain_multineat_params.MutateActivationAProb = 0.0
+    brain_multineat_params.ActivationAMutationMaxPower = 0.5
+    brain_multineat_params.MinActivationA = 0.05
+    brain_multineat_params.MaxActivationA = 6.0
+
+    brain_multineat_params.MutateNeuronActivationTypeProb = 0.03
+
+    brain_multineat_params.ActivationFunction_SignedSigmoid_Prob = 0.0
+    brain_multineat_params.ActivationFunction_UnsignedSigmoid_Prob = 0.0
+    brain_multineat_params.ActivationFunction_Tanh_Prob = 1.0
+    brain_multineat_params.ActivationFunction_TanhCubic_Prob = 0.0
+    brain_multineat_params.ActivationFunction_SignedStep_Prob = 1.0
+    brain_multineat_params.ActivationFunction_UnsignedStep_Prob = 0.0
+    brain_multineat_params.ActivationFunction_SignedGauss_Prob = 1.0
+    brain_multineat_params.ActivationFunction_UnsignedGauss_Prob = 0.0
+    brain_multineat_params.ActivationFunction_Abs_Prob = 0.0
+    brain_multineat_params.ActivationFunction_SignedSine_Prob = 1.0
+    brain_multineat_params.ActivationFunction_UnsignedSine_Prob = 0.0
+    brain_multineat_params.ActivationFunction_Linear_Prob = 1.0
+
+    brain_multineat_params.MutateNeuronTraitsProb = 0.0
+    brain_multineat_params.MutateLinkTraitsProb = 0.0
+
+    brain_multineat_params.AllowLoops = False
+
+    return BodybrainCompositionGenotype(
+        id,
+        config,
+        NeatcppnBodyGenotype.random(
+            body_n_inputs, body_n_ouputs, body_multineat_params
+        ),
+        NeatcppnCpgBrainGenotype.random(
+            brain_n_inputs, brain_n_outputs, brain_multineat_params
+        ),
+    )
 
 
 async def run():
@@ -43,8 +139,38 @@ async def run():
     population_size = 30
     offspring_size = 15
 
+    brain_config = NeatcppnCpgBrainConfig(
+        abs_output_bound=1.0,
+        use_frame_of_reference=False,
+        signal_factor_all=4.0,
+        signal_factor_mid=2.5,
+        signal_factor_left_right=2.5,
+        range_lb=None,
+        range_ub=1.0,
+        init_neuron_state=0.707,
+        load_brain=None,
+        output_directory=None,
+        run_analytics=None,
+        reset_robot_position=None,
+        reset_neuron_state_bool=None,
+        reset_neuron_random=False,
+        verbose=None,
+        startup_time=None,
+    )
+
     configuration = BodybrainCompositionConfig(
-        # TODO
+        body_crossover=neatcppn_body_crossover,
+        brain_crossover=neatcppn_cpg_brain_crossover,
+        body_crossover_config=None,
+        brain_crossover_config=None,
+        body_mutate=neatcppn_body_mutate,
+        brain_mutate=neatcppn_cpg_brain_mutate,
+        body_mutate_config=None,
+        brain_mutate_config=None,
+        body_develop=neatcppn_body_develop,
+        brain_develop=neatcppn_cpg_brain_develop,
+        body_develop_config=None,
+        brain_develop_config=brain_config,
     )
 
     # experiment params #
@@ -76,7 +202,7 @@ async def run():
 
     population_conf = PopulationConfig(
         population_size=population_size,
-        genotype_constructor=BodybrainComposition,
+        genotype_constructor=create_random_genotype,
         genotype_conf=configuration,
         fitness_function=fitness.displacement_velocity,
         mutation_operator=bodybrain_composition_mutate,
