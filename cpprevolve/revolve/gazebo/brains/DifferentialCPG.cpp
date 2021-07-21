@@ -443,7 +443,9 @@ void DifferentialCPG::bo_init_sampling(){
       }
 
       // Vector permutation
-      std::random_shuffle(one_dimension.begin(), one_dimension.end() );
+      std::random_device rd;
+      std::mt19937 g(rd());
+      std::shuffle(one_dimension.begin(), one_dimension.end(), g);
 
       // Save permuted vector
       all_dimensions.push_back(one_dimension);

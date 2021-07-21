@@ -13,49 +13,52 @@ library(viridis)
 
 #### CHANGE THE PARAMETERS HERE ####
 
-base_directory <- c(
-                    'data',  'data', 'data')
+base_directory <-paste('jim', sep='')
+base_directory2 <-paste('karine/alife2021', sep='')
 
-analysis = 'analysis'
-output_directory = paste(base_directory[2],'/',analysis ,sep='')
+analysis = 'analysis/plots'
+output_directory = paste(base_directory2,'/',analysis ,sep='')
 
-experiments_type = c(  'hyperplasticodingseasonsI15base' ,
-                       'hyperplasticodingseasonsI15',
-                       'hyperplasticodingt3'
-                       
+experiments_type = c(
+                     'plasticodingscaffolding2_equal',
+                     'static_plane',
+                     'plasticodingscaffolding_inv',
+                     'static_tilted')
+
+experiments_labels = c( 
+                        'plasticodingscaffolding2_equal',
+                        'static_plane',
+                        'plasticodingscaffolding_inv',
+                        'static_tilted'
                         )
-runs = list(#c(1:5),
-            c(1:5),
-            c(1:5),
-            c(1:5))
-environments = list( c('tilted3'),
-                     c('tilted3'),
-                     c('tilted3')
-                     
-                     )
+runs = list(
+            c(1:8),
+            c(1:10),
+            c(1:10),
+            c(1:10))
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
-methods_labels = c( 
-                     
-                    'base tilted',
-                    'plastic tilted',
-                    'tilted'
-                     ) # note that labels of Plane death and Tilted death are INVERTED on purpose, to fix the mistake done when naming the experiments.
+methods_labels = c(
+                   'Equal',
+                   'Flat',
+                   'Inv Equal',
+                   'Tilted'
+                   )
 
-experiments_type_colors = c('#009900',
-                            '#EE8610',
-                            '#7550ff',
-                            '#876044' )
+experiments_type_colors = c('#0000CD', 
+                            '#FF00FF',
+                            '#228B22',
+                            '#D2691E') 
 
 #aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
-aggregations = c('median')
+aggregations = c( 'Q25', 'median', 'Q75')
 
-gens = 200
+gens = 100
 pop = 100
-num_heatmaps = 1
 
-gens_box_comparisons = c(gens-1)
+#gens_box_comparisons = c(gens-1)
+gens_box_comparisons = c(99)
 
 measures_names = c(
   'displacement_velocity_hill',
@@ -78,18 +81,18 @@ measures_names = c(
   #'height',
   'absolute_size',
   'sensors',
-  'symmetry',
-  'avg_period'#,
-#  'dev_period',
-#  'avg_phase_offset',
- # 'dev_phase_offset',
- # 'avg_amplitude',
- # 'dev_amplitude',
- # 'avg_intra_dev_params',
+  'symmetry'#,
+  #'avg_period',
+  #'dev_period',
+  #'avg_phase_offset',
+  #'dev_phase_offset',
+  #'avg_amplitude',
+  #'dev_amplitude',
+  #'avg_intra_dev_params',
   #'avg_inter_dev_params',
   #'sensors_reach',
   #'recurrence',
- # 'synaptic_reception'
+  #'synaptic_reception'
 )
 
 # add proper labels soon...
@@ -114,20 +117,19 @@ measures_labels = c(
   #'height',
   'Size',
   'Sensors',
-  'Symmetry',
-  'Average Period'#,
- # 'Dev Period',
+  'Symmetry'#,
+  #'Average Period',
+  #'Dev Period',
   #'Avg phase offset',
   #'Dev phase offset',
   #'Avg Amplitude',
- # 'Dev amplitude',
- #'Avg intra dev params',
- # 'Avg inter dev params',
- # 'Sensors Reach',
- # 'Recurrence',
- # 'Synaptic reception'
+  #'Dev amplitude',
+  #'Avg intra dev params',
+  #'Avg inter dev params',
+  #'Sensors Reach',
+  #'Recurrence',
+  #'Synaptic reception'
 )
-
 
 more_measures_names = c(
   # 'novelty',
@@ -146,14 +148,10 @@ more_measures_labels = c(
 #### CHANGE THE PARAMETERS HERE ####
 
 
-
 methods = c()
 for (exp in 1:length(experiments_type))
 {
-  for (env in 1:length(environments[[exp]]))
-  {
-    methods = c(methods, paste(experiments_type[exp], environments[[exp]][env], sep='_'))
-  }
+    methods = c(methods, paste(experiments_type[exp], sep='_'))
 }
 
 measures_snapshots_all = NULL
@@ -162,25 +160,19 @@ for (exp in 1:length(experiments_type))
 {
   for(run in runs[[exp]])
   {
-    for (env in 1:length(environments[[exp]]))
-    {
-      measures   = read.table(paste(base_directory[exp],paste(experiments_type[exp], environments[[exp]][env], run,"all_measures.tsv", sep='_'), sep='/'),
-                              header = TRUE, fill=TRUE)
-
+ 
+      measures_snapshots = read.table(paste(base_directory2,paste(experiments_type[exp], run, "snapshots_full.tsv", sep='_'), sep='/'),
+                               header = TRUE)
+      
       for( m in 1:length(measures_names))
       {
-        measures[measures_names[m]] = as.numeric(as.character(measures[[measures_names[m]]]))
+        measures_snapshots[measures_names[m]] = as.numeric(as.character(measures_snapshots[[measures_names[m]]]))
       }
-
-      snapshots   = read.table(paste(base_directory[exp],paste(experiments_type[exp], environments[[exp]][env], run, "snapshots_ids.tsv", sep='_'), sep='/'),
-                               header = TRUE)
-
-      measures_snapshots = sqldf('select * from snapshots inner join measures using(robot_id) order by generation')
-
+      
       measures_snapshots$run = run
       measures_snapshots$displacement_velocity_hill =   measures_snapshots$displacement_velocity_hill*100
       measures_snapshots$run = as.factor(measures_snapshots$run)
-      measures_snapshots$method = paste(experiments_type[exp], environments[[exp]][env],sep='_')
+      measures_snapshots$method = paste(experiments_type[exp], sep='_')
       measures_snapshots$method_label =  methods_labels[exp]
 
       if ( is.null(measures_snapshots_all)){
@@ -188,7 +180,7 @@ for (exp in 1:length(experiments_type))
       }else{
         measures_snapshots_all = rbind(measures_snapshots_all, measures_snapshots)
       }
-    }
+    
   }
 }
 
@@ -202,6 +194,7 @@ measures_labels = c(measures_labels, more_measures_labels)
 for( m in 1:length(more_measures_names)){
   measures_snapshots_all[more_measures_names[m]] = as.numeric(as.character(measures_snapshots_all[[more_measures_names[m]]]))
 }
+
 
 
 measures_averages_gens_1 = list()
@@ -289,10 +282,25 @@ for (met in 1:length(methods))
 
 
 all_na = colSums(is.na(measures_averages_gens)) == nrow(measures_averages_gens)
+
 for (i in 1:length(measures_names))
 {
 
   #  line plots
+
+
+  # finding values for scaling
+  max_y =  0
+  min_y = 10000000
+  for(a in 1:length(aggregations)){
+    for(m in 1:length(methods)){
+      max_value = max(measures_averages_gens[paste(methods[m],'_',measures_names[i],'_', aggregations[a], '_Q75',sep='')], na.rm = TRUE)
+      min_value = min(measures_averages_gens[paste(methods[m],'_',measures_names[i],'_', aggregations[a], '_Q25',sep='')], na.rm = TRUE)
+      if(max_value > max_y){ max_y = max_value }
+      if(min_value < min_y){ min_y = min_value }
+    }
+  }
+  #if (measures_names[i] == 'absolute_size' )  {    max_y = 16}
 
   for(a in 1:length(aggregations)){
 
@@ -313,19 +321,13 @@ for (i in 1:length(measures_names))
       }
     }
 
-
-
-    # finding values for scaling
-    max_y =  0
-
-
     if (max_y>0) {
       graph = graph + coord_cartesian(ylim = c(min_y, max_y))
     }
     graph = graph  +  labs(y=measures_labels[i], x="Generation", title="")
 
     graph = graph +   scale_color_manual(values=experiments_type_colors)
-    graph = graph  + theme(legend.position="right" ,  legend.text=element_text(size=25), axis.text=element_text(size=32), axis.title=element_text(size=30),
+    graph = graph  + theme(legend.position="none" ,  legend.text=element_text(size=25), axis.text=element_text(size=32), axis.title=element_text(size=30),
                            plot.subtitle=element_text(size=30 ), plot.title=element_text(size=30 ))
 
     ggsave(paste( output_directory,'/',measures_names[i], '_', aggregations[a], '_lines.pdf',  sep=''), graph , device='pdf', height = 10, width = 10)
@@ -383,23 +385,18 @@ for (i in 1:length(measures_names))
           stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
 
         # in this list, use the desired pairs names from methods_labels
-        comps = list(  c( 'base tilted', 'plastic tilted' ),
-                       c( 'base tilted', 'tilted' ),
-                       c( 'tilted', 'plastic tilted' )
-        )
-        
-        
-
-
-        if (max_y>0) {
-          g1 = g1 + coord_cartesian(ylim = c(min_y, max_y))
-
-        }
-
-        g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=14, step_increase=0.15,
+        comps = list( c('Equal', 'Inv Equal'),
+                      c('Equal', 'Flat'),
+                      c('Equal', 'Tilted'),
+                      c('Inv Equal', 'Flat'),
+                      c('Equal', 'Tilted'),
+                      c('Flat', 'Tilted')
+                      )
+        mxax = max(all_final_values[1])
+        g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=15,
                                comparisons = comps,
-                               #map_signif_level=c("***"=0.001,"**"=0.01, "*"=0.05)  )
-                               map_signif_level=c( )  )
+                               map_signif_level=c("***"=0.001,"**"=0.01, "*"=0.05) , 
+                               y_position=c(mxax*1.1, mxax*1.2, mxax*1.3, mxax*1.4, mxax*1.5, mxax*1.6)  )
 
         if (out == 'full' || (out == 'filtered' &&  has_outliers == TRUE) ){
           ggsave(paste(output_directory,"/",measures_names[i],"_",gc,"_", aggregations[a],'_', out,"_boxes.pdf",sep = ""), g1, device = "pdf", height=18, width = 10)
@@ -412,4 +409,6 @@ for (i in 1:length(measures_names))
   }
 
 }
+
+
 

@@ -2,7 +2,7 @@
 
 runs=5
 final_gen=199
-experiments=("hyperplasticodingseasonsI15" "hyperplasticodingp" "hyperplasticodingt3")
+experiments=("hyperplasticodingseasonsI15" "hyperplasticodingp" "hyperplasticodingt3"  "hyperplasticodingseasonsI15base")
 
 
 for i in $(seq $runs)

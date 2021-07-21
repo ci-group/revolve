@@ -8,18 +8,20 @@ import sys
 dirpath = 'data/'
 
 experiments_type = [
- #'hyperplasticodingp',
- #'hyperplasticodingt3',
-  'hyperplasticodingseasons'
+   'hyperplasticodingp'#,
+   # 'hyperplasticodingt3',
+   # 'hyperplasticodingseasonsI15',
+   # 'hyperplasticodingseasonsI15base'
 
 ]
 environments = {
-    #'hyperplasticodingp': ['plane'],
-    #'hyperplasticodingt3': ['tilted3'],
-    'hyperplasticodingseasons' : ['plane', 'tilted3']
+    'hyperplasticodingp': ['plane']#,
+    # 'hyperplasticodingt3': ['tilted3'],
+    # 'hyperplasticodingseasonsI15' : ['plane', 'tilted3'],
+    # 'hyperplasticodingseasonsI15base' : ['plane', 'tilted3']
                  }
 
-runs = range(1, 5+1)
+runs = range(1, 1+1)
 
 # set these variables according to your experiments #
 
