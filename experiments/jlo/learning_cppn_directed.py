@@ -233,8 +233,8 @@ async def run():
     simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)
     await simulator_queue.start()
 
-    analyzer_queue = AnalyzerQueue(1, settings, settings.port_start + n_cores)
-    await analyzer_queue.start()
+    analyzer_queue = None  # AnalyzerQueue(1, settings, settings.port_start + n_cores)
+    # await analyzer_queue.start()
 
     population = Population(
         population_conf, simulator_queue, analyzer_queue, next_robot_id

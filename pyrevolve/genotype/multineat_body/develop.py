@@ -38,6 +38,7 @@ def multineat_body_develop(
 
                     to_explore.put(child)
                     part_count += 1
+                    # revolve_bot -> update_subtrate throws on collision (raise for intersection True)
         elif type(module) == BrickModule:
             for child_index in range(1, 4):
                 if part_count < max_parts:
