@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+from dataclasses import dataclass
 
 import multineat
 from pyrevolve import parser
@@ -36,10 +37,71 @@ from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
 
+@dataclass
+class GenotypeConstructorConfig:
+    bodybrain_composition_config: BodybrainCompositionConfig
+    body_multineat_params: multineat.Parameters
+    brain_multineat_params: multineat.Parameters
+
+
 def create_random_genotype(
-    config: BodybrainCompositionConfig, id: int
+    config: GenotypeConstructorConfig, id: int
 ) -> BodybrainCompositionGenotype:
-    # body settings
+    return BodybrainCompositionGenotype(
+        id,
+        config.bodybrain_composition_config,
+        MultineatBodyGenotype.random(config.body_multineat_params),
+        MultineatCpgBrainGenotype.random(config.brain_multineat_params),
+    )
+
+
+async def run():
+    """
+    The main coroutine, which is started below.
+    """
+
+    # experiment settings
+    num_generations = 3
+    population_size = 30
+    offspring_size = 15
+
+    # config for brain development from multineat
+    brain_config = MultineatCpgBrainConfig(
+        abs_output_bound=1.0,
+        use_frame_of_reference=False,
+        signal_factor_all=4.0,
+        signal_factor_mid=2.5,
+        signal_factor_left_right=2.5,
+        range_lb=None,
+        range_ub=1.0,
+        init_neuron_state=0.707,
+        load_brain=None,
+        output_directory=None,
+        run_analytics=None,
+        reset_robot_position=None,
+        reset_neuron_state_bool=None,
+        reset_neuron_random=False,
+        verbose=None,
+        startup_time=None,
+    )
+
+    # bodybrain composition genotype config
+    bodybrain_composition_config = BodybrainCompositionConfig(
+        body_crossover=neatcppn_body_crossover,
+        brain_crossover=neatcppn_cpg_brain_crossover,
+        body_crossover_config=None,
+        brain_crossover_config=None,
+        body_mutate=neatcppn_body_mutate,
+        brain_mutate=neatcppn_cpg_brain_mutate,
+        body_mutate_config=None,
+        brain_mutate_config=None,
+        body_develop=neatcppn_body_develop,
+        brain_develop=neatcppn_cpg_brain_develop,
+        body_develop_config=None,
+        brain_develop_config=brain_config,
+    )
+
+    # body multineat settings
     body_multineat_params = multineat.Parameters()
 
     body_multineat_params.MutateRemLinkProb = 0.02
@@ -76,7 +138,7 @@ def create_random_genotype(
 
     body_multineat_params.AllowLoops = False
 
-    # brain settings
+    # brain multineat settings
     brain_multineat_params = multineat.Parameters()
 
     brain_multineat_params.MutateRemLinkProb = 0.02
@@ -113,56 +175,12 @@ def create_random_genotype(
 
     brain_multineat_params.AllowLoops = False
 
-    return BodybrainCompositionGenotype(
-        id,
-        config,
-        MultineatBodyGenotype.random(body_multineat_params),
-        MultineatCpgBrainGenotype.random(brain_multineat_params),
+    # genotype constructor config. Used by `create_random_genotype` in this file.
+    genotype_constructor_config = GenotypeConstructorConfig(
+        bodybrain_composition_config, body_multineat_params, brain_multineat_params
     )
 
-
-async def run():
-    """
-    The main coroutine, which is started below.
-    """
-
-    num_generations = 3
-    population_size = 30
-    offspring_size = 15
-
-    brain_config = MultineatCpgBrainConfig(
-        abs_output_bound=1.0,
-        use_frame_of_reference=False,
-        signal_factor_all=4.0,
-        signal_factor_mid=2.5,
-        signal_factor_left_right=2.5,
-        range_lb=None,
-        range_ub=1.0,
-        init_neuron_state=0.707,
-        load_brain=None,
-        output_directory=None,
-        run_analytics=None,
-        reset_robot_position=None,
-        reset_neuron_state_bool=None,
-        reset_neuron_random=False,
-        verbose=None,
-        startup_time=None,
-    )
-
-    configuration = BodybrainCompositionConfig(
-        body_crossover=neatcppn_body_crossover,
-        brain_crossover=neatcppn_cpg_brain_crossover,
-        body_crossover_config=None,
-        brain_crossover_config=None,
-        body_mutate=neatcppn_body_mutate,
-        brain_mutate=neatcppn_cpg_brain_mutate,
-        body_mutate_config=None,
-        brain_mutate_config=None,
-        body_develop=neatcppn_body_develop,
-        brain_develop=neatcppn_cpg_brain_develop,
-        body_develop_config=None,
-        brain_develop_config=brain_config,
-    )
+    ###### From here on I did not check things yet --Aart
 
     # Parse command line / file input arguments
     settings = parser.parse_args()
@@ -192,12 +210,12 @@ async def run():
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=create_random_genotype,
-        genotype_conf=configuration,
+        genotype_conf=genotype_constructor_config,
         fitness_function=fitness.displacement_velocity,
         mutation_operator=bodybrain_composition_mutate,
-        mutation_conf=configuration,
+        mutation_conf=bodybrain_composition_config,
         crossover_operator=bodybrain_composition_crossover,
-        crossover_conf=configuration,
+        crossover_conf=bodybrain_composition_config,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(
             individuals, 2, tournament_selection

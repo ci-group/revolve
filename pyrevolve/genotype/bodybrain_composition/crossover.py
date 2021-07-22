@@ -7,7 +7,7 @@ from pyrevolve.genotype.bodybrain_composition.genotype import (
 
 
 def bodybrain_composition_crossover(
-    parents: List[BodybrainCompositionGenotype], config: BodybrainCompositionConfig, _
+    parents: List[BodybrainCompositionGenotype], _, config: BodybrainCompositionConfig
 ) -> BodybrainCompositionGenotype:
     body_child = config.body_crossover(
         [parent.body_genotype for parent in parents],
