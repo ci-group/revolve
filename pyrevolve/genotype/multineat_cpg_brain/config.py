@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class NeatcppnCpgBrainConfig:
+class MultineatCpgBrainConfig:
     abs_output_bound: float
     use_frame_of_reference: bool
     signal_factor_all: float

@@ -21,15 +21,17 @@ from pyrevolve.genotype.bodybrain_composition.genotype import (
 from pyrevolve.genotype.bodybrain_composition.mutation import (
     bodybrain_composition_mutate,
 )
-from pyrevolve.genotype.neatcppn_body.crossover import neatcppn_body_crossover
-from pyrevolve.genotype.neatcppn_body.develop import neatcppn_body_develop
-from pyrevolve.genotype.neatcppn_body.genotype import NeatcppnBodyGenotype
-from pyrevolve.genotype.neatcppn_body.mutation import neatcppn_body_mutate
-from pyrevolve.genotype.neatcppn_cpg_brain.config import NeatcppnCpgBrainConfig
-from pyrevolve.genotype.neatcppn_cpg_brain.crossover import neatcppn_cpg_brain_crossover
-from pyrevolve.genotype.neatcppn_cpg_brain.develop import neatcppn_cpg_brain_develop
-from pyrevolve.genotype.neatcppn_cpg_brain.genotype import NeatcppnCpgBrainGenotype
-from pyrevolve.genotype.neatcppn_cpg_brain.mutation import neatcppn_cpg_brain_mutate
+from pyrevolve.genotype.multineat_body.crossover import neatcppn_body_crossover
+from pyrevolve.genotype.multineat_body.develop import neatcppn_body_develop
+from pyrevolve.genotype.multineat_body.genotype import MultineatBodyGenotype
+from pyrevolve.genotype.multineat_body.mutation import neatcppn_body_mutate
+from pyrevolve.genotype.multineat_cpg_brain.config import MultineatCpgBrainConfig
+from pyrevolve.genotype.multineat_cpg_brain.crossover import (
+    neatcppn_cpg_brain_crossover,
+)
+from pyrevolve.genotype.multineat_cpg_brain.develop import neatcppn_cpg_brain_develop
+from pyrevolve.genotype.multineat_cpg_brain.genotype import MultineatCpgBrainGenotype
+from pyrevolve.genotype.multineat_cpg_brain.mutation import neatcppn_cpg_brain_mutate
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
@@ -38,9 +40,6 @@ def create_random_genotype(
     config: BodybrainCompositionConfig, id: int
 ) -> BodybrainCompositionGenotype:
     # body settings
-    body_n_inputs = 4
-    body_n_ouputs = 3
-
     body_multineat_params = multineat.Parameters()
 
     body_multineat_params.MutateRemLinkProb = 0.02
@@ -78,9 +77,6 @@ def create_random_genotype(
     body_multineat_params.AllowLoops = False
 
     # brain settings
-    brain_n_inputs = 4
-    brain_n_outputs = 1
-
     brain_multineat_params = multineat.Parameters()
 
     brain_multineat_params.MutateRemLinkProb = 0.02
@@ -120,12 +116,8 @@ def create_random_genotype(
     return BodybrainCompositionGenotype(
         id,
         config,
-        NeatcppnBodyGenotype.random(
-            body_n_inputs, body_n_ouputs, body_multineat_params
-        ),
-        NeatcppnCpgBrainGenotype.random(
-            brain_n_inputs, brain_n_outputs, brain_multineat_params
-        ),
+        MultineatBodyGenotype.random(body_multineat_params),
+        MultineatCpgBrainGenotype.random(brain_multineat_params),
     )
 
 
@@ -134,12 +126,11 @@ async def run():
     The main coroutine, which is started below.
     """
 
-    # experiment params #
     num_generations = 3
     population_size = 30
     offspring_size = 15
 
-    brain_config = NeatcppnCpgBrainConfig(
+    brain_config = MultineatCpgBrainConfig(
         abs_output_bound=1.0,
         use_frame_of_reference=False,
         signal_factor_all=4.0,
@@ -172,8 +163,6 @@ async def run():
         body_develop_config=None,
         brain_develop_config=brain_config,
     )
-
-    # experiment params #
 
     # Parse command line / file input arguments
     settings = parser.parse_args()
