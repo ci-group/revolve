@@ -4,7 +4,7 @@ import multineat
 from pyrevolve.revolve_bot import RevolveBot
 
 
-class NeatcppnGenotype:
+class MultineatGenotype:
     _multineat_genome: multineat.Genome
 
     def __init__(self, multineat_genome: multineat.Genome):
@@ -15,7 +15,7 @@ class NeatcppnGenotype:
         n_inputs: int,
         n_outputs: int,
         multineat_params: multineat.Parameters,
-    ) -> NeatcppnGenotype:
+    ) -> MultineatGenotype:
         multineat_genome = multineat.Genome(
             0,  # ID
             n_inputs,
@@ -28,4 +28,4 @@ class NeatcppnGenotype:
             multineat_params,
             0,  # number of hidden layers
         )
-        return NeatcppnGenotype(multineat_genome)
+        return MultineatGenotype(multineat_genome)

@@ -1,12 +1,12 @@
 import multineat
-from pyrevolve.genotype.neatcppn.genotype import NeatcppnGenotype
+from pyrevolve.genotype.multineat.genotype import MultineatGenotype
 
 
-class MultineatBodyGenotype(NeatcppnGenotype):
+class MultineatBodyGenotype(MultineatGenotype):
     @staticmethod
     def random(
         multineat_params: multineat.Parameters,
-    ) -> NeatcppnGenotype:
+    ) -> MultineatGenotype:
         n_inputs = 4
         n_outputs = 6
         return super(MultineatBodyGenotype, MultineatBodyGenotype).random(

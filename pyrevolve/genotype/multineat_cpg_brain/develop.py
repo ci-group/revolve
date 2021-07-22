@@ -1,9 +1,12 @@
+from pyrevolve.genotype.multineat.genotype import MultineatGenotype
 from pyrevolve.genotype.multineat_cpg_brain.config import MultineatCpgBrainConfig
 from pyrevolve.revolve_bot.brain import Brain
 from pyrevolve.revolve_bot.brain.cpg import BrainCPG
 
 
-def multineat_cpg_brain_develop(self, config: MultineatCpgBrainConfig) -> Brain:
+def multineat_cpg_brain_develop(
+    genotype: MultineatGenotype, config: MultineatCpgBrainConfig
+) -> Brain:
     brain = BrainCPG()
     brain.abs_output_bound = config.abs_output_bound
     brain.use_frame_of_reference = config.use_frame_of_reference
