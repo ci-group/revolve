@@ -85,22 +85,6 @@ async def run():
         startup_time=None,
     )
 
-    # bodybrain composition genotype config
-    bodybrain_composition_config = BodybrainCompositionConfig(
-        body_crossover=neatcppn_body_crossover,
-        brain_crossover=neatcppn_cpg_brain_crossover,
-        body_crossover_config=None,
-        brain_crossover_config=None,
-        body_mutate=neatcppn_body_mutate,
-        brain_mutate=neatcppn_cpg_brain_mutate,
-        body_mutate_config=None,
-        brain_mutate_config=None,
-        body_develop=neatcppn_body_develop,
-        brain_develop=neatcppn_cpg_brain_develop,
-        body_develop_config=None,
-        brain_develop_config=brain_config,
-    )
-
     # body multineat settings
     body_multineat_params = multineat.Parameters()
 
@@ -174,6 +158,22 @@ async def run():
     brain_multineat_params.MutateLinkTraitsProb = 0.0
 
     brain_multineat_params.AllowLoops = False
+
+    # bodybrain composition genotype config
+    bodybrain_composition_config = BodybrainCompositionConfig(
+        body_crossover=neatcppn_body_crossover,
+        brain_crossover=neatcppn_cpg_brain_crossover,
+        body_crossover_config=None,
+        brain_crossover_config=None,
+        body_mutate=neatcppn_body_mutate,
+        brain_mutate=neatcppn_cpg_brain_mutate,
+        body_mutate_config=None,
+        brain_mutate_config=None,
+        body_develop=neatcppn_body_develop,
+        brain_develop=neatcppn_cpg_brain_develop,
+        body_develop_config=None,
+        brain_develop_config=brain_config,
+    )
 
     # genotype constructor config. Used by `create_random_genotype` in this file.
     genotype_constructor_config = GenotypeConstructorConfig(
