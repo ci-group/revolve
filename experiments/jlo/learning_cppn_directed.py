@@ -22,17 +22,17 @@ from pyrevolve.genotype.bodybrain_composition.genotype import (
 from pyrevolve.genotype.bodybrain_composition.mutation import (
     bodybrain_composition_mutate,
 )
-from pyrevolve.genotype.multineat_body.crossover import neatcppn_body_crossover
-from pyrevolve.genotype.multineat_body.develop import neatcppn_body_develop
+from pyrevolve.genotype.multineat_body.crossover import multineat_body_crossover
+from pyrevolve.genotype.multineat_body.develop import multineat_body_develop
 from pyrevolve.genotype.multineat_body.genotype import MultineatBodyGenotype
-from pyrevolve.genotype.multineat_body.mutation import neatcppn_body_mutate
+from pyrevolve.genotype.multineat_body.mutation import multineat_body_mutate
 from pyrevolve.genotype.multineat_cpg_brain.config import MultineatCpgBrainConfig
 from pyrevolve.genotype.multineat_cpg_brain.crossover import (
-    neatcppn_cpg_brain_crossover,
+    multineat_cpg_brain_crossover,
 )
-from pyrevolve.genotype.multineat_cpg_brain.develop import neatcppn_cpg_brain_develop
+from pyrevolve.genotype.multineat_cpg_brain.develop import multineat_cpg_brain_develop
 from pyrevolve.genotype.multineat_cpg_brain.genotype import MultineatCpgBrainGenotype
-from pyrevolve.genotype.multineat_cpg_brain.mutation import neatcppn_cpg_brain_mutate
+from pyrevolve.genotype.multineat_cpg_brain.mutation import multineat_cpg_brain_mutate
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
@@ -161,16 +161,16 @@ async def run():
 
     # bodybrain composition genotype config
     bodybrain_composition_config = BodybrainCompositionConfig(
-        body_crossover=neatcppn_body_crossover,
-        brain_crossover=neatcppn_cpg_brain_crossover,
+        body_crossover=multineat_body_crossover,
+        brain_crossover=multineat_cpg_brain_crossover,
         body_crossover_config=None,
         brain_crossover_config=None,
-        body_mutate=neatcppn_body_mutate,
-        brain_mutate=neatcppn_cpg_brain_mutate,
+        body_mutate=multineat_body_mutate,
+        brain_mutate=multineat_cpg_brain_mutate,
         body_mutate_config=None,
         brain_mutate_config=None,
-        body_develop=neatcppn_body_develop,
-        brain_develop=neatcppn_cpg_brain_develop,
+        body_develop=multineat_body_develop,
+        brain_develop=multineat_cpg_brain_develop,
         body_develop_config=None,
         brain_develop_config=brain_config,
     )
@@ -230,7 +230,6 @@ async def run():
 
     n_cores = settings.n_cores
 
-    settings = parser.parse_args()
     simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)
     await simulator_queue.start()
 
