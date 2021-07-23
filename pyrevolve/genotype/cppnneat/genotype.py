@@ -28,3 +28,7 @@ class CppnneatGenotype:
             0,  # number of hidden layers
         )
         return CppnneatGenotype(multineat_genome)
+
+    @property
+    def multineat_genome(self) -> multineat.Genome:
+        return self._multineat_genome

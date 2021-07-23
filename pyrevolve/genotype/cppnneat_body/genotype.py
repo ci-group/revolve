@@ -8,7 +8,7 @@ class CppnneatBodyGenotype(CppnneatGenotype):
         multineat_params: multineat.Parameters,
     ) -> CppnneatGenotype:
         n_inputs = 4
-        n_outputs = 6
+        n_outputs = 7
         return super(CppnneatBodyGenotype, CppnneatBodyGenotype).random(
             n_inputs, n_outputs, multineat_params
         )

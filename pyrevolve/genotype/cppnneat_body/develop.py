@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from queue import Queue
 from typing import Any, Optional, Tuple
 
+import multineat
 from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
 from pyrevolve.genotype.cppnneat_body.config import CppnneatBodyConfig
 from pyrevolve.revolve_bot.revolve_module import (
@@ -30,6 +31,9 @@ def cppnneat_body_develop(
 ) -> CoreModule:
     max_parts = 10
 
+    brain_net = multineat.NeuralNetwork()
+    genotype.multineat_genome.BuildPhenotype(brain_net)
+
     to_explore: Queue[RevolveModule] = Queue()
 
     core_module = CoreModule()
@@ -50,14 +54,14 @@ def cppnneat_body_develop(
             child_index_range = range(0, 4)
         elif type(module.module_reference) == BrickModule:
             child_index_range = range(1, 4)
-        elif type(module) == ActiveHingeModule:
+        elif type(module.module_reference) == ActiveHingeModule:
             child_index_range = range(1, 2)
         else:  # Should actually never arrive here but just checking module type to be sure
             raise RuntimeError
 
         for child_index in child_index_range:
             if part_count < max_parts:
-                child = _add_child(module, child_index)
+                child = _add_child(brain_net, module, child_index)
                 if child != None:
                     to_explore.put(child)
                     part_count += 1
@@ -67,17 +71,39 @@ def cppnneat_body_develop(
 
 # get module type, orientation
 def _get_child_type(
-    position: Tuple[int, int, int], chain_length: int
+    brain_net: multineat.NeuralNetwork,
+    position: Tuple[int, int, int],
+    chain_length: int,
 ) -> Tuple[Any, int]:
-    return (BrickModule, 0)  # TODO
+    brain_net.Input([position[0], position[1], position[2], chain_length])
+    brain_net.Activate()
+    output = brain_net.Output()
+
+    # get module type from output probabilities
+    type_probs = [output[0], output[1], output[2]]
+    types = [None, BrickModule, ActiveHingeModule]
+    module_type = types[type_probs.index(min(type_probs))]
+
+    # get rotation from output probabilities
+    rotation_probs = [output[3], output[4], output[5], output[6]]
+    rotation = rotation_probs.index(min(rotation_probs))
+
+    # module_type = ActiveHingeModule
+    # rotation = 0
+
+    if module_type == ActiveHingeModule:  # debugging
+        module_type = BrickModule
+    return (module_type, rotation)
 
 
-def _add_child(module: _Module, child_index: int) -> Optional[_Module]:
+def _add_child(
+    brain_net: multineat.NeuralNetwork, module: _Module, child_index: int
+) -> Optional[_Module]:
     forward = get_new_forward(module.forward, module.up, child_index)
     position = _add(module.position, forward)
     chain_length = module.chain_length + 1
 
-    child_type, orientation = _get_child_type(position, chain_length)
+    child_type, orientation = _get_child_type(brain_net, position, chain_length)
     if child_type == None:
         return None
 
