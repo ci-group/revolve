@@ -2,5 +2,5 @@ from dataclasses import dataclass
 
 
 @dataclass
-class MultineatBodyConfig:
+class CppnneatBodyConfig:
     pass

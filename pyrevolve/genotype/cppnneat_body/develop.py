@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from queue import Queue
 from typing import Any, Optional, Tuple
 
-from pyrevolve.genotype.multineat.genotype import MultineatGenotype
-from pyrevolve.genotype.multineat_body.config import MultineatBodyConfig
+from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
+from pyrevolve.genotype.cppnneat_body.config import CppnneatBodyConfig
 from pyrevolve.revolve_bot.revolve_module import (
     ActiveHingeModule,
     BrickModule,
@@ -19,8 +19,8 @@ class _Module:
     module_reference: CoreModule
 
 
-def multineat_body_develop(
-    genotype: MultineatGenotype, config: MultineatBodyConfig
+def cppnneat_body_develop(
+    genotype: CppnneatGenotype, config: CppnneatBodyConfig
 ) -> CoreModule:
     max_parts = 10
 

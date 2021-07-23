@@ -22,17 +22,17 @@ from pyrevolve.genotype.bodybrain_composition.genotype import (
 from pyrevolve.genotype.bodybrain_composition.mutation import (
     bodybrain_composition_mutate,
 )
-from pyrevolve.genotype.multineat_body.crossover import multineat_body_crossover
-from pyrevolve.genotype.multineat_body.develop import multineat_body_develop
-from pyrevolve.genotype.multineat_body.genotype import MultineatBodyGenotype
-from pyrevolve.genotype.multineat_body.mutation import multineat_body_mutate
-from pyrevolve.genotype.multineat_cpg_brain.config import MultineatCpgBrainConfig
-from pyrevolve.genotype.multineat_cpg_brain.crossover import (
-    multineat_cpg_brain_crossover,
+from pyrevolve.genotype.cppnneat_body.crossover import cppnneat_body_crossover
+from pyrevolve.genotype.cppnneat_body.develop import cppnneat_body_develop
+from pyrevolve.genotype.cppnneat_body.genotype import CppnneatBodyGenotype
+from pyrevolve.genotype.cppnneat_body.mutation import cppnneat_body_mutate
+from pyrevolve.genotype.cppnneat_cpg_brain.config import CppnneatCpgBrainConfig
+from pyrevolve.genotype.cppnneat_cpg_brain.crossover import (
+    cppnneat_cpg_brain_crossover,
 )
-from pyrevolve.genotype.multineat_cpg_brain.develop import multineat_cpg_brain_develop
-from pyrevolve.genotype.multineat_cpg_brain.genotype import MultineatCpgBrainGenotype
-from pyrevolve.genotype.multineat_cpg_brain.mutation import multineat_cpg_brain_mutate
+from pyrevolve.genotype.cppnneat_cpg_brain.develop import cppnneat_cpg_brain_develop
+from pyrevolve.genotype.cppnneat_cpg_brain.genotype import CppnneatCpgBrainGenotype
+from pyrevolve.genotype.cppnneat_cpg_brain.mutation import cppnneat_cpg_brain_mutate
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
@@ -50,8 +50,8 @@ def create_random_genotype(
     return BodybrainCompositionGenotype(
         id,
         config.bodybrain_composition_config,
-        MultineatBodyGenotype.random(config.body_multineat_params),
-        MultineatCpgBrainGenotype.random(config.brain_multineat_params),
+        CppnneatBodyGenotype.random(config.body_multineat_params),
+        CppnneatCpgBrainGenotype.random(config.brain_multineat_params),
     )
 
 
@@ -66,7 +66,7 @@ async def run():
     offspring_size = 15
 
     # config for brain development from multineat
-    brain_config = MultineatCpgBrainConfig(
+    brain_config = CppnneatCpgBrainConfig(
         abs_output_bound=1.0,
         use_frame_of_reference=False,
         signal_factor_all=4.0,
@@ -161,16 +161,16 @@ async def run():
 
     # bodybrain composition genotype config
     bodybrain_composition_config = BodybrainCompositionConfig(
-        body_crossover=multineat_body_crossover,
-        brain_crossover=multineat_cpg_brain_crossover,
+        body_crossover=cppnneat_body_crossover,
+        brain_crossover=cppnneat_cpg_brain_crossover,
         body_crossover_config=None,
         brain_crossover_config=None,
-        body_mutate=multineat_body_mutate,
-        brain_mutate=multineat_cpg_brain_mutate,
+        body_mutate=cppnneat_body_mutate,
+        brain_mutate=cppnneat_cpg_brain_mutate,
         body_mutate_config=None,
         brain_mutate_config=None,
-        body_develop=multineat_body_develop,
-        brain_develop=multineat_cpg_brain_develop,
+        body_develop=cppnneat_body_develop,
+        brain_develop=cppnneat_cpg_brain_develop,
         body_develop_config=None,
         brain_develop_config=brain_config,
     )

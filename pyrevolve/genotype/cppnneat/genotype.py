@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import multineat
-from pyrevolve.revolve_bot import RevolveBot
 
 
-class MultineatGenotype:
+class CppnneatGenotype:
     _multineat_genome: multineat.Genome
 
     def __init__(self, multineat_genome: multineat.Genome):
@@ -15,7 +14,7 @@ class MultineatGenotype:
         n_inputs: int,
         n_outputs: int,
         multineat_params: multineat.Parameters,
-    ) -> MultineatGenotype:
+    ) -> CppnneatGenotype:
         multineat_genome = multineat.Genome(
             0,  # ID
             n_inputs,
@@ -28,4 +27,4 @@ class MultineatGenotype:
             multineat_params,
             0,  # number of hidden layers
         )
-        return MultineatGenotype(multineat_genome)
+        return CppnneatGenotype(multineat_genome)
