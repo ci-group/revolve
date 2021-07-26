@@ -31,7 +31,7 @@ class BodybrainCompositionGenotype(Genotype):
             self._body_genotype, self._config.body_develop_config
         )
         phenotype._brain = self._config.brain_develop(
-            self._brain_genotype, self._config.brain_develop_config
+            self._brain_genotype, self._config.brain_develop_config, phenotype._body
         )
         phenotype.update_substrate()
         return phenotype

@@ -1,11 +1,15 @@
+from xml.etree import ElementTree
+
 from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
 from pyrevolve.genotype.cppnneat_cpg_brain.config import CppnneatCpgBrainConfig
 from pyrevolve.revolve_bot.brain import Brain
 from pyrevolve.revolve_bot.brain.cpg import BrainCPG
+from pyrevolve.revolve_bot.revolve_bot import RevolveBot
+from pyrevolve.revolve_bot.revolve_module import CoreModule
 
 
 def cppnneat_cpg_brain_develop(
-    genotype: CppnneatGenotype, config: CppnneatCpgBrainConfig
+    genotype: CppnneatGenotype, config: CppnneatCpgBrainConfig, body: CoreModule
 ) -> Brain:
     brain = BrainCPG()
     brain.abs_output_bound = config.abs_output_bound
@@ -25,6 +29,46 @@ def cppnneat_cpg_brain_develop(
     brain.verbose = config.verbose
     brain.startup_time = config.startup_time
 
-    brain.weights = [0.5]  # TODO weights
+    # Convert to sdf so we can extract things like position and order of actuators exactly like they would be read by the plugin
+    bot = RevolveBot("dummy")
+    bot._body = body
+    bot._brain = BrainCPG()  # dummy
+    bot.update_substrate()
+    sdf = bot.to_sdf()
+    root = ElementTree.fromstring(sdf)
+    namespaces = {"rv": "https://github.com/ci-group/revolve"}
+    actuators = root.findall(
+        "model/plugin[@name='robot_controller']/rv:robot_config/rv:brain/rv:actuators/rv:servomotor",
+        namespaces,
+    )
+
+    # calculate weights from actuators
+    brain.weights = []
+
+    # TODO which weights first. connection or internal?
+
+    for i, actuator in enumerate(actuators[:-1]):
+        for neighbour in actuators[i + 1 :]:
+            leftcoords = list(
+                map(lambda x: float(x), actuator.attrib["coordinates"].split(";"))
+            )
+            rightcoords = list(
+                map(lambda x: float(x), neighbour.attrib["coordinates"].split(";"))
+            )
+            # TODO
+            if (
+                abs(leftcoords[0] - rightcoords[0])
+                + abs(leftcoords[1] - rightcoords[1])
+                + abs(leftcoords[2] - rightcoords[2])
+                < 2.01
+            ):
+                brain.weights.append(0.5)
+
+    # temp TODO
+    for actuator in actuators:
+        coords = actuator.attrib["coordinates"]
+        brain.weights.append(0.5)
+
+    print(len(brain.weights))
 
     return brain

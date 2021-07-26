@@ -35,7 +35,7 @@ class BodybrainCompositionConfig:
         [Any, Any], CoreModule
     ]  # (body_genotype, body_develop_config) -> CoreModule
     brain_develop: Callable[
-        [Any, Any], Brain
+        [Any, Any, CoreModule], Brain
     ]  # (brain_genotype, brain_develop_config) -> Brain
     body_develop_config: Any
     brain_develop_config: Any
