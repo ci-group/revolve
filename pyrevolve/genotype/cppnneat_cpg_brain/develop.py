@@ -25,6 +25,6 @@ def cppnneat_cpg_brain_develop(
     brain.verbose = config.verbose
     brain.startup_time = config.startup_time
 
-    brain.weights = []  # TODO weights
+    brain.weights = [0.5]  # TODO weights
 
     return brain

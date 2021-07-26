@@ -14,6 +14,9 @@ class CppnneatGenotype:
         n_inputs: int,
         n_outputs: int,
         multineat_params: multineat.Parameters,
+        n_start_mutations: int,
+        innov_db: multineat.InnovationDatabase,
+        rng: multineat.RNG,
     ) -> CppnneatGenotype:
         multineat_genome = multineat.Genome(
             0,  # ID
@@ -27,6 +30,16 @@ class CppnneatGenotype:
             multineat_params,
             0,  # number of hidden layers
         )
+
+        for _ in range(n_start_mutations):
+            multineat_genome.Mutate(
+                False,
+                multineat.SearchMode.COMPLEXIFYING,
+                innov_db,
+                multineat_params,
+                rng,
+            )
+
         return CppnneatGenotype(multineat_genome)
 
     @property

@@ -77,29 +77,24 @@ def _get_child_type(
 ) -> Tuple[Any, int]:
     brain_net.Input([position[0], position[1], position[2], chain_length])
     brain_net.Activate()
-    output = brain_net.Output()
+    outputs = brain_net.Output()
 
     # get module type from output probabilities
-    type_probs = [output[0], output[1], output[2]]
+    type_probs = [outputs[0], outputs[1], outputs[2]]
     types = [None, BrickModule, ActiveHingeModule]
     module_type = types[type_probs.index(min(type_probs))]
 
     # get rotation from output probabilities
-    rotation_probs = [output[3], output[4], output[5], output[6]]
+    rotation_probs = [outputs[3], outputs[4], outputs[5], outputs[6]]
     rotation = rotation_probs.index(min(rotation_probs))
 
-    # module_type = ActiveHingeModule
-    # rotation = 0
-
-    if module_type == ActiveHingeModule:  # debugging
-        module_type = BrickModule
     return (module_type, rotation)
 
 
 def _add_child(
     brain_net: multineat.NeuralNetwork, module: _Module, child_index: int
 ) -> Optional[_Module]:
-    forward = get_new_forward(module.forward, module.up, child_index)
+    forward = _get_new_forward(module.forward, module.up, child_index)
     position = _add(module.position, forward)
     chain_length = module.chain_length + 1
 
@@ -133,7 +128,7 @@ def _add_child(
     # revolve_bot -> update_subtrate throws on collision (raise for intersection True)
 
 
-def get_new_forward(
+def _get_new_forward(
     parent_forward: Tuple[int, int, int], parent_up: Tuple[int, int, int], slot: int
 ) -> Tuple[int, int, int]:
     rotation: int

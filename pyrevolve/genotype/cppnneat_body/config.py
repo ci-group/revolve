@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 
+import multineat
+
 
 @dataclass
 class CppnneatBodyConfig:
-    pass
+    innov_db: multineat.InnovationDatabase
+    rng: multineat.RNG

@@ -1,8 +1,13 @@
 from dataclasses import dataclass
 
+import multineat
+
 
 @dataclass
 class CppnneatCpgBrainConfig:
+    innov_db: multineat.InnovationDatabase
+    rng: multineat.RNG
+
     abs_output_bound: float
     use_frame_of_reference: bool
     signal_factor_all: float
