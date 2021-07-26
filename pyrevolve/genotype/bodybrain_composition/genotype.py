@@ -3,8 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from pyrevolve.genotype import Genotype
-from pyrevolve.genotype.bodybrain_composition.config import \
-    BodybrainCompositionConfig
+from pyrevolve.genotype.bodybrain_composition.config import BodybrainCompositionConfig
 from pyrevolve.revolve_bot import RevolveBot
 
 
@@ -34,6 +33,7 @@ class BodybrainCompositionGenotype(Genotype):
         phenotype._brain = self._config.brain_develop(
             self._brain_genotype, self._config.brain_develop_config
         )
+        phenotype.update_substrate()
         return phenotype
 
     def export_genotype(self, filepath):
