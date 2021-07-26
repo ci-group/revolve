@@ -10,7 +10,7 @@ class CppnneatCpgBrainGenotype(CppnneatGenotype):
         innov_db: multineat.InnovationDatabase,
         rng: multineat.RNG,
     ) -> CppnneatGenotype:
-        n_inputs = 4
+        n_inputs = 6
         n_outputs = 1
         return super(CppnneatCpgBrainGenotype, CppnneatCpgBrainGenotype).random(
             n_inputs, n_outputs, multineat_params, n_start_mutations, innov_db, rng

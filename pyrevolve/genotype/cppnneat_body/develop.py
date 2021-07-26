@@ -31,8 +31,8 @@ def cppnneat_body_develop(
 ) -> CoreModule:
     max_parts = 10
 
-    brain_net = multineat.NeuralNetwork()
-    genotype.multineat_genome.BuildPhenotype(brain_net)
+    body_net = multineat.NeuralNetwork()
+    genotype.multineat_genome.BuildPhenotype(body_net)
 
     to_explore: Queue[RevolveModule] = Queue()
 
@@ -61,7 +61,7 @@ def cppnneat_body_develop(
 
         for child_index in child_index_range:
             if part_count < max_parts:
-                child = _add_child(brain_net, module, child_index)
+                child = _add_child(body_net, module, child_index)
                 if child != None:
                     to_explore.put(child)
                     part_count += 1
@@ -71,13 +71,13 @@ def cppnneat_body_develop(
 
 # get module type, orientation
 def _get_child_type(
-    brain_net: multineat.NeuralNetwork,
+    body_net: multineat.NeuralNetwork,
     position: Tuple[int, int, int],
     chain_length: int,
 ) -> Tuple[Any, int]:
-    brain_net.Input([position[0], position[1], position[2], chain_length])
-    brain_net.Activate()
-    outputs = brain_net.Output()
+    body_net.Input([position[0], position[1], position[2], chain_length])
+    body_net.Activate()
+    outputs = body_net.Output()
 
     # get module type from output probabilities
     type_probs = [outputs[0], outputs[1], outputs[2]]
@@ -92,13 +92,13 @@ def _get_child_type(
 
 
 def _add_child(
-    brain_net: multineat.NeuralNetwork, module: _Module, child_index: int
+    body_net: multineat.NeuralNetwork, module: _Module, child_index: int
 ) -> Optional[_Module]:
     forward = _get_new_forward(module.forward, module.up, child_index)
     position = _add(module.position, forward)
     chain_length = module.chain_length + 1
 
-    child_type, orientation = _get_child_type(brain_net, position, chain_length)
+    child_type, orientation = _get_child_type(body_net, position, chain_length)
     if child_type == None:
         return None
 

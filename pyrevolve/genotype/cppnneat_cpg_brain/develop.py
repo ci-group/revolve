@@ -1,5 +1,6 @@
 from xml.etree import ElementTree
 
+import multineat
 from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
 from pyrevolve.genotype.cppnneat_cpg_brain.config import CppnneatCpgBrainConfig
 from pyrevolve.revolve_bot.brain import Brain
@@ -47,27 +48,41 @@ def cppnneat_cpg_brain_develop(
 
     # TODO which weights first. connection or internal?
 
+    brain_net = multineat.NeuralNetwork()
+    genotype.multineat_genome.BuildPhenotype(brain_net)
+
+    parsecoords = lambda coordsstr: list(map(lambda x: float(x), coordsstr.split(";")))
+
+    for actuator in actuators:
+        coords = parsecoords(actuator.attrib["coordinates"])
+        brain_net.Input([coords[0], coords[1], coords[2], 0.0, 0.0, 0.0])
+        brain_net.Activate()
+        weight = brain_net.Output()[0]
+        brain.weights.append(weight)
+
     for i, actuator in enumerate(actuators[:-1]):
         for neighbour in actuators[i + 1 :]:
-            leftcoords = list(
-                map(lambda x: float(x), actuator.attrib["coordinates"].split(";"))
-            )
-            rightcoords = list(
-                map(lambda x: float(x), neighbour.attrib["coordinates"].split(";"))
-            )
-            # TODO
+            leftcoords = parsecoords(actuator.attrib["coordinates"])
+            rightcoords = parsecoords(neighbour.attrib["coordinates"])
             if (
                 abs(leftcoords[0] - rightcoords[0])
                 + abs(leftcoords[1] - rightcoords[1])
                 + abs(leftcoords[2] - rightcoords[2])
                 < 2.01
             ):
-                brain.weights.append(0.5)
-
-    # temp TODO
-    for actuator in actuators:
-        coords = actuator.attrib["coordinates"]
-        brain.weights.append(0.5)
+                brain_net.Input(
+                    [
+                        leftcoords[0],
+                        leftcoords[1],
+                        leftcoords[2],
+                        rightcoords[0],
+                        rightcoords[1],
+                        rightcoords[2],
+                    ]
+                )
+                brain_net.Activate()
+                weight = brain_net.Output()[0]
+                brain.weights.append(weight)
 
     print(len(brain.weights))
 
