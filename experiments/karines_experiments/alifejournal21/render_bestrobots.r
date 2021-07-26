@@ -4,20 +4,27 @@ require('magick')
 ##### change paths/labels/params here #####
 
 
-paths = c('plasticodingscaffolding2_equal',
-          'static_plane',
-          'static_tilted',
-          'plasticodingscaffolding_inv' )
+paths = c(
+          'plasticodingscaffolding3_inc_normal'#,
+          #'plasticodingscaffolding_inc_inv',
+          #'plasticodingscaffolding2_equal',
+          #'static_plane',
+          #'static_tilted',
+         # 'plasticodingscaffolding_inv' 
+          )
 
 # final environment
 environments = list(
-  c('tilted5') ,
+  c('tilted5'),
+  c('plane'),
+  c('tilted5'),
   c('plane'),
   c('tilted5'),
   c('plane')
 )
 
 colors = list( c('#ffffff'),
+               c('#ffffff'),
                c('#ffffff'),
                c('#ffffff'),
                c('#ffffff'))
@@ -27,12 +34,12 @@ base_directory2 <-paste('karine/alife2021/', sep='')
 
 analysis = 'analysis/2dtopbest'
 
-runs = list( c(1:8), c(1:10), c(1:10), c(1:10))
+runs = list(c(1:4), c(1:9), c(1:10), c(1:10), c(1:10), c(1:10))
 pop = 100
 num_top = 5
 
 gens = c(99)
-criteria = c('desc', 'desc', 'desc', 'desc')
+criteria = c('desc', 'desc','desc', 'desc', 'desc', 'desc')
 
 ##### change paths/labels/params here #####
 

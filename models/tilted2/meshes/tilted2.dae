@@ -5,36 +5,12 @@
       <author>Blender User</author>
       <authoring_tool>Blender 2.92.0 commit date:2021-02-24, commit time:16:25, hash:02948a2cab44</authoring_tool>
     </contributor>
-    <created>2021-03-15T16:01:27</created>
-    <modified>2021-03-15T16:01:27</modified>
+    <created>2021-06-02T19:04:57</created>
+    <modified>2021-06-02T19:04:57</modified>
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
-  <library_effects>
-    <effect id="Material_002-effect">
-      <profile_COMMON>
-        <technique sid="common">
-          <lambert>
-            <emission>
-              <color sid="emission">0 0 0 1</color>
-            </emission>
-            <diffuse>
-              <color sid="diffuse">0.01834756 0.3800506 0.06089931 1</color>
-            </diffuse>
-            <index_of_refraction>
-              <float sid="ior">1.45</float>
-            </index_of_refraction>
-          </lambert>
-        </technique>
-      </profile_COMMON>
-    </effect>
-  </library_effects>
   <library_images/>
-  <library_materials>
-    <material id="Material_002-material" name="Material.002">
-      <instance_effect url="#Material_002-effect"/>
-    </material>
-  </library_materials>
   <library_geometries>
     <geometry id="Plane-mesh" name="Plane">
       <mesh>
@@ -61,7 +37,7 @@
         <vertices id="Plane-mesh-vertices">
           <input semantic="POSITION" source="#Plane-mesh-positions"/>
         </vertices>
-        <triangles material="Material_002-material" count="2">
+        <triangles count="2">
           <input semantic="VERTEX" source="#Plane-mesh-vertices" offset="0"/>
           <input semantic="NORMAL" source="#Plane-mesh-normals" offset="1"/>
           <p>1 0 2 0 0 0 1 0 3 0 2 0</p>
@@ -72,14 +48,8 @@
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="Plane" name="Plane" type="NODE">
-        <matrix sid="transform">11.96257 0 0 -0.3712567 0 8.05979 -0.05233596 0 0 0.4223957 0.9986295 0 0 0 0 1</matrix>
-        <instance_geometry url="#Plane-mesh" name="Plane">
-          <bind_material>
-            <technique_common>
-              <instance_material symbol="Material_002-material" target="#Material_002-material"/>
-            </technique_common>
-          </bind_material>
-        </instance_geometry>
+        <matrix sid="transform">11.96257 0 0 -0.3712567 0 8.065934 -0.0348995 0 0 0.2816686 0.9993908 0 0 0 0 1</matrix>
+        <instance_geometry url="#Plane-mesh" name="Plane"/>
       </node>
     </visual_scene>
   </library_visual_scenes>

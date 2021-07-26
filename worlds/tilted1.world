@@ -32,7 +32,7 @@
       <uri>model://sun</uri>
     </include>
     <include>
-      <uri>model://tilted3</uri>
+      <uri>model://tilted1</uri>
     </include>
 
     <plugin name="revolve-world" filename="libWorldControlPlugin.so" />

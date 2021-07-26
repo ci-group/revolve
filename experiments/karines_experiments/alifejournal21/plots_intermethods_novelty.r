@@ -16,40 +16,44 @@ library(viridis)
 base_directory <-paste('jim', sep='')
 base_directory2 <-paste('karine/alife2021', sep='')
 
-analysis = 'analysis/plots'
+analysis = 'analysis/plotseq'
 output_directory = paste(base_directory2,'/',analysis ,sep='')
 
 experiments_type = c(
+                     'plasticodingscaffolding_inc_inv',
+                     'plasticodingscaffolding3_inc_normal',
                      'plasticodingscaffolding2_equal',
                      'static_plane',
                      'plasticodingscaffolding_inv',
                      'static_tilted')
 
 experiments_labels = c( 
+                        'plasticodingscaffolding_inc_inv',
+                        'plasticodingscaffolding3_inc_normal',
                         'plasticodingscaffolding2_equal',
                         'static_plane',
                         'plasticodingscaffolding_inv',
                         'static_tilted'
                         )
 runs = list(
-            c(1:1),
-            c(1:1),
-            c(1:1),
-            c(1:1))
+            c(1:9),
+            c(1:4),
+            c(1:10),
+            c(1:10),
+            c(1:10),
+            c(1:10))
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
 methods_labels = c(
+                   'Inv Incr',
+                   'Incr',
                    'Equal',
                    'Flat',
                    'Inv Equal',
                    'Tilted'
                    )
 
-experiments_type_colors = c('#0000CD', 
-                            '#FF00FF',
-                            '#228B22',
-                            '#D2691E') 
 
 #aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
 aggregations = c( 'Q25', 'median', 'Q75')
@@ -134,15 +138,15 @@ measures_labels = c(
 more_measures_names = c(
   # 'novelty',
   'novelty_pop',
-  'fitness'#,
-  #'cons_fitness'
+  'fitness',
+  'cons_fitness'
 )
 
 more_measures_labels = c(
   #'Novelty (+archive)',
   'Novelty',
-  'Fitness'#,
-  #'Number of slaves'
+  'Fitness',
+  'Number of slaves'
 )
 
 #### CHANGE THE PARAMETERS HERE ####
@@ -204,7 +208,7 @@ random_runs = paste('(', paste(sample(runs[[1]], 3), collapse=', ' ), ')')
 
 for (i in 1:length(measures_names)){
 
-  query = paste("select method_label,'Run '||run as run, generation, robot_id, novelty_pop as value from measures_snapshots_all ")
+  query = paste("select method_label, run, generation, robot_id, novelty_pop as value from measures_snapshots_all ")
   if (!all_runs){
     query = paste(query, "where run in ",random_runs)
   }
@@ -219,27 +223,27 @@ for (i in 1:length(measures_names)){
     scale_fill_viridis(option ="C")
   heat <-heat + facet_grid(method_label~run)
   heat <-heat + scale_y_continuous(breaks =c())
-  heat <-heat + scale_x_continuous(breaks =c(0, 25, 50, 75, 100))
+  heat <-heat + scale_x_continuous(breaks =c(0,   50,  99))
   heat <-heat + labs(title="Novelty", x="Generations", y="Robots", fill="Novelty")
   heat <-heat + theme(legend.position = "none")+
     theme(legend.key.size = unit(1.5, 'cm'))+
-    theme(plot.title=element_text(size=37))+
-    theme(axis.text.y=element_text(size=31)) +
-    theme(axis.text.x=element_text(size=28)) +
-    theme(axis.title=element_text(size=35)) +
-    theme(strip.text.y=element_text(size=38)) +
-    theme(strip.text.x=element_text(size=30)) +
+    theme(plot.title=element_text(size=48))+
+    theme(axis.text.y=element_text(size=38)) +
+    theme(axis.text.x=element_text(size=36)) +
+    theme(axis.title=element_text(size=47)) +
+    theme(strip.text.y=element_text(size=51)) +
+    theme(strip.text.x=element_text(size=41)) +
     theme(strip.background = element_rect(colour="white"))+
     theme(plot.title=element_text(hjust=0))+
     theme(axis.ticks=element_blank())+
-    theme(legend.title=element_text(size=36))+
-    theme(legend.text=element_text(size=36))#+
+    theme(legend.title=element_text(size=40))+
+    theme(legend.text=element_text(size=40))#+
   #removeGrid()
 
   if (!all_runs){
-    ggsave(paste(output_directory,"/novelty_heat.png",sep = ""), heat, device = "png", height=11.5, width = 20)
+    ggsave(paste(output_directory,"/novelty_heat.png",sep = ""), heat, device = "png", height=22, width = 20)
   }else{
-    ggsave(paste(output_directory,"/novelty_heat.png",sep = ""), heat, device = "png", height=11.5, width = 50, limitsize = FALSE)
+    ggsave(paste(output_directory,"/novelty_heat.png",sep = ""), heat, device = "png", height=22, width = 50, limitsize = FALSE)
   }
 
 }

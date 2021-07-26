@@ -9,12 +9,16 @@ dirpath = '/storage/jim/'
 dirpath_write = '/storage/karine/alife2021/'
 
 experiments_type = [
-      'plasticodingscaffolding2_equal',
-      'static_plane',
-      'static_tilted',
-      'plasticodingscaffolding_inv'
+    'plasticodingscaffolding3_inc_normal' #,
+    #'plasticodingscaffolding_inc_inv',
+      #'plasticodingscaffolding2_equal',
+      #'static_plane',
+     # 'static_tilted',
+      #'plasticodingscaffolding_inv'
 ]
 environments = {
+  'plasticodingscaffolding3_inc_normal': ['plane', 'tilted1', 'tilted2', 'tilted3', 'tilted4', 'tilted5'],
+  'plasticodingscaffolding_inc_inv': ['tilted5', 'tilted4', 'tilted3', 'tilted2', 'tilted1', 'plane'],
   'plasticodingscaffolding2_equal': ['plane', 'tilted1', 'tilted2', 'tilted3', 'tilted4', 'tilted5'],
   'static_plane': ['plane'],
   'static_tilted': ['tilted5'],
@@ -22,7 +26,9 @@ environments = {
 }
 
 runs = {
-  'plasticodingscaffolding2_equal':  range(1, 8+1),
+  'plasticodingscaffolding3_inc_normal': range(1, 4+1),#10
+  'plasticodingscaffolding_inc_inv': range(1, 9+1),#10
+  'plasticodingscaffolding2_equal':  range(1, 10+1),
   'static_plane':  range(1, 10+1),
   'static_tilted':  range(1, 10+1),
   'plasticodingscaffolding_inv':  range(1, 10+1)

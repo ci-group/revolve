@@ -16,39 +16,39 @@ library(viridis)
 base_directory <-paste('jim', sep='')
 base_directory2 <-paste('karine/alife2021', sep='')
 
-analysis = 'analysis/plots'
+analysis = 'analysis/plotsinc'
 output_directory = paste(base_directory2,'/',analysis ,sep='')
 
 experiments_type = c(
-                     'plasticodingscaffolding_inc',
                      'static_plane',
+                     'plasticodingscaffolding3_inc_normal',
                      'plasticodingscaffolding_inc_inv',
                      'static_tilted')
 
 experiments_labels = c( 
-                  'plasticodingscaffolding_inc',
                   'static_plane',
+                  'plasticodingscaffolding3_inc_normal',
                   'plasticodingscaffolding_inc_inv',
                   'static_tilted'
                         )
 runs = list(
-            c(1:8),
             c(1:10),
-            c(1:10),
+            c(1:4),
+            c(1:9),
             c(1:10))
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
 methods_labels = c(
-                   'Incr',
                    'Flat',
+                   'Incr',
                    'Inv Incr',
                    'Tilted'
                    )
 
-experiments_type_colors = c('#0000CD', 
-                            '#FF00FF',
-                            '#228B22',
+experiments_type_colors = c('#FF00FF',
+                            '#7F00FF', 
+                            '#00FF00',
                             '#D2691E') 
 
 #aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
@@ -134,15 +134,15 @@ measures_labels = c(
 more_measures_names = c(
   # 'novelty',
   'novelty_pop',
-  'fitness'#,
-  #'cons_fitness'
+  'fitness',
+  'cons_fitness'
 )
 
 more_measures_labels = c(
   #'Novelty (+archive)',
   'Novelty',
-  'Fitness'#,
-  #'Number of slaves'
+  'Fitness',
+  'Number of slaves'
 )
 
 #### CHANGE THE PARAMETERS HERE ####
@@ -168,7 +168,7 @@ for (exp in 1:length(experiments_type))
       {
         measures_snapshots[measures_names[m]] = as.numeric(as.character(measures_snapshots[[measures_names[m]]]))
       }
-      
+
       measures_snapshots$run = run
       measures_snapshots$displacement_velocity_hill =   measures_snapshots$displacement_velocity_hill*100
       measures_snapshots$run = as.factor(measures_snapshots$run)
@@ -188,14 +188,14 @@ for (exp in 1:length(experiments_type))
 fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",pop," order by 4"))
 measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL")
 
+
 measures_names = c(measures_names, more_measures_names)
 measures_labels = c(measures_labels, more_measures_labels)
 
 for( m in 1:length(more_measures_names)){
   measures_snapshots_all[more_measures_names[m]] = as.numeric(as.character(measures_snapshots_all[[more_measures_names[m]]]))
 }
-
-
+ 
 
 measures_averages_gens_1 = list()
 measures_averages_gens_2 = list()
@@ -327,8 +327,15 @@ for (i in 1:length(measures_names))
     graph = graph  +  labs(y=measures_labels[i], x="Generation", title="")
 
     graph = graph +   scale_color_manual(values=experiments_type_colors)
-    graph = graph  + theme(legend.position="bottom" ,  legend.text=element_text(size=25), axis.text=element_text(size=32), axis.title=element_text(size=30),
+    graph = graph  + theme(legend.position="none" ,  legend.text=element_text(size=25), axis.text=element_text(size=32), axis.title=element_text(size=30),
                            plot.subtitle=element_text(size=30 ), plot.title=element_text(size=30 ))
+
+    # seasons markers
+    graph = graph + geom_vline(xintercept = 4, linetype="dashed", color = "black",alpha=0.3)
+    graph = graph + geom_vline(xintercept = 13, linetype="dashed", color = "black",alpha=0.3)
+    graph = graph + geom_vline(xintercept = 27, linetype="dashed", color = "black",alpha=0.3)
+    graph = graph + geom_vline(xintercept = 46, linetype="dashed", color = "black",alpha=0.3)
+    graph = graph + geom_vline(xintercept = 70, linetype="dashed", color = "black",alpha=0.3)
 
     ggsave(paste( output_directory,'/',measures_names[i], '_', aggregations[a], '_lines.pdf',  sep=''), graph , device='pdf', height = 10, width = 10)
 
@@ -389,7 +396,7 @@ for (i in 1:length(measures_names))
                       c('Incr', 'Flat'),
                       c('Incr', 'Tilted'),
                       c('Inv Incr', 'Flat'),
-                      c('Incr', 'Tilted'),
+                      c('Inv Incr', 'Tilted'),
                       c('Flat', 'Tilted')
                       )
         mxax = max(all_final_values[1])
