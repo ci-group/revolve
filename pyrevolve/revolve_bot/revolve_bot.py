@@ -301,7 +301,7 @@ class RevolveBot:
             self._update_substrate(
                 raise_for_intersections,
                 module,
-                new_direction,
+                slot_rotation,
                 substrate_coordinates_map,
             )
 
