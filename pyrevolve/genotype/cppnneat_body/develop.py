@@ -5,12 +5,9 @@ from typing import Any, Optional, Tuple
 import multineat
 from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
 from pyrevolve.genotype.cppnneat_body.config import CppnneatBodyConfig
-from pyrevolve.revolve_bot.revolve_module import (
-    ActiveHingeModule,
-    BrickModule,
-    CoreModule,
-    RevolveModule,
-)
+from pyrevolve.revolve_bot.revolve_module import (ActiveHingeModule,
+                                                  BrickModule, CoreModule,
+                                                  RevolveModule)
 
 """
 Not using a library for vector because it's super simple with int and I don't feel like using numpy at this moment
@@ -70,7 +67,7 @@ def cppnneat_body_develop(
 
 
 # get module type, orientation
-def _get_child_type(
+def _evaluate_cppg(
     body_net: multineat.NeuralNetwork,
     position: Tuple[int, int, int],
     chain_length: int,
@@ -87,7 +84,7 @@ def _get_child_type(
     module_type = types[type_probs.index(min(type_probs))]
 
     # get rotation from output probabilities
-    rotation_probs = [outputs[3], outputs[4], outputs[5], outputs[6]]
+    rotation_probs = [outputs[3], outputs[4]]
     rotation = rotation_probs.index(min(rotation_probs))
 
     return (module_type, rotation)
@@ -100,7 +97,7 @@ def _add_child(
     position = _add(module.position, forward)
     chain_length = module.chain_length + 1
 
-    child_type, orientation = _get_child_type(body_net, position, chain_length)
+    child_type, orientation = _evaluate_cppg(body_net, position, chain_length)
     if child_type == None:
         return None
 

@@ -47,7 +47,7 @@ def cppnneat_cpg_brain_develop(
     for actuator in actuators:
         coords = parsecoords(actuator.attrib["coordinates"])
         brain_net.Input(
-            [1.0, coords[0], coords[1], coords[2], 0.0, 0.0, 0.0]
+            [1.0, coords[0], coords[1], coords[2], coords[0], coords[1], coords[2]]
         )  # 1.0 is the bias input
         brain_net.Activate()
         weight = brain_net.Output()[0]
@@ -66,6 +66,7 @@ def cppnneat_cpg_brain_develop(
             ):
                 brain_net.Input(
                     [
+                        1.0,
                         leftcoords[0],
                         leftcoords[1],
                         leftcoords[2],
