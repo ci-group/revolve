@@ -45,3 +45,12 @@ class CppnneatGenotype:
     @property
     def multineat_genome(self) -> multineat.Genome:
         return self._multineat_genome
+
+    def mutate(innov_db: multineat.InnovationDatabase, rng: multineat.RNG) -> None:
+        multineat_genome.Mutate(
+            False,
+            multineat.SearchMode.COMPLEXIFYING,
+            innov_db,
+            multineat_params,
+            rng,
+        )

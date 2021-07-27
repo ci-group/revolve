@@ -75,7 +75,9 @@ def _get_child_type(
     position: Tuple[int, int, int],
     chain_length: int,
 ) -> Tuple[Any, int]:
-    body_net.Input([position[0], position[1], position[2], chain_length])
+    body_net.Input(
+        [1.0, position[0], position[1], position[2], chain_length]
+    )  # 1.0 is the bias input
     body_net.Activate()
     outputs = body_net.Output()
 

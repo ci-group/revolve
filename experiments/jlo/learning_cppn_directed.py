@@ -95,22 +95,14 @@ async def run():
     brain_config = CppnneatCpgBrainConfig(
         innov_db,
         rng,
-        abs_output_bound=1.0,
-        use_frame_of_reference=False,
-        signal_factor_all=4.0,
-        signal_factor_mid=2.5,
-        signal_factor_left_right=2.5,
-        range_lb=None,
-        range_ub=1.0,
-        init_neuron_state=0.707,
-        load_brain=None,
-        output_directory=None,
-        run_analytics=None,
-        reset_robot_position=None,
-        reset_neuron_state_bool=None,
-        reset_neuron_random=False,
-        verbose=None,
-        startup_time=None,
+        abs_output_bound=1.0,  # maximum(and minimum, negative) ceiling of actuator position. 1 is the value we want for gazebo and our real robots
+        use_frame_of_reference=False,  # at some point we will use this for directed locomation(use emiels stuff)
+        signal_factor_all=4.0,  # actuator gain
+        signal_factor_mid=2.5,  # not used anymore after update later(see emiels code)
+        signal_factor_left_right=2.5,  # not used anymore after update later(see emiels code)
+        range_ub=1.0,  # scales weights to be between -1 and 1. Our weights are between 0 and 1 so this value is good.
+        init_neuron_state=0.707,  # x to this value and y to minus this
+        reset_neuron_random=False
     )
 
     # body multineat settings

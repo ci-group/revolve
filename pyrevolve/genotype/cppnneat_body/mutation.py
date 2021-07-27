@@ -1,8 +1,8 @@
-from pyrevolve.genotype.cppnneat_body.genotype import CppnneatBodyGenotype
+from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
 
 
 def cppnneat_body_mutate(
-    genotype: CppnneatBodyGenotype, config
-) -> CppnneatBodyGenotype:  # TODO config type
+    genotype: CppnneatGenotype, config
+) -> CppnneatGenotype:  # TODO config type
     return genotype
-    # TODO
+    copy = genotype.clone()

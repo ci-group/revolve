@@ -10,7 +10,7 @@ class CppnneatBodyGenotype(CppnneatGenotype):
         innov_db: multineat.InnovationDatabase,
         rng: multineat.RNG,
     ) -> CppnneatGenotype:
-        n_inputs = 4
+        n_inputs = 4 + 1  # 1 extra for bias
         n_outputs = 7
         return super(CppnneatBodyGenotype, CppnneatBodyGenotype).random(
             n_inputs, n_outputs, multineat_params, n_start_mutations, innov_db, rng

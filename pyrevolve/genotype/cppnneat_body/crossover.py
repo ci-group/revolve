@@ -1,10 +1,10 @@
 from typing import List
 
-from pyrevolve.genotype.cppnneat_body.genotype import CppnneatBodyGenotype
+from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
 
 
 def cppnneat_body_crossover(
-    parents: List[CppnneatBodyGenotype], config
-) -> CppnneatBodyGenotype:  # TODO config type
+    parents: List[CppnneatGenotype], config
+) -> CppnneatGenotype:  # TODO config type
     # TODO
     return parents[0]
