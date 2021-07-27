@@ -46,13 +46,12 @@ def cppnneat_cpg_brain_develop(
     # calculate weights from actuators
     brain.weights = []
 
-    # TODO which weights first. connection or internal?
-
     brain_net = multineat.NeuralNetwork()
     genotype.multineat_genome.BuildPhenotype(brain_net)
 
     parsecoords = lambda coordsstr: list(map(lambda x: float(x), coordsstr.split(";")))
 
+    # internal weights
     for actuator in actuators:
         coords = parsecoords(actuator.attrib["coordinates"])
         brain_net.Input([coords[0], coords[1], coords[2], 0.0, 0.0, 0.0])
@@ -60,6 +59,7 @@ def cppnneat_cpg_brain_develop(
         weight = brain_net.Output()[0]
         brain.weights.append(weight)
 
+    # external weights
     for i, actuator in enumerate(actuators[:-1]):
         for neighbour in actuators[i + 1 :]:
             leftcoords = parsecoords(actuator.attrib["coordinates"])
