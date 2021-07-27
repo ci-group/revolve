@@ -102,7 +102,7 @@ async def run():
         signal_factor_left_right=2.5,  # not used anymore after update later(see emiels code)
         range_ub=1.0,  # scales weights to be between -1 and 1. Our weights are between 0 and 1 so this value is good.
         init_neuron_state=0.707,  # x to this value and y to minus this
-        reset_neuron_random=False
+        reset_neuron_random=False # ignore init neuron state and use random value
     )
 
     # body multineat settings
