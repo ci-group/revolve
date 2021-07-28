@@ -12,5 +12,5 @@ def bodybrain_composition_mutate(
         genotype.brain_genotype, config.brain_mutate_config
     )
     return BodybrainCompositionGenotype(
-        0xCAFED00D, config, mutated_body, mutated_brain
-    )  # id is placeholder. expected to be set by framework later
+        genotype.id, config, mutated_body, mutated_brain
+    )  # id must be the same as input id
