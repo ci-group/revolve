@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from typing import Any, Dict
+
 import multineat
 
 
@@ -72,3 +75,14 @@ class CppnneatGenotype:
 
     def clone(self) -> CppnneatGenotype:
         return CppnneatGenotype(multineat.Genome(self.multineat_genome))
+
+    def serialize_to_dict(self) -> Dict[str, Any]:
+        return {"multineat_genome": self._multineat_genome.Serialize()}
+
+    @staticmethod
+    def deserialize_from_dict(serialized: Dict[str, Any]) -> CppnneatGenotype:
+        multineat_genome = multineat.Genome()
+        multineat_genome.Deserialize(
+            serialized["multineat_genome"]
+        )
+        return CppnneatGenotype(multineat_genome)

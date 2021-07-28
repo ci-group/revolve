@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import typing
 from dataclasses import dataclass
 
 import multineat
@@ -48,7 +49,7 @@ class GenotypeConstructorConfig:
 def create_random_genotype(
     config: GenotypeConstructorConfig, id: int
 ) -> BodybrainCompositionGenotype:
-    return BodybrainCompositionGenotype(
+    return BodybrainCompositionGenotype[CppnneatBodyGenotype, CppnneatCpgBrainGenotype](
         id,
         config.bodybrain_composition_config,
         CppnneatBodyGenotype.random(
