@@ -1,10 +1,10 @@
 from typing import List
 
-from pyrevolve.genotype.cppnneat_cpg_brain.genotype import CppnneatCpgBrainGenotype
+from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
 
 
 def cppnneat_cpg_brain_crossover(
-    parents: List[CppnneatCpgBrainGenotype], config
-) -> CppnneatCpgBrainGenotype:  # TODO config type
+    parents: List[CppnneatGenotype], config
+) -> CppnneatGenotype:  # TODO config type
     return parents[0]
     # TODO

@@ -4,7 +4,7 @@ import multineat
 
 
 class CppnneatGenotype:
-    _multineat_genome: multineat.Genome
+    _multineat_genome: multineat.Genomemultineat_genome
 
     def __init__(self, multineat_genome: multineat.Genome):
         self._multineat_genome = multineat_genome
@@ -31,26 +31,29 @@ class CppnneatGenotype:
             0,  # number of hidden layers
         )
 
+        genome = CppnneatGenotype(multineat_genome)
         for _ in range(n_start_mutations):
-            multineat_genome.Mutate(
-                False,
-                multineat.SearchMode.COMPLEXIFYING,
-                innov_db,
-                multineat_params,
-                rng,
-            )
+            genome.mutate(multineat_params, innov_db, rng)
 
-        return CppnneatGenotype(multineat_genome)
+        return genome
 
     @property
     def multineat_genome(self) -> multineat.Genome:
         return self._multineat_genome
 
-    def mutate(innov_db: multineat.InnovationDatabase, rng: multineat.RNG) -> None:
-        multineat_genome.Mutate(
+    def mutate(
+        self,
+        multineat_params: multineat.Parameters,
+        innov_db: multineat.InnovationDatabase,
+        rng: multineat.RNG,
+    ) -> None:
+        self.multineat_genome.Mutate(
             False,
             multineat.SearchMode.COMPLEXIFYING,
             innov_db,
             multineat_params,
             rng,
         )
+
+    def clone(self) -> CppnneatGenotype:
+        return CppnneatGenotype(multineat.Genome(self.multineat_genome))
