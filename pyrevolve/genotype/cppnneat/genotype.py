@@ -55,5 +55,20 @@ class CppnneatGenotype:
             rng,
         )
 
+    def mate(
+        self,
+        partner: CppnneatGenotype,
+        multineat_params: multineat.Parameters,
+        rng: multineat.RNG,
+    ) -> CppnneatGenotype:
+        child_multineat_genome = self.multineat_genome.Mate(
+            partner.multineat_genome,
+            True,  # mate_average TODO
+            True,  # interspecies_crossover
+            rng,
+            multineat_params,
+        )
+        return CppnneatGenotype(child_multineat_genome)
+
     def clone(self) -> CppnneatGenotype:
         return CppnneatGenotype(multineat.Genome(self.multineat_genome))

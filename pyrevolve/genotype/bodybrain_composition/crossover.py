@@ -1,5 +1,6 @@
 from typing import List
 
+from pyrevolve.evolution.individual import Individual
 from pyrevolve.genotype.bodybrain_composition.config import BodybrainCompositionConfig
 from pyrevolve.genotype.bodybrain_composition.genotype import (
     BodybrainCompositionGenotype,
@@ -7,14 +8,14 @@ from pyrevolve.genotype.bodybrain_composition.genotype import (
 
 
 def bodybrain_composition_crossover(
-    parents: List[BodybrainCompositionGenotype], _, config: BodybrainCompositionConfig
+    parents: List[Individual], _, config: BodybrainCompositionConfig
 ) -> BodybrainCompositionGenotype:
     body_child = config.body_crossover(
-        [parent.body_genotype for parent in parents],
+        [parent.genotype.body_genotype for parent in parents],
         config.body_crossover_config,
     )
     brain_child = config.brain_crossover(
-        [parent.brain_genotype for parent in parents],
+        [parent.genotype.brain_genotype for parent in parents],
         config.brain_crossover_config,
     )
     return BodybrainCompositionGenotype(

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, List
 
+from pyrevolve.evolution.individual import Individual
 from pyrevolve.revolve_bot.brain import Brain
 from pyrevolve.revolve_bot.revolve_module import CoreModule
 

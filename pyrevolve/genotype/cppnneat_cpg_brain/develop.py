@@ -79,6 +79,4 @@ def cppnneat_cpg_brain_develop(
                 weight = brain_net.Output()[0]
                 brain.weights.append(weight)
 
-    print(len(brain.weights))
-
     return brain

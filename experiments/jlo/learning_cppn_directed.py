@@ -73,7 +73,7 @@ async def run():
 
     # experiment settings
     num_generations = 3
-    population_size = 30
+    population_size = 2
     offspring_size = 15
 
     body_n_start_mutations: int = 10
