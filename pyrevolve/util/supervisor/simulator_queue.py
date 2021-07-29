@@ -1,15 +1,13 @@
 import asyncio
 import os
 import time
-from typing import Tuple, Callable, Optional
+from typing import Callable, Optional, Tuple
 
 from pyrevolve.angle.manage.robotmanager import RobotManager
-from pyrevolve.revolve_bot import RevolveBot
-from pyrevolve.evolution.individual import Individual
 from pyrevolve.custom_logging.logger import logger
+from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
-from pyrevolve.tol.manage import World
-from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
+from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.tol.manage import World, measures
 from pyrevolve.util.supervisor.supervisor_multi import DynamicSimSupervisor
@@ -83,7 +81,13 @@ class SimulatorQueue:
 
         await asyncio.sleep(1)
 
-    def test_robot(self, individual: Individual, robot: RevolveBot, conf: PopulationConfig, fitness_fun):
+    def test_robot(
+        self,
+        individual: Individual,
+        robot: RevolveBot,
+        conf: PopulationConfig,
+        fitness_fun,
+    ):
         """
         :param individual: robot individual
         :param robot: robot phenotype
@@ -114,12 +118,17 @@ class SimulatorQueue:
         )
         logger.debug("Restarting simulator done... connection done")
 
-    async def _worker_evaluate_robot(self, connection, robot: RevolveBot, future, conf, fitness_fun):
+    async def _worker_evaluate_robot(
+        self, connection, robot: RevolveBot, future, conf, fitness_fun
+    ):
         await asyncio.sleep(0.01)
         start = time.time()
         try:
             timeout = self.EVALUATION_TIMEOUT  # seconds
-            result = await asyncio.wait_for(self._evaluate_robot(connection, robot, conf, fitness_fun), timeout=timeout)
+            result = await asyncio.wait_for(
+                self._evaluate_robot(connection, robot, conf, fitness_fun),
+                timeout=timeout,
+            )
         except asyncio.TimeoutError:
             # WAITED TO MUCH, RESTART SIMULATOR
             elapsed = time.time() - start
@@ -141,13 +150,23 @@ class SimulatorQueue:
             self._free_simulator[i] = True
             if self._enable_play_pause:
                 await self._connections[i].pause(True)
-                await self._connections[i].reset(rall=True, time_only=True, model_only=False)
+                await self._connections[i].reset(
+                    rall=True, time_only=True, model_only=False
+                )
             while True:
                 logger.info(f"simulator {i} waiting for robot")
-                (individual, robot, future, conf, fitness_fun) = await self._robot_queue.get()
+                (
+                    individual,
+                    robot,
+                    future,
+                    conf,
+                    fitness_fun,
+                ) = await self._robot_queue.get()
                 self._free_simulator[i] = False
                 logger.info(f"Picking up robot {robot.id} into simulator {i}")
-                success = await self._worker_evaluate_robot(self._connections[i], robot, future, conf, fitness_fun)
+                success = await self._worker_evaluate_robot(
+                    self._connections[i], robot, future, conf, fitness_fun
+                )
                 if success:
                     if robot.failed_eval_attempt_count == 3:
                         logger.info(
@@ -159,25 +178,34 @@ class SimulatorQueue:
                 else:
                     # restart of the simulator happened
                     robot.failed_eval_attempt_count += 1
-                    logger.info(f"Robot {robot.id} current failed attempt: {robot.failed_eval_attempt_count}")
-                    await self._robot_queue.put((individual, robot, future, conf, fitness_fun))
+                    logger.info(
+                        f"Robot {robot.id} current failed attempt: {robot.failed_eval_attempt_count}"
+                    )
+                    await self._robot_queue.put(
+                        (individual, robot, future, conf, fitness_fun)
+                    )
                     await self._restart_simulator(i)
                     if self._enable_play_pause:
                         await self._connections[i].pause(True)
-                        await self._connections[i].reset(rall=True, time_only=True, model_only=False)
+                        await self._connections[i].reset(
+                            rall=True, time_only=True, model_only=False
+                        )
                 self._robot_queue.task_done()
                 self._free_simulator[i] = True
         except Exception:
             logger.exception(f"Exception occurred for Simulator worker {i}")
 
-    async def _evaluate_robot(self,
-                              simulator_connection,
-                              robot: RevolveBot,
-                              conf: PopulationConfig,
-                              fitness_fun: Callable[[RobotManager, RevolveBot], float]) \
-            -> Tuple[Optional[float], Optional[measures.BehaviouralMeasurements]]:
+    async def _evaluate_robot(
+        self,
+        simulator_connection,
+        robot: RevolveBot,
+        conf: PopulationConfig,
+        fitness_fun: Callable[[RobotManager, RevolveBot], float],
+    ) -> Tuple[Optional[float], Optional[measures.BehaviouralMeasurements]]:
         if robot.failed_eval_attempt_count >= 3:
-            logger.info(f'Robot {robot.id} evaluation failed (reached max attempt of 3), fitness set to None.')
+            logger.info(
+                f"Robot {robot.id} evaluation failed (reached max attempt of 3), fitness set to None."
+            )
             robot_fitness_none = None
             measurements_none = None
             return robot_fitness_none, measurements_none
@@ -187,7 +215,9 @@ class SimulatorQueue:
             pose_z = self._settings.z_start
             if robot.simulation_boundaries is not None:
                 pose_z -= robot.simulation_boundaries.min.z
-            robot_manager = await simulator_connection.insert_robot(robot, Vector3(0, 0, pose_z), max_age)
+            robot_manager = await simulator_connection.insert_robot(
+                robot, Vector3(0, 0, pose_z), max_age
+            )
             if self._enable_play_pause:
                 await simulator_connection.pause(False)
             start = time.time()
@@ -206,7 +236,9 @@ class SimulatorQueue:
             # await simulator_connection.delete_robot(robot_manager)
             if self._enable_play_pause:
                 await simulator_connection.pause(True)
-            await simulator_connection.reset(rall=True, time_only=True, model_only=False)
+            await simulator_connection.reset(
+                rall=True, time_only=True, model_only=False
+            )
             return robot_fitness, measures.BehaviouralMeasurements(robot_manager, robot)
 
     async def _join(self):

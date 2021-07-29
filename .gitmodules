@@ -4,3 +4,6 @@
 [submodule "thirdparty/MultiNEAT"]
 	path = thirdparty/MultiNEAT
 	url = https://github.com/ci-group/MultiNEAT.git
+[submodule "thirdparty/gazebo"]
+	path = thirdparty/gazebo
+	url = https://github.com/ci-group/gazebo.git
