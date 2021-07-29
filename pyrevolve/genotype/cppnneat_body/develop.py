@@ -1,13 +1,16 @@
 from dataclasses import dataclass
 from queue import Queue
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Set, Tuple
 
 import multineat
 from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
 from pyrevolve.genotype.cppnneat_body.config import CppnneatBodyConfig
-from pyrevolve.revolve_bot.revolve_module import (ActiveHingeModule,
-                                                  BrickModule, CoreModule,
-                                                  RevolveModule)
+from pyrevolve.revolve_bot.revolve_module import (
+    ActiveHingeModule,
+    BrickModule,
+    CoreModule,
+    RevolveModule,
+)
 
 """
 Not using a library for vector because it's super simple with int and I don't feel like using numpy at this moment
@@ -32,6 +35,7 @@ def cppnneat_body_develop(
     genotype.multineat_genome.BuildPhenotype(body_net)
 
     to_explore: Queue[RevolveModule] = Queue()
+    grid: Set[Tuple(int, int, int)] = set()
 
     core_module = CoreModule()
     core_module.id = "core"
@@ -41,6 +45,7 @@ def cppnneat_body_develop(
     to_explore.put(
         _Module((0, 0, 0), (0, -1, 0), (0, 0, 1), 0, core_module)
     )  # forward is always slot 1
+    grid.add((0, 0, 0))
     part_count = 1
 
     while not to_explore.empty():
@@ -58,7 +63,7 @@ def cppnneat_body_develop(
 
         for child_index in child_index_range:
             if part_count < max_parts:
-                child = _add_child(body_net, module, child_index)
+                child = _add_child(body_net, module, child_index, grid)
                 if child != None:
                     to_explore.put(child)
                     part_count += 1
@@ -91,11 +96,21 @@ def _evaluate_cppg(
 
 
 def _add_child(
-    body_net: multineat.NeuralNetwork, module: _Module, child_index: int
+    body_net: multineat.NeuralNetwork,
+    module: _Module,
+    child_index: int,
+    grid: Set[Tuple[int, int, int]],
 ) -> Optional[_Module]:
     forward = _get_new_forward(module.forward, module.up, child_index)
     position = _add(module.position, forward)
     chain_length = module.chain_length + 1
+
+    # if grid cell is occupied, don't make a child
+    # else, set cell as occupied
+    if position in grid:
+        return None
+    else:
+        grid.add(position)
 
     child_type, orientation = _evaluate_cppg(body_net, position, chain_length)
     if child_type == None:
