@@ -212,33 +212,15 @@ async def run():
         brain_multineat_params,
     )
 
-    ###### From here on I did not check things yet --Aart
-
-    # Parse command line / file input arguments
+    # parse command line arguments
     settings = parser.parse_args()
+
+    # create object that provides functionality
+    # to access the correct experiment directories,
+    # export/import things, recovery info etc.
     experiment_management = ExperimentManagement(settings)
-    do_recovery = (
-        settings.recovery_enabled and not experiment_management.experiment_is_new()
-    )
 
-    logger.info(
-        "Activated run " + settings.run + " of experiment " + settings.experiment_name
-    )
-
-    if do_recovery:
-        (
-            gen_num,
-            has_offspring,
-            next_robot_id,
-        ) = experiment_management.read_recovery_state(population_size, offspring_size)
-
-        if gen_num == num_generations - 1:
-            logger.info("Experiment is already complete.")
-            return
-    else:
-        gen_num = 0
-        next_robot_id = 1
-
+    # settings for the evolutionary process
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=create_random_genotype,
@@ -260,6 +242,39 @@ async def run():
         experiment_management=experiment_management,
     )
 
+    # check if recovery is required
+    do_recovery = (
+        settings.recovery_enabled and not experiment_management.experiment_is_new()
+    )
+
+    # print some info about the experiment and recovery
+    logger.info(
+        "Activated run " + settings.run + " of experiment " + settings.experiment_name
+    )
+    if settings.recovery_enabled:
+        if experiment_management.experiment_is_new():
+            logger.info("This is a new experiment. No recovery performed.")
+        else:
+            logger.info("Recovering proviously stopped run")
+
+    # set gen_num and next_robot_id to starting value,
+    # or get them from recovery state
+    if do_recovery:
+        (
+            gen_num,
+            _,
+            next_robot_id,
+        ) = experiment_management.read_recovery_state(population_size, offspring_size)
+    else:
+        gen_num = 0
+        next_robot_id = 1
+
+    # maybe experiment is done already?
+    if gen_num == num_generations - 1:
+        logger.info("Experiment is already complete.")
+        return
+
+    # setup simulator_quque and analyzer_queue based on number of cores
     n_cores = settings.n_cores
 
     simulator_queue = SimulatorQueue(n_cores, settings, settings.port_start)
@@ -268,9 +283,12 @@ async def run():
     analyzer_queue = AnalyzerQueue(1, settings, settings.port_start + n_cores)
     await analyzer_queue.start()
 
+    # create start population
     population = Population(
         population_conf, simulator_queue, analyzer_queue, next_robot_id
     )
+
+    # DIDNT CHECK FROM HERE
 
     if do_recovery:
         # loading a previous state of the experiment
