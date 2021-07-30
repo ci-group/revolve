@@ -162,11 +162,14 @@ async def run():
     innov_db = multineat.InnovationDatabase()
 
     # config for body
-    body_config = CppnneatBodyConfig(body_multineat_params, innov_db, rng,
-        mate_average=True, # mate_average  average weights of matching connections. if false, choose one at random
-        interspecies_crossover=True # interspecies_crossover should be true because we don't do species
-        )
-    
+    body_config = CppnneatBodyConfig(
+        body_multineat_params,
+        innov_db,
+        rng,
+        mate_average=False,  # mate_average  average weights of matching connections. if false, choose one at random
+        interspecies_crossover=True,  # interspecies_crossover should be true because we don't do species
+    )
+
     # config for brain
     brain_config = CppnneatCpgBrainConfig(
         brain_multineat_params,
@@ -180,8 +183,8 @@ async def run():
         range_ub=1.0,  # scales weights to be between -1 and 1. Our weights are between 0 and 1 so this value is good.
         init_neuron_state=0.707,  # x to this value and y to minus this
         reset_neuron_random=False,  # ignore init neuron state and use random value
-        mate_average=True, # see body_config
-        interspecies_crossover=True # see body_config
+        mate_average=False,  # see body_config
+        interspecies_crossover=True,  # see body_config
     )
 
     # bodybrain composition genotype config
