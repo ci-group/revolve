@@ -63,11 +63,13 @@ class CppnneatGenotype:
         partner: CppnneatGenotype,
         multineat_params: multineat.Parameters,
         rng: multineat.RNG,
+        mate_average: bool,
+        interspecies_crossover: bool
     ) -> CppnneatGenotype:
         child_multineat_genome = self.multineat_genome.Mate(
             partner.multineat_genome,
-            True,  # mate_average TODO
-            True,  # interspecies_crossover
+            mate_average,
+            interspecies_crossover,
             rng,
             multineat_params,
         )

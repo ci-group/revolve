@@ -17,3 +17,6 @@ class CppnneatCpgBrainConfig:
     range_ub: float
     init_neuron_state: float  # initial value of neurons
     reset_neuron_random: bool  # ignore init neuron state and use random value
+
+    mate_average: bool
+    interspecies_crossover: bool

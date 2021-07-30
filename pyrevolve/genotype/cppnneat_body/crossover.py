@@ -8,4 +8,4 @@ def cppnneat_body_crossover(
     parents: List[CppnneatGenotype], config: CppnneatBodyConfig
 ) -> CppnneatGenotype:
     assert len(parents) == 2
-    return parents[0].mate(parents[1], config.multineat_params, config.rng)
+    return parents[0].mate(parents[1], config.multineat_params, config.rng, config.mate_average, config.interspecies_crossover)
