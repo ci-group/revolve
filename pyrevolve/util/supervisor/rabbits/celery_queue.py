@@ -25,7 +25,9 @@ app = celery.Celery('CeleryQueue', backend='rpc://', broker='pyamqp://guest@loca
 
 @app.task
 def evaluate_robot(robot_sdf: AnyStr, life_timeout: float):
-    raise NotImplementedError("Evaluating a robot is implemented in C++, inside gazebo")
+    import manage_isaac
+    manage_isaac.simulator(robot_sdf, life_timeout)
+    #raise NotImplementedError("Evaluating a robot is implemented in C++, inside gazebo")
 
 
 def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, timeout: float) -> int:

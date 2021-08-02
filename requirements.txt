@@ -13,7 +13,7 @@ pandas
 neat-python>=0.92
 python-dateutil>=2.8.0
 # Rabbitmq and celery
-celery=5.0.5
+celery==5.0.5
 brotli # Otherwise it may cause importing issue because high quality python quirks
 # Database
 sqlalchemy>=1.3.23
@@ -23,3 +23,4 @@ dbus-python
 # Non PIP packages
 -e git+https://github.com/ci-group/pygazebo.git@master#egg=pygazebo
 thirdparty/MultiNEAT
+thirdparty/isaacgym/python

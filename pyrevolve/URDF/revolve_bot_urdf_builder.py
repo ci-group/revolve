@@ -30,7 +30,6 @@ def revolve_bot_to_urdf(robot, robot_pose, nice_format, self_collide=True):
     core_link.append(core_collision)
 
     for core_slot, child_module in robot._body.iter_children():
-        print(child_module)
         if child_module is None:
             continue
         core_slot = robot._body.boxslot(Orientation(core_slot))
