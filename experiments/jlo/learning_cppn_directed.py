@@ -73,9 +73,9 @@ async def run():
     """
 
     # experiment settings
-    num_generations = 5
-    population_size = 30
-    offspring_size = 15
+    num_generations = 2
+    population_size = 10
+    offspring_size = 5
 
     body_n_start_mutations: int = 10
     brain_n_start_mutations: int = 10
@@ -259,10 +259,11 @@ async def run():
 
     # set gen_num and next_robot_id to starting value,
     # or get them from recovery state
+    # gen_num will be -1 if nothing has been done yet
     if do_recovery:
         (
             gen_num,
-            _,
+            has_offspring,
             next_robot_id,
         ) = experiment_management.read_recovery_state(population_size, offspring_size)
     else:
@@ -288,11 +289,12 @@ async def run():
         population_conf, simulator_queue, analyzer_queue, next_robot_id
     )
 
-    # DIDNT CHECK FROM HERE
-
+    # Recover if required
     if do_recovery:
         # loading a previous state of the experiment
-        await population.load_snapshot(gen_num)
+        await population.load_snapshot(
+            gen_num
+        )  # I think this breaks when gen_num == -1 --Aart
         if gen_num >= 0:
             logger.info(
                 "Recovered snapshot "
@@ -320,9 +322,9 @@ async def run():
         await population.init_pop()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
+    # our evolutionary loop
+    # gen_num can still be -1.
     while gen_num < num_generations - 1:
         gen_num += 1
         population = await population.next_gen(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)
-
-    # output result after completing all generations...

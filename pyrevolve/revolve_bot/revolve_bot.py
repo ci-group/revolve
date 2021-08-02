@@ -329,7 +329,9 @@ class RevolveBot:
             except Exception as e:
                 logger.exception("Failed rendering brain. Exception:")
         else:
-            raise RuntimeError(
+            with open(img_path, "w") as file:
+                file.write("dummy\n")
+            logger.warn(
                 "Brain {} image rendering not supported".format(type(self._brain))
             )
 
