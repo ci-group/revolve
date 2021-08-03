@@ -63,6 +63,22 @@ class PostgreSQLDatabase:
         # Generates the sessionmaker, to create sessions
         self._sessionmaker: sessionmaker = sessionmaker(bind=self._engine)
 
+    def start_sync(self) -> None:
+        """
+        SYNC VERSION Ensures that the database server is running
+        """
+        self.postgres_service.start_sync()
+
+        self._engine: Engine = create_engine(
+            # The PostgreSQL dialect uses psycopg2 as the default DBAPI. pg8000 is also available as a pure-Python substitute
+            f'postgresql://{self._username}:{self._password}@{self._address}/{self._dbname}'
+        )
+        # Bind the engine to the metadata of the Base class so that the
+        # decleratives can be accessed through a DBSession instance
+        db_data.Base.metadata.bind = self._engine
+        # Generates the sessionmaker, to create sessions
+        self._sessionmaker: sessionmaker = sessionmaker(bind=self._engine)
+
     def init_db(self, first_time=False) -> None:
         """
         Database needs to be running before calling this function

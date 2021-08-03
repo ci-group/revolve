@@ -1,4 +1,5 @@
 import numpy as np
+from typing import List
 
 
 def RK45(state, A, dt):
@@ -11,7 +12,8 @@ def RK45(state, A, dt):
 
 class CPG():
     def __init__(self, weights, dt):
-        self.dt = dt
+        self.dt: float = dt
+        self.weights: List[float] = weights
         self.state_shape = (len(weights) * 2, int(1))
         weights = np.insert(weights, range(1, len(weights)), 0)
         wx_wy = np.diag(weights, 1)
@@ -30,7 +32,11 @@ class CPG():
         # return np.array(y_t[::2])
 
     def set_weights(self, weights):
+        self.weights = weights
         weights = np.insert(weights, range(1, len(weights)), 0)
         wx_wy = np.diag(weights, 1)
         wy_wx = np.diag(-weights, -1)
         self.A = wx_wy + wy_wx
+
+    def get_weights(self) -> List[float]:
+        return self.weights
