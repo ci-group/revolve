@@ -1,16 +1,17 @@
-import numpy as np
 import math
 
-from pyrevolve.SDF.math import Vector3
-from pyrevolve.util import Time
+import numpy as np
 from pyrevolve.angle.manage.robotmanager import RobotManager as RvRobotManager
 from pyrevolve.revolve_bot.revolve_bot import RevolveBot
+from pyrevolve.SDF.math import Vector3
+from pyrevolve.util import Time
 
 
 class BehaviouralMeasurements:
     """
-        Calculates all the measurements and saves them in one object
+    Calculates all the measurements and saves them in one object
     """
+
     def __init__(self, robot_manager: RvRobotManager = None, robot: RevolveBot = None):
         """
         :param robot_manager: Revolve Manager that holds the life of the robot
@@ -32,16 +33,56 @@ class BehaviouralMeasurements:
             self.head_balance = None
             self.contacts = None
 
+    @staticmethod
+    def zero():
+        b = BehaviouralMeasurements()
+        b.velocity = 0
+        b.displacement = (Vector3(), Time())
+        b.displacement_velocity = 0
+        b.displacement_velocity_hill = 0
+        b.head_balance = 0
+        b.contacts = 0
+        return b
+
+    def __add__(self, other):
+        if isinstance(other, BehaviouralMeasurements):
+            b = BehaviouralMeasurements()
+            b.velocity = self.velocity + other.velocity
+            b.displacement = (
+                self.displacement[0] + other.displacement[0],
+                self.displacement[1] + other.displacement[1],
+            )
+            b.displacement_velocity = (
+                self.displacement_velocity + other.displacement_velocity
+            )
+            b.displacement_velocity_hill = (
+                self.displacement_velocity_hill + other.displacement_velocity_hill
+            )
+            b.head_balance = self.head_balance + other.head_balance
+            b.contacts = self.contacts + other.contacts
+            return b
+        else:
+            raise RuntimeError("addition not supported for other types")
+
+    def __truediv__(self, other):
+        b = BehaviouralMeasurements()
+        b.velocity = self.velocity / other
+        b.displacement = (self.displacement[0] / other, self.displacement[1] / other)
+        b.displacement_velocity = self.displacement_velocity / other
+        b.displacement_velocity_hill = self.displacement_velocity_hill / other
+        b.head_balance = self.head_balance / other
+        b.contacts = self.contacts / other
+        return b
+
     def items(self):
         return {
-            'velocity': self.velocity,
+            "velocity": self.velocity,
             #'displacement': self.displacement,
-            'displacement_velocity': self.displacement_velocity,
-            'displacement_velocity_hill': self.displacement_velocity_hill,
-            'head_balance': self.head_balance,
-            'contacts': self.contacts
+            "displacement_velocity": self.displacement_velocity,
+            "displacement_velocity_hill": self.displacement_velocity_hill,
+            "head_balance": self.head_balance,
+            "contacts": self.contacts,
         }.items()
-
 
 
 def velocity(robot_manager: RvRobotManager):
@@ -65,7 +106,7 @@ def displacement(robot_manager: RvRobotManager):
         return Vector3(0, 0, 0), Time()
     return (
         robot_manager._positions[-1] - robot_manager._positions[0],
-        robot_manager._times[-1] - robot_manager._times[0]
+        robot_manager._times[-1] - robot_manager._times[0],
     )
 
 
@@ -130,15 +171,19 @@ def contacts(robot_manager: RvRobotManager, robot: RevolveBot):
     avg_contacts = 0
     for c in robot_manager._contacts:
         avg_contacts += c
-    #TODO remove this IF, it's ugly as hell
+    # TODO remove this IF, it's ugly as hell
     if robot._morphological_measurements is None:
         robot._morphological_measurements = robot.measure_body()
     avg_contacts = avg_contacts / robot._morphological_measurements.absolute_size
     return avg_contacts
 
 
-def logs_position_orientation(robot_manager: RvRobotManager, o, evaluation_time, robotid, path):
-    with open(path + '/data_fullevolution/descriptors/positions_' + robotid + '.txt', "a+") as f:
+def logs_position_orientation(
+    robot_manager: RvRobotManager, o, evaluation_time, robotid, path
+):
+    with open(
+        path + "/data_fullevolution/descriptors/positions_" + robotid + ".txt", "a+"
+    ) as f:
         if robot_manager.second <= evaluation_time:
             robot_manager.avg_roll += robot_manager._orientations[o][0]
             robot_manager.avg_pitch += robot_manager._orientations[o][1]
@@ -147,7 +192,9 @@ def logs_position_orientation(robot_manager: RvRobotManager, o, evaluation_time,
             robot_manager.avg_y += robot_manager._positions[o].y
             robot_manager.avg_z += robot_manager._positions[o].z
             robot_manager.avg_roll = robot_manager.avg_roll / robot_manager.count_group
-            robot_manager.avg_pitch = robot_manager.avg_pitch / robot_manager.count_group
+            robot_manager.avg_pitch = (
+                robot_manager.avg_pitch / robot_manager.count_group
+            )
             robot_manager.avg_yaw = robot_manager.avg_yaw / robot_manager.count_group
             robot_manager.avg_x = robot_manager.avg_x / robot_manager.count_group
             robot_manager.avg_y = robot_manager.avg_y / robot_manager.count_group
@@ -155,13 +202,22 @@ def logs_position_orientation(robot_manager: RvRobotManager, o, evaluation_time,
             robot_manager.avg_roll = robot_manager.avg_roll * 180 / math.pi
             robot_manager.avg_pitch = robot_manager.avg_pitch * 180 / math.pi
             robot_manager.avg_yaw = robot_manager.avg_yaw * 180 / math.pi
-            f.write(str(robot_manager.second) + ' '
-                    + str(robot_manager.avg_roll) + ' '
-                    + str(robot_manager.avg_pitch) + ' '
-                    + str(robot_manager.avg_yaw) + ' '
-                    + str(robot_manager.avg_x) + ' '
-                    + str(robot_manager.avg_y) + ' '
-                    + str(robot_manager.avg_z) + '\n')
+            f.write(
+                str(robot_manager.second)
+                + " "
+                + str(robot_manager.avg_roll)
+                + " "
+                + str(robot_manager.avg_pitch)
+                + " "
+                + str(robot_manager.avg_yaw)
+                + " "
+                + str(robot_manager.avg_x)
+                + " "
+                + str(robot_manager.avg_y)
+                + " "
+                + str(robot_manager.avg_z)
+                + "\n"
+            )
             robot_manager.second += 1
             robot_manager.avg_roll = 0
             robot_manager.avg_pitch = 0

@@ -4,7 +4,7 @@ import multineat
 from pyrevolve.genotype.cppnneat.genotype import CppnneatGenotype
 from pyrevolve.genotype.cppnneat_cpg_brain.config import CppnneatCpgBrainConfig
 from pyrevolve.revolve_bot.brain import Brain
-from pyrevolve.revolve_bot.brain.cpg import BrainCPG
+from pyrevolve.revolve_bot.brain.cpg_target import BrainCPGTarget
 from pyrevolve.revolve_bot.revolve_bot import RevolveBot
 from pyrevolve.revolve_bot.revolve_module import CoreModule
 
@@ -12,7 +12,7 @@ from pyrevolve.revolve_bot.revolve_module import CoreModule
 def cppnneat_cpg_brain_develop(
     genotype: CppnneatGenotype, config: CppnneatCpgBrainConfig, body: CoreModule
 ) -> Brain:
-    brain = BrainCPG()
+    brain = BrainCPGTarget()
     brain.abs_output_bound = config.abs_output_bound
     brain.use_frame_of_reference = config.use_frame_of_reference
     brain.signal_factor_all = config.signal_factor_all
@@ -25,7 +25,7 @@ def cppnneat_cpg_brain_develop(
     # Convert to sdf so we can extract things like position and order of actuators exactly like they would be read by the plugin
     bot = RevolveBot("dummy")
     bot._body = body
-    bot._brain = BrainCPG()  # dummy
+    bot._brain = BrainCPGTarget()  # dummy
     bot.update_substrate()
     sdf = bot.to_sdf()
     root = ElementTree.fromstring(sdf)

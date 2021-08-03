@@ -1,33 +1,41 @@
-# [(G,P), (G,P), (G,P), (G,P), (G,P)]
-
-from pyrevolve.evolution.individual import Individual
-from pyrevolve.SDF.math import Vector3
-from pyrevolve.tol.manage import measures
-from ..custom_logging.logger import logger
-import time
 import asyncio
+import math
 import os
+import random
+from typing import Tuple
+
+from pyrevolve.angle.manage.robotmanager import RobotManager
+from pyrevolve.evolution.individual import Individual
+from pyrevolve.revolve_bot.brain.cpg_target import BrainCPGTarget
+from pyrevolve.revolve_bot.revolve_bot import RevolveBot
+from pyrevolve.tol.manage import measures
+from pyrevolve.tol.manage.measures import BehaviouralMeasurements
+
+from ..custom_logging.logger import logger
 
 
 class PopulationConfig:
-    def __init__(self,
-                 population_size: int,
-                 genotype_constructor,
-                 genotype_conf,
-                 fitness_function,
-                 mutation_operator,
-                 mutation_conf,
-                 crossover_operator,
-                 crossover_conf,
-                 selection,
-                 parent_selection,
-                 population_management,
-                 population_management_selector,
-                 evaluation_time,
-                 experiment_name,
-                 experiment_management,
-                 offspring_size=None,
-                 next_robot_id=1):
+    def __init__(
+        self,
+        population_size: int,
+        genotype_constructor,
+        genotype_conf,
+        fitness_function,
+        mutation_operator,
+        mutation_conf,
+        crossover_operator,
+        crossover_conf,
+        selection,
+        parent_selection,
+        population_management,
+        population_management_selector,
+        evaluation_time,
+        experiment_name,
+        experiment_management,
+        offspring_size=None,
+        next_robot_id=1,
+        grace_time: float = 0.0,
+    ):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -63,10 +71,17 @@ class PopulationConfig:
         self.experiment_management = experiment_management
         self.offspring_size = offspring_size
         self.next_robot_id = next_robot_id
+        self.grace_time: float = grace_time
 
 
 class Population:
-    def __init__(self, conf: PopulationConfig, simulator_queue, analyzer_queue=None, next_robot_id=1):
+    def __init__(
+        self,
+        conf: PopulationConfig,
+        simulator_queue,
+        analyzer_queue=None,
+        next_robot_id=1,
+    ):
         """
         Creates a Population object that initialises the
         individuals in the population with an empty list
@@ -89,44 +104,64 @@ class Population:
         individual.develop()
         self.conf.experiment_management.export_genotype(individual)
         self.conf.experiment_management.export_phenotype(individual)
-        self.conf.experiment_management.export_phenotype_images(os.path.join('data_fullevolution', 'phenotype_images'), individual)
+        self.conf.experiment_management.export_phenotype_images(
+            os.path.join("data_fullevolution", "phenotype_images"), individual
+        )
         individual.phenotype.measure_phenotype()
-        individual.phenotype.export_phenotype_measurements(self.conf.experiment_management.data_folder)
+        individual.phenotype.export_phenotype_measurements(
+            self.conf.experiment_management.data_folder
+        )
 
         return individual
 
     async def load_individual(self, id):
         data_path = self.conf.experiment_management.data_folder
         genotype = self.conf.genotype_constructor(self.conf.genotype_conf, id)
-        genotype.load_genotype(os.path.join(data_path, 'genotypes', f'genotype_{id}.txt'))
+        genotype.load_genotype(
+            os.path.join(data_path, "genotypes", f"genotype_{id}.txt")
+        )
 
         individual = Individual(genotype)
         individual.develop()
         individual.phenotype.measure_phenotype()
 
-        with open(os.path.join(data_path, 'fitness', f'fitness_{id}.txt')) as f:
+        with open(os.path.join(data_path, "fitness", f"fitness_{id}.txt")) as f:
             data = f.readlines()[0]
-            individual.fitness = None if data == 'None' else float(data)
+            individual.fitness = None if data == "None" else float(data)
 
-        with open(os.path.join(data_path, 'descriptors', f'behavior_desc_{id}.txt')) as f:
+        with open(
+            os.path.join(data_path, "descriptors", f"behavior_desc_{id}.txt")
+        ) as f:
             lines = f.readlines()
-            if lines[0] == 'None':
+            if lines[0] == "None":
                 individual.phenotype._behavioural_measurements = None
             else:
-                individual.phenotype._behavioural_measurements = measures.BehaviouralMeasurements()
+                individual.phenotype._behavioural_measurements = (
+                    measures.BehaviouralMeasurements()
+                )
                 for line in lines:
-                    if line.split(' ')[0] == 'velocity':
-                        individual.phenotype._behavioural_measurements.velocity = float(line.split(' ')[1])
-                    #if line.split(' ')[0] == 'displacement':
-                     #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity':
-                        individual.phenotype._behavioural_measurements.displacement_velocity = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'displacement_velocity_hill':
-                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'head_balance':
-                        individual.phenotype._behavioural_measurements.head_balance = float(line.split(' ')[1])
-                    if line.split(' ')[0] == 'contacts':
-                        individual.phenotype._behavioural_measurements.contacts = float(line.split(' ')[1])
+                    if line.split(" ")[0] == "velocity":
+                        individual.phenotype._behavioural_measurements.velocity = float(
+                            line.split(" ")[1]
+                        )
+                    # if line.split(' ')[0] == 'displacement':
+                    #   individual.phenotype._behavioural_measurements.displacement = float(line.split(' ')[1])
+                    if line.split(" ")[0] == "displacement_velocity":
+                        individual.phenotype._behavioural_measurements.displacement_velocity = float(
+                            line.split(" ")[1]
+                        )
+                    if line.split(" ")[0] == "displacement_velocity_hill":
+                        individual.phenotype._behavioural_measurements.displacement_velocity_hill = float(
+                            line.split(" ")[1]
+                        )
+                    if line.split(" ")[0] == "head_balance":
+                        individual.phenotype._behavioural_measurements.head_balance = (
+                            float(line.split(" ")[1])
+                        )
+                    if line.split(" ")[0] == "contacts":
+                        individual.phenotype._behavioural_measurements.contacts = float(
+                            line.split(" ")[1]
+                        )
 
         return individual
 
@@ -136,13 +171,19 @@ class Population:
         :param gen_num: number of the generation snapshot to recover
         """
         data_path = self.conf.experiment_management.experiment_folder
-        for r, d, f in os.walk(data_path +'/selectedpop_'+str(gen_num)):
+        for r, d, f in os.walk(data_path + "/selectedpop_" + str(gen_num)):
             for file in f:
-                if 'body' in file:
-                    id = file.split('.')[0].split('_')[-2]+'_'+file.split('.')[0].split('_')[-1]
+                if "body" in file:
+                    id = (
+                        file.split(".")[0].split("_")[-2]
+                        + "_"
+                        + file.split(".")[0].split("_")[-1]
+                    )
                     self.individuals.append(await self.load_individual(id))
 
-    async def load_offspring(self, last_snapshot, population_size, offspring_size, next_robot_id):
+    async def load_offspring(
+        self, last_snapshot, population_size, offspring_size, next_robot_id
+    ):
         """
         Recovers the part of an unfinished offspring
         :param
@@ -155,8 +196,8 @@ class Population:
         else:
             n_robots = population_size + last_snapshot * offspring_size
 
-        for robot_id in range(n_robots+1, next_robot_id):
-            individuals.append(await self.load_individual('robot_'+str(robot_id)))
+        for robot_id in range(n_robots + 1, next_robot_id):
+            individuals.append(await self.load_individual("robot_" + str(robot_id)))
 
         self.next_robot_id = next_robot_id
         return individuals
@@ -165,8 +206,12 @@ class Population:
         """
         Populates the population (individuals list) with Individual objects that contains their respective genotype.
         """
-        for i in range(self.conf.population_size-len(recovered_individuals)):
-            individual = self._new_individual(self.conf.genotype_constructor(self.conf.genotype_conf, self.next_robot_id))
+        for i in range(self.conf.population_size - len(recovered_individuals)):
+            individual = self._new_individual(
+                self.conf.genotype_constructor(
+                    self.conf.genotype_conf, self.next_robot_id
+                )
+            )
             self.individuals.append(individual)
             self.next_robot_id += 1
 
@@ -184,12 +229,14 @@ class Population:
 
         new_individuals = []
 
-        for _i in range(self.conf.offspring_size-len(recovered_individuals)):
+        for _i in range(self.conf.offspring_size - len(recovered_individuals)):
             # Selection operator (based on fitness)
             # Crossover
             if self.conf.crossover_operator is not None:
                 parents = self.conf.parent_selection(self.individuals)
-                child_genotype = self.conf.crossover_operator(parents, self.conf.genotype_conf, self.conf.crossover_conf)
+                child_genotype = self.conf.crossover_operator(
+                    parents, self.conf.genotype_conf, self.conf.crossover_conf
+                )
                 child = Individual(child_genotype)
             else:
                 child = self.conf.selection(self.individuals)
@@ -198,7 +245,9 @@ class Population:
             self.next_robot_id += 1
 
             # Mutation operator
-            child_genotype = self.conf.mutation_operator(child.genotype, self.conf.mutation_conf)
+            child_genotype = self.conf.mutation_operator(
+                child.genotype, self.conf.mutation_conf
+            )
             # Insert individual in new population
             individual = self._new_individual(child_genotype)
 
@@ -211,17 +260,26 @@ class Population:
 
         # create next population
         if self.conf.population_management_selector is not None:
-            new_individuals = self.conf.population_management(self.individuals, new_individuals,
-                                                              self.conf.population_management_selector)
+            new_individuals = self.conf.population_management(
+                self.individuals,
+                new_individuals,
+                self.conf.population_management_selector,
+            )
         else:
-            new_individuals = self.conf.population_management(self.individuals, new_individuals)
-        new_population = Population(self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id)
+            new_individuals = self.conf.population_management(
+                self.individuals, new_individuals
+            )
+        new_population = Population(
+            self.conf, self.simulator_queue, self.analyzer_queue, self.next_robot_id
+        )
         new_population.individuals = new_individuals
-        logger.info(f'Population selected in gen {gen_num} with {len(new_population.individuals)} individuals...')
+        logger.info(
+            f"Population selected in gen {gen_num} with {len(new_population.individuals)} individuals..."
+        )
 
         return new_population
 
-    async def evaluate(self, new_individuals, gen_num, type_simulation = 'evolve'):
+    async def evaluate(self, new_individuals, gen_num, type_simulation="evolve"):
         """
         Evaluates each individual in the new gen population
 
@@ -232,24 +290,36 @@ class Population:
         # await self.simulator_connection.pause(True)
         robot_futures = []
         for individual in new_individuals:
-            logger.info(f'Evaluating individual (gen {gen_num}) {individual.genotype.id} ...')
-            robot_futures.append(asyncio.ensure_future(self.evaluate_single_robot(individual)))
+            logger.info(
+                f"Evaluating individual (gen {gen_num}) {individual.genotype.id} ..."
+            )
+            robot_futures.append(
+                asyncio.ensure_future(self.evaluate_single_robot(individual))
+            )
 
         await asyncio.sleep(1)
 
         for i, future in enumerate(robot_futures):
             individual = new_individuals[i]
-            logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
+            logger.info(f"Evaluation of Individual {individual.phenotype.id}")
+            (
+                individual.fitness,
+                individual.phenotype._behavioural_measurements,
+            ) = await future
 
             if individual.phenotype._behavioural_measurements is None:
-                assert (individual.fitness is None)
+                assert individual.fitness is None
 
-            if type_simulation == 'evolve':
-                self.conf.experiment_management.export_behavior_measures(individual.phenotype.id, individual.phenotype._behavioural_measurements)
+            if type_simulation == "evolve":
+                self.conf.experiment_management.export_behavior_measures(
+                    individual.phenotype.id,
+                    individual.phenotype._behavioural_measurements,
+                )
 
-            logger.info(f'Individual {individual.phenotype.id} has a fitness of {individual.fitness}')
-            if type_simulation == 'evolve':
+            logger.info(
+                f"Individual {individual.phenotype.id} has a fitness of {individual.fitness}"
+            )
+            if type_simulation == "evolve":
                 self.conf.experiment_management.export_fitness(individual)
 
     async def evaluate_single_robot(self, individual):
@@ -260,12 +330,71 @@ class Population:
         if individual.phenotype is None:
             individual.develop()
 
+        # analyze self collisions and robot bounding box
         if self.analyzer_queue is not None:
-            collisions, bounding_box = await self.analyzer_queue.test_robot(individual, self.conf)
+            collisions, bounding_box = await self.analyzer_queue.test_robot(
+                individual, individual.phenotype, self.conf, self._fitness
+            )
             if collisions > 0:
-                logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
+                logger.info(
+                    f"discarding robot {individual} because there are {collisions} self collisions"
+                )
                 return None, None
             else:
                 individual.phenotype.simulation_boundaries = bounding_box
 
-        return await self.simulator_queue.test_robot(individual, self.conf)
+        # evaluate using directed locomotion according to gongjin's method
+
+        # evaluate this many times in random directions
+        number_of_evals = 3
+
+        original_id = individual.phenotype.id
+
+        fitness_list = []
+        behaviour_list = []
+        target_dir_list = []
+        for i in range(number_of_evals):
+            # create random target direction vector
+            individual.phenotype._id = f"{original_id}_{i+1}"
+            target_direction = random.random() * math.pi * 2.0
+            target_as_vector: Tuple[float, float, float] = (
+                math.cos(target_direction),
+                math.sin(target_direction),
+                0,
+            )
+            print(
+                f"Target direction of {individual.phenotype._id} = {target_direction}"
+            )
+
+            # set target
+            assert isinstance(individual.phenotype._brain, BrainCPGTarget)
+            individual.phenotype._brain.target = target_as_vector
+
+            # simulate robot and save fitness
+            fitness, behaviour = await self.simulator_queue.test_robot(
+                individual,
+                individual.phenotype,
+                self.conf,
+                lambda robot_manager, robot: self._fitness(robot_manager, robot),
+            )
+            fitness_list.append(fitness)
+            behaviour_list.append(behaviour)
+            target_dir_list.append(target_direction)
+
+        # set robot id back to original id
+        individual.phenotype._id = original_id
+
+        fitness_avg = sum(fitness_list) / len(fitness_list)
+        behaviour_avg = sum(behaviour_list, start=BehaviouralMeasurements.zero()) / len(
+            behaviour_list
+        )
+
+        print(f"Fitness values for robot {original_id} = {fitness_list}")
+        print(f"Based on targets {target_dir_list}")
+        print(f"Average fitness = {fitness_avg}")
+        return fitness_avg, behaviour_avg
+
+    @staticmethod
+    def _fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
+        return 0.0
+        # TODO
