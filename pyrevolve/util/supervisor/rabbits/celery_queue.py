@@ -1,5 +1,4 @@
 import atexit
-import random
 import uuid
 from concurrent.futures.process import ProcessPoolExecutor
 
@@ -25,7 +24,7 @@ app = celery.Celery('CeleryQueue', backend='rpc://', broker='pyamqp://guest@loca
 
 @app.task
 def evaluate_robot(robot_sdf: AnyStr, life_timeout: float):
-    import manage_isaac
+    from isaac import manage_isaac
     manage_isaac.simulator(robot_sdf, life_timeout)
     #raise NotImplementedError("Evaluating a robot is implemented in C++, inside gazebo")
 
@@ -36,7 +35,7 @@ def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, t
 
     robot_id: int = r.get(timeout=timeout)
     logger.info(f'Request RECEIVED : {str(r)} for "{robot_name}"')
-    assert(type(robot_id) == int)
+    assert(type(robot_id) is int)
     return robot_id
 
 
