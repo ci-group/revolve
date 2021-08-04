@@ -135,12 +135,12 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
         // Set frame of reference
         int frame_of_reference = 0;
         // We are a left neuron
-        if (coord_x < 0)
+        if (coord_y < 0)
         {
             frame_of_reference = -1;
         }
         // We are a right neuron
-        else if (coord_x > 0)
+        else if (coord_y > 0)
         {
             frame_of_reference = 1;
         }
