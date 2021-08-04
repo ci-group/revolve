@@ -26,6 +26,7 @@
 #include <gazebo/common/common.hh>
 
 #include <revolve/gazebo/Types.h>
+#include <revolve/brains/controller/actuators/Actuator.h>
 
 namespace revolve
 {

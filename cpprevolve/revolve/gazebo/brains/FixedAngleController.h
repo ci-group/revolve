@@ -17,21 +17,13 @@ namespace revolve
 namespace gazebo
 {
 
-class FixedAngleController: public Brain, private revolve::FixedAngleController
+class FixedAngleController: public revolve::FixedAngleController
 {
 public:
     explicit FixedAngleController(double angle)
-        : Brain()
-        , revolve::FixedAngleController(angle)
+        : revolve::FixedAngleController(angle)
     {}
 
-    void Update(const std::vector<MotorPtr> &motors,
-                const std::vector<SensorPtr> &sensors,
-                const double time,
-                const double step) override
-    {
-        revolve::FixedAngleController::update(motors, sensors, time, step);
-    }
 };
 
 }

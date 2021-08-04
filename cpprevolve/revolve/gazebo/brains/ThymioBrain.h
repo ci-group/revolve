@@ -30,7 +30,7 @@ namespace revolve
   namespace gazebo
   {
     class ThymioBrain
-        : public Brain
+        : public ::revolve::gazebo::Brain
     {
       /// \brief The RLPower constructor reads out configuration file,
       /// deretmines which algorithm type to apply and initialises new policy.

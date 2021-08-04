@@ -25,11 +25,13 @@ bool string_replace(std::string& str, const std::string& from, const std::string
 
 
 DifferentialCPPNCPG::DifferentialCPPNCPG(const sdf::ElementPtr brain_sdf,
-                                           const std::vector<MotorPtr> &motors)
+                                           const std::vector<MotorPtr> &motors,
+                                           std::shared_ptr<revolve::AngleToTargetDetector> angle_to_target_sensor)
         : DifferentialCPGClean(
         				brain_sdf,
         				motors,
-								DifferentialCPPNCPG::load_cppn_genome_from_sdf(brain_sdf))
+                        DifferentialCPPNCPG::load_cppn_genome_from_sdf(brain_sdf),
+                        angle_to_target_sensor)
 {}
 
 /// \brief extracts CPPN genome from brain_sdf

@@ -63,24 +63,15 @@ MotorPtr MotorFactory::Create(sdf::ElementPtr _motorSdf)
   auto coordinates = _motorSdf->GetAttribute("coordinates");
   auto typeParam = _motorSdf->GetAttribute("type");
   auto partIdParam = _motorSdf->GetAttribute("part_id");
-  //  auto partNameParam = _motorSdf->GetAttribute("part_name");
+//  auto partNameParam = _motorSdf->GetAttribute("part_name");
   auto idParam = _motorSdf->GetAttribute("id");
 
-  if (coordinates == nullptr)
-  {
-    std::cerr << "Motor missing coordinates." << std::endl;
-    throw std::runtime_error("Motor error: missing coordinates");
-  }
+  if (coordinates == nullptr) throw std::runtime_error("Motor coordinates not found");
+  if (typeParam == nullptr) throw std::runtime_error("Motor typeParam not found");
+  if (partIdParam == nullptr) throw std::runtime_error("Motor partIdParam not found");
+  if (idParam == nullptr) throw std::runtime_error("Motor idParam not found");
 
-  if (not typeParam or not partIdParam or not idParam)
-  {
-    std::cerr << "Motor is missing required attributes (`id`, `type` or "
-                 "`part_id`)."
-              << std::endl;
-    throw std::runtime_error("Motor error");
-  }
-
-  //  auto partName = partNameParam->GetAsString();
+//  auto partName = partNameParam->GetAsString();
   auto partId = partIdParam->GetAsString();
   auto type = typeParam->GetAsString();
   auto id = idParam->GetAsString();

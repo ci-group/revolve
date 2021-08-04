@@ -8,11 +8,11 @@
 using namespace revolve;
 
 VideoFileStream::VideoFileStream(const char *filename, double fps, cv::Size frame_size)
-//    : video(filename, cv::VideoWriter::fourcc('V','P','9','0'), fps, std::move(frame_size), true)
-    : video(filename, cv::VideoWriter::fourcc('h','2','6','4'), fps, std::move(frame_size), true)
-    , filename(filename)
+    //    : video(filename, cv::VideoWriter::fourcc('V','P','9','0'), fps, std::move(frame_size), true)
+    : video(filename, CV_FOURCC('h', '2', '6', '4'), fps, std::move(frame_size), true), filename(filename)
 {
-    if (!video.isOpened()) {
+    if (!video.isOpened())
+    {
         std::ostringstream error_message;
         error_message << "Could not open video file \"" << filename << "\" for writing";
         throw std::runtime_error(error_message.str());

@@ -35,6 +35,7 @@ ThymioBrain::ThymioBrain(
     sdf::ElementPtr /* _node */,
     std::vector< MotorPtr > &/* _motors */,
     std::vector< SensorPtr > &/* _sensors */)
+    : Brain()
 {
   std::cout << "Hello!" << std::endl;
   this->robot_ = _model;

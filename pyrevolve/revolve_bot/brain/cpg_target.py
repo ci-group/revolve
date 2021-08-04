@@ -14,7 +14,7 @@ class BrainCPGTarget(BrainCPG):
     @staticmethod
     def from_yaml(yaml_object):
         brain = BrainCPGTarget()
-        for my_type in ["controller", "learner"]:  # , "meta"]:
+        for my_type in ["controller", "learner"]:
             try:
                 my_object = yaml_object[my_type]
                 for key, value in my_object.items():
@@ -28,9 +28,12 @@ class BrainCPGTarget(BrainCPG):
 
     def to_yaml(self):
         yaml = super().to_yaml()
+        yaml["controller"]["type"] = "cpg-target"
         yaml["controller"]["target"] = self.target
+        return yaml
 
     def controller_sdf(self):
         sdf = super().controller_sdf()
         sdf.set("target", ";".join(str(x) for x in self.target))
+        sdf.set("type", "cpg-target")
         return sdf

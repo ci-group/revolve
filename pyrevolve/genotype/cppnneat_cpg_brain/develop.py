@@ -15,9 +15,7 @@ def cppnneat_cpg_brain_develop(
     brain = BrainCPGTarget()
     brain.abs_output_bound = config.abs_output_bound
     brain.use_frame_of_reference = config.use_frame_of_reference
-    brain.signal_factor_all = config.signal_factor_all
-    brain.signal_factor_mid = config.signal_factor_mid
-    brain.signal_factor_left_right = config.signal_factor_left_right
+    brain.output_signal_factor = config.output_signal_factor
     brain.range_ub = config.range_ub
     brain.init_neuron_state = config.init_neuron_state
     brain.reset_neuron_random = config.reset_neuron_random

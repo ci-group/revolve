@@ -7,32 +7,34 @@ import multineat
 from pyrevolve import parser
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
-from pyrevolve.evolution.pop_management.steady_state import (
-    steady_state_population_management,
-)
+from pyrevolve.evolution.pop_management.steady_state import \
+    steady_state_population_management
 from pyrevolve.evolution.population import Population, PopulationConfig
-from pyrevolve.evolution.selection import multiple_selection, tournament_selection
+from pyrevolve.evolution.selection import (multiple_selection,
+                                           tournament_selection)
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.bodybrain_composition.config import BodybrainCompositionConfig
-from pyrevolve.genotype.bodybrain_composition.crossover import (
-    bodybrain_composition_crossover,
-)
-from pyrevolve.genotype.bodybrain_composition.genotype import (
-    BodybrainCompositionGenotype,
-)
-from pyrevolve.genotype.bodybrain_composition.mutation import (
-    bodybrain_composition_mutate,
-)
+from pyrevolve.genotype.bodybrain_composition.config import \
+    BodybrainCompositionConfig
+from pyrevolve.genotype.bodybrain_composition.crossover import \
+    bodybrain_composition_crossover
+from pyrevolve.genotype.bodybrain_composition.genotype import \
+    BodybrainCompositionGenotype
+from pyrevolve.genotype.bodybrain_composition.mutation import \
+    bodybrain_composition_mutate
 from pyrevolve.genotype.cppnneat_body.config import CppnneatBodyConfig
 from pyrevolve.genotype.cppnneat_body.crossover import cppnneat_body_crossover
 from pyrevolve.genotype.cppnneat_body.develop import cppnneat_body_develop
 from pyrevolve.genotype.cppnneat_body.genotype import CppnneatBodyGenotype
 from pyrevolve.genotype.cppnneat_body.mutation import cppnneat_body_mutate
 from pyrevolve.genotype.cppnneat_cpg_brain.config import CppnneatCpgBrainConfig
-from pyrevolve.genotype.cppnneat_cpg_brain.crossover import cppnneat_cpg_brain_crossover
-from pyrevolve.genotype.cppnneat_cpg_brain.develop import cppnneat_cpg_brain_develop
-from pyrevolve.genotype.cppnneat_cpg_brain.genotype import CppnneatCpgBrainGenotype
-from pyrevolve.genotype.cppnneat_cpg_brain.mutation import cppnneat_cpg_brain_mutate
+from pyrevolve.genotype.cppnneat_cpg_brain.crossover import \
+    cppnneat_cpg_brain_crossover
+from pyrevolve.genotype.cppnneat_cpg_brain.develop import \
+    cppnneat_cpg_brain_develop
+from pyrevolve.genotype.cppnneat_cpg_brain.genotype import \
+    CppnneatCpgBrainGenotype
+from pyrevolve.genotype.cppnneat_cpg_brain.mutation import \
+    cppnneat_cpg_brain_mutate
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
@@ -177,9 +179,7 @@ async def run():
         rng,
         abs_output_bound=1.0,  # maximum(and minimum, negative) ceiling of actuator position. 1 is the value we want for gazebo and our real robots
         use_frame_of_reference=False,  # at some point we will use this for directed locomation(use emiels stuff)
-        signal_factor_all=4.0,  # actuator gain
-        signal_factor_mid=2.5,  # not used anymore after update later(see emiels code)
-        signal_factor_left_right=2.5,  # not used anymore after update later(see emiels code)
+        output_signal_factor=1.0,  # actuator gain
         range_ub=1.0,  # scales weights to be between -1 and 1. Our weights are between 0 and 1 so this value is good.
         init_neuron_state=0.707,  # x to this value and y to minus this
         reset_neuron_random=False,  # ignore init neuron state and use random value

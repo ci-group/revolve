@@ -14,6 +14,8 @@ public:
         : _n_inputs(n_inputs)
     {}
 
+    virtual ~Sensor() = default;
+
     /// \brief Read the value of the sensor into the
     /// \param[in] _input: array.
     /// \brief[in,out] _input Input value to write on

@@ -54,7 +54,8 @@ NeuralNetwork::NeuralNetwork(
     const sdf::ElementPtr &_settings,
     const std::vector< MotorPtr > &_motors,
     const std::vector< SensorPtr > &_sensors)
-    : flipState_(false)
+    : Controller(ControllerType::NEURAL_NETWORK)
+    , flipState_(false)
     , nInputs_(0)
     , nOutputs_(0)
     , nHidden_(0)
@@ -395,7 +396,7 @@ void NeuralNetwork::Step(const double _time)
 }
 
 /////////////////////////////////////////////////
-void NeuralNetwork::Update(
+void NeuralNetwork::update(
     const std::vector< MotorPtr > &_motors,
     const std::vector< SensorPtr > &_sensors,
     const double _time,

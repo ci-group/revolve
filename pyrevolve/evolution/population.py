@@ -327,6 +327,7 @@ class Population:
         :param individual: individual
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
         """
+
         if individual.phenotype is None:
             individual.develop()
 

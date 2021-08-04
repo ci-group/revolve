@@ -12,12 +12,24 @@
 
 namespace revolve
 {
+class DifferentialCPG;
 
 class Controller
 {
 public:
+    enum ControllerType {
+        NONE = 0,
+        NEURAL_NETWORK,
+        SPLINES,
+        DIFFERENTIAL_CPG,
+        RANDOM,
+        // add new controller types here
+    } const controller_type;
+
     /// \brief Constructor
-    explicit Controller() {}
+    explicit Controller(ControllerType controller_type)
+        : controller_type(controller_type)
+    {}
 
     /// \brief Deconstructor
     virtual ~Controller() {}
@@ -28,6 +40,8 @@ public:
             const double _time,
             const double _step
     ) = 0;
+
+    virtual DifferentialCPG* into_DifferentialCPG() { return nullptr; }
 };
 
 }
