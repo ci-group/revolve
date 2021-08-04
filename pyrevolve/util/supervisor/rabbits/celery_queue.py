@@ -9,6 +9,7 @@ import celery
 import celery.exceptions
 import math
 
+from isaac import manage_isaac
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.individual import Individual
@@ -23,14 +24,36 @@ app = celery.Celery('CeleryQueue', backend='rpc://', broker='pyamqp://guest@loca
 
 
 @app.task
-def evaluate_robot(robot_sdf: AnyStr, life_timeout: float):
-    from isaac import manage_isaac
-    manage_isaac.simulator(robot_sdf, life_timeout)
-    #raise NotImplementedError("Evaluating a robot is implemented in C++, inside gazebo")
+def evaluate_robot(robot_sdf: AnyStr, life_timeout: float) -> int:
+    """
+    Evaluates robots in the gazebo CeleryWorker plugin. Behavioural data is saved in the Database
+     and the ID of the robot in the database is returned.
+    :param robot_sdf: SDF robot, in string
+    :param life_timeout: how long should the robot be evaluated
+    :return: id of the robot in the database (WARNING: may be different from robot_id)
+    """
+    raise NotImplementedError("Evaluating a robot is implemented in C++, inside gazebo")
 
 
-def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, timeout: float) -> int:
-    r = evaluate_robot.delay(robot_sdf, max_age)
+@app.task
+def evaluate_robot_isaac(robot_urdf: AnyStr, life_timeout: float) -> int:
+    """
+    Evaluates robots in isaac gym. Behavioural data is saved in the Database
+     and the ID of the robot in the database is returned.
+    :param robot_urdf: URDF robot, in string
+    :param life_timeout: how long should the robot be evaluated
+    :return: id of the robot in the database (WARNING: may be different from robot_id)
+    """
+    return manage_isaac.simulator(robot_urdf, life_timeout)
+
+
+def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, timeout: float, simulator: AnyStr) -> int:
+    if simulator == 'gazebo':
+        r = evaluate_robot.delay(robot_sdf, max_age)
+    elif simulator == 'isaacgym':
+        r = evaluate_robot_isaac.delay(robot_sdf, max_age)
+    else:
+        raise RuntimeError(f"Simulator \"{simulator}\" not recognized")
     logger.info(f'Request SENT to rabbitmq: {str(r)} for "{robot_name}"')
 
     robot_id: int = r.get(timeout=timeout)
@@ -43,13 +66,13 @@ class CeleryQueue:
     EVALUATION_TIMEOUT = 60  # REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
     MAX_ATTEMPTS = 3
 
-    def __init__(self, args, queue_name: AnyStr = 'celery', dbname: Optional[AnyStr] = None, urdf: bool = False):
+    def __init__(self, args, queue_name: AnyStr = 'celery', dbname: Optional[AnyStr] = None, use_isaacgym: bool = False):
         self._queue_name: AnyStr = queue_name
         self._args = args
         self._dbname: AnyStr = str(uuid.uuid1()) if dbname is None else dbname
         self._db: PostgreSQLDatabase = PostgreSQLDatabase(dbname=self._dbname, address='localhost', username='matteo')
         self._process_pool_executor = ProcessPoolExecutor()
-        self._use_urdf: bool = urdf
+        self._use_isaacgym: bool = use_isaacgym
         atexit.register(
             lambda: asyncio.get_event_loop().run_until_complete(self.stop(wait=False))
         )
@@ -82,9 +105,10 @@ class CeleryQueue:
         :return: robot_id in the database
         """
         loop = asyncio.get_event_loop()
+        simulator = 'isaacgym' if self._use_isaacgym else 'gazebo'
         robot_id: int = await loop.run_in_executor(self._process_pool_executor,
                                                    call_evaluate_robot,
-                                                   robot_name, robot_sdf, max_age, timeout)
+                                                   robot_name, robot_sdf, max_age, timeout, simulator)
         return robot_id
 
     async def test_robot(self,
@@ -107,7 +131,7 @@ class CeleryQueue:
             if robot.simulation_boundaries is not None:
                 pose_z -= robot.simulation_boundaries.min.z
             pose: Vector3 = Vector3(0.0, 0.0, pose_z)
-            if self._use_urdf:
+            if self._use_isaacgym:
                 robot_sdf: AnyStr = robot.to_urdf(pose)
             else:
                 robot_sdf: AnyStr = robot.to_sdf(pose)

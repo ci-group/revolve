@@ -1,7 +1,7 @@
 import time
 import numpy as np
-from thirdparty.reversible_de.algorithms.recombination import DifferentialRecombination
-from thirdparty.reversible_de.algorithms.selections import SelectBest
+from .revde.algorithms.recombination import DifferentialRecombination
+from .revde.algorithms.selections import SelectBest
 
 
 class DifferentialEvolution:
