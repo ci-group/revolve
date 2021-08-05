@@ -25,12 +25,14 @@ float GZAngleToTargetDetector::detect_angle()
     // calculate angle from target
 
     // Forward x and y
-    const double x_f = forward_vec[0];
-    const double y_f = forward_vec[1];
+    auto forward_norm = forward_vec.Normalized();
+    const double x_f = forward_norm[0];
+    const double y_f = forward_norm[1];
 
     // Target x and y
-    const double x_t = this->target[0];
-    const double y_t = this->target[1];
+    auto target_norm = this->target.Normalized();
+    const double x_t = target_norm[0];
+    const double y_t = target_norm[1];
 
     const double angle_robot_forward = std::atan2(y_f, x_f);
     const double angle_robot_target = std::atan2(y_t, x_t);
