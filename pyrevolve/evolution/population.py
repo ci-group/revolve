@@ -401,32 +401,34 @@ class Population:
         """
         Fitness is determined by the formula:
 
-        F = e3 * (e1 / (delta + 1) - w * e2)
+        F = e3 * (e1 / (delta + 1) - penalty_factor * e2)
 
         Where e1 is the distance travelled in the right direction,
         e2 is the distance of the final position p1 from the ideal
         trajectory starting at starting position p0 and following
-        the target direction. e3 rewards locomotion in a straight
-        line.
+        the target direction. e3 is distance in right direction divided by
+        length of traveled path(curved) + infinitesimal constant to never divide
+        by zero.
+        delta is angle between optimal direction and traveled direction.
         """
 
-        ksi = 1.0
+        penalty_factor = 0.01
+
         epsilon: float = sys.float_info.epsilon
-        # beta0: float = math.radians(target_direction_degrees)
-        print("ksi: ", ksi, ", and epsilon: ", epsilon)
 
+        # length of traveled path(over the complete curve)
         path_length = measures.path_length(robot_manager)  # L
-        print("path length: ", path_length)
-
-        # robot orientation, array[roll, pitch, yaw]
-        orient_0 = robot_manager._orientations[0]
-        orient_1 = robot_manager._orientations[-1]
-        print("Robot orientation: ", orient_0, " at t0, and: ", orient_1, " at t1")
 
         # robot position, Vector3(pos.x, pos.y, pos.z)
-        pos_0 = robot_manager._positions[0]
-        pos_1 = robot_manager._positions[-1]
-        print("Robot position: ", pos_0, " at t0, and: ", pos_1, " at t1")
+        pos_0 = robot_manager._positions[0]  # start
+        pos_1 = robot_manager._positions[-1]  # end
+
+        # robot displacement
+        displacement: Tuple[float, float, float] = (
+            pos_1[0] - pos_0[0],
+            pos_1[1] - pos_0[1],
+            pos_1[2] - pos_0[2],
+        )
 
         # steal target from brain
         target = robot._brain.target
@@ -435,9 +437,6 @@ class Population:
         # beta1 = arc tangent of y1 - y0 / x1 - x0 in radians
         beta1 = math.atan2((pos_1[1] - pos_0[1]), (pos_1[0] - pos_0[0]))
 
-        print("Target direction: ", beta0, " radians")
-        print("Robot direction: ", beta1, " radians")
-
         # intersection angle between the target direction and travelled direction
         # always pick smallest angle
         if abs(beta1 - beta0) > math.pi:
@@ -445,28 +444,31 @@ class Population:
         else:
             delta = abs(beta1 - beta0)
 
-        # use pythagoras for displacement between T0 and T1, and calculate projected distance
-        # and deviation distance
-        displacement_run = math.sqrt(
-            (pos_1[0] - pos_0[0]) ** 2 + (pos_1[1] - pos_0[1]) ** 2
+        # projection of displacement with target line
+        dist_in_right_direction: float = (
+            displacement[0] * target[0] + displacement[1] * target[1]
         )
 
-        dist_projection = displacement_run * math.cos(delta)
-        print("Total displacement: ", displacement_run)
-        print("Projected distance: ", dist_projection)
+        # distance from displacement to target line
+        dist_to_optimal_line: float = math.sqrt(
+            (dist_in_right_direction * target[0] - displacement[0]) ** 2
+            + (dist_in_right_direction * target[1] - displacement[1]) ** 2
+        )
+
+        print(
+            f"target: {target}, displacement: {displacement}, dist_in_right_direction: {dist_in_right_direction}, dist_to_optimal_line: {dist_to_optimal_line}"
+        )
 
         # filter out passive blocks
-        if dist_projection < 0.01:
+        if dist_in_right_direction < 0.01:
             fitness = 0
             print("Did not pass fitness test, fitness = ", fitness)
         else:
-            dist_penalty = displacement_run * math.sin(delta)
-            penalty = 0.01 * dist_penalty
-
-            # fitness = dist_projection / (alpha + ksi) - penalty
-            fitness = (abs(dist_projection) / (path_length + epsilon)) * (
-                dist_projection / (delta + ksi) - penalty
+            fitness = (dist_in_right_direction / (epsilon + path_length)) * (
+                dist_in_right_direction / (delta + 1)
+                - penalty_factor * dist_to_optimal_line
             )
+
             print("Fitness = ", fitness)
 
         return fitness
