@@ -357,7 +357,7 @@ class Population:
         target_dir_list = []
         for i in range(number_of_evals):
             # create random target direction vector
-            individual.phenotype._id = f"{original_id}_{i+1}"
+            individual.phenotype._id = f"{original_id}_iter_{i+1}"
             target_direction = random.random() * math.pi * 2.0
             target_as_vector: Tuple[float, float, float] = (
                 math.cos(target_direction),
