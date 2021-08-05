@@ -424,27 +424,26 @@ class Population:
         pos_1 = robot_manager._positions[-1]  # end
 
         # robot displacement
-        displacement: Tuple[float, float, float] = (
-            pos_1[0] - pos_0[0],
-            pos_1[1] - pos_0[1],
-            pos_1[2] - pos_0[2],
+        displacement: Tuple[float, float] = (pos_1[0] - pos_0[0], pos_1[1] - pos_0[1])
+        displacement_length = math.sqrt(
+            displacement[0] * displacement[0] + displacement[1] * displacement[1]
+        )
+        displacement_normalized = (
+            displacement[0] / displacement_length,
+            displacement[1] / displacement_length,
         )
 
         # steal target from brain
+        # is already normalized
         target = robot._brain.target
-        beta0 = math.atan2(target[1], target[0])
 
-        # beta1 = arc tangent of y1 - y0 / x1 - x0 in radians
-        beta1 = math.atan2((pos_1[1] - pos_0[1]), (pos_1[0] - pos_0[0]))
+        # angle between target and actual direction
+        delta = math.acos(
+            target[0] * displacement_normalized[0]
+            + target[1] * displacement_normalized[1]
+        )
 
-        # intersection angle between the target direction and travelled direction
-        # always pick smallest angle
-        if abs(beta1 - beta0) > math.pi:
-            delta = 2 * math.pi - abs(beta1 - beta0)
-        else:
-            delta = abs(beta1 - beta0)
-
-        # projection of displacement with target line
+        # projection of displacement on target line
         dist_in_right_direction: float = (
             displacement[0] * target[0] + displacement[1] * target[1]
         )
