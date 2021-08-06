@@ -25,7 +25,7 @@ float GZAngleToTargetDetector::detect_angle()
     // calculate angle from target
 
     // Forward x and y
-    auto forward_norm = forward_vec.Normalized();
+    auto forward_norm = orientation_vec.Normalized();
     const double x_f = forward_norm[0];
     const double y_f = forward_norm[1];
 

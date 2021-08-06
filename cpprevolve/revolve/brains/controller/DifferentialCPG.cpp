@@ -205,7 +205,7 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
                 {
 #ifdef DifferentialCPG_PRINT_INFO
                     std::cout << "Creating connnection ["
-                              << x << ';' << y << ';' << z << ';' << 1 << '-'
+                              << x << ';' << y << ';' << z << ';' << 1 << '|'
                               << near_x << ';' << near_y << ';' << near_z << ';' << 1
                               << "] to connection_weights[" << i << ']' << std::endl;
 #endif
@@ -269,7 +269,7 @@ void DifferentialCPG::load_genome_to_controller(const NEAT::Genome &genome)
         double weight = net.Output()[0];
 #ifdef DifferentialCPG_PRINT_INFO
         std::cout << "Creating weight ["
-                  << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
+                  << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '|'
                   << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
                   << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
 #endif
@@ -290,7 +290,7 @@ void DifferentialCPG::load_genome_to_controller(const NEAT::Genome &genome)
         double weight = net.Output()[0];
 #ifdef DifferentialCPG_PRINT_INFO
         std::cout << "Creating weight ["
-                  << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '-'
+                  << inputs[0] << ';' << inputs[1] << ';' << inputs[2] << ';' << inputs[3] << '|'
                   << inputs[4] << ';' << inputs[5] << ';' << inputs[6] << ';' << inputs[7]
                   << "] to connection_weights[" << k << "]\t-> " << weight << std::endl;
 #endif
@@ -363,7 +363,7 @@ void DifferentialCPG::set_ode_matrix()
         size_t k = motor_coordinates.at({x, y, z});
 #ifdef DifferentialCPG_PRINT_INFO
         std::cout << "Setting connection ["
-                  << x << ';' << y << ';' << z << ';' << 1 << '-'
+                  << x << ';' << y << ';' << z << ';' << 1 << '|'
                   << x << ';' << y << ';' << z << ';' << -1
                   << "] to connection_weights[" << k << "]\t-> " << this->connection_weights.at(k) << std::endl;
 #endif
@@ -437,7 +437,7 @@ void DifferentialCPG::set_ode_matrix()
         const int sample_index = connections[{x1, y1, z1, w1, x2, y2, z2, w2}];
 #ifdef DifferentialCPG_PRINT_INFO
         std::cout << "Setting connection ["
-                  << x1 << ';' << y1 << ';' << z1 << ';' << w1 << '-'
+                  << x1 << ';' << y1 << ';' << z1 << ';' << w1 << '|'
                   << x2 << ';' << y2 << ';' << z2 << ';' << w2
                   << "] to connection_weights[" << sample_index << "]\t-> " << this->connection_weights.at(sample_index) << std::endl;
 #endif
@@ -624,7 +624,7 @@ void DifferentialCPG::step(
                     //                    std::cout << "New output_j equals [" << output_j << "]" << std::endl;
                 }
             }
-            this->output[j] = output_j;
+            this->output[j] = (output_j + 1.0) / 2.0;
         }
         i++;
     }
