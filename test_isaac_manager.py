@@ -1,9 +1,6 @@
-import math
-import numpy as np
-import time
 import os
 
-import manage_isaac
+from isaac import manage_isaac
 from pyrevolve import parser
 
 

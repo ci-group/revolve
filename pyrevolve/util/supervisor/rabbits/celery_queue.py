@@ -1,5 +1,4 @@
 import atexit
-import random
 import uuid
 from concurrent.futures.process import ProcessPoolExecutor
 
@@ -10,7 +9,7 @@ import celery
 import celery.exceptions
 import math
 
-import manage_isaac
+from isaac import manage_isaac
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.individual import Individual
@@ -59,7 +58,7 @@ def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, t
 
     robot_id: int = r.get(timeout=timeout)
     logger.info(f'Request RECEIVED : {str(r)} for "{robot_name}"')
-    assert(type(robot_id) == int)
+    assert(type(robot_id) is int)
     return robot_id
 
 
