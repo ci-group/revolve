@@ -2,7 +2,6 @@ import os
 from typing import Callable
 
 from pyrevolve.custom_logging.logger import logger
-from pyrevolve.evolution.population import PopulationConfig
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.gazebo.analyze import BodyAnalyzer
 from pyrevolve.revolve_bot import RevolveBot

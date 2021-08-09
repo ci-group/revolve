@@ -7,10 +7,11 @@ import multineat
 from pyrevolve import parser
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
-from pyrevolve.evolution.pop_management.steady_state import (
+from pyrevolve.evolution.population.population import Population
+from pyrevolve.evolution.population.population_config import PopulationConfig
+from pyrevolve.evolution.population.population_management import (
     steady_state_population_management,
 )
-from pyrevolve.evolution.population import Population, PopulationConfig
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.bodybrain_composition.config import BodybrainCompositionConfig
@@ -309,7 +310,7 @@ async def run():
             logger.info("Recovered unfinished offspring " + str(gen_num))
 
             if gen_num == 0:
-                await population.init_pop(individuals)
+                await population.initialize(individuals)
             else:
                 population = await population.next_gen(gen_num, individuals)
 
@@ -317,7 +318,7 @@ async def run():
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-        await population.init_pop()
+        await population.initialize()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     # our evolutionary loop
