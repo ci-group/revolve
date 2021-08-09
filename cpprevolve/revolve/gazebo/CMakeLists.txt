@@ -296,6 +296,16 @@ target_link_libraries(RecorderCameraPlugin
 target_include_directories(RecorderCameraPlugin
         PRIVATE ${OpenCV_INCLUDE_DIRS})
 
+# Create TorusWorld plugin
+add_library(TorusWorldPlugin SHARED
+        plugin/register_torus_world.cpp
+        plugin/TorusWorldPlugin.cpp
+)
+target_link_libraries(TorusWorldPlugin
+        revolve-gazebo
+        ${GAZEBO_LIBRARIES}
+)
+
 # Create Robot plugin
 add_library(
         RobotControlPlugin SHARED
