@@ -10,7 +10,8 @@ __pycache__/
 .Python
 env/
 /build/
-/cmake-build-*/
+cmake-build-*/
+cmake-multineat-*/
 /output*/
 develop-eggs/
 dist/
@@ -76,3 +77,8 @@ Pipfile.lock
 # Revolve related
 *.sdf
 *.urdf
+src/
+
+# OS crap
+.DS_Store
+.directory

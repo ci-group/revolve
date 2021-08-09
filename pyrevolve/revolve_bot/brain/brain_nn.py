@@ -109,10 +109,10 @@ class BrainNN(Brain):
         for name, node in self.nodes.items():
             assert(name == node.id)
             neuron = xml.etree.ElementTree.SubElement(controller, 'rv:neuron', {
-                'layer': node.layer,
-                'type': node.type,
-                'id': node.id,
-                'part_id': node.part_id,
+                'layer': str(node.layer),
+                'type': str(node.type),
+                'id': str(node.id),
+                'part_id': str(node.part_id),
             })
             node_map[node.id] = neuron
 

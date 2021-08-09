@@ -1,9 +1,12 @@
+import copy
+
+
 class Genotype:
     def clone(self):
         """
         Create an returns deep copy of the genotype
         """
-        raise NotImplementedError("Method must be implemented by genome")
+        return copy.deepcopy(self)
 
     def develop(self):
         """
@@ -12,6 +15,12 @@ class Genotype:
         :return: a RevolveBot instance
         :rtype: RevolveBot
         """
+        raise NotImplementedError("Method must be implemented by genome")
+
+    def load_genotype(self, file_path: str):
+        raise NotImplementedError("Method must be implemented by genome")
+
+    def export_genotype(self, file_path: str):
         raise NotImplementedError("Method must be implemented by genome")
 
 

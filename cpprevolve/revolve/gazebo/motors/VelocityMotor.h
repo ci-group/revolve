@@ -45,7 +45,8 @@ namespace revolve
             ::gazebo::physics::ModelPtr _model,
             const std::string &_partId,
             const std::string &_motorId,
-            sdf::ElementPtr _motor);
+            sdf::ElementPtr _motor,
+            const std::string &_coordinates);
 
       /// \brief Destructor
       public: virtual ~VelocityMotor();
@@ -55,7 +56,7 @@ namespace revolve
       /// maximum velocity set by the motor.
       /// \param[in,out] outputs
       /// \param[in] step
-      virtual void Update(
+      virtual void write(
           const double *outputs,
           double step);
 
@@ -85,7 +86,7 @@ namespace revolve
 
       /// \brief PID for this velocity motor
       protected: ::gazebo::common::PID pid_;
-    };
+};
   }  // namespace gazebo
 }  // namespace revolve
 

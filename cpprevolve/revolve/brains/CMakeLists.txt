@@ -18,6 +18,8 @@ find_package(Boost REQUIRED COMPONENTS system)
 # Find Eigen3 - A lightweight C++ template library for vector and matrix math
 find_package(Eigen3 REQUIRED)
 
+find_package(MultiNEAT REQUIRED)
+
 # Find NLOpt - Non Linear Optimization
 pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
 
@@ -39,6 +41,9 @@ target_include_directories(revolve-learners
 
 target_include_directories(revolve-learners
         PUBLIC ${NLOpt_LIBRARY_DIRS})
+
+target_link_libraries(revolve-controllers
+        MultiNEAT::MultiNEAT)
 
 install(TARGETS revolve-controllers revolve-learners
         RUNTIME DESTINATION bin

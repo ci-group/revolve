@@ -7,6 +7,8 @@ class Config(object):
                  max_parts,
                  max_inputs,
                  max_outputs,
+                 initial_parts_mu,
+                 initial_parts_sigma,
                  body_mutation_epsilon=0.05,
                  enforce_planarity=True,
                  disable_sensors=False,
@@ -23,3 +25,5 @@ class Config(object):
         self.enable_wheel_parts = enable_wheel_parts
         self.max_parts = max_parts
         self.min_parts = min_parts
+        self.initial_parts_mu = initial_parts_mu
+        self.initial_parts_sigma = initial_parts_sigma

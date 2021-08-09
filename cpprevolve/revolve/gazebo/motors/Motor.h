@@ -26,23 +26,25 @@
 #include <gazebo/physics/physics.hh>
 
 #include <revolve/gazebo/Types.h>
+#include <revolve/brains/controller/actuators/Actuator.h>
 
 namespace revolve
 {
   namespace gazebo
   {
-    class Motor
+    class Motor : public revolve::Actuator
     {
       /// \brief Constructor
       /// \brief[in] _model Model identifier
       /// \brief[in] _partId Module identifier
       /// \brief[in] _motorId Motor identifier
       /// \brief[in] _outputs Number of motor outputs
-      public: Motor(
+    public: Motor (
           ::gazebo::physics::ModelPtr _model,
           const std::string &_partId,
           const std::string &_motorId,
-          const unsigned int _outputs);
+          unsigned int _outputs,
+          const std::string &_coordinates);
 
       /// \brief Destructor
       public: virtual ~Motor();
@@ -54,7 +56,7 @@ namespace revolve
       /// array of values, out of which the motor should read the first `n`
       /// values if it specifies `n` outputs.
       /// \param[in] step Actuation time in seconds
-      public: virtual void Update(
+      public: void write(
           const double *_output,
           double _step) = 0;
 
@@ -81,9 +83,6 @@ namespace revolve
 
       /// \brief Robot-wide unique motor ID
       protected: std::string motorId_;
-
-      /// \brief Number of output neurons that should be connected to the motor.
-      protected: unsigned int outputs_;
     };
   } /* namespace gazebo */
 } /* namespace tol_robogen */

@@ -8,9 +8,11 @@
 #include "Controller.h"
 #include "actuators/Actuator.h"
 #include "sensors/Sensor.h"
+
 #include <map>
+#include <memory>
 #include <boost/numeric/odeint.hpp>
-#include <Eigen/Geometry>
+#include <multineat/Genome.h>
 
 typedef std::vector< double > state_type;
 
@@ -30,28 +32,37 @@ public:
         double signal_factor_left_right;
         double abs_output_bound;
         std::vector< double > weights;
+        /// can be null, indicating that there is no map
+        std::unique_ptr<std::map<std::string, std::set<std::string>>> connection_map;
     };
 
     /// \brief Constructor
-    /// \param[in] _modelName Name of the robot
-    /// \param[in] _node The brain node
-    /// \param[in] _motors Reference to a motor list, it be reordered
-    /// \param[in] _sensors Reference to a sensor list, it might be reordered
+    /// \param[in] params Parameters for the controller
+    /// \param[in] _actuators Reference to a actuator list
     DifferentialCPG(
-            const ControllerParams &params,
-            const std::vector< std::unique_ptr < Actuator > > &_actuators);
+            DifferentialCPG::ControllerParams params,
+            const std::vector<std::shared_ptr<Actuator>> &_actuators);
+
+    /// \brief Constructor for Controller with config CPPN
+    /// \param[in] params Parameters for the controller
+    /// \param[in] _actuators Reference to a actuator list
+    /// \param[in] config_cppn_genome Reference to the genome for configuring the weights in CPG
+    DifferentialCPG(
+            DifferentialCPG::ControllerParams params,
+            const std::vector<std::shared_ptr<Actuator>> &_actuators,
+            const NEAT::Genome &config_cppn_genome);
 
     /// \brief Destructor
     virtual ~DifferentialCPG();
 
     /// \brief The default update method for the controller
-    /// \param[in] _motors Motor list
+    /// \param[in] _actuators Actuator list
     /// \param[in] _sensors Sensor list
     /// \param[in] _time Current world time
     /// \param[in] _step Current time step
     virtual void update(
-            const std::vector< std::unique_ptr < Actuator > > &actuators,
-            const std::vector< std::unique_ptr < Sensor > > &sensors,
+            const std::vector<std::shared_ptr<Actuator>> &actuators,
+            const std::vector<std::shared_ptr<Sensor>> &sensors,
             const double _time,
             const double _step) override;
 
@@ -61,6 +72,8 @@ protected:
             const double time,
             const double step);
 
+    void init_params_and_connections(const ControllerParams &params, const std::vector<std::shared_ptr<Actuator>> &actuators);
+
     void set_ode_matrix();
 
 private:
@@ -68,24 +81,28 @@ private:
     void reset_neuron_state();
 
 public:
-    std::map< std::tuple< double, double >, size_t > motor_coordinates;
+    std::map< std::tuple< int, int, int >, size_t > motor_coordinates;
 
 protected:
     /// \brief Register of motor IDs and their x,y-coordinates
 //    std::map< std::string, std::tuple< int, int > > positions;
 
-    /// \brief Register of individual neurons in x,y,z-coordinates
-    /// \details x,y-coordinates define position of a robot's module and
-    // z-coordinate define A or B neuron (z=1 or -1 respectively). Stored
+    struct Neuron {
+        int x, y, z, w;
+        double bias, gain, state;
+        int frame;
+    };
+
+    /// \brief Register of individual neurons in x,y,z,w-coordinates
+    /// \details x,y,z-coordinates define position of a robot's module and
+    // w-coordinate define A or B neuron (w=1 or -1 respectively). Stored
     // values are a bias, gain, state and frame of reference of each neuron.
-    std::map< std::tuple< int, int, int >, std::tuple< double, double, double, int > >
-    neurons;
+    std::vector< Neuron > neurons;
 
     /// \brief Register of connections between neighnouring neurons
-    /// \details Coordinate set of two neurons (x1, y1, z1) and (x2, y2, z2)
-    // define a connection. The second tuple contains 1: the connection value and
-    // 2: the weight index corresponding to this connection.
-    std::map< std::tuple< int, int, int, int, int, int >, std::tuple<int, int > >
+    /// \details Coordinate set of two neurons (x1, y1, z1, w1) and (x2, y2, z2, w2)
+    ///   define a connection. The value is the weight index corresponding to this connection.
+    std::map< std::tuple< int, int, int, int, int, int, int, int>, int >
     connections;
 
     /// \brief Runge-Kutta 45 stepper
@@ -108,7 +125,7 @@ private:
     double range_ub;
 
     /// \brief Loaded sample
-    Eigen::VectorXd sample;
+    std::vector<double> sample;
 
     /// \brief The number of weights to optimize
     size_t n_weights;
@@ -135,7 +152,7 @@ private:
     bool use_frame_of_reference;
 
     double abs_output_bound;
-};
+    };
 
 }
 

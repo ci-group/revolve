@@ -30,14 +30,13 @@ class RobotManager(RvRobotManager):
         :param robot: RevolveBot
         :param position:
         :type position: Vector3
-        :param time:
+        :param time: time the robot was created
         :type time: Time
         :param battery_level: Battery charge for this robot
         :type battery_level: float
         :return:
         """
-        time = conf.evaluation_time if time is None else time
-        speed_window = int(float(time) * conf.pose_update_frequency) + 1 if position_log_size is None \
+        speed_window = int(float(conf.evaluation_time) * conf.pose_update_frequency) if position_log_size is None \
             else position_log_size
         super(RobotManager, self).__init__(
                 robot=robot,

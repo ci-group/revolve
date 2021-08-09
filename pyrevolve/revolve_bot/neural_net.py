@@ -7,7 +7,7 @@ from __future__ import print_function
 import random
 import itertools
 
-from pyrevolve.spec import NeuralNetwork
+from pyrevolve.angle.representation import Neuron, NeuralConnection, NeuralNetwork
 from pyrevolve.spec import NeuralNetImplementation
 from pyrevolve.spec import BodyImplementation
 
@@ -90,7 +90,8 @@ class NeuralNetworkGenerator(object):
         # Initialize network interface, i.e. inputs and outputs
         for layer, ids in (("input", inputs), ("output", outputs)):
             for neuron_id in ids:
-                neuron = net.neuron.add()
+                net.neuron.append(Neuron())
+                neuron = net.neuron[-1]
                 neuron.id = neuron_id
                 neuron.layer = layer
 
@@ -104,7 +105,8 @@ class NeuralNetworkGenerator(object):
         num_hidden = self.choose_num_hidden() if num_hidden is None \
             else num_hidden
         for i in range(num_hidden):
-            neuron = net.neuron.add()
+            net.neuron.append(Neuron())
+            neuron = net.neuron[-1]
             neuron.id = 'brian-gen-hidden-{}'.format(len(hidden))
 
             # Assign a part ID to each hidden neuron, provided we
@@ -128,10 +130,7 @@ class NeuralNetworkGenerator(object):
 
             weight = self.choose_weight()
 
-            conn = net.connection.add()
-            conn.src = src
-            conn.dst = dst
-            conn.weight = weight
+            net.connection.append(NeuralConnection(src, dst, [], weight))
 
         return net
 
@@ -169,7 +168,7 @@ class NeuralNetworkGenerator(object):
         :return:
         """
         # Initialize random parameters
-        spec.set_parameters(neuron.param, spec.get_random_parameters())
+        neuron.param = spec.get_random_parameters()
 
     def choose_neuron_type(self, layer):
         """

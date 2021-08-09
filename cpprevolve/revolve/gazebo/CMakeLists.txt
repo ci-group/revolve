@@ -45,7 +45,7 @@ endif ()
 find_package(PkgConfig REQUIRED)
 
 # Find Boost
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Find Eigen3 - A lightweight C++ template library for vector and matrix math
@@ -111,6 +111,9 @@ include_directories(
         ${PROTOBUF_INCLUDE_DIRS}
         ${GAZEBO_PROTO_INCLUDE}
 )
+
+# Find OpenCV
+find_package( OpenCV REQUIRED )
 
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
@@ -200,6 +203,7 @@ add_library(
 
 target_link_libraries(
         revolve-gazebo
+        revolve-controllers
         ${GAZEBO_LIBRARIES}
         ${Boost_LIBRARIES}
         ${GSL_LIBRARIES}
@@ -247,6 +251,22 @@ target_link_libraries(TorusWorldPlugin
         revolve-gazebo
         ${GAZEBO_LIBRARIES}
 )
+
+# Create RecorderCamera plugin
+add_library(RecorderCameraPlugin SHARED
+        plugin/RecorderCamera.cpp
+        plugin/register_recorder_camera_plugin.cpp
+        plugin/FrameBuffer.cpp
+        plugin/VideoFileStream.cpp
+)
+target_link_libraries(RecorderCameraPlugin
+        revolve-gazebo
+        ${GAZEBO_LIBRARIES}
+        CameraPlugin #Gazebo-cmake being crap
+        ${OpenCV_LIBS}
+)
+target_include_directories(RecorderCameraPlugin
+        PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 # Create Robot plugin
 add_library(

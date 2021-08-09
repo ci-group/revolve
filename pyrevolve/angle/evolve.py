@@ -5,9 +5,7 @@ from __future__ import print_function
 import math
 import random
 
-from .representation import Tree, Node
-
-from ..spec.msgs import BodyPart, Neuron, Robot
+from .representation import Tree, Node, Neuron, Robot, BodyPart
 
 from ..util import decide
 

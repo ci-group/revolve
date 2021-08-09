@@ -20,6 +20,7 @@
 #include <string>
 
 #include <revolve/gazebo/sensors/LightSensor.h>
+#include <gazebo/sensors/CameraSensor.hh>
 
 namespace gz = gazebo;
 
@@ -58,9 +59,6 @@ LightSensor::LightSensor(
 }
 
 /////////////////////////////////////////////////
-LightSensor::~LightSensor() = default;
-
-/////////////////////////////////////////////////
 void LightSensor::OnUpdate()
 {
   // Average all channels and pixels to get a linear
@@ -89,7 +87,7 @@ void LightSensor::OnUpdate()
 /// read method - although I have to check whether this is even possible. In
 /// any case that would force the sensor update here on the "driver" thread,
 /// which might be detrimental to performance.
-void LightSensor::Read(double *_input)
+void LightSensor::read(double *_input)
 {
   _input[0] = this->lastValue_;
 }
