@@ -357,7 +357,7 @@ class Population:
             fitness, behaviour = await self.simulator_queue.test_robot(
                 individual,
                 individual.phenotype,
-                self.conf,
+                self.config,
                 lambda robot_manager, robot: self._fitness(robot_manager, robot),
             )
             fitness_list.append(fitness)
@@ -392,6 +392,8 @@ class Population:
         by zero.
         delta is angle between optimal direction and traveled direction.
         """
+
+        return 0 # TODO
 
         penalty_factor = 0.01
 
