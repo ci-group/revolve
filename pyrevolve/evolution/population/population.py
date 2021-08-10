@@ -1,22 +1,28 @@
 from __future__ import annotations
-import asyncio
-import os
-import math
-import re
 
+import asyncio
+import math
+import os
+import random
+import re
+import sys
+from typing import TYPE_CHECKING
+
+from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.individual import Individual
-from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.population.population_config import PopulationConfig
+from pyrevolve.revolve_bot.brain.cpg_target import BrainCPGTarget
 from pyrevolve.revolve_bot.revolve_bot import RevolveBot
+from pyrevolve.tol.manage import measures
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import List, Optional, Callable
-    from pyrevolve.tol.manage.robotmanager import RobotManager
+    from typing import Callable, List, Optional, Tuple
 
-    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
+    from pyrevolve.tol.manage.robotmanager import RobotManager
+    from pyrevolve.util.supervisor.analyzer_queue import (AnalyzerQueue,
+                                                          SimulatorQueue)
 
 
 MULTI_DEV_BODY_PNG_REGEX = re.compile('body_(\\d+)_(\\d+)\\.png')
@@ -320,11 +326,129 @@ class Population:
             else:
                 phenotype.simulation_boundaries = bounding_box
 
-        if self.simulator_queue is not None:
-            return await self.simulator_queue.test_robot(individual, phenotype, self.config, fitness_fun)
-        else:
-            print("MOCKING SIMULATION")
-            return await self._mock_simulation()
+        # evaluate using directed locomotion according to gongjin's method
 
-    async def _mock_simulation(self):
-        return fitness.random(None, None), BehaviouralMeasurements()
+        # evaluate this many times in random directions
+        number_of_evals = 3
+
+        original_id = individual.phenotype.id
+
+        fitness_list = []
+        behaviour_list = []
+        target_dir_list = []
+        for i in range(number_of_evals):
+            # create random target direction vector
+            individual.phenotype._id = f"{original_id}_iter_{i+1}"
+            target_direction = random.random() * math.pi * 2.0
+            target_as_vector: Tuple[float, float, float] = (
+                math.cos(target_direction),
+                math.sin(target_direction),
+                0,
+            )
+            print(
+                f"Target direction of {individual.phenotype._id} = {target_direction}"
+            )
+
+            # set target
+            assert isinstance(individual.phenotype._brain, BrainCPGTarget)
+            individual.phenotype._brain.target = target_as_vector
+
+            # simulate robot and save fitness
+            fitness, behaviour = await self.simulator_queue.test_robot(
+                individual,
+                individual.phenotype,
+                self.conf,
+                lambda robot_manager, robot: self._fitness(robot_manager, robot),
+            )
+            fitness_list.append(fitness)
+            behaviour_list.append(behaviour)
+            target_dir_list.append(target_direction)
+
+        # set robot id back to original id
+        individual.phenotype._id = original_id
+
+        fitness_avg = sum(fitness_list) / len(fitness_list)
+        behaviour_avg = sum(behaviour_list, start=BehaviouralMeasurements.zero()) / len(
+            behaviour_list
+        )
+
+        print(f"Fitness values for robot {original_id} = {fitness_list}")
+        print(f"Based on targets {target_dir_list}")
+        print(f"Average fitness = {fitness_avg}")
+        return fitness_avg, behaviour_avg
+
+    @staticmethod
+    def _fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
+        """
+        Fitness is determined by the formula:
+
+        F = e3 * (e1 / (delta + 1) - penalty_factor * e2)
+
+        Where e1 is the distance travelled in the right direction,
+        e2 is the distance of the final position p1 from the ideal
+        trajectory starting at starting position p0 and following
+        the target direction. e3 is distance in right direction divided by
+        length of traveled path(curved) + infinitesimal constant to never divide
+        by zero.
+        delta is angle between optimal direction and traveled direction.
+        """
+
+        penalty_factor = 0.01
+
+        epsilon: float = sys.float_info.epsilon
+
+        # length of traveled path(over the complete curve)
+        path_length = measures.path_length(robot_manager)  # L
+
+        # robot position, Vector3(pos.x, pos.y, pos.z)
+        pos_0 = robot_manager._positions[0]  # start
+        pos_1 = robot_manager._positions[-1]  # end
+
+        # robot displacement
+        displacement: Tuple[float, float] = (pos_1[0] - pos_0[0], pos_1[1] - pos_0[1])
+        displacement_length = math.sqrt(
+            displacement[0] * displacement[0] + displacement[1] * displacement[1]
+        )
+        displacement_normalized = (
+            displacement[0] / displacement_length,
+            displacement[1] / displacement_length,
+        )
+
+        # steal target from brain
+        # is already normalized
+        target = robot._brain.target
+
+        # angle between target and actual direction
+        delta = math.acos(
+            target[0] * displacement_normalized[0]
+            + target[1] * displacement_normalized[1]
+        )
+
+        # projection of displacement on target line
+        dist_in_right_direction: float = (
+            displacement[0] * target[0] + displacement[1] * target[1]
+        )
+
+        # distance from displacement to target line
+        dist_to_optimal_line: float = math.sqrt(
+            (dist_in_right_direction * target[0] - displacement[0]) ** 2
+            + (dist_in_right_direction * target[1] - displacement[1]) ** 2
+        )
+
+        print(
+            f"target: {target}, displacement: {displacement}, dist_in_right_direction: {dist_in_right_direction}, dist_to_optimal_line: {dist_to_optimal_line}"
+        )
+
+        # filter out passive blocks
+        if dist_in_right_direction < 0.01:
+            fitness = 0
+            print("Did not pass fitness test, fitness = ", fitness)
+        else:
+            fitness = (dist_in_right_direction / (epsilon + path_length)) * (
+                dist_in_right_direction / (delta + 1)
+                - penalty_factor * dist_to_optimal_line
+            )
+
+            print("Fitness = ", fitness)
+
+        return fitness
