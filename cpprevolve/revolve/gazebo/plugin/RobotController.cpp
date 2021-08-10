@@ -17,7 +17,7 @@
 *
 */
 
-#include  <stdexcept>
+#include <stdexcept>
 
 #include <gazebo/sensors/sensors.hh>
 
@@ -54,62 +54,65 @@ void RobotController::Load(
     ::gazebo::physics::ModelPtr _parent,
     sdf::ElementPtr _sdf)
 {
-    try {
-        // Store the pointer to the model / world
-        this->model_ = _parent;
-        this->world_ = _parent->GetWorld();
-        this->initTime_ = this->world_->SimTime().Double();
+  try
+  {
+    // Store the pointer to the model / world
+    this->model_ = _parent;
+    this->world_ = _parent->GetWorld();
+    this->initTime_ = this->world_->SimTime().Double();
 
-        // Create transport node
-        this->node_.reset(new gz::transport::Node());
-        this->node_->Init();
+    // Create transport node
+    this->node_.reset(new gz::transport::Node());
+    this->node_->Init();
 
-        // Subscribe to robot battery state updater
-        this->batterySetSub_ = this->node_->Subscribe(
-                "~/battery_level/request",
-                &RobotController::UpdateBattery,
-                this);
-        this->batterySetPub_ = this->node_->Advertise<gz::msgs::Response>(
-                "~/battery_level/response");
+    // Subscribe to robot battery state updater
+    this->batterySetSub_ = this->node_->Subscribe(
+        "~/battery_level/request",
+        &RobotController::UpdateBattery,
+        this);
+    this->batterySetPub_ = this->node_->Advertise<gz::msgs::Response>(
+        "~/battery_level/response");
 
-        if (not _sdf->HasElement("rv:robot_config")) {
-            std::cerr
-                    << "No `rv:robot_config` element found, controller not initialized."
-                    << std::endl;
-            return;
-        }
-
-        auto robotConfiguration = _sdf->GetElement("rv:robot_config");
-
-        if (robotConfiguration->HasElement("rv:update_rate")) {
-            auto updateRate = robotConfiguration->GetElement("rv:update_rate")->Get<double>();
-            this->actuationTime_ = 1.0 / updateRate;
-        }
-
-        // Load motors
-        this->motorFactory_ = this->MotorFactory(_parent);
-        this->LoadActuators(robotConfiguration);
-
-        // Load sensors
-        this->sensorFactory_ = this->SensorFactory(_parent);
-        this->LoadSensors(robotConfiguration);
-
-        // Load brain, this needs to be done after the motors and sensors so they
-        // can potentially be reordered.
-        this->LoadBrain(robotConfiguration);
-
-        // Call the battery loader
-        this->LoadBattery(robotConfiguration);
-
-        // Call startup function which decides on actuation
-        this->Startup(_parent, _sdf);
-    }
-    catch (const std::exception &e)
+    if (not _sdf->HasElement("rv:robot_config"))
     {
-        std::cerr << "Error Loading the Robot Controller, exception: " << std::endl
-                  << e.what() << std::endl;
-        throw;
+      std::cerr
+          << "No `rv:robot_config` element found, controller not initialized."
+          << std::endl;
+      return;
     }
+
+    auto robotConfiguration = _sdf->GetElement("rv:robot_config");
+
+    if (robotConfiguration->HasElement("rv:update_rate"))
+    {
+      auto updateRate = robotConfiguration->GetElement("rv:update_rate")->Get<double>();
+      this->actuationTime_ = 1.0 / updateRate;
+    }
+
+    // Load motors
+    this->motorFactory_ = this->MotorFactory(_parent);
+    this->LoadActuators(robotConfiguration);
+
+    // Load sensors
+    this->sensorFactory_ = this->SensorFactory(_parent);
+    this->LoadSensors(robotConfiguration);
+
+    // Load brain, this needs to be done after the motors and sensors so they
+    // can potentially be reordered.
+    this->LoadBrain(robotConfiguration);
+
+    // Call the battery loader
+    this->LoadBattery(robotConfiguration);
+
+    // Call startup function which decides on actuation
+    this->Startup(_parent, _sdf);
+  }
+  catch (const std::exception &e)
+  {
+    std::cerr << "Error Loading the Robot Controller, exception: " << std::endl
+              << e.what() << std::endl;
+    throw;
+  }
 }
 
 /////////////////////////////////////////////////
@@ -143,8 +146,7 @@ void RobotController::UpdateBattery(ConstRequestPtr &_request)
 /////////////////////////////////////////////////
 void RobotController::LoadActuators(const sdf::ElementPtr _sdf)
 {
-  if (not _sdf->HasElement("rv:brain")
-      or not _sdf->GetElement("rv:brain")->HasElement("rv:actuators"))
+  if (not _sdf->HasElement("rv:brain") or not _sdf->GetElement("rv:brain")->HasElement("rv:actuators"))
   {
     return;
   }
@@ -166,8 +168,7 @@ void RobotController::LoadActuators(const sdf::ElementPtr _sdf)
 /////////////////////////////////////////////////
 void RobotController::LoadSensors(const sdf::ElementPtr _sdf)
 {
-  if (not _sdf->HasElement("rv:brain")
-      or not _sdf->GetElement("rv:brain")->HasElement("rv:sensors"))
+  if (not _sdf->HasElement("rv:brain") or not _sdf->GetElement("rv:brain")->HasElement("rv:sensors"))
   {
     return;
   }
@@ -218,8 +219,9 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
   else if ("rlpower" == learner and "spline" == controller_type)
   {
-    if (not motors_.empty()) {
-        brain_.reset(new RLPower(this->model_, brain_sdf, motors_, sensors_));
+    if (not motors_.empty())
+    {
+      brain_.reset(new RLPower(this->model_, brain_sdf, motors_, sensors_));
     }
   }
   else if ("bo" == learner and "cpg" == controller_type)
@@ -228,16 +230,16 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
   else if ("offline" == learner and "cpg" == controller_type)
   {
-      brain_.reset(new DifferentialCPGClean(brain_sdf, motors_));
+    brain_.reset(new DifferentialCPGClean(brain_sdf, motors_));
   }
   else if ("offline" == learner and "cppn-cpg" == controller_type)
   {
-      brain_.reset(new DifferentialCPPNCPG(brain_sdf, motors_));
+    brain_.reset(new DifferentialCPPNCPG(brain_sdf, motors_));
   }
   else if ("offline" == learner and "fixed-angle" == controller_type)
   {
     double angle = std::stod(
-            brain_sdf->GetElement("rv:controller")->GetAttribute("angle")->GetAsString());
+        brain_sdf->GetElement("rv:controller")->GetAttribute("angle")->GetAsString());
     brain_.reset(new FixedAngleController(angle));
   }
   else
@@ -295,7 +297,7 @@ double RobotController::BatteryLevel()
     return 0.0;
   }
 
-  return batteryElem_->GetElement("rv:level")->Get< double >();
+  return batteryElem_->GetElement("rv:level")->Get<double>();
 }
 
 /////////////////////////////////////////////////
