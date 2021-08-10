@@ -331,14 +331,14 @@ class Population:
         # evaluate this many times in random directions
         number_of_evals = 3
 
-        original_id = individual.phenotype.id
+        original_id = phenotype.id
 
         fitness_list = []
         behaviour_list = []
         target_dir_list = []
         for i in range(number_of_evals):
             # create random target direction vector
-            individual.phenotype._id = f"{original_id}_iter_{i+1}"
+            phenotype._id = f"{original_id}_iter_{i+1}"
             target_direction = random.random() * math.pi * 2.0
             target_as_vector: Tuple[float, float, float] = (
                 math.cos(target_direction),
@@ -346,12 +346,12 @@ class Population:
                 0,
             )
             print(
-                f"Target direction of {individual.phenotype._id} = {target_direction}"
+                f"Target direction of {phenotype._id} = {target_direction}"
             )
 
             # set target
-            assert isinstance(individual.phenotype._brain, BrainCPGTarget)
-            individual.phenotype._brain.target = target_as_vector
+            assert isinstance(phenotype._brain, BrainCPGTarget)
+            phenotype._brain.target = target_as_vector
 
             # simulate robot and save fitness
             fitness, behaviour = await self.simulator_queue.test_robot(
