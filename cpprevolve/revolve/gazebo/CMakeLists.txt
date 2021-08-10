@@ -248,22 +248,6 @@ target_link_libraries(
         ${GAZEBO_LIBRARIES}
 )
 
-# Create RecorderCamera plugin
-#add_library(RecorderCameraPlugin SHARED
-        #plugin/RecorderCamera.cpp
-        #plugin/register_recorder_camera_plugin.cpp
-        #plugin/FrameBuffer.cpp
-        #plugin/VideoFileStream.cpp
-#)
-#target_link_libraries(RecorderCameraPlugin
-        #revolve-gazebo
-        #${GAZEBO_LIBRARIES}
-        #CameraPlugin #Gazebo-cmake being crap
-        #${OpenCV_LIBS}
-#)
-#target_include_directories(RecorderCameraPlugin
-        #PRIVATE ${OpenCV_INCLUDE_DIRS})
-
 # Create Robot plugin
 add_library(
         RobotControlPlugin SHARED
