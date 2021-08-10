@@ -4,8 +4,8 @@ Class containing the body parts to compose a Robogen robot
 import math
 from collections import OrderedDict
 from enum import Enum
-
 import numpy as np
+
 from pyrevolve import SDF
 
 
@@ -31,47 +31,43 @@ class Orientation(Enum):
 
     def short_repr(self):
         if self == self.BACK:
-            return "B"
+            return 'B'
         elif self == self.FORWARD:
-            return "F"
+            return 'F'
         elif self == self.RIGHT:
-            return "R"
+            return 'R'
         elif self == self.LEFT:
-            return "L"
+            return 'L'
         else:
             assert False
 
     def get_slot_rotation_matrix(self):
         if self == self.BACK:
-            return rotate_matrix_z_axis(math.pi)  # 180
+            return rotate_matrix_z_axis(math.pi) # 180
         elif self == self.FORWARD:
             return rotate_matrix_z_axis(0.0)
         elif self == self.RIGHT:
-            return rotate_matrix_z_axis(math.pi / 2.0)  # 90
+            return rotate_matrix_z_axis(math.pi / 2.0) # 90
         elif self == self.LEFT:
-            return rotate_matrix_z_axis(math.pi / -2.0)  # -90
+            return rotate_matrix_z_axis(math.pi / -2.0) # -90
 
 
 def rotate_matrix_z_axis(angle):
-    z_rotation_matrix = np.array(
-        [
-            [round(np.cos(angle)), -1 * round(np.sin(angle)), 0],
-            [round(np.sin(angle)), round(np.cos(angle)), 0],
-            [0, 0, 1],
-        ]
-    )
+    z_rotation_matrix = np.array([
+        [round(np.cos(angle)), -1*round(np.sin(angle)), 0],
+        [round(np.sin(angle)),    round(np.cos(angle)), 0],
+        [0,                                          0, 1]
+        ])
 
     return z_rotation_matrix
 
 
 def rotate_matrix_x_axis(angle):
-    x_rotation_matrix = np.array(
-        [
-            [1, 0, 0],
-            [0, round(np.cos(angle)), -1 * round(np.sin(angle))],
-            [0, round(np.sin(angle)), round(np.cos(angle))],
-        ]
-    )
+    x_rotation_matrix = np.array([
+        [1,                      0,                       0],
+        [0,   round(np.cos(angle)), -1*round(np.sin(angle))],
+        [0,   round(np.sin(angle)),    round(np.cos(angle))]
+    ])
 
     return x_rotation_matrix
 
@@ -80,7 +76,6 @@ class RevolveModule:
     """
     Base class allowing for constructing Robogen components in an overviewable manner
     """
-
     DEFAULT_COLOR = (0.5, 0.5, 0.5)
     TYPE = None
     VISUAL_MESH = None
@@ -102,75 +97,70 @@ class RevolveModule:
     @staticmethod
     def FromYaml(yaml_object):
         """
-        From a yaml object, creates a data struture of interconnected body modules.
-        Standard names for modules are:
+        From a yaml object, creates a data struture of interconnected body modules. 
+        Standard names for modules are: 
         CoreComponent
         ActiveHinge
         FixedBrick
         FixedBrickSensor
         """
-        mod_type = yaml_object["type"]
-        if mod_type == "CoreComponent" or mod_type == "Core":
+        mod_type = yaml_object['type']
+        if mod_type == 'CoreComponent' or mod_type == 'Core':
             module = CoreModule()
-        elif mod_type == "ActiveHinge":
+        elif mod_type == 'ActiveHinge':
             module = ActiveHingeModule()
-        elif mod_type == "FixedBrick":
+        elif mod_type == 'FixedBrick':
             module = BrickModule()
-        elif mod_type == "FixedBrickSensor":
+        elif mod_type == 'FixedBrickSensor':
             module = BrickSensorModule()
-        elif mod_type == "TouchSensor":
+        elif mod_type == 'TouchSensor':
             module = TouchSensorModule()
         else:
-            raise NotImplementedError(
-                '"{}" module not yet implemented'.format(mod_type)
-            )
+            raise NotImplementedError('"{}" module not yet implemented'.format(mod_type))
 
-        module.id = yaml_object["id"]
+        module.id = yaml_object['id']
 
         try:
-            module.orientation = yaml_object["orientation"]
+            module.orientation = yaml_object['orientation']
         except KeyError:
             module.orientation = 0
 
         try:
             module.rgb = (
-                yaml_object["params"]["red"],
-                yaml_object["params"]["green"],
-                yaml_object["params"]["blue"],
+                yaml_object['params']['red'],
+                yaml_object['params']['green'],
+                yaml_object['params']['blue'],
             )
         except KeyError:
             pass
 
-        if "children" in yaml_object:
-            for parent_slot in yaml_object["children"]:
+        if 'children' in yaml_object:
+            for parent_slot in yaml_object['children']:
                 module.children[parent_slot] = RevolveModule.FromYaml(
-                    yaml_object=yaml_object["children"][parent_slot]
-                )
+                    yaml_object=yaml_object['children'][parent_slot])
 
         return module
 
     def to_yaml(self):
         if self.TYPE is None:
-            raise RuntimeError(
-                'Module TYPE is not implemented for "{}",'
-                " this should be defined.".format(self.__class__)
-            )
+            raise RuntimeError('Module TYPE is not implemented for "{}",'
+                               ' this should be defined.'.format(self.__class__))
 
         yaml_dict_object = OrderedDict()
-        yaml_dict_object["id"] = self.id
-        yaml_dict_object["type"] = self.TYPE
-        yaml_dict_object["orientation"] = self.orientation
+        yaml_dict_object['id'] = self.id
+        yaml_dict_object['type'] = self.TYPE
+        yaml_dict_object['orientation'] = self.orientation
 
         if self.rgb is not None:
-            yaml_dict_object["params"] = {
-                "red": self.rgb[0],
-                "green": self.rgb[1],
-                "blue": self.rgb[2],
+            yaml_dict_object['params'] = {
+                'red': self.rgb[0],
+                'green': self.rgb[1],
+                'blue': self.rgb[2],
             }
 
         children = self._generate_yaml_children()
         if children is not None:
-            yaml_dict_object["children"] = children
+            yaml_dict_object['children'] = children
 
         return yaml_dict_object
 
@@ -195,7 +185,7 @@ class RevolveModule:
         """
         raise RuntimeError("Robot tree validation not yet implemented")
 
-    def to_sdf(self, tree_depth="", parent_link=None, child_link=None):
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
         """
         Transform the module in sdf elements.
 
@@ -209,7 +199,7 @@ class RevolveModule:
         :return: visual SDF element, collision SDF element, sensor SDF element.
         Sensor SDF element may be None.
         """
-        name = "component_{}_{}__box".format(tree_depth, self.TYPE)
+        name = 'component_{}_{}__box'.format(tree_depth, self.TYPE)
         visual = SDF.Visual(name, self.color())
         geometry = SDF.MeshGeometry(self.VISUAL_MESH)
         visual.append(geometry)
@@ -239,8 +229,7 @@ class RevolveModule:
         """
         has_children = False
 
-        if self.children == {1: None}:
-            return False
+        if self.children == {1: None}: return False
 
         for i, child in enumerate(self.children):
             if child is not None:
@@ -253,9 +242,8 @@ class CoreModule(RevolveModule):
     """
     Inherits class RevolveModule. Creates Robogen core module
     """
-
     TYPE = "CoreComponent"
-    VISUAL_MESH = "model://rg_robot/meshes/CoreComponent.dae"
+    VISUAL_MESH = 'model://rg_robot/meshes/CoreComponent.dae'
     SLOT_COORDINATES = 0.089 / 2.0
     COLLISION_BOX = (0.089, 0.089, 0.045)
     MASS = grams(90)
@@ -271,8 +259,8 @@ class CoreModule(RevolveModule):
             (-self.SLOT_COORDINATES, self.SLOT_COORDINATES),  # Z
         )
 
-    def to_sdf(self, tree_depth="", parent_link=None, child_link=None):
-        imu_sensor = SDF.IMUSensor("core-imu_sensor", parent_link, self)
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        imu_sensor = SDF.IMUSensor('core-imu_sensor', parent_link, self)
         visual, collision, _ = super().to_sdf(tree_depth, parent_link, child_link)
         parent_link.append(imu_sensor)
         return visual, collision, imu_sensor
@@ -282,10 +270,9 @@ class ActiveHingeModule(RevolveModule):
     """
     Inherits class RevolveModule. Creates Robogen joint module
     """
-
-    TYPE = "ActiveHinge"
-    VISUAL_MESH_FRAME = "model://rg_robot/meshes/ActiveHinge_Frame.dae"
-    VISUAL_MESH_SERVO = "model://rg_robot/meshes/ActiveCardanHinge_Servo_Holder.dae"
+    TYPE = 'ActiveHinge'
+    VISUAL_MESH_FRAME = 'model://rg_robot/meshes/ActiveHinge_Frame.dae'
+    VISUAL_MESH_SERVO = 'model://rg_robot/meshes/ActiveCardanHinge_Servo_Holder.dae'
     COLLISION_BOX_FRAME = (2.20e-02, 3.575e-02, 1.0e-02)
     COLLISION_BOX_SERVO = (2.45e-02, 2.575e-02, 1.5e-02)
     COLLISION_BOX_SERVO_2 = (1.0e-3, 3.4e-2, 3.4e-02)
@@ -313,13 +300,13 @@ class ActiveHingeModule(RevolveModule):
         else:
             return {1: child.to_yaml()}
 
-    def to_sdf(self, tree_depth="", parent_link=None, child_link=None):
-        assert parent_link is not None
-        assert child_link is not None
-        name_frame = "component_{}_{}__frame".format(tree_depth, self.TYPE)
-        name_joint = "component_{}_{}__joint".format(tree_depth, self.TYPE)
-        name_servo = "component_{}_{}__servo".format(tree_depth, self.TYPE)
-        name_servo2 = "component_{}_{}__servo2".format(tree_depth, self.TYPE)
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        assert(parent_link is not None)
+        assert(child_link is not None)
+        name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
+        name_joint = 'component_{}_{}__joint'.format(tree_depth, self.TYPE)
+        name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
+        name_servo2 = 'component_{}_{}__servo2'.format(tree_depth, self.TYPE)
 
         visual_frame = SDF.Visual(name_frame, self.color())
         geometry = SDF.MeshGeometry(self.VISUAL_MESH_FRAME)
@@ -343,25 +330,21 @@ class ActiveHingeModule(RevolveModule):
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO_2)
         collision_servo_2.append(geometry)
 
-        joint = SDF.Joint(
-            self.id,
-            name_joint,
-            parent_link,
-            child_link,
-            axis=SDF.math.Vector3(0, 1, 0),
-            coordinates=self.substrate_coordinates,
-            motorized=True,
-        )
+        joint = SDF.Joint(self.id,
+                          name_joint,
+                          parent_link,
+                          child_link,
+                          axis=SDF.math.Vector3(0, 1, 0),
+                          coordinates=self.substrate_coordinates,
+                          motorized=True)
 
         joint.set_position(SDF.math.Vector3(-0.0085, 0, 0))
 
-        return (
-            visual_frame,
-            [collision_frame],
-            visual_servo,
-            [collision_servo, collision_servo_2],
-            joint,
-        )
+        return visual_frame, \
+               [collision_frame], \
+               visual_servo, \
+               [collision_servo, collision_servo_2], \
+               joint
 
     def possible_slots_frame(self):
         box_geometry = self.COLLISION_BOX_FRAME
@@ -382,7 +365,11 @@ class ActiveHingeModule(RevolveModule):
     def boxslot_frame(self, orientation=None):
         orientation = Orientation.BACK if orientation is None else orientation
         boundaries = self.possible_slots_frame()
-        return BoxSlotJoints(boundaries, orientation, self.COLLISION_BOX_SERVO_OFFSET)
+        return BoxSlotJoints(
+            boundaries,
+            orientation,
+            self.COLLISION_BOX_SERVO_OFFSET
+        )
 
     def boxslot_servo(self, orientation=None):
         orientation = Orientation.BACK if orientation is None else orientation
@@ -403,9 +390,8 @@ class BrickModule(RevolveModule):
     """
     Inherits class RevolveModule. Creates Robogen brick module
     """
-
     TYPE = "FixedBrick"
-    VISUAL_MESH = "model://rg_robot/meshes/FixedBrick.dae"
+    VISUAL_MESH = 'model://rg_robot/meshes/FixedBrick.dae'
     SLOT_COORDINATES = 3.8e-2 / 2.0
     COLLISION_BOX = (4.1e-2, 4.1e-2, 3.55e-02)
     MASS = grams(10.2)
@@ -426,9 +412,8 @@ class BrickSensorModule(RevolveModule):
     TODO not finished
     Inherits class RevolveModule. Creates Robogen brick sensor module
     """
-
     TYPE = "FixedBrickSensor"
-    VISUAL_MESH = "model://rg_robot/meshes/FixedBrick.dae"
+    VISUAL_MESH = 'model://rg_robot/meshes/FixedBrick.dae'
     COLLISION_BOX = (4.1e-2, 4.1e-2, 3.55e-02)
 
     def __init__(self):
@@ -440,9 +425,8 @@ class TouchSensorModule(RevolveModule):
     """
     Inherits class RevolveModule. Creates Robogen sensor module
     """
-
     TYPE = "TouchSensor"
-    VISUAL_MESH = "model://rg_robot/meshes/TouchSensor.dae"
+    VISUAL_MESH = 'model://rg_robot/meshes/TouchSensor.dae'
     SLOT_COORDINATES = 1e-2 / 2.0
     COLLISION_BOX = (4.1e-3, 3.1e-2, 1.55e-02)
     MASS = grams(3)
@@ -453,7 +437,7 @@ class TouchSensorModule(RevolveModule):
 
     def boxslot(self, orientation=None):
         orientation = Orientation.BACK if orientation is None else orientation
-        assert orientation is Orientation.BACK
+        assert (orientation is Orientation.BACK)
         return BoxSlotTouchSensor(self.possible_slots())
 
     def possible_slots(self):
@@ -463,10 +447,10 @@ class TouchSensorModule(RevolveModule):
             (0, 0),  # Z
         )
 
-    def to_sdf(self, tree_depth="", parent_link=None, child_link=None):
-        assert parent_link is not None
-        name = "component_{}_{}".format(tree_depth, self.TYPE)
-        name_sensor = "sensor_{}_{}".format(tree_depth, self.TYPE)
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        assert(parent_link is not None)
+        name = 'component_{}_{}'.format(tree_depth, self.TYPE)
+        name_sensor = 'sensor_{}_{}'.format(tree_depth, self.TYPE)
 
         visual = SDF.Visual(name, self.rgb)
         geometry = SDF.MeshGeometry(self.VISUAL_MESH)
@@ -487,7 +471,6 @@ class BoxSlot:
     """
     Helper class for modules connection slots
     """
-
     def __init__(self, boundaries, orientation: Orientation):
         self.orientation = orientation
         self.pos = self._calculate_box_slot_pos(boundaries, orientation)
@@ -505,7 +488,7 @@ class BoxSlot:
         elif slot == Orientation.LEFT:
             return SDF.math.Vector3(boundaries[0][0], 0, 0)
         else:
-            raise RuntimeError("invalid module orientation: {}".format(slot))
+            raise RuntimeError('invalid module orientation: {}'.format(slot))
 
     @staticmethod
     def _calculate_box_slot_tangent(slot: Orientation):
@@ -531,12 +514,8 @@ class BoxSlot:
 
 
 class BoxSlotJoints(BoxSlot):
-    def __init__(
-        self,
-        boundaries,
-        orientation: Orientation,
-        offset=(SDF.math.Vector3(), SDF.math.Vector3()),
-    ):
+
+    def __init__(self, boundaries, orientation: Orientation, offset=(SDF.math.Vector3(), SDF.math.Vector3())):
         self.offset = offset
         super().__init__(boundaries, orientation)
 
@@ -546,7 +525,7 @@ class BoxSlotJoints(BoxSlot):
         elif slot == Orientation.FORWARD:
             return SDF.math.Vector3(boundaries[0][1], 0, 0) + self.offset[1]
         else:
-            raise RuntimeError("invalid module orientation: {}".format(slot))
+            raise RuntimeError('invalid module orientation: {}'.format(slot))
 
     @staticmethod
     def _calculate_box_slot_tangent(slot: Orientation):
@@ -569,7 +548,7 @@ class BoxSlotTouchSensor(BoxSlot):
         if slot == Orientation.BACK:
             return SDF.math.Vector3(boundaries[0][0], 0, 0)
         else:
-            raise RuntimeError("invalid module orientation: {}".format(slot))
+            raise RuntimeError('invalid module orientation: {}'.format(slot))
 
     @staticmethod
     def _calculate_box_slot_tangent(slot: Orientation):

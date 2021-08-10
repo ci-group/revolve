@@ -1,10 +1,13 @@
-from __future__ import absolute_import, division
+from __future__ import absolute_import
+from __future__ import division
+
+from pyrevolve.SDF.math import Vector3
 
 from pyrevolve.angle import RobotManager as RvRobotManager
-from pyrevolve.evolution import fitness
-from pyrevolve.SDF.math import Vector3
-from pyrevolve.tol.manage import measures as ms
 from pyrevolve.util import Time
+
+from pyrevolve.tol.manage import measures as ms
+from pyrevolve.evolution import fitness
 
 
 class RobotManager(RvRobotManager):
@@ -13,14 +16,14 @@ class RobotManager(RvRobotManager):
     """
 
     def __init__(
-        self,
-        conf,
-        robot,
-        position,
-        time,
-        battery_level=0.0,
-        position_log_size=None,
-        warmup_time=0.0,
+            self,
+            conf,
+            robot,
+            position,
+            time,
+            battery_level=0.0,
+            position_log_size=None,
+            warmup_time=0.0,
     ):
         """
         :param conf:
@@ -33,18 +36,15 @@ class RobotManager(RvRobotManager):
         :type battery_level: float
         :return:
         """
-        speed_window = (
-            int(float(conf.evaluation_time) * conf.pose_update_frequency)
-            if position_log_size is None
+        speed_window = int(float(conf.evaluation_time) * conf.pose_update_frequency) if position_log_size is None \
             else position_log_size
-        )
         super(RobotManager, self).__init__(
-            robot=robot,
-            position=position,
-            time=time,
-            battery_level=battery_level,
-            speed_window=speed_window,
-            warmup_time=warmup_time,
+                robot=robot,
+                position=position,
+                time=time,
+                battery_level=battery_level,
+                speed_window=speed_window,
+                warmup_time=warmup_time,
         )
 
         # Set of robots this bot has mated with
@@ -73,14 +73,14 @@ class RobotManager(RvRobotManager):
             # has been reached
             return False
 
-        if (
-            self.last_mate is not None
-            and float(self.last_update - self.last_mate) < self.conf.gestation_period
-        ):
+        if self.last_mate is not None and \
+                float(self.last_update - self.last_mate) < \
+                self.conf.gestation_period:
             # Don't mate within the cooldown window
             return False
 
-        if self.distance_to(other.last_position) > self.conf.mating_distance_threshold:
+        if self.distance_to(other.last_position) > \
+                self.conf.mating_distance_threshold:
             return False
 
         my_fitness = self.old_revolve_fitness()
@@ -89,8 +89,8 @@ class RobotManager(RvRobotManager):
         # Only mate with robots with nonzero fitness, check for self
         # zero-fitness to prevent division by zero.
         return other_fitness > 0 and (
-            my_fitness == 0
-            or (other_fitness / my_fitness) >= self.conf.mating_fitness_threshold
+            my_fitness == 0 or
+            (other_fitness / my_fitness) >= self.conf.mating_fitness_threshold
         )
 
     @staticmethod
@@ -99,22 +99,11 @@ class RobotManager(RvRobotManager):
         :return:
         """
         return [
-            "run",
-            "id",
-            "t_birth",
-            "parent1",
-            "parent2",
-            "nparts",
-            "x",
-            "y",
-            "z",
-            "extremity_count",
-            "joint_count",
-            "motor_count",
-            "inputs",
-            "outputs",
-            "hidden",
-            "conn",
+            'run', 'id', 't_birth',
+            'parent1', 'parent2', 'nparts',
+            'x', 'y', 'z',
+            'extremity_count', 'joint_count', 'motor_count',
+            'inputs', 'outputs', 'hidden', 'conn'
         ]
 
     # def write_robot(self, world, details_file, csv_writer):
