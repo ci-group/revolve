@@ -1,3 +1,4 @@
+import random
 from dataclasses import dataclass
 from queue import Queue
 from typing import Any, Optional, Set, Tuple
@@ -9,6 +10,7 @@ from pyrevolve.revolve_bot.revolve_module import (
     ActiveHingeModule,
     BrickModule,
     CoreModule,
+    Orientation,
     RevolveModule,
 )
 
@@ -40,7 +42,7 @@ def cppnneat_body_develop(
     core_module = CoreModule()
     core_module.id = "core"
     core_module.rgb = [1, 1, 0]
-    core_module.orientation = 1
+    core_module.orientation = 0
 
     to_explore.put(
         _Module((0, 0, 0), (0, -1, 0), (0, 0, 1), 0, core_module)
@@ -48,25 +50,34 @@ def cppnneat_body_develop(
     grid.add((0, 0, 0))
     part_count = 1
 
-    while not to_explore.empty():
-        module: _Module = to_explore.get()
+    rand = random.randint(0, 3)
+    core_module.children[rand] = BrickModule()
+    core_module.children[rand].rgb = [1, 0, 0]
+    core_module.children[rand].orientation = 0
 
-        child_index_range: range
-        if type(module.module_reference) == CoreModule:
-            child_index_range = range(0, 4)
-        elif type(module.module_reference) == BrickModule:
-            child_index_range = range(1, 4)
-        elif type(module.module_reference) == ActiveHingeModule:
-            child_index_range = range(1, 2)
-        else:  # Should actually never arrive here but just checking module type to be sure
-            raise RuntimeError
+    core_module.children[rand].children[2] = BrickModule()
+    core_module.children[rand].children[2].rgb = [0, 0, 1]
+    core_module.children[rand].children[2].orientation = 0
 
-        for child_index in child_index_range:
-            if part_count < max_parts:
-                child = _add_child(body_net, module, child_index, grid)
-                if child != None:
-                    to_explore.put(child)
-                    part_count += 1
+    # while not to_explore.empty():
+    #     module: _Module = to_explore.get()
+
+    #     child_index_range: range
+    #     if type(module.module_reference) == CoreModule:
+    #         child_index_range = range(0, 4)
+    #     elif type(module.module_reference) == BrickModule:
+    #         child_index_range = range(1, 4)
+    #     elif type(module.module_reference) == ActiveHingeModule:
+    #         child_index_range = range(1, 2)
+    #     else:  # Should actually never arrive here but just checking module type to be sure
+    #         raise RuntimeError
+
+    #     for child_index in child_index_range:
+    #         if part_count < max_parts:
+    #             child = _add_child(body_net, module, child_index, grid)
+    #             if child != None:
+    #                 to_explore.put(child)
+    #                 part_count += 1
 
     return core_module
 
