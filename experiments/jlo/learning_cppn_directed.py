@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-import asyncio
-import typing
+import math
+import sys
 from dataclasses import dataclass
+from typing import Tuple
 
 import multineat
 from pyrevolve import parser
+from pyrevolve.angle.manage.robotmanager import RobotManager
 from pyrevolve.custom_logging.logger import logger
-from pyrevolve.evolution import fitness
 from pyrevolve.evolution.population.population import Population
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.evolution.population.population_management import (
@@ -34,6 +35,8 @@ from pyrevolve.genotype.cppnneat_cpg_brain.crossover import cppnneat_cpg_brain_c
 from pyrevolve.genotype.cppnneat_cpg_brain.develop import cppnneat_cpg_brain_develop
 from pyrevolve.genotype.cppnneat_cpg_brain.genotype import CppnneatCpgBrainGenotype
 from pyrevolve.genotype.cppnneat_cpg_brain.mutation import cppnneat_cpg_brain_mutate
+from pyrevolve.revolve_bot.revolve_bot import RevolveBot
+from pyrevolve.tol.manage import measures
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
@@ -66,6 +69,80 @@ def create_random_genotype(
             config.bodybrain_composition_config.brain_develop_config.rng,
         ),
     )
+
+
+def calculate_fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
+    """
+    Fitness is determined by the formula:
+
+    F = e3 * (e1 / (delta + 1) - penalty_factor * e2)
+
+    Where e1 is the distance travelled in the right direction,
+    e2 is the distance of the final position p1 from the ideal
+    trajectory starting at starting position p0 and following
+    the target direction. e3 is distance in right direction divided by
+    length of traveled path(curved) + infinitesimal constant to never divide
+    by zero.
+    delta is angle between optimal direction and traveled direction.
+    """
+    penalty_factor = 0.01
+
+    epsilon: float = sys.float_info.epsilon
+
+    # length of traveled path(over the complete curve)
+    path_length = measures.path_length(robot_manager)  # L
+
+    # robot position, Vector3(pos.x, pos.y, pos.z)
+    pos_0 = robot_manager._positions[0]  # start
+    pos_1 = robot_manager._positions[-1]  # end
+
+    # robot displacement
+    displacement: Tuple[float, float] = (pos_1[0] - pos_0[0], pos_1[1] - pos_0[1])
+    displacement_length = math.sqrt(
+        displacement[0] * displacement[0] + displacement[1] * displacement[1]
+    )
+    displacement_normalized = (
+        displacement[0] / displacement_length,
+        displacement[1] / displacement_length,
+    )
+
+    # steal target from brain
+    # is already normalized
+    target = robot._brain.target
+
+    # angle between target and actual direction
+    delta = math.acos(
+        target[0] * displacement_normalized[0] + target[1] * displacement_normalized[1]
+    )
+
+    # projection of displacement on target line
+    dist_in_right_direction: float = (
+        displacement[0] * target[0] + displacement[1] * target[1]
+    )
+
+    # distance from displacement to target line
+    dist_to_optimal_line: float = math.sqrt(
+        (dist_in_right_direction * target[0] - displacement[0]) ** 2
+        + (dist_in_right_direction * target[1] - displacement[1]) ** 2
+    )
+
+    print(
+        f"target: {target}, displacement: {displacement}, dist_in_right_direction: {dist_in_right_direction}, dist_to_optimal_line: {dist_to_optimal_line}"
+    )
+
+    # filter out passive blocks
+    if dist_in_right_direction < 0.01:
+        fitness = 0
+        print("Did not pass fitness test, fitness = ", fitness)
+    else:
+        fitness = (dist_in_right_direction / (epsilon + path_length)) * (
+            dist_in_right_direction / (delta + 1)
+            - penalty_factor * dist_to_optimal_line
+        )
+
+        print("Fitness = ", fitness)
+
+    return fitness
 
 
 async def run():
@@ -224,7 +301,7 @@ async def run():
         population_size=population_size,
         genotype_constructor=create_random_genotype,
         genotype_conf=genotype_constructor_config,
-        fitness_function=fitness.displacement_velocity,
+        fitness_function=calculate_fitness,
         mutation_operator=bodybrain_composition_mutate,
         mutation_conf=bodybrain_composition_config,
         crossover_operator=bodybrain_composition_crossover,

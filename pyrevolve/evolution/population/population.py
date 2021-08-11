@@ -5,16 +5,13 @@ import math
 import os
 import random
 import re
-import sys
 from typing import TYPE_CHECKING
 
 from pyrevolve.custom_logging.logger import logger
-from pyrevolve.evolution import fitness
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.revolve_bot.brain.cpg_target import BrainCPGTarget
 from pyrevolve.revolve_bot.revolve_bot import RevolveBot
-from pyrevolve.tol.manage import measures
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 
 if TYPE_CHECKING:
@@ -358,7 +355,7 @@ class Population:
                 individual,
                 individual.phenotype,
                 self.config,
-                lambda robot_manager, robot: self._fitness(robot_manager, robot),
+                lambda robot_manager, robot: fitness_fun(robot_manager, robot),
             )
             fitness_list.append(fitness)
             behaviour_list.append(behaviour)
@@ -376,78 +373,3 @@ class Population:
         print(f"Based on targets {target_dir_list}")
         print(f"Average fitness = {fitness_avg}")
         return fitness_avg, behaviour_avg
-
-    @staticmethod
-    def _fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
-        """
-        Fitness is determined by the formula:
-
-        F = e3 * (e1 / (delta + 1) - penalty_factor * e2)
-
-        Where e1 is the distance travelled in the right direction,
-        e2 is the distance of the final position p1 from the ideal
-        trajectory starting at starting position p0 and following
-        the target direction. e3 is distance in right direction divided by
-        length of traveled path(curved) + infinitesimal constant to never divide
-        by zero.
-        delta is angle between optimal direction and traveled direction.
-        """
-        penalty_factor = 0.01
-
-        epsilon: float = sys.float_info.epsilon
-
-        # length of traveled path(over the complete curve)
-        path_length = measures.path_length(robot_manager)  # L
-
-        # robot position, Vector3(pos.x, pos.y, pos.z)
-        pos_0 = robot_manager._positions[0]  # start
-        pos_1 = robot_manager._positions[-1]  # end
-
-        # robot displacement
-        displacement: Tuple[float, float] = (pos_1[0] - pos_0[0], pos_1[1] - pos_0[1])
-        displacement_length = math.sqrt(
-            displacement[0] * displacement[0] + displacement[1] * displacement[1]
-        )
-        displacement_normalized = (
-            displacement[0] / displacement_length,
-            displacement[1] / displacement_length,
-        )
-
-        # steal target from brain
-        # is already normalized
-        target = robot._brain.target
-
-        # angle between target and actual direction
-        delta = math.acos(
-            target[0] * displacement_normalized[0]
-            + target[1] * displacement_normalized[1]
-        )
-
-        # projection of displacement on target line
-        dist_in_right_direction: float = (
-            displacement[0] * target[0] + displacement[1] * target[1]
-        )
-
-        # distance from displacement to target line
-        dist_to_optimal_line: float = math.sqrt(
-            (dist_in_right_direction * target[0] - displacement[0]) ** 2
-            + (dist_in_right_direction * target[1] - displacement[1]) ** 2
-        )
-
-        print(
-            f"target: {target}, displacement: {displacement}, dist_in_right_direction: {dist_in_right_direction}, dist_to_optimal_line: {dist_to_optimal_line}"
-        )
-
-        # filter out passive blocks
-        if dist_in_right_direction < 0.01:
-            fitness = 0
-            print("Did not pass fitness test, fitness = ", fitness)
-        else:
-            fitness = (dist_in_right_direction / (epsilon + path_length)) * (
-                dist_in_right_direction / (delta + 1)
-                - penalty_factor * dist_to_optimal_line
-            )
-
-            print("Fitness = ", fitness)
-
-        return fitness
