@@ -76,7 +76,7 @@ class Population:
 
         return individual
 
-    def load_snapshot(self, gen_num: int, multi_development=False) -> None:
+    def load_snapshot(self, gen_num: int, multi_development=True) -> None:
         """
         Recovers all genotypes and fitnesses of robots in the lastest selected population
         :param gen_num: number of the generation snapshot to recover
