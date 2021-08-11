@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import division
+from __future__ import absolute_import, division
 
 from math import ceil
 
@@ -31,7 +30,7 @@ class Time(object):
         """
         if dbl is not None:
             self.sec = int(dbl)
-            self.nsec = int(round((dbl - self.sec) * 10e9))
+            self.nsec = int(round((dbl - self.sec) * 1e9))
         elif msg:
             self.sec = msg.sec
             self.nsec = msg.nsec
@@ -50,13 +49,13 @@ class Time(object):
         :return:
         """
         if self.nsec < 0:
-            n = ceil(abs(self.nsec / float(10e9)))
+            n = ceil(abs(self.nsec / float(1e9)))
             self.sec -= n
-            self.nsec += n * 10e9
-        elif self.nsec >= 10e9:
-            n = int(self.nsec / 10e9)
+            self.nsec += n * 1e9
+        elif self.nsec >= 1e9:
+            n = int(self.nsec / 1e9)
             self.sec += n
-            self.nsec -= n * 10e9
+            self.nsec -= n * 1e9
 
     def is_zero(self):
         """
@@ -125,9 +124,7 @@ class Time(object):
         :return:
         """
         if isinstance(other, Time):
-            return self.__class__(
-                    sec=self.sec + other.sec,
-                    nsec=self.nsec + other.nsec)
+            return self.__class__(sec=self.sec + other.sec, nsec=self.nsec + other.nsec)
 
         # Otherwise assume a number
         return self.__class__(dbl=float(self) + other)
@@ -141,12 +138,13 @@ class Time(object):
         :return:
         """
         if isinstance(other, Time):
-            return self.__class__(
-                    sec=self.sec - other.sec,
-                    nsec=self.nsec - other.nsec)
+            return self.__class__(sec=self.sec - other.sec, nsec=self.nsec - other.nsec)
 
         # Assume a number
         return self.__class__(dbl=float(self) - other)
+
+    def __truediv__(self, other):
+        return self.__class__(dbl=float(self) / float(other))
 
     def __rsub__(self, other):
         """

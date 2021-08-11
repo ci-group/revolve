@@ -392,9 +392,6 @@ class Population:
         by zero.
         delta is angle between optimal direction and traveled direction.
         """
-
-        return 0 # TODO
-
         penalty_factor = 0.01
 
         epsilon: float = sys.float_info.epsilon

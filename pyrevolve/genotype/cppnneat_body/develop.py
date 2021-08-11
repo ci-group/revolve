@@ -54,10 +54,12 @@ def cppnneat_body_develop(
     core_module.children[rand] = BrickModule()
     core_module.children[rand].rgb = [1, 0, 0]
     core_module.children[rand].orientation = 0
+    core_module.children[rand].id = "asdads"
 
     core_module.children[rand].children[2] = BrickModule()
     core_module.children[rand].children[2].rgb = [0, 0, 1]
     core_module.children[rand].children[2].orientation = 0
+    core_module.children[rand].children[2].id = "fdojfdg"
 
     # while not to_explore.empty():
     #     module: _Module = to_explore.get()
