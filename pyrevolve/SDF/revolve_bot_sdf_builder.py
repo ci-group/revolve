@@ -13,8 +13,7 @@ def revolve_bot_to_sdf(robot, robot_pose, nice_format, self_collide=True):
 
     robot_id = robot.id
     assert (robot_id is not None)
-    if str(robot_id).isdigit():
-        robot_id = f"robot_{robot_id}"
+    robot_id = f"robot_{robot_id}"
     model = ElementTree.SubElement(sdf_root, 'model', {
         'name': str(robot_id)
     })
