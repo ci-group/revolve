@@ -31,7 +31,7 @@ class BodybrainCompositionGenotype(Generic[_body_type, _brain_type], Genotype):
         self._brain_genotype = brain_genotype
 
     def develop(self) -> RevolveBot:
-        phenotype = RevolveBot("robot_" + str(self.id))
+        phenotype = RevolveBot(self.id)
         phenotype._body = self._config.body_develop(
             self._body_genotype, self._config.body_develop_config
         )
