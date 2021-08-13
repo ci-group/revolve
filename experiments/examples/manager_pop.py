@@ -67,6 +67,7 @@ async def run():
             gen_num,
             has_offspring,
             next_robot_id,
+            _,
         ) = experiment_management.read_recovery_state(population_size, offspring_size)
 
         if gen_num == num_generations - 1:
@@ -112,7 +113,7 @@ async def run():
 
     if do_recovery:
         # loading a previous state of the experiment
-        await population.load_snapshot(gen_num)
+        population.load_snapshot(gen_num)
         if gen_num >= 0:
             logger.info(
                 "Recovered snapshot "
@@ -122,7 +123,7 @@ async def run():
                 + " individuals"
             )
         if has_offspring:
-            individuals = await population.load_offspring(
+            individuals = population.load_offspring(
                 gen_num, population_size, offspring_size, next_robot_id
             )
             gen_num += 1
@@ -131,7 +132,7 @@ async def run():
             if gen_num == 0:
                 await population.initialize(individuals)
             else:
-                population = await population.next_gen(gen_num, individuals)
+                population = await population.next_generation(gen_num, individuals)
 
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
@@ -142,7 +143,7 @@ async def run():
 
     while gen_num < num_generations - 1:
         gen_num += 1
-        population = await population.next_gen(gen_num)
+        population = await population.next_generation(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     # output result after completing all generations...
