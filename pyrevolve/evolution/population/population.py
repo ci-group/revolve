@@ -360,6 +360,9 @@ class Population:
         :param phenotype: robot phenotype to test [optional]
         :return: Returns future of the evaluation, future returns (fitness, [behavioural] measurements)
         """
+        # evaluate this many times in random directions
+        number_of_evals = 3
+
         if phenotype is None:
             if individual.phenotype is None:
                 individual.develop()
@@ -380,10 +383,6 @@ class Population:
                 phenotype.simulation_boundaries = bounding_box
 
         # evaluate using directed locomotion according to gongjin's method
-
-        # evaluate this many times in random directions
-        number_of_evals = 3
-
         original_id = phenotype.id
 
         fitness_list = []
@@ -392,7 +391,9 @@ class Population:
         for i in range(number_of_evals):
             # create random target direction vector
             phenotype._id = f"{original_id}_iter_{i+1}"
-            target_direction = random.random() * math.pi * 2.0
+            target_direction = (
+                math.pi * 2.0 / number_of_evals * i
+            )  # random.random() * math.pi * 2.0
             target_as_vector: Tuple[float, float, float] = (
                 math.cos(target_direction),
                 math.sin(target_direction),
