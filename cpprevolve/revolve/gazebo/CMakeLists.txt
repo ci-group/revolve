@@ -53,14 +53,15 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Find NLOpt - Non Linear Optimization
-pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
-include_directories(${NLOpt_INCLUDE_DIRS})
-link_directories(${NLOpt_LIBRARY_DIRS})
+#pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
+#include_directories(${NLOpt_INCLUDE_DIRS})
+#link_directories(${NLOpt_LIBRARY_DIRS})
 
 # Find Limbo - LIbrary for Model-Based Optimization
-set(LIMBO_DIR ${CMAKE_SOURCE_DIR}/thirdparty/limbo)
-set(LIMBO_DEFINES USE_NLOPT)
-include_directories(${LIMBO_DIR}/src)
+# Required for BO. Currently not in use so disabled.
+#set(LIMBO_DIR ${CMAKE_SOURCE_DIR}/thirdparty/limbo)
+#set(LIMBO_DEFINES USE_NLOPT)
+#include_directories(${LIMBO_DIR}/src)
 
 # Find GSL - GNU Scientific Library
 find_package(GSL REQUIRED)
@@ -174,6 +175,8 @@ file(GLOB_RECURSE
         sensors/*.cpp
         util/*.cpp
 )
+# Currently not in use. Excluded so dependencies can be disabled.
+list(FILTER REVOLVE_GZ_SRC EXCLUDE REGEX ".*/brains/DifferentialCPG.cpp")
 
 # Generate
 # _____________________________________________________________________________
