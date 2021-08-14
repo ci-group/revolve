@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import math
 import os
 import random
@@ -410,7 +411,12 @@ class Population:
                 individual,
                 individual.phenotype,
                 self.config,
-                lambda robot_manager, robot: fitness_fun(robot_manager, robot),
+                lambda robot_manager, robot: self._fitness_robotmanager_hook(
+                    fitness_fun,
+                    self.config.experiment_management.experiment_folder,
+                    robot_manager,
+                    robot,
+                ),
             )
             fitness_list.append(fitness)
             behaviour_list.append(behaviour)
@@ -428,3 +434,55 @@ class Population:
         print(f"Based on targets {target_dir_list}")
         print(f"Average fitness = {fitness_avg}")
         return fitness_avg, behaviour_avg
+
+    # acts as a proxy for the fitness function, but man in the middles to use the robot manager
+    # to store the complete simulation history
+    # very ugly but lets just make it work for this experiment
+    @staticmethod
+    def _fitness_robotmanager_hook(
+        fitness_function,
+        path: str,
+        robot_manager: RobotManager,
+        robot: RevolveBot,
+    ) -> float:
+        # secretly save the simulation history
+        Population._save_simulation_history(robot_manager, path, robot.id)
+
+        # do actual fitness calculation
+        return fitness_function(robot_manager, robot)
+
+    @staticmethod
+    def _save_simulation_history(robot_manager: RobotManager, path: str, robot_id: str):
+        with open(
+            path + "/data_fullevolution/descriptors/simulation_" + robot_id + ".json",
+            "w",
+        ) as file:
+            output = []
+            for i in range(len(robot_manager._positions)):
+                orientation_vecs = {}
+                for key in robot_manager._orientation_vecs[i].keys():
+                    item = robot_manager._orientation_vecs[i][key]
+                    orientation_vecs[key.name.lower()] = (item[0], item[1], item[2])
+                output.append(
+                    {
+                        "info": "'orientation' is euler angles.",
+                        "position": (
+                            robot_manager._positions[i][0],
+                            robot_manager._positions[i][2],
+                            robot_manager._positions[i][2],
+                        ),
+                        "orientation": (
+                            robot_manager._orientations[i][0],
+                            robot_manager._orientations[i][1],
+                            robot_manager._orientations[i][2],
+                        ),
+                        "time": str(robot_manager._times[i]),
+                        # pretty sure you can derive the following from the above
+                        #  but saving them just to be sure
+                        "ds": robot_manager._ds[i],
+                        "dt": robot_manager._dt[i],
+                        "orientation_vecs": orientation_vecs,
+                        "seconds": robot_manager._seconds[i],
+                    }
+                )
+            file.write(json.dumps(output))
