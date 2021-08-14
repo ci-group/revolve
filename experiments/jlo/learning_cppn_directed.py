@@ -101,10 +101,13 @@ def calculate_fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
     displacement_length = math.sqrt(
         displacement[0] * displacement[0] + displacement[1] * displacement[1]
     )
-    displacement_normalized = (
-        displacement[0] / displacement_length,
-        displacement[1] / displacement_length,
-    )
+    if displacement_length > 0:
+        displacement_normalized = (
+            displacement[0] / displacement_length,
+            displacement[1] / displacement_length,
+        )
+    else:
+        displacement_normalized = (0, 0)
 
     # steal target from brain
     # is already normalized
