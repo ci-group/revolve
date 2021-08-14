@@ -14,5 +14,5 @@ manager=experiments/jlo/learning_cppn_directed.py
 for i in $(seq $runs)
 do
         run=$(($i+runs_start))
-        screen -d -m -S "${exp_name}_${run}" -L -Logfile "${exp_name}${log_suffix}_${run}.log" nice -n19 ./revolve.sh --manager $manager --experiment-name $exp_name --n-cores 5 --port-start $((${start_port} + ($run*10))) --run $run --evaluation-time=30
+        screen -d -m -S "${exp_name}_${run}" -L -Logfile "${exp_name}${log_suffix}_${run}.log" nice -n19 ./revolve_restarting.sh --manager $manager --experiment-name $exp_name --n-cores 5 --port-start $((${start_port} + ($run*10))) --run $run --evaluation-time=30
 done
