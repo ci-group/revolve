@@ -1,0 +1,9 @@
+#!/bin/bash
+while true
+	do
+         for i in {1..10}; do
+                ./revolve_restarting.sh --experiment-name=evo_only --run=$i --manager=experiments/jlo/learning_cppn_directed.py --n-cores 5;
+                sleep 5s
+	            
+	   done
+done
