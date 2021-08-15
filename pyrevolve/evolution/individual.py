@@ -66,7 +66,7 @@ class Individual:
         else:
             parents_ids_str = 'None'
 
-        filename = os.path.join(folder, f'parents_{self.id}.yaml')
+        filename = os.path.join(folder, f'parents_{self.id}.txt')
         with open(filename, 'w') as file:
             file.write(f'parents:{parents_ids_str}')
 
