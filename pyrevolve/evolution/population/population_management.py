@@ -10,7 +10,6 @@ def steady_state_population_management(old_individuals, new_individuals, selecto
     return multiple_selection(selection_pool, pop_size, selector)
 
 
-def generational_population_management(old_individuals, new_individuals):
-    assert (len(old_individuals) == len(new_individuals))
+def generational_population_management(old_individuals, new_individuals, _):
+    assert len(old_individuals) == len(new_individuals)
     return new_individuals
-
