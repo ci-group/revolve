@@ -422,13 +422,25 @@ class Population:
             behaviour_list.append(behaviour)
             target_dir_list.append(target_direction)
 
+            with open(
+                f"{self.config.experiment_management.experiment_folder}/data_fullevolution/fitness/fitness_robot_{phenotype._id}.txt",
+                "w",
+            ) as file:
+                file.write(str(fitness))
+
         # set robot id back to original id
-        individual.phenotype._id = original_id
+        phenotype._id = original_id
 
         fitness_avg = sum(fitness_list) / len(fitness_list)
         behaviour_avg = sum(behaviour_list, start=BehaviouralMeasurements.zero()) / len(
             behaviour_list
         )
+
+        with open(
+            f"{self.config.experiment_management._fitness_folder}/fitness_robot_{phenotype._id}.txt",
+            "w",
+        ) as file:
+            file.write(str(fitness_avg))
 
         print(f"Fitness values for robot {original_id} = {fitness_list}")
         print(f"Based on targets {target_dir_list}")
