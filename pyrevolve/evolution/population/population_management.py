@@ -10,6 +10,9 @@ def steady_state_population_management(old_individuals, new_individuals, selecto
     return multiple_selection(selection_pool, pop_size, selector)
 
 
-def generational_population_management(old_individuals, new_individuals, _):
-    assert len(old_individuals) == len(new_individuals)
-    return new_individuals
+def generational_population_management(old_individuals, new_individuals, selector):
+    # offspring was at least the size of the old generation
+    assert len(new_individuals) >= len(old_individuals)
+    # choose as many kids as there were in the old generation.
+    # this replaces the old generation
+    return multiple_selection(new_individuals, len(old_individuals), selector)
