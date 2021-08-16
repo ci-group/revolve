@@ -189,27 +189,3 @@ def panoramic_rotation(robot_manager, robot: RevolveBot, vertical_angle_limit: f
         total_angle += delta
 
     return total_angle
-
-
-# This will not be part of future code, solely for experimental practice
-def gait_with_rotation(_robot_manager, robot):
-    gait_fitness = displacement(_robot_manager, robot)
-    rotation_fitness = rotation(_robot_manager, robot)
-
-    return 0.75 * gait_fitness + 0.25 * rotation_fitness
-
-
-# This will not be part of future code, solely for experimental practice
-def gait_and_rotation(_robot_manager, robot):
-    gait_fitness = displacement(_robot_manager, robot)
-    rotation_fitness = rotation(_robot_manager, robot)
-
-    return 0.5 * gait_fitness + 0.5 * rotation_fitness
-
-
-# This will not be part of future code, solely for experimental practice
-def rotation_with_gait(_robot_manager, robot):
-    gait_fitness = displacement(_robot_manager, robot)
-    rotation_fitness = rotation(_robot_manager, robot)
-
-    return 0.75 * rotation_fitness + 0.25 * gait_fitness
