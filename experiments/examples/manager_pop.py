@@ -15,9 +15,7 @@ from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotype
 from pyrevolve.genotype.direct_tree.direct_tree_crossover import (
     crossover_list as direct_tree_crossover_list,
 )
-from pyrevolve.genotype.direct_tree.direct_tree_genotype import (
-    Genotype as DirectTreeGenotype,
-)
+from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
 from pyrevolve.genotype.direct_tree.direct_tree_mutation import (
     mutate as direct_tree_mutate,
 )
@@ -103,7 +101,7 @@ async def run():
             individuals, 2, tournament_selection
         ),
         population_management=steady_state_population_management,
-        population_management_selector=None,
+        population_management_selector=tournament_selection,
         evaluation_time=settings.evaluation_time,
         grace_time=settings.grace_time,
         offspring_size=offspring_size,
