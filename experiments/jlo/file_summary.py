@@ -5,13 +5,13 @@ dirpath = 'data'
 experiments_type = [
                     'evolution_only'
                     ]
-runs = 10
+runs = 1
 # set these variables according to your experiments #
 
 
 def build_headers(path):
 
-    print(path + "/all_measures.txt")
+    # print(path + "/all_measures.txt")
     file_summary = open(path + "/all_measures.tsv", "w+")
     file_summary.write('robot_id\t')
 
@@ -19,8 +19,8 @@ def build_headers(path):
     with open(path + '/data_fullevolution/descriptors/behavioural/behavior_desc_1.txt') as file:
         for line in file:
 
-            print(file)
-            print(line)
+            # print(file)
+            # print(line)
             if (' ' in line.strip()):
                 measure, value = line.strip().split(' ')
                 behavior_headers.append(measure)
@@ -52,7 +52,7 @@ for exp in experiments_type:
         behavior_headers, phenotype_headers = build_headers(path)
 
         file_summary = open(path + "/all_measures.tsv", "a")
-        for r, d, f in os.walk(path+'/data_fullevolution/fitness'):
+        for r, d, f in os.walk(path+'/data_fullevolution/genotypes'):
             for file in f:
 
                 robot_id = file.split('.')[0].split('_')[-1]
@@ -62,10 +62,8 @@ for exp in experiments_type:
                 if os.path.isfile(bh_file):
                     with open(bh_file) as file:
                         for line in file:
-
-
-                            print(bh_file)
-                            print(line)
+                            # print(bh_file)
+                            # print(line)
                             if (' ' in line.strip()):
                                 measure, value = line.strip().split(' ')
                                 file_summary.write(value+'\t')
@@ -92,13 +90,14 @@ for exp in experiments_type:
         file_summary.close()
 
         file_summary = open(path + "/snapshots_ids.tsv", "a")
-        for r, d, f in os.walk(path):
+        for r, d, f in os.walk(path+'/generations'):
             for dir in d:
-                if 'selectedpop' in dir:
+                if 'generation' in dir:
                     gen = dir.split('_')[1]
-                    for r2, d2, f2 in os.walk(path + '/selectedpop_' + str(gen)):
+                    for r2, d2, f2 in os.walk(path + '/generations/generation_' + str(gen)):
                         for file in f2:
                             if 'body' in file:
-                                id = file.split('.')[0].split('_')[-1]
+                                id = file.split('.')[0].split('_')[1]
+                                # print(id)
                                 file_summary.write(gen+'\t'+id+'\n')
         file_summary.close()
