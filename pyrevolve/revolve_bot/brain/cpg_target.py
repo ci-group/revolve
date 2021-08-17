@@ -14,7 +14,7 @@ class BrainCPGTarget(BrainCPG):
     @staticmethod
     def from_yaml(yaml_object):
         brain = BrainCPGTarget()
-        for my_type in ["controller", "learner"]:
+        for my_type in ["controller"]:
             try:
                 my_object = yaml_object[my_type]
                 for key, value in my_object.items():
@@ -25,12 +25,6 @@ class BrainCPGTarget(BrainCPG):
             except:
                 print("Didn't load {} parameters".format(my_type))
         return brain
-
-    def to_yaml(self):
-        yaml = super().to_yaml()
-        yaml["controller"]["type"] = "cpg-target"
-        yaml["controller"]["target"] = self.target
-        return yaml
 
     def controller_sdf(self):
         sdf = super().controller_sdf()
