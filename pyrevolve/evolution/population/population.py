@@ -7,6 +7,7 @@ import os
 import re
 from typing import TYPE_CHECKING
 
+import cma
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
@@ -382,7 +383,60 @@ class Population:
         fitness_fun: Callable[[RobotManager, RevolveBot], float],
         phenotype: Optional[RevolveBot] = None,
     ) -> Tuple[float, BehaviouralMeasurements]:
-        raise NotImplementedError()
+        if phenotype is None:
+            if individual.phenotype is None:
+                individual.develop()
+            phenotype = individual.phenotype
+
+        if len(phenotype.brain.weights) <= 1:
+            if len(phenotype.brain.weights) == 1:
+                logger.warn(
+                    "Brain with one weight not optimized. CMAES library does not support 1D."
+                )
+            return await self.get_fitness(individual, fitness_fun, phenotype)
+
+        es = cma.CMAEvolutionStrategy(phenotype.brain.weights, 0.5)
+        phenotype.cmaes_i = 0
+        while not es.stop():
+            solutions = es.ask()
+            es.tell(
+                solutions,
+                [
+                    await self._get_fitness_cmaes_evaluate_weights(
+                        individual, fitness_fun, phenotype, weights
+                    )
+                    for weights in solutions
+                ],
+            )
+
+        delattr(phenotype, "cmaes_i")
+
+        # best fitness could also be retrieved from es.result.xbest
+        # but we want an entry in the output logs for the best one
+        # and the easiest way to get that is to just evaluate again
+        original_weights = phenotype.brain.weights
+        phenotype.brain.weights = es.result.xbest
+        fitness = await self.get_fitness(individual, fitness_fun, phenotype)
+        phenotype.brain.weights = original_weights
+
+        return fitness
+
+    async def _get_fitness_cmaes_evaluate_weights(
+        self,
+        individual: Individual,
+        fitness_fun: Callable[[RobotManager, RevolveBot], float],
+        phenotype: RevolveBot,
+        weights: List[float],
+    ) -> float:
+        original_weights = phenotype.brain.weights
+        phenotype.brain.weights = weights
+        original_id = phenotype.id
+        phenotype._id = f"{original_id}_cmaes_{phenotype.cmaes_i}"
+        fitness = await self.get_fitness(individual, fitness_fun, phenotype)
+        phenotype.brain.weights = original_weights
+        phenotype._id = original_id
+        phenotype.cmaes_i += 1
+        return fitness
 
     # call this to get the fitness of a single robot instance.
     async def get_fitness(
