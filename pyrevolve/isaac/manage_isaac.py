@@ -1,7 +1,7 @@
 """
 Loading and testing
 """
-from typing import AnyStr, List
+from typing import AnyStr, List, Optional
 import math
 import tempfile
 import os
@@ -13,11 +13,32 @@ from isaacgym import gymutil
 from pyrevolve import isaac
 from pyrevolve.isaac.Learners import DifferentialEvolution
 
-
 from sqlalchemy.orm import Session
 
 from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
 from pyrevolve.util.supervisor.rabbits import Robot, RobotEvaluation, RobotState
+
+from celery.signals import worker_process_init, worker_process_shutdown
+
+db: Optional[PostgreSQLDatabase] = None
+
+
+@worker_process_init.connect
+def init_worker(**kwargs):
+    global db
+    print("Initializing database connection for worker...")
+    db = PostgreSQLDatabase(username='matteo')
+    # Create connection engine
+    db.start_sync()
+    print("DB connection Initialized.")
+
+
+@worker_process_shutdown.connect
+def shutdown_worker(**kwargs):
+    print('Closing database connectionn for worker...')
+    # Disconnect from the database
+    db.disconnect()
+    print('DB connection Closed.')
 
 
 class Arguments:
@@ -26,7 +47,7 @@ class Arguments:
         self.compute_device_id = 0
         self.graphics_device_id = 0
         self.num_threads = 0
-        self.headless = False
+        self.headless = True
 
 
 def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
@@ -59,18 +80,14 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     args = Arguments()
     print(f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
 
-    # Configure database
-    db = PostgreSQLDatabase()
-    db.start_sync() #create connection engine
-
     # Insert robot
     new_robot = Robot(name=robot_asset_filename)
     with db.session() as session:
         assert session.is_active
         session.add(new_robot)  # TODO change to robot name, not random file name
         session.commit()
-    session = None
-
+        # this line actually queries the database while the session is still active
+        new_robot_id = new_robot.id
 
     # configure sim
     sim_params = gymapi.SimParams()
@@ -306,6 +323,6 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     # remove temporary file
     robot_asset_file.close()
 
-    # Disconnect from the database
-    db.disconnect()
-    return new_robot.id
+    # close robot states session if present
+    robot_states_session.close()
+    return new_robot_id

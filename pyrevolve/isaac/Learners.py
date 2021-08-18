@@ -1,7 +1,7 @@
 import time
 import numpy as np
-from .revde.algorithms.recombination import DifferentialRecombination
-from .revde.algorithms.selections import SelectBest
+from thirdparty.reversible_de.algorithms.recombination import DifferentialRecombination
+from thirdparty.reversible_de.algorithms.selections import SelectBest
 
 
 class DifferentialEvolution:
@@ -29,7 +29,7 @@ class DifferentialEvolution:
         self.f = np.append(self.f, fitness)
 
     def get_new_weights(self):
-        if self.x_new.shape[0] is 0:
+        if self.x_new.shape[0] == 0:
             self.new_pop()
             if type(self.x_new) == tuple:
                 self.x_new = np.concatenate(self.x_new, 0)
