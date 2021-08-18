@@ -98,9 +98,7 @@ def calculate_fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
 
     # robot displacement
     displacement: Tuple[float, float] = (pos_1[0] - pos_0[0], pos_1[1] - pos_0[1])
-    displacement_length = math.sqrt(
-        displacement[0] * displacement[0] + displacement[1] * displacement[1]
-    )
+    displacement_length = math.sqrt(displacement[0] ** 2 + displacement[1] ** 2)
     if displacement_length > 0:
         displacement_normalized = (
             displacement[0] / displacement_length,
@@ -112,21 +110,30 @@ def calculate_fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
     # steal target from brain
     # is already normalized
     target = robot._brain.target
+    target_length = math.sqrt(target[0] ** 2 + target[1] ** 2)
+    target_normalized = (target[0] / target_length, target[1] / target_length)
 
     # angle between target and actual direction
     delta = math.acos(
-        target[0] * displacement_normalized[0] + target[1] * displacement_normalized[1]
+        min(
+            1.0,
+            max(
+                0,
+                target_normalized[0] * displacement_normalized[0]
+                + target_normalized[1] * displacement_normalized[1],
+            ),
+        )
     )
 
     # projection of displacement on target line
     dist_in_right_direction: float = (
-        displacement[0] * target[0] + displacement[1] * target[1]
+        displacement[0] * target_normalized[0] + displacement[1] * target_normalized[1]
     )
 
     # distance from displacement to target line
     dist_to_optimal_line: float = math.sqrt(
-        (dist_in_right_direction * target[0] - displacement[0]) ** 2
-        + (dist_in_right_direction * target[1] - displacement[1]) ** 2
+        (dist_in_right_direction * target_normalized[0] - displacement[0]) ** 2
+        + (dist_in_right_direction * target_normalized[1] - displacement[1]) ** 2
     )
 
     print(
