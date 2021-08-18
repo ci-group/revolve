@@ -135,6 +135,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     robot_handles = []
     envs = []
     # create env
+    assert(num_envs > 0)
     for i in range(num_envs):
         env = gym.create_env(sim, env_lower, env_upper, num_per_row)
         envs.append(env)
@@ -294,8 +295,9 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         gym.fetch_results(sim, True)
 
         if not args.headless:
+            gym.step_graphics(sim)
             gym.draw_viewer(viewer, sim, False)
-            gym.sync_frame_time(sim) # makes the simulator run in real time
+            gym.sync_frame_time(sim)  # makes the simulator run in real time
 
     # %% END Simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
