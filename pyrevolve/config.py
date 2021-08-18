@@ -22,7 +22,7 @@ class CustomParser(argparse.ArgumentParser):
         if split < 0:
             return [arg_line]
 
-        k, v = "--" + arg_line[:split].replace("_", "-"), arg_line[1 + split:]
+        k, v = "--" + arg_line[:split].replace("_", "-"), arg_line[1 + split :]
 
         # Try to determine if this key is a store constant action, if so
         # return only the key.
@@ -39,9 +39,11 @@ class CustomParser(argparse.ArgumentParser):
         """
         Takes the result of `parse_args` and writes it back to a file.
         """
-        lines = ["{key}={value}\n".format(key=k, value=args.__dict__[k]) for k
-                 in sorted(args.__dict__.keys())]
-        with open(file, 'w') as configuration_output:
+        lines = [
+            "{key}={value}\n".format(key=k, value=args.__dict__[k])
+            for k in sorted(args.__dict__.keys())
+        ]
+        with open(file, "w") as configuration_output:
             configuration_output.writelines(lines)
 
 
@@ -63,121 +65,144 @@ def str_to_address(v):
     return host, int(port)
 
 
-parser = CustomParser(fromfile_prefix_chars='@')
+parser = CustomParser(fromfile_prefix_chars="@")
 
 parser.add_argument(
-    '--manager',
+    "--learner",
+    type=str,
+    choices=["disabled", "revdeknn", "cmaes"],
+    help="What learner should be used. Very hacky implementation so don't merge this.",
+    required=True,
+)
+
+parser.add_argument(
+    "--manager",
     default=None,
     type=str,
-    help="Determine which manager to use. Defaults to no manager."
+    help="Determine which manager to use. Defaults to no manager.",
 )
 
 parser.add_argument(
-    '--fitness',
+    "--fitness",
     default="displacement_velocity",
     type=str,
-    help="Determine which manager to use. Defaults to no manager."
+    help="Determine which manager to use. Defaults to no manager.",
 )
 
 parser.add_argument(
-    '--experiment-name',
-    default='default_experiment', type=str,
-    help="Name of current experiment. A folder with this name will be created. Default to \"default_experiment\"."
+    "--experiment-name",
+    default="default_experiment",
+    type=str,
+    help='Name of current experiment. A folder with this name will be created. Default to "default_experiment".',
 )
 
 parser.add_argument(
-    '--run',
-    default='1', type=str,
-    help="Run of repetition of an experiment. Default to \"1\"."
+    "--run",
+    default="1",
+    type=str,
+    help='Run of repetition of an experiment. Default to "1".',
 )
 
 parser.add_argument(
-    '--test-robot',
-    default=None, type=str,
+    "--test-robot",
+    default=None,
+    type=str,
     help="Alternative to --manager. Start a simulation with a single robot instead of running evolution."
-         "Loads a yaml robot."
+    "Loads a yaml robot.",
 )
 
 parser.add_argument(
-    '--record',
-    default=False, type=bool,
-    help="When running with --test-robot argument, records the video of the test run"
+    "--record",
+    default=False,
+    type=bool,
+    help="When running with --test-robot argument, records the video of the test run",
 )
 
 parser.add_argument(
-    '--plot-test-robot',
-    default=False, type=bool,
-    help="When testing a robot, plot the data instead of printing it to the terminal. Default False."
+    "--plot-test-robot",
+    default=False,
+    type=bool,
+    help="When testing a robot, plot the data instead of printing it to the terminal. Default False.",
 )
 
 parser.add_argument(
-    '--test-robot-collision',
-    default=None, type=str,
+    "--test-robot-collision",
+    default=None,
+    type=str,
     help="Alternative to --manager. Tests the collision of a single robot. "
-         "Loads a yaml robot."
+    "Loads a yaml robot.",
 )
 
 parser.add_argument(
-    '--simulator-cmd',
-    default='gzserver', type=str,
-    help="Determine whether to use gzserver or gazebo. Default to \"gzserver\"."
+    "--simulator-cmd",
+    default="gzserver",
+    type=str,
+    help='Determine whether to use gzserver or gazebo. Default to "gzserver".',
 )
 
 parser.add_argument(
-    '--n-cores',
-    default=1, type=int,
-    help="Number of simulators to use at the same time. Default to \"1\"."
+    "--n-cores",
+    default=1,
+    type=int,
+    help='Number of simulators to use at the same time. Default to "1".',
 )
 
 parser.add_argument(
-    '--port-start',
-    default=11345, type=int,
-    help="Gazebo ports [start_port, start_port + n_cores + n_analyzers]. Default to \"11345\"."
+    "--port-start",
+    default=11345,
+    type=int,
+    help='Gazebo ports [start_port, start_port + n_cores + n_analyzers]. Default to "11345".',
 )
 
 parser.add_argument(
-    '--world',
-    default='worlds/plane.world', type=str,
+    "--world",
+    default="worlds/plane.world",
+    type=str,
     help="Determine which world gazebo should use."
-         "Usefull not only to change the environment, but also the physical properties of the world "
-         "and the simulation/real time ratio (you can use the dedicated real time worlds). "
-         "Defaults to \"worlds/plane.world\"."
+    "Usefull not only to change the environment, but also the physical properties of the world "
+    "and the simulation/real time ratio (you can use the dedicated real time worlds). "
+    'Defaults to "worlds/plane.world".',
 )
 
 parser.add_argument(
-    '--z-start',
-    default=0.03, type=float,
+    "--z-start",
+    default=0.03,
+    type=float,
     help="Position in the z axis where the robot is placed at the beginning of the simulation. "
-         "Default \"0.03\"."
+    'Default "0.03".',
 )
 
 parser.add_argument(
-    '--evaluation-time',
-    default=30, type=float,
+    "--evaluation-time",
+    default=30,
+    type=float,
     help="In offline evolution, this determines the length of the evaluation time. "
-         "A single run time will be evaluation-time + grace-time"
+    "A single run time will be evaluation-time + grace-time"
     # For old_online_fitness:
     #   "The size of the `speed window` for each robot, i.e. the number of "
     #   "past (simulation) seconds over which its speed is evaluated."
 )
 
 parser.add_argument(
-    '--grace-time',
-    default=0, type=float,
+    "--grace-time",
+    default=0,
+    type=float,
     help="In offline evolution, this determines how much time before the start of an evaluation."
     # For old_online_fitness it's useless.
 )
 
 parser.add_argument(
-    '--recovery-enabled',
-    default=True, type=str_to_bool,
-    help="Whether the recovery is enabled (save and load the recovery both). Default \"True\"."
+    "--recovery-enabled",
+    default=True,
+    type=str_to_bool,
+    help='Whether the recovery is enabled (save and load the recovery both). Default "True".',
 )
 
 parser.add_argument(
-    '--export-phenotype',
-    default=True, type=str_to_bool,
-    help="Exports yamls with the phenotypes. Default \"True\"."
+    "--export-phenotype",
+    default=True,
+    type=str_to_bool,
+    help='Exports yamls with the phenotypes. Default "True".',
 )
 
 # Directory where robot information will be written. The system writes
@@ -195,35 +220,40 @@ parser.add_argument(
 # specified output directory, unless a subdirectory is explicitly
 # provided with `--restore-directory`
 parser.add_argument(
-    '--output-directory',
-    default="output", type=str,
-    help="OLD. Directory where robot statistics are written. Default \"output\"."
+    "--output-directory",
+    default="output",
+    type=str,
+    help='OLD. Directory where robot statistics are written. Default "output".',
 )
 
 parser.add_argument(
-    '--restore-directory',
-    default="restore", type=str,
+    "--restore-directory",
+    default="restore",
+    type=str,
     help="OLD. Explicit subdirectory of the output directory, if a world "
-         "state is present in this directory it will be restored. Default \"restore\"."
+    'state is present in this directory it will be restored. Default "restore".',
 )
 
 parser.add_argument(
-    '--sensor-update-rate',
-    default=8, type=int,
-    help='The rate at which Gazebo sensors are set to update their values. Default \"8\".'
+    "--sensor-update-rate",
+    default=8,
+    type=int,
+    help='The rate at which Gazebo sensors are set to update their values. Default "8".',
 )
 
 parser.add_argument(
-    '--controller-update-rate',
-    default=8, type=int,
-    help='The rate at which the `RobotController` is requested to update. Default \"8\".'
+    "--controller-update-rate",
+    default=8,
+    type=int,
+    help='The rate at which the `RobotController` is requested to update. Default "8".',
 )
 
 parser.add_argument(
-    '--pose-update-frequency',
-    default=5, type=int,
+    "--pose-update-frequency",
+    default=5,
+    type=int,
     help="The frequency at which the world is requested to send robot pose"
-         " updates (in number of times per *simulation* second). Default \"5\"."
+    ' updates (in number of times per *simulation* second). Default "5".',
 )
 
 

@@ -319,6 +319,7 @@ async def run():
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
+        learner=settings.learner,
     )
 
     # check if recovery is required

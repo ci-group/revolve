@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
-    from typing import Callable, Optional, List
+    from typing import Callable, List, Optional
+
     from pyrevolve.evolution.individual import Individual
     from pyrevolve.genotype import Genotype
     from pyrevolve.revolve_bot import RevolveBot
@@ -10,28 +12,39 @@ if TYPE_CHECKING:
 
 
 class PopulationConfig:
-    def __init__(self,
-                 population_size: int,
-                 genotype_constructor: Callable[[object, int], Genotype],
-                 genotype_conf: object,
-                 fitness_function: Optional[Callable[[RobotManager, RevolveBot], float]],
-                 mutation_operator: Callable[[Genotype, object], Genotype],
-                 mutation_conf: object,
-                 crossover_operator: Callable[[List[Individual], object, object], Genotype],
-                 crossover_conf: object,
-                 selection: Callable[[List[Individual]], Individual],
-                 parent_selection: Callable[[List[Individual]], List[Individual]],
-                 population_management: Callable[
-                     [List[Individual], List[Individual], Callable[[List[Individual]], Individual]],
-                     List[Individual]
-                 ],
-                 population_management_selector: Optional[Callable[[List[Individual]], Individual]],
-                 evaluation_time: float,
-                 experiment_name: str,
-                 experiment_management,
-                 offspring_size: Optional[int] = None,
-                 grace_time: float = 0.0,
-                 objective_functions: Optional[List[Callable[[RobotManager, RevolveBot], float]]] = None):
+    def __init__(
+        self,
+        population_size: int,
+        genotype_constructor: Callable[[object, int], Genotype],
+        genotype_conf: object,
+        fitness_function: Optional[Callable[[RobotManager, RevolveBot], float]],
+        mutation_operator: Callable[[Genotype, object], Genotype],
+        mutation_conf: object,
+        crossover_operator: Callable[[List[Individual], object, object], Genotype],
+        crossover_conf: object,
+        selection: Callable[[List[Individual]], Individual],
+        parent_selection: Callable[[List[Individual]], List[Individual]],
+        population_management: Callable[
+            [
+                List[Individual],
+                List[Individual],
+                Callable[[List[Individual]], Individual],
+            ],
+            List[Individual],
+        ],
+        population_management_selector: Optional[
+            Callable[[List[Individual]], Individual]
+        ],
+        evaluation_time: float,
+        experiment_name: str,
+        experiment_management,
+        offspring_size: Optional[int] = None,
+        grace_time: float = 0.0,
+        objective_functions: Optional[
+            List[Callable[[RobotManager, RevolveBot], float]]
+        ] = None,
+        learner: str = "disabled",
+    ):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -83,3 +96,4 @@ class PopulationConfig:
         self.experiment_management = experiment_management
         self.offspring_size = offspring_size
         self.objective_functions = objective_functions
+        self.learner = learner

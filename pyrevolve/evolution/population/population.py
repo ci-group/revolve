@@ -349,12 +349,49 @@ class Population:
             if type_simulation == "evolve":
                 self.config.experiment_management.export_fitness(individual)
 
+    # gets fitness of an individual but can apply a learning algorithm first
     async def evaluate_single_robot(
         self,
         individual: Individual,
         fitness_fun: Callable[[RobotManager, RevolveBot], float],
         phenotype: Optional[RevolveBot] = None,
-    ) -> (float, BehaviouralMeasurements):
+    ) -> Tuple[float, BehaviouralMeasurements]:
+        if self.config.learner == "disabled":
+            return await self.get_fitness(individual, fitness_fun, phenotype)
+        elif self.config.learner == "revdeknn":
+            return await self.get_fitness_revdeknn(individual, fitness_fun, phenotype)
+        elif self.config.learner == "cmaes":
+            return await self.get_fitness_cmaes(individual, fitness_fun, phenotype)
+        else:
+            raise NotImplementedError(
+                f"learner type not supported: {self.config.learner}"
+            )
+
+    # get fitness of individual, but apply learner algorithm revdeknn first
+    async def get_fitness_revdeknn(
+        self,
+        individual: Individual,
+        fitness_fun: Callable[[RobotManager, RevolveBot], float],
+        phenotype: Optional[RevolveBot] = None,
+    ) -> Tuple[float, BehaviouralMeasurements]:
+        raise NotImplementedError()
+
+    # get fitness of individual, but apply learner algorithm cmaes first
+    async def get_fitness_cmaes(
+        self,
+        individual: Individual,
+        fitness_fun: Callable[[RobotManager, RevolveBot], float],
+        phenotype: Optional[RevolveBot] = None,
+    ) -> Tuple[float, BehaviouralMeasurements]:
+        raise NotImplementedError()
+
+    # call this to get the fitness of a single robot instance.
+    async def get_fitness(
+        self,
+        individual: Individual,
+        fitness_fun: Callable[[RobotManager, RevolveBot], float],
+        phenotype: Optional[RevolveBot] = None,
+    ) -> Tuple[float, BehaviouralMeasurements]:
         """
         :param individual: individual
         :param fitness_fun: fitness function
