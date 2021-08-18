@@ -44,6 +44,7 @@ class PopulationConfig:
             List[Callable[[RobotManager, RevolveBot], float]]
         ] = None,
         learner: str = "disabled",
+        target_distance: float = 10.0,
     ):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
@@ -97,3 +98,4 @@ class PopulationConfig:
         self.offspring_size = offspring_size
         self.objective_functions = objective_functions
         self.learner = learner
+        self.target_distance = target_distance

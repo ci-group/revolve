@@ -158,6 +158,8 @@ async def run():
     population_size = 50
     offspring_size = 50
 
+    target_distance = 10
+
     body_n_start_mutations: int = 10
     brain_n_start_mutations: int = 10
 
@@ -320,6 +322,7 @@ async def run():
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
         learner=settings.learner,
+        target_distance=target_distance,
     )
 
     # check if recovery is required

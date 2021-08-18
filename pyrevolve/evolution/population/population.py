@@ -4,7 +4,6 @@ import asyncio
 import json
 import math
 import os
-import random
 import re
 from typing import TYPE_CHECKING
 
@@ -429,19 +428,17 @@ class Population:
         for i in range(number_of_evals):
             # create random target direction vector
             phenotype._id = f"{original_id}_iter_{i+1}"
-            target_direction = (
-                math.pi * 2.0 / number_of_evals * i
-            )  # random.random() * math.pi * 2.0
-            target_as_vector: Tuple[float, float, float] = (
-                math.cos(target_direction),
-                math.sin(target_direction),
+            target_direction = math.pi * 2.0 / number_of_evals * i
+            target: Tuple[float, float, float] = (
+                math.cos(target_direction) * self.config.target_distance,
+                math.sin(target_direction) * self.config.target_distance,
                 0,
             )
             logger.info(f"Target direction of {phenotype._id} = {target_direction}")
 
             # set target
             assert isinstance(phenotype._brain, BrainCPGTarget)
-            phenotype._brain.target = target_as_vector
+            phenotype._brain.target = target
 
             # simulate robot and save fitness
             fitness, behaviour = await self.simulator_queue.test_robot(
