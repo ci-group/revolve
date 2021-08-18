@@ -10,7 +10,8 @@ from pyrevolve.util.supervisor.rabbits import Robot, RobotEvaluation, RobotState
 class TestDatabase(unittest.TestCase):
     def setUp(self) -> None:
         self.db = PostgreSQLDatabase()
-        self.db.start()
+        self.db.start_sync()
+        self.db.destroy()
         self.db.init_db(first_time=False)
 
     def tearDown(self) -> None:
@@ -43,6 +44,8 @@ class TestDatabase(unittest.TestCase):
             new_eval2 = RobotEvaluation(robot=new_robot, n=2, fitness=1.1)
             session.add(new_eval2)
             session.commit()
+            self.assertEqual(1, new_robot.id)
+        self.assertEqual(1, new_robot.id)
 
         with self.db.session() as session:
             for state in TestDatabase._generate_robot_states(10, new_eval):
