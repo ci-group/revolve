@@ -115,7 +115,7 @@ def calculate_fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
 
     # angle between target and actual direction
     delta = math.acos(
-        min(
+        min(  # bound to account for small float errors. acos crashes on 1.0000000001
             1.0,
             max(
                 0,
