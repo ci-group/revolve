@@ -131,7 +131,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     asset_options.armature = 0.01
 
     # Set up the env grid
-    num_envs = 1
+    num_envs = 10
 
     spacing = 2.0
     env_lower = gymapi.Vec3(-spacing, 0.0, -spacing)

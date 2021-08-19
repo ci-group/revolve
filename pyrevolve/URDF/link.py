@@ -14,7 +14,7 @@ class Link(URDF.Posable):
             position=position,
             rotation=rotation,
         )
-        print(name)
+        # print(name)
         self.name = name
         self.size = (0, 0, 0, 0, 0, 0)
         self.inertial = None
@@ -56,10 +56,10 @@ class Link(URDF.Posable):
         :rtype: URDF.math.Vector3
         """
         translation = self.get_center_of_mass()
-        print(translation)
-        print(self.get_position())
+        # print(translation)
+        # print(self.get_position())
         self.set_position(translation)
-        print(self.get_position())
+        # print(self.get_position())
         for el in self.iter_elements(lambda elem: isinstance(elem, URDF.Posable)):
             el.translate(-translation)
         for joint in self.joints:
@@ -83,7 +83,7 @@ class Link(URDF.Posable):
 
         if not np.allclose(self.get_center_of_mass().norm(), 0):
             logger.warning("calculating inertial for link with nonzero center of mass.", file=sys.stderr)
-        print(self.get_center_of_mass(), f" INERTIA: {self.name}")
+        # print(self.get_center_of_mass(), f" INERTIA: {self.name}")
         i_final = np.zeros((3, 3))
         total_mass = 0.0
         for collision in self.collisions:

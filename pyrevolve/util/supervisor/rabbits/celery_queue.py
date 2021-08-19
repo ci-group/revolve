@@ -9,7 +9,6 @@ import celery
 import celery.exceptions
 import math
 
-from isaac import manage_isaac
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.individual import Individual
@@ -19,6 +18,14 @@ from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
 from pyrevolve.util.supervisor.rabbits import RobotState
 from pyrevolve.util import Time
+
+ISAAC_AVAILABLE = False
+try:
+    from pyrevolve.isaac import manage_isaac
+    ISAAC_AVAILABLE = True
+except Exception as e:
+    assert False
+    print("Could not load ISAAC simulator ", e)
 
 app = celery.Celery('CeleryQueue', backend='rpc://', broker='pyamqp://guest@localhost//')
 
@@ -44,6 +51,7 @@ def evaluate_robot_isaac(robot_urdf: AnyStr, life_timeout: float) -> int:
     :param life_timeout: how long should the robot be evaluated
     :return: id of the robot in the database (WARNING: may be different from robot_id)
     """
+    assert ISAAC_AVAILABLE
     return manage_isaac.simulator(robot_urdf, life_timeout)
 
 
@@ -51,6 +59,7 @@ def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, t
     if simulator == 'gazebo':
         r = evaluate_robot.delay(robot_sdf, max_age)
     elif simulator == 'isaacgym':
+        assert ISAAC_AVAILABLE
         r = evaluate_robot_isaac.delay(robot_sdf, max_age)
     else:
         raise RuntimeError(f"Simulator \"{simulator}\" not recognized")
@@ -63,7 +72,7 @@ def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, t
 
 
 class CeleryQueue:
-    EVALUATION_TIMEOUT = 60  # REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
+    EVALUATION_TIMEOUT = 600  # REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
     MAX_ATTEMPTS = 3
 
     def __init__(self, args, queue_name: AnyStr = 'celery', dbname: Optional[AnyStr] = None, use_isaacgym: bool = False):
@@ -160,7 +169,10 @@ class CeleryQueue:
             # DB_ID from rabbitmq and retrieve result from database
             with self._db.session() as session:
                 # behaviour = [s for s in session.query(RobotState).filter(RobotState.evaluation_robot_id == robot_id)]
-                behaviour_query: Iterable[RobotState] = session.query(RobotState).filter(RobotState.evaluation_robot_id == int(robot_id))
+                behaviour_query: Iterable[RobotState] = session\
+                    .query(RobotState) \
+                    .filter(RobotState.evaluation_robot_id == int(robot_id))\
+                    .filter(RobotState.evaluation_n == int(99))
                 first_pos: Optional[Vector3] = None
                 first_time: Time
                 last_pos: Optional[Vector3] = None

@@ -13,7 +13,8 @@ def revolve_bot_to_urdf(robot, robot_pose, nice_format, self_collide=True):
     from pyrevolve import URDF
 
     assert (robot.id is not None)
-    model = ElementTree.Element("robot", {'name': str(robot.id)})
+    robot_id = f"robot_{robot.id}"
+    model = ElementTree.Element("robot", {'name': robot_id})
     pose_elem = URDF.Pose(robot_pose)
     model.append(pose_elem)
 

@@ -1,6 +1,6 @@
 import os
 
-from isaac import manage_isaac
+from pyrevolve.isaac import manage_isaac
 from pyrevolve import parser
 
 

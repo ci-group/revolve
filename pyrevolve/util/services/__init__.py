@@ -2,6 +2,8 @@ import platform
 from abc import abstractmethod, ABC  # Abstract Base Classes
 from typing import AnyStr
 
+import asyncio
+
 from pyrevolve.custom_logging.logger import logger
 
 
@@ -16,6 +18,9 @@ class ServiceBase(ABC):
     @abstractmethod
     async def start(self) -> None:
         raise NotImplementedError("Abstract method")
+
+    def start_sync(self) -> None:
+        asyncio.get_event_loop().run_until_complete(self.start())
 
     @abstractmethod
     async def stop(self) -> None:
