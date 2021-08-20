@@ -51,12 +51,12 @@ async def run():
     # initialization finished
 
     # load robot file
-    path = "phenotype_501.yaml"
+    path = "experiments/jlo/data/evo_only/1/data_fullevolution/phenotypes/phenotype_260.yaml"
     robot = RevolveBot(_id=settings.test_robot)
     robot.load_file(path, conf_type="yaml")
     robot.update_substrate()
 
-    target_direction = 0
+    target_direction = 120
     target_as_vector = (
         math.cos(target_direction),
         math.sin(target_direction),
