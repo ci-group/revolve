@@ -396,7 +396,7 @@ class Population:
             return await self.get_fitness(individual, fitness_fun, phenotype)
 
         es = cma.CMAEvolutionStrategy(
-            phenotype.brain.weights, 0.5, {"maxfevals": "100/(4 + 3 * np.log(N))"}
+            phenotype.brain.weights, 0.5, {"maxfevals": "100"}, {"maxiter": "100/(4 + 3 * np.log(N))"}
         )
         phenotype.cmaes_i = 0
         while not es.stop():
