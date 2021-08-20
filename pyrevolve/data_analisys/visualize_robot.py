@@ -147,15 +147,19 @@ async def test_robot_run(robot_file_path: str):
     await asyncio.sleep(1)
 
     # init finished
-
     robot = RevolveBot(_id=settings.test_robot)
     robot.load_file(robot_file_path, conf_type='yaml')
+    target_angle = 0.0 * math.pi
+    # robot._brain.set_target_angle(target_angle)
+    # print(f'Target angle is {robot._brain.target}')
     robot.update_substrate()
+    print(f'Saving file "{robot_file_path}.sdf"')
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
 
-    await connection.pause(True)
+    # await connection.pause(True)
     robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.25), life_timeout=None)
     await asyncio.sleep(1.0)
+    await connection.pause(False)
 
     if settings.plot_test_robot:
         import matplotlib.pyplot as plt
@@ -175,10 +179,13 @@ async def test_robot_run(robot_file_path: str):
         fig, ax1 = plt.subplots(1, 1)
         SIZE = 300
 
-        line10, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='x')
-        line11, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='y')
-        line12, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='z')
-        line13, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='fitness')
+        # ax1.plot([0, -10], [0, 0], linestyle='dashed', label='target direction')
+        # ax1.plot([0, 0], [0, 5], linestyle='dashed', label='target direction')
+        ax1.plot([0, 10], [0, 0], linestyle='dashed', label='target direction')
+        line10, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='robot trajectory', color='green')
+        # line11, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='y')
+        # line12, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='z')
+        # line13, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='fitness')
         # line20, = ax2.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='x')
         # line21, = ax2.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='y')
         # line22, = ax2.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='z')
@@ -203,8 +210,18 @@ async def test_robot_run(robot_file_path: str):
             await asyncio.sleep(0.1)
             times = [float(t) for t in robot_manager._times]
             steps = [i for i in range(len(times))]
+            # vecs = [vec[Orientation.FORWARD] for vec in robot_manager._orientation_vecs]
             vecs = [vec[Orientation.FORWARD] for vec in robot_manager._orientation_vecs]
+            vecs2 = [vec2 for vec2 in robot_manager._positions]
+
+            # print(f'Vecs = {vecs}')
+            xs2 = [float(v[0]) for v in vecs2]
+            ys2 = [float(v[1]) for v in vecs2]
+            # print(f'xs2 = {xs2}')
+            # print(f'ys2 = {ys2}')
+
             xs = [float(v.x) for v in vecs]
+            # print(f'xs = {xs}')
             ys = [float(v.y) for v in vecs]
             zs = [float(v.z) for v in vecs]
             # fitnesses, _ = rotation(robot_manager, robot)
@@ -212,11 +229,13 @@ async def test_robot_run(robot_file_path: str):
             #fitness.panoramic_rotation(robot_manager, robot)
             if len(times) < 2:
                 continue
-            assert len(times) == len(xs)
-            update(line10, ax1, times, xs)
-            update(line11, ax1, times, ys)
-            update(line12, ax1, times, zs)
-            update(line13, ax1, times, fitnesses)
+            assert len(times) == len(xs2)
+            update(line10, ax1, xs2, ys2)
+            # update(line10, ax1, times, xs)
+            # update(line11, ax1, times, ys)
+            # update(line12, ax1, times, zs)
+            # update(line13, ax1, times, fitnesses)
+
             # update(line20, ax2, steps, xs)
             # update(line21, ax2, steps, ys)
             # update(line22, ax2, steps, zs)
@@ -230,9 +249,11 @@ async def test_robot_run(robot_file_path: str):
             # Print robot fitness every second
             if not settings.record:
                 status = 'dead' if robot_manager.dead else 'alive'
-                print(f"Robot fitness ({status}) is \n"
-                      f" OLD:     {fitness.online_old_revolve(robot_manager)}\n"
-                      f" DISPLAC: {fitness.displacement(robot_manager, robot)}\n"
-                      f" DIS_VEL: {fitness.displacement_velocity(robot_manager, robot)}")
+                try:
+                    pass
+                    print(f"Robot fitness ({status}) is \n"
+                          f" DIRECTED LOCOMOTION:     {fitness.directed_locomotion(robot_manager, robot, beta0=target_angle)}\n")
+                except:
+                    pass
 
             await asyncio.sleep(1.0)
