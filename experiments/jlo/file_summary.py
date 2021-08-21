@@ -3,9 +3,9 @@ import os
 # set these variables according to your experiments #
 dirpath = 'data'
 experiments_type = [
-                    'evolution_only'
+                    'evo_only'
                     ]
-runs = 1
+runs = 10
 # set these variables according to your experiments #
 
 
@@ -27,13 +27,100 @@ def build_headers(path):
                 file_summary.write(measure+'\t')
             else:
                 file_summary.write('\t')
+    # behavior_headers = []
+    # behavior_headers.append('velocity')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('displacement_velocity')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('displacement_velocity_hill')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('head_balance')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('contacts')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('gaitAngleErr')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('Avgstepsize')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('SumArea')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('MeanHeadDeviation')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('DisplacementSum')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('x_axis_displacement')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('displacement_full_avg')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('gaitAngleErrorCumulative')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('EffectiveMovement')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('DifFromIdealMovement')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('DifFromIdealMovementX')
+    # file_summary.write(behavior_headers[-1] + '\t')
+    # behavior_headers.append('DifFromIdealMovementY')
+    # file_summary.write(behavior_headers[-1] + '\t')
+
+
+    # phenotype_headers = []
+    # with open(path + '/data_fullevolution/descriptors/phenotype_desc_1.txt') as file:
+    #     for line in file:
+    #         measure, value = line.strip().split(' ')
+    #         phenotype_headers.append(measure)
+    #         file_summary.write(measure+'\t')
 
     phenotype_headers = []
-    with open(path + '/data_fullevolution/descriptors/phenotype_desc_1.txt') as file:
-        for line in file:
-            measure, value = line.strip().split(' ')
-            phenotype_headers.append(measure)
-            file_summary.write(measure+'\t')
+    phenotype_headers.append('branching')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('branching_modules_count')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('limbs')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('extremities')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('length_of_limbs')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('extensiveness')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('coverage')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('joints')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('hinge_count')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('active_hinges_count')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('brick_count')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('touch_sensor_count')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('brick_sensor_count')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('proportion')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('width')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('height')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('z_depth')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('absolute_size')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('sensors')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('symmetry')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('vertical_symmetry')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('height_base_ratio')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('base_density')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('bottom_layer')
+    file_summary.write(phenotype_headers[-1] + '\t')
+
     file_summary.write('fitness\n')
     file_summary.close()
 
@@ -79,7 +166,8 @@ for exp in experiments_type:
                     with open(pt_file) as file:
                         for line in file:
                             measure, value = line.strip().split(' ')
-                            file_summary.write(value+'\t')
+                            if measure in phenotype_headers:
+                                file_summary.write(value+'\t')
                 else:
                     for h in phenotype_headers:
                         file_summary.write('None'+'\t')
