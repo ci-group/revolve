@@ -120,7 +120,9 @@ def build_headers(path):
     file_summary.write(phenotype_headers[-1] + '\t')
     phenotype_headers.append('bottom_layer')
     file_summary.write(phenotype_headers[-1] + '\t')
-    phenotype_headers.append('parents')
+    phenotype_headers.append('parents_1')
+    file_summary.write(phenotype_headers[-1] + '\t')
+    phenotype_headers.append('parents_2')
     file_summary.write(phenotype_headers[-1] + '\t')
 
     file_summary.write('fitness\n')
@@ -180,8 +182,21 @@ for exp in experiments_type:
                     with open(kt_file) as file:
                         for line in file:
                             measure, value = line.strip().split(':')
-                            if measure in phenotype_headers:
-                                file_summary.write(value.replace(",", " ")+'\t')
+                            if measure+'_1' in phenotype_headers:
+                                file_summary.write(value.split(',')[0]+'\t')
+
+                else:
+                    for h in phenotype_headers:
+                        file_summary.write('None'+'\t')
+
+                dt_file = path+'/data_fullevolution/phylogeny/parents_'+robot_id+'.txt'
+                if os.path.isfile(dt_file):
+                    with open(dt_file) as file:
+                        for line in file:
+                            measure, value = line.strip().split(':')
+                            if measure+'_2' in phenotype_headers:
+                                file_summary.write(value.split(',')[-1]+'\t')
+
                 else:
                     for h in phenotype_headers:
                         file_summary.write('None'+'\t')
