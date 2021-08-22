@@ -453,6 +453,37 @@ class Population:
 
         return fitness, behaviour
 
+    async def _get_fitness_revdeknn_evaluate_weights_all(
+        self,
+        individual: Individual,
+        fitness_fun: Callable[[RobotManager, RevolveBot], float],
+        phenotype: RevolveBot,
+        theta: np.ndarray,  # mxn matrix
+    ):
+        return [
+            await self._get_fitness_revdeknn_evaluate_weights(
+                individual, fitness_fun, phenotype, weights
+            )
+            for weights in theta
+        ]
+
+    async def _get_fitness_revdeknn_evaluate_weights(
+        self,
+        individual: Individual,
+        fitness_fun: Callable[[RobotManager, RevolveBot], float],
+        phenotype: RevolveBot,
+        weights: List[float],
+    ) -> float:
+        original_weights = phenotype.brain.weights
+        phenotype.brain.weights = weights
+        original_id = phenotype.id
+        phenotype._id = f"{original_id}_revdeknn_{phenotype.revdeknn_i}"
+        fitness, _ = await self.get_fitness(individual, fitness_fun, phenotype)
+        phenotype.brain.weights = original_weights
+        phenotype._id = original_id
+        phenotype.revdeknn_i += 1
+        return [fitness]
+
     # get fitness of individual, but apply learner algorithm cmaes first
     async def get_fitness_cmaes(
         self,
@@ -501,37 +532,6 @@ class Population:
         phenotype.brain.weights = original_weights
 
         return fitness, behaviour
-
-    async def _get_fitness_revdeknn_evaluate_weights_all(
-        self,
-        individual: Individual,
-        fitness_fun: Callable[[RobotManager, RevolveBot], float],
-        phenotype: RevolveBot,
-        theta: np.ndarray,  # mxn matrix
-    ):
-        return [
-            await self._get_fitness_revdeknn_evaluate_weights(
-                individual, fitness_fun, phenotype, weights
-            )
-            for weights in theta
-        ]
-
-    async def _get_fitness_revdeknn_evaluate_weights(
-        self,
-        individual: Individual,
-        fitness_fun: Callable[[RobotManager, RevolveBot], float],
-        phenotype: RevolveBot,
-        weights: List[float],
-    ) -> float:
-        original_weights = phenotype.brain.weights
-        phenotype.brain.weights = weights
-        original_id = phenotype.id
-        phenotype._id = f"{original_id}_revdeknn_{phenotype.revdeknn_i}"
-        fitness, _ = await self.get_fitness(individual, fitness_fun, phenotype)
-        phenotype.brain.weights = original_weights
-        phenotype._id = original_id
-        phenotype.revdeknn_i += 1
-        return [fitness]
 
     async def _get_fitness_cmaes_evaluate_weights(
         self,
