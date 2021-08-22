@@ -10,16 +10,16 @@ from sklearn.neighbors import KNeighborsRegressor
 class RevDEknn:
     def __init__(
         self,
-        calculate_fitness: Callable[[List[float]], float],
+        calculate_fitnesses: Callable[[List[float]], float],
         gamma: float,
         clip_min: float,
         clip_max: float,
         cr,  # float or array like of floats?
     ):
-        self.calculate_fitness = calculate_fitness
+        self.calculate_fitnesses = calculate_fitnesses
         self.gamma = gamma
         self.clip_min = clip_min
-        self.clip_mxa = clip_max
+        self.clip_max = clip_max
         self.cr = cr
 
         R = np.asarray(
@@ -81,7 +81,7 @@ class RevDEknn:
 
         return theta_new[ind[: theta.shape[0]]]
 
-    def step(self, theta, E_old) -> Tuple[np.ndarray, float]:
+    async def step(self, theta, E_old) -> Tuple[np.ndarray, float]:
         """
         theta: numpy.ndarray 2D with first dimension population size, second dimension # weights
                this is what we are optimizing
@@ -97,7 +97,7 @@ class RevDEknn:
         )
 
         # (2. Evaluate)
-        E_new = self.calculate_fitness(
+        E_new = await self.calculate_fitnesses(
             theta_new,
         )
 

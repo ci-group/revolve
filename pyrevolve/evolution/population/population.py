@@ -8,6 +8,8 @@ import re
 from typing import TYPE_CHECKING
 
 import cma
+import numpy as np
+from pyrevolve.algorithms.revdeknn import RevDEknn
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
@@ -374,7 +376,82 @@ class Population:
         fitness_fun: Callable[[RobotManager, RevolveBot], float],
         phenotype: Optional[RevolveBot] = None,
     ) -> Tuple[float, BehaviouralMeasurements]:
-        raise NotImplementedError()
+        # TODO does revdeknn like high or low fitness values?
+        # what is the best fitness value? how do we get it from the alg
+
+        if phenotype is None:
+            if individual.phenotype is None:
+                individual.develop()
+            phenotype = individual.phenotype
+
+        initial_pop_count = 3
+        gauss_sigma = 1.0
+        iterations = 1
+
+        revde_gamma = 0.5
+        revde_cr = 0.9
+
+        if len(phenotype.brain.weights) == 0:
+            return await self.get_fitness(individual, fitness_fun, phenotype)
+
+        initial_weights = phenotype.brain.weights
+
+        # create array of 99 arrays
+        # each array is for an individual
+        # all entries are weight modifiers from  anormal distribition
+        # so each array is same length as number of weights
+        population = np.random.normal(
+            0, gauss_sigma, (initial_pop_count - 1, len(initial_weights))
+        )
+        # add entry for original brain with 0 modifiers
+        population = np.append([[0] * len(initial_weights)], population, 0)
+
+        # add brain weights to each of the modifiers so we get `initial_pop_count` different brains
+        # altered by a gaussian distribution
+        population = np.array(
+            list(map(lambda mods: np.add(mods, initial_weights), population))
+        )
+
+        # index used by `_get_fitness_revdeknn_evaluate_weights` to make unique robot ids
+        phenotype.revdeknn_i = 0
+
+        fitnesses = [
+            await self._get_fitness_revdeknn_evaluate_weights(
+                individual, fitness_fun, phenotype, weights
+            )
+            for weights in population
+        ]
+
+        es = RevDEknn(
+            lambda theta: (
+                await self._get_fitness_revdeknn_evaluate_weights_all(
+                    individual, fitness_fun, phenotype, theta
+                )
+                for _ in "_"
+            ).__anext__(),  # extremely ugly hack to get await in a lambda as I don't have time to make a good interface for revdeknn
+            revde_gamma,
+            -1.0,
+            1.0,
+            revde_cr,
+        )
+
+        for _ in range(iterations):
+            population, fitnesses = await es.step(population, fitnesses)
+
+        delattr(phenotype, "revdeknn_i")
+
+        print("AAAAAAAAAAAAA")
+        print(fitnesses)
+
+        # best fitness could also be retrieved from last element in the fitnesses array
+        # but we want an entry in the output logs for the best one
+        # and the easiest way to get that is to just evaluate again
+        original_weights = phenotype.brain.weights
+        phenotype.brain.weights = population[0]
+        fitness, behaviour = await self.get_fitness(individual, fitness_fun, phenotype)
+        phenotype.brain.weights = original_weights
+
+        return fitness, behaviour
 
     # get fitness of individual, but apply learner algorithm cmaes first
     async def get_fitness_cmaes(
@@ -420,10 +497,41 @@ class Population:
         # and the easiest way to get that is to just evaluate again
         original_weights = phenotype.brain.weights
         phenotype.brain.weights = es.result.xbest
-        fitness = await self.get_fitness(individual, fitness_fun, phenotype)
+        fitness, behaviour = await self.get_fitness(individual, fitness_fun, phenotype)
         phenotype.brain.weights = original_weights
 
-        return fitness
+        return fitness, behaviour
+
+    async def _get_fitness_revdeknn_evaluate_weights_all(
+        self,
+        individual: Individual,
+        fitness_fun: Callable[[RobotManager, RevolveBot], float],
+        phenotype: RevolveBot,
+        theta: np.ndarray,  # mxn matrix
+    ):
+        return [
+            await self._get_fitness_revdeknn_evaluate_weights(
+                individual, fitness_fun, phenotype, weights
+            )
+            for weights in theta
+        ]
+
+    async def _get_fitness_revdeknn_evaluate_weights(
+        self,
+        individual: Individual,
+        fitness_fun: Callable[[RobotManager, RevolveBot], float],
+        phenotype: RevolveBot,
+        weights: List[float],
+    ) -> float:
+        original_weights = phenotype.brain.weights
+        phenotype.brain.weights = weights
+        original_id = phenotype.id
+        phenotype._id = f"{original_id}_revdeknn_{phenotype.revdeknn_i}"
+        fitness, _ = await self.get_fitness(individual, fitness_fun, phenotype)
+        phenotype.brain.weights = original_weights
+        phenotype._id = original_id
+        phenotype.revdeknn_i += 1
+        return [fitness]
 
     async def _get_fitness_cmaes_evaluate_weights(
         self,
@@ -436,7 +544,7 @@ class Population:
         phenotype.brain.weights = weights
         original_id = phenotype.id
         phenotype._id = f"{original_id}_cmaes_{phenotype.cmaes_i}"
-        fitness = await self.get_fitness(individual, fitness_fun, phenotype)
+        fitness, _ = await self.get_fitness(individual, fitness_fun, phenotype)
         phenotype.brain.weights = original_weights
         phenotype._id = original_id
         phenotype.cmaes_i += 1
