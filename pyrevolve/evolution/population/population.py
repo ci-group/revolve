@@ -376,9 +376,6 @@ class Population:
         fitness_fun: Callable[[RobotManager, RevolveBot], float],
         phenotype: Optional[RevolveBot] = None,
     ) -> Tuple[float, BehaviouralMeasurements]:
-        # TODO does revdeknn like high or low fitness values?
-        # what is the best fitness value? how do we get it from the alg
-
         if phenotype is None:
             if individual.phenotype is None:
                 individual.develop()
@@ -439,9 +436,6 @@ class Population:
             population, fitnesses = await es.step(population, fitnesses)
 
         delattr(phenotype, "revdeknn_i")
-
-        print("AAAAAAAAAAAAA")
-        print(fitnesses)
 
         # best fitness could also be retrieved from last element in the fitnesses array
         # but we want an entry in the output logs for the best one
