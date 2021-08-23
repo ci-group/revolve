@@ -16,7 +16,7 @@ library(viridis)
 base_directory <- c(
   'data',  'data', 'data')
 
-analysis = 'analysis_basic'
+analysis = 'analysis_summary'
 output_directory = paste(base_directory[2],'/',analysis ,sep='')
 
 experiments_type = c(  'evo_only' ,
@@ -43,10 +43,16 @@ methods_labels = c(
   'evolution + RevDEknn'
 ) # note that labels of Plane death and Tilted death are INVERTED on purpose, to fix the mistake done when naming the experiments.
 
-experiments_type_colors = c('#009900',
-                            '#EE8610',
-                            '#7550ff',
-                            '#876044' )
+experiments_type_colors = c(
+                            '#87CEFA', #light sky blue
+                            '#9370db', #medium purple 
+                            '#80DAEB',#medium sky blue
+                            #'#00BFFF', #deep skyblue 
+                            #'#876044'  #brown
+                            # '#009900', #green
+                            # '#EE8610', #orange
+                            # '#7550ff', #purple
+                            ) 
 
 #aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
 aggregations = c('mean','max')
