@@ -652,29 +652,36 @@ class Population:
         robot: RevolveBot,
     ) -> float:
         # secretly save the simulation history
-        Population._save_simulation_history(robot_manager, path, robot.id)
+        Population._save_simulation_history(
+            robot_manager, robot._brain.target, path, robot.id
+        )
 
         # do actual fitness calculation
         return fitness_function(robot_manager, robot)
 
     @staticmethod
-    def _save_simulation_history(robot_manager: RobotManager, path: str, robot_id: str):
+    def _save_simulation_history(
+        robot_manager: RobotManager,
+        target: Tuple[float, float, float],
+        path: str,
+        robot_id: str,
+    ):
         with open(
             path + "/data_fullevolution/descriptors/simulation_" + robot_id + ".json",
             "w",
         ) as file:
-            output = []
+            steps = []
             for i in range(len(robot_manager._positions)):
                 orientation_vecs = {}
                 for key in robot_manager._orientation_vecs[i].keys():
                     item = robot_manager._orientation_vecs[i][key]
                     orientation_vecs[key.name.lower()] = (item[0], item[1], item[2])
-                output.append(
+                steps.append(
                     {
                         "info": "'orientation' is euler angles.",
                         "position": (
                             robot_manager._positions[i][0],
-                            robot_manager._positions[i][2],
+                            robot_manager._positions[i][1],
                             robot_manager._positions[i][2],
                         ),
                         "orientation": (
@@ -691,4 +698,5 @@ class Population:
                         "seconds": robot_manager._seconds[i],
                     }
                 )
+            output = {"steps": steps, "target": (target[0], target[1], target[2])}
             file.write(json.dumps(output))
