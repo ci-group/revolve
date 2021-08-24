@@ -136,21 +136,21 @@ def calculate_fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
         + (dist_in_right_direction * target_normalized[1] - displacement[1]) ** 2
     )
 
-    print(
+    logger.info(
         f"target: {target}, displacement: {displacement}, dist_in_right_direction: {dist_in_right_direction}, dist_to_optimal_line: {dist_to_optimal_line}"
     )
 
     # filter out passive blocks
     if dist_in_right_direction < 0.01:
         fitness = 0
-        print("Did not pass fitness test, fitness = ", fitness)
+        logger.info(f"Did not pass fitness test, fitness = {fitness}")
     else:
         fitness = (dist_in_right_direction / (epsilon + path_length)) * (
             dist_in_right_direction / (delta + 1)
             - penalty_factor * dist_to_optimal_line
         )
 
-        print("Fitness = ", fitness)
+        logger.info(f"Fitness = {fitness}")
 
     return fitness
 
