@@ -2,6 +2,7 @@ import platform
 
 import asyncio
 import dbus
+import time
 from typing import AnyStr
 
 from dbus import DBusException
@@ -41,6 +42,23 @@ class SystemdService(ServiceBase):
             while not self._is_running:
                 logger.info(f"{self._name} service starting..")
                 await asyncio.sleep(1)
+                self._check_is_running()
+            logger.info(f"{self._name} service running!")
+        else:
+            logger.warning("Service was already running")
+
+    def start_sync(self) -> None:
+        """
+        Starts the service
+        :raises DBusException:
+        """
+        self._check_is_running()
+        if not self._is_running:
+            # https://www.freedesktop.org/wiki/Software/systemd/dbus/
+            self._systemd_manager.StartUnit(self._service_name, 'fail')
+            while not self._is_running:
+                logger.info(f"{self._name} service starting..")
+                time.sleep(1)
                 self._check_is_running()
             logger.info(f"{self._name} service running!")
         else:

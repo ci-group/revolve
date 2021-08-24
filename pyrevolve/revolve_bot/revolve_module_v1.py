@@ -8,6 +8,7 @@ import numpy as np
 
 from pyrevolve import URDF
 from pyrevolve import SDF
+from pyrevolve.custom_logging.logger import logger
 
 
 # MEASUREMENT CONVERSION
@@ -292,7 +293,7 @@ class CoreModule(RevolveModule):
         return visual, collision, imu_sensor
 
     def to_urdf(self, tree_depth='', parent_link=None, child_link=None):
-        print("WARNING: Visual meshes are not rotated correctly!")
+        logger.warning("Visual meshes are not rotated correctly!")
         imu_sensor = URDF.IMUSensor('core-imu_sensor', parent_link, self)
         visual, collision, _ = super().to_urdf(tree_depth, parent_link, child_link)
         visual.rotate(URDF.math.Quaternion(0,0,-0.7071,0.7071))

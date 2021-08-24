@@ -1,63 +1,44 @@
 """
 Loading and testing
 """
-import logging
-import math
-import os
-import random
-import sys
-import tempfile
 from typing import AnyStr, List, Optional
+import math
+import tempfile
+import os
 
 import numpy as np
-from celery.signals import worker_process_init, worker_process_shutdown
 from isaacgym import gymapi
+from isaacgym import gymutil
+
+from pyrevolve import isaac
+from pyrevolve.isaac.Learners import DifferentialEvolution
+
 from sqlalchemy.orm import Session
 
-from pyrevolve.custom_logging.logger import create_logger
-from pyrevolve.isaac.ISAACBot import ISAACBot
-from pyrevolve.isaac.Learners import DifferentialEvolution
-from pyrevolve.revolve_bot.brain.controller import Controller as RevolveController, DifferentialCPG, DifferentialCPG_ControllerParams
 from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
-from pyrevolve.util.supervisor.rabbits import Robot as DBRobot
-from pyrevolve.util.supervisor.rabbits import RobotEvaluation as DBRobotEvaluation
-from pyrevolve.util.supervisor.rabbits import RobotState as DBRobotState
+from pyrevolve.util.supervisor.rabbits import Robot, RobotEvaluation, RobotState
+
+from celery.signals import worker_process_init, worker_process_shutdown
 
 db: Optional[PostgreSQLDatabase] = None
 
-isaac_logger: logging.Logger = create_logger(
-    name='isaac',
-    level=logging.DEBUG,
-    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler('./revolve_isaac.log', mode='a')]
-)
-
 
 @worker_process_init.connect
-def init_worker_celery(**kwargs):
-    init_worker()
-
-
-def init_worker():
+def init_worker(**_kwargs):
     global db
-    isaac_logger.info("Initializing database connection for worker...")
+    print("Initializing database connection for worker...")
     db = PostgreSQLDatabase(username='matteo')
     # Create connection engine
     db.start_sync()
-    isaac_logger.info("DB connection Initialized.")
+    print("DB connection Initialized.")
 
 
 @worker_process_shutdown.connect
-def shutdown_worker_celery(**kwargs):
-    shutdown_worker()
-
-
-def shutdown_worker():
-    global db
-    isaac_logger.info('Closing database connectionn for worker...')
+def shutdown_worker(**_kwargs):
+    print('Closing database connectionn for worker...')
     # Disconnect from the database
     db.disconnect()
-    isaac_logger.info('DB connection Closed.')
-    db = None
+    print('DB connection Closed.')
 
 
 class Arguments:
@@ -92,30 +73,21 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
 
     # %% Initialize gym
     gym = gymapi.acquire_gym()
-    isaac_logger.debug('gym initialized')
+    print('gym initialized')
 
     # Parse arguments
     #args = gymutil.parse_arguments(description="Loading and testing")
     args = Arguments()
-    isaac_logger.debug(
-        f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
-
-    # Parse URDF(xml) locally, we need to extract some data
-    robot: ISAACBot = ISAACBot(robot_urdf)
-
-    manual_db_session = False
-    if db is None:
-        manual_db_session = True
-        init_worker()
+    print(f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
 
     # Insert robot
-    db_robot = DBRobot(name=robot.name)
+    new_robot = Robot(name=robot_asset_filename)
     with db.session() as session:
         assert session.is_active
-        session.add(db_robot)  # TODO change to robot name, not random file name
+        session.add(new_robot)  # TODO change to robot name, not random file name
         session.commit()
         # this line actually queries the database while the session is still active
-        db_robot_id = db_robot.id
+        new_robot_id = new_robot.id
 
     # configure sim
     sim_params = gymapi.SimParams()
@@ -137,7 +109,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     sim = gym.create_sim(args.compute_device_id, args.graphics_device_id, args.physics_engine, sim_params)
 
     if sim is None:
-        isaac_logger.error("*** Failed to create sim")
+        print("*** Failed to create sim")
         raise RuntimeError("Failed to create sim")
 
     if not args.headless:
@@ -148,7 +120,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         gym.viewer_camera_look_at(viewer, None, cam_pos, cam_target)
 
     # %% Initialize environment
-    isaac_logger.debug("Initialize environment")
+    print("Initialize environment")
     # Add ground plane
     plane_params = gymapi.PlaneParams()
     gym.add_ground(sim, plane_params)
@@ -159,34 +131,38 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     asset_options.armature = 0.01
 
     # Set up the env grid
-    num_envs = 1
+    num_envs = 10
 
     spacing = 2.0
     env_lower = gymapi.Vec3(-spacing, 0.0, -spacing)
     env_upper = gymapi.Vec3(spacing, spacing, spacing)
 
     # %% Initialize robots: Robot
-    isaac_logger.debug("Initialize Robot")
+    print("Initialize Robot")
     # Load robot asset
 
-    isaac_logger.debug(f"Creating {num_envs} environments")
+    print(f"Creating {num_envs} environments")
     envs = []
     num_per_row = int(math.sqrt(num_envs))
+
+    pose = gymapi.Transform()
+    pose.p = gymapi.Vec3(0, 0.04, 0)
+    pose.r = gymapi.Quat(-0.707107, 0.0, 0.0, 0.707107)
 
     robot_handles = []
     envs = []
     # create env
-    assert (num_envs > 0)
+    assert(num_envs > 0)
     for i in range(num_envs):
         env = gym.create_env(sim, env_lower, env_upper, num_per_row)
         envs.append(env)
 
-        isaac_logger.info(f"Loading {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
+        print(f"Loading asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
         robot_asset = gym.load_urdf(
             sim, asset_root, robot_asset_filename, asset_options)
 
         # add robot
-        robot_handle = gym.create_actor(env, robot_asset, robot.pose, f"{robot.name} #{i}", 1, 2)
+        robot_handle = gym.create_actor(env, robot_asset, pose, f"robot #{i}", 1, 2)
         robot_handles.append(robot_handle)
 
     # # get joint limits and ranges for robot
@@ -198,38 +174,21 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     props["damping"].fill(600.0)
     robot_num_dofs = len(props)
 
-    assert robot_num_dofs == len(robot.actuators)
-
     controller_update_time = sim_params.dt * 10
     # List of active controllers
     controllers = []
     # List of active evaluations (database objects)
-    evals: List[DBRobotEvaluation] = []
+    evals: List[RobotEvaluation] = []
 
-    controller_type = robot.controller().getAttribute('type')
-    learner_type = robot.learner().getAttribute('type')
-
-    # TODO implement proper controller
-    controller_type = 'cpg'
-    if controller_type == 'cpg':
-        Controller = lambda args: DifferentialCPG(args[0], args[1])
-        # TODO load parameters from URDF element
-        params = DifferentialCPG_ControllerParams()
-        params.weights = [random.uniform(0, 1) for _ in range(robot.n_weights)]
-        controller_init_params = (
-            params,
-            robot.actuators
-        )
-    else:
-        raise RuntimeError(f'unsupported controller "{controller_type}"')
-
-    isaac_logger.info(f'Loading Controller "{controller_type}" with learner "{learner_type}" [LEARNING NOT IMPLEMENTED]')
-
+    pop_size = num_envs
+    assert (pop_size % num_envs == 0)
+    genomes = np.random.uniform(0, 1, (pop_size, robot_num_dofs))
     for i in range(num_envs):
         gym.set_actor_dof_properties(envs[i], robot_handles[i], props)
-        controller = Controller(controller_init_params)
+        weights = genomes[i, :]
+        controller = isaac.CPG(weights, controller_update_time)
         controllers.append(controller)
-        evals.append(DBRobotEvaluation(robot=db_robot, n=i))
+        evals.append(RobotEvaluation(robot=new_robot, n=i))
 
     # Write first evaluations in database
     with db.session() as session:
@@ -241,16 +200,14 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
 
     gym_to_gz_rotation_transform = gymapi.Quat.from_axis_angle(gymapi.Vec3(1, 0, 0), -math.pi/2)
 
-    def update_robot(time: float, delta: float):
+    def update_robot(time: float):
         time_nsec, time_sec = math.modf(time)
         time_nsec *= 1_000_000_000
         for _i in range(num_envs):
-            _controller: RevolveController = controllers[_i]
+            _controller = controllers[_i]
             _robot_handle = robot_handles[_i]
 
-            _controller.update(robot.actuators, robot.sensors, time, delta)
-            # TODO order needs to be readjusted here
-            position_target = [act.output for act in robot.actuators]
+            position_target = _controller.update_CPG().astype('f')
             gym.set_actor_dof_position_targets(envs[_i], _robot_handle, position_target)
 
             robot_pose = gym.get_actor_rigid_body_states(envs[_i], _robot_handle, gymapi.STATE_POS)["pose"]
@@ -265,17 +222,25 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
             # robot_rot *= gym_to_gz_rotation_transform
 
             # Save current robot state and queue to the database
-            db_state = DBRobotState(evaluation=evals[_i], time_sec=int(time_sec), time_nsec=int(time_nsec),
-                                    # We swap x and z to have the data saved the same way as gazebo
-                                    pos_x=float(robot_pos_gz[0]),
-                                    pos_y=float(robot_pos_gz[1]),
-                                    pos_z=float(robot_pos_gz[2]),
-                                    rot_quaternion_x=float(robot_rot[0]), rot_quaternion_y=float(robot_rot[1]),
-                                    rot_quaternion_z=float(robot_rot[2]), rot_quaternion_w=float(robot_rot[3]),
-                                    orientation_left=0, orientation_right=0, orientation_forward=0, orientation_back=0)
+            db_state = RobotState(evaluation=evals[_i], time_sec=int(time_sec), time_nsec=int(time_nsec),
+                                  # We swap x and z to have the data saved the same way as gazebo
+                                  pos_x=float(robot_pos_gz[0]), pos_y=float(robot_pos_gz[1]), pos_z=float(robot_pos_gz[2]),
+                                  rot_quaternion_x=float(robot_rot[0]), rot_quaternion_y=float(robot_rot[1]),
+                                  rot_quaternion_z=float(robot_rot[2]), rot_quaternion_w=float(robot_rot[3]),
+                                  orientation_left=0, orientation_right=0, orientation_forward=0, orientation_back=0)
             robot_states_session.add(db_state)
 
+    # %% Initialize learner
+    params = {
+        'evaluate_objective_type': 'full',
+        'pop_size': pop_size,
+        'CR': 0.9,
+        'F': 0.5,
+    }
+    learner = DifferentialEvolution(genomes, num_envs, 'de', (0, 1), params)
+
     eval_time = life_timeout  # how many seconds should the robot live
+    max_num_gen = 10
 
     def obtain_fitness(env, body):
         body_states = gym.get_actor_rigid_body_states(env, body, gymapi.STATE_POS)["pose"]["p"][0]
@@ -285,23 +250,62 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         absolute_distance = np.linalg.norm(original_pos - current_pos)
         return absolute_distance
 
+    def update_learner(gen_counter: int, next_gen: int):
+        """
+
+        :param gen_counter:
+        :param next_gen:
+        :return: False if no running is needed any more
+        """
+        print("Update Learner")
+        with db.session() as session:
+            for _i in range(num_envs):
+                _controller = controllers[_i]
+                _robot_handle = robot_handles[_i]
+                fitness = obtain_fitness(envs[_i], robot_handle)
+                learner.add_eval(-fitness)
+                evals[_i].fitness = float(fitness)
+                evals[_i].controller = str(
+                    _controller.get_weights())
+                session.add(evals[_i])
+
+            if next_gen != max_num_gen:
+                new_genomes = learner.get_new_weights()
+                for _i in range(num_envs):
+                    eval_n = (next_gen*num_envs) + _i
+                    _weights = new_genomes[i, :]
+                    controller.set_weights(_weights)
+                    controller.reset_controller()
+                    evals[_i] = RobotEvaluation(robot=new_robot, n=int(eval_n))
+                    session.add(evals[_i])
+
+            session.commit()
+
+        gym.set_sim_rigid_body_states(sim, initial_state, gymapi.STATE_ALL)
+        return next_gen != max_num_gen
+
     initial_state = np.copy(gym.get_sim_rigid_body_states(sim, gymapi.STATE_ALL))
 
     # %% Simulate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     gym.prepare_sim(sim)
-
-    prev_t: float = gym.get_sim_time(sim)
-    while True:
+    gym_generation = 1
+    running = False
+    while not learner.gen == max_num_gen:
         t: float = gym.get_sim_time(sim)
-        delta: float = t - prev_t
         if t % controller_update_time == 0.0:
             if round(t % eval_time, 2) == 0.0 and t > 0.0:
                 # Commit all data of the current robot states into the database
                 robot_states_session.commit()
                 robot_states_session.close()
-                break
-            elif delta != 0:
-                update_robot(t, delta)
+                # New generation
+                running = update_learner(gym_generation, gym_generation+1)
+                if not running:
+                    break
+                # New generation id
+                gym_generation += 1
+                # Create robot states session for the new generation
+                robot_states_session = db.session()
+            update_robot(t)
 
         # Step the physics
         gym.simulate(sim)
@@ -312,18 +316,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
             gym.draw_viewer(viewer, sim, False)
             gym.sync_frame_time(sim)  # makes the simulator run in real time
 
-        prev_t = t
-
     # %% END Simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    with db.session() as session:
-        _controller = controllers[0]
-        fitness = obtain_fitness(envs[0], robot_handle)
-        evals[0].fitness = float(fitness)
-        # evals[0].controller = str(
-        #     _controller.get_weights())
-        session.add(evals[0])
-        session.commit()
 
     gym.destroy_sim(sim)
 
@@ -332,8 +325,4 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
 
     # close robot states session if present
     robot_states_session.close()
-
-    if manual_db_session:
-        shutdown_worker()
-
-    return db_robot_id
+    return new_robot_id

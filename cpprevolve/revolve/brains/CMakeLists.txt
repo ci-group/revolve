@@ -48,3 +48,7 @@ target_link_libraries(revolve-controllers
 install(TARGETS revolve-controllers revolve-learners
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib)
+
+if(DEFINED PYTHON_BRAIN_BINDINGS)
+    add_subdirectory(python)
+endif()

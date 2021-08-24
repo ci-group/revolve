@@ -11,7 +11,8 @@ def RK45(state, A, dt):
 
 
 class CPG():
-    def __init__(self, weights, dt):
+    def __init__(self, weights: List[float], dt: float):
+        assert(len(weights) > 0)
         self.dt: float = dt
         self.weights: List[float] = weights
         self.state_shape = (len(weights) * 2, int(1))

@@ -226,9 +226,13 @@ void DifferentialCPG::init_params_and_connections(const ControllerParams &params
             // A->B and B->A for some node (which makes sense).
             const double dist_x = std::fabs(x - near_x);
             const double dist_y = std::fabs(y - near_y);
+            const double dist_z = std::fabs(z - near_z);
 
-            // TODO: Verify for non-spiders
-            if (std::fabs(dist_x + dist_y - 2) < 0.01)
+            const double man_dist = dist_x + dist_y + dist_z;
+
+            // TODO: other method than manhattan distance for non-spiders
+            // manhattan distance 0 < d < 2
+            if (man_dist > 0.01 && man_dist < 2.01)
             {
                 if(this->connections.count({x, y, z, 1, near_x, near_y, near_z, 1}) == 0 and
                    this->connections.count({near_x, near_y, near_z, 1, x, y, z, 1}) == 0)
@@ -511,18 +515,18 @@ void DifferentialCPG::step(
     }
 
     // Loop over all neurons to actually update their states. Note that this is a new outer for loop
-    auto i = 0; auto j = 0;
+    auto i = 0; size_t j;
     for (Neuron &neuron : this->neurons)
     {
         // Get bias gain and state for this neuron. Note that we don't take the coordinates.
         // However, they are implicit as their order did not change.
-        int x = neuron.x;
-        int y = neuron.y;
-        int z = neuron.z;
+        int x_ = neuron.x;
+        int y_ = neuron.y;
+        int z_ = neuron.z;
         int frame_of_reference = neuron.frame;
         neuron.state = this->next_state[i];
-        j = this->motor_coordinates[{x,y,z}];
-        // Should be one, as output should be based on +1 neurons, which are the A neurons
+        j = this->motor_coordinates[{x_, y_, z_}];
+        // Should be one, as output should be based on -1 neurons, which are the B neurons
         if (i % 2 == 1)
         {
             // TODO: Add Milan's function here as soon as things are working a bit
@@ -554,6 +558,8 @@ void DifferentialCPG::step(
             {
                 this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound)) - 1);
             }
+
+            this->output[j] = (this->output[j] * 2) - 1;
         }
         i++;
     }

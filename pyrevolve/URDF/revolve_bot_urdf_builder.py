@@ -5,6 +5,7 @@ import xml.etree.ElementTree
 
 # from pyrevolve import SDF as URDF
 from pyrevolve import URDF
+from pyrevolve.custom_logging.logger import logger
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, Orientation, BoxSlot
 
 
@@ -295,7 +296,7 @@ def _urdf_brain_plugin_conf(
     else:
         robot_brain_urdf.append(robot_learner)
 
-    robot_controller = robot_brain.learner_sdf()
+    robot_controller = robot_brain.controller_sdf()
     if robot_controller is None:
         xml.etree.ElementTree.SubElement(robot_brain_urdf, 'rv:controller', {'type': 'None'})
     else:
@@ -304,7 +305,7 @@ def _urdf_brain_plugin_conf(
     try:
         robot_IMC = robot_brain.IMC.controller_sdf()
     except:
-        print("IMC in-active!")
+        logger.warning("IMC in-active!")
         xml.etree.ElementTree.SubElement(robot_brain_urdf, 'rv:IMC', {'active': 'false'})
     else:
         robot_brain_urdf.append(robot_IMC)

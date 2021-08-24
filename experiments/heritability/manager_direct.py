@@ -112,7 +112,7 @@ async def run():
         logger.fatal(f'GazeboCeleryWorker died with code: {exit_code} ({process})')
 
     # CELERY CONNECTION (includes database connection)
-    simulator_queue = CeleryQueue(args, args.port_start, dbname='revolve')
+    simulator_queue = CeleryQueue(args, args.port_start, dbname='revolve', use_isaacgym=True)
     await simulator_queue.start(cleanup_database=True)
 
     # CELERY GAZEBO WORKER

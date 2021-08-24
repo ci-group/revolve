@@ -23,17 +23,17 @@ class DifferentialCPG
 {
 public:
     struct ControllerParams {
-        bool reset_neuron_random;
-        bool use_frame_of_reference;
-        double init_neuron_state;
-        double range_ub;
-        double signal_factor_all;
-        double signal_factor_mid;
-        double signal_factor_left_right;
-        double abs_output_bound;
-        std::vector< double > weights;
+        bool reset_neuron_random = false;
+        bool use_frame_of_reference = false;
+        double init_neuron_state = 0.707;
+        double range_ub = 1.0;
+        double signal_factor_all = 1.0;
+        double signal_factor_mid = 1.0;
+        double signal_factor_left_right = 1.0;
+        double abs_output_bound = 1.0;
+        std::vector< double > weights = {};
         /// can be null, indicating that there is no map
-        std::unique_ptr<std::map<std::string, std::set<std::string>>> connection_map;
+        //std::unique_ptr<std::map<std::string, std::set<std::string>>> connection_map;
     };
 
     /// \brief Constructor
