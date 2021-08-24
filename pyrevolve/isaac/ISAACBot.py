@@ -31,6 +31,7 @@ class ISAACSensor(Sensor):
         self.type = element.getAttribute("type")
 
     def read(self, input: float):
+        # TODO this does not work
         input = 0.0
 
 

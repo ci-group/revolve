@@ -26,6 +26,7 @@
 #include <gazebo/msgs/msgs.hh>
 #include <SimpleAmqpClient/SimpleAmqpClient.h>
 #include <json/json.h>
+#include <boost/optional.hpp>
 #include "database/Database.h"
 
 

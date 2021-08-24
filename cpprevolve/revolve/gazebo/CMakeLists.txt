@@ -262,12 +262,12 @@ target_link_libraries(CeleryWorkerPlugin
 target_link_directories(CeleryWorkerPlugin
         PUBLIC ${AMQP_LIBRARY_DIRS}
         PUBLIC ${PQXX_LIBRARY_DIRS}
-        PRIVATE ${JSONCPP_LIBRARY_DIRS}
+        PUBLIC ${JSONCPP_LIBRARY_DIRS}
 )
 target_include_directories(CeleryWorkerPlugin
         PUBLIC ${AMQP_INCLUDE_DIRS}
         PUBLIC ${PQXX_INCLUDE_DIRS}
-        PRIVATE ${JSONCPP_INCLUDE_DIRS}
+        PUBLIC ${JSONCPP_INCLUDE_DIRS}
 )
 
 add_library(CeleryRobotWorkerPlugin SHARED

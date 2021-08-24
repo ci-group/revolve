@@ -54,8 +54,8 @@ bool CeleryRobotWorker::_robot_work(const ::gazebo::common::UpdateInfo &info)
         return false;
     }
 
-    assert(_task_robot.has_value());
-    std::tuple<std::string, ::gazebo::physics::ModelPtr, double> &tuple_task = _task_robot.value();
+    assert(_task_robot);
+    std::tuple<std::string, ::gazebo::physics::ModelPtr, double> &tuple_task = *_task_robot;
     const std::string &name = std::get<0>(tuple_task);
     ::gazebo::physics::ModelPtr &robot_model = std::get<1>(tuple_task);
     double death_sentence = std::get<2>(tuple_task);
