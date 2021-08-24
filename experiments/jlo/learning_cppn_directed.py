@@ -11,7 +11,7 @@ from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.population.population import Population
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.evolution.population.population_management import (
-    generational_population_management,
+    steady_state_population_management,
 )
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.experiment_management import ExperimentManagement
@@ -163,7 +163,7 @@ async def run():
     # experiment settings
     num_generations = 30
     population_size = 50
-    offspring_size = 50
+    offspring_size = 100
 
     target_distance = 10
 
@@ -322,7 +322,7 @@ async def run():
         parent_selection=lambda individuals: multiple_selection(
             individuals, 2, tournament_selection
         ),
-        population_management=generational_population_management,
+        population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=settings.evaluation_time,
         offspring_size=offspring_size,
