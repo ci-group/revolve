@@ -49,7 +49,7 @@ public:
     virtual ~WorldController();
 
     virtual void Load(
-            ::gazebo::physics::WorldPtr _parent,
+            ::gazebo::physics::WorldPtr world,
             sdf::ElementPtr _sdf) override;
 
     virtual void Reset() override;

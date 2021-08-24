@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2018 Vrije Universiteit Amsterdam
+ * Copyright (C) 2015-2021 Vrije Universiteit Amsterdam
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Description: TODO: <Add brief description about file purpose>
  * Author: Milan Jelisavcic & Maarten van Hooft
  * Date: December 29, 2018
  *
  */
-
 #include "DifferentialCPG.h"
 
 // STL macros

@@ -1,7 +1,22 @@
-//
-// Created by matteo on 14/06/19.
-//
-
+/*
+ * Copyright (C) 2015-2021 Vrije Universiteit Amsterdam
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Author: Milan Jelisavcic & Maarten van Hooft
+ * Date: December 29, 2018
+ *
+ */
 #ifndef REVOLVE_DIFFERENTIALCPG_H
 #define REVOLVE_DIFFERENTIALCPG_H
 
@@ -53,24 +68,22 @@ public:
             const NEAT::Genome &config_cppn_genome);
 
     /// \brief Destructor
-    virtual ~DifferentialCPG();
+    ~DifferentialCPG() override;
 
     /// \brief The default update method for the controller
     /// \param[in] _actuators Actuator list
     /// \param[in] _sensors Sensor list
     /// \param[in] _time Current world time
     /// \param[in] _step Current time step
-    virtual void update(
+    void update(
             const std::vector<std::shared_ptr<Actuator>> &actuators,
             const std::vector<std::shared_ptr<Sensor>> &sensors,
-            const double _time,
-            const double _step) override;
+            double _time,
+            double _step) override;
 
 protected:
 
-    void step(
-            const double time,
-            const double step);
+    void step(double time, double step);
 
     void init_params_and_connections(const ControllerParams &params, const std::vector<std::shared_ptr<Actuator>> &actuators);
 

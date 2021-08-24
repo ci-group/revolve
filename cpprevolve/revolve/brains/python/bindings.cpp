@@ -42,7 +42,7 @@ PYBIND11_MODULE(revolvebrains, m) {
 
     m.def("add", &add, "A function which adds two numbers",
           py::arg("i"), py::arg("j"));
-    
+
     py::class_<Actuator, PyActuator, std::shared_ptr<Actuator>>(m, "Actuator")
             .def(py::init<unsigned int, double, double, double>())
             .def(py::init<unsigned int, std::tuple<double, double, double>>())
