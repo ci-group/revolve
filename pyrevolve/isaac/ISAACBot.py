@@ -89,8 +89,8 @@ class ISAACBot:
                 # z->-y
                 self.pose.p = gymapi.Vec3(
                     xyz[0],
-                    (xyz[2]) + ground_offset,
-                    -xyz[1],
+                    xyz[1],
+                    xyz[2] + ground_offset,
                 )
                 # TODO verify this is correct
                 self.pose.r = gymapi.Quat.from_euler_zyx(
