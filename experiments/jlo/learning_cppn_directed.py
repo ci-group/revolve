@@ -137,7 +137,7 @@ def calculate_fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
     )
 
     logger.info(
-        f"target: {target}, displacement: {displacement}, dist_in_right_direction: {dist_in_right_direction}, dist_to_optimal_line: {dist_to_optimal_line}"
+        f"target: {target}, displacement: {displacement}, dist_in_right_direction: {dist_in_right_direction}, dist_to_optimal_line: {dist_to_optimal_line}, delta: {delta}, path_length: {path_length}"
     )
 
     # filter out passive blocks
