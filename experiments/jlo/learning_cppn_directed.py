@@ -248,13 +248,14 @@ async def run():
     rng = multineat.RNG()
     rng.TimeSeed()
 
-    # multineat innovation database
-    innov_db = multineat.InnovationDatabase()
+    # multineat innovation databases
+    innov_db_body = multineat.InnovationDatabase()
+    innov_db_brain = multineat.InnovationDatabase()
 
     # config for body
     body_config = CppnneatBodyConfig(
         body_multineat_params,
-        innov_db,
+        innov_db_body,
         rng,
         mate_average=False,  # mate_average  average weights of matching connections. if false, choose one at random
         interspecies_crossover=True,  # interspecies_crossover should be true because we don't do species
@@ -263,7 +264,7 @@ async def run():
     # config for brain
     brain_config = CppnneatCpgBrainConfig(
         brain_multineat_params,
-        innov_db,
+        innov_db_brain,
         rng,
         abs_output_bound=1.0,  # maximum(and minimum, negative) ceiling of actuator position. 1 is the value we want for gazebo and our real robots
         use_frame_of_reference=False,  # at some point we will use this for directed locomation(use emiels stuff)
