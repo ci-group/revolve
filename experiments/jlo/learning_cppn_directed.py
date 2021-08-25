@@ -118,7 +118,7 @@ def calculate_fitness(robot_manager: RobotManager, robot: RevolveBot) -> float:
         min(  # bound to account for small float errors. acos crashes on 1.0000000001
             1.0,
             max(
-                0,
+                -1,
                 target_normalized[0] * displacement_normalized[0]
                 + target_normalized[1] * displacement_normalized[1],
             ),
