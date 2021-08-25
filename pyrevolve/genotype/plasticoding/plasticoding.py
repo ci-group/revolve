@@ -11,7 +11,7 @@ from pyrevolve.revolve_bot.brain.brain_nn import Node
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Optional, Dict, List, Union
+    from typing import Optional, Dict, List, Union, TextIO, AnyStr
     from pyrevolve.genotype.plasticoding import PlasticodingConfig
     from pyrevolve.revolve_bot import RevolveBot
 
@@ -54,7 +54,7 @@ class Plasticoding(Genotype):
             lines = f.readlines()
             self._load_genotype_from(lines)
 
-    def _load_genotype_from(self, lines: List[str]) -> None:
+    def _load_genotype_from(self, lines: List[AnyStr]) -> None:
         for line in lines:
             line_array = line.split(' ')
             replaceable_symbol = Alphabet(line_array[0])
@@ -73,7 +73,7 @@ class Plasticoding(Genotype):
         with open(filepath, 'w+') as file:
             self._export_genotype_open_file(file)
 
-    def _export_genotype_open_file(self, file) -> None:
+    def _export_genotype_open_file(self, file: TextIO) -> None:
         for key, rule in self.grammar.items():
             line = key.value + ' '
             for item_rule in range(0, len(rule)):

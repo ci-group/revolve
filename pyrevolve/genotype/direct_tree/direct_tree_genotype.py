@@ -1,14 +1,14 @@
 from __future__ import annotations
-from typing import Optional
 
-from pyrevolve.genotype.direct_tree.direct_tree_utils import duplicate_subtree
+from typing import Optional, TextIO, AnyStr, List
+
 from pyrevolve.genotype import Genotype
-from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
-
 from pyrevolve.genotype.direct_tree import direct_tree_random_generator
+from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
+from pyrevolve.genotype.direct_tree.direct_tree_utils import duplicate_subtree
 from pyrevolve.revolve_bot import RevolveBot
-from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, RevolveModule
 from pyrevolve.revolve_bot.brain import BrainNN, brain_nn
+from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule
 from pyrevolve.revolve_bot.revolve_module import CoreModule
 
 
@@ -48,9 +48,17 @@ class DirectTreeGenotype(Genotype):
         other.phenotype = None
         return other
 
-    def load_genotype(self, genotype_filename: str) -> None:
+    def load_genotype(self, genotype_filename: AnyStr) -> None:
         revolvebot: RevolveBot = RevolveBot()
         revolvebot.load_file(genotype_filename, conf_type='yaml')
+        self._load_genotype_from_revolvebot(revolvebot)
+
+    def _load_genotype_from_lines(self, genotype_lines: List[AnyStr]) -> None:
+        revolvebot: RevolveBot = RevolveBot()
+        revolvebot.load('\n'.join(genotype_lines), conf_type='yaml')
+        self._load_genotype_from_revolvebot(revolvebot)
+
+    def _load_genotype_from_revolvebot(self, revolvebot: RevolveBot) -> None:
         self.id = revolvebot.id
         self.representation = revolvebot._body
 
@@ -77,6 +85,11 @@ class DirectTreeGenotype(Genotype):
     def export_genotype(self, filepath: str) -> None:
         self.develop()
         self.phenotype.save_file(filepath, conf_type='yaml')
+
+    def _export_genotype_open_file(self, open_file: TextIO) -> None:
+        self.develop()
+        serialized_yaml = self.phenotype.to_yaml()
+        open_file.write(serialized_yaml)
 
     def develop(self) -> RevolveBot:
         if self.phenotype is None:
