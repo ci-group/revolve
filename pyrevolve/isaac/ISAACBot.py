@@ -94,14 +94,14 @@ class ISAACBot:
                 )
                 # TODO verify this is correct
                 self.pose.r = gymapi.Quat.from_euler_zyx(
-                    rpy[2],
-                    rpy[1],
                     rpy[0],
+                    rpy[1],
+                    rpy[2],
                 )
                 break
         else:
-            self.pose.p = gymapi.Vec3(0, ground_offset, 0)
-            self.pose.r = gymapi.Quat(-0.707107, 0.0, 0.0, 0.707107)
+            self.pose.p = gymapi.Vec3(0, 0, ground_offset)
+            self.pose.r = gymapi.Quat(0.0, 0.0, 0.0, 0.707107)
 
         self.sensors = [s for s in self._list_sensors()]
         self.actuators = [a for a in self._list_actuator()]
@@ -124,7 +124,8 @@ class ISAACBot:
     def _list_actuator(self) -> Iterable[ISAACActuator]:
         actuators_xml = self.urdf.documentElement.getElementsByTagName('rv:actuators')[0]
         for actuator in actuators_xml.childNodes:
-            yield ISAACActuator(actuator)
+            if actuator.nodeType != actuator.TEXT_NODE:
+                yield ISAACActuator(actuator)
 
     def _compute_n_weights(self) -> int:
         n_intra_connections = len(self.actuators)

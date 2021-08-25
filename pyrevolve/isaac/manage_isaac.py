@@ -121,6 +121,8 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     sim_params = gymapi.SimParams()
     sim_params.dt = 1.0 / 60.0
     sim_params.substeps = 2
+    sim_params.up_axis = gymapi.UP_AXIS_Z
+    sim_params.gravity = gymapi.Vec3(0.0, 0.0, -9.81)
     if args.physics_engine == gymapi.SIM_FLEX:
         sim_params.flex.solver_type = 5
         sim_params.flex.num_outer_iterations = 4
@@ -151,6 +153,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     isaac_logger.debug("Initialize environment")
     # Add ground plane
     plane_params = gymapi.PlaneParams()
+    plane_params.normal = gymapi.Vec3(0, 0, 1) # z-up!
     gym.add_ground(sim, plane_params)
 
     asset_options = gymapi.AssetOptions()
@@ -162,7 +165,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     num_envs = 1
 
     spacing = 2.0
-    env_lower = gymapi.Vec3(-spacing, 0.0, -spacing)
+    env_lower = gymapi.Vec3(-spacing, -spacing, 0.0)
     env_upper = gymapi.Vec3(spacing, spacing, spacing)
 
     # %% Initialize robots: Robot
@@ -239,8 +242,6 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
 
     robot_states_session: Session = db.session()
 
-    gym_to_gz_rotation_transform = gymapi.Quat.from_axis_angle(gymapi.Vec3(1, 0, 0), -math.pi/2)
-
     def update_robot(time: float, delta: float):
         time_nsec, time_sec = math.modf(time)
         time_nsec *= 1_000_000_000
@@ -257,19 +258,12 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
             robot_pos: gymapi.Vec3 = robot_pose['p'][0]  # -> [0] is to get the position of the head
             robot_rot: gymapi.Quat = robot_pose['r'][0]  # -> [0] is to get the rotation of the head
 
-            # Convert to gazebo system
-            # TODO verify this is correct
-            robot_pos_gz = (
-                robot_pos[0], -robot_pos[2], robot_pos[1]
-            )
-            # robot_rot *= gym_to_gz_rotation_transform
-
             # Save current robot state and queue to the database
             db_state = DBRobotState(evaluation=evals[_i], time_sec=int(time_sec), time_nsec=int(time_nsec),
                                     # We swap x and z to have the data saved the same way as gazebo
-                                    pos_x=float(robot_pos_gz[0]),
-                                    pos_y=float(robot_pos_gz[1]),
-                                    pos_z=float(robot_pos_gz[2]),
+                                    pos_x=float(robot_pos[0]),
+                                    pos_y=float(robot_pos[1]),
+                                    pos_z=float(robot_pos[2]),
                                     rot_quaternion_x=float(robot_rot[0]), rot_quaternion_y=float(robot_rot[1]),
                                     rot_quaternion_z=float(robot_rot[2]), rot_quaternion_w=float(robot_rot[3]),
                                     orientation_left=0, orientation_right=0, orientation_forward=0, orientation_back=0)
@@ -290,18 +284,13 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     # %% Simulate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     gym.prepare_sim(sim)
 
-    prev_t: float = gym.get_sim_time(sim)
     while True:
         t: float = gym.get_sim_time(sim)
-        delta: float = t - prev_t
         if t % controller_update_time == 0.0:
             if round(t % eval_time, 2) == 0.0 and t > 0.0:
-                # Commit all data of the current robot states into the database
-                robot_states_session.commit()
-                robot_states_session.close()
                 break
-            elif delta != 0:
-                update_robot(t, delta)
+            else:
+                update_robot(t, controller_update_time)
 
         # Step the physics
         gym.simulate(sim)
@@ -312,9 +301,11 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
             gym.draw_viewer(viewer, sim, False)
             gym.sync_frame_time(sim)  # makes the simulator run in real time
 
-        prev_t = t
-
     # %% END Simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    # Commit all data of the current robot states into the database
+    robot_states_session.commit()
+    robot_states_session.close()
 
     with db.session() as session:
         _controller = controllers[0]

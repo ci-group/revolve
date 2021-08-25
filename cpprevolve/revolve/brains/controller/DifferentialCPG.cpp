@@ -557,7 +557,7 @@ void DifferentialCPG::step(
                 this->output[j] = this->signal_factor_all_*this->abs_output_bound*((2.0)/(1.0 + std::pow(2.718, -2.0 * x_input / this->abs_output_bound)) - 1);
             }
 
-            this->output[j] = (this->output[j] * 2) - 1;
+            //this->output[j] = (this->output[j] * 2) - 1;
         }
         i++;
     }
