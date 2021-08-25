@@ -270,7 +270,7 @@ async def run():
         use_frame_of_reference=False,  # at some point we will use this for directed locomation(use emiels stuff)
         output_signal_factor=1.0,  # actuator gain
         range_ub=1.0,  # scales weights to be between -1 and 1. Our weights are between 0 and 1 so this value is good.
-        init_neuron_state=0.707,  # x to this value and y to minus this
+        init_neuron_state=math.sqrt(2) / 2.0,  # x to this value and y to minus this
         reset_neuron_random=False,  # ignore init neuron state and use random value
         mate_average=False,  # see body_config
         interspecies_crossover=True,  # see body_config
