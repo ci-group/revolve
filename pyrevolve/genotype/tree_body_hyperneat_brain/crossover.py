@@ -1,13 +1,11 @@
+from typing import List
+
+from pyrevolve.evolution.individual import Individual
+from pyrevolve.genotype.direct_tree.direct_tree_crossover import crossover_list as direct_tree_crossover
 from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
 from pyrevolve.genotype.neat_brain_genome.crossover import standard_crossover as NEATBrainCrossover
-from pyrevolve.genotype.direct_tree.direct_tree_crossover import crossover_list as direct_tree_crossover
 from pyrevolve.genotype.tree_body_hyperneat_brain import DirectTreeCPGHyperNEATGenotype, \
     DirectTreeCPGHyperNEATGenotypeConfig
-
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from pyrevolve.evolution.individual import Individual
-    from typing import List
 
 
 class CrossoverConfig:

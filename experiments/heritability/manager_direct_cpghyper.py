@@ -106,7 +106,7 @@ async def run():
         objective_functions=None,
         mutation_operator=lambda genotype, gen_conf: standard_mutation(genotype, gen_conf),
         mutation_conf=genotype_conf,
-        crossover_operator=lambda parents, gen_conf, _: standard_crossover([p.genotype for p in parents], gen_conf),
+        crossover_operator=lambda parents, gen_conf, _: standard_crossover(parents, gen_conf),
         crossover_conf=None,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),

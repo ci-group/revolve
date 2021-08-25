@@ -61,6 +61,8 @@ def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, t
     elif simulator == 'isaacgym':
         assert ISAAC_AVAILABLE
         r = evaluate_robot_isaac.delay(robot_sdf, max_age)
+        # Uncomment this if you want isaac in the same process of revolve (make sure you only run one at the time)
+        # return evaluate_robot_isaac(robot_sdf, max_age)
     else:
         raise RuntimeError(f"Simulator \"{simulator}\" not recognized")
     logger.info(f'Request SENT to rabbitmq: {str(r)} for "{robot_name}"')
@@ -100,7 +102,7 @@ class CeleryQueue:
         if type(wait) is float:
             raise NotImplementedError("call shutdown but wait only N seconds not implemented yet")
         elif type(wait) is bool:
-            self._process_pool_executor.shutdown(wait=wait, cancel_futures=True)
+            self._process_pool_executor.shutdown(wait=wait)
         else:
             raise AttributeError(f"Wait cannot be of type {type(wait)}")
 
