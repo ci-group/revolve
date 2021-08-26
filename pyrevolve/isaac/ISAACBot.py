@@ -1,6 +1,7 @@
 import xml.dom.minidom
 from typing import AnyStr, Optional, List, Iterable
 
+import numpy as np
 from isaacgym import gymapi
 
 from pyrevolve.revolve_bot.brain.controller import Actuator, Sensor
@@ -77,7 +78,7 @@ class ISAACBot:
 
         # Search for robot model pose
         for child in model_urdf.childNodes:
-            if child.tagName == 'origin':
+            if child.nodeType != child.TEXT_NODE and child.tagName == 'origin':
                 xyz_txt = child.getAttribute('xyz')
                 rpy_txt = child.getAttribute('rpy')
                 xyz = [float(f) for f in xyz_txt.split(' ')]
@@ -106,7 +107,8 @@ class ISAACBot:
         self.sensors = [s for s in self._list_sensors()]
         self.actuators = [a for a in self._list_actuator()]
 
-        self.n_weights = self._compute_n_weights()
+        self.n_weights, self.connection_list = self._compute_n_weights()
+        self.actuator_map = np.arange(self.n_weights)
 
     def joints(self) -> Iterable[xml.dom.minidom.Element]:
         for joint in self.urdf.documentElement.getElementsByTagName('joint'):
@@ -127,12 +129,18 @@ class ISAACBot:
             if actuator.nodeType != actuator.TEXT_NODE:
                 yield ISAACActuator(actuator)
 
-    def _compute_n_weights(self) -> int:
+    def _compute_n_weights(self) -> (int, list):
         n_intra_connections = len(self.actuators)
         n_extra_connections = 0
+
+        connection_list = []
+        element = 0
         for act_a in self.actuators:
+            row = element // n_intra_connections
             for act_b in self.actuators:
-                if act_a is act_b:
+                col = element % n_intra_connections
+                element += 1
+                if col <= row:  # only consider upper-triangular connections
                     continue
 
                 # TODO define better method than manhattan distance
@@ -145,8 +153,26 @@ class ISAACBot:
                 man_dist = dist_x + dist_y + dist_z
                 if 0.01 < man_dist < 2.01:
                     n_extra_connections += 1
+                    connection_list.append((row, col))  # remember pos list of intra-neuron connections
+        return n_intra_connections + n_extra_connections, connection_list
 
-        return n_intra_connections + n_extra_connections
+    def create_actuator_map(self, actuator_dict: dict):
+        index = list(actuator_dict.values())
+        keys = list(actuator_dict.keys())
+        self.actuator_map = [index[keys.index(act.joint)] for act in self.actuators]
+
+    def create_CPG_network(self, weights) -> np.array:
+        assert (len(weights) == self.n_weights)
+        n_dof = len(self.actuators)
+        intra_connections = np.diag(weights[:n_dof], 0)
+        inter_connections = np.zeros_like(intra_connections)
+        for ind, index in enumerate(self.connection_list):
+            inter_connections[index] = weights[n_dof + ind]
+        weight_matrix = np.zeros((n_dof * 2, n_dof * 2))
+        weight_matrix[0::2, 1::2] = intra_connections  # place connection within oscillators x -> y
+        weight_matrix[0::2, 0::2] += inter_connections  # place connections between oscillators x -> x
+        weight_matrix -= weight_matrix.T  # copy weights in anti-symmetric direction
+        return weight_matrix
 
     def learner(self) -> xml.dom.minidom.Element:
         return self.urdf.documentElement.getElementsByTagName('rv:learner')[0]

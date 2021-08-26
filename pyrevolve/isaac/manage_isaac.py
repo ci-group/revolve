@@ -145,8 +145,8 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     if not args.headless:
         viewer = gym.create_viewer(sim, gymapi.CameraProperties())
         # Point camera at environments
-        cam_pos = gymapi.Vec3(-4.0, 4.0, -1.0)
-        cam_target = gymapi.Vec3(0.0, 2.0, 1.0)
+        cam_pos = gymapi.Vec3(-4.0, 0, 4.0)
+        cam_target = gymapi.Vec3(0.0, 0.0, 0.0)
         gym.viewer_camera_look_at(viewer, None, cam_pos, cam_target)
 
     # %% Initialize environment
@@ -191,6 +191,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         # add robot
         robot_handle = gym.create_actor(env, robot_asset, robot.pose, f"{robot.name} #{i}", 1, 2)
         robot_handles.append(robot_handle)
+        robot.create_actuator_map(gym.get_actor_joint_dict(env, robot_handle))
 
     # # get joint limits and ranges for robot
     props = gym.get_actor_dof_properties(env, robot_handle)
@@ -209,16 +210,26 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     # List of active evaluations (database objects)
     evals: List[DBRobotEvaluation] = []
 
-    controller_type = robot.controller().getAttribute('type')
+    controller_urdf = robot.controller()
     learner_type = robot.learner().getAttribute('type')
 
-    # TODO implement proper controller
-    controller_type = 'cpg'
+    controller_type = controller_urdf.getAttribute('type')
     if controller_type == 'cpg':
         Controller = lambda args: DifferentialCPG(args[0], args[1])
-        # TODO load parameters from URDF element
         params = DifferentialCPG_ControllerParams()
-        params.weights = [random.uniform(0, 1) for _ in range(robot.n_weights)]
+        for key, value in controller_urdf.attributes.items():
+            if not hasattr(params, key):
+                print(f"{controller_type}-controller has no parameter: {key}")
+                continue
+            try:
+                if key == 'weights':
+                    value = f"[{value.replace(';', ',')}]"
+                setattr(params, key, eval(value))
+            except:
+                print(f"URDF parameter {key} has invalid value {value} -> requires type: {type(params.__getattribute__(key))}")
+        if not params.weights:
+            params.weights = [random.uniform(0, 1) for _ in range(robot.n_weights)]
+        matrix = robot.create_CPG_network(params.weights)
         controller_init_params = (
             params,
             robot.actuators
@@ -250,9 +261,9 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
             _robot_handle = robot_handles[_i]
 
             _controller.update(robot.actuators, robot.sensors, time, delta)
-            # TODO order needs to be readjusted here
-            position_target = [act.output for act in robot.actuators]
-            gym.set_actor_dof_position_targets(envs[_i], _robot_handle, position_target)
+
+            position_target = np.array([act.output for act in robot.actuators]).astype('f')
+            gym.set_actor_dof_position_targets(envs[_i], _robot_handle, position_target[robot.actuator_map])
 
             robot_pose = gym.get_actor_rigid_body_states(envs[_i], _robot_handle, gymapi.STATE_POS)["pose"]
             robot_pos: gymapi.Vec3 = robot_pose['p'][0]  # -> [0] is to get the position of the head
