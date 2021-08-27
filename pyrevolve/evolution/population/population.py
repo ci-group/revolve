@@ -21,8 +21,7 @@ if TYPE_CHECKING:
     from typing import Callable, List, Optional, Tuple
 
     from pyrevolve.tol.manage.robotmanager import RobotManager
-    from pyrevolve.util.supervisor.analyzer_queue import (AnalyzerQueue,
-                                                          SimulatorQueue)
+    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
 
 
 MULTI_DEV_BODY_PNG_REGEX = re.compile("body_(\\d+)_(\\d+)\\.png")
@@ -509,7 +508,7 @@ class Population:
             es.tell(
                 solutions,
                 [
-                    await -self._get_fitness_cmaes_evaluate_weights( # minus because its minimizing
+                    -await self._get_fitness_cmaes_evaluate_weights(  # minus because its minimizing
                         individual, fitness_fun, phenotype, weights
                     )
                     for weights in solutions
