@@ -123,9 +123,11 @@ def _add_child(
 
     # coloring
     if child_type == BrickModule:
-        child.rgb = [1, 0, 0]
+        #child.rgb = [1, 0, 0]
+        child.rgb = [0, 0, 1]
     elif child_type == ActiveHingeModule:
-        child.rgb = [0, 1, 0]
+        #child.rgb = [0, 1, 0]
+        child.rgb = [0.7, 0.7, 0.72]
     else:  # Should actually never arrive here but just checking module type to be sure
         raise RuntimeError
 
