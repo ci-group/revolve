@@ -149,9 +149,18 @@ async def test_robot_run(robot_file_path: str):
     # init finished
     robot = RevolveBot(_id=settings.test_robot)
     robot.load_file(robot_file_path, conf_type='yaml')
-    target_angle = 0.0 * math.pi
+    # target_angle = 0.0 * math.pi
     # robot._brain.set_target_angle(target_angle)
     # print(f'Target angle is {robot._brain.target}')
+
+    target_direction = 0.0 * math.pi #90 / 360 * 2 * math.pi
+    target_as_vector = (
+        math.cos(target_direction),
+        math.sin(target_direction),
+        0,
+    )
+    robot._brain.target = target_as_vector
+
     robot.update_substrate()
     print(f'Saving file "{robot_file_path}.sdf"')
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
@@ -164,25 +173,26 @@ async def test_robot_run(robot_file_path: str):
     if settings.plot_test_robot:
         import matplotlib.pyplot as plt
         import matplotlib
-        gui_env = ['TKAgg', 'GTK3Agg', 'Qt5Agg', 'Qt4Agg', 'WXAgg']
-        for gui in gui_env:
-            try:
-                print("testing", gui)
-                matplotlib.use(gui, warn=False, force=True)
-                from matplotlib import pyplot as plt
-                break
-            except Exception as e:
-                print(e)
-                continue
+        matplotlib.use('TKAgg')
+        # gui_env = ['TKAgg', 'GTK3Agg', 'Qt5Agg', 'Qt4Agg', 'WXAgg']
+        # for gui in gui_env:
+        #     try:
+        #         print("testing", gui)
+        #         matplotlib.use(gui, warn=False, force=True)
+        #         from matplotlib import pyplot as plt
+        #         break
+        #     except Exception as e:
+        #         print(e)
+        #         continue
         print("Using:", matplotlib.get_backend())
         plt.ion()
         fig, ax1 = plt.subplots(1, 1)
         SIZE = 300
 
-        # ax1.plot([0, -10], [0, 0], linestyle='dashed', label='target direction')
-        # ax1.plot([0, 0], [0, 5], linestyle='dashed', label='target direction')
-        ax1.plot([0, 10], [0, 0], linestyle='dashed', label='target direction')
-        line10, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='robot trajectory', color='green')
+        #ax1.plot([0, -10], [0, 0], linestyle='dashed', label='target direction') # 180 degree
+        #ax1.plot([0, 0], [0, 5], linestyle='dashed', label='target direction')  # 90 degree
+        ax1.plot([0, 10], [0, 0], linestyle='dashed', label='target direction', color='lightskyblue')   # 0 degree
+        line10, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='robot trajectory', color='mediumpurple')
         # line11, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='y')
         # line12, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='z')
         # line13, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='fitness')
