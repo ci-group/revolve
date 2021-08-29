@@ -153,7 +153,8 @@ async def test_robot_run(robot_file_path: str):
     # robot._brain.set_target_angle(target_angle)
     # print(f'Target angle is {robot._brain.target}')
 
-    target_direction = 0.0 * math.pi #90 / 360 * 2 * math.pi
+    # target_direction = 0.0 * math.pi
+    target_direction = 120 / 360 * 2 * math.pi
     target_as_vector = (
         math.cos(target_direction),
         math.sin(target_direction),
@@ -191,8 +192,10 @@ async def test_robot_run(robot_file_path: str):
 
         #ax1.plot([0, -10], [0, 0], linestyle='dashed', label='target direction') # 180 degree
         #ax1.plot([0, 0], [0, 5], linestyle='dashed', label='target direction')  # 90 degree
-        ax1.plot([0, 10], [0, 0], linestyle='dashed', label='target direction', color='lightskyblue')   # 0 degree
-        line10, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='robot trajectory', color='mediumpurple')
+        #ax1.plot([0, 10], [0, 0], linestyle='dashed', label='target direction', color='lightskyblue')   # 0 degree
+        #ax1.plot([0, -0.04999999999999998], [0, 0.08660254037844387], linestyle='dashed', label='target direction', color='lightskyblue')  # 120 degree
+        ax1.plot([0, -0.05000000000000004], [0, -0.08660254037844384], linestyle='dashed', label='target direction', color='lightskyblue') # 240 degree
+        line10, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='robot trajectory', color='green')
         # line11, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='y')
         # line12, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='z')
         # line13, = ax1.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='fitness')
@@ -201,6 +204,8 @@ async def test_robot_run(robot_file_path: str):
         # line22, = ax2.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='z')
         # line23, = ax2.plot([0 for i in range(SIZE)], [0 for i in range(SIZE)], '-', label='fitness')
         ax1.legend()
+        ax1.set_xlabel("x (m)")
+        ax1.set_ylabel("y (m)")
         # ax2.legend()
         fig.show()
         EPS = 0.1
