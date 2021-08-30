@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from typing import Any, Dict
 
@@ -64,7 +65,7 @@ class CppnneatGenotype:
         multineat_params: multineat.Parameters,
         rng: multineat.RNG,
         mate_average: bool,
-        interspecies_crossover: bool
+        interspecies_crossover: bool,
     ) -> CppnneatGenotype:
         child_multineat_genome = self.multineat_genome.Mate(
             partner.multineat_genome,
@@ -84,7 +85,10 @@ class CppnneatGenotype:
     @staticmethod
     def deserialize_from_dict(serialized: Dict[str, Any]) -> CppnneatGenotype:
         multineat_genome = multineat.Genome()
-        multineat_genome.Deserialize(
-            serialized["multineat_genome"]
-        )
+        multineat_genome.Deserialize(serialized["multineat_genome"])
         return CppnneatGenotype(multineat_genome)
+
+    def makehash(self) -> str:
+        sha = hashlib.sha256()
+        sha.update(self.multineat_genome.Serialize().encode())
+        return sha.hexdigest()

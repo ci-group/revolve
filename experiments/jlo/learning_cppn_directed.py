@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import hashlib
 import math
 import sys
 from dataclasses import dataclass
@@ -244,9 +245,25 @@ async def run():
 
     brain_multineat_params.AllowLoops = False
 
+    # parse command line arguments
+    settings = parser.parse_args()
+    # always off we use a different hack
+    settings.recovery_enabled = False
+
+    # create object that provides functionality
+    # to access the correct experiment directories,
+    # export/import things, recovery info etc.
+    experiment_management = ExperimentManagement(settings)
+
     # multineat rng
     rng = multineat.RNG()
-    rng.TimeSeed()
+
+    # seed equal to sha64 hash of experiment name + run
+    sha = hashlib.sha256()
+    sha.update(experiment_management._experiment_folder.encode())
+    seed = int.from_bytes(sha.digest()[:7], "little")
+
+    rng.Seed(seed)
 
     # multineat innovation databases
     innov_db_body = multineat.InnovationDatabase()
@@ -300,14 +317,6 @@ async def run():
         body_multineat_params,
         brain_multineat_params,
     )
-
-    # parse command line arguments
-    settings = parser.parse_args()
-
-    # create object that provides functionality
-    # to access the correct experiment directories,
-    # export/import things, recovery info etc.
-    experiment_management = ExperimentManagement(settings)
 
     # settings for the evolutionary process
     population_conf = PopulationConfig(

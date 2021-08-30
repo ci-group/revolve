@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import typing
 from typing import Generic, TypeVar
@@ -66,3 +67,10 @@ class BodybrainCompositionGenotype(Generic[_body_type, _brain_type], Genotype):
     @property
     def brain_genotype(self) -> _brain_type:
         return self._brain_genotype
+
+    def makehash(self) -> str:
+        body = self.body_genotype.makehash()
+        brain = self.brain_genotype.makehash()
+        sha = hashlib.sha256()
+        sha.update(f"{body}_{brain}".encode())
+        return sha.hexdigest()

@@ -92,6 +92,36 @@ class BehaviouralMeasurements:
             "contacts": self.contacts,
         }.items()
 
+    def to_object(self):
+        return {
+            "velocity": self.velocity,
+            "displacement": {
+                "x": self.displacement[0][0],
+                "y": self.displacement[0][1],
+                "z": self.displacement[0][2],
+                "t_sec": self.displacement[1].sec,
+                "t_nsec": self.displacement[1].nsec,
+            },
+            "displacement_velocity": self.displacement_velocity,
+            "displacement_velocity_hill": self.displacement_velocity_hill,
+            "head_balance": self.head_balance,
+            "contacts": self.contacts,
+        }
+
+    def from_object(obj):
+        new = BehaviouralMeasurements()
+        new.velocity = obj["velocity"]
+        vec = Vector3(
+            obj["displacement"]["x"], obj["displacement"]["y"], obj["displacement"]["z"]
+        )
+        time = Time(obj["displacement"]["t_sec"], obj["displacement"]["t_nsec"])
+        new.displacement = (vec, time)
+        new.displacement_velocity = obj["displacement_velocity"]
+        new.displacement_velocity_hill = obj["displacement_velocity_hill"]
+        new.head_balance = obj["head_balance"]
+        new.contacts = obj["contacts"]
+        return new
+
 
 def velocity(robot_manager: RvRobotManager):
     """

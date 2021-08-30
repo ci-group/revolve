@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import math
 import os
@@ -600,27 +601,64 @@ class Population:
             assert isinstance(phenotype._brain, BrainCPGTarget)
             phenotype._brain.target = target
 
-            # simulate robot and save fitness
-            fitness, behaviour = await self.simulator_queue.test_robot(
-                individual,
-                individual.phenotype,
-                self.config,
-                lambda robot_manager, robot: self._fitness_robotmanager_hook(
-                    fitness_fun,
-                    self.config.experiment_management.experiment_folder,
-                    robot_manager,
-                    robot,
-                ),
-            )
+            # the hashing process is awful, inefficient and built in 10 minutes
+            genotype_hash = individual.genotype.makehash()
+            sha = hashlib.sha256()
+            sha.update(str(tuple(phenotype.brain.weights)).encode())
+            weights_hash = sha.hexdigest()
+            sha = hashlib.sha256()
+            sha.update(f"{genotype_hash}_{weights_hash}_{i}".encode())
+            hashed = sha.hexdigest()
+            cachefile = f"{self.config.experiment_management._fitness_cache}/{hashed}"
+
+            # load cache if available
+            if os.path.isfile(cachefile):
+                print("Found cached simulation results")
+
+                with open(cachefile, "r") as f:
+                    parsed = json.loads(f.read())
+                    fitness = parsed["fitness"]
+                    behaviour = BehaviouralMeasurements.from_object(parsed["behaviour"])
+
+                with open(
+                    f"{self.config.experiment_management.experiment_folder}/data_fullevolution/fitness/fitness_robot_{phenotype._id}.txt",
+                    "w",
+                ) as file:
+                    file.write(str(fitness))
+            else:
+                # simulate robot and save fitness
+                fitness, behaviour = await self.simulator_queue.test_robot(
+                    individual,
+                    individual.phenotype,
+                    self.config,
+                    lambda robot_manager, robot: self._fitness_robotmanager_hook(
+                        fitness_fun,
+                        self.config.experiment_management.experiment_folder,
+                        robot_manager,
+                        robot,
+                    ),
+                )
+
+                with open(
+                    f"{self.config.experiment_management.experiment_folder}/data_fullevolution/fitness/fitness_robot_{phenotype._id}.txt",
+                    "w",
+                ) as file:
+                    file.write(str(fitness))
+
+                # save cache
+                with open(cachefile, "w") as f:
+                    f.write(
+                        json.dumps(
+                            {
+                                "fitness": fitness,
+                                "behaviour": behaviour.to_object(),
+                            }
+                        )
+                    )
+
             fitness_list.append(fitness)
             behaviour_list.append(behaviour)
             target_dir_list.append(target_direction)
-
-            with open(
-                f"{self.config.experiment_management.experiment_folder}/data_fullevolution/fitness/fitness_robot_{phenotype._id}.txt",
-                "w",
-            ) as file:
-                file.write(str(fitness))
 
         # set robot id back to original id
         phenotype._id = original_id
@@ -639,6 +677,7 @@ class Population:
         print(f"Fitness values for robot {original_id} = {fitness_list}")
         print(f"Based on targets {target_dir_list}")
         print(f"Average fitness = {fitness_avg}")
+
         return fitness_avg, behaviour_avg
 
     # acts as a proxy for the fitness function, but man in the middles to use the robot manager

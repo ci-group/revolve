@@ -55,6 +55,7 @@ class ExperimentManagement:
             self.experiment_folder, self.GENERATIONS_FOLDER
         )
         self._fitness_folder: str = os.path.join(self._data_folder, "fitness")
+        self._fitness_cache: str = os.path.join(self._fitness_folder, "cache")
 
     # TODO refactoring
     def create_exp_folders(self) -> None:
@@ -62,6 +63,13 @@ class ExperimentManagement:
         Creates all necessary folders for the data to be saved.
         WARNING: It deletes the current experiment folder if there is one.
         """
+        if os.path.exists(self._fitness_cache):
+            copied = True
+            if os.path.exists("/tmp/fitness_cache"):
+                shutil.rmtree("/tmp/fitness_cache")
+            shutil.move(self._fitness_cache, "/tmp/fitness_cache")
+        else:
+            copied = False
         if os.path.exists(self.experiment_folder):
             shutil.rmtree(self.experiment_folder)
         os.makedirs(self.experiment_folder)
@@ -75,6 +83,10 @@ class ExperimentManagement:
         os.mkdir(self._failed_robots_folder)
         os.mkdir(self._generations_folder)
         os.mkdir(self._fitness_folder)
+        if copied:
+            shutil.move("/tmp/fitness_cache", self._fitness_cache)
+        else:
+            os.mkdir(self._fitness_cache)
 
     @property
     def experiment_folder(self) -> str:
@@ -436,15 +448,20 @@ class ExperimentManagement:
         self._fitnesses_saved = set()
 
         last_id_with_fitness = -1
-        with open(self._fitness_file_path, "r") as fitness_file:
-            for line in fitness_file:
-                line_split = line.split(",")
-                individual_id = line_split[0]
-                _fitness = line_split[1:]
-                individual_id = int(individual_id)
-                self._fitnesses_saved.add(individual_id)
-                if individual_id > last_id_with_fitness:
-                    last_id_with_fitness = individual_id
+        if os.path.isfile(self._fitness_file_path):
+            with open(self._fitness_file_path, "r") as fitness_file:
+                for line in fitness_file:
+                    line_split = line.split(",")
+                    individual_id = line_split[0]
+                    _fitness = line_split[1:]
+                    individual_id = int(individual_id)
+                    self._fitnesses_saved.add(individual_id)
+                    if individual_id > last_id_with_fitness:
+                        last_id_with_fitness = individual_id
+        else:
+            print(
+                f"Unable to open fitness file during recovery. Maybe previous runs did not get that far yet. {self._fitness_file_path}"
+            )
 
         # if there are more robots to recover than the number expected in this snapshot
         if last_id_with_fitness > expected_n_robots:
