@@ -29,7 +29,7 @@ class _Module:
 def cppnneat_body_develop(
     genotype: CppnneatGenotype, config: CppnneatBodyConfig
 ) -> CoreModule:
-    max_parts = 10
+    max_parts = 30
 
     body_net = multineat.NeuralNetwork()
     genotype.multineat_genome.BuildPhenotype(body_net)
@@ -127,7 +127,7 @@ def _add_child(
         child.rgb = [0, 0, 1]
     elif child_type == ActiveHingeModule:
         #child.rgb = [0, 1, 0]
-        child.rgb = [0.7, 0.7, 0.72]
+        child.rgb = [0, 1, 0]
     else:  # Should actually never arrive here but just checking module type to be sure
         raise RuntimeError
 
