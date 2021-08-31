@@ -247,8 +247,6 @@ async def run():
 
     # parse command line arguments
     settings = parser.parse_args()
-    # always off we use a different hack
-    settings.recovery_enabled = False
 
     # create object that provides functionality
     # to access the correct experiment directories,
