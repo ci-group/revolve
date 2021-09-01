@@ -506,7 +506,7 @@ class Population:
             ).encode()
         )
         seed = int.from_bytes(sha.digest()[:4], "little")
-        print(f"CMAES seed for robot {phenotype.id} = {seed}")
+        logger.info(f"CMAES seed for robot {phenotype.id} = {seed}")
 
         es = cma.CMAEvolutionStrategy(
             phenotype.brain.weights,
@@ -596,7 +596,7 @@ class Population:
 
             # load cache if available
             if os.path.isfile(cachefile):
-                print(f"Found cached analyzer results for robot: {phenotype.id}")
+                logger.info(f"Found cached analyzer results for robot: {phenotype.id}")
 
                 with open(cachefile, "r") as f:
                     parsed = json.loads(f.read())
@@ -611,7 +611,9 @@ class Population:
                 bounding_box.max.z = parsed["bounding_box"]["max"]["z"]
 
             else:
-                print(f"No analyzer results for robot: {phenotype.id}. Analyzing..")
+                logger.info(
+                    f"No analyzer results for robot: {phenotype.id}. Analyzing.."
+                )
                 collisions, bounding_box = await self.analyzer_queue.test_robot(
                     individual, phenotype, self.config, fitness_fun
                 )
@@ -677,7 +679,9 @@ class Population:
 
             # load cache if available
             if os.path.isfile(cachefile):
-                print(f"Found cached simulation results for robot: {phenotype.id}")
+                logger.info(
+                    f"Found cached simulation results for robot: {phenotype.id}"
+                )
 
                 with open(cachefile, "r") as f:
                     parsed = json.loads(f.read())
@@ -690,7 +694,9 @@ class Population:
                 ) as file:
                     file.write(str(fitness))
             else:
-                print(f"No cached simulation for robot: {phenotype.id} simulating..")
+                logger.info(
+                    f"No cached simulation for robot: {phenotype.id} simulating.."
+                )
                 # simulate robot and save fitness
                 fitness, behaviour = await self.simulator_queue.test_robot(
                     individual,
@@ -738,10 +744,6 @@ class Population:
             "w",
         ) as file:
             file.write(str(fitness_avg))
-
-        print(f"Fitness values for robot {original_id} = {fitness_list}")
-        print(f"Based on targets {target_dir_list}")
-        print(f"Average fitness = {fitness_avg}")
 
         return fitness_avg, behaviour_avg
 
