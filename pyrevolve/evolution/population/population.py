@@ -423,7 +423,7 @@ class Population:
 
         es = RevDEknn(
             lambda theta: (
-                -await self._get_fitness_revdeknn_evaluate_weights_all(
+                await self._get_fitness_revdeknn_evaluate_weights_all(
                     individual, fitness_fun, phenotype, theta
                 )
                 for _ in "_"
@@ -478,7 +478,7 @@ class Population:
         phenotype.brain.weights = original_weights
         phenotype._id = original_id
         phenotype.revdeknn_i += 1
-        return [fitness]
+        return [-fitness]
 
     # get fitness of individual, but apply learner algorithm cmaes first
     async def get_fitness_cmaes(
