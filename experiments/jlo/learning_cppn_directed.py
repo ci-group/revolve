@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import hashlib
 import math
+import random
 import sys
 from dataclasses import dataclass
 from typing import Tuple
@@ -267,6 +268,9 @@ async def run():
 
     # also seed numpy random for CMAES and RevDEknn
     np.random.seed(seed)
+
+    # also std random
+    random.seed(seed)
 
     # multineat innovation databases
     innov_db_body = multineat.InnovationDatabase()
