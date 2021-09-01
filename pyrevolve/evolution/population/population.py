@@ -499,6 +499,17 @@ class Population:
                 )
             return await self.get_fitness(individual, fitness_fun, phenotype)
 
+        genotype_hash = individual.genotype.makehash()
+        sha = hashlib.sha256()
+        sha.update(str(tuple(phenotype.brain.weights)).encode())
+        weights_hash = sha.hexdigest()
+        sha = hashlib.sha256()
+        sha.update(
+            f"{genotype_hash}_{weights_hash}_{self.config.experiment_management._experiment_folder}".encode()
+        )
+        hashed = sha.hexdigest()
+        base_seed = int.from_bytes(sha.digest()[:4], "little")
+
         es = cma.CMAEvolutionStrategy(
             phenotype.brain.weights,
             0.5,
@@ -509,16 +520,21 @@ class Population:
             },
         )
         phenotype.cmaes_i = 0
+
+        np.random.seed(base_seed - 1)
         while not es.stop():
+            np.random.seed((base_seed + phenotype.cmaes_i) % 1000000)
             solutions = es.ask()
+            fitnesses = [
+                -await self._get_fitness_cmaes_evaluate_weights(  # minus because its minimizing
+                    individual, fitness_fun, phenotype, weights
+                )
+                for weights in solutions
+            ]
+            np.random.seed((base_seed + phenotype.cmaes_i + 100000) % 1000000)
             es.tell(
                 solutions,
-                [
-                    -await self._get_fitness_cmaes_evaluate_weights(  # minus because its minimizing
-                        individual, fitness_fun, phenotype, weights
-                    )
-                    for weights in solutions
-                ],
+                fitnesses,
             )
 
         delattr(phenotype, "cmaes_i")
