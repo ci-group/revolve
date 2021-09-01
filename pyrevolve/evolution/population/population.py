@@ -499,22 +499,13 @@ class Population:
                 )
             return await self.get_fitness(individual, fitness_fun, phenotype)
 
-        sha = hashlib.sha256()
-        sha.update(
-            (
-                f"{self.config.experiment_management._experiment_folder}{phenotype.id}"
-            ).encode()
-        )
-        seed = int.from_bytes(sha.digest()[:4], "little")
-        logger.info(f"CMAES seed for robot {phenotype.id} = {seed}")
-
         es = cma.CMAEvolutionStrategy(
             phenotype.brain.weights,
             0.5,
             {
                 "maxfevals": "100",
                 "maxiter": "100/(4 + 3 * np.log(N))",
-                "seed": f"{seed}",
+                "seed": "float('nan')",
             },
         )
         phenotype.cmaes_i = 0

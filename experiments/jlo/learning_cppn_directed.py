@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 import multineat
+import numpy as np
 from pyrevolve import parser
 from pyrevolve.angle.manage.robotmanager import RobotManager
 from pyrevolve.custom_logging.logger import logger
@@ -259,10 +260,13 @@ async def run():
     # seed equal to sha64 hash of experiment name + run
     sha = hashlib.sha256()
     sha.update(experiment_management._experiment_folder.encode())
-    seed = int.from_bytes(sha.digest()[:7], "little")
+    seed = int.from_bytes(sha.digest()[:5], "little")
     logger.info(f"Seed for randomizer: {seed}")
 
     rng.Seed(seed)
+
+    # also seed numpy random for CMAES and RevDEknn
+    np.random.seed(seed)
 
     # multineat innovation databases
     innov_db_body = multineat.InnovationDatabase()
