@@ -414,7 +414,7 @@ class Population:
         phenotype.revdeknn_i = 0
 
         fitnesses = [
-            await self._get_fitness_revdeknn_evaluate_weights(
+            -await self._get_fitness_revdeknn_evaluate_weights(
                 individual, fitness_fun, phenotype, weights
             )
             for weights in population
@@ -422,7 +422,7 @@ class Population:
 
         es = RevDEknn(
             lambda theta: (
-                await self._get_fitness_revdeknn_evaluate_weights_all(
+                -await self._get_fitness_revdeknn_evaluate_weights_all(
                     individual, fitness_fun, phenotype, theta
                 )
                 for _ in "_"
