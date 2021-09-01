@@ -579,7 +579,6 @@ class WorldManager(manage.WorldManager):
         :param robot_manager:
         :type robot_manager: RobotManager
         """
-        logger.info("Unregistering robot {}.".format(robot_manager.name))
         del self.robot_managers[robot_manager.name]
 
     async def reset(self, **kwargs):
