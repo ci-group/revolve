@@ -260,6 +260,7 @@ async def run():
     sha = hashlib.sha256()
     sha.update(experiment_management._experiment_folder.encode())
     seed = int.from_bytes(sha.digest()[:7], "little")
+    print(f"Seed for randomizer: {seed}")
 
     rng.Seed(seed)
 

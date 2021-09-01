@@ -16,6 +16,7 @@ from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.revolve_bot.brain.cpg_target import BrainCPGTarget
 from pyrevolve.revolve_bot.revolve_bot import RevolveBot
+from pyrevolve.spec.msgs import BoundingBox
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 
 if TYPE_CHECKING:
@@ -498,10 +499,23 @@ class Population:
                 )
             return await self.get_fitness(individual, fitness_fun, phenotype)
 
+        sha = hashlib.sha256()
+        sha.update(
+            (
+                f"{self.config.experiment_management._experiment_folder}{phenotype.id}"
+            ).encode()
+        )
+        seed = int.from_bytes(sha.digest()[:4], "little")
+        print(f"CMAES seed for robot {phenotype.id} = {seed}")
+
         es = cma.CMAEvolutionStrategy(
             phenotype.brain.weights,
             0.5,
-            {"maxfevals": "100", "maxiter": "100/(4 + 3 * np.log(N))"},
+            {
+                "maxfevals": "100",
+                "maxiter": "100/(4 + 3 * np.log(N))",
+                "seed": f"{seed}",
+            },
         )
         phenotype.cmaes_i = 0
         while not es.stop():
@@ -569,9 +583,59 @@ class Population:
         assert isinstance(phenotype, RevolveBot)
 
         if self.analyzer_queue is not None:
-            collisions, bounding_box = await self.analyzer_queue.test_robot(
-                individual, phenotype, self.config, fitness_fun
+            genotype_hash = individual.genotype.makehash()
+            sha = hashlib.sha256()
+            sha.update(str(tuple(phenotype.brain.weights)).encode())
+            weights_hash = sha.hexdigest()
+            sha = hashlib.sha256()
+            sha.update(f"{genotype_hash}_{weights_hash}".encode())
+            hashed = sha.hexdigest()
+            cachefile = (
+                f"{self.config.experiment_management._fitness_cache}/analyzer_{hashed}"
             )
+
+            # load cache if available
+            if os.path.isfile(cachefile):
+                print(f"Found cached analyzer results for robot: {phenotype.id}")
+
+                with open(cachefile, "r") as f:
+                    parsed = json.loads(f.read())
+
+                collisions = parsed["collisions"]
+                bounding_box = BoundingBox()
+                bounding_box.min.x = parsed["bounding_box"]["min"]["x"]
+                bounding_box.min.y = parsed["bounding_box"]["min"]["y"]
+                bounding_box.min.z = parsed["bounding_box"]["min"]["z"]
+                bounding_box.max.x = parsed["bounding_box"]["max"]["x"]
+                bounding_box.max.y = parsed["bounding_box"]["max"]["y"]
+                bounding_box.max.z = parsed["bounding_box"]["max"]["z"]
+
+            else:
+                print(f"No analyzer results for robot: {phenotype.id}. Analyzing..")
+                collisions, bounding_box = await self.analyzer_queue.test_robot(
+                    individual, phenotype, self.config, fitness_fun
+                )
+                with open(cachefile, "w") as f:
+                    f.write(
+                        json.dumps(
+                            {
+                                "collisions": collisions,
+                                "bounding_box": {
+                                    "min": {
+                                        "x": bounding_box.min.x,
+                                        "y": bounding_box.min.y,
+                                        "z": bounding_box.min.z,
+                                    },
+                                    "max": {
+                                        "x": bounding_box.max.x,
+                                        "y": bounding_box.max.y,
+                                        "z": bounding_box.max.z,
+                                    },
+                                },
+                            }
+                        )
+                    )
+
             if collisions > 0:
                 logger.info(
                     f"discarding robot {individual} because there are {collisions} self collisions"
@@ -613,7 +677,7 @@ class Population:
 
             # load cache if available
             if os.path.isfile(cachefile):
-                print("Found cached simulation results")
+                print(f"Found cached simulation results for robot: {phenotype.id}")
 
                 with open(cachefile, "r") as f:
                     parsed = json.loads(f.read())
@@ -626,6 +690,7 @@ class Population:
                 ) as file:
                     file.write(str(fitness))
             else:
+                print(f"No cached simulation for robot: {phenotype.id} simulating..")
                 # simulate robot and save fitness
                 fitness, behaviour = await self.simulator_queue.test_robot(
                     individual,
