@@ -260,7 +260,7 @@ async def run():
     # seed equal to sha64 hash of experiment name + run
     sha = hashlib.sha256()
     sha.update(experiment_management._experiment_folder.encode())
-    seed = int.from_bytes(sha.digest()[:5], "little")
+    seed = int.from_bytes(sha.digest()[:4], "little")
     logger.info(f"Seed for randomizer: {seed}")
 
     rng.Seed(seed)
