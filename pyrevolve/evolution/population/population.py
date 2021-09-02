@@ -23,7 +23,8 @@ if TYPE_CHECKING:
     from typing import Callable, List, Optional, Tuple
 
     from pyrevolve.tol.manage.robotmanager import RobotManager
-    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
+    from pyrevolve.util.supervisor.analyzer_queue import (AnalyzerQueue,
+                                                          SimulatorQueue)
 
 
 MULTI_DEV_BODY_PNG_REGEX = re.compile("body_(\\d+)_(\\d+)\\.png")
@@ -510,6 +511,7 @@ class Population:
         hashed = sha.hexdigest()
         base_seed = int.from_bytes(sha.digest()[:4], "little")
 
+        np.random.seed(base_seed - 1)
         es = cma.CMAEvolutionStrategy(
             phenotype.brain.weights,
             0.5,
@@ -521,7 +523,6 @@ class Population:
         )
         phenotype.cmaes_i = 0
 
-        np.random.seed(base_seed - 1)
         while not es.stop():
             np.random.seed((base_seed + phenotype.cmaes_i) % 1000000)
             solutions = es.ask()
@@ -707,7 +708,7 @@ class Population:
                 # simulate robot and save fitness
                 fitness, behaviour = await self.simulator_queue.test_robot(
                     individual,
-                    individual.phenotype,
+                    phenotype,
                     self.config,
                     lambda robot_manager, robot: self._fitness_robotmanager_hook(
                         fitness_fun,
