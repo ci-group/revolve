@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import uuid
 from typing import TYPE_CHECKING
 
 import yaml
@@ -63,11 +64,12 @@ class ExperimentManagement:
         Creates all necessary folders for the data to be saved.
         WARNING: It deletes the current experiment folder if there is one.
         """
+        tmpdir = uuid.uuid4().hex
+
         if os.path.exists(self._fitness_cache):
             copied = True
-            if os.path.exists("/tmp/fitness_cache"):
-                shutil.rmtree("/tmp/fitness_cache")
-            shutil.move(self._fitness_cache, "/tmp/fitness_cache")
+            os.mkdir(f"/tmp/{tmpdir}")
+            shutil.move(self._fitness_cache, f"/tmp/{tmpdir}/fitness_cache")
         else:
             copied = False
         if os.path.exists(self.experiment_folder):
@@ -84,7 +86,8 @@ class ExperimentManagement:
         os.mkdir(self._generations_folder)
         os.mkdir(self._fitness_folder)
         if copied:
-            shutil.move("/tmp/fitness_cache", self._fitness_cache)
+            shutil.move(f"/tmp/{tmpdir}/fitness_cache", self._fitness_cache)
+            shutil.rmree(f"/tmp/{tmpdir}")
         else:
             os.mkdir(self._fitness_cache)
 
