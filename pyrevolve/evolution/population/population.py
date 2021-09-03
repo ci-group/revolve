@@ -23,7 +23,8 @@ if TYPE_CHECKING:
     from typing import Callable, List, Optional, Tuple
 
     from pyrevolve.tol.manage.robotmanager import RobotManager
-    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
+    from pyrevolve.util.supervisor.analyzer_queue import (AnalyzerQueue,
+                                                          SimulatorQueue)
 
 
 MULTI_DEV_BODY_PNG_REGEX = re.compile("body_(\\d+)_(\\d+)\\.png")
@@ -622,7 +623,7 @@ class Population:
                     bounding_box.max.z = parsed["bounding_box"]["max"]["z"]
                     loadsuccess = True
                 except:
-                    logger.log("Found cache file but failed to load. Removing..")
+                    logger.info("Found cache file but failed to load. Removing..")
                     os.remove(cachefile)
             if not loadsuccess:
                 logger.info(
@@ -713,7 +714,7 @@ class Population:
                         file.write(str(fitness))
                     loadsuccess = True
                 except:
-                    logger.log("Found cache file but failed to load. Removing..")
+                    logger.info("Found cache file but failed to load. Removing..")
                     os.remove(cachefile)
             if not loadsuccess:
                 logger.info(
