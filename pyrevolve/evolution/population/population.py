@@ -23,8 +23,7 @@ if TYPE_CHECKING:
     from typing import Callable, List, Optional, Tuple
 
     from pyrevolve.tol.manage.robotmanager import RobotManager
-    from pyrevolve.util.supervisor.analyzer_queue import (AnalyzerQueue,
-                                                          SimulatorQueue)
+    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
 
 
 MULTI_DEV_BODY_PNG_REGEX = re.compile("body_(\\d+)_(\\d+)\\.png")
@@ -394,12 +393,24 @@ class Population:
         if len(phenotype.brain.weights) == 0:
             return await self.get_fitness(individual, fitness_fun, phenotype)
 
+        genotype_hash = individual.genotype.makehash()
+        sha = hashlib.sha256()
+        sha.update(str(tuple(phenotype.brain.weights)).encode())
+        weights_hash = sha.hexdigest()
+        sha = hashlib.sha256()
+        sha.update(
+            f"{genotype_hash}_{weights_hash}_{self.config.experiment_management._experiment_folder}".encode()
+        )
+        hashed = sha.hexdigest()
+        base_seed = int.from_bytes(sha.digest()[:4], "little")
+
         initial_weights = phenotype.brain.weights
 
         # create array of 99 arrays
         # each array is for an individual
         # all entries are weight modifiers from  anormal distribition
         # so each array is same length as number of weights
+        np.random.seed(base_seed)
         population = np.random.normal(
             0, gauss_sigma, (initial_pop_count - 1, len(initial_weights))
         )
@@ -433,6 +444,7 @@ class Population:
             -1.0,
             1.0,
             revde_cr,
+            base_seed + 1,
         )
 
         for _ in range(iterations):

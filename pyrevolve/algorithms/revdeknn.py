@@ -15,6 +15,7 @@ class RevDEknn:
         clip_min: float,
         clip_max: float,
         cr,  # float or array like of floats?
+        seedhack: int,
     ):
         self.calculate_fitnesses = calculate_fitnesses
         self.gamma = gamma
@@ -45,6 +46,9 @@ class RevDEknn:
         self.X: np.ndarray = None  # numpy.ndarray 2D with each column indices/weights
         self.E: np.ndarray = None  # numpy.ndarray 1D of fitness values corresponding to each list of indices
 
+        self.seedhack = seedhack
+        self.seedi = 0
+
     def _proposal(self, theta: np.ndarray, E=None):
 
         if self.X is None:
@@ -58,6 +62,10 @@ class RevDEknn:
         self.nn.fit(self.X, self.E)
 
         theta_0 = np.expand_dims(theta, 1)  # B x 1 x D
+
+        # :(
+        np.random.seed(self.seedhack + self.seedi % 1000000)
+        self.seedi += 1
 
         indices_1 = np.random.permutation(theta.shape[0])
         indices_2 = np.random.permutation(theta.shape[0])
