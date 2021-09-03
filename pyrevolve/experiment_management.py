@@ -87,7 +87,7 @@ class ExperimentManagement:
         os.mkdir(self._fitness_folder)
         if copied:
             shutil.move(f"/tmp/{tmpdir}/fitness_cache", self._fitness_cache)
-            shutil.rmree(f"/tmp/{tmpdir}")
+            shutil.rmtree(f"/tmp/{tmpdir}")
         else:
             os.mkdir(self._fitness_cache)
 
