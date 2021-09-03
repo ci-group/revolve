@@ -427,7 +427,7 @@ class Population:
         phenotype.revdeknn_i = 0
 
         fitnesses = [
-            -await self._get_fitness_revdeknn_evaluate_weights(
+            await self._get_fitness_revdeknn_evaluate_weights(
                 individual, fitness_fun, phenotype, weights
             )
             for weights in population
