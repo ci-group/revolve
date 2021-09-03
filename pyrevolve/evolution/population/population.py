@@ -23,8 +23,7 @@ if TYPE_CHECKING:
     from typing import Callable, List, Optional, Tuple
 
     from pyrevolve.tol.manage.robotmanager import RobotManager
-    from pyrevolve.util.supervisor.analyzer_queue import (AnalyzerQueue,
-                                                          SimulatorQueue)
+    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
 
 
 MULTI_DEV_BODY_PNG_REGEX = re.compile("body_(\\d+)_(\\d+)\\.png")
@@ -603,22 +602,29 @@ class Population:
             )
 
             # load cache if available
+            loadsuccess = False
             if os.path.isfile(cachefile):
-                logger.info(f"Found cached analyzer results for robot: {phenotype.id}")
+                try:
+                    logger.info(
+                        f"Found cached analyzer results for robot: {phenotype.id}"
+                    )
 
-                with open(cachefile, "r") as f:
-                    parsed = json.loads(f.read())
+                    with open(cachefile, "r") as f:
+                        parsed = json.loads(f.read())
 
-                collisions = parsed["collisions"]
-                bounding_box = BoundingBox()
-                bounding_box.min.x = parsed["bounding_box"]["min"]["x"]
-                bounding_box.min.y = parsed["bounding_box"]["min"]["y"]
-                bounding_box.min.z = parsed["bounding_box"]["min"]["z"]
-                bounding_box.max.x = parsed["bounding_box"]["max"]["x"]
-                bounding_box.max.y = parsed["bounding_box"]["max"]["y"]
-                bounding_box.max.z = parsed["bounding_box"]["max"]["z"]
-
-            else:
+                    collisions = parsed["collisions"]
+                    bounding_box = BoundingBox()
+                    bounding_box.min.x = parsed["bounding_box"]["min"]["x"]
+                    bounding_box.min.y = parsed["bounding_box"]["min"]["y"]
+                    bounding_box.min.z = parsed["bounding_box"]["min"]["z"]
+                    bounding_box.max.x = parsed["bounding_box"]["max"]["x"]
+                    bounding_box.max.y = parsed["bounding_box"]["max"]["y"]
+                    bounding_box.max.z = parsed["bounding_box"]["max"]["z"]
+                    loadsuccess = True
+                except:
+                    logger.log("Found cache file but failed to load. Removing..")
+                    os.remove(cachefile)
+            if not loadsuccess:
                 logger.info(
                     f"No analyzer results for robot: {phenotype.id}. Analyzing.."
                 )
@@ -686,22 +692,30 @@ class Population:
             cachefile = f"{self.config.experiment_management._fitness_cache}/{hashed}"
 
             # load cache if available
+            loadsuccess = False
             if os.path.isfile(cachefile):
-                logger.info(
-                    f"Found cached simulation results for robot: {phenotype.id}"
-                )
+                try:
+                    logger.info(
+                        f"Found cached simulation results for robot: {phenotype.id}"
+                    )
 
-                with open(cachefile, "r") as f:
-                    parsed = json.loads(f.read())
-                    fitness = parsed["fitness"]
-                    behaviour = BehaviouralMeasurements.from_object(parsed["behaviour"])
+                    with open(cachefile, "r") as f:
+                        parsed = json.loads(f.read())
+                        fitness = parsed["fitness"]
+                        behaviour = BehaviouralMeasurements.from_object(
+                            parsed["behaviour"]
+                        )
 
-                with open(
-                    f"{self.config.experiment_management.experiment_folder}/data_fullevolution/fitness/fitness_robot_{phenotype._id}.txt",
-                    "w",
-                ) as file:
-                    file.write(str(fitness))
-            else:
+                    with open(
+                        f"{self.config.experiment_management.experiment_folder}/data_fullevolution/fitness/fitness_robot_{phenotype._id}.txt",
+                        "w",
+                    ) as file:
+                        file.write(str(fitness))
+                    loadsuccess = True
+                except:
+                    logger.log("Found cache file but failed to load. Removing..")
+                    os.remove(cachefile)
+            if not loadsuccess:
                 logger.info(
                     f"No cached simulation for robot: {phenotype.id} simulating.."
                 )
