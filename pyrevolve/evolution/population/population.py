@@ -383,9 +383,9 @@ class Population:
                 individual.develop()
             phenotype = individual.phenotype
 
-        initial_pop_count = 3
+        initial_pop_count = 10
         gauss_sigma = 1.0
-        iterations = 1
+        iterations = 10
 
         revde_gamma = 0.5
         revde_cr = 0.9
