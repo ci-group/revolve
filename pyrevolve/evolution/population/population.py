@@ -524,18 +524,12 @@ class Population:
         base_seed = int.from_bytes(sha.digest()[:4], "little")
 
         np.random.seed(base_seed - 1)
-        es = cma.CMAEvolutionStrategy(
-            phenotype.brain.weights,
-            0.5,
-            {
-                "maxfevals": "100",
-                "maxiter": "100/(4 + 3 * np.log(N))",
-                "seed": "float('nan')",
-            },
-        )
+        es = cma.CMAEvolutionStrategy(phenotype.brain.weights, 0.5)
         phenotype.cmaes_i = 0
 
-        while not es.stop():
+        maxfun = 100
+        evals = 0
+        while not es.stop() and evals < maxfun:
             np.random.seed((base_seed + phenotype.cmaes_i) % 1000000)
             solutions = es.ask()
             fitnesses = [
@@ -544,6 +538,7 @@ class Population:
                 )
                 for weights in solutions
             ]
+            evals += len(fitnesses)
             np.random.seed((base_seed + phenotype.cmaes_i + 100000) % 1000000)
             es.tell(
                 solutions,
