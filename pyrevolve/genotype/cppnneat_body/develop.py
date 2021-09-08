@@ -29,7 +29,7 @@ class _Module:
 def cppnneat_body_develop(
     genotype: CppnneatGenotype, config: CppnneatBodyConfig
 ) -> CoreModule:
-    max_parts = 30
+    max_parts = 10
 
     body_net = multineat.NeuralNetwork()
     genotype.multineat_genome.BuildPhenotype(body_net)
