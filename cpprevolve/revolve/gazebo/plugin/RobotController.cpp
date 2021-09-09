@@ -224,10 +224,6 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
       brain_.reset(new RLPower(this->model_, brain_sdf, motors_, sensors_));
     }
   }
-  else if ("bo" == learner and "cpg" == controller_type)
-  {
-    brain_.reset(new DifferentialCPG(this->model_, _sdf, motors_, sensors_));
-  }
   else if ("offline" == learner and "cpg" == controller_type)
   {
     brain_.reset(new DifferentialCPGClean(brain_sdf, motors_));
