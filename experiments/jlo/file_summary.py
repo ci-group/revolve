@@ -201,9 +201,13 @@ for exp in experiments_type:
                     for h in phenotype_headers:
                         file_summary.write('None'+'\t')
 
-                file = open(path+'/data_fullevolution/fitness/fitness_robot_'+robot_id+'.txt', 'r')
-                fitness = file.read()
-                file_summary.write(fitness + '\n')
+                fitness_file = path + '/data_fullevolution/fitness/fitness_robot_' + robot_id + '.txt'
+                if os.path.isfile(fitness_file):
+                    with open(fitness_file) as file:
+                        fitness = file.read()
+                        file_summary.write(fitness + '\n')
+                else:
+                    file_summary.write('0' + '\t')
 
         file_summary.close()
 
