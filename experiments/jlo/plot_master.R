@@ -341,7 +341,7 @@ for (i in 1:length(measures_names))
     }
     graph = graph  +  labs(y=measures_labels[i], x="generation", title="")
     
-    graph = graph +   scale_color_manual(values=experiments_type_colors)
+    graph = graph +   scale_color_manual(values=experiments_type_colors, labels = c("evolution only", "evolution + learning"))
     graph = graph  + theme_bw()
     graph = graph  + theme(legend.position="top" ,  legend.text=element_text(size=20), 
                            #legend.background = element_rect(fill = "darkgray",color = NA),
@@ -399,7 +399,7 @@ for (i in 1:length(measures_names))
                 # title=str_to_title(aggregations[a])
                 )
         
-        g1 = g1 +  scale_color_manual(values=  experiments_type_colors  )
+        g1 = g1 +  scale_color_manual(values=experiments_type_colors)
         g1 = g1 + theme_bw()
         g1 = g1 + theme(legend.position="none" , 
                         text = element_text(size=25) , #50
