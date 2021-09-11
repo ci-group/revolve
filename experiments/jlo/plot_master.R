@@ -39,7 +39,8 @@ methods_labels = c(
 ) # note that labels of Plane death and Tilted death are INVERTED on purpose, to fix the mistake done when naming the experiments.
 
 experiments_type_colors = c(
-                            '#2a9df4', #blue
+  '#00BFFF', #deep skyblue
+                            #'#2a9df4', #blue
                             '#9370db', #medium purple
                             '#009900', #green
                             '#009900', #green
@@ -53,14 +54,15 @@ experiments_type_colors = c(
                             )
                             
 ribbon_colors = c(
-  '#87CEFA', #light sky blue
+  '#00BFFF', #deep skyblue
+  #'#2a9df4', #blue
   '#9370db' #medium purple
 )
 
 #aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
 aggregations = c('mean', 'median','max')
 
-gens = 10
+gens = 30
 pop = 100
 num_heatmaps = 1
 
@@ -343,11 +345,11 @@ for (i in 1:length(measures_names))
     
     graph = graph +   scale_color_manual(values=experiments_type_colors, labels = c("evolution only", "evolution + learning"))
     graph = graph  + theme_bw()
-    graph = graph  + theme(legend.position="top" ,  legend.text=element_text(size=20), 
+    graph = graph  + theme(legend.position="top" ,  legend.text=element_text(size=25), 
                            #legend.background = element_rect(fill = "darkgray",color = NA),
                            legend.background = element_rect(color = "steelblue", linetype = "solid"),
-                           axis.text=element_text(size=25), axis.title=element_text(size=25),
-                           plot.subtitle=element_text(size=25 ), plot.title=element_text(size=25 ))
+                           axis.text=element_text(size=30), axis.title=element_text(size=30),
+                           plot.subtitle=element_text(size=30 ), plot.title=element_text(size=30 ))
     
     ggsave(paste( output_directory,'/',measures_names[i], '_', aggregations[a], '_lines.pdf',  sep=''), graph , device='pdf', height = 10, width = 10)
     
@@ -402,9 +404,9 @@ for (i in 1:length(measures_names))
         g1 = g1 +  scale_color_manual(values=experiments_type_colors)
         g1 = g1 + theme_bw()
         g1 = g1 + theme(legend.position="none" , 
-                        text = element_text(size=25) , #50
+                        text = element_text(size=30) , #50
                         #plot.title=element_text(size=25),  #50
-                        axis.text=element_text(size=25, color='black'),
+                        axis.text=element_text(size=30, color='black'),
                         #axis.text.x = element_text(angle = 20, hjust = 0.9),
                         plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  1.3, unit = "cm"))+
           stat_summary(fun.y = mean, geom="point" ,shape = 20,  size=8, color="cyan")
