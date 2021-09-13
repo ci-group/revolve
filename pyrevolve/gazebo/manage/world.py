@@ -102,11 +102,6 @@ class WorldManager(object):
         :param pause:
         :return: Future for the published message
         """
-        if pause:
-            logger.info("Pausing the world.")
-        else:
-            logger.info("Resuming the world.")
-
         msg = world_control_pb2.WorldControl()
         msg.pause = pause
         await self.world_control.publish(msg)
@@ -124,7 +119,6 @@ class WorldManager(object):
         :param model_only: resets only the models
         :param time_only: resets only the time
         """
-        logger.info("Resetting the world state.")
         msg = world_control_pb2.WorldControl()
         msg.reset.all = rall
         msg.reset.model_only = model_only

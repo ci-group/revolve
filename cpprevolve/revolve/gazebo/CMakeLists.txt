@@ -18,6 +18,7 @@ add_definitions(-pedantic -Wno-long-long -Wall -Wextra -Wformat=2
         -Wswitch-enum -Wuninitialized
         -Wswitch-default -Winit-self -Wfloat-equal -fPIC )
 
+# need c++17 for libSimpleAmqpClient >= 7.something
 set (CMAKE_CXX_STANDARD 17)
 
 # Debug Flags
@@ -53,15 +54,14 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Find NLOpt - Non Linear Optimization
-#pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
-#include_directories(${NLOpt_INCLUDE_DIRS})
-#link_directories(${NLOpt_LIBRARY_DIRS})
+pkg_check_modules(NLOpt REQUIRED nlopt>=2.4)
+include_directories(${NLOpt_INCLUDE_DIRS})
+link_directories(${NLOpt_LIBRARY_DIRS})
 
 # Find Limbo - LIbrary for Model-Based Optimization
-# Required for BO. Currently not in use so disabled.
-#set(LIMBO_DIR ${CMAKE_SOURCE_DIR}/thirdparty/limbo)
-#set(LIMBO_DEFINES USE_NLOPT)
-#include_directories(${LIMBO_DIR}/src)
+set(LIMBO_DIR ${CMAKE_SOURCE_DIR}/thirdparty/limbo)
+set(LIMBO_DEFINES USE_NLOPT)
+include_directories(${LIMBO_DIR}/src)
 
 # Find GSL - GNU Scientific Library
 find_package(GSL REQUIRED)
@@ -112,6 +112,13 @@ include_directories(
         ${PROTOBUF_INCLUDE_DIRS}
         ${GAZEBO_PROTO_INCLUDE}
 )
+
+# Find OpenCV
+find_package( OpenCV REQUIRED )
+
+#pkg_check_modules(JSONCPP REQUIRED jsoncpp>1.7)
+#pkg_check_modules(AMQP REQUIRED libSimpleAmqpClient>2.6)
+pkg_check_modules(PQXX REQUIRED libpqxx>6.4)
 
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
@@ -175,8 +182,6 @@ file(GLOB_RECURSE
         sensors/*.cpp
         util/*.cpp
 )
-# Currently not in use. Excluded so dependencies can be disabled.
-list(FILTER REVOLVE_GZ_SRC EXCLUDE REGEX ".*/brains/DifferentialCPG.cpp")
 
 # Generate
 # _____________________________________________________________________________
@@ -204,6 +209,7 @@ add_library(
 target_link_libraries(
         revolve-gazebo
         revolve-controllers
+        revolve-learners
         ${GAZEBO_LIBRARIES}
         ${Boost_LIBRARIES}
         ${GSL_LIBRARIES}
@@ -239,16 +245,6 @@ target_link_libraries(
         AnalyzerPlugin
         revolve-gazebo
         revolve-proto
-        ${GAZEBO_LIBRARIES}
-)
-
-# Create Torus World plugin
-add_library(TorusWorldPlugin SHARED
-        plugin/TorusWorld.cpp
-        plugin/register_torus_world_plugin.cpp
-)
-target_link_libraries(TorusWorldPlugin
-        revolve-gazebo
         ${GAZEBO_LIBRARIES}
 )
 

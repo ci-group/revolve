@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Generic, TypeVar
+from typing import Any, Dict, Generic, TypeVar
 
 from pyrevolve.genotype import Genotype as RevolveGenotype
 from pyrevolve.revolve_bot import RevolveBot
@@ -59,6 +59,10 @@ class Genotype(Generic[_body_type, _brain_type], RevolveGenotype):
     def load_genotype(self, filepath: str) -> None:
         file = open(filepath)
         data = json.loads(file.read())
+
+        assert isinstance(data, Dict)
+        assert "body" in data
+        assert "brain" in data
 
         self._body_genotype.deserialize_from_dict(data["body"])
         self._brain_genotype.deserialize_from_dict(data["brain"])

@@ -9,4 +9,5 @@ from .genotype import Genotype
 
 @typechecked
 def crossover(parents: List[Genotype], config: Config) -> Genotype:
-    return cppnneat_crossover(parents, config)
+    crossover_parent = cppnneat_crossover(parents, config)
+    return Genotype(crossover_parent._multineat_genome)

@@ -7,4 +7,5 @@ from .genotype import Genotype
 
 @typechecked
 def mutate(genotype: Genotype, config: Config) -> Genotype:
-    return cppnneat_mutate(genotype, config)
+    parent_mutate = cppnneat_mutate(genotype, config)
+    return Genotype(parent_mutate._multineat_genome)

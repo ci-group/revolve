@@ -389,7 +389,7 @@ class ExperimentManagement:
         return last_complete_generation, has_offspring, last_id_with_fitness+1, last_species_id+1,
 
     def load_individual(self,
-                        _id: AnyStr,
+                        _id: int,
                         config: PopulationConfig,
                         fitness: Optional[str] = None) -> Individual:
         """

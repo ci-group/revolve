@@ -23,6 +23,7 @@
 
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
+#include <revolve/gazebo/sensors/GZAngleToTargetDetector.h>
 #include <revolve/gazebo/brains/Brains.h>
 #include <revolve/gazebo/brains/FixedAngleController.h>
 
@@ -224,6 +225,40 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
       brain_.reset(new RLPower(this->model_, brain_sdf, motors_, sensors_));
     }
   }
+  else if ("bo" == learner and "cpg" == controller_type)
+  {
+    //WARNING! not doing BO any more
+    brain_.reset(new DifferentialCPG(_sdf, motors_));
+  }
+  else if ("target" == learner and "cpg" == controller_type)
+  {
+    std::shared_ptr<revolve::AngleToTargetDetector> fake_target_sensor(
+        new GZAngleToTargetDetector(this->model_, ignition::math::Vector3d(0, 10, 0)));
+    brain_.reset(new DifferentialCPGClean(brain_sdf, motors_, fake_target_sensor));
+  }
+  else if ("offline" == learner && "cpg-target" == controller_type)
+  {
+    std::vector<double> target_vec;
+    std::string target_str = brain_sdf->GetElement("rv:controller")->GetAttribute("target")->GetAsString();
+    std::string delimiter = ";";
+    size_t pos = 0;
+    std::string token;
+    std::cout << "The generated target equals (" << target_str << ")" << std::endl;
+    while ((pos = target_str.find(delimiter)) != std::string::npos)
+    {
+      token = target_str.substr(0, pos);
+      target_vec.push_back(stod(token));
+      target_str.erase(0, pos + delimiter.length());
+    }
+    // push the last element that does not end with the delimiter
+    target_vec.push_back(stod(target_str));
+
+    ignition::math::Vector3d target(target_vec[0], target_vec[1], target_vec[2]);
+
+    std::shared_ptr<revolve::AngleToTargetDetector> fake_target_sensor(
+        new GZAngleToTargetDetector(this->model_, target));
+    brain_.reset(new DifferentialCPGClean(brain_sdf, motors_, fake_target_sensor));
+  }
   else if ("offline" == learner and "cpg" == controller_type)
   {
     brain_.reset(new DifferentialCPGClean(brain_sdf, motors_));
@@ -240,8 +275,11 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
   }
   else
   {
-    throw std::runtime_error("Robot brain is not defined.");
+    std::ostringstream message;
+    message << "Robot brain is not defined. (learner='" << learner << "', controller='" << controller_type << "')";
+    throw std::runtime_error(message.str());
   }
+  std::cout << "Loaded controller " << controller_type << " and learner " << learner << std::endl;
 }
 
 /////////////////////////////////////////////////
@@ -273,7 +311,7 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
   auto currentTime = _info.simTime.Double() - initTime_;
 
   if (brain_)
-    brain_->Update(motors_, sensors_, currentTime, actuationTime_);
+    brain_->update(motors_, sensors_, currentTime, actuationTime_);
 }
 
 /////////////////////////////////////////////////

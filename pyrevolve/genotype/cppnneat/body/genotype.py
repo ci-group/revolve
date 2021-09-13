@@ -27,6 +27,4 @@ class Genotype(CppnneatGenotype):
             innov_db,
             rng,
         )
-        asd = Genotype(random_parent._multineat_genome)
-        print(type(asd))
-        return asd
+        return Genotype(random_parent._multineat_genome)

@@ -32,7 +32,7 @@ namespace revolve
 {
   namespace gazebo
   {
-    class Motor : public revolve::Actuator
+    class Motor : public ::revolve::Actuator
     {
       /// \brief Constructor
       /// \brief[in] _model Model identifier

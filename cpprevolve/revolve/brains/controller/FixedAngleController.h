@@ -14,7 +14,8 @@ class FixedAngleController: public Controller
 {
 public:
     explicit FixedAngleController(double angle)
-        : angle(angle)
+        : Controller(ControllerType::NONE)
+        , angle(angle)
     {}
 
     void update(const std::vector<std::shared_ptr<Actuator> > &_actuators,

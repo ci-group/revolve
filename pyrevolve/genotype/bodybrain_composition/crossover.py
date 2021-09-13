@@ -11,14 +11,22 @@ from .genotype import Genotype
 def crossover(parents: List[Individual], _, config: Config) -> Genotype:
     assert len(parents) >= 1
 
-    body_genotype_type = type(parents[0].body_genotype)
-    brain_genotype_type = type(parents[0].brain_genotype)
+    body_genotype_type = type(parents[0].genotype.body_genotype)
+    brain_genotype_type = type(parents[0].genotype.brain_genotype)
 
     # assert all parents' body genotypes are of the same type
     # same for brain genotypes
-    assert all([type(parent.body_genotype) == body_genotype_type for parent in parents])
     assert all(
-        [type(parent.brain_genotype) == brain_genotype_type for parent in parents]
+        [
+            type(parent.genotype.body_genotype) == body_genotype_type
+            for parent in parents
+        ]
+    )
+    assert all(
+        [
+            type(parent.genotype.brain_genotype) == brain_genotype_type
+            for parent in parents
+        ]
     )
 
     body_child = config.body_crossover(
