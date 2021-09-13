@@ -93,7 +93,6 @@ class Genotype(BodybrainCompositionSubGenotype):
     def serialize_to_dict(self) -> Dict[str, Any]:
         return {"multineat_genome": self._multineat_genome.Serialize()}
 
-    @staticmethod
     @typechecked
-    def deserialize_from_dict(self, serialized: Dict[str, Any]) -> Genotype:
+    def deserialize_from_dict(self, serialized: Dict[str, Any]):
         self._multineat_genome.Deserialize(serialized["multineat_genome"])
