@@ -23,8 +23,7 @@ if TYPE_CHECKING:
     from typing import Callable, List, Optional, Tuple
 
     from pyrevolve.tol.manage.robotmanager import RobotManager
-    from pyrevolve.util.supervisor.analyzer_queue import (AnalyzerQueue,
-                                                          SimulatorQueue)
+    from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
 
 
 MULTI_DEV_BODY_PNG_REGEX = re.compile("body_(\\d+)_(\\d+)\\.png")
@@ -461,11 +460,11 @@ class Population:
         fitness, behaviour = await self.get_fitness(individual, fitness_fun, phenotype)
         phenotype.brain.weights = original_weights
 
-        old_id = phenotype.id
-        phenotype.id = f"{old_id}_afterlearning"
+        old_id = phenotype._id
+        phenotype._id = f"{old_id}_afterlearning"
         self.config.experiment_management.export_genotype(individual)
         self.config.experiment_management.export_phenotype(individual)
-        phenotype.id = old_id
+        phenotype._id = old_id
 
         return fitness, behaviour
 
