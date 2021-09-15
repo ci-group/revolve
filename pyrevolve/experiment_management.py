@@ -69,7 +69,7 @@ class ExperimentManagement:
         if os.path.exists(self._fitness_cache):
             copied = True
             os.mkdir(f"/home/jieluo/{tmpdir}")
-            shutil.move(self._fitness_cache, f"/tmp/{tmpdir}/fitness_cache")
+            shutil.move(self._fitness_cache, f"/home/jieluo/{tmpdir}/fitness_cache")
         else:
             copied = False
         if os.path.exists(self.experiment_folder):
@@ -86,8 +86,8 @@ class ExperimentManagement:
         os.mkdir(self._generations_folder)
         os.mkdir(self._fitness_folder)
         if copied:
-            shutil.move(f"/tmp/{tmpdir}/fitness_cache", self._fitness_cache)
-            shutil.rmtree(f"/tmp/{tmpdir}")
+            shutil.move(f"/home/jieluo/{tmpdir}/fitness_cache", self._fitness_cache)
+            shutil.rmtree(f"/home/jieluo/{tmpdir}")
         else:
             os.mkdir(self._fitness_cache)
 
