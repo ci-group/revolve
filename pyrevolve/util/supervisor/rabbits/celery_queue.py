@@ -1,13 +1,11 @@
 import atexit
 import uuid
 from concurrent.futures.process import ProcessPoolExecutor
+from typing import AnyStr, Callable, Any, Tuple, Optional, Union
 
 import asyncio
-from typing import AnyStr, Callable, Any, Tuple, Optional, Iterable, Union
-
 import celery
 import celery.exceptions
-import math
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.custom_logging.logger import logger
@@ -137,43 +135,50 @@ class CeleryQueue:
         """
 
         for attempt in range(self.MAX_ATTEMPTS):
-            pose_z: float = self._args.z_start
-            if robot.simulation_boundaries is not None:
-                pose_z -= robot.simulation_boundaries.min.z
-            pose: Vector3 = Vector3(0.0, 0.0, pose_z)
-            if self._use_isaacgym:
-                robot_sdf: AnyStr = robot.to_urdf(pose)
-            else:
-                robot_sdf: AnyStr = robot.to_sdf(pose)
-            max_age: float = conf.evaluation_time + conf.grace_time
-
-            import xml.dom.minidom
-            reparsed = xml.dom.minidom.parseString(robot_sdf)
-            robot_name = ''
-            for model in reparsed.documentElement.getElementsByTagName('model'):
-                robot_name = model.getAttribute('name')
-                if str(robot_name).isdigit():
-                    error_message = f'Inserting robot with invalid name: {robot_name}'
-                    logger.critical(error_message)
-                    raise RuntimeError(error_message)
-                logger.info(f"Inserting robot {robot_name}.")
-
             try:
-                robot_id: int = await self._call_evaluate_robot(robot_name, robot_sdf, max_age, self.EVALUATION_TIMEOUT)
-                assert(type(robot_id) == int)
-            except celery.exceptions.TimeoutError:
-                logger.warning(f'Giving up on robot {robot_name} after {self.EVALUATION_TIMEOUT} seconds.')
-                if attempt < self.MAX_ATTEMPTS:
-                    logger.warning(f'Retrying')
-                continue
+                pose_z: float = self._args.z_start
+                if robot.simulation_boundaries is not None:
+                    pose_z -= robot.simulation_boundaries.min.z
+                pose: Vector3 = Vector3(0.0, 0.0, pose_z)
+                if self._use_isaacgym:
+                    robot_sdf: AnyStr = robot.to_urdf(pose)
+                else:
+                    robot_sdf: AnyStr = robot.to_sdf(pose)
+                max_age: float = conf.evaluation_time + conf.grace_time
 
-            robot_manager = DBRobotManager(self._db, robot_id, robot,
-                                           evaluation_time=conf.evaluation_time,
-                                           warmup_time=conf.grace_time)
-            robot_fitness = fitness_fun(robot_manager, robot)
+                import xml.dom.minidom
+                reparsed = xml.dom.minidom.parseString(robot_sdf)
+                robot_name = ''
+                for model in reparsed.documentElement.getElementsByTagName('model'):
+                    robot_name = model.getAttribute('name')
+                    if str(robot_name).isdigit():
+                        error_message = f'Inserting robot with invalid name: {robot_name}'
+                        logger.critical(error_message)
+                        raise RuntimeError(error_message)
+                    logger.info(f"Inserting robot {robot_name}.")
 
-            logger.info(f'Robot {robot_id} evaluation finished with fitness={robot_fitness}')
-            return robot_fitness, BehaviouralMeasurements(robot_manager, robot)
+                try:
+                    robot_id: int = await self._call_evaluate_robot(robot_name,
+                                                                    robot_sdf,
+                                                                    max_age,
+                                                                    self.EVALUATION_TIMEOUT)
+                    assert (type(robot_id) == int)
+                except celery.exceptions.TimeoutError:
+                    logger.warning(f'Giving up on robot {robot_name} after {self.EVALUATION_TIMEOUT} seconds.')
+                    if attempt < self.MAX_ATTEMPTS:
+                        logger.warning(f'Retrying')
+                    continue
+
+                robot_manager = DBRobotManager(self._db, robot_id, robot,
+                                               evaluation_time=conf.evaluation_time,
+                                               warmup_time=conf.grace_time)
+                robot_fitness = fitness_fun(robot_manager, robot)
+
+                logger.info(f'Robot {robot_id} evaluation finished with fitness={robot_fitness}')
+                return robot_fitness, BehaviouralMeasurements(robot_manager, robot)
+            except Exception as e:
+                logger.exception(
+                    f"Exception thrown when trying to simulate a robot:\"{robot.id}\" at attempt #{attempt}.")
 
         logger.warning(f'Robot {robot.id} evaluation failed (reached max attempt of {self.MAX_ATTEMPTS}),'
                        ' fitness set to None.')
