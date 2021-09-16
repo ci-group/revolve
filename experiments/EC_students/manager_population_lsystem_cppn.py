@@ -26,15 +26,7 @@ from pyrevolve.genotype.bodybrain_composition.mutation import (
     mutate as bodybrain_composition_mutate,
 )
 from pyrevolve.genotype.cppnneat.body.config import Config as CppnneatBodyConfig
-from pyrevolve.genotype.lsystem_body.crossover import crossover as lsystem_body_crossover
-from pyrevolve.genotype.lsystem_body.develop import develop as lsystem_body_develop
-from pyrevolve.genotype.lsystem_body.genotype import Genotype as lsystemBodyGenotype
-from pyrevolve.genotype.lsystem_body.mutation import mutate as lsystem_body_mutate
-from pyrevolve.genotype.lsystem_body.config import Config as LsystemBodyConfig
 from pyrevolve.genotype.cppnneat.brain.config import Config as CppnneatBrainConfig
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
 from pyrevolve.genotype.cppnneat.brain.crossover import (
     crossover as cppnneat_brain_crossover,
 )
@@ -42,18 +34,26 @@ from pyrevolve.genotype.cppnneat.brain.develop import develop as cppnneat_brain_
 from pyrevolve.genotype.cppnneat.brain.genotype import Genotype as CppnneatBrainGenotype
 from pyrevolve.genotype.cppnneat.brain.mutation import mutate as cppnneat_brain_mutate
 from pyrevolve.genotype.cppnneat.config import get_default_multineat_params
+from pyrevolve.genotype.lsystem_body.config import Config as LsystemBodyConfig
+from pyrevolve.genotype.lsystem_body.crossover import (
+    crossover as lsystem_body_crossover,
+)
+from pyrevolve.genotype.lsystem_body.develop import develop as lsystem_body_develop
+from pyrevolve.genotype.lsystem_body.genotype import Genotype as lsystemBodyGenotype
+from pyrevolve.genotype.lsystem_body.mutation import mutate as lsystem_body_mutate
+from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
+from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
+
 
 @dataclass
 class GenotypeConstructorConfig:
     body_plasticoding_config: PlasticodingConfig
-    #body_n_start_mutations: int
     brain_n_start_mutations: int
     bodybrain_composition_config: BodybrainCompositionConfig
-    #body_multineat_params: multineat.Parameters
     brain_multineat_params: multineat.Parameters
-    #body_cppn_output_activation_type: multineat.ActivationFunction
     brain_cppn_output_activation_type: multineat.ActivationFunction
 
 
@@ -63,8 +63,7 @@ def create_random_genotype(
     return BodybrainCompositionGenotype[lsystemBodyGenotype, CppnneatBrainGenotype](
         id,
         config.bodybrain_composition_config,
-        lsystemBodyGenotype.random(config.body_plasticoding_config)
-        ,
+        lsystemBodyGenotype.random(config.body_plasticoding_config),
         CppnneatBrainGenotype.random(
             config.brain_multineat_params,
             config.brain_cppn_output_activation_type,
@@ -89,8 +88,6 @@ async def run():
 
     brain_n_start_mutations: int = 10
 
-
-
     # brain multineat settings
     multineat_params_brain = get_default_multineat_params()
 
@@ -100,8 +97,6 @@ async def run():
 
     # multineat innovation databases
     innov_db_brain = multineat.InnovationDatabase()
-
-
 
     # config for brain
     brain_config = CppnneatBrainConfig(
@@ -118,27 +113,19 @@ async def run():
         reset_neuron_random=False,
     )
 
-    body_config = LsystemBodyConfig(PlasticodingConfig())
-
-    body_mutation_conf = MutationConfig(
-        mutation_prob=0.8,
-        genotype_conf=body_config,
-    )
-
-    body_crossover_conf = CrossoverConfig(
-        crossover_prob=0.8,
-        genotype_conf=body_config,
+    body_config = LsystemBodyConfig(
+        PlasticodingConfig(), mutation_prob=0.8, crossover_prob=0.8
     )
 
     # bodybrain composition genotype config
     bodybrain_composition_config = BodybrainCompositionConfig(
         body_crossover=lsystem_body_crossover,
         brain_crossover=cppnneat_brain_crossover,
-        body_crossover_config=body_crossover_conf,
+        body_crossover_config=body_config,
         brain_crossover_config=brain_config,
         body_mutate=lsystem_body_mutate,
         brain_mutate=cppnneat_brain_mutate,
-        body_mutate_config=body_mutation_conf,
+        body_mutate_config=body_config,
         brain_mutate_config=brain_config,
         body_develop=lsystem_body_develop,
         brain_develop=cppnneat_brain_develop,
@@ -152,14 +139,10 @@ async def run():
             max_structural_modules=15,
             plastic=False,
         ),
-        #body_n_start_mutations,
         brain_n_start_mutations,
         bodybrain_composition_config,
-        #multineat_params_body,
         multineat_params_brain,
-        #body_cppn_output_activation_type=multineat.ActivationFunction.TANH,
         brain_cppn_output_activation_type=multineat.ActivationFunction.TANH,
-
     )
 
     # parse command line arguments

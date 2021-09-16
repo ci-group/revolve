@@ -1,24 +1,33 @@
 from typing import List
 
-from ..plasticoding.crossover.standard_crossover import standard_crossover
-from ..lsystem_body.genotype import Genotype
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig as Config
-from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding import Plasticoding
 
+from ..lsystem_body.genotype import Genotype
+from ..plasticoding.crossover.crossover import CrossoverConfig
+from ..plasticoding.crossover.standard_crossover import standard_crossover
+from .config import Config
+
+
 def crossover(parents: List[Genotype], config: Config) -> Genotype:
-    pars = Plasticize(parents,config.genotype_conf)
-    out = Deplasticize(standard_crossover({'plane':0.03},pars,config),config)
+    pars = Plasticize(parents, config)
+
+    crossover_config = CrossoverConfig(
+        config.crossover_prob, config.plasticoding_config
+    )
+
+    out = Deplasticize(standard_crossover({"plane": 0.03}, pars, crossover_config))
     return out
 
-def Plasticize(parents,config):
+
+def Plasticize(parents, config):
     p = []
-    for parent in (parents):
+    for parent in parents:
         gen = Plasticoding(config.plasticoding_config)
         gen.grammar = parent.genotype_impl
         p.append(gen)
     return p
 
-def Deplasticize(genotype,config):
+
+def Deplasticize(genotype):
     gen = Genotype(genotype_impl=genotype.grammar)
     return gen

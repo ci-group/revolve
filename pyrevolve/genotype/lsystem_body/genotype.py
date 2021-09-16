@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 from typeguard import typechecked
 
+from ..bodybrain_composition.sub_genotype import \
+    SubGenotype as BodybrainCompositionSubGenotype
 from ..plasticoding.initialization import _generate_random_grammar
 from ..plasticoding.plasticoding import Alphabet
-from ..bodybrain_composition.sub_genotype import (
-    SubGenotype as BodybrainCompositionSubGenotype,
-)
+
 
 class Genotype(BodybrainCompositionSubGenotype):
     genotype_impl: Dict[Alphabet, List[Any]]
@@ -28,4 +28,6 @@ class Genotype(BodybrainCompositionSubGenotype):
         gen = Genotype(genotype_impl=_generate_random_grammar(conf))
         return gen
 
-
+    @typechecked
+    def clone(self) -> Genotype:
+        return Genotype(self.genotype_impl)

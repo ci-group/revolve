@@ -1,14 +1,19 @@
-from .genotype import Genotype
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig as Config
-from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
 from pyrevolve.genotype.plasticoding import Plasticoding
+from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.plasticoding.mutation.standard_mutation import standard_mutation
+
+from .config import Config
+from .genotype import Genotype
+
+
 def mutate(genotype: Genotype, config: Config) -> Genotype:
-    #return genotype # TODO!
-    gen = Plasticoding(config.genotype_conf)
+    gen = Plasticoding(config.plasticoding_config)
     gen.grammar = genotype.genotype_impl
 
-    mutatedgenotype = standard_mutation(gen, config)
+    mutation_config = MutationConfig(config.mutation_prob, config.plasticoding_config)
+    mutatedgenotype = standard_mutation(gen, mutation_config)
 
-    genotype.genotype_impl = mutatedgenotype.grammar
+    copy = genotype.clone()
+    copy.genotype_impl = mutatedgenotype.grammar
 
-    return genotype
+    return copy
