@@ -137,8 +137,8 @@ async def run():
                 world_file='worlds/plane.celery.world',
                 gui=args.gui,
                 simulator_args=['--verbose'],
-                plugins_dir_path=os.path.join('.', 'build', 'lib'),
-                models_dir_path=os.path.join('.', 'models'),
+                plugins_dir_path=os.path.join('../heritability', 'build', 'lib'),
+                models_dir_path=os.path.join('../heritability', 'models'),
                 simulator_name=f'GazeboCeleryWorker_{n}',
                 process_terminated_callback=worker_crash,
             )
