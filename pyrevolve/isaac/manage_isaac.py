@@ -210,8 +210,16 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     learner_type = robot.learner().getAttribute('type')
 
     # TODO implement proper controller
-    controller_type = 'cpg'
     if controller_type == 'cpg':
+        Controller = lambda args: DifferentialCPG(args[0], args[1])
+        # TODO load parameters from URDF element
+        params = DifferentialCPG_ControllerParams()
+        params.weights = [random.uniform(0, 1) for _ in range(robot.n_weights)]
+        controller_init_params = (
+            params,
+            robot.actuators
+        )
+    elif controller_type == 'cppn-cpg':
         Controller = lambda args: DifferentialCPG(args[0], args[1])
         # TODO load parameters from URDF element
         params = DifferentialCPG_ControllerParams()

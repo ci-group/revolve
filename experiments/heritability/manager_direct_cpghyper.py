@@ -11,7 +11,8 @@ from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.population.population import Population
 from pyrevolve.evolution.population.population_config import PopulationConfig
-from pyrevolve.evolution.population.population_management import generational_population_management
+from pyrevolve.evolution.population.population_management import generational_population_management, \
+    steady_state_population_management
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype, DirectTreeGenotypeConfig
 from pyrevolve.genotype.tree_body_hyperneat_brain import DirectTreeCPGHyperNEATGenotypeConfig, \
@@ -30,9 +31,9 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 50
+    num_generations = 100
     population_size = 100
-    offspring_size = 100
+    offspring_size = 50
 
     morph_single_mutation_prob = 0.2
     morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8
@@ -110,8 +111,8 @@ async def run():
         crossover_conf=None,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
-        population_management=generational_population_management,
-        population_management_selector=None,  # must be none for generational management function
+        population_management=steady_state_population_management,
+        population_management_selector=tournament_selection,  # must be none for generational management function
         evaluation_time=args.evaluation_time,
         grace_time=args.grace_time,
         offspring_size=offspring_size,

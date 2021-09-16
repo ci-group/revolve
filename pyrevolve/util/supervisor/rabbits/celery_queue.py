@@ -16,8 +16,7 @@ from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
-from pyrevolve.util.supervisor.rabbits import RobotState
-from pyrevolve.util import Time
+from pyrevolve.util.supervisor.rabbits.measurement import DBRobotManager
 
 ISAAC_AVAILABLE = False
 try:
@@ -95,9 +94,9 @@ class CeleryQueue:
         self._db.init_db(first_time=False)
 
     async def stop(self, wait: Union[float, bool] = True):
-        if self._db is not None:
-            self._db.disconnect()
-            self._db.destroy()
+        # if self._db is not None:
+        #     self._db.disconnect()
+        #     self._db.destroy()
         self._db: Optional[PostgreSQLDatabase] = None
         if type(wait) is float:
             raise NotImplementedError("call shutdown but wait only N seconds not implemented yet")
@@ -168,35 +167,13 @@ class CeleryQueue:
                     logger.warning(f'Retrying')
                 continue
 
-            # DB_ID from rabbitmq and retrieve result from database
-            with self._db.session() as session:
-                # behaviour = [s for s in session.query(RobotState).filter(RobotState.evaluation_robot_id == robot_id)]
-                behaviour_query: Iterable[RobotState] = session\
-                    .query(RobotState) \
-                    .filter(RobotState.evaluation_robot_id == int(robot_id))\
-                    .filter(RobotState.evaluation_n == int(99))
-                first_pos: Optional[Vector3] = None
-                first_time: Time
-                last_pos: Optional[Vector3] = None
-                last_time: Time
-                for state in behaviour_query:
-                    state: RobotState = state
-                    last_time = Time(sec=state.time_sec, nsec=state.time_nsec)
-                    last_pos = Vector3(state.pos_x, state.pos_y, state.pos_z)
-                    if first_pos is None:
-                        first_time = last_time
-                        first_pos = last_pos.copy()
+            robot_manager = DBRobotManager(self._db, robot_id, robot,
+                                           evaluation_time=conf.evaluation_time,
+                                           warmup_time=conf.grace_time)
+            robot_fitness = fitness_fun(robot_manager, robot)
 
-                # TODO fitness: float = fitness_fun(behaviour, robot)
-                if first_pos is not None and last_pos is not None:
-                    distance: Vector3 = last_pos - first_pos
-                    distance_size: float = math.sqrt(distance.x*distance.x + distance.y*distance.y)
-                    fitness: float = distance_size / float(last_time - first_time)
-                else:
-                    fitness: float = -1
-
-            logger.info(f'Robot {robot.id} evaluation finished with fitness={fitness}')
-            return fitness, BehaviouralMeasurements()
+            logger.info(f'Robot {robot_id} evaluation finished with fitness={robot_fitness}')
+            return robot_fitness, BehaviouralMeasurements(robot_manager, robot)
 
         logger.warning(f'Robot {robot.id} evaluation failed (reached max attempt of {self.MAX_ATTEMPTS}),'
                        ' fitness set to None.')

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 import math
 
@@ -11,6 +13,13 @@ class BehaviouralMeasurements:
     """
         Calculates all the measurements and saves them in one object
     """
+    velocity: Optional[float]
+    displacement: Optional[float]
+    displacement_velocity: Optional[float]
+    displacement_velocity_hill: Optional[float]
+    head_balance: Optional[float]
+    contacts: Optional[float]
+
     def __init__(self, robot_manager: RvRobotManager = None, robot: RevolveBot = None):
         """
         :param robot_manager: Revolve Manager that holds the life of the robot
