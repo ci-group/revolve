@@ -458,13 +458,12 @@ class Population:
         original_weights = phenotype.brain.weights
         phenotype.brain.weights = population[0]
         fitness, behaviour = await self.get_fitness(individual, fitness_fun, phenotype)
-        phenotype.brain.weights = original_weights
-
         old_id = phenotype._id
         phenotype._id = f"{old_id}_afterlearning"
         self.config.experiment_management.export_genotype(individual)
         self.config.experiment_management.export_phenotype(individual)
         phenotype._id = old_id
+        phenotype.brain.weights = original_weights
 
         return fitness, behaviour
 
@@ -559,6 +558,11 @@ class Population:
         original_weights = phenotype.brain.weights
         phenotype.brain.weights = es.result.xbest
         fitness, behaviour = await self.get_fitness(individual, fitness_fun, phenotype)
+        old_id = phenotype._id
+        phenotype._id = f"{old_id}_afterlearning"
+        self.config.experiment_management.export_genotype(individual)
+        self.config.experiment_management.export_phenotype(individual)
+        phenotype._id = old_id
         phenotype.brain.weights = original_weights
 
         return fitness, behaviour
