@@ -71,7 +71,7 @@ def develop(genotype: Genotype, config: Config) -> CoreModule:
 
 
 # get module type, orientation
-def _evaluate_cppg(
+def _evaluate_cppn(
     body_net: multineat.NeuralNetwork,
     position: Tuple[int, int, int],
     chain_length: int,
@@ -111,7 +111,7 @@ def _add_child(
     else:
         grid.add(position)
 
-    child_type, orientation = _evaluate_cppg(body_net, position, chain_length)
+    child_type, orientation = _evaluate_cppn(body_net, position, chain_length)
     if child_type == None:
         return None
 
