@@ -709,23 +709,17 @@ class Plasticoding(Genotype):
         if symbol[index_symbol] is Alphabet.JOINT_HORIZONTAL \
                 or symbol[index_symbol] is Alphabet.JOINT_VERTICAL:
 
-            try:
-                symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max),
-                                        random.uniform(conf.oscillator_param_min,
-                                                       conf.oscillator_param_max),
-                                        random.uniform(conf.oscillator_param_min,
-                                                       conf.oscillator_param_max),
-                                        random.uniform(conf.oscillator_param_min,
-                                                       conf.oscillator_param_max)]
-            except Exception:
-                print('fuck')
+            symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max),
+                                    random.uniform(conf.oscillator_param_min,
+                                                    conf.oscillator_param_max),
+                                    random.uniform(conf.oscillator_param_min,
+                                                    conf.oscillator_param_max),
+                                    random.uniform(conf.oscillator_param_min,
+                                                    conf.oscillator_param_max)]
         if symbol[index_symbol] is Alphabet.SENSOR \
                 or symbol[index_symbol] is Alphabet.ADD_EDGE \
                 or symbol[index_symbol] is Alphabet.LOOP:
-            try:
-                symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max)]
-            except Exception:
-                print('f')
+            symbol[index_params] = [random.uniform(conf.weight_min, conf.weight_max)]
         if symbol[index_symbol] is Alphabet.MUTATE_EDGE \
                 or symbol[index_symbol] is Alphabet.MUTATE_AMP \
                 or symbol[index_symbol] is Alphabet.MUTATE_PER \
