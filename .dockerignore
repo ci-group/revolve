@@ -1,0 +1,13 @@
+.git/
+/.hgignore
+/.hgreview
+
+/build/
+/cmake-build-*/
+/.venv/
+
+__pycache__/
+
+.idea/
+.vscode/
+/experiments/*/data/

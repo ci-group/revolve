@@ -18,7 +18,8 @@ add_definitions(-pedantic -Wno-long-long -Wall -Wextra -Wformat=2
         -Wswitch-enum -Wuninitialized
         -Wswitch-default -Winit-self -Wfloat-equal -fPIC )
 
-set (CMAKE_CXX_STANDARD 11)
+# need c++17 for libSimpleAmqpClient >= 7.something
+set (CMAKE_CXX_STANDARD 17)
 
 # Debug Flags
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb3 -DDEBUG")
@@ -45,7 +46,7 @@ endif ()
 find_package(PkgConfig REQUIRED)
 
 # Find Boost
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Find Eigen3 - A lightweight C++ template library for vector and matrix math
@@ -111,6 +112,13 @@ include_directories(
         ${PROTOBUF_INCLUDE_DIRS}
         ${GAZEBO_PROTO_INCLUDE}
 )
+
+# Find OpenCV
+find_package( OpenCV REQUIRED )
+
+#pkg_check_modules(JSONCPP REQUIRED jsoncpp>1.7)
+#pkg_check_modules(AMQP REQUIRED libSimpleAmqpClient>2.6)
+pkg_check_modules(PQXX REQUIRED libpqxx>6.4)
 
 # Add Gazebo C++ flags (this includes c++11)
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
@@ -200,6 +208,8 @@ add_library(
 
 target_link_libraries(
         revolve-gazebo
+        revolve-controllers
+        revolve-learners
         ${GAZEBO_LIBRARIES}
         ${Boost_LIBRARIES}
         ${GSL_LIBRARIES}
@@ -235,16 +245,6 @@ target_link_libraries(
         AnalyzerPlugin
         revolve-gazebo
         revolve-proto
-        ${GAZEBO_LIBRARIES}
-)
-
-# Create Torus World plugin
-add_library(TorusWorldPlugin SHARED
-        plugin/TorusWorld.cpp
-        plugin/register_torus_world_plugin.cpp
-)
-target_link_libraries(TorusWorldPlugin
-        revolve-gazebo
         ${GAZEBO_LIBRARIES}
 )
 

@@ -22,8 +22,6 @@
 
 // Includes all sensor types for convenience
 #include <revolve/gazebo/sensors/ImuSensor.h>
-#include <revolve/gazebo/sensors/BatterySensor.h>
-#include <revolve/gazebo/sensors/PointIntensitySensor.h>
 #include <revolve/gazebo/sensors/LightSensor.h>
 #include <revolve/gazebo/sensors/TouchSensor.h>
 

@@ -4,4 +4,3 @@ from .time import Time
 
 from .functions import *
 from .futures import *
-from .supervisor import Supervisor

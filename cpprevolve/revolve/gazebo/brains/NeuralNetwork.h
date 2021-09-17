@@ -19,14 +19,14 @@
 *
 */
 
-#ifndef REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
-#define REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_
+#pragma once
 
 #include <map>
 #include <string>
 #include <vector>
 
 #include <gazebo/gazebo.hh>
+#include <revolve/brains/controller/Controller.h>
 
 #include <revolve/msgs/neural_net.pb.h>
 
@@ -53,8 +53,7 @@ namespace revolve
       SUPG
     };
 
-    class NeuralNetwork
-        : public Brain
+    class NeuralNetwork : public ::revolve::Controller
     {
       /// \brief Constructor
       /// \param[in] _modelName Name of the robot
@@ -75,11 +74,11 @@ namespace revolve
       /// \param[in] _sensors Sensor list
       /// \param[in] _time Current world time
       /// \param[in] _step Current time step
-      public:  virtual void Update(
+      public: void update(
           const std::vector< MotorPtr > &_motors,
           const std::vector< SensorPtr > &_sensors,
-          const double _time,
-          const double _step);
+          double _time,
+          double _step) override;
 
       /// \brief Steps the neural network
       protected: void Step(const double _time);
@@ -153,5 +152,3 @@ namespace revolve
     };
   } /* namespace gazebo */
 } /* namespace revolve */
-
-#endif /* REVOLVE_GAZEBO_BRAIN_NEURALNETWORK_H_ */

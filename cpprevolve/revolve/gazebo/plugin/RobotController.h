@@ -29,9 +29,13 @@
 #include <gazebo/msgs/msgs.hh>
 
 #include <revolve/gazebo/Types.h>
+#include "revolve/brains/controller/sensors/Sensor.h"
+#include "revolve/brains/controller/actuators/Actuator.h"
 
 namespace revolve
 {
+  class Controller;
+
   namespace gazebo
   {
     class RobotController
@@ -114,7 +118,7 @@ namespace revolve
       protected: SensorFactoryPtr sensorFactory_;
 
       /// \brief Brain controlling this model
-      protected: BrainPtr brain_;
+      protected: std::unique_ptr<::revolve::Controller> brain_;
 
       /// \brief Actuation time, in seconds
       protected: double actuationTime_;

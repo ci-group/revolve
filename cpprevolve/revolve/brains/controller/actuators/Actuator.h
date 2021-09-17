@@ -24,13 +24,21 @@ public:
     inline double coordinate_y() const { return std::get<1>(this->coordinates); }
     inline double coordinate_z() const { return std::get<2>(this->coordinates); }
 
+    enum StateType {
+        POSITION,
+        VELOCITY,
+        TORQUE
+    };
+
+    virtual double Current_State( StateType type ) = 0;
+
     virtual void write(const double *output, double step) = 0;
 
     inline unsigned int n_outputs() const {return this->_n_outputs;}
 
-private:
+protected:
     const unsigned int _n_outputs;
-    const std::tuple<double, double, double> coordinates;
+    std::tuple<double, double, double> coordinates;
 };
 
 }

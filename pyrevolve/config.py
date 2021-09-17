@@ -73,6 +73,13 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    '--fitness',
+    default="displacement_velocity",
+    type=str,
+    help="Determine which manager to use. Defaults to no manager."
+)
+
+parser.add_argument(
     '--experiment-name',
     default='default_experiment', type=str,
     help="Name of current experiment. A folder with this name will be created. Default to \"default_experiment\"."
@@ -89,6 +96,18 @@ parser.add_argument(
     default=None, type=str,
     help="Alternative to --manager. Start a simulation with a single robot instead of running evolution."
          "Loads a yaml robot."
+)
+
+parser.add_argument(
+    '--record',
+    default=False, type=bool,
+    help="When running with --test-robot argument, records the video of the test run"
+)
+
+parser.add_argument(
+    '--plot-test-robot',
+    default=False, type=bool,
+    help="When testing a robot, plot the data instead of printing it to the terminal. Default False."
 )
 
 parser.add_argument(
@@ -135,10 +154,18 @@ parser.add_argument(
 parser.add_argument(
     '--evaluation-time',
     default=30, type=float,
-    help="In offline evolution, this determines the length of the experiment run."
+    help="In offline evolution, this determines the length of the evaluation time. "
+         "A single run time will be evaluation-time + grace-time"
     # For old_online_fitness:
     #   "The size of the `speed window` for each robot, i.e. the number of "
     #   "past (simulation) seconds over which its speed is evaluated."
+)
+
+parser.add_argument(
+    '--grace-time',
+    default=0, type=float,
+    help="In offline evolution, this determines how much time before the start of an evaluation."
+    # For old_online_fitness it's useless.
 )
 
 parser.add_argument(

@@ -144,8 +144,8 @@ class DynamicSimSupervisor(object):
         self._logger.info("Created Supervisor with:"
                           f"\n\t- simulator command: {simulator_cmd} {simulator_args}"
                           f"\n\t- world file: {world_file}"
-                          f"\n\t- GAZEBO_PLUGIN_PATH: {plugins_dir_path}"
-                          f"\n\t- GAZEBO_MODEL_PATH: {models_dir_path}")
+                          f"\n\t- GAZEBO_PLUGIN_PATH={plugins_dir_path}"
+                          f"\n\t- GAZEBO_MODEL_PATH={models_dir_path}")
 
     async def launch_simulator(self, address='localhost', port=11345):
         """
@@ -245,20 +245,30 @@ class DynamicSimSupervisor(object):
             env[key] = value
         env['GAZEBO_MASTER_URI'] = f'http://{address}:{port}'
 
+        # Search for gazebo dynamic library lookup folder
         process = subprocess.run(['which', self.simulator_cmd[0]], stdout=subprocess.PIPE)
         process.check_returncode()
         gazebo_libraries_path = process.stdout.decode()
         gazebo_libraries_path = os.path.dirname(gazebo_libraries_path)
         for lib_f in ['lib', 'lib64']:
             _gazebo_libraries_path = os.path.join(gazebo_libraries_path, '..', lib_f)
-            if os.path.isfile(os.path.join(_gazebo_libraries_path, 'libgazebo_common.so')):
+            lib_postfix = 'dylib' if platform.system() == 'Darwin' else 'so'
+            if os.path.isfile(os.path.join(_gazebo_libraries_path, f'libgazebo_common.{lib_postfix}')):
                 gazebo_libraries_path = _gazebo_libraries_path
                 break
 
+        # Platform dependant environment setup
         if platform.system() == 'Darwin':
             env['DYLD_LIBRARY_PATH'] = gazebo_libraries_path
         else:  # linux
             env['LD_LIBRARY_PATH'] = gazebo_libraries_path
+            # remove screen scaling variables, gazebo does not handle screen scaling really well.
+            if 'QT_AUTO_SCREEN_SCALE_FACTOR' in env:
+                del env['QT_AUTO_SCREEN_SCALE_FACTOR']
+            if 'QT_SCREEN_SCALE_FACTORS' in env:
+                del env['QT_SCREEN_SCALE_FACTORS']
+            # force set x11(xcb) platform, since gazebo on wayland is broken
+            env['QT_QPA_PLATFORM'] = 'xcb'
         self.procs[output_tag] = await self._launch_with_ready_str(
             cmd=gz_args,
             ready_str=ready_str,

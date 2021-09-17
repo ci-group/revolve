@@ -17,13 +17,15 @@
 *
 */
 
-#include  <stdexcept>
+#include <stdexcept>
 
 #include <gazebo/sensors/sensors.hh>
 
 #include <revolve/gazebo/motors/MotorFactory.h>
 #include <revolve/gazebo/sensors/SensorFactory.h>
+#include <revolve/gazebo/sensors/GZAngleToTargetDetector.h>
 #include <revolve/gazebo/brains/Brains.h>
+#include <revolve/gazebo/brains/FixedAngleController.h>
 
 #include "RobotController.h"
 
@@ -53,56 +55,65 @@ void RobotController::Load(
     ::gazebo::physics::ModelPtr _parent,
     sdf::ElementPtr _sdf)
 {
-  // Store the pointer to the model / world
-  this->model_ = _parent;
-  this->world_ = _parent->GetWorld();
-  this->initTime_ = this->world_->SimTime().Double();
-
-  // Create transport node
-  this->node_.reset(new gz::transport::Node());
-  this->node_->Init();
-
-  // Subscribe to robot battery state updater
-  this->batterySetSub_ = this->node_->Subscribe(
-      "~/battery_level/request",
-      &RobotController::UpdateBattery,
-      this);
-  this->batterySetPub_ = this->node_->Advertise< gz::msgs::Response >(
-      "~/battery_level/response");
-
-  if (not _sdf->HasElement("rv:robot_config"))
+  try
   {
-    std::cerr
-        << "No `rv:robot_config` element found, controller not initialized."
-        << std::endl;
-    return;
+    // Store the pointer to the model / world
+    this->model_ = _parent;
+    this->world_ = _parent->GetWorld();
+    this->initTime_ = this->world_->SimTime().Double();
+
+    // Create transport node
+    this->node_.reset(new gz::transport::Node());
+    this->node_->Init();
+
+    // Subscribe to robot battery state updater
+    this->batterySetSub_ = this->node_->Subscribe(
+        "~/battery_level/request",
+        &RobotController::UpdateBattery,
+        this);
+    this->batterySetPub_ = this->node_->Advertise<gz::msgs::Response>(
+        "~/battery_level/response");
+
+    if (not _sdf->HasElement("rv:robot_config"))
+    {
+      std::cerr
+          << "No `rv:robot_config` element found, controller not initialized."
+          << std::endl;
+      return;
+    }
+
+    auto robotConfiguration = _sdf->GetElement("rv:robot_config");
+
+    if (robotConfiguration->HasElement("rv:update_rate"))
+    {
+      auto updateRate = robotConfiguration->GetElement("rv:update_rate")->Get<double>();
+      this->actuationTime_ = 1.0 / updateRate;
+    }
+
+    // Load motors
+    this->motorFactory_ = this->MotorFactory(_parent);
+    this->LoadActuators(robotConfiguration);
+
+    // Load sensors
+    this->sensorFactory_ = this->SensorFactory(_parent);
+    this->LoadSensors(robotConfiguration);
+
+    // Load brain, this needs to be done after the motors and sensors so they
+    // can potentially be reordered.
+    this->LoadBrain(robotConfiguration);
+
+    // Call the battery loader
+    this->LoadBattery(robotConfiguration);
+
+    // Call startup function which decides on actuation
+    this->Startup(_parent, _sdf);
   }
-
-  auto robotConfiguration = _sdf->GetElement("rv:robot_config");
-
-  if (robotConfiguration->HasElement("rv:update_rate"))
+  catch (const std::exception &e)
   {
-    auto updateRate = robotConfiguration->GetElement("rv:update_rate")->Get< double >();
-    this->actuationTime_ = 1.0 / updateRate;
+    std::cerr << "Error Loading the Robot Controller, exception: " << std::endl
+              << e.what() << std::endl;
+    throw;
   }
-
-  // Load motors
-  this->motorFactory_ = this->MotorFactory(_parent);
-  this->LoadActuators(robotConfiguration);
-
-  // Load sensors
-  this->sensorFactory_ = this->SensorFactory(_parent);
-  this->LoadSensors(robotConfiguration);
-
-  // Load brain, this needs to be done after the motors and sensors so they
-  // can potentially be reordered.
-  this->LoadBrain(robotConfiguration);
-
-  // Call the battery loader
-  this->LoadBattery(robotConfiguration);
-
-  // Call startup function which decides on actuation
-  this->Startup(_parent, _sdf);
 }
 
 /////////////////////////////////////////////////
@@ -136,8 +147,7 @@ void RobotController::UpdateBattery(ConstRequestPtr &_request)
 /////////////////////////////////////////////////
 void RobotController::LoadActuators(const sdf::ElementPtr _sdf)
 {
-  if (not _sdf->HasElement("rv:brain")
-      or not _sdf->GetElement("rv:brain")->HasElement("rv:actuators"))
+  if (not _sdf->HasElement("rv:brain") or not _sdf->GetElement("rv:brain")->HasElement("rv:actuators"))
   {
     return;
   }
@@ -159,8 +169,7 @@ void RobotController::LoadActuators(const sdf::ElementPtr _sdf)
 /////////////////////////////////////////////////
 void RobotController::LoadSensors(const sdf::ElementPtr _sdf)
 {
-  if (not _sdf->HasElement("rv:brain")
-      or not _sdf->GetElement("rv:brain")->HasElement("rv:sensors"))
+  if (not _sdf->HasElement("rv:brain") or not _sdf->GetElement("rv:brain")->HasElement("rv:sensors"))
   {
     return;
   }
@@ -200,29 +209,77 @@ void RobotController::LoadBrain(const sdf::ElementPtr _sdf)
     return;
   }
 
-  auto brain = _sdf->GetElement("rv:brain");
-  auto controller = brain->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
-  auto learner = brain->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
-  std::cout << "Loading controller " << controller << " and learner " << learner << std::endl;
+  auto brain_sdf = _sdf->GetElement("rv:brain");
+  auto controller_type = brain_sdf->GetElement("rv:controller")->GetAttribute("type")->GetAsString();
+  auto learner = brain_sdf->GetElement("rv:learner")->GetAttribute("type")->GetAsString();
+  std::cout << "Loading controller " << controller_type << " and learner " << learner << std::endl;
 
-  if ("offline" == learner and "ann" == controller)
+  if ("offline" == learner and "ann" == controller_type)
   {
-    brain_.reset(new NeuralNetwork(this->model_, brain, motors_, sensors_));
+    brain_.reset(new NeuralNetwork(this->model_, brain_sdf, motors_, sensors_));
   }
-  else if ("rlpower" == learner and "spline" == controller)
+  else if ("rlpower" == learner and "spline" == controller_type)
   {
-    if (not motors_.empty()) {
-        brain_.reset(new RLPower(this->model_, brain, motors_, sensors_));
+    if (not motors_.empty())
+    {
+      brain_.reset(new RLPower(this->model_, brain_sdf, motors_, sensors_));
     }
   }
-  else if ("bo" == learner and "cpg" == controller)
+  else if ("bo" == learner and "cpg" == controller_type)
   {
-    brain_.reset(new DifferentialCPG(this->model_, _sdf, motors_, sensors_));
+    //WARNING! not doing BO any more
+    brain_.reset(new DifferentialCPG(_sdf, motors_));
+  }
+  else if ("target" == learner and "cpg" == controller_type)
+  {
+    std::shared_ptr<revolve::AngleToTargetDetector> fake_target_sensor(
+        new GZAngleToTargetDetector(this->model_, ignition::math::Vector3d(0, 10, 0)));
+    brain_.reset(new DifferentialCPGClean(brain_sdf, motors_, fake_target_sensor));
+  }
+  else if ("offline" == learner && "cpg-target" == controller_type)
+  {
+    std::vector<double> target_vec;
+    std::string target_str = brain_sdf->GetElement("rv:controller")->GetAttribute("target")->GetAsString();
+    std::string delimiter = ";";
+    size_t pos = 0;
+    std::string token;
+    std::cout << "The generated target equals (" << target_str << ")" << std::endl;
+    while ((pos = target_str.find(delimiter)) != std::string::npos)
+    {
+      token = target_str.substr(0, pos);
+      target_vec.push_back(stod(token));
+      target_str.erase(0, pos + delimiter.length());
+    }
+    // push the last element that does not end with the delimiter
+    target_vec.push_back(stod(target_str));
+
+    ignition::math::Vector3d target(target_vec[0], target_vec[1], target_vec[2]);
+
+    std::shared_ptr<revolve::AngleToTargetDetector> fake_target_sensor(
+        new GZAngleToTargetDetector(this->model_, target));
+    brain_.reset(new DifferentialCPGClean(brain_sdf, motors_, fake_target_sensor));
+  }
+  else if ("offline" == learner and "cpg" == controller_type)
+  {
+    brain_.reset(new DifferentialCPGClean(brain_sdf, motors_));
+  }
+  else if ("offline" == learner and "cppn-cpg" == controller_type)
+  {
+    brain_.reset(new DifferentialCPPNCPG(brain_sdf, motors_));
+  }
+  else if ("offline" == learner and "fixed-angle" == controller_type)
+  {
+    double angle = std::stod(
+        brain_sdf->GetElement("rv:controller")->GetAttribute("angle")->GetAsString());
+    brain_.reset(new FixedAngleController(angle));
   }
   else
   {
-    throw std::runtime_error("Robot brain is not defined.");
+    std::ostringstream message;
+    message << "Robot brain is not defined. (learner='" << learner << "', controller='" << controller_type << "')";
+    throw std::runtime_error(message.str());
   }
+  std::cout << "Loaded controller " << controller_type << " and learner " << learner << std::endl;
 }
 
 /////////////////////////////////////////////////
@@ -254,7 +311,7 @@ void RobotController::DoUpdate(const ::gazebo::common::UpdateInfo _info)
   auto currentTime = _info.simTime.Double() - initTime_;
 
   if (brain_)
-    brain_->Update(motors_, sensors_, currentTime, actuationTime_);
+    brain_->update(motors_, sensors_, currentTime, actuationTime_);
 }
 
 /////////////////////////////////////////////////
@@ -274,7 +331,7 @@ double RobotController::BatteryLevel()
     return 0.0;
   }
 
-  return batteryElem_->GetElement("rv:level")->Get< double >();
+  return batteryElem_->GetElement("rv:level")->Get<double>();
 }
 
 /////////////////////////////////////////////////
