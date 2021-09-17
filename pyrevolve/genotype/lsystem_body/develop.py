@@ -12,7 +12,6 @@ from pyrevolve.revolve_bot.revolve_module import (
 from ..plasticoding.plasticoding import Plasticoding,PlasticodingConfig
 from typeguard import typechecked
 
-#from .config import Config
 from .genotype import Genotype
 
 @typechecked

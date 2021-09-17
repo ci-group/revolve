@@ -9,17 +9,17 @@ from .config import Config
 
 
 def crossover(parents: List[Genotype], config: Config) -> Genotype:
-    pars = Plasticize(parents, config)
+    pars = plasticize(parents, config)
 
     crossover_config = CrossoverConfig(
         config.crossover_prob, config.plasticoding_config
     )
 
-    out = Deplasticize(standard_crossover({"plane": 0.03}, pars, crossover_config))
+    out = deplasticize(standard_crossover({"plane": 0.03}, pars, crossover_config))
     return out
 
 
-def Plasticize(parents, config):
+def plasticize(parents, config):
     p = []
     for parent in parents:
         gen = Plasticoding(config.plasticoding_config)
@@ -28,6 +28,6 @@ def Plasticize(parents, config):
     return p
 
 
-def Deplasticize(genotype):
+def deplasticize(genotype):
     gen = Genotype(genotype_impl=genotype.grammar)
     return gen
