@@ -9,7 +9,6 @@ from ..bodybrain_composition.sub_genotype import (
     SubGenotype as BodybrainCompositionSubGenotype,
 )
 
-
 class Genotype(BodybrainCompositionSubGenotype):
     _multineat_genome: multineat.Genomemultineat_genome
 
