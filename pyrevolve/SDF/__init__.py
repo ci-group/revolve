@@ -6,6 +6,7 @@ from .geometry import Visual, Collision, MeshGeometry, BoxGeometry
 from .inertial import Inertial
 from .joint import Joint
 from .sensor import CameraSensor, TouchSensor, IMUSensor
+from .linear import Linear
 from . import math
 from .revolve_bot_sdf_builder import revolve_bot_to_sdf
 

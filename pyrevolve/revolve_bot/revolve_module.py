@@ -385,6 +385,122 @@ class ActiveHingeModule(RevolveModule):
         else:
             raise RuntimeError("Invalid orientation")
 
+class LinearActuatorModule(RevolveModule):
+    """
+    Inherits class RevolveModule. Creates Robogen joint module
+    """
+    TYPE = 'LinearActuator'
+    VISUAL_MESH_FRAME = 'model://rg_robot/meshes/11.dae'
+    VISUAL_MESH_SERVO = 'model://rg_robot/meshes/2.dae'
+    COLLISION_BOX_FRAME = (4.5e-02, 1.575e-02, 1.5e-02)
+    COLLISION_BOX_SERVO = (3.5e-02, 0.5e-02, 0.5e-02)
+    COLLISION_BOX_SERVO_2 = (1.0e-3, 0.5e-2, 0.5e-02)
+    COLLISION_BOX_SERVO_OFFSET = (
+        SDF.math.Vector3(0, 0, 0),
+        SDF.math.Vector3(0, 0, 0),
+    )
+    MASS_FRAME = grams(1.7)
+    MASS_SERVO = grams(9)
+
+    def __init__(self):
+        super().__init__()
+        self.children = {1: None}
+
+    def iter_children(self):
+        return self.children.items()
+
+    def _generate_yaml_children(self):
+        child = self.children[1]
+        if child is None:
+            return None
+        else:
+            return {1: child.to_yaml()}
+
+    def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
+        assert(parent_link is not None)
+        assert(child_link is not None)
+        name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
+        name_joint = 'component_{}_{}__joint'.format(tree_depth, self.TYPE)
+        name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
+        name_servo2 = 'component_{}_{}__servo2'.format(tree_depth, self.TYPE)
+
+        visual_frame = SDF.Visual(name_frame, self.rgb)
+        geometry = SDF.MeshGeometry(self.VISUAL_MESH_FRAME)
+        visual_frame.append(geometry)
+
+        collision_frame = SDF.Collision(name_frame, self.MASS_FRAME)
+        collision_frame.translate(SDF.math.Vector3(0, 0, 0))
+        geometry = SDF.BoxGeometry(self.COLLISION_BOX_FRAME)
+        collision_frame.append(geometry)
+
+        visual_servo = SDF.Visual(name_servo, self.rgb)
+        geometry = SDF.MeshGeometry(self.VISUAL_MESH_SERVO)
+        visual_servo.append(geometry)
+
+        collision_servo = SDF.Collision(name_servo, self.MASS_SERVO)
+        collision_servo.translate(SDF.math.Vector3(-0.02, 0, 0))
+        geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO)
+        collision_servo.append(geometry)
+
+        collision_servo_2 = SDF.Collision(name_servo2, 0)
+        collision_servo_2.translate(SDF.math.Vector3(0.02, 0.0, 0))
+        geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO_2)
+        collision_servo_2.append(geometry)
+
+        joint = SDF.Linear(self.id,
+                          name_joint,
+                          parent_link,
+                          child_link,
+                          axis=SDF.math.Vector3(1, 0, 0),
+                          coordinates=self.substrate_coordinates,
+                          motorized=True)#,
+
+        #joint.set_position(SDF.math.Vector3(1, 0, 0))
+
+        return visual_frame, \
+               [collision_frame], \
+               visual_servo, \
+               [collision_servo, collision_servo_2], \
+               joint
+
+    def possible_slots_frame(self):
+        box_geometry = self.COLLISION_BOX_FRAME
+        return (
+            (box_geometry[0] / -2.0, box_geometry[0] / 2.0 - 0.001),  # X
+            (0, 0),  # Y
+            (0, 0),  # Z
+        )
+
+    def possible_slots_servo(self):
+        box_geometry = self.COLLISION_BOX_SERVO
+        return (
+            (box_geometry[0] / -2.0, box_geometry[0] / 2.0),  # X
+            (0, 0),  # Y
+            (0, 0),  # Z
+        )
+
+    def boxslot_frame(self, orientation=None):
+        orientation = Orientation.BACK if orientation is None else orientation
+        boundaries = self.possible_slots_frame()
+        return BoxSlotJoints(
+            boundaries,
+            orientation,
+            self.COLLISION_BOX_SERVO_OFFSET
+        )
+
+    def boxslot_servo(self, orientation=None):
+        orientation = Orientation.BACK if orientation is None else orientation
+        boundaries = self.possible_slots_servo()
+        return BoxSlotJoints(boundaries, orientation)
+
+    def boxslot(self, orientation=None):
+        orientation = Orientation.BACK if orientation is None else orientation
+        if orientation is Orientation.BACK:
+            return self.boxslot_frame(orientation)
+        elif orientation is Orientation.FORWARD:
+            return self.boxslot_servo(orientation)
+        else:
+            raise RuntimeError("Invalid orientation")
 
 class BrickModule(RevolveModule):
     """

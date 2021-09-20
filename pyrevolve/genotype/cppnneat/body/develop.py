@@ -8,6 +8,8 @@ from pyrevolve.revolve_bot.revolve_module import (
     BrickModule,
     CoreModule,
     RevolveModule,
+    LinearActuatorModule,
+
 )
 from typeguard import typechecked
 
@@ -55,7 +57,7 @@ def develop(genotype: Genotype, config: Config) -> CoreModule:
             child_index_range = range(0, 4)
         elif type(module.module_reference) == BrickModule:
             child_index_range = range(1, 4)
-        elif type(module.module_reference) == ActiveHingeModule:
+        elif type(module.module_reference) == ActiveHingeModule or LinearActuatorModule:
             child_index_range = range(1, 2)
         else:  # Should actually never arrive here but just checking module type to be sure
             raise RuntimeError
@@ -83,8 +85,13 @@ def _evaluate_cppn(
     outputs = body_net.Output()
 
     # get module type from output probabilities
-    type_probs = [outputs[0], outputs[1], outputs[2]]
-    types = [None, BrickModule, ActiveHingeModule]
+    linearactuator = Config.linearactuator
+    if linearactuator:
+        type_probs = [outputs[0], outputs[1], outputs[2],outputs[5]]
+    else:
+        type_probs = [outputs[0], outputs[1], outputs[2]]
+
+    types = [None, BrickModule, ActiveHingeModule, LinearActuatorModule]
     module_type = types[type_probs.index(min(type_probs))]
 
     # get rotation from output probabilities
@@ -125,6 +132,8 @@ def _add_child(
         child.rgb = [1, 0, 0]
     elif child_type == ActiveHingeModule:
         child.rgb = [0, 1, 0]
+    elif child_type == LinearActuatorModule:
+        child.rgb = [1, 1, 0]
     else:  # Should actually never arrive here but just checking module type to be sure
         raise RuntimeError
 
