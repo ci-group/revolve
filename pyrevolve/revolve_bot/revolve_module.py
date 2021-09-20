@@ -109,6 +109,8 @@ class RevolveModule:
             module = CoreModule()
         elif mod_type == 'ActiveHinge':
             module = ActiveHingeModule()
+        elif mod_type == 'LinearActuator':
+            module = LinearActuatorModule()
         elif mod_type == 'FixedBrick':
             module = BrickModule()
         elif mod_type == 'FixedBrickSensor':

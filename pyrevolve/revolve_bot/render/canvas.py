@@ -189,6 +189,22 @@ class Canvas:
 		self.sign_id(mod_id)
 		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
 
+	def draw_linear(self, mod_id) -> None:
+		"""Draw a hinge (green) on the previous object"""
+
+		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
+		if (Canvas.rotating_orientation % 180 == 0):
+			self.context.set_source_rgb(0, 1.0, 1)
+		else:
+			self.context.set_source_rgb(0, 1.0, 1)
+		self.context.fill_preserve()
+		self.context.set_source_rgb(0, 1, 1)
+		self.context.set_line_width(0.01)
+		self.context.stroke()
+		self.calculate_orientation()
+		self.sign_id(mod_id)
+		Canvas.movement_stack.append([Canvas.x_pos, Canvas.y_pos, Canvas.orientation, Canvas.rotating_orientation])
+
 	def draw_module(self, mod_id) -> None:
 		"""Draw a module (blue) on the previous object"""
 		self.context.rectangle(Canvas.x_pos, Canvas.y_pos, 1, 1)
