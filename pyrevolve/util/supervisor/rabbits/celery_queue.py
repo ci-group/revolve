@@ -6,6 +6,7 @@ from typing import AnyStr, Callable, Any, Tuple, Optional, Union
 import asyncio
 import celery
 import celery.exceptions
+import sqlalchemy
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.custom_logging.logger import logger
@@ -13,7 +14,7 @@ from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
-from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
+from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase, RobotEvaluation as DBRobotEvaluation, RobotState as DBRobotState, Robot as DBRobot
 from pyrevolve.util.supervisor.rabbits.measurement import DBRobotManager
 
 ISAAC_AVAILABLE = False
@@ -177,6 +178,19 @@ class CeleryQueue:
                 logger.info(f'Robot {robot_id} evaluation finished with fitness={robot_fitness}')
                 return robot_fitness, BehaviouralMeasurements(robot_manager, robot)
             except Exception as e:
+                try:
+                    with self._db.session() as session:
+                        db_robot = session.query(DBRobot).filter(DBRobot.name == f'robot_{robot.id}').one()
+                        db_evals = session.query(DBRobotEvaluation).filter(DBRobotEvaluation.robot == db_robot)
+                        db_states = session.query(DBRobotState).filter(DBRobotEvaluation.robot == db_robot)
+                        db_evals.delete()
+                        db_states.delete()
+                        db_robot.delete()
+                        session.commit()
+                except sqlalchemy.sxc.SQLAchemyError as e:
+                    logger.exception(
+                        f"Exception thrown when trying to remove failed robot:\"{robot.id}\" at attempt #{attempt}.")
+
                 logger.exception(
                     f"Exception thrown when trying to simulate a robot:\"{robot.id}\" at attempt #{attempt}.")
 
