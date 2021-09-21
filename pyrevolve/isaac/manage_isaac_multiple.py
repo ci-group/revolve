@@ -5,6 +5,7 @@ import math
 import os
 import random
 import tempfile
+import threading
 from typing import AnyStr, List, Optional
 
 import numpy as np
@@ -23,6 +24,15 @@ from . import isaac_logger
 from .IsaacSim import IsaacSim
 
 
+class Arguments:
+    def __init__(self):
+        self.physics_engine = gymapi.SIM_PHYSX
+        self.compute_device_id = 0
+        self.graphics_device_id = 0
+        self.num_threads = 0
+        self.headless = True
+
+
 @worker_process_init.connect
 def init_worker_celery(**kwargs):
     init_worker()
@@ -34,19 +44,58 @@ def shutdown_worker_celery(**kwargs):
 
 
 db: Optional[PostgreSQLDatabase] = None
+gym: Optional[IsaacSim] = None
+sim_params: Optional[gymapi.SimParams]
 
 
 def init_worker():
-    global db
+    global db, gym, sim_params
     isaac_logger.info("Initializing database connection for worker...")
     db = PostgreSQLDatabase(username='matteo')
     # Create connection engine
     db.start_sync()
     isaac_logger.info("DB connection Initialized.")
 
+    asset_root = tempfile.gettempdir()
+
+    # Parse arguments
+    # args = gymutil.parse_arguments(description="Loading and testing")
+    args = Arguments()
+
+    num_envs = 1
+
+    # configure sim
+    sim_params = gymapi.SimParams()
+    sim_params.dt = 1.0 / 60.0
+    sim_params.substeps = 2
+    if args.physics_engine == gymapi.SIM_FLEX:
+        sim_params.flex.solver_type = 5
+        sim_params.flex.num_outer_iterations = 4
+        sim_params.flex.num_inner_iterations = 15
+        sim_params.flex.relaxation = 0.75
+        sim_params.flex.warm_start = 0.8
+    elif args.physics_engine == gymapi.SIM_PHYSX:
+        sim_params.physx.solver_type = 1
+        sim_params.physx.num_position_iterations = 4
+        sim_params.physx.num_velocity_iterations = 1
+        sim_params.physx.num_threads = args.num_threads
+        sim_params.physx.use_gpu = False
+
+    isaac_logger.debug(
+        f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
+
+    gym = IsaacSim(db, asset_root,
+                   args.compute_device_id, args.graphics_device_id, args.physics_engine, sim_params,
+                   args.headless,
+                   num_envs, 2.0)
+    isaac_logger.debug('gym initialized')
+
 
 def shutdown_worker():
-    global db
+    global db, gym
+    # TODO thread stop
+    if gym is not None:
+        gym.destroy()
     if db is not None:
         # Disconnect from the database
         isaac_logger.info('Closing database connection for worker...')
@@ -55,13 +104,8 @@ def shutdown_worker():
         db = None
 
 
-class Arguments:
-    def __init__(self):
-        self.physics_engine = gymapi.SIM_PHYSX
-        self.compute_device_id = 0
-        self.graphics_device_id = 0
-        self.num_threads = 0
-        self.headless = True
+def simulator_main_loop():
+    pass
 
 
 def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
@@ -85,20 +129,8 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     robot_asset_file.write(robot_urdf)
     robot_asset_file.flush()
 
-
-    # Parse arguments
-    #args = gymutil.parse_arguments(description="Loading and testing")
-    args = Arguments()
-    isaac_logger.debug(
-        f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
-
     # Parse URDF(xml) locally, we need to extract some data
     robot: ISAACBot = ISAACBot(robot_urdf)
-
-    manual_db_session = False
-    if db is None:
-        manual_db_session = True
-        init_worker()
 
     # Insert robot
     db_robot = DBRobot(name=robot.name)
@@ -108,32 +140,6 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         session.commit()
         # this line actually queries the database while the session is still active
         db_robot_id = db_robot.id
-
-    # configure sim
-    sim_params = gymapi.SimParams()
-    sim_params.dt = 1.0 / 60.0
-    sim_params.substeps = 2
-    if args.physics_engine == gymapi.SIM_FLEX:
-        sim_params.flex.solver_type = 5
-        sim_params.flex.num_outer_iterations = 4
-        sim_params.flex.num_inner_iterations = 15
-        sim_params.flex.relaxation = 0.75
-        sim_params.flex.warm_start = 0.8
-    elif args.physics_engine == gymapi.SIM_PHYSX:
-        sim_params.physx.solver_type = 1
-        sim_params.physx.num_position_iterations = 4
-        sim_params.physx.num_velocity_iterations = 1
-        sim_params.physx.num_threads = args.num_threads
-        sim_params.physx.use_gpu = False
-
-    num_envs = 1
-
-    # %% Initialize gym
-    gym = IsaacSim(db, asset_root,
-                   args.compute_device_id, args.graphics_device_id, args.physics_engine, sim_params,
-                   args.headless,
-                   num_envs, 2.0)
-    isaac_logger.debug('gym initialized')
 
     # %% Initialize environment
     isaac_logger.debug("Initialize environment")
@@ -150,6 +156,8 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     isaac_logger.debug("Initialize Robot")
     # Load robot asset
 
+    num_envs = 1
+
     # put robots in environments
     assert (num_envs > 0)
     for i in range(num_envs):
@@ -157,13 +165,11 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         gym.insert_robot(i, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
 
     controller_update_time = sim_params.dt * 10
-    # List of active controllers
-    controllers = []
     # List of active evaluations (database objects)
     evals: List[DBRobotEvaluation] = []
 
-    controller_type = robot.controller_desc().getAttribute('type')
-    learner_type = robot.learner_desc().getAttribute('type')
+    controller_type = robot.controller().getAttribute('type')
+    learner_type = robot.learner().getAttribute('type')
 
     # TODO implement proper controller
     if controller_type == 'cpg':
@@ -187,12 +193,13 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     else:
         raise RuntimeError(f'unsupported controller "{controller_type}"')
 
-    isaac_logger.info(f'Loading Controller "{controller_type}" with learner "{learner_type}" [LEARNING NOT IMPLEMENTED]')
+    isaac_logger.info(
+        f'Loading Controller "{controller_type}" with learner "{learner_type}" [LEARNING NOT IMPLEMENTED]')
 
-    for i in range(num_envs):
-        controller = Controller(controller_init_params)
-        controllers.append(controller)
-        evals.append(DBRobotEvaluation(robot=db_robot, n=i))
+    for r in gym.robot_handles:
+        controller: RevolveController = Controller(controller_init_params)
+        gym.add_controller(r, controller)
+        evals.append(DBRobotEvaluation(robot=db_robot, n=0))
 
     # Write first evaluations in database
     with db.session() as session:
@@ -206,7 +213,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         time_nsec, time_sec = math.modf(time)
         time_nsec *= 1_000_000_000
         for _i in range(num_envs):
-            controller: RevolveController = controllers[_i]
+            controller: RevolveController = gym.controllers[_i]
             _robot_handle = gym.robot_handles[_i]
 
             controller.update(robot.actuators, robot.sensors, time, delta)
@@ -219,7 +226,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
             robot_rot: gymapi.Quat = robot_pose[1]
 
             # Convert to gazebo system
-            # TODO ask Fuda how to fix this
+            # TODO verify this is correct
             robot_pos_gz = (
                 robot_pos[0], -robot_pos[2], robot_pos[1]
             )
@@ -290,15 +297,10 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         session.add(evals[0])
         session.commit()
 
-    gym.destroy()
-
     # remove temporary file
     robot_asset_file.close()
 
     # close robot states session if present
     robot_states_session.close()
-
-    if manual_db_session:
-        shutdown_worker()
 
     return db_robot_id

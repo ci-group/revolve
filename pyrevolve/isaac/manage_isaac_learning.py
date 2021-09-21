@@ -1,44 +1,53 @@
 """
 Loading and testing
 """
-from typing import AnyStr, List, Optional
 import math
-import tempfile
 import os
+import tempfile
+from typing import AnyStr, List, Optional
 
 import numpy as np
+from celery.signals import worker_process_init, worker_process_shutdown
 from isaacgym import gymapi
-from isaacgym import gymutil
+from sqlalchemy.orm import Session
 
 from pyrevolve import isaac
 from pyrevolve.isaac.Learners import DifferentialEvolution
-
-from sqlalchemy.orm import Session
-
 from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
 from pyrevolve.util.supervisor.rabbits import Robot, RobotEvaluation, RobotState
+from . import isaac_logger
 
-from celery.signals import worker_process_init, worker_process_shutdown
+
+@worker_process_init.connect
+def init_worker_celery(**kwargs):
+    init_worker()
+
+
+@worker_process_shutdown.connect
+def shutdown_worker_celery(**kwargs):
+    shutdown_worker()
+
 
 db: Optional[PostgreSQLDatabase] = None
 
 
-@worker_process_init.connect
-def init_worker(**_kwargs):
+def init_worker():
     global db
-    print("Initializing database connection for worker...")
+    isaac_logger.info("Initializing database connection for worker...")
     db = PostgreSQLDatabase(username='matteo')
     # Create connection engine
     db.start_sync()
-    print("DB connection Initialized.")
+    isaac_logger.info("DB connection Initialized.")
 
 
-@worker_process_shutdown.connect
-def shutdown_worker(**_kwargs):
-    print('Closing database connectionn for worker...')
-    # Disconnect from the database
-    db.disconnect()
-    print('DB connection Closed.')
+def shutdown_worker():
+    global db
+    if db is not None:
+        # Disconnect from the database
+        isaac_logger.info('Closing database connection for worker...')
+        db.disconnect()
+        isaac_logger.info('DB connection Closed.')
+        db = None
 
 
 class Arguments:
@@ -73,12 +82,12 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
 
     # %% Initialize gym
     gym = gymapi.acquire_gym()
-    print('gym initialized')
+    isaac_logger.info('gym initialized')
 
     # Parse arguments
     #args = gymutil.parse_arguments(description="Loading and testing")
     args = Arguments()
-    print(f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
+    isaac_logger.info(f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
 
     # Insert robot
     new_robot = Robot(name=robot_asset_filename)
@@ -109,7 +118,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     sim = gym.create_sim(args.compute_device_id, args.graphics_device_id, args.physics_engine, sim_params)
 
     if sim is None:
-        print("*** Failed to create sim")
+        isaac_logger.error("*** Failed to create sim ***")
         raise RuntimeError("Failed to create sim")
 
     if not args.headless:
@@ -120,7 +129,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         gym.viewer_camera_look_at(viewer, None, cam_pos, cam_target)
 
     # %% Initialize environment
-    print("Initialize environment")
+    isaac_logger.info("Initialize environment")
     # Add ground plane
     plane_params = gymapi.PlaneParams()
     gym.add_ground(sim, plane_params)
@@ -138,10 +147,10 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     env_upper = gymapi.Vec3(spacing, spacing, spacing)
 
     # %% Initialize robots: Robot
-    print("Initialize Robot")
+    isaac_logger.info("Initialize Robot")
     # Load robot asset
 
-    print(f"Creating {num_envs} environments")
+    isaac_logger.info(f"Creating {num_envs} environments")
     envs = []
     num_per_row = int(math.sqrt(num_envs))
 
@@ -157,7 +166,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         env = gym.create_env(sim, env_lower, env_upper, num_per_row)
         envs.append(env)
 
-        print(f"Loading asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
+        isaac_logger.info(f"Loading asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
         robot_asset = gym.load_urdf(
             sim, asset_root, robot_asset_filename, asset_options)
 
@@ -257,7 +266,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         :param next_gen:
         :return: False if no running is needed any more
         """
-        print("Update Learner")
+        isaac_logger.info("Update Learner")
         with db.session() as session:
             for _i in range(num_envs):
                 _controller = controllers[_i]

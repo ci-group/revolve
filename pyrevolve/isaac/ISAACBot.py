@@ -147,8 +147,8 @@ class ISAACBot:
 
         return n_intra_connections + n_extra_connections
 
-    def learner(self) -> xml.dom.minidom.Element:
+    def learner_desc(self) -> xml.dom.minidom.Element:
         return self.urdf.documentElement.getElementsByTagName('rv:learner')[0]
 
-    def controller(self) -> xml.dom.minidom.Element:
+    def controller_desc(self) -> xml.dom.minidom.Element:
         return self.urdf.documentElement.getElementsByTagName('rv:controller')[0]
