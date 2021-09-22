@@ -7,7 +7,7 @@ from .genotype import Genotype
 
 
 def mutate(genotype: Genotype, config: Config) -> Genotype:
-    gen = Plasticoding(config.plasticoding_config)
+    gen = Plasticoding(config.plasticoding_config,robot_id=0)
     gen.grammar = genotype.genotype_impl
 
     mutation_config = MutationConfig(config.mutation_prob, config.plasticoding_config)

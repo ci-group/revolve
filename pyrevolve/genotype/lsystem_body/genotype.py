@@ -17,10 +17,10 @@ class Genotype(BodybrainCompositionSubGenotype):
         self.genotype_impl = genotype_impl
 
     def serialize_to_dict(self) -> Dict[Any, Any]:
-        return self.genotype_impl
+        return self#.genotype_impl
 
-    def deserialize_from_dict(self, serialized: Dict[str, Any]):
-        self.genotype_impl = serialized
+    def deserialize_from_dict(self, serialized: Dict[Any, Any]):
+        self = serialized#.genotype_impl = serialized
 
     @staticmethod
     @typechecked
@@ -31,3 +31,4 @@ class Genotype(BodybrainCompositionSubGenotype):
     @typechecked
     def clone(self) -> Genotype:
         return Genotype(self.genotype_impl)
+

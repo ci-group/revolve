@@ -50,7 +50,7 @@ class Genotype(Generic[_body_type, _brain_type], RevolveGenotype):
     def export_genotype(self, filepath: str):
         body = self._body_genotype.serialize_to_dict()
         brain = self._brain_genotype.serialize_to_dict()
-        asjson = json.dumps({"body": body, "brain": brain})
+        asjson = json.dumps({"body": str(body), "brain": brain})
         file = open(filepath, "w+")
         file.write(asjson)
         file.close()

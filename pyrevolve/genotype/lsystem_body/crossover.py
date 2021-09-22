@@ -12,17 +12,20 @@ def crossover(parents: List[Genotype], config: Config) -> Genotype:
     pars = plasticize(parents, config)
 
     crossover_config = CrossoverConfig(
-        config.crossover_prob, config.plasticoding_config
+        config.crossover_prob,
+        config.plasticoding_config,
     )
+    out = standard_crossover(pars, crossover_config)
 
-    out = deplasticize(standard_crossover({"plane": 0.03}, pars, crossover_config))
-    return out
+    gen = Genotype(genotype_impl=out.grammar)
+
+    return gen
 
 
 def plasticize(parents, config):
     p = []
     for parent in parents:
-        gen = Plasticoding(config.plasticoding_config)
+        gen = Plasticoding(config.plasticoding_config,robot_id=0)
         gen.grammar = parent.genotype_impl
         p.append(gen)
     return p
