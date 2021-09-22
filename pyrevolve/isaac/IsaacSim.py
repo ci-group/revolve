@@ -2,7 +2,7 @@
 Isaac Simulator wrapper for functionality
 """
 import math
-from typing import AnyStr, List, Optional, Any, Dict
+from typing import AnyStr, List, Optional, Union, Dict
 
 from isaacgym import gymapi
 
@@ -69,7 +69,7 @@ class IsaacSim:
         self._gym.add_ground(self._sim, plane_params)
 
     def insert_robot(self,
-                     env: Any[gymapi.Env, int],
+                     env: Union[gymapi.Env, int],
                      urdf_path: AnyStr,
                      robot_asset_options: gymapi.AssetOptions,
                      pose: gymapi.Transform,
@@ -104,7 +104,7 @@ class IsaacSim:
         self.controllers[robot_handle] = controller
 
     def prepare(self) -> bool:
-        return self._gym.prepare(self._sim)
+        return self._gym.prepare_sim(self._sim)
 
     def simulate(self) -> None:
         self._gym.simulate(self._sim)
@@ -113,16 +113,16 @@ class IsaacSim:
         self._gym.fetch_results(self._sim, wait_for_latest_sim_step)
 
     def set_robot_dof_position_targets(self,
-                                       env: Any[int, gymapi.Env],
-                                       robot_handle: Any[int, gymapi.Actor],
+                                       env: Union[int, gymapi.Env],
+                                       robot_handle: int,
                                        position_target: List[float],
                                        ) -> None:
         env: gymapi.Env = self._environment(env)
         self._gym.set_actor_dof_position_targets(env, robot_handle, position_target)
 
     def get_robot_position_rotation(self,
-                                    env: Any[int, gymapi.Env],
-                                    robot_handle: Any[int, gymapi.Actor],
+                                    env: Union[int, gymapi.Env],
+                                    robot_handle: int,
                                     ) -> (gymapi.Vec3, gymapi.Quat):
         """
         Returns last available data for position and rotation of a robot (static body)
@@ -161,7 +161,7 @@ class IsaacSim:
             self._gym.destroy_viewer(self._viewer)
         self._gym.destroy_sim(self._sim)
 
-    def _environment(self, env: Any[int, gymapi.Env]) -> gymapi.Env:
+    def _environment(self, env: Union[int, gymapi.Env]) -> gymapi.Env:
         if isinstance(env, int):
             env = self.envs[env]
 
