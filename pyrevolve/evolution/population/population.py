@@ -456,7 +456,7 @@ class Population:
         # but we want an entry in the output logs for the best one
         # and the easiest way to get that is to just evaluate again
         original_weights = phenotype.brain.weights
-        phenotype.brain.weights = population[0]
+        phenotype.brain.weights = population[0].tolist()
         fitness, behaviour = await self.get_fitness(individual, fitness_fun, phenotype)
         old_id = phenotype._id
         phenotype._id = f"{old_id}_afterlearning"
@@ -476,7 +476,7 @@ class Population:
     ):
         return [
             await self._get_fitness_revdeknn_evaluate_weights(
-                individual, fitness_fun, phenotype, weights
+                individual, fitness_fun, phenotype, weights.tolist()
             )
             for weights in theta
         ]
