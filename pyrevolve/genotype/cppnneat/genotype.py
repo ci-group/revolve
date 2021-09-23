@@ -89,9 +89,9 @@ class Genotype(BodybrainCompositionSubGenotype):
         return Genotype(multineat.Genome(self.multineat_genome))
 
     @typechecked
-    def serialize_to_dict(self) -> Dict[str, Any]:
+    def serialize_to_dict(self) -> Dict[any, Any]:
         return {"multineat_genome": self._multineat_genome.Serialize()}
 
     @typechecked
-    def deserialize_from_dict(self, serialized: Dict[str, Any]):
+    def deserialize_from_dict(self, serialized: Dict[any, Any]):
         self._multineat_genome.Deserialize(serialized["multineat_genome"])

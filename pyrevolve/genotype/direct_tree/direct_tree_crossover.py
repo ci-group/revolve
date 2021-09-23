@@ -7,6 +7,7 @@ from pyrevolve.genotype.direct_tree.direct_tree_utils import recursive_iterate_m
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
 from pyrevolve.revolve_bot import RevolveModule
 from pyrevolve.revolve_bot.revolve_module import Orientation, CoreModule
+from pyrevolve.genotype.tree_based_body.genotype import Genotype
 
 
 def crossover_list(parents: List[DirectTreeGenotype], conf: DirectTreeGenotypeConfig):
@@ -82,4 +83,4 @@ def crossover(parent_a: DirectTreeGenotype,
         assert module.id not in module_ids
         module_ids.add(module.id)
 
-    return genotype_child
+    return Genotype(genotype_impl=genotype_child)
