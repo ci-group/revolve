@@ -1,7 +1,9 @@
 from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet, PlasticodingConfig
 from pyrevolve.evolution.individual import Individual
 import random
-from ....custom_logging.logger import genotype_logger
+from pyrevolve.genotype.plasticoding.plasticoding import Plasticoding, Alphabet
+from pyrevolve.custom_logging.logger import genotype_logger
+from pyrevolve.genotype.lsystem_body.genotype import Genotype
 
 
 def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
@@ -38,19 +40,18 @@ def generate_child_genotype(parent_genotypes, genotype_conf, crossover_conf):
     return genotype.clone()
 
 
-def standard_crossover(environments, parent_individuals, conf):
+def standard_crossover(parent_individuals, crossover_conf):
     """
     Creates an child (individual) through crossover with two parents
 
     :param parent_genotypes: genotypes of the parents to be used for crossover
     :return: genotype result of the crossover
     """
-    first_environment = list(environments.keys())[-1]
-
-    parent_genotypes = [parent_individuals[p] for p in range(parent_individuals.__len__())]
-    new_genotype = generate_child_genotype(parent_genotypes, conf.genotype_conf, conf)
-
+    parent_genotypes = [p for p in parent_individuals]
+    new_genotype = generate_child_genotype(parent_genotypes, crossover_conf.plasticoding_config, crossover_conf)
     #TODO what if you have more than 2 parents? fix log
     genotype_logger.info(
-        f'crossover: for genome {new_genotype.id} done.')
+        f'crossover: for genome {new_genotype.id} - p1: {parent_genotypes[0].id} p2: {parent_genotypes[1].id}.')
+
+    gen = Genotype
     return new_genotype

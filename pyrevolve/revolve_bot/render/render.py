@@ -1,7 +1,7 @@
 import cairo
 from .canvas import Canvas
 from .grid import Grid
-from ..revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, TouchSensorModule, BrickSensorModule
+from ..revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, TouchSensorModule, BrickSensorModule, LinearActuatorModule
 from ...custom_logging.logger import logger
 
 
@@ -24,6 +24,11 @@ class Render:
             canvas.move_by_slot(slot)
             Canvas.rotating_orientation += module.orientation
             canvas.draw_hinge(module.id)
+            canvas.draw_connector_to_parent()
+        elif isinstance(module, LinearActuatorModule):
+            canvas.move_by_slot(slot)
+            Canvas.rotating_orientation += module.orientation
+            canvas.draw_linear(module.id)
             canvas.draw_connector_to_parent()
         elif isinstance(module, BrickModule):
             canvas.move_by_slot(slot)
@@ -53,7 +58,7 @@ class Render:
         @param slot: attachment of parent slot
         @param include_sensors: add sensors to visisted_cooridnates if True
         """
-        if isinstance(module, ActiveHingeModule) or isinstance(module, BrickModule) or isinstance(module, TouchSensorModule) or isinstance(module, BrickSensorModule):
+        if isinstance(module, ActiveHingeModule) or isinstance(module, LinearActuatorModule) or isinstance(module, BrickModule) or isinstance(module, TouchSensorModule) or isinstance(module, BrickSensorModule):
             self.grid.move_by_slot(slot)
             self.grid.add_to_visited(include_sensors, isinstance(module, TouchSensorModule))
         if module.has_children():

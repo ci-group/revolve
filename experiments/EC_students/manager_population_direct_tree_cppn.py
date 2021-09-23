@@ -34,23 +34,23 @@ from pyrevolve.genotype.cppnneat.brain.develop import develop as cppnneat_brain_
 from pyrevolve.genotype.cppnneat.brain.genotype import Genotype as CppnneatBrainGenotype
 from pyrevolve.genotype.cppnneat.brain.mutation import mutate as cppnneat_brain_mutate
 from pyrevolve.genotype.cppnneat.config import get_default_multineat_params
-from pyrevolve.genotype.lsystem_body.config import Config as LsystemBodyConfig
-from pyrevolve.genotype.lsystem_body.crossover import (
-    crossover as lsystem_body_crossover,
+from pyrevolve.genotype.tree_based_body.config import Config as TreeBaseBodyConfig
+from pyrevolve.genotype.tree_based_body.crossover import (
+    crossover as treebase_body_crossover,
 )
-from pyrevolve.genotype.lsystem_body.develop import develop as lsystem_body_develop
-from pyrevolve.genotype.lsystem_body.genotype import Genotype as lsystemBodyGenotype
-from pyrevolve.genotype.lsystem_body.mutation import mutate as lsystem_body_mutate
-from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
-from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+from pyrevolve.genotype.tree_based_body.develop import develop as treebase_body_develop
+from pyrevolve.genotype.tree_based_body.genotype import Genotype as TreeBaseBodyGenotype
+from pyrevolve.genotype.tree_based_body.mutation import mutate as tree_base_body_mutate
+from pyrevolve.genotype.direct_tree.direct_tree_crossover import crossover as tree_base_crossover
+from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeMutationConfig as MutationConfig
+from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
 
 @dataclass
 class GenotypeConstructorConfig:
-    body_plasticoding_config: PlasticodingConfig
+    body_dtree_config: DirectTreeGenotypeConfig()
     brain_n_start_mutations: int
     bodybrain_composition_config: BodybrainCompositionConfig
     brain_multineat_params: multineat.Parameters
@@ -60,10 +60,10 @@ class GenotypeConstructorConfig:
 def create_random_genotype(
     config: GenotypeConstructorConfig, id: int
 ) -> BodybrainCompositionGenotype:
-    return BodybrainCompositionGenotype[lsystemBodyGenotype, CppnneatBrainGenotype](
+    return BodybrainCompositionGenotype[TreeBaseBodyGenotype, CppnneatBrainGenotype](
         id,
         config.bodybrain_composition_config,
-        lsystemBodyGenotype.random(config.body_plasticoding_config),
+        TreeBaseBodyGenotype.random(config),
         CppnneatBrainGenotype.random(
             config.brain_multineat_params,
             config.brain_cppn_output_activation_type,
@@ -113,21 +113,19 @@ async def run():
         reset_neuron_random=False,
     )
 
-    body_config = LsystemBodyConfig(
-        PlasticodingConfig(), mutation_prob=0.8, crossover_prob=0.8
-    )
+    body_config = DirectTreeGenotypeConfig().init
 
     # bodybrain composition genotype config
     bodybrain_composition_config = BodybrainCompositionConfig(
-        body_crossover=lsystem_body_crossover,
+        body_crossover=treebase_body_crossover,
         brain_crossover=cppnneat_brain_crossover,
         body_crossover_config=body_config,
         brain_crossover_config=brain_config,
-        body_mutate=lsystem_body_mutate,
+        body_mutate=tree_base_body_mutate,
         brain_mutate=cppnneat_brain_mutate,
         body_mutate_config=body_config,
         brain_mutate_config=brain_config,
-        body_develop=lsystem_body_develop,
+        body_develop=treebase_body_develop,
         brain_develop=cppnneat_brain_develop,
         body_develop_config=body_config,
         brain_develop_config=brain_config,
@@ -135,10 +133,7 @@ async def run():
 
     # genotype constructor config. Used by `create_random_genotype` in this file.
     genotype_constructor_config = GenotypeConstructorConfig(
-        PlasticodingConfig(
-            max_structural_modules=15,
-            #plastic=False,
-        ),
+        DirectTreeGenotypeConfig(),
         brain_n_start_mutations,
         bodybrain_composition_config,
         multineat_params_brain,

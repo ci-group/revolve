@@ -6,18 +6,19 @@ from typeguard import typechecked
 
 from ..bodybrain_composition.sub_genotype import \
     SubGenotype as BodybrainCompositionSubGenotype
-from ..plasticoding.initialization import _generate_random_grammar
-from ..plasticoding.plasticoding import Alphabet
+from ..direct_tree.direct_tree_genotype import DirectTreeGenotype
+
 
 
 class Genotype(BodybrainCompositionSubGenotype):
-    genotype_impl: Dict[Alphabet, List[Any]]
+    genotype_impl: DirectTreeGenotype
 
-    def __init__(self, genotype_impl: dict):
+    def __init__(self, genotype_impl: DirectTreeGenotype):
         self.genotype_impl = genotype_impl
 
     def serialize_to_dict(self) -> Dict[Any, Any]:
-        return str(self)
+        self.genotype_impl.develop()
+        return self.genotype_impl.phenotype.to_yaml()
 
     def deserialize_from_dict(self, serialized: Dict[Any, Any]):
         self = serialized
@@ -25,9 +26,12 @@ class Genotype(BodybrainCompositionSubGenotype):
     @staticmethod
     @typechecked
     def random(conf) -> Genotype:
-        gen = Genotype(genotype_impl=_generate_random_grammar(conf))
-        return gen
+
+        gen = DirectTreeGenotype(conf.body_dtree_config, 0).random_initialization()
+        out = Genotype(genotype_impl=gen)
+        return out
 
     @typechecked
     def clone(self) -> Genotype:
         return Genotype(self.genotype_impl)
+

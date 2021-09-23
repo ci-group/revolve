@@ -11,6 +11,7 @@ from pyrevolve.util import decide
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.revolve_bot.revolve_module import CoreModule, RevolveModule, Orientation, ActiveHingeModule, BrickModule
+from pyrevolve.genotype.tree_based_body.genotype import Genotype
 
 
 def mutate(genotype: DirectTreeGenotype,
@@ -40,13 +41,13 @@ def mutate(genotype: DirectTreeGenotype,
     # TODO change colors
 
     # delete_random_subtree
-    if decide(genotype_conf.mutation.p_delete_subtree):
+    if decide(genotype.conf.mutation.p_delete_subtree):
         r, n = delete_random_subtree(tree, genotype_conf)
         if r is not None:
             print(f"DELETED {n} ELEMENTS")
 
     # generate random new module
-    if decide(genotype_conf.mutation.p_generate_subtree):
+    if decide(genotype.conf.mutation.p_generate_subtree):
         r = generate_random_new_module(tree, genotype_conf)
         if r is not None:
             print(f"GENERATED NEW SUBTREE of size {subtree_size(r)}")
@@ -54,17 +55,17 @@ def mutate(genotype: DirectTreeGenotype,
     # TODO random rotate modules
 
     # duplicate random subtree
-    if decide(genotype_conf.mutation.p_duplicate_subtree):
+    if decide(genotype.conf.mutation.p_duplicate_subtree):
         if duplicate_random_subtree(tree, genotype_conf):
             print("DUPLICATED")
 
     # swap random subtree
-    if decide(genotype_conf.mutation.p_swap_subtree):
+    if decide(genotype.conf.mutation.p_swap_subtree):
         if swap_random_subtree(tree):
             print("SWAPPED")
 
     # mutate oscillators
-    if decide(genotype_conf.mutation.p_mutate_oscillators):
+    if decide(genotype.conf.mutation.p_mutate_oscillators):
         mutate_oscillators(tree, genotype_conf)
 
     module_ids = set()
@@ -72,7 +73,7 @@ def mutate(genotype: DirectTreeGenotype,
         assert module.id not in module_ids
         module_ids.add(module.id)
 
-    return genotype
+    return Genotype(genotype_impl=genotype)
 
 
 def delete_random_subtree(root: RevolveModule,
@@ -146,8 +147,8 @@ def generate_random_new_module(root: RevolveModule,
 
     possible_children_probs: List[float] = [
         0,
-        genotype_conf.init.prob_child_block,
-        genotype_conf.init.prob_child_active_joint,
+        genotype_conf.prob_child_block,
+        genotype_conf.prob_child_active_joint,
     ]
 
     new_module = generate_new_module(target_parent, target_empty_slot, possible_children_probs, genotype_conf)
@@ -248,20 +249,20 @@ def mutate_oscillators(root: RevolveModule, conf: DirectTreeGenotypeConfig) -> N
     :param root: root of the robot tree
     :param conf: genotype config for mutation probabilities
     """
-
-    for _, _, module, _ in recursive_iterate_modules(root):
-        if isinstance(module, ActiveHingeModule):
-            if decide(conf.mutation.p_mutate_oscillator):
-                module.oscillator_amplitude += random.gauss(0, conf.mutation.mutate_oscillator_amplitude_sigma)
-                module.oscillator_period += random.gauss(0, conf.mutation.mutate_oscillator_period_sigma)
-                module.oscillator_phase += random.gauss(0, conf.mutation.mutate_oscillator_phase_sigma)
-
-                # amplitude is clamped between 0 and 1
-                module.oscillator_amplitude = clamp(module.oscillator_amplitude, 0, 1)
-                # phase and period are periodically repeating every max_oscillation,
-                #  so we bound the value between [0,conf.max_oscillation] for convenience
-                module.oscillator_phase = module.oscillator_phase % conf.max_oscillation
-                module.oscillator_period = module.oscillator_period % conf.max_oscillation
+    pass
+    # for _, _, module, _ in recursive_iterate_modules(root):
+    #     if isinstance(module, ActiveHingeModule):
+    #         if decide(conf.p_mutate_oscillator):
+    #             module.oscillator_amplitude += random.gauss(0, conf.mutate_oscillator_amplitude_sigma)
+    #             module.oscillator_period += random.gauss(0, conf.mutate_oscillator_period_sigma)
+    #             module.oscillator_phase += random.gauss(0, conf.mutate_oscillator_phase_sigma)
+    #
+    #             # amplitude is clamped between 0 and 1
+    #             module.oscillator_amplitude = clamp(module.oscillator_amplitude, 0, 1)
+    #             # phase and period are periodically repeating every max_oscillation,
+    #             #  so we bound the value between [0,conf.max_oscillation] for convenience
+    #             module.oscillator_phase = module.oscillator_phase % conf.max_oscillation
+    #             module.oscillator_period = module.oscillator_period % conf.max_oscillation
 
 
 def clamp(value: Union[float, int],

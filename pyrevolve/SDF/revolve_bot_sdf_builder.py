@@ -2,7 +2,7 @@ import math
 import xml.etree.ElementTree
 
 from pyrevolve import SDF
-from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, Orientation, BoxSlot
+from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, Orientation, BoxSlot, LinearActuatorModule
 
 
 def revolve_bot_to_sdf(robot, robot_pose, nice_format, self_collide=True):
@@ -143,8 +143,63 @@ def _module_to_sdf(module, parent_link, parent_slot: BoxSlot, parent_collision, 
     my_link = parent_link
     my_collision = None
 
-    # ACTIVE HINGE
+    # ACTIVE HINGE OR LinearActuator
     if type(module) is ActiveHingeModule:
+        child_link = SDF.Link('{}_Leg'.format(slot_chain), self_collide=self_collide)
+
+        visual_frame, collisions_frame, \
+        visual_servo, collisions_servo, \
+        joint = module.to_sdf('{}'.format(slot_chain), parent_link, child_link)
+
+        # parent_slot = parent_module.boxslot(parent_slot)
+        module_slot = module.boxslot_frame(Orientation.BACK)
+        _sdf_attach_module(module_slot, module.orientation,
+                           visual_frame, collisions_frame[0],
+                           parent_slot, parent_collision)
+
+        parent_slot = module.boxslot_frame(Orientation.FORWARD)
+        module_slot = module.boxslot_servo(Orientation.BACK)
+        _sdf_attach_module(module_slot, None,
+                           visual_servo, collisions_servo[0],
+                           parent_slot, collisions_frame[0])
+
+        joint.set_rotation(visual_servo.get_rotation())
+        old_position = joint.get_position()
+        joint.set_position(visual_servo.get_position())
+        joint.translate(joint.to_parent_direction(old_position))
+
+        # Add visuals and collisions for Servo Frame block
+        parent_link.append(visual_frame)
+        for i, collision_frame in enumerate(collisions_frame):
+            parent_link.append(collision_frame)
+            collisions.append(collision_frame)
+            if i != 0:
+                old_pos = collision_frame.get_position()
+                collision_frame.set_rotation(visual_frame.get_rotation())
+                collision_frame.set_position(visual_frame.get_position())
+                collision_frame.translate(collision_frame.to_parent_direction(old_pos))
+
+        # Add visuals and collisions for Servo block
+        child_link.append(visual_servo)
+        for i, collision_servo in enumerate(collisions_servo):
+            child_link.append(collision_servo)
+            collisions.append(collision_servo)
+            if i != 0:
+                old_pos = collision_servo.get_position()
+                collision_servo.set_position(collisions_servo[0].get_position())
+                collision_servo.set_rotation(collisions_servo[0].get_rotation())
+                collision_servo.translate(collision_servo.to_parent_direction(old_pos))
+
+        # Add joint
+        child_link.add_joint(joint)
+        links.append(child_link)
+        joints.append(joint)
+
+        # update my_link and my_collision
+        my_link = child_link
+        my_collision = collisions_servo[0]
+
+    elif type(module) is LinearActuatorModule:
         child_link = SDF.Link('{}_Leg'.format(slot_chain), self_collide=self_collide)
 
         visual_frame, collisions_frame, \

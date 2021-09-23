@@ -1,7 +1,7 @@
 import math
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, BrickModule, TouchSensorModule, BrickSensorModule, \
-    CoreModule
+    CoreModule, LinearActuatorModule
 
 
 class MeasureBody3D:
@@ -434,6 +434,8 @@ class MeasureBody3D:
         if module is None:
             module = self.body
         elif isinstance(module, ActiveHingeModule) and not _filter(module):
+            hinge_count += 1
+        elif isinstance(module, LinearActuatorModule) and not _filter(module):
             hinge_count += 1
         elif isinstance(module, BrickModule) and not _filter(module):
             brick_count += 1
