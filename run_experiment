@@ -1,0 +1,11 @@
+ #!/bin/bash
+
+ 
+while true
+	do
+         for i in {1..10}; do
+                ./revolve.py --experiment-name experiment_learning --run $i --manager experiments/EC_students/manager_learning --n-cores 4 --port-start 11000  --evaluation-time 50;
+
+                sleep 5s
+	   done
+done
