@@ -1,13 +1,12 @@
 import atexit
 import uuid
 from concurrent.futures.process import ProcessPoolExecutor
+from typing import AnyStr, Callable, Any, Tuple, Optional, Union
 
 import asyncio
-from typing import AnyStr, Callable, Any, Tuple, Optional, Iterable, Union
-
 import celery
 import celery.exceptions
-import math
+import sqlalchemy
 
 from pyrevolve.SDF.math import Vector3
 from pyrevolve.custom_logging.logger import logger
@@ -15,9 +14,8 @@ from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
-from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
-from pyrevolve.util.supervisor.rabbits import RobotState
-from pyrevolve.util import Time
+from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase, RobotEvaluation as DBRobotEvaluation, RobotState as DBRobotState, Robot as DBRobot
+from pyrevolve.util.supervisor.rabbits.measurement import DBRobotManager
 
 ISAAC_AVAILABLE = False
 try:
@@ -61,6 +59,8 @@ def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, t
     elif simulator == 'isaacgym':
         assert ISAAC_AVAILABLE
         r = evaluate_robot_isaac.delay(robot_sdf, max_age)
+        # Uncomment this if you want isaac in the same process of revolve (make sure you only run one at the time)
+        # return evaluate_robot_isaac(robot_sdf, max_age)
     else:
         raise RuntimeError(f"Simulator \"{simulator}\" not recognized")
     logger.info(f'Request SENT to rabbitmq: {str(r)} for "{robot_name}"')
@@ -93,14 +93,14 @@ class CeleryQueue:
         self._db.init_db(first_time=False)
 
     async def stop(self, wait: Union[float, bool] = True):
-        if self._db is not None:
-            self._db.disconnect()
-            self._db.destroy()
+        # if self._db is not None:
+        #     self._db.disconnect()
+        #     self._db.destroy()
         self._db: Optional[PostgreSQLDatabase] = None
         if type(wait) is float:
             raise NotImplementedError("call shutdown but wait only N seconds not implemented yet")
         elif type(wait) is bool:
-            self._process_pool_executor.shutdown(wait=wait, cancel_futures=True)
+            self._process_pool_executor.shutdown(wait=wait)
         else:
             raise AttributeError(f"Wait cannot be of type {type(wait)}")
 
@@ -136,65 +136,63 @@ class CeleryQueue:
         """
 
         for attempt in range(self.MAX_ATTEMPTS):
-            pose_z: float = self._args.z_start
-            if robot.simulation_boundaries is not None:
-                pose_z -= robot.simulation_boundaries.min.z
-            pose: Vector3 = Vector3(0.0, 0.0, pose_z)
-            if self._use_isaacgym:
-                robot_sdf: AnyStr = robot.to_urdf(pose)
-            else:
-                robot_sdf: AnyStr = robot.to_sdf(pose)
-            max_age: float = conf.evaluation_time + conf.grace_time
-
-            import xml.dom.minidom
-            reparsed = xml.dom.minidom.parseString(robot_sdf)
-            robot_name = ''
-            for model in reparsed.documentElement.getElementsByTagName('model'):
-                robot_name = model.getAttribute('name')
-                if str(robot_name).isdigit():
-                    error_message = f'Inserting robot with invalid name: {robot_name}'
-                    logger.critical(error_message)
-                    raise RuntimeError(error_message)
-                logger.info(f"Inserting robot {robot_name}.")
-
             try:
-                robot_id: int = await self._call_evaluate_robot(robot_name, robot_sdf, max_age, self.EVALUATION_TIMEOUT)
-                assert(type(robot_id) == int)
-            except celery.exceptions.TimeoutError:
-                logger.warning(f'Giving up on robot {robot_name} after {self.EVALUATION_TIMEOUT} seconds.')
-                if attempt < self.MAX_ATTEMPTS:
-                    logger.warning(f'Retrying')
-                continue
-
-            # DB_ID from rabbitmq and retrieve result from database
-            with self._db.session() as session:
-                # behaviour = [s for s in session.query(RobotState).filter(RobotState.evaluation_robot_id == robot_id)]
-                behaviour_query: Iterable[RobotState] = session\
-                    .query(RobotState) \
-                    .filter(RobotState.evaluation_robot_id == int(robot_id))\
-                    .filter(RobotState.evaluation_n == int(99))
-                first_pos: Optional[Vector3] = None
-                first_time: Time
-                last_pos: Optional[Vector3] = None
-                last_time: Time
-                for state in behaviour_query:
-                    state: RobotState = state
-                    last_time = Time(sec=state.time_sec, nsec=state.time_nsec)
-                    last_pos = Vector3(state.pos_x, state.pos_y, state.pos_z)
-                    if first_pos is None:
-                        first_time = last_time
-                        first_pos = last_pos.copy()
-
-                # TODO fitness: float = fitness_fun(behaviour, robot)
-                if first_pos is not None and last_pos is not None:
-                    distance: Vector3 = last_pos - first_pos
-                    distance_size: float = math.sqrt(distance.x*distance.x + distance.y*distance.y)
-                    fitness: float = distance_size / float(last_time - first_time)
+                pose_z: float = self._args.z_start
+                if robot.simulation_boundaries is not None:
+                    pose_z -= robot.simulation_boundaries.min.z
+                pose: Vector3 = Vector3(0.0, 0.0, pose_z)
+                if self._use_isaacgym:
+                    robot_sdf: AnyStr = robot.to_urdf(pose)
                 else:
-                    fitness: float = -1
+                    robot_sdf: AnyStr = robot.to_sdf(pose)
+                max_age: float = conf.evaluation_time + conf.grace_time
 
-            logger.info(f'Robot {robot.id} evaluation finished with fitness={fitness}')
-            return fitness, BehaviouralMeasurements()
+                import xml.dom.minidom
+                reparsed = xml.dom.minidom.parseString(robot_sdf)
+                robot_name = ''
+                for model in reparsed.documentElement.getElementsByTagName('model'):
+                    robot_name = model.getAttribute('name')
+                    if str(robot_name).isdigit():
+                        error_message = f'Inserting robot with invalid name: {robot_name}'
+                        logger.critical(error_message)
+                        raise RuntimeError(error_message)
+                    logger.info(f"Inserting robot {robot_name}.")
+
+                try:
+                    robot_id: int = await self._call_evaluate_robot(robot_name,
+                                                                    robot_sdf,
+                                                                    max_age,
+                                                                    self.EVALUATION_TIMEOUT)
+                    assert (type(robot_id) == int)
+                except celery.exceptions.TimeoutError:
+                    logger.warning(f'Giving up on robot {robot_name} after {self.EVALUATION_TIMEOUT} seconds.')
+                    if attempt < self.MAX_ATTEMPTS:
+                        logger.warning(f'Retrying')
+                    continue
+
+                robot_manager = DBRobotManager(self._db, robot_id, robot,
+                                               evaluation_time=conf.evaluation_time,
+                                               warmup_time=conf.grace_time)
+                robot_fitness = fitness_fun(robot_manager, robot)
+
+                logger.info(f'Robot {robot_id} evaluation finished with fitness={robot_fitness}')
+                return robot_fitness, BehaviouralMeasurements(robot_manager, robot)
+            except Exception as e:
+                try:
+                    with self._db.session() as session:
+                        db_robot = session.query(DBRobot).filter(DBRobot.name == f'robot_{robot.id}').one()
+                        db_evals = session.query(DBRobotEvaluation).filter(DBRobotEvaluation.robot == db_robot)
+                        db_states = session.query(DBRobotState).filter(DBRobotEvaluation.robot == db_robot)
+                        db_evals.delete()
+                        db_states.delete()
+                        db_robot.delete()
+                        session.commit()
+                except sqlalchemy.sxc.SQLAchemyError as e:
+                    logger.exception(
+                        f"Exception thrown when trying to remove failed robot:\"{robot.id}\" at attempt #{attempt}.")
+
+                logger.exception(
+                    f"Exception thrown when trying to simulate a robot:\"{robot.id}\" at attempt #{attempt}.")
 
         logger.warning(f'Robot {robot.id} evaluation failed (reached max attempt of {self.MAX_ATTEMPTS}),'
                        ' fitness set to None.')

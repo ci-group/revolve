@@ -5,6 +5,8 @@ import multineat
 import re
 import sys
 
+from typing import TextIO, AnyStr
+
 from pyrevolve.genotype import Genotype
 from pyrevolve.revolve_bot.brain import BrainCPG, BrainCPPNCPG
 
@@ -197,15 +199,15 @@ class NeatBrainGenome(Genotype):
             lines = f.readlines()
             self._load_genotype_from(lines[0])
 
-    def _load_genotype_from(self, text):
+    def _load_genotype_from(self, text: AnyStr):
         text = text.strip()
         self._neat_genome.Deserialize(text.replace('inf', str(sys.float_info.max)).strip('\n'))
 
-    def export_genotype(self, file_path: str):
+    def export_genotype(self, file_path: AnyStr):
         with open(file_path, 'w+') as file:
             self._export_genotype_open_file(file)
 
-    def _export_genotype_open_file(self, file):
+    def _export_genotype_open_file(self, file: TextIO):
         text = self._neat_genome.Serialize()
         file.write(text + '\n')
 

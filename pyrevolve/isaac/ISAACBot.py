@@ -174,8 +174,8 @@ class ISAACBot:
         weight_matrix -= weight_matrix.T  # copy weights in anti-symmetric direction
         return weight_matrix
 
-    def learner(self) -> xml.dom.minidom.Element:
+    def learner_desc(self) -> xml.dom.minidom.Element:
         return self.urdf.documentElement.getElementsByTagName('rv:learner')[0]
 
-    def controller(self) -> xml.dom.minidom.Element:
+    def controller_desc(self) -> xml.dom.minidom.Element:
         return self.urdf.documentElement.getElementsByTagName('rv:controller')[0]

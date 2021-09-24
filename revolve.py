@@ -3,6 +3,7 @@ import os
 import sys
 import asyncio
 import importlib
+import traceback
 
 from pyrevolve.data_analisys.visualize_robot import test_robot_run
 from pyrevolve.data_analisys.check_robot_collision import test_collision_robot
@@ -34,11 +35,10 @@ def run(loop, arguments):
     else:
         # no test robot, no manager -> just run gazebo
         loop.run_until_complete(only_gazebo.run())
-        loop.run_forever()
+        return loop.run_forever()
 
 
 def main():
-    import traceback
 
     def handler(_loop, context):
         try:

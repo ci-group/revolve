@@ -195,14 +195,14 @@ class RevolveBot:
 
         return yaml.dump(yaml_dict)
 
-    def save_file(self, path: str, conf_type: str = 'yaml') -> None:
+    def save_file(self, path: AnyStr, conf_type: AnyStr = 'yaml') -> None:
         """
         Save robot's description on a given file path in a specified format
         :param path:
         :param conf_type:
         :return:
         """
-        robot: str
+        robot: AnyStr
         if 'yaml' == conf_type:
             robot = self.to_yaml()
         elif 'sdf' == conf_type:

@@ -10,20 +10,20 @@ class NEATCrossoverConf:
         self.speciation = True
 
 
-def standard_crossover(parents, NeatCrossoverConf, crossover_conf, lsystem_conf):
+def standard_crossover(parents, NeatCrossoverConf: NEATCrossoverConf, crossover_conf, lsystem_conf):
     """
     Creates an child (genotype) through crossover with two parents
 
     :param parents: parents brain genome to be used for crossover
     :param NeatCrossoverConf: NEAT genotype configuration object
-    :param crossover_conf: CrossoverConfig for lsystem
+    :param crossover_conf: CrossoverConfig
     :return: genotype result of the crossover
     """
     assert len(parents) == 2
 
     crossover_attempt = random.uniform(0.0, 1.0)
     if crossover_attempt > crossover_conf.crossover_prob:
-         new_genotype = parents[0]._neat_genome
+        new_genotype = parents[0]._neat_genome
     else:
         mother = parents[0]._neat_genome
         father = parents[1]._neat_genome
