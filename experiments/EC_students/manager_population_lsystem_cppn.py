@@ -43,7 +43,7 @@ from pyrevolve.genotype.lsystem_body.genotype import Genotype as lsystemBodyGeno
 from pyrevolve.genotype.lsystem_body.mutation import mutate as lsystem_body_mutate
 from pyrevolve.genotype.plasticoding.crossover.crossover import CrossoverConfig
 from pyrevolve.genotype.plasticoding.mutation.mutation import MutationConfig
-from pyrevolve.genotype.plasticoding.plasticoding import PlasticodingConfig
+from pyrevolve.genotype.plasticoding import PlasticodingConfig
 from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 

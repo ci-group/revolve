@@ -8,6 +8,7 @@ class DirectTreeGenotypeConfig():
                  init_n_parts_sigma: float = 4,
                  init_prob_no_child: float = 0.1,
                  init_prob_child_active_joint: float = 0.4,
+                 init_prob_child_linear_joint: float = 0,#.4,
                  init_prob_child_block: float = 0.5,
                  mutation_p_duplicate_subtree: float = 0.05,
                  mutation_p_delete_subtree: float = 0.05,
@@ -28,6 +29,7 @@ class DirectTreeGenotypeConfig():
             n_parts_sigma=init_n_parts_sigma,
             prob_no_child=init_prob_no_child,
             prob_child_active_joint=init_prob_child_active_joint,
+            prob_child_linear_joint=init_prob_child_linear_joint,
             prob_child_block=init_prob_child_block,
             min_parts=min_parts,
             max_parts=max_parts,
@@ -61,6 +63,7 @@ class RandomGenerateConfig:
                  n_parts_sigma: float,
                  prob_no_child: float,
                  prob_child_active_joint: float,
+                 prob_child_linear_joint: float,
                  prob_child_block: float,
                  min_parts,
                  max_parts,
@@ -78,6 +81,7 @@ class RandomGenerateConfig:
         self.n_parts_sigma: float = n_parts_sigma
         self.prob_no_child: float = prob_no_child
         self.prob_child_active_joint: float = prob_child_active_joint
+        self.prob_child_linear_joint: float = prob_child_linear_joint
         self.prob_child_block: float = prob_child_block
         self.min_parts = min_parts
         self.max_parts = max_parts

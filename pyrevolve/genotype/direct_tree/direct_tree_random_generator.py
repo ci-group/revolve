@@ -7,7 +7,7 @@ from typing import Tuple, List, Optional, Type
 from pyrevolve.genotype.direct_tree.direct_tree_utils import recursive_iterate_modules
 from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
 from pyrevolve.revolve_bot import RevolveBot
-from pyrevolve.revolve_bot.revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, Orientation
+from pyrevolve.revolve_bot.revolve_module import RevolveModule, CoreModule, BrickModule, ActiveHingeModule, LinearActuatorModule, Orientation
 
 
 possible_orientation: List[float] = [0, 90, 180, 270]
@@ -16,12 +16,14 @@ module_short_name_conversion = {
     BrickModule: 'B',
     ActiveHingeModule: 'J',
     CoreModule: 'C',
+    LinearActuatorModule: 'L',
 }
 
 possible_children: List[Optional[Type[RevolveModule]]] = [
     None,
     BrickModule,
-    ActiveHingeModule
+    ActiveHingeModule,
+    LinearActuatorModule
 ]
 
 
@@ -76,6 +78,7 @@ def generate_tree(core: CoreModule,
         config.init.prob_no_child,
         config.init.prob_child_block,
         config.init.prob_child_active_joint,
+        config.init.prob_child_linear_joint,
     ]
 
     while count_parts <= max_parts and not slot_queue.empty():
@@ -147,7 +150,7 @@ def generate_new_module(parent: RevolveModule,
     new_child_module.rgb = module_color
 
     # if is active, add oscillator parameters
-    if isinstance(new_child_module, ActiveHingeModule):
+    if isinstance(new_child_module, ActiveHingeModule) or isinstance(new_child_module, LinearActuatorModule):
         new_child_module.oscillator_period = random.uniform(0, config.max_oscillation)
         # makes no sense to shift it more than the max oscillation period
         new_child_module.oscillator_phase = random.uniform(0, config.max_oscillation)

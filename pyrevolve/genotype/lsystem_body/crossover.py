@@ -14,7 +14,7 @@ def crossover(parents: List[Genotype], config: Config) -> Genotype:
         config.crossover_prob,
         config.plasticoding_config,
     )
-    out = standard_crossover(pars, crossover_config)
+    out = standard_crossover(pars, crossover_config.genotype_conf, crossover_config)
 
     gen = Genotype(genotype_impl=out.grammar)
 
