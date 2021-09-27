@@ -115,7 +115,7 @@ async def run():
     )
 
     body_config = LearningBodyConfig(
-        mutation_prob=0.8, crossover_prob=0.8
+        mutation_prob=0, crossover_prob=0
     )
 
     # bodybrain composition genotype config

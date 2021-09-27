@@ -9,7 +9,7 @@ from pyrevolve.revolve_bot.revolve_module import (
     CoreModule,
     RevolveModule,
 )
-from ..plasticoding.plasticoding import Plasticoding,PlasticodingConfig
+from ..plasticoding import Plasticoding, PlasticodingConfig
 from typeguard import typechecked
 
 from .genotype import Genotype
@@ -18,6 +18,6 @@ from .genotype import Genotype
 def develop(genotype: Genotype, config: Config) -> CoreModule:
     plasticoding = Plasticoding(conf=config.plasticoding_config, robot_id=0)
     plasticoding.grammar = genotype.genotype_impl
-    bot = plasticoding.develop('plane')
+    bot = plasticoding.develop()
     return bot._body
 
