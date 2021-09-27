@@ -118,6 +118,15 @@ class Plasticoding(Genotype):
                  random.uniform(conf.oscillator_param_min, conf.oscillator_param_max),
                  random.uniform(conf.oscillator_param_min, conf.oscillator_param_max)]
             )
+        if symbol[INDEX_SYMBOL] is Alphabet.JOINT_HORIZONTAL \
+                or symbol[INDEX_SYMBOL] is Alphabet.JOINT_VERTICAL:
+            symbol[INDEX_PARAMS].clear()
+            symbol[INDEX_PARAMS].extend(
+                [random.uniform(conf.weight_min, conf.weight_max),
+                 random.uniform(conf.oscillator_param_min, conf.oscillator_param_max),
+                 random.uniform(conf.oscillator_param_min, conf.oscillator_param_max),
+                 random.uniform(conf.oscillator_param_min, conf.oscillator_param_max)]
+            )
 
         if symbol[INDEX_SYMBOL] is Alphabet.SENSOR \
                 or symbol[INDEX_SYMBOL] is Alphabet.ADD_EDGE \

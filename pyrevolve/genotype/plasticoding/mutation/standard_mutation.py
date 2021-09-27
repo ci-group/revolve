@@ -56,7 +56,7 @@ def generate_symbol(genotype_conf):
     # Modules
     if symbol_category == 1:
         # do not use the first symbol, the core
-        symbols = Alphabet.modules(genotype_conf.allow_vertical_brick)[1:]
+        symbols = Alphabet.modules(genotype_conf.allow_vertical_brick,genotype_conf.allow_linear_joint)[1:]
     # Morphology mounting commands
     elif symbol_category == 2:
         symbols = Alphabet.morphology_mounting_commands()

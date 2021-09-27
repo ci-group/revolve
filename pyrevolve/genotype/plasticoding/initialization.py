@@ -18,7 +18,7 @@ def _generate_random_grammar(conf: PlasticodingConfig) -> Dict[Alphabet, List]:
     s_segments = random.randint(1, conf.e_max_groups)
     grammar = {}
 
-    for symbol in Alphabet.wordify(Alphabet.modules(conf.allow_vertical_brick)):
+    for symbol in Alphabet.wordify(Alphabet.modules(conf.allow_vertical_brick, conf.allow_linear_joint)):
 
         if symbol[0] == conf.axiom_w:
             grammar[symbol[0]] = [[conf.axiom_w, []]]
@@ -27,7 +27,7 @@ def _generate_random_grammar(conf: PlasticodingConfig) -> Dict[Alphabet, List]:
 
         for s in range(0, s_segments):
             symbol_module = random.randint(
-                1, len(Alphabet.modules(conf.allow_vertical_brick)) - 1)
+                1, len(Alphabet.modules(conf.allow_vertical_brick, conf.allow_linear_joint)) - 1)
             symbol_mounting = random.randint(
                 0, len(Alphabet.morphology_mounting_commands()) - 1)
             symbol_morph_moving = random.randint(
@@ -47,7 +47,7 @@ def _generate_random_grammar(conf: PlasticodingConfig) -> Dict[Alphabet, List]:
                 Plasticoding.build_symbol(
                     Alphabet.wordify(Alphabet.morphology_mounting_commands())[symbol_mounting], conf),
                 Plasticoding.build_symbol(
-                    Alphabet.wordify(Alphabet.modules(conf.allow_vertical_brick))[symbol_module], conf),
+                    Alphabet.wordify(Alphabet.modules(conf.allow_vertical_brick, conf.allow_linear_joint))[symbol_module], conf),
                 Plasticoding.build_symbol(
                     Alphabet.wordify(Alphabet.morphology_moving_commands(
                         conf.use_movement_commands, conf.use_rotation_commands, conf.use_movement_stack)

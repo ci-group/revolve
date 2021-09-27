@@ -17,6 +17,7 @@ class PlasticodingConfig:
                  i_iterations=3,
                  max_structural_modules=100,
                  robot_id=0,
+                 allow_linear_joint=True,
                  allow_vertical_brick=True,
                  use_movement_commands=True,
                  use_rotation_commands=True,
@@ -37,6 +38,7 @@ class PlasticodingConfig:
         self.max_structural_modules = max_structural_modules
         self.robot_id = robot_id
         self.allow_vertical_brick = allow_vertical_brick
+        self.allow_linear_joint = allow_linear_joint
         self.use_movement_commands = use_movement_commands
         self.use_rotation_commands = use_rotation_commands
         self.use_movement_stack = use_movement_stack
