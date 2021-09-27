@@ -16,18 +16,15 @@ library(viridis)
 base_directory <- c(
   'data',  'data')
 
-analysis = 'analysis_2'
+analysis = 'analysis'
 output_directory = paste(base_directory[2],'/',analysis ,sep='')
 
-experiments_type = c(  'evo_only_merge' ,
-                       'evo_revdeknn'
+experiments_type = c(  'lsys'
                        
 )
 runs = list(
-  c(1:10),
-  c(1:10))
-environments = list( c('plane'),
-                     c('plane')
+  c(1:1))
+environments = list( c('plane')
 )
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
@@ -43,7 +40,7 @@ experiments_type_colors = c(
   #'#2a9df4', #blue
   '#9370db', #medium purple
   '#009900', #green
-  '#009900', #green
+  '#009900' #green
   # '#00BFFF', #deep skyblue
   # '#80DAEB'  #medium sky blue
   
@@ -62,8 +59,8 @@ ribbon_colors = c(
 #aggregations = c('min', 'Q25','mean', 'median', 'Q75','max')
 aggregations = c('mean', 'median','max')
 
-gens = 30
-pop = 100
+gens = 10
+pop = 10
 num_heatmaps = 1
 
 gens_box_comparisons = c(gens-1)
@@ -343,7 +340,7 @@ for (i in 1:length(measures_names))
     }
     graph = graph  +  labs(y=measures_labels[i], x="generation", title="")
     
-    graph = graph +   scale_color_manual(values=experiments_type_colors, labels = c("evolution only", "evolution + learning"))
+    graph = graph +   scale_color_manual(values=experiments_type_colors, labels = c("lsys"))
     graph = graph  + theme_bw()
     graph = graph  + theme(legend.position="top" ,  legend.text=element_text(size=25), 
                            #legend.background = element_rect(fill = "darkgray",color = NA),
@@ -398,7 +395,7 @@ for (i in 1:length(measures_names))
             #x="Method", 
             x=NULL,
             y=measures_labels[i], 
-            # title=str_to_title(aggregations[a])
+            title=str_to_title(aggregations[a])
           )
         
         g1 = g1 +  scale_color_manual(values=experiments_type_colors)
@@ -443,3 +440,4 @@ for (i in 1:length(measures_names))
   }
   
 }
+
