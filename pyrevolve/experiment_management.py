@@ -77,8 +77,13 @@ class ExperimentManagement:
         folder = self._data_folder()+'/'+environment
         individual.export_individual(folder)
 
-    def export_behavior_measures(self, _id, measures, environment):
-        filename = os.path.join(self._data_folder()+'/'+environment, 'descriptors', f'behavior_desc_{_id}.txt')
+    def export_behavior_measures(self, _id, measures, environment, gen_num):
+        if self.settings.resimulate != '':
+            gen = str(gen_num)+'_'
+        else:
+            gen= ''
+
+        filename = os.path.join(self._data_folder()+'/'+environment, 'descriptors', f'behavior_desc_{gen}{_id}.txt')
         with open(filename, "w") as f:
             if measures is None:
                 f.write(str(None))

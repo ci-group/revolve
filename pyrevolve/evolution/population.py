@@ -177,9 +177,9 @@ class Population:
         Recovers all genotypes and fitnesses of robots in the latest selected population
         :param gen_num: number of the generation snapshot to recover
         """
-
         final_season = list(self.conf.environments.keys())[-1]
         path = 'experiments/'+self.conf.experiment_name
+
         for r, d, f in os.walk(os.path.join(path,'selectedpop_'+
                                final_season,'selectedpop_'+str(gen_num))):
             for file in f:
@@ -534,6 +534,14 @@ class Population:
             for environment in self.conf.environments:
                 await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
 
+                # resimulates parents in case of environmental change
+                if self.conf.all_settings.resimulate != "":
+                    if str(gen_num) in self.conf.all_settings.resimulate.split(' '):
+                        for ind in self.individuals:
+                            # TODO: because of this, resimulate parents can not be recovered. make it recoverable
+                            ind[environment].evaluated = False
+                        await self.evaluate(new_individuals= self.individuals, gen_num=gen_num, environment=environment)
+
         # calculate novelty
         for environment in self.conf.environments:
             self.calculate_novelty(selection_pool, environment, gen_num)
@@ -616,7 +624,8 @@ class Population:
                 individual.evaluated = True
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id,
                                                                          individual.phenotype._behavioural_measurements,
-                                                                         environment)
+                                                                         environment,
+                                                                         gen_num)
                 if self.conf.all_settings.use_neat:
                     self.save_neat(gen_num)
                 else:

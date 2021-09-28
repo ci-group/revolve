@@ -170,6 +170,11 @@ parser.add_argument(
     help="If individuals of the offspring can die in the first season. "
 )
 
+parser.add_argument(
+    '--resimulate',
+    default="", type=str,
+    help="Generations in which parents should be simulated again to be tested in a new environment. Example: '3 5 8'. And if empty, then None. "
+)
 
 parser.add_argument(
     '--evaluation-time',
