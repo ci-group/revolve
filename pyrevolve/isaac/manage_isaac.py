@@ -141,7 +141,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     isaac_logger.debug("Initialize environment")
     # Add ground plane
     plane_params = gymapi.PlaneParams()
-    plane_params.normal = gymapi.Vec3(0, 0, 1) # z-up!
+    plane_params.normal = gymapi.Vec3(0, 0, 1)  # z-up!
     gym.add_ground(plane_params)
 
     asset_options = gymapi.AssetOptions()
@@ -220,8 +220,9 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         time_nsec, time_sec = math.modf(time)
         time_nsec *= 1_000_000_000
         for _i in range(num_envs):
-            controller: RevolveController = controllers[_i]
             _robot_handle = gym.robot_handles[_i]
+            controller: RevolveController = controllers[_i]
+            # controller: RevolveController = gym.controllers[_robot_handle]
 
             controller.update(robot.actuators, robot.sensors, time, delta)
 
@@ -259,7 +260,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         for r in gym.robot_handles:
             initial_states[(env, r)] = np.copy(gym.get_robot_position_rotation(env, r))
 
-    # %% Simulate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%act.output for act in robot.actuators%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # %% Simulate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     gym.prepare()
 
     while True:

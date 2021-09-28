@@ -6,8 +6,8 @@ from typing import AnyStr, List, Optional, Union, Dict
 
 from isaacgym import gymapi
 
-from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
 from pyrevolve.revolve_bot.brain.controller import Controller as RevolveController
+from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
 from . import isaac_logger
 from .ISAACBot import ISAACBot
 
@@ -18,6 +18,7 @@ class IsaacSim:
     _viewer: Optional[gymapi.Viewer]
     _asset_root: AnyStr
     _db: PostgreSQLDatabase
+    robots: List[ISAACBot]
     robot_handles: List[int]
     envs: List[gymapi.Env]
     controllers: Dict[int, RevolveController]
@@ -70,6 +71,7 @@ class IsaacSim:
 
     def insert_robot(self,
                      env: Union[gymapi.Env, int],
+                     robot: ISAACBot,
                      urdf_path: AnyStr,
                      robot_asset_options: gymapi.AssetOptions,
                      pose: gymapi.Transform,
@@ -80,6 +82,7 @@ class IsaacSim:
         """
         Inserts a robot in the system
         :param env: Environmental Handle
+        :param robot: Robot to insert
         :param urdf_path: path to the robot asset (URDF)
         :param robot_asset_options: robot asset simulator parameters
         :param pose: transform of where the robot will be initally placed
@@ -89,16 +92,25 @@ class IsaacSim:
         :param segmentation_id: segmentation ID used in segmentation camera sensor
         :return: robot handle
         """
-        env: gymapi.Env = self._environment(env)
+        # TODO hack your way to insert the robot in a running simulation
+        env_i, env = self._environment(env)
+        robot.env_index = env_i
+        self.robots.append(robot)
+
         robot_asset = self._gym.load_urdf(self._sim, self._asset_root, urdf_path, robot_asset_options)
-        robot_handle: int = self._gym.create_actor(env, robot_asset, pose, robot_name, group, filter_, segmentation_id)
-        self.robot_handles.append(robot_handle)
-        props = self._gym.get_actor_dof_properties(env, robot_handle)
+        robot.handle = self._gym.create_actor(env, robot_asset, pose, robot_name, group, filter_, segmentation_id)
+        self.robot_handles.append(robot.handle)
+
+        # Robot Actor properties
+        props = self._gym.get_actor_dof_properties(env, robot.handle)
         props["driveMode"].fill(gymapi.DOF_MODE_POS)
         props["stiffness"].fill(1000.0)
         props["damping"].fill(600.0)
-        self._gym.set_actor_dof_properties(env, robot_handle, props)
-        return robot_handle
+        self._gym.set_actor_dof_properties(env, robot.handle, props)
+
+        robot.born_time = self.get_sim_time()
+
+        return robot.handle
 
     def add_controller(self, robot_handle: int, controller: RevolveController):
         self.controllers[robot_handle] = controller
@@ -117,7 +129,7 @@ class IsaacSim:
                                        robot_handle: int,
                                        position_target: List[float],
                                        ) -> None:
-        env: gymapi.Env = self._environment(env)
+        env_i, env = self._environment(env)
         self._gym.set_actor_dof_position_targets(env, robot_handle, position_target)
 
     def get_robot_position_rotation(self,
@@ -130,7 +142,7 @@ class IsaacSim:
         :param robot_handle: handle of the robot
         :return: Position and Rotation of the robot
         """
-        env: gymapi.Env = self._environment(env)
+        env_i, env = self._environment(env)
         robot_pose = self._gym.get_actor_rigid_body_states(env, robot_handle, gymapi.STATE_POS)["pose"]
         robot_pos: gymapi.Vec3 = robot_pose['p'][0]  # -> [0] is to get the position of the head
         robot_rot: gymapi.Quat = robot_pose['r'][0]  # -> [0] is to get the rotation of the head
@@ -161,10 +173,21 @@ class IsaacSim:
             self._gym.destroy_viewer(self._viewer)
         self._gym.destroy_sim(self._sim)
 
-    def _environment(self, env: Union[int, gymapi.Env]) -> gymapi.Env:
+    def _environment(self, env: Union[int, gymapi.Env]) -> (int, gymapi.Env):
         if isinstance(env, int):
-            env = self.envs[env]
+            index: int = env
+            env = self.envs[index]
+        else:
+            index: int = self.envs.index(env)
 
         if not isinstance(env, gymapi.Env):
             raise RuntimeError("Wrong argument passed to function")
-        return env
+        return index, env
+
+    def update_robots(self, time: float, delta: float) -> None:
+        if len(self.robots) == 0:
+            return
+        with self._db.session() as robot_states_session:
+            for robot in self.robots:
+                robot.update_robot(time, delta, self, robot_states_session)
+            robot_states_session.commit()

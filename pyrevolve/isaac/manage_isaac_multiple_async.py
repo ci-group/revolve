@@ -1,18 +1,25 @@
 """
 Loading and testing
 """
+import math
 import os
+import random
 import tempfile
-from typing import AnyStr, List, Optional, Tuple
+import threading
+from typing import AnyStr, List, Optional
 
 import numpy as np
 from celery.signals import worker_process_init, worker_process_shutdown
 from isaacgym import gymapi
+from sqlalchemy.orm import Session
 
 from pyrevolve.isaac.ISAACBot import ISAACBot
+from pyrevolve.revolve_bot.brain.controller import Controller as RevolveController, DifferentialCPG, \
+    DifferentialCPG_ControllerParams
 from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
 from pyrevolve.util.supervisor.rabbits import Robot as DBRobot
 from pyrevolve.util.supervisor.rabbits import RobotEvaluation as DBRobotEvaluation
+from pyrevolve.util.supervisor.rabbits import RobotState as DBRobotState
 from . import isaac_logger
 from .IsaacSim import IsaacSim
 
@@ -37,20 +44,25 @@ def shutdown_worker_celery(**kwargs):
 
 
 db: Optional[PostgreSQLDatabase] = None
+gym: Optional[IsaacSim] = None
+sim_params: Optional[gymapi.SimParams]
+sim_thread: threading.Thread
+stop_simulator: bool = True
 
 
 def init_worker():
-    global db
+    global db, gym, sim_params, sim_thread, stop_simulator
     isaac_logger.info("Initializing database connection for worker...")
     db = PostgreSQLDatabase(username='matteo')
     # Create connection engine
     db.start_sync()
     isaac_logger.info("DB connection Initialized.")
 
-
-def init_sym(_db: PostgreSQLDatabase, args: Arguments) -> Tuple[IsaacSim, gymapi.SimParams]:
-    assert _db is not None
     asset_root = tempfile.gettempdir()
+
+    # Parse arguments
+    # args = gymutil.parse_arguments(description="Loading and testing")
+    args = Arguments()
 
     num_envs = 1
 
@@ -76,7 +88,7 @@ def init_sym(_db: PostgreSQLDatabase, args: Arguments) -> Tuple[IsaacSim, gymapi
     isaac_logger.debug(
         f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
 
-    gym = IsaacSim(_db, asset_root,
+    gym = IsaacSim(db, asset_root,
                    args.compute_device_id, args.graphics_device_id, args.physics_engine, sim_params,
                    args.headless,
                    num_envs, 2.0)
@@ -89,11 +101,21 @@ def init_sym(_db: PostgreSQLDatabase, args: Arguments) -> Tuple[IsaacSim, gymapi
     plane_params.normal = gymapi.Vec3(0, 0, 1)  # z-up!
     gym.add_ground(plane_params)
 
-    return gym, sim_params
+    # Start the simulation thread
+    stop_simulator = False
+    sim_thread = threading.Thread(target=simulator_main_loop, args=(args.headless,))
+    sim_thread.start()
 
 
 def shutdown_worker():
-    global db
+    global db, gym, sim_thread, stop_simulator
+    stop_simulator = True
+    sim_thread.join(10.0)  # wait ten seconds to shutdown
+    if sim_thread.is_alive():
+        isaac_logger.error("Simulator not terminated after 10 seconds of waiting, giving up.")
+        # standard python cannot force close a thread, and you should really not to (or GIL and GC could have problems)
+    if gym is not None:
+        gym.destroy()
     if db is not None:
         # Disconnect from the database
         isaac_logger.info('Closing database connection for worker...')
@@ -102,19 +124,18 @@ def shutdown_worker():
         db = None
 
 
-def simulator_main_loop(gym: IsaacSim, controller_update_time: float, headless):
-    global db
+def simulator_main_loop(headless):
+    global db, gym, sim_params, stop_simulator
+    controller_update_time = sim_params.dt * 10
 
     # Prepare the simulation
     gym.prepare()
 
-    while True:
-        time: float = gym.get_sim_time()
-        if time % controller_update_time == 0.0:
-            life_cycle(gym, time)
-            if len(gym.robots) is 0:
-                break
-            gym.update_robots(time, controller_update_time)
+    while not stop_simulator:
+        t: float = gym.get_sim_time()
+        if t % controller_update_time == 0.0:
+            life_cycle()
+            gym.update_robots(t, controller_update_time)
 
         # Step the physics
         gym.simulate()
@@ -126,13 +147,12 @@ def simulator_main_loop(gym: IsaacSim, controller_update_time: float, headless):
             gym.sync_frame_time()  # makes the simulator run in real time
 
 
-def life_cycle(gym: IsaacSim, time: float):
-    global db
+def life_cycle(time: float):
+    global db, gym, sim_params, stop_simulator
     for i, robot in enumerate(gym.robots):
         if time > robot.death_time():
             isaac_logger.info(f"Robot {robot.name} has finshed evaluation, removing it from the simulator")
             gym.robots.remove(robot)
-            # TODO hack your way to remove the robot in simulation, now is only removed from the controller loop
 
 
 def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
@@ -142,20 +162,10 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
     :param life_timeout: how long should the robot live
     :return: database id of the robot
     """
-    global db
+    global gym, sim_params
+    # Create temporary file for the robot urdf. The file will be removed when the file is closed.
 
-    # Parse arguments
-    # args = gymutil.parse_arguments(description="Loading and testing")
-    args = Arguments()
-
-    manual_db_session = False
-    if db is None:
-        manual_db_session = True
-        init_worker()
-
-    gym: IsaacSim
-    sim_params: gymapi.SimParams
-    gym, sim_params = init_sym(db, args)
+    init_worker()
 
     # Load robot asset
     asset_options = gymapi.AssetOptions()
@@ -173,12 +183,9 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
 
     with db.session() as session:
         for i, robot_urdf in enumerate(robots_urdf):
-            # Create temporary file for the robot urdf. The file will be removed when the file is closed.
             # TODO place the tempfiles in a separate temporary folder for all assets.
             #  I.e. `tmp_asset_dir = tempfile.TemporaryDirectory(prefix='revolve_')`
-            robot_asset_file = tempfile.NamedTemporaryFile(mode='w+t',
-                                                           prefix='revolve_isaacgym_robot_urdf_',
-                                                           suffix='.urdf')
+            robot_asset_file = tempfile.NamedTemporaryFile(mode='w+t', prefix='revolve_isaacgym_robot_urdf_', suffix='.urdf')
             robot_asset_files.append(robot_asset_file)
 
             # Path of the file created, to pass to the simulator.
@@ -241,18 +248,14 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
             initial_states[(env, r)] = np.copy(gym.get_robot_position_rotation(env, r))
 
     # %% Simulate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    controller_update_time = sim_params.dt * 10
-    # Simulate until all robots died
-    simulator_main_loop(gym, controller_update_time, args.headless)
+    # WAIT FOR THREAD
+
 
     # %% END Simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    gym.destroy()
+    shutdown_worker()
 
     # remove temporary file
     for robot_asset_file in robot_asset_files:
         robot_asset_file.close()
-
-    if manual_db_session:
-        shutdown_worker()
 
     return db_robot_id
