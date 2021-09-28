@@ -56,7 +56,7 @@ async def run():
     robot.load_file(path, conf_type="yaml")
     robot.update_substrate()
 
-    target_direction = 120
+    target_direction = 240 / 360 * 2 * math.pi
     target_as_vector = (
         math.cos(target_direction),
         math.sin(target_direction),
