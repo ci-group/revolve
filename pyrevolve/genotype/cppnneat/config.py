@@ -55,4 +55,4 @@ class Config:
     # if you don't know what this is, make it True
     interspecies_crossover: bool
     multineat_params: multineat.Parameters
-    linearactuator = True
+    linearactuator = False
