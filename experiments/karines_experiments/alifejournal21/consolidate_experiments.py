@@ -5,33 +5,28 @@ import sys
 # set these variables according to your experiments #
 
 # run from karine_experiments
-dirpath = '/storage/jim/'
+dirpath = '/storage/karine/alife2021/'
 dirpath_write = '/storage/karine/alife2021/'
 
-experiments_type = [
-    'plasticodingscaffolding3_inc_normal' #,
-    #'plasticodingscaffolding_inc_inv',
-      #'plasticodingscaffolding2_equal',
-      #'static_plane',
-     # 'static_tilted',
-      #'plasticodingscaffolding_inv'
-]
+experiments_type = ["scaffeq" "scaffeqinv" "scaffinc" "scaffincinv" "staticplane" "statictilted"]
+experiments_type = ["scaffeq"]
+
 environments = {
-  'plasticodingscaffolding3_inc_normal': ['plane', 'tilted1', 'tilted2', 'tilted3', 'tilted4', 'tilted5'],
-  'plasticodingscaffolding_inc_inv': ['tilted5', 'tilted4', 'tilted3', 'tilted2', 'tilted1', 'plane'],
-  'plasticodingscaffolding2_equal': ['plane', 'tilted1', 'tilted2', 'tilted3', 'tilted4', 'tilted5'],
-  'static_plane': ['plane'],
-  'static_tilted': ['tilted5'],
-  'plasticodingscaffolding_inv': ['tilted5', 'tilted4', 'tilted3', 'tilted2', 'tilted1', 'plane']
+    'scaffeq': ['plane', 'tilted1', 'tilted2', 'tilted3', 'tilted4', 'tilted5'],
+    'scaffeqinv': ['tilted5', 'tilted4', 'tilted3', 'tilted2', 'tilted1', 'plane'],
+    'scaffinc': ['plane', 'tilted1', 'tilted2', 'tilted3', 'tilted4', 'tilted5'],
+    'scaffincinv': ['tilted5', 'tilted4', 'tilted3', 'tilted2', 'tilted1', 'plane'],
+    'staticplane': ['plane'],
+    'statictilted': ['tilted5']
 }
 
 runs = {
-  'plasticodingscaffolding3_inc_normal': range(1, 4+1),#10
-  'plasticodingscaffolding_inc_inv': range(1, 9+1),#10
-  'plasticodingscaffolding2_equal':  range(1, 10+1),
-  'static_plane':  range(1, 10+1),
-  'static_tilted':  range(1, 10+1),
-  'plasticodingscaffolding_inv':  range(1, 10+1)
+  'scaffeq': range(1, 1+1),#20
+  'scaffeqinv': range(1, 20+1),
+  'scaffinc':  range(1, 20+1),
+  'scaffincinv':  range(1, 20+1),
+  'staticplane':  range(1, 20+1),
+  'statictilted':  range(1, 20+1)
 }
 
 # set these variables according to your experiments #

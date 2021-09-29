@@ -32,7 +32,7 @@ async def run():
     front = 'none'
 
     # environment world and z-start
-    environments = {'plane': 0.03 }
+    environments = {'plane': 0.1 }
 
     # calculation of the measures can be on or off, because they are expensive
     novelty_on = {'novelty': False,

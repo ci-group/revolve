@@ -535,8 +535,9 @@ class Population:
                 await self.evaluate(new_individuals=new_individuals, gen_num=gen_num, environment=environment)
 
                 # resimulates parents in case of environmental change
+
                 if self.conf.all_settings.resimulate != "":
-                    if str(gen_num) in self.conf.all_settings.resimulate.split(' '):
+                    if str(gen_num) in self.conf.all_settings.resimulate.split('-'):
                         for ind in self.individuals:
                             # TODO: because of this, resimulate parents can not be recovered. make it recoverable
                             ind[environment].evaluated = False

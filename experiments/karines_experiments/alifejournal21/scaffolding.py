@@ -26,13 +26,10 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 10#100
-    population_size = 2#100
-    offspring_size = 2#50
+    num_generations = 100
+    population_size = 100
+    offspring_size = 50
     front = 'none'
-
-    # environment world and z-start
-    environments = {'plane': 0.03 }
 
     # calculation of the measures can be on or off, because they are expensive
     novelty_on = {'novelty': False,
@@ -64,6 +61,9 @@ async def run():
     # Parse command line / file input arguments
     settings = parser.parse_args()
 
+    # environment world and z-start
+    environments = {settings.world: 0.1}
+
     experiment_management = ExperimentManagement(settings, environments)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
@@ -80,10 +80,11 @@ async def run():
         gen_num = 0
         next_robot_id = 1
 
+    # same fitness for all levels of inclination
     def fitness_function_plane(measures, robot):
         return fitness.displacement_velocity_hill(measures, robot)
 
-    fitness_function = {'plane': fitness_function_plane}
+    fitness_function = {settings.world: fitness_function_plane}
 
     population_conf = PopulationConfig(
         population_size=population_size,
@@ -164,5 +165,9 @@ async def run():
         gen_num += 1
         population = await population.next_gen(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)
+        if settings.resimulate != "":
+            if str(gen_num+1) in settings.resimulate.split('-'):
+                print(f'restart at {gen_num} to renew world')
+                sys.exit()
 
     # output result after completing all generations...

@@ -4,20 +4,21 @@
 
 #runs=20
 runs=1
-num_terminals=8
+#num_terminals=8
+num_terminals=4
 start_port=8000
 final_gen=99
-experiments=("scaffinc")
-#"scaffeq" "scaffeqinv" "scaffinc" "scaffincinv"
-experiments_path=karines_experiments/data/
-managers_path=experiments/karines_experiments/
+experiments=("scaffeq" "scaffeqinv" "scaffinc" "scaffincinv")
+experiments=("scaffeq")
+experiments_path=link_storage/alifej2021/
+managers_path=experiments/karines_experiments/alifejournal21/
 
 while true
 	do
 
     echo "killing all processes..."
-   # kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
-   # kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');
+    kill $(  ps aux | grep 'gzserver' | awk '{print $2}');
+    kill $(  ps aux | grep 'revolve.py' | awk '{print $2}');
 
     echo "restarting all processes..."
 
@@ -47,11 +48,11 @@ while true
              echo "$file"
              echo "None";
              to_do+=("${experiment}_${run}")
+              done_gen+=(-1)
           fi
 
         done
     done
-
 
     # selects num_terminals unfinished experiments to spawn
     to_do=(${to_do[@]:0:$num_terminals})
@@ -76,7 +77,6 @@ while true
              worlds=("tilted5" "tilted4" "tilted3" "tilted2" "tilted1" "plane")
          fi
 
-         # this one covers also the none case, because it gets converted to zero
          if [ $((${done_gen[$i]}+1)) -ge ${gens[0]} ] && [ $((${done_gen[$i]}+1)) -lt ${gens[1]} ]; then
            world=0
          fi
@@ -96,13 +96,19 @@ while true
            world=5
          fi
 
-         echo ""
-         echo -d -m -S "${experiment}" -L -Logfile "${experiment}.log" nice -n19 ./revolve.sh --manager "${managers_path}$(cut -d'_' -f1 <<<"$experiment").py" --world "${worlds[$world]}" --experiment-name "${experiments_path}${experiment}" --evaluation-time 50 --n-cores 4 --port-start $start_port
+         resimulate=""
+         for gen in "${gens[@]}"
+          do resimulate="$resimulate$gen-"
+         done
+
+         echo "${experiment} $((${done_gen[$i]}+1)) ${worlds[$world]}"
+        #--evaluation-time 50
+         echo  -d -m -S "${experiment}" -L -Logfile "${experiment}.log" nice -n19 ./revolve.sh --manager "${managers_path}scaffolding.py" --world "${worlds[$world]}" --experiment-name "${experiments_path}${experiment}" --resimulate "${resimulate}" --evaluation-time 1 --n-cores 4 --port-start $start_port --k-novelty 1
          start_port=$((${start_port}+10))
          i=$((${i}+1))
     done
 
-    sleep 3600s;
+  sleep 1800s;
 
 done
 
