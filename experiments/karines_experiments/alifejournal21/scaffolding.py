@@ -61,10 +61,11 @@ async def run():
     # Parse command line / file input arguments
     settings = parser.parse_args()
 
-    # environment world and z-start
-    environments = {settings.world: 0.1}
+    # instance of phenotype (it does not have plasticity, so uses a dummy one)
+    # it is internally called environment
+    instances_phenotype = {'unique': None}
 
-    experiment_management = ExperimentManagement(settings, environments)
+    experiment_management = ExperimentManagement(settings, instances_phenotype)
     do_recovery = settings.recovery_enabled and not experiment_management.experiment_is_new()
 
     logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
@@ -84,7 +85,7 @@ async def run():
     def fitness_function_plane(measures, robot):
         return fitness.displacement_velocity_hill(measures, robot)
 
-    fitness_function = {settings.world: fitness_function_plane}
+    fitness_function = {list(instances_phenotype.keys())[-1]: fitness_function_plane}
 
     population_conf = PopulationConfig(
         population_size=population_size,
@@ -95,15 +96,15 @@ async def run():
         mutation_conf=mutation_conf,
         crossover_operator=standard_crossover,
         crossover_conf=crossover_conf,
-        selection=lambda individuals: tournament_selection(individuals, environments, 2),
-        parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection, environments),
+        selection=lambda individuals: tournament_selection(individuals, instances_phenotype, 2),
+        parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection, instances_phenotype),
         population_management=steady_state_population_management,
         population_management_selector=tournament_selection,
         evaluation_time=settings.evaluation_time,
         offspring_size=offspring_size,
         experiment_name=settings.experiment_name,
         experiment_management=experiment_management,
-        environments=environments,
+        environments=instances_phenotype,
         novelty_on=novelty_on,
         front=front,
         run_simulation=settings.run_simulation,
@@ -115,10 +116,10 @@ async def run():
 
     if settings.run_simulation == 1:
         previous_port = None
-        for environment in environments:
 
-            settings.world = environment
-            settings.z_start = environments[environment]
+        for instance_phenotype in instances_phenotype:
+            settings.world = settings.world
+            settings.z_start = 0.1
 
             if previous_port is None:
                 port = settings.port_start
@@ -127,8 +128,8 @@ async def run():
                 port = previous_port+settings.n_cores
                 previous_port = port
 
-            simulator_queue[environment] = SimulatorQueue(settings.n_cores, settings, port)
-            await simulator_queue[environment].start()
+            simulator_queue[instance_phenotype] = SimulatorQueue(settings.n_cores, settings, port)
+            await simulator_queue[instance_phenotype].start()
 
         analyzer_queue = AnalyzerQueue(1, settings, port+settings.n_cores)
         await analyzer_queue.start()
