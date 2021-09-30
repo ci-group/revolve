@@ -21,6 +21,7 @@ from pyrevolve.util.supervisor import CeleryQueue
 from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig, BrainType
 from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor
 from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
 
 INTERNAL_WORKERS = False
 
@@ -126,7 +127,8 @@ async def run():
         logger.fatal(f'GazeboCeleryWorker died with code: {exit_code} ({process})')
 
     # CELERY CONNECTION (includes database connection)
-    simulator_queue = CeleryQueue(args, args.port_start, dbname='revolve', use_isaacgym=True)
+    # simulator_queue = CeleryQueue(args, args.port_start, dbname='revolve', use_isaacgym=True)
+    simulator_queue = CeleryPopulationQueue(args, dbname='revolve', use_isaacgym=True, local_computing=True)
     await simulator_queue.start(cleanup_database=True)
 
     # CELERY GAZEBO WORKER

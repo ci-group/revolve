@@ -1,8 +1,10 @@
 import math
 import random
+import sys
 import xml.dom.minidom
-from typing import AnyStr, List, Iterable, Callable, Optional
+from typing import AnyStr, List, Iterable, Optional, Tuple, Dict
 
+import multineat as NEAT
 import numpy as np
 import sqlalchemy.orm
 from isaacgym import gymapi
@@ -11,10 +13,10 @@ from pyrevolve.SDF.math import Vector3
 from pyrevolve.revolve_bot.brain.controller import Actuator, Sensor
 from pyrevolve.revolve_bot.brain.controller import Controller as RevolveController
 from pyrevolve.revolve_bot.brain.controller import DifferentialCPG, DifferentialCPG_ControllerParams
-from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
 from pyrevolve.util.supervisor.rabbits import Robot as DBRobot
 from pyrevolve.util.supervisor.rabbits import RobotEvaluation as DBRobotEvaluation
 from pyrevolve.util.supervisor.rabbits import RobotState as DBRobotState
+from . import isaac_logger
 
 
 def get_xml_text(nodelist):
@@ -76,6 +78,8 @@ class ISAACBot:
     sensors: List[ISAACSensor]
     actuators: List[ISAACActuator]
     n_weights: int
+    connection_list: List[Tuple[int, int]]
+    connection_map: Dict[int, Tuple[List[float], List[float]]]
     # Sym stuff
     handle: int
     env_index: int
@@ -84,6 +88,7 @@ class ISAACBot:
     life_duration: float
     # Database Stuff
     db_robot: DBRobot
+    db_robot_id: int
     evals: List[DBRobotEvaluation]
 
     def __init__(self, urdf: AnyStr, ground_offset: float = 0.04, life_duration: float = math.inf):
@@ -126,13 +131,14 @@ class ISAACBot:
 
         # Database stuff
         self.db_robot = None
+        self.db_robot_id = None
         self.evals = []
 
         # Controller Stuff
         self.sensors = [s for s in self._list_sensors()]
         self.actuators = [a for a in self._list_actuator()]
 
-        self.n_weights, self.connection_list = self._compute_n_weights()
+        self.n_weights, self.connection_list, self.connection_map = self._compute_n_weights()
         self.actuator_map = np.arange(self.n_weights)
 
         self.controller = self._create_controller()
@@ -156,16 +162,29 @@ class ISAACBot:
             if actuator.nodeType != actuator.TEXT_NODE:
                 yield ISAACActuator(actuator)
 
-    def _compute_n_weights(self) -> (int, list):
-        n_intra_connections = len(self.actuators)
-        n_extra_connections = 0
+    def _compute_n_weights(self) -> Tuple[int,
+                                          List[Tuple[int, int]],
+                                          Dict[int, Tuple[List[float], List[float]]]]:
+        """
+        Computes the connections of a cpg network
+        :return: number of weights,
+                 list of connections for a connection matrix,
+                 dictionary mapping index of the weight vector to the coordinates in robot space (for CPPN)
+        """
+        n_actuators: int = len(self.actuators)
+        n_intra_connections: int = n_actuators
+        n_extra_connections: int = 0
 
-        connection_list = []
+        connection_map: Dict[int, Tuple[List[float], List[float]]] = {
+            i: ([x for x in actuator.coordinates] + [1.], [x for x in actuator.coordinates] + [-1.])
+            for i, actuator in enumerate(self.actuators)
+        }
+        connection_list: List[Tuple[int, int]] = []
         element = 0
         for act_a in self.actuators:
-            row = element // n_intra_connections
+            row = element // n_actuators
             for act_b in self.actuators:
-                col = element % n_intra_connections
+                col = element % n_actuators
                 element += 1
                 if col <= row:  # only consider upper-triangular connections
                     continue
@@ -180,8 +199,10 @@ class ISAACBot:
                 man_dist = dist_x + dist_y + dist_z
                 if 0.01 < man_dist < 2.01:
                     n_extra_connections += 1
+                    connection_map[n_intra_connections + n_extra_connections - 1] = \
+                        ([x for x in act_a.coordinates] + [1.], [x for x in act_b.coordinates] + [1.])
                     connection_list.append((row, col))  # remember pos list of intra-neuron connections
-        return n_intra_connections + n_extra_connections, connection_list
+        return n_intra_connections + n_extra_connections, connection_list, connection_map
 
     def create_actuator_map(self, actuator_dict: dict):
         index = list(actuator_dict.values())
@@ -196,6 +217,7 @@ class ISAACBot:
         if controller_type == 'cpg-python':
             params: DifferentialCPG_ControllerParams = self._extract_cpg_urdf_params()
             if not params.weights:
+                isaac_logger.error('Controller did not initialized weights correctly, initializing randomly')
                 params.weights = [random.uniform(0, 1) for _ in range(self.n_weights)]
             matrix = self._create_python_cpg_network(params.weights)
             # TODO use the python controller!
@@ -203,13 +225,15 @@ class ISAACBot:
         elif controller_type == 'cpg':
             params: DifferentialCPG_ControllerParams = self._extract_cpg_urdf_params()
             if not params.weights:
+                isaac_logger.warning('Controller did not initialized weights correctly, initializing randomly')
                 params.weights = [random.uniform(0, 1) for _ in range(self.n_weights)]
             params.weights = [random.uniform(0, 1) for _ in range(self.n_weights)]
             controller = DifferentialCPG(params, self.actuators)
         elif controller_type == 'cppn-cpg':
             params: DifferentialCPG_ControllerParams = self._extract_cpg_urdf_params()
-            # TODO load cppn-network from URDF element and use that to generate weights
-            if not params.weights:
+            params.weights = self._create_cpg_cppn_weights()
+            if not params.weights or len(params.weights) != self.n_weights:
+                isaac_logger.warning('Controller did not initialized weights correctly, initializing randomly')
                 params.weights = [random.uniform(0, 1) for _ in range(self.n_weights)]
             params.weights = [random.uniform(0, 1) for _ in range(self.n_weights)]
             controller = DifferentialCPG(params, self.actuators)
@@ -234,7 +258,7 @@ class ISAACBot:
                 print(f"URDF parameter {key} has invalid value {value} -> requires type: {type(params.__getattribute__(key))}")
             return params
 
-    def _create_python_cpg_network(self, weights) -> np.array:
+    def _create_python_cpg_network(self, weights: List[float]) -> np.array:
         assert (len(weights) == self.n_weights)
         n_dof = len(self.actuators)
         intra_connections = np.diag(weights[:n_dof], 0)
@@ -246,6 +270,42 @@ class ISAACBot:
         weight_matrix[0::2, 0::2] += inter_connections  # place connections between oscillators x -> x
         weight_matrix -= weight_matrix.T  # copy weights in anti-symmetric direction
         return weight_matrix
+
+    def _create_cpg_cppn_weights(self) -> List[float]:
+        # Extract CPPN from URDF
+        controller_urdf: xml.dom.minidom.Element = self.controller_desc()
+        genome_urdf: xml.dom.minidom.Element = controller_urdf.getElementsByTagName('rv:genome')[0]
+        genome_type: AnyStr = genome_urdf.getAttribute('type')
+        if genome_type != 'CPPN':
+            raise RuntimeError("unexpected GENOME type")
+        genome_string: AnyStr = get_xml_text(genome_urdf.childNodes)
+        genome_string = genome_string.replace('inf', str(sys.float_info.max))
+        genome: NEAT.Genome = NEAT.Genome()
+        try:
+            genome.Deserialize(genome_string)
+        except RuntimeError as e:
+            isaac_logger.exception(f'error parsing CPPN genome: "{genome_string}"')
+            raise
+
+        # Generate weigths from the CPPN
+        net: NEAT.NeuralNetwork = NEAT.NeuralNetwork()
+        genome.BuildPhenotype(net)
+        genome.CalculateDepth()
+        nn_depth: int = genome.GetDepth()
+
+        weights: List[float] = [0.0 for _ in range(self.n_weights)]
+
+        # First step, motor oscillator coordinates
+        for index, coordinates in self.connection_map.items():
+            net.Flush()
+            nn_input: List[float] = coordinates[0] + coordinates[1]
+            net.Input(nn_input)
+            for _ in range(nn_depth):
+                net.Activate()
+            weight: float = net.Output()[0]
+            weights[index] = weight
+
+        return weights
 
     def learner_desc(self) -> xml.dom.minidom.Element:
         return self.urdf.documentElement.getElementsByTagName('rv:learner')[0]

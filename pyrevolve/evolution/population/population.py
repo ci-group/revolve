@@ -1,19 +1,21 @@
 from __future__ import annotations
-import asyncio
-import os
+
 import math
+import os
 import re
 
+import asyncio
+
+from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.individual import Individual
-from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.revolve_bot.revolve_bot import RevolveBot
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import List, Optional, Callable
+    from typing import List, Optional, Callable, Tuple
     from pyrevolve.tol.manage.robotmanager import RobotManager
 
     from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue, SimulatorQueue
@@ -212,20 +214,26 @@ class Population:
         assert isinstance(self.config.objective_functions, list) is True
         assert self.config.fitness_function is None
 
-        robot_futures = []
-        for individual in new_individuals:
-            individual.develop()
-            individual.objectives = [-math.inf for _ in range(len(self.config.objective_functions))]
+        if hasattr(self.simulator_queue, 'test_robot'):
+            robot_futures = []
+            for individual in new_individuals:
+                individual.develop()
+                individual.objectives = [-math.inf for _ in range(len(self.config.objective_functions))]
 
-            assert len(individual.phenotype) == len(self.config.objective_functions)
-            for objective, robot in enumerate(individual.phenotype):
-                logger.info(f'Evaluating individual (gen {gen_num} - objective {objective}) {robot.id}')
-                objective_fun = self.config.objective_functions[objective]
-                future = asyncio.ensure_future(
-                    self.evaluate_single_robot(individual=individual, fitness_fun=objective_fun, phenotype=robot))
-                robot_futures.append((individual, robot, objective, future))
+                assert len(individual.phenotype) == len(self.config.objective_functions)
+                for objective, robot in enumerate(individual.phenotype):
+                    logger.info(f'Evaluating individual (gen {gen_num} - objective {objective}) {robot.id}')
+                    objective_fun = self.config.objective_functions[objective]
+                    future = asyncio.ensure_future(
+                        self.evaluate_single_robot(individual=individual, fitness_fun=objective_fun, phenotype=robot))
+                    robot_futures.append((individual, robot, objective, future))
 
-        await asyncio.sleep(1)
+            await asyncio.sleep(1)
+        elif hasattr(self.simulator_queue, 'test_population'):
+            raise NotImplementedError(
+                "Test an entire population at once is not implemented when using multiple objectives")
+        else:
+            raise AttributeError("Simulator queue object does not implement either 'test_robot' or 'test_population'")
 
         for individual, robot, objective, future in robot_futures:
             assert objective < len(self.config.objective_functions)
@@ -268,20 +276,34 @@ class Population:
                                        type_simulation = 'evolve') -> None:
         # Parse command line / file input arguments
         # await self.simulator_connection.pause(True)
-        robot_futures = []
-        for individual in new_individuals:
-            logger.info(f'Evaluating individual (gen {gen_num}) {individual.id} ...')
-            assert callable(self.config.fitness_function)
-            robot_futures.append(
-                asyncio.ensure_future(
-                    self.evaluate_single_robot(individual=individual, fitness_fun=self.config.fitness_function)))
+        assert callable(self.config.fitness_function)
 
-        await asyncio.sleep(1)
+        robot_fitnesses: List[float] = []
+        robot_behaviours: List[BehaviouralMeasurements] = []
+        if hasattr(self.simulator_queue, 'test_robot'):
+            robot_futures = []
+            for individual in new_individuals:
+                logger.info(f'Evaluating individual (gen {gen_num}) {individual.id} ...')
+                robot_futures.append(
+                    asyncio.ensure_future(
+                        self.evaluate_single_robot(individual=individual, fitness_fun=self.config.fitness_function)))
+            await asyncio.sleep(1)
+            for future in robot_futures:
+                fitness, behaviour = await future
+                robot_fitnesses.append(fitness)
+                robot_behaviours.append(behaviour)
 
-        for i, future in enumerate(robot_futures):
-            individual = new_individuals[i]
+        elif hasattr(self.simulator_queue, 'test_population'):
+            logger.info(f'Evaluating whole population (gen {gen_num}) ...')
+            robot_fitnesses, robot_behaviours = await self.evaluate_whole_population(population=new_individuals, fitness_fun=self.config.fitness_function)
+
+        else:
+            raise AttributeError("Simulator queue object does not implement either 'test_robot' or 'test_population'")
+
+        for individual, fitness, behaviour in zip(new_individuals, robot_fitnesses, robot_behaviours):
             logger.info(f'Evaluation of Individual {individual.phenotype.id}')
-            individual.fitness, individual.phenotype._behavioural_measurements = await future
+            individual.fitness = fitness
+            individual.phenotype._behavioural_measurements = behaviour
 
             if individual.phenotype._behavioural_measurements is None:
                 assert (individual.fitness is None)
@@ -298,7 +320,7 @@ class Population:
     async def evaluate_single_robot(self,
                                     individual: Individual,
                                     fitness_fun: Callable[[RobotManager, RevolveBot], float],
-                                    phenotype: Optional[RevolveBot] = None) -> (float, BehaviouralMeasurements):
+                                    phenotype: Optional[RevolveBot] = None) -> Tuple[float, BehaviouralMeasurements]:
         """
         :param individual: individual
         :param fitness_fun: fitness function
@@ -326,5 +348,39 @@ class Population:
             print("MOCKING SIMULATION")
             return await self._mock_simulation()
 
-    async def _mock_simulation(self):
+    async def evaluate_whole_population(self,
+                                        population: List[Individual],
+                                        fitness_fun: Callable[[RobotManager, RevolveBot], float]) \
+            -> Tuple[List[Optional[float]], List[Optional[BehaviouralMeasurements]]]:
+        phenotypes = []
+        for individual in population:
+            if individual.phenotype is None:
+                individual.develop()
+            phenotypes.append(individual.phenotype)
+
+        skip: List[int] = []
+        if self.analyzer_queue is not None:
+            for i, phenotype in enumerate(phenotypes):
+                collisions, bounding_box = await self.analyzer_queue.test_robot(individual, phenotype, self.config, fitness_fun)
+                if collisions > 0:
+                    logger.info(f"discarding robot {individual} because there are {collisions} self collisions")
+                    skip.append(i)
+                else:
+                    phenotype.simulation_boundaries = bounding_box
+
+        for i in skip:
+            del population[i]
+            del phenotypes[i]
+
+        fitnesses, behaviours = await self.simulator_queue.test_population(population, phenotypes, self.config, fitness_fun)
+
+        # TODO verify that these are correctly positioned
+        for i in skip:
+            fitnesses.insert(i, None)
+            behaviours.insert(i, None)
+
+        return fitnesses, behaviours
+
+    @staticmethod
+    async def _mock_simulation():
         return fitness.random(None, None), BehaviouralMeasurements()

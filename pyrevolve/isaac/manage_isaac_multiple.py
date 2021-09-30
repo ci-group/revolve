@@ -48,11 +48,9 @@ def init_worker():
     isaac_logger.info("DB connection Initialized.")
 
 
-def init_sym(_db: PostgreSQLDatabase, args: Arguments) -> Tuple[IsaacSim, gymapi.SimParams]:
+def init_sym(_db: PostgreSQLDatabase, args: Arguments, num_envs: int) -> Tuple[IsaacSim, gymapi.SimParams]:
     assert _db is not None
     asset_root = tempfile.gettempdir()
-
-    num_envs = 1
 
     # configure sim
     sim_params = gymapi.SimParams()
@@ -135,7 +133,7 @@ def life_cycle(gym: IsaacSim, time: float):
             # TODO hack your way to remove the robot in simulation, now is only removed from the controller loop
 
 
-def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
+def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[int]:
     """
     Simulate the robot in isaac gym
     :param robots_urdf: list of URDF describing the robot
@@ -147,6 +145,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
     # Parse arguments
     # args = gymutil.parse_arguments(description="Loading and testing")
     args = Arguments()
+    isolated_environments = True
 
     manual_db_session = False
     if db is None:
@@ -155,7 +154,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
 
     gym: IsaacSim
     sim_params: gymapi.SimParams
-    gym, sim_params = init_sym(db, args)
+    gym, sim_params = init_sym(db, args, len(robots_urdf) if isolated_environments else 1)
 
     # Load robot asset
     asset_options = gymapi.AssetOptions()
@@ -163,7 +162,6 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
     asset_options.flip_visual_attachments = True
     asset_options.armature = 0.01
 
-    isolated_environments = False
     num_envs = len(robots_urdf) if isolated_environments else 1
     assert (num_envs > 0)
 
@@ -209,14 +207,16 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
 
             # Load in the simulator
             isaac_logger.info(f"Loading {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
-            gym.insert_robot(i, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
+            env_index = i if isolated_environments else 0
+            gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
 
             # Insert robot in the database
-            robot.db_robot = DBRobot(name=robot.name)
-            assert session.is_active
-            session.add(robot.db_robot)
-            # this line actually queries the database while the session is still active
-            db_robot_id = robot.db_robot.id
+            with db.session() as session2:
+                robot.db_robot = DBRobot(name=robot.name)
+                session2.add(robot.db_robot)
+                session2.commit()
+                # this line actually queries the database while the session is still active
+                robot.db_robot_id = robot.db_robot.id
 
             db_eval = DBRobotEvaluation(robot=robot.db_robot, n=0)
             robot.evals.append(db_eval)
@@ -226,19 +226,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
         # end for loop
         session.commit()
 
-    # def obtain_fitness(env_, robot_handle_):
-    #     body_states = gym.get_robot_position_rotation(env_, robot_handle_)[0]
-    #     current_pos = np.array((body_states[0], body_states[1], body_states[2]))
-    #     initial_state = initial_states[(env_, robot_handle_)]
-    #     position0 = initial_state[0]
-    #     original_pos = np.array((position0[0], position0[1], position0[2]))
-    #     absolute_distance = np.linalg.norm(original_pos - current_pos)
-    #     return absolute_distance
-
-    initial_states = {}
-    for env in gym.envs:
-        for r in gym.robot_handles:
-            initial_states[(env, r)] = np.copy(gym.get_robot_position_rotation(env, r))
+    db_robots_id = [robot.db_robot_id for robot in gym.robots]
 
     # %% Simulate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     controller_update_time = sim_params.dt * 10
@@ -255,4 +243,4 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> int:
     if manual_db_session:
         shutdown_worker()
 
-    return db_robot_id
+    return db_robots_id

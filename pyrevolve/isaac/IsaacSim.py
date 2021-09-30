@@ -32,12 +32,14 @@ class IsaacSim:
                  sim_params: gymapi.SimParams,
                  headless: bool,
                  num_envs: int,
-                 environment_size: float = 2.0,
+                 environment_size: float = 0.1,
                  ):
         self._asset_root = asset_root
         self._db = db
+        self._spacing = environment_size
         self.robot_handles = []
         self.envs = []
+        self.robots = []
 
         self._gym = gymapi.acquire_gym()
         self._sim = self._gym.create_sim(compute_device_id,
