@@ -21,6 +21,9 @@ class IsaacSim:
     robots: List[ISAACBot]
     robot_handles: List[int]
     envs: List[gymapi.Env]
+    _env_lower: gymapi.Vec3
+    _env_upper: gymapi.Vec3
+    _num_per_row: int
     controllers: Dict[int, RevolveController]
 
     def __init__(self,
@@ -59,12 +62,13 @@ class IsaacSim:
             self._gym.viewer_camera_look_at(self._viewer, None, cam_pos, cam_target)
 
         # Create environments
-        env_lower = gymapi.Vec3(-environment_size, 0.0, -environment_size)
-        env_upper = gymapi.Vec3(environment_size, environment_size, environment_size)
-        num_per_row = int(math.sqrt(num_envs))
+        self._env_lower = gymapi.Vec3(-environment_size, 0.0, -environment_size)
+        self._env_upper = gymapi.Vec3(environment_size, environment_size, environment_size)
+        self._num_per_row = int(math.sqrt(num_envs))
         for i in range(num_envs):
-            env = self._gym.create_env(self._sim, env_lower, env_upper, num_per_row)
-            self.envs.append(env)
+            # You should initialize these at the last minute because of performance reasons
+            # env = self._gym.create_env(self._sim, env_lower, env_upper, num_per_row)
+            self.envs.append(None)
 
     def add_ground(self, plane_params: Optional[gymapi.PlaneParams] = None) -> None:
         if plane_params is None:
@@ -179,6 +183,9 @@ class IsaacSim:
         if isinstance(env, int):
             index: int = env
             env = self.envs[index]
+            if env is None:
+                env = self._gym.create_env(self._sim, self._env_lower, self._env_upper, self._num_per_row)
+                self.envs[index] = env
         else:
             index: int = self.envs.index(env)
 
