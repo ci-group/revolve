@@ -23,7 +23,7 @@ class Arguments:
         self.compute_device_id = 0
         self.graphics_device_id = 0
         self.num_threads = 0
-        self.headless = True
+        self.headless = False
 
 
 @worker_process_init.connect
@@ -77,7 +77,7 @@ def init_sym(_db: PostgreSQLDatabase, args: Arguments, num_envs: int) -> Tuple[I
     gym = IsaacSim(_db, asset_root,
                    args.compute_device_id, args.graphics_device_id, args.physics_engine, sim_params,
                    args.headless,
-                   num_envs, 2.0)
+                   num_envs, 0.5)
     isaac_logger.debug('gym initialized')
 
     # %% Initialize environment
@@ -145,7 +145,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
     # Parse arguments
     # args = gymutil.parse_arguments(description="Loading and testing")
     args = Arguments()
-    isolated_environments = True
+    isolated_environments = False
 
     manual_db_session = False
     if db is None:
@@ -207,7 +207,13 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
 
             # Load in the simulator
             isaac_logger.info(f"Loading {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
-            env_index = i if isolated_environments else 0
+            if isolated_environments:
+                env_index = i
+            else:
+                env_index = 0
+                robot.pose += gymapi.Vec3(
+                    gym.en
+                )
             gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
 
             # Insert robot in the database

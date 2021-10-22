@@ -35,7 +35,7 @@ class IsaacSim:
                  sim_params: gymapi.SimParams,
                  headless: bool,
                  num_envs: int,
-                 environment_size: float = 0.1,
+                 environment_size: float = 2.0,
                  ):
         self._asset_root = asset_root
         self._db = db
@@ -53,14 +53,6 @@ class IsaacSim:
             isaac_logger.error("*** Failed to create sim ***")
             raise RuntimeError("Failed to create sim")
 
-        self._viewer = None
-        if not headless:
-            self._viewer = self._gym.create_viewer(self._sim, gymapi.CameraProperties())
-            # Point camera at environments
-            cam_pos = gymapi.Vec3(-4.0, 4.0, -1.0)
-            cam_target = gymapi.Vec3(0.0, 2.0, 1.0)
-            self._gym.viewer_camera_look_at(self._viewer, None, cam_pos, cam_target)
-
         # Create environments
         self._env_lower = gymapi.Vec3(-environment_size, 0.0, -environment_size)
         self._env_upper = gymapi.Vec3(environment_size, environment_size, environment_size)
@@ -69,6 +61,14 @@ class IsaacSim:
             # You should initialize these at the last minute because of performance reasons
             # env = self._gym.create_env(self._sim, env_lower, env_upper, num_per_row)
             self.envs.append(None)
+
+        self._viewer = None
+        if not headless:
+            self._viewer = self._gym.create_viewer(self._sim, gymapi.CameraProperties())
+            # Point camera at environments
+            cam_pos = gymapi.Vec3(self._num_per_row/2, -4.0, 4.0)
+            cam_target = gymapi.Vec3(self._num_per_row/2, self._num_per_row/2, 0)
+            self._gym.viewer_camera_look_at(self._viewer, None, cam_pos, cam_target)
 
     def add_ground(self, plane_params: Optional[gymapi.PlaneParams] = None) -> None:
         if plane_params is None:
