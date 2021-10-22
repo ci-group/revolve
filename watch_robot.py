@@ -51,17 +51,18 @@ async def run():
     # initialization finished
 
     # load robot file
-    path = "phenotype_1.yaml"
+    path = "phenotype_2870.yaml"
     robot = RevolveBot(_id=settings.test_robot)
     robot.load_file(path, conf_type="yaml")
     robot.update_substrate()
 
     target_direction = 240 / 360 * 2 * math.pi
-    target_as_vector = (
-        math.cos(target_direction),
-        math.sin(target_direction),
-        0,
-    )
+    #target_as_vector = (
+    #    math.cos(target_direction),
+    #    math.sin(target_direction),
+    #    0,
+    #)
+    target_as_vector = (0, 10, 0)
     robot._brain.target = target_as_vector
 
     robot.save_file(f"{path}.sdf", conf_type="sdf")
