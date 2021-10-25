@@ -425,7 +425,7 @@ class ExperimentManagement:
                     line_split = line.split(',')
                     line_id = line_split[0]
                     line_fitness = line_split[1:]  # type List[str]
-                    if line_id == _id:
+                    if int(line_id) == _id:
                         objectives = [None if line_fitness_v.startswith('None') else float(line_fitness_v) for line_fitness_v in line_fitness]
                         if len(line_fitness) == 1:
                             fitness = objectives[0]
