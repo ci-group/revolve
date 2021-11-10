@@ -8,8 +8,8 @@ num_terminals=8
 start_port=8000
 final_gen=99
 experiments=("staticplane" "statictilted")
-experiments_path=karines_experiments/data/
-managers_path=experiments/karines_experiments/
+experiments_path=link_storage/alifej2021/
+managers_path=experiments/karines_experiments/alifejournal21/
 
 while true
 	do

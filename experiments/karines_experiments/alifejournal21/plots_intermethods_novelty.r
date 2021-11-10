@@ -13,35 +13,22 @@ library(viridis)
 
 #### CHANGE THE PARAMETERS HERE ####
 
-base_directory <-paste('jim', sep='')
-base_directory2 <-paste('karine/alife2021', sep='')
+base_directory2 <-paste('/storage/karine/alifej2021', sep='')
 
-analysis = 'analysis/plotseq'
+analysis = 'analysis/measures'
 output_directory = paste(base_directory2,'/',analysis ,sep='')
 
-experiments_type = c(
-                     'plasticodingscaffolding_inc_inv',
-                     'plasticodingscaffolding3_inc_normal',
-                     'plasticodingscaffolding2_equal',
-                     'static_plane',
-                     'plasticodingscaffolding_inv',
-                     'static_tilted')
+experiments_type = c("scaffincinv", "scaffinc", "scaffeq", "staticplane", "scaffeqinv", "statictilted")
+experiments_type = c("scaffeq", "scaffeqinv","scaffeq", "scaffeqinv","scaffeq", "scaffeqinv")
+experiments_labels = c("scaffincinv", "scaffinc", "scaffeq", "staticplane", "scaffeqinv", "statictilted")
 
-experiments_labels = c( 
-                        'plasticodingscaffolding_inc_inv',
-                        'plasticodingscaffolding3_inc_normal',
-                        'plasticodingscaffolding2_equal',
-                        'static_plane',
-                        'plasticodingscaffolding_inv',
-                        'static_tilted'
-                        )
 runs = list(
-            c(1:9),
-            c(1:4),
-            c(1:10),
-            c(1:10),
-            c(1:10),
-            c(1:10))
+            c(1:20),
+            c(1:20),
+            c(1:20),
+            c(1:20),
+            c(1:20),
+            c(1:20))
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
@@ -202,11 +189,9 @@ for( m in 1:length(more_measures_names)){
 
 #####
 # heatmap
-all_runs = TRUE
-random_runs = paste('(', paste(sample(runs[[1]], 3), collapse=', ' ), ')')
+all_runs = FALSE
+random_runs = paste('(', paste(sample(runs[[1]], 10), collapse=', ' ), ')')
 
-
-for (i in 1:length(measures_names)){
 
   query = paste("select method_label, run, generation, robot_id, novelty_pop as value from measures_snapshots_all ")
   if (!all_runs){
@@ -217,13 +202,15 @@ for (i in 1:length(measures_names)){
   measures_heat = measures_heat %>%
     group_by(method_label, run, generation) %>%
     mutate(rank = order(order(value)))
+  
+  #measures_heat =  sqldf(paste("select * from measures_heat where rank>65 "))
 
   heat <-ggplot(measures_heat, aes(generation, rank, fill=value))+
     geom_tile(color= "white",size=0.1)+
     scale_fill_viridis(option ="C")
   heat <-heat + facet_grid(method_label~run)
   heat <-heat + scale_y_continuous(breaks =c())
-  heat <-heat + scale_x_continuous(breaks =c(0,   50,  99))
+  heat <-heat + scale_x_continuous(breaks =c())
   heat <-heat + labs(title="Novelty", x="Generations", y="Robots", fill="Novelty")
   heat <-heat + theme(legend.position = "none")+
     theme(legend.key.size = unit(1.5, 'cm'))+
@@ -241,9 +228,8 @@ for (i in 1:length(measures_names)){
   #removeGrid()
 
   if (!all_runs){
-    ggsave(paste(output_directory,"/novelty_heat.png",sep = ""), heat, device = "png", height=22, width = 20)
+    ggsave(paste(output_directory,"/novelty_heat.png",sep = ""), heat, device = "png", height=22, width = 49)
   }else{
     ggsave(paste(output_directory,"/novelty_heat.png",sep = ""), heat, device = "png", height=22, width = 50, limitsize = FALSE)
   }
 
-}

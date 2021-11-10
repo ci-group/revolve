@@ -4,37 +4,39 @@ require('magick')
 ##### change paths/labels/params here #####
 
 
-paths = c(
-          'plasticodingscaffolding3_inc_normal'#,
-          #'plasticodingscaffolding_inc_inv',
-          #'plasticodingscaffolding2_equal',
-          #'static_plane',
-          #'static_tilted',
-         # 'plasticodingscaffolding_inv' 
-          )
+paths = c("scaffeq", "staticplane", "scaffeqinv", "scaffinc", "scaffincinv", "statictilted")
+paths = c("scaffeq",   "scaffeqinv", "scaffinc", "scaffincinv" )
 
 # final environment
 environments = list(
-  c('tilted5'),
+  c('unique'),
   c('plane'),
-  c('tilted5'),
-  c('plane'),
+  c('unique'),
+  c('unique'),
   c('tilted5'),
   c('plane')
+)
+environments = list(
+  c('unique'),
+   
+  c('unique'),
+  c('unique'),
+ 
+  c('unique')
 )
 
 colors = list( c('#ffffff'),
                c('#ffffff'),
                c('#ffffff'),
                c('#ffffff'),
+               c('#ffffff'),
                c('#ffffff'))
 
-base_directory <- paste('jim/', sep='')
-base_directory2 <-paste('karine/alife2021/', sep='')
+base_directory2 <-paste('/storage/karine/alifej2021/', sep='')
 
 analysis = 'analysis/2dtopbest'
 
-runs = list(c(1:4), c(1:9), c(1:10), c(1:10), c(1:10), c(1:10))
+runs = list(c(1:20), c(1:20), c(1:20), c(1:20), c(1:20), c(1:20))
 pop = 100
 num_top = 5
 
@@ -55,7 +57,7 @@ for(m in 1:length(paths))
   # for each repetition
   for (exp in runs[[m]])
   {
-    input_directory  <-    paste(base_directory, paths[m],'_',exp, '/selectedpop_', sep='')
+    input_directory  <-    paste(base_directory2, paths[m],'_',exp, '/selectedpop_', sep='')
     
     # highest in criteria in gen
     for (g in 1:length(gens))

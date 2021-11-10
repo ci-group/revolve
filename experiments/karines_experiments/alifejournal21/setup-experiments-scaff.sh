@@ -3,8 +3,7 @@
 #set -x
 
 runs=20
-#num_terminals=8
-num_terminals=4
+num_terminals=8
 start_port=8000
 final_gen=99
 experiments=("scaffeq" "scaffeqinv" "scaffinc" "scaffincinv")
@@ -108,7 +107,6 @@ while true
   sleep 1800s;
 
 done
-
 
 # killall screen
 # screen -r naaameee

@@ -13,38 +13,26 @@ library(viridis)
 
 #### CHANGE THE PARAMETERS HERE ####
 
-base_directory <-paste('jim', sep='')
-base_directory2 <-paste('karine/alife2021', sep='')
+base_directory2 <-paste('/storage/karine/alifej2021', sep='')
 
-analysis = 'analysis/plotsinc'
+analysis = 'analysis/measures/inc'
 output_directory = paste(base_directory2,'/',analysis ,sep='')
 
-experiments_type = c(
-                     'static_plane',
-                     'plasticodingscaffolding3_inc_normal',
-                     'plasticodingscaffolding_inc_inv',
-                     'static_tilted')
+experiments_type = c("staticplane", "scaffinc", "scaffincinv","statictilted")
+experiments_labels = c("staticplane", "scaffinc", "scaffincinv","statictilted")
 
-experiments_labels = c( 
-                  'static_plane',
-                  'plasticodingscaffolding3_inc_normal',
-                  'plasticodingscaffolding_inc_inv',
-                  'static_tilted'
-                        )
 runs = list(
-            c(1:10),
-            c(1:4),
-            c(1:9),
-            c(1:10))
+            c(1:20),
+            c(1:20),
+            c(1:20),
+            c(1:20))
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
-methods_labels = c(
-                   'Flat',
-                   'Incr',
-                   'Inv Incr',
-                   'Tilted'
-                   )
+methods_labels =  c('Flat',
+                    'Incr',
+                    'Inv Incr',
+                    'Tilted')
 
 experiments_type_colors = c('#FF00FF',
                             '#7F00FF', 
