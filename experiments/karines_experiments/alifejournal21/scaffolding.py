@@ -118,8 +118,9 @@ async def run():
         previous_port = None
 
         for instance_phenotype in instances_phenotype:
-            settings.world = settings.world
             settings.z_start = 0.1
+            # just as a remainder! :D
+            settings.world = settings.world
 
             if previous_port is None:
                 port = settings.port_start

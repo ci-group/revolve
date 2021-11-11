@@ -135,14 +135,26 @@ parser.add_argument(
     help="Uae 'watch' for just watching robots, or 'log' watch and log."
 )
 
+parser.add_argument(
+    '--watch-k',
+    default=1, type=int,
+    help="How many robots from the to chosen generation you wanna watch or log."
+)
+
+parser.add_argument(
+    '--watch-gen',
+    default=99, type=int,
+    help="which generation you wanna watch or log."
+)
+
 
 parser.add_argument(
     '--world',
-    default='worlds/plane.world', type=str,
+    default='plane.realtime', type=str,
     help="Determine which world gazebo should use."
          "Usefull not only to change the environment, but also the physical properties of the world "
          "and the simulation/real time ratio (you can use the dedicated real time worlds). "
-         "Defaults to \"worlds/plane.world\"."
+         "Defaults to plane."
 )
 
 parser.add_argument(

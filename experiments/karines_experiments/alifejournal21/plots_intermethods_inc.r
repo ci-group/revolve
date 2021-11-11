@@ -18,8 +18,7 @@ base_directory2 <-paste('/storage/karine/alifej2021', sep='')
 analysis = 'analysis/measures/inc'
 output_directory = paste(base_directory2,'/',analysis ,sep='')
 
-experiments_type = c("staticplane", "scaffinc", "scaffincinv","statictilted")
-experiments_labels = c("staticplane", "scaffinc", "scaffincinv","statictilted")
+experiments_type = c("staticplane", "scaffincinv", "scaffinc","statictilted")
 
 runs = list(
             c(1:20),
@@ -29,10 +28,10 @@ runs = list(
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
-methods_labels =  c('Flat',
-                    'Incr',
-                    'Inv Incr',
-                    'Tilted')
+methods_labels =  c('1-Flat',
+                    '2-Inv Incr',
+                    '3-Incr',
+                    '4-Tilted')
 
 experiments_type_colors = c('#FF00FF',
                             '#7F00FF', 
@@ -51,13 +50,13 @@ gens_box_comparisons = c(99)
 measures_names = c(
   'displacement_velocity_hill',
   'head_balance',
-  'branching',
+  #'branching',
   #'branching_modules_count',
-  'limbs',
-  'extremities',
-  'length_of_limbs',
+  # 'limbs',
+  #'extremities',
+  # 'length_of_limbs',
   #'extensiveness',
-  'coverage',
+  # 'coverage',
   'joints',
   #'hinge_count',
   #'active_hinges_count',
@@ -67,17 +66,17 @@ measures_names = c(
   'proportion',
   #'width',
   #'height',
-  'absolute_size',
-  'sensors',
-  'symmetry'#,
-  #'avg_period',
+  'absolute_size'#,
+  #'sensors',
+  #'symmetry',
+  #'avg_period'#,
   #'dev_period',
   #'avg_phase_offset',
   #'dev_phase_offset',
   #'avg_amplitude',
   #'dev_amplitude',
-  #'avg_intra_dev_params',
-  #'avg_inter_dev_params',
+  # 'avg_intra_dev_params',
+  #'avg_inter_dev_params'#,
   #'sensors_reach',
   #'recurrence',
   #'synaptic_reception'
@@ -87,13 +86,13 @@ measures_names = c(
 measures_labels = c(
   'Speed (cm/s)',
   'Balance',
-  'Branching',
+  #'Branching',
   #'branching_modules_count',
-  'Rel number of limbs',
-  'Number of Limbs',
-  'Rel. Length of Limbs',
+  # 'Rel number of limbs',
+  #'Number of Limbs',
+  # 'Rel. Length of Limbs',
   #'Extensiveness',
-  'Coverage',
+  #'Coverage',
   'Rel. Number of Joints',
   #'hinge_count',
   #'active_hinges_count',
@@ -103,21 +102,22 @@ measures_labels = c(
   'Proportion',
   #'width',
   #'height',
-  'Size',
-  'Sensors',
-  'Symmetry'#,
-  #'Average Period',
+  'Size'#,
+  # 'Sensors',
+  # 'Symmetry',
+  #'Average Period'#,
   #'Dev Period',
   #'Avg phase offset',
   #'Dev phase offset',
   #'Avg Amplitude',
   #'Dev amplitude',
-  #'Avg intra dev params',
-  #'Avg inter dev params',
+  # 'Avg intra dev params',
+  #'Avg inter dev params'#,
   #'Sensors Reach',
   #'Recurrence',
   #'Synaptic reception'
 )
+
 
 more_measures_names = c(
   # 'novelty',
@@ -175,7 +175,6 @@ for (exp in 1:length(experiments_type))
 
 fail_test = sqldf(paste("select method,run,generation,count(*) as c from measures_snapshots_all group by 1,2,3 having c<",pop," order by 4"))
 measures_snapshots_all = sqldf("select * from measures_snapshots_all where cons_fitness IS NOT NULL")
-
 
 measures_names = c(measures_names, more_measures_names)
 measures_labels = c(measures_labels, more_measures_labels)
@@ -380,15 +379,15 @@ for (i in 1:length(measures_names))
           stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
 
         # in this list, use the desired pairs names from methods_labels
-        comps = list( c('Incr', 'Inv Incr'),
-                      c('Incr', 'Flat'),
-                      c('Incr', 'Tilted'),
-                      c('Inv Incr', 'Flat'),
-                      c('Inv Incr', 'Tilted'),
-                      c('Flat', 'Tilted')
+        comps = list( c('3-Incr', '2-Inv Incr'),
+                      c('3-Incr', '1-Flat'),
+                      c('3-Incr', '4-Tilted'),
+                      c('2-Inv Incr', '1-Flat'),
+                      c('2-Inv Incr', '4-Tilted'),
+                      c('1-Flat', '4-Tilted')
                       )
         mxax = max(all_final_values[1])
-        g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=15,
+        g1 = g1 + geom_signif( test="t.test", size=1, textsize=15,
                                comparisons = comps,
                                map_signif_level=c("***"=0.001,"**"=0.01, "*"=0.05) , 
                                y_position=c(mxax*1.1, mxax*1.2, mxax*1.3, mxax*1.4, mxax*1.5, mxax*1.6)  )

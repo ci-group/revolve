@@ -21,19 +21,21 @@ import sys
 import time
 import numpy as np
 
+
 async def run():
     """
     The main coroutine, which is started below.
     """
-
+    settings = parser.parse_args()
     # environment world and z-start
     realtime = False
-    environments = {#'plane': 0.03#,
-                   # 'tilted5': 0.1
-        'tilted3': 0.08
-                    }
+    if settings.resimulate == "":
+        environments = {'unique': 0.1}
+    else:
+        environments = {'plane': 0.03
+                        #,'tilted5': 0.1
+                        }
 
-    settings = parser.parse_args()
     experiment_management = ExperimentManagement(settings, environments)
 
     logger.info('Activated run '+settings.run+' of experiment '+settings.experiment_name)
@@ -71,11 +73,14 @@ async def run():
         previous_port = None
         for environment in environments:
 
-            if realtime:
-                settings.world = environment+'.realtime'
+            if settings.resimulate == "":
+                settings.z_start = environments['unique']
             else:
-                settings.world = environment
-            settings.z_start = environments[environment]
+                if realtime:
+                    settings.world = environment+'.realtime'
+                else:
+                    settings.world = environment
+                settings.z_start = environments[environment]
 
             if previous_port is None:
                 port = settings.port_start
@@ -93,8 +98,8 @@ async def run():
     population = Population(population_conf, simulator_queue, analyzer_queue, 1)
 
     # choose a snapshot here. and the maximum best individuals you wish to watch
-    generation = 149
-    max_best = 1
+    generation = settings.watch_gen
+    max_best = settings.watch_k
     await population.load_snapshot(generation)
 
     values = []
@@ -105,22 +110,31 @@ async def run():
             
         if ind[list(environments.keys())[-1]].consolidated_fitness is not None:
             values.append(ind[list(environments.keys())[-1]].consolidated_fitness)
+            #values.append(ind[list(environments.keys())[-1]].phenotype._behavioural_measurements.displacement_velocity_hill)
         else:
             values.append(-float('Inf'))
-        #values.append(ind['plane'].phenotype._behavioural_measurements.displacement_velocity_hill)
-
     values = np.array(values)
-
     population.individuals = np.array(population.individuals)
     # highest
-    population.individuals = population.individuals[np.argsort(-1*values)[0:max_best]]
+    population.individuals = population.individuals[np.argsort(-1*values)]
     # lowest
-    #population.individuals = population.individuals[np.argsort(-1*values)[(len(population.individuals)-max_best):len(population.individuals)]]
+    # population.individuals = population.individuals[np.argsort(values)]
 
-    for ind in population.individuals:
-        print(ind[list(environments.keys())[-1]].phenotype.id, ind[list(environments.keys())[-1]].consolidated_fitness)
+    to_eval = []
+    for idx, ind in enumerate(population.individuals):
+        # if population.individuals[idx][list(environments.keys())[-1]].phenotype.id \
+        #         in ('robot_3026', 'robot_3039', 'robot_3067', 'robot_3072', 'robot_3021', 'robot_3216'):
+        if True:
+            to_eval.append(population.individuals[idx])
+    to_eval = to_eval[0:max_best]
+
+    for ind in to_eval:
+        print(ind[list(environments.keys())[-1]].phenotype.id, ind[list(environments.keys())[-1]].consolidated_fitness,
+              ind[list(environments.keys())[-1]].phenotype._behavioural_measurements.displacement_velocity_hill)
 
     for environment in environments:
-        print('watch in ', environment)
-        await population.evaluate(new_individuals=population.individuals, gen_num=generation,
+        print('watch in', environment)
+        await population.evaluate(new_individuals=to_eval, gen_num=generation,
                                   environment=environment, type_simulation=settings.watch_type)
+
+# ./revolve.py --experiment-name link_storage/alifej2021/scaffeqinv_1 --manager experiments/karines_experiments/watch_best.py --simulator-cmd gazebo --watch-k 2 --watch-gen 99

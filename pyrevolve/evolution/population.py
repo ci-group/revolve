@@ -170,7 +170,7 @@ class Population:
                 file = open(file_name, 'rb')
                 self.novelty_archive = pickle.load(file)
             except:
-                print('bad pickle for archiive')
+                print('bad pickle for archive')
 
     async def load_snapshot(self, gen_num):
         """
@@ -616,12 +616,10 @@ class Population:
 
             if type_simulation == 'log':
                 self.conf.experiment_management.stability_export(self.conf.all_settings.experiment_name,
-                                                                 self.conf.all_settings.evaluation_time,
                                                                  individual.phenotype.id,
                                                                  individual.phenotype._behavioural_measurements.items())
 
             if type_simulation == 'evolve':
-                
                 individual.evaluated = True
                 self.conf.experiment_management.export_behavior_measures(individual.phenotype.id,
                                                                          individual.phenotype._behavioural_measurements,

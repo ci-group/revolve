@@ -10,7 +10,7 @@ dirpath = '/storage/karine/alifej2021/'
 dirpath_write = '/storage/karine/alifej2021/'
 
 experiments_type = ["scaffeq", "scaffeqinv", "scaffinc", "scaffincinv", "staticplane", "statictilted"]
-experiments_type = [ "staticplane", "statictilted"]
+
 environments = {
     'scaffeq': ['unique'],
     'scaffeqinv': ['unique'],
