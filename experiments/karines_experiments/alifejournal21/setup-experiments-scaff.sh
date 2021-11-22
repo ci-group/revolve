@@ -111,3 +111,10 @@ done
 # killall screen
 # screen -r naaameee
 # screen -list
+
+
+#while true
+	#do
+	 # rm -r *;
+	  #sleep 1800s;
+	  #done

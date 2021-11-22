@@ -28,10 +28,12 @@ async def run():
     """
     settings = parser.parse_args()
     # environment world and z-start
-    realtime = False
-    environments = {#'plane': 0.03,
-                        'tilted5': 0.1
-                    }
+    if 'staticplane' in settings.experiment_name:
+        environments = {'plane': 0.1}
+    elif 'statictilted' in settings.experiment_name:
+        environments = {'tilted5': 0.1}
+    else:
+        environments = {'unique': 0.1}
 
     experiment_management = ExperimentManagement(settings, environments)
 
@@ -69,11 +71,6 @@ async def run():
     if settings.run_simulation == 1:
         previous_port = None
         for environment in environments:
-
-            if realtime:
-                settings.world = environment+'.realtime'
-            else:
-                settings.world = environment
             settings.z_start = environments[environment]
 
             if previous_port is None:
@@ -112,7 +109,7 @@ async def run():
     # highest
     population.individuals = population.individuals[np.argsort(-1*values)]
     # lowest
-    # population.individuals = population.individuals[np.argsort(values)]
+    #population.individuals = population.individuals[np.argsort(values)]
 
     to_eval = []
     for idx, ind in enumerate(population.individuals):
@@ -122,13 +119,13 @@ async def run():
             to_eval.append(population.individuals[idx])
     to_eval = to_eval[0:max_best]
 
-    for ind in to_eval:
-        print(ind[list(environments.keys())[-1]].phenotype.id, ind[list(environments.keys())[-1]].consolidated_fitness,
-              ind[list(environments.keys())[-1]].phenotype._behavioural_measurements.displacement_velocity_hill)
+    for idx,ind in enumerate(to_eval):
+        print(ind[list(environments.keys())[-1]].phenotype.id, ind[list(environments.keys())[-1]].consolidated_fitness)#,
+              #ind[list(environments.keys())[-1]].phenotype._behavioural_measurements.displacement_velocity_hill)
 
     for environment in environments:
         print('watch in', environment)
         await population.evaluate(new_individuals=to_eval, gen_num=generation,
                                   environment=environment, type_simulation=settings.watch_type)
 
-# ./revolve.py --manager experiments/karines_experiments/watch_best.py --evaluation-time 50 --simulator-cmd gazebo --watch-k 1 --watch-gen 99 --experiment-name link_storage/alifej2021/statictilted_4
+# ./revolve.py --manager experiments/karines_experiments/alifejournal21/watch_robust.py --evaluation-time 50 --simulator-cmd gazebo --watch-k 1 --watch-gen 99 --world tilted5 --experiment-name link_storage/alifej2021/scaffeq_4

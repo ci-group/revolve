@@ -4,39 +4,41 @@ require('magick')
 ##### change paths/labels/params here #####
 
 
-paths = c('plasticodingscaffolding2_equal',
-          'static_plane',
-          'static_tilted',
-          'plasticodingscaffolding_inv' )
+paths = c("scaffeq", "staticplane", "scaffeqinv", "scaffinc", "scaffincinv", "statictilted")
 
 environments = list(
-  c('tilted1', 'tilted2', 'tilted3', 'tilted4', 'tilted5', 'tilted5'),
-  c('plane','plane','plane','plane','plane', 'plane'),
-  c('tilted5','tilted5','tilted5','tilted5','tilted5', 'tilted5'),
-  c('tilted4', 'tilted3', 'tilted2', 'tilted1', 'plane', 'plane')
+  c('unique'),
+  c('plane'),
+  c('unique'),
+  c('unique'),
+  c('unique'),
+  c('tilted5')
 )
 
 seqs = list(
-  c(17, 34, 51, 68, 85, 99),
-  c(17, 34, 51, 68, 85, 99),
-  c(17, 34, 51, 68, 85, 99),
-  c(17, 34, 51, 68, 85, 99)
+  c(16, 33, 50, 67, 84, 99),
+  c(16, 33, 50, 67, 84, 99),
+  c(16, 33, 50, 67, 84, 99),
+  c( 3, 12, 26, 45, 69, 99),
+  c( 3, 12, 26, 45, 69, 99),
+  c(16, 33, 50, 67, 84, 99)
 )
 
 colors = list( c('#ffffff'),
                c('#ffffff'),
                c('#ffffff'),
+               c('#ffffff'),
+               c('#ffffff'),
                c('#ffffff'))
 
-base_directory <- paste('jim/', sep='')
-base_directory2 <-paste('karine/alife2021/', sep='')
+base_directory2 <-paste('/storage/karine/alifej2021/', sep='')
 
-analysis = 'analysis/2dseqbest2'
+analysis = 'analysis/2dbeststages'
 
-runs = list( c(1:8), c(1:10), c(1:10), c(1:10))
+runs = list( c(1:20), c(1:20), c(1:20), c(1:20), c(1:20), c(1:20))
 pop = 100
 
-criteria = c('desc', 'desc', 'desc', 'desc')
+criteria = c('desc', 'desc', 'desc', 'desc', 'desc', 'desc')
 
 ##### change paths/labels/params here #####
 
@@ -51,15 +53,13 @@ for(m in 1:length(paths))
   # for each repetition
   for (exp in runs[[m]])
   {
-    input_directory  <-    paste(base_directory, paths[m],'_',exp, '/selectedpop_', sep='')
+    input_directory  <-    paste(base_directory2, paths[m],'_',exp, '/selectedpop_', sep='')
     
-    envn=0
+    new = 0
     for (g in seqs[[m]])
     {
-      envn=envn+1
-      
       ids_gens = data.frame()
-      list = strsplit(list.files(paste(input_directory, environments[[m]][envn],'/selectedpop_', g, sep='')), ' ')
+      list = strsplit(list.files(paste(input_directory, environments[[m]],'/selectedpop_', g, sep='')), ' ')
       for(geno in 1:pop)
       {
         genome =  data.frame(cbind(c(g), c(strsplit(strsplit(list [[geno]],'_')[[1]][3],'.png')[[1]][1] )))
@@ -79,7 +79,7 @@ for(m in 1:length(paths))
       
       phenotype= bests[1,'robot_id']
   
-      patha = paste(input_directory, environments[[m]][envn], "/selectedpop_",g,sep="")
+      patha = paste(input_directory, environments[[m]], "/selectedpop_",g,sep="")
       
       body <- list.files(patha, paste("body_robot_",phenotype,".png$",sep=""), full.names = TRUE)
       body = image_read(body)
@@ -87,12 +87,13 @@ for(m in 1:length(paths))
   
       body = image_border(image_background(body, colors[[m]][1] ), "transparent", "5x5")
       
-      if(envn == 1)
+      if(new == 0)
       {
         bodies = body
       }else{
         bodies = c(bodies, body)
       }
+      new = 1
       
     }
     

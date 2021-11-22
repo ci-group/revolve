@@ -267,7 +267,36 @@ for (met in 1:length(methods))
 
 
 
+######
 
+shapiro <- function(x){
+  tryCatch(
+    {
+      y=round(shapiro.test(c(array(x))[[1]])$p.value,4)
+      return(y)
+    },
+    error=function(error_message) {
+      message(error_message)
+      return(NA)
+    }
+  )
+}
+
+comps = list()
+mlength = length(methods_labels)-1
+idx=1
+for (meto1 in 1:mlength)
+{ aux = meto1+1
+for (meto2 in aux:length(methods_labels))
+{
+  if (meto1!=meto2){
+    comps[[idx]] = c(methods_labels[meto1], methods_labels[meto2])
+    idx=idx+1
+  }
+}
+}
+
+file <-file(paste(output_directory,'/normality.txt',sep=''), open="w")
 all_na = colSums(is.na(measures_averages_gens)) == nrow(measures_averages_gens)
 
 for (i in 1:length(measures_names))
@@ -345,15 +374,15 @@ for (i in 1:length(measures_names))
           gen_measures = sqldf(paste("select * from met_measures where generation=", gc, sep=''))
 
           temp = data.frame( c(gen_measures[paste(methods[met],'_',measures_names[i],'_', aggregations[a], sep='')]))
-          colnames(temp) <- 'values'
+          colnames(temp) <- 'val'
 
           if (out == 'filtered'){
-            if (!all(is.na(temp$values))){
+            if (!all(is.na(temp$val))){
 
               num_rows_before = nrow(temp)
-              upperl <- quantile(temp$values)[4] + 1.5*IQR(temp$values)
-              lowerl <- quantile(temp$values)[2] - 1.5*IQR(temp$values)
-              temp = temp %>% filter(values <= upperl & values >= lowerl )
+              upperl <- quantile(temp$val)[4] + 1.5*IQR(temp$val)
+              lowerl <- quantile(temp$val)[2] - 1.5*IQR(temp$val)
+              temp = temp %>% filter(val <= upperl & val >= lowerl )
 
               if (num_rows_before > nrow(temp)){
                 has_outliers = TRUE
@@ -364,8 +393,34 @@ for (i in 1:length(measures_names))
           temp$type = methods_labels[met]
           all_final_values = rbind(all_final_values, temp)
         }
+        
+        
+        if(a==2 && out == "full" && gc==99){
+          mlength = length(methods_labels)-1
+          for (meto1 in 1:mlength)
+          { aux = meto1+1
+          for (meto2 in aux:length(methods_labels))
+          {
+            if (meto1!=meto2){
+              
+              set1=sqldf(paste("select val from all_final_values where type='",methods_labels[meto1],"'",sep=''))
+              set2=sqldf(paste("select val from all_final_values where type='",methods_labels[meto2],"'",sep=''))
+              
+              s1=shapiro(set1['val'])
+              s2=shapiro(set2['val'])
+              
+              writeLines(paste(measures_names[i], 
+                               methods_labels[meto1], s1, 
+                               methods_labels[meto2], s2
+              ) , file)
+            }
+          }
+          }
+        }
+        
 
-        g1 <-  ggplot(data=all_final_values, aes(x= type , y=values, color=type )) +
+
+        g1 <-  ggplot(data=all_final_values, aes(x= type , y=val, color=type )) +
           geom_boxplot(position = position_dodge(width=0.9),lwd=2,  outlier.size = 4) +
           labs( x="Method", y=measures_labels[i], title=str_to_title(aggregations[a]))
 
@@ -378,16 +433,8 @@ for (i in 1:length(measures_names))
                         plot.margin=margin(t = 0.5, r = 0.5, b = 0.5, l =  1.3, unit = "cm"))+
           stat_summary(fun.y = mean, geom="point" ,shape = 16,  size=11)
 
-        # in this list, use the desired pairs names from methods_labels
-        comps = list( c('3-Incr', '2-Inv Incr'),
-                      c('3-Incr', '1-Flat'),
-                      c('3-Incr', '4-Tilted'),
-                      c('2-Inv Incr', '1-Flat'),
-                      c('2-Inv Incr', '4-Tilted'),
-                      c('1-Flat', '4-Tilted')
-                      )
         mxax = max(all_final_values[1])
-        g1 = g1 + geom_signif( test="t.test", size=1, textsize=15,
+        g1 = g1 + geom_signif( test="wilcox.test", size=1, textsize=15,
                                comparisons = comps,
                                map_signif_level=c("***"=0.001,"**"=0.01, "*"=0.05) , 
                                y_position=c(mxax*1.1, mxax*1.2, mxax*1.3, mxax*1.4, mxax*1.5, mxax*1.6)  )
@@ -404,5 +451,7 @@ for (i in 1:length(measures_names))
 
 }
 
+
+close(file)
 
 
