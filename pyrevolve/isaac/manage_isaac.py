@@ -71,11 +71,12 @@ def init_sym(_db: PostgreSQLDatabase, args: Arguments, num_envs: int) -> Tuple[I
         sim_params.flex.relaxation = 0.75
         sim_params.flex.warm_start = 0.8
     elif args.physics_engine == gymapi.SIM_PHYSX:
+        import torch
         sim_params.physx.solver_type = 1
         sim_params.physx.num_position_iterations = 4
         sim_params.physx.num_velocity_iterations = 1
         sim_params.physx.num_threads = args.num_threads
-        sim_params.physx.use_gpu = False
+        sim_params.physx.use_gpu = torch.cuda.is_available()
 
     isaac_logger.debug(
         f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
