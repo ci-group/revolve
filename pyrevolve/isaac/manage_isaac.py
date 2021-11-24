@@ -157,7 +157,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     assert (num_envs > 0)
     for i in range(num_envs):
         isaac_logger.info(f"Loading {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
-        gym.insert_robot(i, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
+        gym.insert_robot(i, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
 
     controller_update_time = sim_params.dt * 10
     # List of active controllers
