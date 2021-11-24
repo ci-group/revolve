@@ -18,15 +18,17 @@ base_directory2 <-paste('/storage/karine/alifej2021', sep='')
 analysis = 'analysis/measures'
 output_directory = paste(base_directory2,'/',analysis ,sep='')
 
-experiments_type = c(  "scaffincinv", "scaffeqinv")
+experiments_type = c(  "scaffincinv", "scaffeqinv",   "scaffinc", "scaffeq" )
 
 runs = list(
+  c(1:20),
+  c(1:20),
   c(1:20),
   c(1:20))
 
 # methods are product of experiments_type VS environments and should be coupled with colors.
 # make sure to define methods_labels in alphabetic order, and experiments_type accordingly
-methods_labels =  c( "scaffincinv", "scaffeqinv")
+methods_labels =  c( "scaffincinv", "scaffeqinv",   "scaffinc", "scaffeq")
 
 experiments_type_colors = c('#FF00FF',
                             '#7F00FF', 
@@ -169,16 +171,89 @@ for (exp in 1:length(experiments_type))
 
 
 
+measures_averages_gens_1 = list()
+measures_averages_gens_2 = list()
+
+for (met in 1:length(methods))
+{
+  measures_aux = c()
+  p <- c(0.25, 0.75)
+  p_names <- map_chr(p, ~paste0('Q',.x*100, sep=""))
+  p_funs <- map(p, ~partial(quantile, probs = .x, na.rm = TRUE)) %>%
+    set_names(nm = p_names)
+  
+  query ='select run, generation'
+  for (i in 1:length(measures_names))
+  {
+    query = paste(query,', avg(',measures_names[i],') as ', methods[met], '_',measures_names[i],'_mean', sep='')
+    query = paste(query,', median(',measures_names[i],') as ', methods[met], '_',measures_names[i],'_median', sep='')
+    query = paste(query,', min(',measures_names[i],') as ', methods[met], '_',measures_names[i],'_min', sep='')
+    query = paste(query,', max(',measures_names[i],') as ', methods[met], '_',measures_names[i],'_max', sep='')
+    measures_aux = c(measures_aux, measures_names[i])
+  }
+  query = paste(query,' from measures_snapshots_all
+                where method="', methods[met],'" group by run, generation', sep='')
+  inner_measures = sqldf(query)
+  
+  quantiles = data.frame(measures_snapshots_all %>%
+                           filter(method==methods[met]) %>%
+                           group_by(run, generation) %>%
+                           summarize_at(vars(  measures_aux), funs(!!!p_funs)) )
+  for (i in 1:length(measures_names)){
+    for(q in c('Q25', 'Q75')){
+      variable =  paste(measures_names[i], q, sep='_')
+      names(quantiles)[names(quantiles) == variable] <- paste(methods[met], '_',variable, sep='')
+    }
+  }
+  inner_measures = sqldf('select * from inner_measures inner join quantiles using (run, generation)')
+  
+  measures_averages_gens_1[[met]] = inner_measures
+  
+  inner_measures = measures_averages_gens_1[[met]]
+  
+  inner_measures$generation = as.numeric(inner_measures$generation)
+  
+  measures_aux = c()
+  query = 'select generation'
+  for (i in 1:length(measures_names))
+  {
+    query = paste(query,', median(', methods[met],'_',measures_names[i],'_mean) as ' , methods[met],'_',measures_names[i],'_mean_median', sep='')
+    query = paste(query,', median(', methods[met],'_',measures_names[i],'_median) as ', methods[met],'_',measures_names[i],'_median_median', sep='')
+    query = paste(query,', median(', methods[met],'_',measures_names[i],'_min) as ', methods[met],'_',measures_names[i],'_min_median', sep='')
+    query = paste(query,', median(', methods[met],'_',measures_names[i],'_max) as ', methods[met],'_',measures_names[i],'_max_median', sep='')
+    query = paste(query,', median(', methods[met],'_',measures_names[i],'_Q25) as ', methods[met],'_',measures_names[i],'_Q25_median', sep='')
+    query = paste(query,', median(', methods[met],'_',measures_names[i],'_Q75) as ', methods[met],'_',measures_names[i],'_Q75_median', sep='')
+    
+    measures_aux = c(measures_aux, paste(methods[met],'_',measures_names[i],'_mean', sep='') )
+    measures_aux = c(measures_aux, paste(methods[met],'_',measures_names[i],'_median', sep='') )
+    measures_aux = c(measures_aux, paste(methods[met],'_',measures_names[i],'_min', sep='') )
+    measures_aux = c(measures_aux, paste(methods[met],'_',measures_names[i],'_max', sep='') )
+    measures_aux = c(measures_aux, paste(methods[met],'_',measures_names[i],'_Q25', sep='') )
+    measures_aux = c(measures_aux, paste(methods[met],'_',measures_names[i],'_Q75', sep='') )
+  }
+  query = paste(query,' from inner_measures group by generation', sep="")
+  outter_measures = sqldf(query)
+  
+  quantiles = data.frame(inner_measures %>%
+                           group_by(generation) %>%
+                           summarize_at(vars(  measures_aux), funs(!!!p_funs)) )
+  
+  measures_averages_gens_2[[met]] = sqldf('select * from outter_measures inner join quantiles using (generation)')
+  
+}
+
 
 file <-file(paste(output_directory,'/compare_drops.txt',sep=''), open="w")
 exps_stages = list()
 exps_stages[[1]] = c(3,4,  12,13,  26,27,  45,46,  69,70)
 exps_stages[[2]] = c(16,17,  33,34,  50,51,  67,68,  84,85)
+exps_stages[[3]] = c(3,4,  12,13,  26,27,  45,46,  69,70)
+exps_stages[[4]] = c(16,17,  33,34,  50,51,  67,68,  84,85)
 
 for (met in 1:length(methods))
 {
   
-  met_measures = measures_averages_gens_1[[met]]
+  met_measures = measures_averages_gens_1 [[met]]
  
   for (s in c(1,3,5,7,9)){
     query1 = paste("select ",methods[met],"_displacement_velocity_hill_median as s from met_measures where ",
