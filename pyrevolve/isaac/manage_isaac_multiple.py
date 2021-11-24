@@ -145,7 +145,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
     # Parse arguments
     # args = gymutil.parse_arguments(description="Loading and testing")
     args = Arguments()
-    isolated_environments = False
+    isolated_environments = True
 
     manual_db_session = False
     if db is None:
@@ -190,7 +190,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
 
             # Parse URDF(xml) locally, we need to extract some data
             robot: ISAACBot = ISAACBot(robot_urdf, ground_offset=0.04, life_duration=life_timeout)
-            env_index: int = i if isolated_environments else 1
+            env_index: int = i if isolated_environments else 0
 
             # Controller
             controller_type = robot.controller_desc().getAttribute('type')
