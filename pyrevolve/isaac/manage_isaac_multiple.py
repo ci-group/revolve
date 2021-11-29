@@ -23,7 +23,7 @@ class Arguments:
         self.compute_device_id = 0
         self.graphics_device_id = 0
         self.num_threads = 0
-        self.headless = False
+        self.headless = True
 
 
 @worker_process_init.connect
@@ -69,7 +69,7 @@ def init_sym(_db: PostgreSQLDatabase, args: Arguments, num_envs: int) -> Tuple[I
         sim_params.physx.num_position_iterations = 4
         sim_params.physx.num_velocity_iterations = 1
         sim_params.physx.num_threads = args.num_threads
-        sim_params.physx.use_gpu = False
+        sim_params.physx.use_gpu = True
 
     isaac_logger.debug(
         f'args threads:{args.num_threads} - compute:{args.compute_device_id} - graphics:{args.graphics_device_id} - physics:{args.physics_engine}')
@@ -110,7 +110,7 @@ def simulator_main_loop(gym: IsaacSim, controller_update_time: float, headless):
         time: float = gym.get_sim_time()
         if time % controller_update_time == 0.0:
             life_cycle(gym, time)
-            if len(gym.robots) is 0:
+            if len(gym.robots) == 0:
                 break
             gym.update_robots(time, controller_update_time)
 
@@ -250,3 +250,27 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
         shutdown_worker()
 
     return db_robots_id
+
+from multiprocessing import Process, shared_memory
+
+def simulator_multiple_process(robots_urdf: List[AnyStr], life_timeout: float) -> List[int]:
+    result = np.array([0 for _ in range(len(robots_urdf))], dtype=np.int64)
+    shared_mem = shared_memory.SharedMemory(create=True, size=result.nbytes)
+    process = Process(target=_inner_simulator_multiple_process,args=(robots_urdf, life_timeout, shared_mem.name))
+    process.start()
+    process.join()
+    remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=shared_mem.buf)
+    result[:] = remote_result[:]
+    shared_mem.close()
+    shared_mem.unlink()
+    return result
+
+def _inner_simulator_multiple_process(robots_urdf: List[AnyStr], life_timeout: float, shared_mem_name: AnyStr) -> int:
+    robot_ids: List[int] = simulator_multiple(robots_urdf, life_timeout)
+    robot_ids = np.array(robot_ids)
+    existing_shared_mem = shared_memory.SharedMemory(name=shared_mem_name)
+    remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=existing_shared_mem.buf)
+    remote_result[:] = robot_ids[:]
+    existing_shared_memory.close()
+    existing_shared_memory.unlink()
+    return 0

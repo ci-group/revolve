@@ -280,7 +280,8 @@ class CeleryPopulationQueue:
         """
         robot_ids: List[int]
         if self._local_computing:
-            robot_ids = manage_isaac_multiple.simulator_multiple(xml_robots, max_age)
+            #robot_ids = manage_isaac_multiple.simulator_multiple(xml_robots, max_age)
+            robot_ids = manage_isaac_multiple.simulator_multiple_process(xml_robots, max_age)
         else:
             loop = asyncio.get_event_loop()
             simulator = 'isaacgym' if self._use_isaacgym else 'gazebo'
