@@ -271,6 +271,5 @@ def _inner_simulator_multiple_process(robots_urdf: List[AnyStr], life_timeout: f
     existing_shared_mem = shared_memory.SharedMemory(name=shared_mem_name)
     remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=existing_shared_mem.buf)
     remote_result[:] = robot_ids[:]
-    existing_shared_memory.close()
-    existing_shared_memory.unlink()
+    existing_shared_mem.close()
     return 0
