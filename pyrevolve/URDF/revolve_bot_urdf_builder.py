@@ -8,6 +8,8 @@ from pyrevolve import URDF
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, Orientation, BoxSlot
 
+ENABLE_VISUALS = True
+
 
 def revolve_bot_to_urdf(robot, robot_pose, nice_format, self_collide=True):
     from xml.etree import ElementTree
@@ -177,7 +179,8 @@ def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision,
         collisions_servo[0].set_position(joint_origin_position + URDF.math.Vector3(0.01015, 0, 0))
 
         # Add visuals and collisions for Servo Frame block
-        parent_link.append(visual_frame)
+        if ENABLE_VISUALS:
+            parent_link.append(visual_frame)
         for i, collision_frame in enumerate(collisions_frame):
             parent_link.append(collision_frame)
             collisions.append(collision_frame)
@@ -188,7 +191,8 @@ def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision,
                 collision_frame.translate(collision_frame.to_parent_direction(old_pos))
 
         # Add visuals and collisions for Servo block
-        child_link.append(visual_servo)
+        if ENABLE_VISUALS:
+            child_link.append(visual_servo)
         for i, collision_servo in enumerate(collisions_servo):
             child_link.append(collision_servo)
             collisions.append(collision_servo)
@@ -216,7 +220,8 @@ def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision,
                             visual, collision,
                             parent_slot, parent_collision)
 
-        parent_link.append(visual)
+        if ENABLE_VISUALS:
+            parent_link.append(visual)
         parent_link.append(collision)
         collisions.append(collision)
 
