@@ -173,7 +173,7 @@ class SimulatorQueue:
             pose_z = self._settings.z_start
             if robot.simulation_boundaries is not None:
                 pose_z -= robot.simulation_boundaries.min.z
-            robot_manager = await simulator_connection.insert_robot(robot, Vector3(0, 0, pose_z), max_age)
+            robot_manager = await simulator_connection.insert_robot(robot, Vector3(0, 0, 0.2), max_age)#pose_z), max_age)
             if self._enable_play_pause:
                 await simulator_connection.pause(False)
             start = time.time()

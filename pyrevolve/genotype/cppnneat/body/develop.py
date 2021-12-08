@@ -87,7 +87,7 @@ def _evaluate_cppn(
     # get module type from output probabilities
     linearactuator = Config.linearactuator
     if linearactuator:
-        type_probs = [outputs[0], outputs[1], outputs[2],outputs[5]]
+        type_probs = [outputs[0], outputs[1], outputs[2], outputs[5]]
     else:
         type_probs = [outputs[0], outputs[1], outputs[2]]
 
