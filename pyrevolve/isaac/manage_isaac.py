@@ -117,6 +117,6 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
         robot_asset_file.close()
 
     if manual_db_session:
-        shutdown_worker()
+        shutdown_worker(mydb)
 
     return db_robots_id
