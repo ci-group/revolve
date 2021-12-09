@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
-from pyrevolve.util.services import Service
+from pyrevolve.util.services import Service, UserManagedService
 from pyrevolve.util.supervisor.rabbits import db_data
 from pyrevolve.custom_logging.logger import logger
 
@@ -35,7 +35,10 @@ class PostgreSQLDatabase:
         self._address = address.strip()
         self._dbname = dbname.strip()
 
-        self.postgres_service: Service = Service('PostgreSQL')
+        if address == 'localhost':
+            self.postgres_service: Service = Service('PostgreSQL')
+        else:
+            self.postgres_service: Service = UserManagedService('PostgreSQL')
 
         self._engine: Optional[Engine] = None
         self._sessionmaker: sessionmaker = None

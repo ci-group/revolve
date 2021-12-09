@@ -98,11 +98,11 @@ class CeleryQueue:
     EVALUATION_TIMEOUT = 600  # REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
     MAX_ATTEMPTS = 3
 
-    def __init__(self, args, queue_name: AnyStr = 'celery', dbname: Optional[AnyStr] = None, use_isaacgym: bool = False):
+    def __init__(self, args, queue_name: AnyStr = 'celery', dbname: Optional[AnyStr] = None, db_addr='localhost', use_isaacgym: bool = False):
         self._queue_name: AnyStr = queue_name
         self._args = args
         self._dbname: AnyStr = str(uuid.uuid1()) if dbname is None else dbname
-        self._db: PostgreSQLDatabase = PostgreSQLDatabase(dbname=self._dbname, address='localhost', username='matteo')
+        self._db: PostgreSQLDatabase = PostgreSQLDatabase(dbname=self._dbname, address=db_addr, username='matteo')
         self._process_pool_executor = ProcessPoolExecutor()
         self._use_isaacgym: bool = use_isaacgym
         atexit.register(

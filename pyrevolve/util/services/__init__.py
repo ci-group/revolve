@@ -27,6 +27,8 @@ class ServiceBase(ABC):
         raise NotImplementedError("Abstract method")
 
 
+from .user_managed_service import UserManagedService
+
 if platform.system() == 'Linux':
     from .systemd import SystemdService as Service
 else:
