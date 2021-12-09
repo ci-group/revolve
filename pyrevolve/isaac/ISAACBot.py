@@ -87,8 +87,8 @@ class ISAACBot:
     born_time: Optional[float]
     life_duration: float
     # Database Stuff
-    db_robot: DBRobot
-    db_robot_id: int
+    db_robot: Optional[DBRobot]
+    db_robot_id: Optional[int]
     evals: List[DBRobotEvaluation]
 
     def __init__(self, urdf: AnyStr, ground_offset: float = 0.04, life_duration: float = math.inf):
@@ -317,13 +317,13 @@ class ISAACBot:
                      time: float,
                      delta: float,
                      gym,
-                     robot_states_session: sqlalchemy.orm.session) -> None:
+                     robot_states_session: Optional[sqlalchemy.orm.Session] = None) -> None:
         """
         Updates the robot (controller, position and database state)
         :param time: simulator wall clock in seconds
         :param delta: delta seconds since the last update_robot
         :param gym: pointer to the gym object
-        :param robot_states_session: database session to save the robot state
+        :param robot_states_session: optional database session to save the robot state
         """
 
         self.controller.update(self.actuators, self.sensors, time, delta)
@@ -331,24 +331,25 @@ class ISAACBot:
         position_target = [act.output for act in self.actuators]
         gym.set_robot_dof_position_targets(self.env_index, self.handle, position_target)
 
-        # Database data
-        time_nsec, time_sec = math.modf(time)
-        time_nsec *= 1_000_000_000
+        if isinstance(robot_states_session, sqlalchemy.orm.Session):
+            # Database data
+            time_nsec, time_sec = math.modf(time)
+            time_nsec *= 1_000_000_000
 
-        robot_pose = gym.get_robot_position_rotation(self.env_index, self.handle)
-        robot_pos: gymapi.Vec3 = robot_pose[0]
-        robot_rot: gymapi.Quat = robot_pose[1]
+            robot_pose = gym.get_robot_position_rotation(self.env_index, self.handle)
+            robot_pos: gymapi.Vec3 = robot_pose[0]
+            robot_rot: gymapi.Quat = robot_pose[1]
 
-        # Save current robot state and queue to the database
-        db_state = DBRobotState(evaluation=self.evals[-1], time_sec=int(time_sec), time_nsec=int(time_nsec),
-                                # We swap x and z to have the data saved the same way as gazebo
-                                pos_x=float(robot_pos[0]),
-                                pos_y=float(robot_pos[1]),
-                                pos_z=float(robot_pos[2]),
-                                rot_quaternion_x=float(robot_rot[0]), rot_quaternion_y=float(robot_rot[1]),
-                                rot_quaternion_z=float(robot_rot[2]), rot_quaternion_w=float(robot_rot[3]),
-                                orientation_left=0, orientation_right=0, orientation_forward=0, orientation_back=0)
-        robot_states_session.add(db_state)
+            # Save current robot state and queue to the database
+            db_state = DBRobotState(evaluation=self.evals[-1], time_sec=int(time_sec), time_nsec=int(time_nsec),
+                                    # We swap x and z to have the data saved the same way as gazebo
+                                    pos_x=float(robot_pos[0]),
+                                    pos_y=float(robot_pos[1]),
+                                    pos_z=float(robot_pos[2]),
+                                    rot_quaternion_x=float(robot_rot[0]), rot_quaternion_y=float(robot_rot[1]),
+                                    rot_quaternion_z=float(robot_rot[2]), rot_quaternion_w=float(robot_rot[3]),
+                                    orientation_left=0, orientation_right=0, orientation_forward=0, orientation_back=0)
+            robot_states_session.add(db_state)
 
     # def _learning_step(self, value_function: Callable[[int, int], float]):
     #     """

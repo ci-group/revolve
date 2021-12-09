@@ -104,7 +104,7 @@ class PostgreSQLDatabase:
         logger.info(f'Creating tables')
         db_data.create_db(self._engine)
 
-    def session(self) -> sqlalchemy.orm.session:
+    def session(self) -> sqlalchemy.orm.Session:
         """
         A `Session` instance establishes all conversations with the database
         and represents a "staging zone" for all the objects loaded into the

@@ -16,47 +16,7 @@ from pyrevolve.isaac.Learners import DifferentialEvolution
 from pyrevolve.util.supervisor.rabbits import PostgreSQLDatabase
 from pyrevolve.util.supervisor.rabbits import Robot, RobotEvaluation, RobotState
 from . import isaac_logger
-
-
-@worker_process_init.connect
-def init_worker_celery(**kwargs):
-    init_worker()
-
-
-@worker_process_shutdown.connect
-def shutdown_worker_celery(**kwargs):
-    shutdown_worker()
-
-
-db: Optional[PostgreSQLDatabase] = None
-
-
-def init_worker():
-    global db
-    isaac_logger.info("Initializing database connection for worker...")
-    db = PostgreSQLDatabase(username='matteo')
-    # Create connection engine
-    db.start_sync()
-    isaac_logger.info("DB connection Initialized.")
-
-
-def shutdown_worker():
-    global db
-    if db is not None:
-        # Disconnect from the database
-        isaac_logger.info('Closing database connection for worker...')
-        db.disconnect()
-        isaac_logger.info('DB connection Closed.')
-        db = None
-
-
-class Arguments:
-    def __init__(self):
-        self.physics_engine = gymapi.SIM_PHYSX
-        self.compute_device_id = 0
-        self.graphics_device_id = 0
-        self.num_threads = 0
-        self.headless = True
+from .common import Arguments, db
 
 
 def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:

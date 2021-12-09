@@ -17,7 +17,7 @@ class IsaacSim:
     _sim: gymapi.Sim
     _viewer: Optional[gymapi.Viewer]
     _asset_root: AnyStr
-    _db: PostgreSQLDatabase
+    _db: Optional[PostgreSQLDatabase]
     robots: List[ISAACBot]
     robot_handles: List[int]
     envs: List[gymapi.Env]
@@ -196,7 +196,11 @@ class IsaacSim:
     def update_robots(self, time: float, delta: float) -> None:
         if len(self.robots) == 0:
             return
-        with self._db.session() as robot_states_session:
+        if self._db is None:
             for robot in self.robots:
-                robot.update_robot(time, delta, self, robot_states_session)
-            robot_states_session.commit()
+                robot.update_robot(time, delta, self)
+        else:
+            with self._db.session() as robot_states_session:
+                for robot in self.robots:
+                    robot.update_robot(time, delta, self, robot_states_session)
+                robot_states_session.commit()
