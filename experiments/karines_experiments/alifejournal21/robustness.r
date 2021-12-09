@@ -80,19 +80,18 @@ test_tilted = wilcox.test(robutness_method_all_avg[robutness_method_all_avg$env 
                           robutness_method_all_avg[robutness_method_all_avg$env == 'Tilted' & robutness_method_all_avg$experiments_type == "6-Incr", "speed"])$p.value
 
 
-g1 <-  ggplot(data=robutness_method_all_avg, aes(x= experiments_type , y=speed, fill= env )) +
-  geom_boxplot(position = position_dodge(width=0.9), outlier.size = 0.5) +
-  labs( x="Environmental scenario", y="Speed (cm/s)")+ 
-  guides(fill=guide_legend("Environment of test"))+
-  theme(legend.position="bottom" , text = element_text(size=25), legend.key.size = unit(3,"line"),
-        axis.text.x = element_text(angle = 20, hjust = 1))+ 
-  stat_summary(fun.y = mean, geom="point" ,  size=3, position = position_dodge(width = 0.9)) +
-  stat_compare_means(method = "wilcox.test", size=9, label = "p.signif", label.y = 5.5) +
-  
-  geom_signif(annotation='ns',  y_position=3.6, xmin=1.3, xmax=2.35,  tip_length = c(0.05,0.05), textsize=7)+
-  geom_signif(annotation='ns',  y_position=4.6, xmin=0.75, xmax=1.75,  tip_length = c(0.05, 0.05), textsize=7)+
-  geom_signif(annotation='ns',  y_position=3.7, xmin=4.8, xmax=5.8,  tip_length = c(0.05,0.05), textsize=7)+
-  geom_signif(annotation='**',  y_position=4.7, xmin=5.3, xmax=6.3,  tip_length = c(0.05, 0.05), textsize=7)
+  g1 <- ggplot(data=robutness_method_all_avg, aes(x= experiments_type , y=speed, fill= env )) +
+geom_boxplot(position = position_dodge(width=0.9), outlier.size = 0.5) +
+labs( x="Environmental scenario", y="Speed (cm/s)")+
+guides(fill=guide_legend("Environment of test"))+
+theme(legend.position="bottom" , text = element_text(size=25), legend.key.size = unit(3,"line"),
+axis.text.x = element_text(angle = 20, hjust = 1))+
+stat_summary(fun.y = mean, geom="point" , size=3, position = position_dodge(width = 0.9)) +
+stat_compare_means(method = "wilcox.test", size=9, label = "p.signif", label.y = 5.5) +
+geom_signif(annotation='ns', y_position=3.6, xmin=2.29, xmax=3.31, tip_length = c(0.05,0.05), textsize=7)+
+geom_signif(annotation='ns', y_position=4.6, xmin=1.75, xmax=2.75, tip_length = c(0.05, 0.05), textsize=7)+
+geom_signif(annotation='ns', y_position=3.7, xmin=4.8, xmax=5.8, tip_length = c(0.05,0.05), textsize=7)+
+geom_signif(annotation='**', y_position=4.7, xmin=5.3, xmax=6.3, tip_length = c(0.05, 0.05), textsize=7)
 
 #'           p = ',formatC(test_plane, digits=2))
 ggsave(paste(output_directory,"/robustness.png",sep = ""), g1, device = "png", height=8, width = 10.5)
