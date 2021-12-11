@@ -80,8 +80,8 @@ class JointAxis(xml.etree.ElementTree.Element):
         limit = xml.etree.ElementTree.SubElement(self, 'limit')
 
         # TODO calibrate this (load from configuration?)
-        SDF.sub_element_text(limit, 'lower', -0.035)#min -0.035 #max 0.065
-        SDF.sub_element_text(limit, 'upper', 0.065)#453982e-01)
+        SDF.sub_element_text(limit, 'lower', 0)#min -0.035 #max 0.065
+        SDF.sub_element_text(limit, 'upper', 0.1)#453982e-01)
         SDF.sub_element_text(limit, 'effort', 1.765800e-01)
         SDF.sub_element_text(limit, 'velocity', 5.235988e+00)#0.000235988e+00)
 

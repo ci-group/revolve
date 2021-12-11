@@ -394,12 +394,19 @@ class LinearActuatorModule(RevolveModule):
     TYPE = 'LinearActuator'
     VISUAL_MESH_FRAME = 'model://rg_robot/meshes/w10.dae'
     VISUAL_MESH_SERVO = 'model://rg_robot/meshes/m10.dae'
-    COLLISION_BOX_FRAME = (0.008, 0.009, 0.009)
-    COLLISION_BOX_SERVO = (0.21, 0.009, 0.009)
-    COLLISION_BOX_SERVO_2 = (0.14, 0.018, 0.018)
+    COLLISION_BOX_FRAME = (0.163, 0.018, 0.018)
+    COLLISION_BOX_SERVO = (0.105, 0.009, 0.009)
+    COLLISION_BOX_SERVO_2 = (0.008, 0.009, 0.009)
     COLLISION_BOX_SERVO_OFFSET = (
-        SDF.math.Vector3(-0.02, 0, 0),
         SDF.math.Vector3(0, 0, 0),
+        SDF.math.Vector3(-0.08, 0, 0),
+        # COLLISION_BOX_FRAME = (0.01, 0.009, 0.009)
+        # COLLISION_BOX_SERVO = (0.11, 0.009, 0.009)
+        # COLLISION_BOX_SERVO_2 = (0.12, 0.018, 0.018)
+        # COLLISION_BOX_SERVO_OFFSET = (
+        #     SDF.math.Vector3(-0.015, 0, 0),
+        #     SDF.math.Vector3(0.01, 0, 0),
+
     )
     MASS_FRAME = grams(1.7)
     MASS_SERVO = grams(70)
@@ -407,6 +414,7 @@ class LinearActuatorModule(RevolveModule):
     def __init__(self):
         super().__init__()
         self.children = {1: None}
+        # self.substrate_coordinates = (5, 5)
 
     def iter_children(self):
         return self.children.items()
@@ -419,8 +427,8 @@ class LinearActuatorModule(RevolveModule):
             return {1: child.to_yaml()}
 
     def to_sdf(self, tree_depth='', parent_link=None, child_link=None):
-        assert(parent_link is not None)
-        assert(child_link is not None)
+        assert (parent_link is not None)
+        assert (child_link is not None)
         name_frame = 'component_{}_{}__frame'.format(tree_depth, self.TYPE)
         name_joint = 'component_{}_{}__joint'.format(tree_depth, self.TYPE)
         name_servo = 'component_{}_{}__servo'.format(tree_depth, self.TYPE)
@@ -440,12 +448,12 @@ class LinearActuatorModule(RevolveModule):
         visual_servo.append(geometry)
 
         collision_servo = SDF.Collision(name_servo, self.MASS_SERVO)
-        collision_servo.translate(SDF.math.Vector3(-0.02, 0, 0))
+        collision_servo.translate(SDF.math.Vector3(-0.008, 0, 0))  #####-0.02
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO)
         collision_servo.append(geometry)
 
         collision_servo_2 = SDF.Collision(name_servo2, 0)
-        collision_servo_2.translate(SDF.math.Vector3(-0.03, 0.0, 0))
+        collision_servo_2.translate(SDF.math.Vector3(0.02, 0.0, 0))
         geometry = SDF.BoxGeometry(self.COLLISION_BOX_SERVO_2)
         collision_servo_2.append(geometry)
 
