@@ -70,6 +70,9 @@ class IsaacSim:
             cam_target = gymapi.Vec3(self._num_per_row/2, self._num_per_row/2, 0)
             self._gym.viewer_camera_look_at(self._viewer, None, cam_pos, cam_target)
 
+    def is_headless(self):
+        return self._viewer is None
+
     def add_ground(self, plane_params: Optional[gymapi.PlaneParams] = None) -> None:
         if plane_params is None:
             plane_params = gymapi.PlaneParams()

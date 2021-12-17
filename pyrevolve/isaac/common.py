@@ -61,10 +61,12 @@ def shutdown_worker(db_: Optional[PostgreSQLDatabase]):
 
 def init_sym(args: Arguments,
              num_envs: int,
-             db: Optional[PostgreSQLDatabase] = None) \
+             db: Optional[PostgreSQLDatabase] = None,
+             asset_root: Optional[AnyStr] = None) \
         -> Tuple[IsaacSim, gymapi.SimParams]:
 
-    asset_root = tempfile.gettempdir()
+    if asset_root is None:
+        asset_root = tempfile.gettempdir()
 
     # configure sim
     sim_params = gymapi.SimParams()
@@ -104,7 +106,7 @@ def init_sym(args: Arguments,
     return gym, sim_params
 
 
-def simulator_main_loop(gym: IsaacSim, controller_update_time: float, headless):
+def simulator_main_loop(gym: IsaacSim, controller_update_time: float):
     # Prepare the simulation
     gym.prepare()
 
@@ -120,7 +122,7 @@ def simulator_main_loop(gym: IsaacSim, controller_update_time: float, headless):
         gym.simulate()
         gym.fetch_results(wait_for_latest_sim_step=True)
 
-        if not headless:
+        if not gym.is_headless():
             gym.step_graphics()
             gym.draw_viewer()
             gym.sync_frame_time()  # makes the simulator run in real time

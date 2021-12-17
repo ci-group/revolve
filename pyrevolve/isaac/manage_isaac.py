@@ -107,7 +107,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     # %% Simulate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     controller_update_time = sim_params.dt * 10
     # Simulate until all robots died
-    simulator_main_loop(gym, controller_update_time, args.headless)
+    simulator_main_loop(gym, controller_update_time)
 
     # %% END Simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     gym.destroy()

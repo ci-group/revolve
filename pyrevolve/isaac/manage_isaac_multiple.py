@@ -32,7 +32,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
     manual_db_session = False
     if mydb is None:
         manual_db_session = True
-        mydb = init_worker()
+        mydb = init_worker('revolve', 'matteo', '')
 
     gym: IsaacSim
     sim_params: gymapi.SimParams
@@ -97,6 +97,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
                     gym.en
                 )
             gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
+            isaac_logger.info(f"Loaded {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
 
             # Insert robot in the database
             with mydb.session() as session2:
@@ -119,7 +120,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
     # %% Simulate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     controller_update_time = sim_params.dt * 10
     # Simulate until all robots died
-    simulator_main_loop(gym, controller_update_time, args.headless)
+    simulator_main_loop(gym, controller_update_time)
 
     # %% END Simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     gym.destroy()
