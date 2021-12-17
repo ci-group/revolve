@@ -93,7 +93,7 @@ def init_sym(args: Arguments,
     gym = IsaacSim(db, asset_root,
                    args.compute_device_id, args.graphics_device_id, args.physics_engine, sim_params,
                    args.headless,
-                   num_envs, 0.5)
+                   num_envs, 2.0)
     isaac_logger.debug('gym initialized')
 
     # %% Initialize environment

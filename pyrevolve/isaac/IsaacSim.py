@@ -4,6 +4,7 @@ Isaac Simulator wrapper for functionality
 import math
 from typing import AnyStr, List, Optional, Union, Dict
 
+import numpy as np
 from isaacgym import gymapi
 
 from pyrevolve.revolve_bot.brain.controller import Controller as RevolveController
@@ -107,8 +108,18 @@ class IsaacSim:
         self.robots.append(robot)
 
         robot_asset = self._gym.load_urdf(self._sim, self._asset_root, urdf_path, robot_asset_options)
+
+        # calculate correct z height
         robot.handle = self._gym.create_actor(env, robot_asset, pose, robot_name, group, filter_, segmentation_id)
         self.robot_handles.append(robot.handle)
+
+        body_states = self._gym.get_actor_rigid_body_states(
+            env, robot.handle, gymapi.STATE_ALL)
+        min_z = np.min(body_states["pose"]['p']['z'])
+
+        pose.p.z -= (min_z - 0.5)  # 0.5 it's an estimated half max-size of all modules
+        # WARNING: we are passing an actor handle as a rigid body handle, things may not work properly
+        self._gym.set_rigid_transform(env, robot.handle, pose)
 
         # Robot Actor properties
         props = self._gym.get_actor_dof_properties(env, robot.handle)
