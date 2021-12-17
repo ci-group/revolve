@@ -8,10 +8,8 @@ from pyrevolve import URDF
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, Orientation, BoxSlot
 
-ENABLE_VISUALS = True
 
-
-def revolve_bot_to_urdf(robot, robot_pose, nice_format, self_collide=True):
+def revolve_bot_to_urdf(robot, robot_pose, nice_format, self_collide=True, enable_visuals=False):
     from xml.etree import ElementTree
     from pyrevolve import URDF
 
@@ -30,7 +28,8 @@ def revolve_bot_to_urdf(robot, robot_pose, nice_format, self_collide=True):
     sensors = [imu_core_sensor]
     collisions = [core_collision]
 
-    core_link.append(core_visual)
+    if enable_visuals:
+        core_link.append(core_visual)
     core_link.append(core_collision)
 
     for core_slot, child_module in robot._body.iter_children():
@@ -47,7 +46,8 @@ def revolve_bot_to_urdf(robot, robot_pose, nice_format, self_collide=True):
                                               core_slot,
                                               core_collision,
                                               slot_chain,
-                                              self_collide)
+                                              self_collide,
+                                              enable_visuals)
 
         links.extend(children_links)
         joints.extend(children_joints)
@@ -123,7 +123,7 @@ def _urdf_attach_module(module_slot, module_orientation: float,
     collision.translate(collision.to_parent_direction(old_translation))
 
 
-def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision, slot_chain, self_collide):
+def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision, slot_chain, self_collide, enable_visuals):
     """
     Recursive function that takes a module and returns a list of URDF links and joints that
     that module and his children have generated.
@@ -133,6 +133,7 @@ def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision,
     :param parent_slot: Slot of the parent which this module should attach to
     :param parent_collision: Parent collision box, needed for the alignment.
     :param slot_chain: Text that names the joints, it encodes the path that was made to arrive to that element.
+    :param enable_visuals: If to add visuals to the URDF
     :return:
     """
     links = []
@@ -179,7 +180,7 @@ def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision,
         collisions_servo[0].set_position(joint_origin_position + URDF.math.Vector3(0.01015, 0, 0))
 
         # Add visuals and collisions for Servo Frame block
-        if ENABLE_VISUALS:
+        if enable_visuals:
             parent_link.append(visual_frame)
         for i, collision_frame in enumerate(collisions_frame):
             parent_link.append(collision_frame)
@@ -191,7 +192,7 @@ def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision,
                 collision_frame.translate(collision_frame.to_parent_direction(old_pos))
 
         # Add visuals and collisions for Servo block
-        if ENABLE_VISUALS:
+        if enable_visuals:
             child_link.append(visual_servo)
         for i, collision_servo in enumerate(collisions_servo):
             child_link.append(collision_servo)
@@ -220,7 +221,7 @@ def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision,
                             visual, collision,
                             parent_slot, parent_collision)
 
-        if ENABLE_VISUALS:
+        if enable_visuals:
             parent_link.append(visual)
         parent_link.append(collision)
         collisions.append(collision)
@@ -245,7 +246,9 @@ def _module_to_urdf(module, parent_link, parent_slot: BoxSlot, parent_collision,
                                               my_link,
                                               my_slot,
                                               my_collision,
-                                              child_slot_chain, self_collide)
+                                              child_slot_chain,
+                                              self_collide,
+                                              enable_visuals)
         links.extend(children_links)
         joints.extend(children_joints)
         sensors.extend(children_sensors)

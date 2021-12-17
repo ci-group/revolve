@@ -415,6 +415,7 @@ class WorldManager(manage.WorldManager):
             revolve_bot: RevolveBot,
             pose: Union[Pose, Vector3] = Vector3(0, 0, 0.05),
             life_timeout: Optional[float] = None,
+            enable_visuals: bool = True,
     ):
         """
         Inserts a robot into the world. This consists of two steps:
@@ -429,18 +430,16 @@ class WorldManager(manage.WorldManager):
         future is returned.
 
         :param revolve_bot:
-        :type revolve_bot: RevolveBot
         :param pose: Insertion pose of a robot
-        :type pose: Pose|Vector3
         :param life_timeout: Life span of the robot
-        :type life_timeout: float|None
+        :param enable_visuals: If to generate the visual part of the SDF
         :return: A future that resolves with the created `Robot` object.
         """
 
         # if the ID is digit, when removing the robot, the simulation will try to remove random stuff from the
         # environment and give weird crash errors
 
-        sdf_bot = revolve_bot.to_sdf(pose)
+        sdf_bot = revolve_bot.to_sdf(pose, enable_visuals=enable_visuals)
         
         # assert the robot id is not bad
         # assert not str(revolve_bot.id).isdigit()

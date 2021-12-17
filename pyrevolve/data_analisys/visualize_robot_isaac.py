@@ -24,7 +24,7 @@ def test_robot_run_isaac(robot_file_path: AnyStr, log: logging.Logger, settings:
     robot.update_substrate()
     robot_asset_filepath = f'{robot_file_path}.urdf'
     # robot.save_file(robot_asset_filepath, conf_type='urdf')
-    robot_urdf = robot.to_urdf(nice_format=True)
+    robot_urdf = robot.to_urdf(nice_format=True, enable_visuals=settings.simulator_visuals)
 
     asset_root: AnyStr = os.path.dirname(robot_asset_filepath)
     robot_asset_filename: AnyStr = os.path.basename(robot_asset_filepath)

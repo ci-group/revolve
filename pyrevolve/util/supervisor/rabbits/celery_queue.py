@@ -184,7 +184,7 @@ class CeleryQueue:
                     pose_z -= robot.simulation_boundaries.min.z
                 pose: Vector3 = Vector3(0.0, 0.0, pose_z)
                 if self._use_isaacgym:
-                    robot_sdf: AnyStr = robot.to_urdf(pose)
+                    robot_sdf: AnyStr = robot.to_urdf(pose, enable_visuals=self._args.simulator_visuals)
                 else:
                     robot_sdf: AnyStr = robot.to_sdf(pose)
                 max_age: float = conf.evaluation_time + conf.grace_time

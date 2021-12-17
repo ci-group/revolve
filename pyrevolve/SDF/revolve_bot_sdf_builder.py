@@ -1,3 +1,5 @@
+import logging
+
 import math
 import xml.etree.ElementTree
 from typing import AnyStr
@@ -6,9 +8,12 @@ from pyrevolve import SDF
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule, Orientation, BoxSlot
 
 
-def revolve_bot_to_sdf(robot, robot_pose, nice_format, self_collide=True) -> AnyStr:
+def revolve_bot_to_sdf(robot, robot_pose, nice_format, self_collide=True, enable_visuals=True) -> AnyStr:
     from xml.etree import ElementTree
     from pyrevolve import SDF
+
+    if not enable_visuals:
+        logging.warning("DISABLING VISUALS IS NOT IMPLEMENTED IN SDF, it's easy you can add it yourself.")
 
     sdf_root = ElementTree.Element('sdf', {'version': '1.6'})
 

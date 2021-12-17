@@ -261,6 +261,14 @@ parser.add_argument(
          "\nDefault \"\"."
 )
 
+parser.add_argument(
+    '--simulator-visuals',
+    default=False, type=bool,
+    help="If to enable visuals in the SDF/URDF. Disabling can speed up the simulation significantly."
+         " Enable it if you intend to use cameras."
+         "\nDefault \"False\"."
+)
+
 
 def make_revolve_config(conf):
     """

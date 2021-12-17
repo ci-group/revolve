@@ -117,7 +117,7 @@ class IsaacSim:
             env, robot.handle, gymapi.STATE_ALL)
         min_z = np.min(body_states["pose"]['p']['z'])
 
-        pose.p.z -= (min_z - 0.5)  # 0.5 it's an estimated half max-size of all modules
+        pose.p.z -= (min_z - 0.08)  # 0.08m (8cm) it's an estimated half max-size of all modules
         # WARNING: we are passing an actor handle as a rigid body handle, things may not work properly
         self._gym.set_rigid_transform(env, robot.handle, pose)
 

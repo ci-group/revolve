@@ -46,7 +46,8 @@ async def test_robot_run_gazebo(robot_file_path: AnyStr, log: logging.Logger, se
     robot.save_file(f'{robot_file_path}.sdf', conf_type='sdf')
 
     await connection.pause(True)
-    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.25), life_timeout=None)
+    robot_manager = await connection.insert_robot(robot, Vector3(0, 0, 0.25),
+                                                  life_timeout=None, enable_visuals=settings.simulator_visuals)
     await asyncio.sleep(1.0)
 
     if settings.plot_test_robot:

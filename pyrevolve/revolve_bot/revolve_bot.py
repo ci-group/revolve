@@ -170,17 +170,22 @@ class RevolveBot:
 
     def to_sdf(self,
                pose=SDF.math.Vector3(0, 0, 0.25),
-               nice_format: Union[bool, str] = None) -> AnyStr:
+               nice_format: Union[bool, str] = None,
+               enable_visuals: bool = False) -> AnyStr:
         if type(nice_format) is bool:
             nice_format = '\t' if nice_format else None
-        return SDF.revolve_bot_to_sdf(self, pose, nice_format, self_collide=self.self_collide)
+        return SDF.revolve_bot_to_sdf(self, pose, nice_format,
+                                      self_collide=self.self_collide,
+                                      enable_visuals=enable_visuals)
 
     def to_urdf(self,
-                pose=SDF.math.Vector3(0,0,0.25),
-                nice_format: Union[bool, str] = None) -> AnyStr:
+                pose=SDF.math.Vector3(0, 0, 0.25),
+                nice_format: Union[bool, str] = None,
+                enable_visuals: bool = False) -> AnyStr:
         if type(nice_format) is bool:
             nice_format = '\t' if nice_format else None
-        return URDF.revolve_bot_to_urdf(self, pose, nice_format, self_collide=self.self_collide)
+        return URDF.revolve_bot_to_urdf(self, pose, nice_format,
+                                        self_collide=self.self_collide, enable_visuals=enable_visuals)
 
     def to_yaml(self) -> AnyStr:
         """
