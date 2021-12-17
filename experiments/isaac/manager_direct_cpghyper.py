@@ -128,7 +128,7 @@ async def run():
 
     # CELERY CONNECTION (includes database connection)
     # simulator_queue = CeleryQueue(args, args.port_start, dbname='revolve', db_addr='127.0.0.1', use_isaacgym=True)
-    simulator_queue = CeleryPopulationQueue(args, dbname='revolve', use_isaacgym=True, local_computing=True)
+    simulator_queue = CeleryPopulationQueue(args, use_isaacgym=True, local_computing=True)
     await simulator_queue.start(cleanup_database=True)
 
     # CELERY GAZEBO WORKER
