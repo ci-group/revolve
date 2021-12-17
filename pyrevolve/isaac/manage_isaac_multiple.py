@@ -16,11 +16,19 @@ from .IsaacSim import IsaacSim
 from .common import init_sym, simulator_main_loop, init_worker, shutdown_worker, Arguments, db
 
 
-def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[int]:
+def simulator_multiple(robots_urdf: List[AnyStr],
+                       life_timeout: float,
+                       dbname: AnyStr,
+                       dbusername: AnyStr,
+                       dbpwd: AnyStr = '') \
+        -> List[int]:
     """
     Simulate the robot in isaac gym
     :param robots_urdf: list of URDF describing the robot
     :param life_timeout: how long should the robot live
+    :param dbname: name of the database
+    :param dbusername: database access username
+    :param dbpwd: database access password (optional)
     :return: database id of the robot
     """
     mydb = db
@@ -32,7 +40,7 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
     manual_db_session = False
     if mydb is None:
         manual_db_session = True
-        mydb = init_worker('revolve', 'matteo', '')
+        mydb = init_worker(dbname, dbusername, dbpwd)
 
     gym: IsaacSim
     sim_params: gymapi.SimParams
@@ -137,10 +145,25 @@ def simulator_multiple(robots_urdf: List[AnyStr], life_timeout: float) -> List[i
 
 from multiprocessing import Process, shared_memory
 
-def simulator_multiple_process(robots_urdf: List[AnyStr], life_timeout: float) -> List[int]:
+
+def simulator_multiple_process(robots_urdf: List[AnyStr],
+                               life_timeout: float,
+                               dbname: AnyStr,
+                               dbusername: AnyStr,
+                               dbpwd: AnyStr = '') -> List[int]:
+    """
+    Simulate the robot in isaac gym
+    :param robots_urdf: URDF describing the robot
+    :param life_timeout: how long should the robot live
+    :param dbname: name of the database
+    :param dbusername: database access username
+    :param dbpwd: database access password (optional)
+    :return: database id of the robot
+    """
     result = np.array([0 for _ in range(len(robots_urdf))], dtype=np.int64)
     shared_mem = shared_memory.SharedMemory(create=True, size=result.nbytes)
-    process = Process(target=_inner_simulator_multiple_process,args=(robots_urdf, life_timeout, shared_mem.name))
+    process = Process(target=_inner_simulator_multiple_process,
+                      args=(robots_urdf, life_timeout, shared_mem.name, dbname, dbusername, dbpwd))
     process.start()
     process.join()
     remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=shared_mem.buf)
@@ -149,8 +172,14 @@ def simulator_multiple_process(robots_urdf: List[AnyStr], life_timeout: float) -
     shared_mem.unlink()
     return result
 
-def _inner_simulator_multiple_process(robots_urdf: List[AnyStr], life_timeout: float, shared_mem_name: AnyStr) -> int:
-    robot_ids: List[int] = simulator_multiple(robots_urdf, life_timeout)
+
+def _inner_simulator_multiple_process(robots_urdf: List[AnyStr],
+                                      life_timeout: float,
+                                      shared_mem_name: AnyStr,
+                                      dbname: AnyStr,
+                                      dbusername: AnyStr,
+                                      dbpwd: AnyStr = '') -> int:
+    robot_ids: List[int] = simulator_multiple(robots_urdf, life_timeout, dbname, dbusername, dbpwd)
     robot_ids = np.array(robot_ids)
     existing_shared_mem = shared_memory.SharedMemory(name=shared_mem_name)
     remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=existing_shared_mem.buf)

@@ -42,22 +42,33 @@ def evaluate_robot(robot_sdf: AnyStr, life_timeout: float) -> int:
 
 
 @app.task
-def evaluate_robot_isaac(robot_urdf: AnyStr, life_timeout: float) -> int:
+def evaluate_robot_isaac(robot_urdf: AnyStr,
+                         life_timeout: float,
+                         dbname: AnyStr,
+                         dbusername: AnyStr,
+                         dbpwd: AnyStr) -> int:
     """
     Evaluates robots in isaac gym. Behavioural data is saved in the Database
      and the ID of the robot in the database is returned.
     :param robot_urdf: URDF robot, in string
     :param life_timeout: how long should the robot be evaluated
+    :param dbname: name of the database
+    :param dbusername: database access username
+    :param dbpwd: database access password (optional)
     :return: id of the robot in the database (WARNING: may be different from robot_id)
     """
     assert ISAAC_AVAILABLE
-    return manage_isaac.simulator(robot_urdf, life_timeout)
+    return manage_isaac.simulator(robot_urdf, life_timeout, dbname, dbusername, dbpwd)
 
 
 @app.task
-def evaluate_population_isaac(robots_urdf: List[AnyStr], life_timeout: float) -> List[int]:
+def evaluate_population_isaac(robots_urdf: List[AnyStr],
+                              life_timeout: float,
+                              dbname: AnyStr,
+                              dbusername: AnyStr,
+                              dbpwd: AnyStr) -> List[int]:
     assert ISAAC_AVAILABLE
-    return manage_isaac_multiple.simulator_multiple(robots_urdf, life_timeout)
+    return manage_isaac_multiple.simulator_multiple(robots_urdf, life_timeout, dbname, dbusername, dbpwd)
 
 
 def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, timeout: float, simulator: AnyStr) -> int:
@@ -78,12 +89,20 @@ def call_evaluate_robot(robot_name: AnyStr, robot_sdf: AnyStr, max_age: float, t
     return robot_id
 
 
-def call_evaluate_population(robot_names: List[AnyStr], xml_robots: List[AnyStr], max_age: float, timeout: float, simulator: AnyStr) -> int:
+def call_evaluate_population(robot_names: List[AnyStr],
+                             xml_robots: List[AnyStr],
+                             max_age: float,
+                             timeout: float,
+                             simulator: AnyStr,
+                             dbname: AnyStr,
+                             dbusername: AnyStr,
+                             dbpwd: AnyStr,
+                             ) -> int:
     if simulator == 'gazebo':
         raise RuntimeError("Gazebo not supported")
     elif simulator == 'isaacgym':
         assert ISAAC_AVAILABLE
-        r = evaluate_population_isaac.delay(xml_robots, max_age)
+        r = evaluate_population_isaac.delay(xml_robots, max_age, dbname, dbusername, dbpwd)
     else:
         raise RuntimeError(f"Simulator \"{simulator}\" not recognized")
     logger.info(f'Request SENT to rabbitmq: {str(r)} for population:"{robot_names}"')
@@ -231,13 +250,14 @@ class CeleryPopulationQueue:
     def __init__(self,
                  args,
                  queue_name: AnyStr = 'celery',
-                 dbname: Optional[AnyStr] = None,
                  use_isaacgym: bool = False,
                  local_computing: bool = False):
         self._queue_name: AnyStr = queue_name
         self._args = args
-        self._dbname: AnyStr = str(uuid.uuid1()) if dbname is None else dbname
-        self._db: PostgreSQLDatabase = PostgreSQLDatabase(dbname=self._dbname, address='localhost', username='matteo')
+        self._db: PostgreSQLDatabase = PostgreSQLDatabase(address='localhost',
+                                                          dbname=self._args.dbname,
+                                                          username=self._args.dbusername,
+                                                          password=self._args.dbpassword)
         self._use_isaacgym: bool = use_isaacgym
         self._local_computing: bool = local_computing
         atexit.register(
@@ -280,14 +300,20 @@ class CeleryPopulationQueue:
         """
         robot_ids: List[int]
         if self._local_computing:
-            #robot_ids = manage_isaac_multiple.simulator_multiple(xml_robots, max_age)
-            robot_ids = manage_isaac_multiple.simulator_multiple_process(xml_robots, max_age)
+            robot_ids = manage_isaac_multiple.simulator_multiple_process(xml_robots,
+                                                                         max_age,
+                                                                         self._args.dbname,
+                                                                         self._args.dbusername,
+                                                                         self._args.dbpassword)
         else:
             loop = asyncio.get_event_loop()
             simulator = 'isaacgym' if self._use_isaacgym else 'gazebo'
             robot_ids = await loop.run_in_executor(self._process_pool_executor,
                                                    call_evaluate_population,
-                                                   robot_names, xml_robots, max_age, timeout, simulator)
+                                                   robot_names, xml_robots, max_age, timeout, simulator,
+                                                   self._args.dbname,
+                                                   self._args.dbusername,
+                                                   self._args.dbpassword)
         assert len(robot_ids) == len(xml_robots)
         return robot_ids
 

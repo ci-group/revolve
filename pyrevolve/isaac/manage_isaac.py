@@ -15,11 +15,18 @@ from .IsaacSim import IsaacSim
 from .common import init_sym, simulator_main_loop, init_worker, shutdown_worker, Arguments, db
 
 
-def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
+def simulator(robot_urdf: AnyStr,
+              life_timeout: float,
+              dbname: AnyStr,
+              dbusername: AnyStr,
+              dbpwd: AnyStr = '') -> int:
     """
     Simulate the robot in isaac gym
     :param robot_urdf: URDF describing the robot
     :param life_timeout: how long should the robot live
+    :param dbname: name of the database
+    :param dbusername: database access username
+    :param dbpwd: database access password (optional)
     :return: database id of the robot
     """
     mydb = db
@@ -31,7 +38,7 @@ def simulator(robot_urdf: AnyStr, life_timeout: float) -> int:
     manual_db_session = False
     if mydb is None:
         manual_db_session = True
-        mydb = init_worker()
+        mydb = init_worker(dbname, dbusername, dbpwd)
 
     gym: IsaacSim
     sim_params: gymapi.SimParams

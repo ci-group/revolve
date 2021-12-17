@@ -238,6 +238,29 @@ parser.add_argument(
          " updates (in number of times per *simulation* second). Default \"5\"."
 )
 
+# DATABASE STUFF
+
+parser.add_argument(
+    '--dbname',
+    default='revolve', type=str,
+    help="Database name. Use different database names if you run multiple experiments in parallel."
+         "\nDefault \"revolve\"."
+)
+
+parser.add_argument(
+    '--dbusername',
+    default='undefined', type=str,
+    help="Database access user. Make sure the user was created in the database."
+         "\nDefault \"undefined\"."
+)
+
+parser.add_argument(
+    '--dbpassword',
+    default='', type=str,
+    help="Database access password. May be unnecessary depending on your database settings."
+         "\nDefault \"\"."
+)
+
 
 def make_revolve_config(conf):
     """
