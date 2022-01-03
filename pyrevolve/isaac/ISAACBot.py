@@ -80,6 +80,8 @@ class ISAACBot:
     n_weights: int
     connection_list: List[Tuple[int, int]]
     connection_map: Dict[int, Tuple[List[float], List[float]]]
+    actuator_map: List[int]
+    actuator_dict: Dict[AnyStr, int]
     # Sym stuff
     handle: int
     env_index: int
@@ -139,6 +141,7 @@ class ISAACBot:
         self.actuators = [a for a in self._list_actuator()]
 
         self.n_weights, self.connection_list, self.connection_map = self._compute_n_weights()
+        # When inserted into the simulator, the map is changed (using `self.create_actuator_map(..)`)
         self.actuator_map = np.arange(self.n_weights)
 
         self.controller = self._create_controller()
@@ -204,10 +207,17 @@ class ISAACBot:
                     connection_list.append((row, col))  # remember pos list of intra-neuron connections
         return n_intra_connections + n_extra_connections, connection_list, connection_map
 
-    def create_actuator_map(self, actuator_dict: dict):
-        index = list(actuator_dict.values())
-        keys = list(actuator_dict.keys())
-        self.actuator_map = [index[keys.index(act.joint)] for act in self.actuators]
+    def create_actuator_map(self, actuator_dict: Dict[AnyStr, int]) -> None:
+        """
+        Creates correct output mapping from URDF order to random ISAAC order
+        :param actuator_dict: `gym.get_actor_dof_dict(env, robot.handle)`
+        """
+        self.actuator_dict = actuator_dict
+        self.actuator_map = [actuator_dict[act.joint] for act in self.actuators]
+        # OLD logic that I'm not sure how to use
+        # index = list(actuator_dict.values())
+        # keys = list(actuator_dict.keys())
+        # self.actuator_map = [index[keys.index(act.joint)] for act in self.actuators]
 
     def _create_controller(self) -> RevolveController:
         controller_type: AnyStr = self.controller_desc().getAttribute('type')
@@ -327,8 +337,11 @@ class ISAACBot:
         """
 
         self.controller.update(self.actuators, self.sensors, time, delta)
-        # TODO order needs to be readjusted here
-        position_target = [act.output for act in self.actuators]
+        # output order readjusted here
+        position_target = np.zeros(len(self.actuators), dtype=np.float32)
+        for i, act in zip(self.actuator_map, self.actuators):
+            position_target[i] = act.output
+        # send new positions to gym
         gym.set_robot_dof_position_targets(self.env_index, self.handle, position_target)
 
         if isinstance(robot_states_session, sqlalchemy.orm.Session):

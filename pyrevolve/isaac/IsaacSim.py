@@ -102,7 +102,7 @@ class IsaacSim:
         :param segmentation_id: segmentation ID used in segmentation camera sensor
         :return: robot handle
         """
-        # TODO hack your way to insert the robot in a running simulation
+        # TODO wait for Nvidia to allow us to insert the robot in a running simulation
         env_i, env = self._environment(env)
         robot.env_index = env_i
         self.robots.append(robot)
@@ -127,6 +127,8 @@ class IsaacSim:
         props["stiffness"].fill(1000.0)
         props["damping"].fill(600.0)
         self._gym.set_actor_dof_properties(env, robot.handle, props)
+
+        robot.create_actuator_map(self._gym.get_actor_dof_dict(env, robot.handle))
 
         robot.born_time = self.get_sim_time()
 
