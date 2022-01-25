@@ -1,6 +1,7 @@
 """
 Loading and testing
 """
+import math
 import os
 import tempfile
 from typing import AnyStr, List
@@ -101,10 +102,11 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                 env_index = i
             else:
                 env_index = 0
-                robot.pose += gymapi.Vec3(
-                    gym.en
-                )
-            gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
+                area_size = math.sqrt(len(robots_urdf))
+                x: float = math.floor(i % area_size)
+                y: float = i // area_size
+                robot.pose.p += gymapi.Vec3(x, y, 0)
+            gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", -1, -1, 0)
             isaac_logger.info(f"Loaded {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
 
             # Insert robot in the database
