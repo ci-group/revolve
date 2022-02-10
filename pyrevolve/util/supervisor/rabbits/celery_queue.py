@@ -304,7 +304,8 @@ class CeleryPopulationQueue:
                                                                          max_age,
                                                                          self._args.dbname,
                                                                          self._args.dbusername,
-                                                                         self._args.dbpassword)
+                                                                         self._args.dbpassword,
+                                                                         self.EVALUATION_TIMEOUT)
         else:
             loop = asyncio.get_event_loop()
             simulator = 'isaacgym' if self._use_isaacgym else 'gazebo'
@@ -368,10 +369,11 @@ class CeleryPopulationQueue:
                                                                      xml_robots,
                                                                      max_age,
                                                                      self.EVALUATION_TIMEOUT)
-                except celery.exceptions.TimeoutError:
+                except (celery.exceptions.TimeoutError, RuntimeError):
                     logger.warning(f'Giving up on robot population after {self.EVALUATION_TIMEOUT} seconds. '
                                    f'population:{robot_names}')
                     if attempt < self.MAX_ATTEMPTS:
+                        #TODO clear database of last generation
                         logger.warning(f'Retrying')
                     continue
 

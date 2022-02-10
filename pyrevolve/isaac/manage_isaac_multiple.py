@@ -4,7 +4,7 @@ Loading and testing
 import math
 import os
 import tempfile
-from typing import AnyStr, List
+from typing import AnyStr, List, Optional
 
 import numpy as np
 from isaacgym import gymapi
@@ -106,7 +106,11 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                 x: float = math.floor(i % area_size)
                 y: float = i // area_size
                 robot.pose.p += gymapi.Vec3(x, y, 0)
-            gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", -1, -1, 0)
+            if isolated_environments:
+                gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
+            else:
+                # shared physics collision group
+                gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", -1, -1, 0)
             isaac_logger.info(f"Loaded {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
 
             # Insert robot in the database
@@ -152,7 +156,8 @@ def simulator_multiple_process(robots_urdf: List[AnyStr],
                                life_timeout: float,
                                dbname: AnyStr,
                                dbusername: AnyStr,
-                               dbpwd: AnyStr = '') -> List[int]:
+                               dbpwd: AnyStr = '',
+                               timeout: Optional[float] = None) -> List[int]:
     """
     Simulate the robot in isaac gym
     :param robots_urdf: URDF describing the robot
@@ -160,6 +165,7 @@ def simulator_multiple_process(robots_urdf: List[AnyStr],
     :param dbname: name of the database
     :param dbusername: database access username
     :param dbpwd: database access password (optional)
+    :param timeout: fail the run if the simulator takes too much time (None means wait indefinitely)
     :return: database id of the robot
     """
     result = np.array([0 for _ in range(len(robots_urdf))], dtype=np.int64)
@@ -167,7 +173,9 @@ def simulator_multiple_process(robots_urdf: List[AnyStr],
     process = Process(target=_inner_simulator_multiple_process,
                       args=(robots_urdf, life_timeout, shared_mem.name, dbname, dbusername, dbpwd))
     process.start()
-    process.join()
+    process.join(timeout)
+    if process.exitcode is None:
+        raise RuntimeError(f"Simulation did not finish in {timeout} seconds")
     remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=shared_mem.buf)
     result[:] = remote_result[:]
     shared_mem.close()
