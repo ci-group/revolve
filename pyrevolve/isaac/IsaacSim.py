@@ -95,7 +95,7 @@ class IsaacSim:
         :param robot: Robot to insert
         :param urdf_path: path to the robot asset (URDF)
         :param robot_asset_options: robot asset simulator parameters
-        :param pose: transform of where the robot will be initally placed
+        :param pose: transform of where the robot will be initially placed
         :param robot_name: name of the robot
         :param group: collision group
         :param filter_: bitwise filter for elements in the same collisionGroup
@@ -133,6 +133,30 @@ class IsaacSim:
         robot.born_time = self.get_sim_time()
 
         return robot.handle
+
+    def insert_obj(self,
+                   env: Union[gymapi.Env, int],
+                   obj_asset,
+                   pose: gymapi.Transform,
+                   name: Optional[AnyStr] = None,
+                   collision_group: int = - 1,
+                   filter_: int = - 1,
+                   segmentation_id: int = 0) -> int:
+        """
+        Inserts a robot in the system
+        :param env: Environmental Handle
+        :param obj_asset: Asset to insert
+        :param pose: transform of where the robot will be initially placed
+        :param name: optional name for the object
+        :param collision_group: collision group
+        :param filter_: bitwise filter for elements in the same collisionGroup
+        :param segmentation_id: segmentation ID used in segmentation camera sensor
+        :return: robot handle
+        """
+        # TODO wait for Nvidia to allow us to insert the robot in a running simulation
+        env_i, env = self._environment(env)
+        handle = self._gym.create_actor(env, obj_asset, pose, name, collision_group, filter_, segmentation_id)
+        return handle
 
     def add_controller(self, robot_handle: int, controller: RevolveController):
         self.controllers[robot_handle] = controller
