@@ -2,11 +2,15 @@
 from __future__ import annotations
 
 import os
-from typing import List
+from typing import List, Optional
 
+import math
+from isaacgym import gymapi
+
+from pyrevolve.evolution.individual import Individual
 from pyrevolve.genotype.tree_body_hyperneat_brain.crossover import standard_crossover
 from pyrevolve.genotype.tree_body_hyperneat_brain.mutation import standard_mutation
-from pyrevolve import parser
+from pyrevolve import parser, SDF
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.selection import multiple_selection, tournament_selection
 from pyrevolve.evolution.population.population import Population
@@ -24,6 +28,20 @@ from pyrevolve.custom_logging.logger import logger
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
 
 INTERNAL_WORKERS = False
+
+
+def environment_constructor(gym: gymapi.Gym,
+                            sim: gymapi.Sim,
+                            _env_lower: gymapi.Vec3,
+                            _env_upper: gymapi.Vec3,
+                            _num_per_row: int,
+                            env: gymapi.Env) -> None:
+    radius: float = 0.2
+    asset_options: gymapi.AssetOptions = gymapi.AssetOptions()
+    asset_options.density = 1.0
+    asset_options.linear_damping = 0.5
+    asset_options.angular_damping = 0.5
+    sphere_asset = gym.create_sphere(sim, radius, asset_options)
 
 
 async def run():
@@ -119,6 +137,7 @@ async def run():
         offspring_size=offspring_size,
         experiment_name=args.experiment_name,
         experiment_management=experiment_management,
+        environment_constructor=environment_constructor, #TODO IMPLEMENT THIS!!!! pass it to isaacqueue that passes it to the manage_isaac_multiple
     )
 
     n_cores = args.n_cores

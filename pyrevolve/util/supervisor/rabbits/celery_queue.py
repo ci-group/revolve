@@ -286,12 +286,14 @@ class CeleryPopulationQueue:
                 raise AttributeError(f"Wait cannot be of type {type(wait)}")
 
     async def _call_evaluate_population(self,
+                                        conf: PopulationConfig,
                                         robot_names: List[AnyStr],
                                         xml_robots: List[AnyStr],
                                         max_age: float,
                                         timeout: float) -> List[int]:
         """
         Start this task separately, hopefully this will not lock the entire process
+        :param conf: configuration object with some parameters about evaluation time and grace time
         :param robot_names: list of names of the robots (for logging purposes)
         :param xml_robots: SDF of the robots to insert
         :param max_age: how many (simulated) seconds should the individual live.
@@ -305,7 +307,8 @@ class CeleryPopulationQueue:
                                                                          self._args.dbname,
                                                                          self._args.dbusername,
                                                                          self._args.dbpassword,
-                                                                         self.EVALUATION_TIMEOUT)
+                                                                         self.EVALUATION_TIMEOUT,
+                                                                         conf.environment_constructor)
         else:
             loop = asyncio.get_event_loop()
             simulator = 'isaacgym' if self._use_isaacgym else 'gazebo'
@@ -365,7 +368,8 @@ class CeleryPopulationQueue:
             try:
                 robot_ids: List[int]
                 try:
-                    robot_ids = await self._call_evaluate_population(robot_names,
+                    robot_ids = await self._call_evaluate_population(conf,
+                                                                     robot_names,
                                                                      xml_robots,
                                                                      max_age,
                                                                      self.EVALUATION_TIMEOUT)

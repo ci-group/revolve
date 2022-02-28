@@ -1,9 +1,9 @@
 """
 Isaac Simulator wrapper for functionality
 """
-import math
-from typing import AnyStr, List, Optional, Union, Dict
+from typing import AnyStr, List, Optional, Union, Dict, Callable
 
+import math
 import numpy as np
 from isaacgym import gymapi
 
@@ -19,6 +19,8 @@ class IsaacSim:
     _viewer: Optional[gymapi.Viewer]
     _asset_root: AnyStr
     _db: Optional[PostgreSQLDatabase]
+    _spacing: float
+    build_environments: Optional[Callable[[gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env], None]]
     robots: List[ISAACBot]
     robot_handles: List[int]
     envs: List[gymapi.Env]
@@ -37,10 +39,12 @@ class IsaacSim:
                  headless: bool,
                  num_envs: int,
                  environment_size: float = 2.0,
+                 environment_constructor: Optional[Callable[[gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env], None]] = None,
                  ):
         self._asset_root = asset_root
         self._db = db
         self._spacing = environment_size
+        self.build_environment = environment_constructor
         self.robot_handles = []
         self.envs = []
         self.robots = []
@@ -225,6 +229,8 @@ class IsaacSim:
             env = self.envs[index]
             if env is None:
                 env = self._gym.create_env(self._sim, self._env_lower, self._env_upper, self._num_per_row)
+                if callable(self.build_environment):
+                    self.build_environment(self._gym, self._sim, self._env_lower, self._env_upper, self._num_per_row, env)
                 self.envs[index] = env
         else:
             index: int = self.envs.index(env)

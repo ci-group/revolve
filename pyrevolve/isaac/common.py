@@ -1,5 +1,5 @@
 import tempfile
-from typing import Tuple, Optional, AnyStr
+from typing import Tuple, Optional, AnyStr, Callable
 
 import numpy as np
 from isaacgym import gymapi
@@ -62,7 +62,8 @@ def shutdown_worker(db_: Optional[PostgreSQLDatabase]):
 def init_sym(args: Arguments,
              num_envs: int,
              db: Optional[PostgreSQLDatabase] = None,
-             asset_root: Optional[AnyStr] = None) \
+             asset_root: Optional[AnyStr] = None,
+             environment_constructor: Optional[Callable[[gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env], None]] = None) \
         -> Tuple[IsaacSim, gymapi.SimParams]:
 
     if asset_root is None:
@@ -93,13 +94,17 @@ def init_sym(args: Arguments,
     gym = IsaacSim(db, asset_root,
                    args.compute_device_id, args.graphics_device_id, args.physics_engine, sim_params,
                    args.headless,
-                   num_envs, 2.0)
+                   num_envs, 2.0,
+                   environment_constructor)
     isaac_logger.debug('gym initialized')
 
     # %% Initialize environment
     isaac_logger.debug("Initialize environment")
     # Add ground plane
     plane_params = gymapi.PlaneParams()
+    # plane_params.static_friction = 10.0
+    # plane_params.dynamic_friction = 10.0
+    # plane_params.restitution =
     plane_params.normal = gymapi.Vec3(0, 0, 1)  # z-up!
     gym.add_ground(plane_params)
 

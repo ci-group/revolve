@@ -1,4 +1,6 @@
 import copy
+from typing import Union, List
+from pyrevolve.revolve_bot import RevolveBot
 
 
 class Genotype:

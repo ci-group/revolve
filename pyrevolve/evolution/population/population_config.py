@@ -31,7 +31,8 @@ class PopulationConfig:
                  experiment_management,
                  offspring_size: Optional[int] = None,
                  grace_time: float = 0.0,
-                 objective_functions: Optional[List[Callable[[RobotManager, RevolveBot], float]]] = None):
+                 objective_functions: Optional[List[Callable[[RobotManager, RevolveBot], float]]] = None,
+                 environment_constructor: Optional[Callable[[gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env], None]] = None):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -59,6 +60,8 @@ class PopulationConfig:
         :param experiment_management: object with methods for managing the current experiment
         :param offspring_size (optional): size of offspring (for steady state)
         :param grace_time: time to wait before starting the evaluation (experiment_time = grace_time + evaluation_time), default to 0.0
+        :param environment_constructor: optional function that gets called whenever a gym environment is initialized (exclusive to isaac gym)
+        Function signature is `environment_constructor(gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env) -> None`
         """
         # Test if at least one of them is set
         assert fitness_function is not None or objective_functions is not None
@@ -83,3 +86,4 @@ class PopulationConfig:
         self.experiment_management = experiment_management
         self.offspring_size = offspring_size
         self.objective_functions = objective_functions
+        self.environment_constructor = environment_constructor
