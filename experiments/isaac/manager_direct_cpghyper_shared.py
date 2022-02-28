@@ -1,0 +1,268 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import os
+from typing import List, Optional
+
+import math
+from isaacgym import gymapi
+
+from pyrevolve.evolution.individual import Individual
+from pyrevolve.genotype.tree_body_hyperneat_brain.crossover import standard_crossover
+from pyrevolve.genotype.tree_body_hyperneat_brain.mutation import standard_mutation
+from pyrevolve import parser, SDF
+from pyrevolve.evolution import fitness
+from pyrevolve.evolution.selection import multiple_selection, tournament_selection
+from pyrevolve.evolution.population.population import Population
+from pyrevolve.evolution.population.population_config import PopulationConfig
+from pyrevolve.evolution.population.population_management import generational_population_management, \
+    steady_state_population_management
+from pyrevolve.experiment_management import ExperimentManagement
+from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype, DirectTreeGenotypeConfig
+from pyrevolve.genotype.tree_body_hyperneat_brain import DirectTreeCPGHyperNEATGenotypeConfig, \
+    DirectTreeCPGHyperNEATGenotype
+from pyrevolve.util.supervisor import CeleryQueue
+from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig, BrainType
+from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
+from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor
+from pyrevolve.custom_logging.logger import logger
+from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
+from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
+
+INTERNAL_WORKERS = False
+
+
+def environment_constructor(gym: gymapi.Gym,
+                            sim: gymapi.Sim,
+                            _env_lower: gymapi.Vec3,
+                            _env_upper: gymapi.Vec3,
+                            _num_per_row: int,
+                            env: gymapi.Env) -> None:
+    radius: float = 0.2
+    asset_options: gymapi.AssetOptions = gymapi.AssetOptions()
+    asset_options.density = 1.0
+    asset_options.linear_damping = 0.5
+    asset_options.angular_damping = 0.5
+    sphere_asset = gym.create_sphere(sim, radius, asset_options)
+
+
+class PositionedPopulation(Population):
+
+    def __init__(self,
+                 config: PopulationConfig,
+                 simulator_queue: SimulatorQueue,
+                 analyzer_queue: Optional[AnalyzerQueue] = None,
+                 next_robot_id: int = 1,
+                 grid_cell_size: float = 0.5):
+        super().__init__(config, simulator_queue, analyzer_queue, next_robot_id)
+        self.grid_cell_size: float = grid_cell_size
+
+    def _new_individual(self,
+                        genotype,
+                        parents: Optional[List[Individual]] = None,
+                        pose: Optional[SDF.math.Vector3] = None):
+        individual = Individual(genotype, pose=pose)
+        individual.develop()
+        if isinstance(individual.phenotype, list):
+            for alternative in individual.phenotype:
+                alternative.update_substrate()
+                alternative.measure_phenotype()
+                alternative.export_phenotype_measurements(self.config.experiment_management.data_folder)
+        else:
+            individual.phenotype.update_substrate()
+            individual.phenotype.measure_phenotype()
+            individual.phenotype.export_phenotype_measurements(self.config.experiment_management.data_folder)
+        if parents is not None:
+            individual.parents = parents
+
+        self.config.experiment_management.export_genotype(individual)
+        self.config.experiment_management.export_phenotype(individual)
+        self.config.experiment_management.export_phenotype_images(individual)
+
+        return individual
+
+    async def initialize(self, recovered_individuals: Optional[List[Individual]] = None) -> None:
+        """
+        Populates the population (individuals list) with Individual objects that contains their respective genotype.
+        """
+        recovered_individuals = [] if recovered_individuals is None else recovered_individuals
+        n_new_individuals = self.config.population_size-len(recovered_individuals)
+
+        # TODO there are recovery problems here,
+        # but I will ignore them (recovered robots and new robots positions are initialized independently)
+        area_size: float = math.sqrt(n_new_individuals)
+        for i in range(n_new_individuals):
+            x: float = math.floor(i % area_size)
+            y: float = i // area_size
+            pose = SDF.math.Vector3(x, y, 0) * self.grid_cell_size
+            new_genotype = self.config.genotype_constructor(self.config.genotype_conf, self.next_robot_id)
+            individual = self._new_individual(new_genotype, pose=pose)
+            self.individuals.append(individual)
+            self.next_robot_id += 1
+
+        await self.evaluate(self.individuals, 0)
+        self.individuals = recovered_individuals + self.individuals
+
+
+async def run():
+    """
+    The main coroutine, which is started below.
+    """
+
+    # experiment params #
+    num_generations = 200
+    population_size = 30
+    offspring_size = 30
+
+    morph_single_mutation_prob = 0.2
+    morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8
+    morph_no_all_mutation_prob = morph_no_single_mutation_prob ** 4  # 0.4096
+    morph_at_least_one_mutation_prob = 1 - morph_no_all_mutation_prob  # 0.5904
+
+    brain_single_mutation_prob = 0.5
+
+    tree_genotype_conf: DirectTreeGenotypeConfig = DirectTreeGenotypeConfig(
+        max_parts=50,
+        min_parts=10,
+        max_oscillation=5,
+        init_n_parts_mu=10,
+        init_n_parts_sigma=4,
+        init_prob_no_child=0.1,
+        init_prob_child_block=0.4,
+        init_prob_child_active_joint=0.5,
+        mutation_p_duplicate_subtree=morph_single_mutation_prob,
+        mutation_p_delete_subtree=morph_single_mutation_prob,
+        mutation_p_generate_subtree=morph_single_mutation_prob,
+        mutation_p_swap_subtree=morph_single_mutation_prob,
+        mutation_p_mutate_oscillators=brain_single_mutation_prob,
+        mutation_p_mutate_oscillator=0.5,
+        mutate_oscillator_amplitude_sigma=0.3,
+        mutate_oscillator_period_sigma=0.3,
+        mutate_oscillator_phase_sigma=0.3,
+    )
+
+    neat_conf: NeatBrainGenomeConfig = NeatBrainGenomeConfig(
+        brain_type=BrainType.CPG,
+        random_seed=None
+    )
+
+    genotype_conf: DirectTreeCPGHyperNEATGenotypeConfig = DirectTreeCPGHyperNEATGenotypeConfig(
+        direct_tree_conf=tree_genotype_conf,
+        neat_conf=neat_conf,
+        number_of_brains=1,
+    )
+
+    # Parse command line / file input arguments
+    args = parser.parse_args()
+    experiment_management = ExperimentManagement(args)
+    has_offspring = False
+    do_recovery = args.recovery_enabled and not experiment_management.experiment_is_new()
+
+    logger.info(f'Activated run {args.run} of experiment {args.experiment_name}')
+
+    if do_recovery:
+        gen_num, has_offspring, next_robot_id, next_species_id = \
+            experiment_management.read_recovery_state(population_size, offspring_size, species=False)
+
+        if gen_num == num_generations - 1:
+            logger.info('Experiment is already complete.')
+            return
+    else:
+        gen_num = 0
+        next_robot_id = 1
+
+    if gen_num < 0:
+        logger.info('Experiment continuing from first generation')
+        gen_num = 0
+
+    if next_robot_id < 0:
+        next_robot_id = 1
+
+    population_conf = PopulationConfig(
+        population_size=population_size,
+        genotype_constructor=lambda conf, _id: DirectTreeCPGHyperNEATGenotype(conf, _id, random_init_body=True),
+        genotype_conf=genotype_conf,
+        fitness_function=fitness.displacement_velocity,
+        objective_functions=None,
+        mutation_operator=lambda genotype, gen_conf: standard_mutation(genotype, gen_conf),
+        mutation_conf=genotype_conf,
+        crossover_operator=lambda parents, gen_conf, _: standard_crossover(parents, gen_conf),
+        crossover_conf=None,
+        selection=lambda individuals: tournament_selection(individuals, 2),
+        parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
+        population_management=steady_state_population_management,
+        population_management_selector=tournament_selection,  # must be none for generational management function
+        evaluation_time=args.evaluation_time,
+        grace_time=args.grace_time,
+        offspring_size=offspring_size,
+        experiment_name=args.experiment_name,
+        experiment_management=experiment_management,
+        environment_constructor=environment_constructor, #TODO IMPLEMENT THIS!!!! pass it to isaacqueue that passes it to the manage_isaac_multiple
+    )
+
+    n_cores = args.n_cores
+
+    def worker_crash(process, exit_code) -> None:
+        logger.fatal(f'GazeboCeleryWorker died with code: {exit_code} ({process})')
+
+    # CELERY CONNECTION (includes database connection)
+    # simulator_queue = CeleryQueue(args, args.port_start, dbname='revolve', db_addr='127.0.0.1', use_isaacgym=True)
+    simulator_queue = CeleryPopulationQueue(args, use_isaacgym=True, local_computing=True)
+    await simulator_queue.start(cleanup_database=True)
+
+    # CELERY GAZEBO WORKER
+    celery_workers: List[GazeboCeleryWorkerSupervisor] = []
+    if INTERNAL_WORKERS:
+        for n in range(n_cores):
+            celery_worker = GazeboCeleryWorkerSupervisor(
+                world_file='worlds/plane.celery.world',
+                gui=args.gui,
+                simulator_args=['--verbose'],
+                plugins_dir_path=os.path.join('../heritability', 'build', 'lib'),
+                models_dir_path=os.path.join('../heritability', 'models'),
+                simulator_name=f'GazeboCeleryWorker_{n}',
+                process_terminated_callback=worker_crash,
+            )
+            await celery_worker.launch_simulator(port=args.port_start + n)
+            celery_workers.append(celery_worker)
+
+    # ANALYZER CONNECTION
+    # analyzer_port = args.port_start + (n_cores if INTERNAL_WORKERS else 0)
+    # analyzer_queue = AnalyzerQueue(1, args, port_start=analyzer_port)
+    # await analyzer_queue.start()
+    analyzer_queue = None
+
+    # INITIAL POPULATION OBJECT
+    population = PositionedPopulation(population_conf, simulator_queue, analyzer_queue, next_robot_id)
+
+    if do_recovery:
+        # loading a previous state of the experiment
+        population.load_snapshot(gen_num, multi_development=True)
+        if gen_num >= 0:
+            logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.individuals)} individuals')
+        if has_offspring:
+            individuals = population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
+            gen_num += 1
+            logger.info(f'Recovered unfinished offspring {gen_num}')
+
+            if gen_num == 0:
+                await population.initialize(individuals)
+            else:
+                population = await population.next_generation(gen_num, individuals)
+
+            experiment_management.export_snapshots(population.individuals, gen_num)
+    else:
+        # starting a new experiment
+        experiment_management.create_exp_folders()
+        await population.initialize()
+        experiment_management.export_snapshots(population.individuals, gen_num)
+
+    while gen_num < num_generations - 1:
+        gen_num += 1
+        population = await population.next_generation(gen_num)
+        experiment_management.export_snapshots(population.individuals, gen_num)
+
+    # CLEANUP
+    for celery_worker in celery_workers:
+        await celery_worker.stop()
+    await simulator_queue.stop()
