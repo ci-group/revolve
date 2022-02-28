@@ -36,7 +36,7 @@ class RevolveBot:
     a robot's sdf mode
     """
 
-    def __init__(self, _id: int = None, self_collide: bool = True):
+    def __init__(self, _id: int = None, self_collide: bool = True, pose: Optional[SDF.math.Vector3] = None):
         self._id: int = _id
         self._body: Optional[CoreModule] = None
         self._brain: Optional[Brain] = None
@@ -47,6 +47,7 @@ class RevolveBot:
         self.battery_level: float = 0.0
         self.simulation_boundaries = None
         self.failed_eval_attempt_count: int = 0
+        self.pose: SDF.math.Vector3 = SDF.math.Vector3(0, 0, 0) if pose is None else pose
 
     @property
     def id(self) -> int:
@@ -174,7 +175,7 @@ class RevolveBot:
                enable_visuals: bool = False) -> AnyStr:
         if type(nice_format) is bool:
             nice_format = '\t' if nice_format else None
-        return SDF.revolve_bot_to_sdf(self, pose, nice_format,
+        return SDF.revolve_bot_to_sdf(self, self.pose + pose, nice_format,
                                       self_collide=self.self_collide,
                                       enable_visuals=enable_visuals)
 
@@ -184,7 +185,7 @@ class RevolveBot:
                 enable_visuals: bool = False) -> AnyStr:
         if type(nice_format) is bool:
             nice_format = '\t' if nice_format else None
-        return URDF.revolve_bot_to_urdf(self, pose, nice_format,
+        return URDF.revolve_bot_to_urdf(self, self.pose + pose, nice_format,
                                         self_collide=self.self_collide, enable_visuals=enable_visuals)
 
     def to_yaml(self) -> AnyStr:

@@ -102,15 +102,23 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                 env_index = i
             else:
                 env_index = 0
-                area_size = math.sqrt(len(robots_urdf))
-                x: float = math.floor(i % area_size)
-                y: float = i // area_size
-                robot.pose.p += gymapi.Vec3(x, y, 0)
+                # Code to position the robots evenly in the environment
+                # area_size = math.sqrt(len(robots_urdf))
+                # x: float = math.floor(i % area_size)
+                # y: float = i // area_size
+                # robot.pose.p += gymapi.Vec3(x, y, 0)
             if isolated_environments:
                 gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
             else:
                 # shared physics collision group
-                gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", -1, -1, 0)
+
+                # revolve/thirdparty/isaacgym/docs/programming/assets.html
+                #
+                # If the collision filter for the actor is set to -1, the actor will use filters loaded in by the asset
+                # loaders. This is important for MJCF files that specify non-zero contypes/conaffinities or have other
+                # contacts specified. Setting the collision filter to 0 will enable collisions between all shapes in
+                # the actor. Setting the collision filter to anything > 0 will disable all self collisions.
+                gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", -1, 1 << i, 0)
             isaac_logger.info(f"Loaded {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
 
             # Insert robot in the database

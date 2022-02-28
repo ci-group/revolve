@@ -249,7 +249,7 @@ parser.add_argument(
 
 parser.add_argument(
     '--dbusername',
-    default='undefined', type=str,
+    default='DB_USERNAME_UNDEFINED', type=str,
     help="Database access user. Make sure the user was created in the database."
          "\nDefault \"undefined\"."
 )

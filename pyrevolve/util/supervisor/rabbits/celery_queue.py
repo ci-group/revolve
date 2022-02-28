@@ -120,8 +120,8 @@ class CeleryQueue:
     def __init__(self, args, queue_name: AnyStr = 'celery', dbname: Optional[AnyStr] = None, db_addr='localhost', use_isaacgym: bool = False):
         self._queue_name: AnyStr = queue_name
         self._args = args
-        self._dbname: AnyStr = str(uuid.uuid1()) if dbname is None else dbname
-        self._db: PostgreSQLDatabase = PostgreSQLDatabase(dbname=self._dbname, address=db_addr, username='matteo')
+        self._dbname: AnyStr = self._args.dbname if dbname is None else dbname
+        self._db: PostgreSQLDatabase = PostgreSQLDatabase(dbname=self._dbname, address=db_addr, username=self._args.dbusername)
         self._process_pool_executor = ProcessPoolExecutor()
         self._use_isaacgym: bool = use_isaacgym
         atexit.register(
