@@ -168,18 +168,26 @@ def simulator_multiple_process(robots_urdf: List[AnyStr],
     :param timeout: fail the run if the simulator takes too much time (None means wait indefinitely)
     :return: database id of the robot
     """
-    result = np.array([0 for _ in range(len(robots_urdf))], dtype=np.int64)
-    shared_mem = shared_memory.SharedMemory(create=True, size=result.nbytes)
-    process = Process(target=_inner_simulator_multiple_process,
-                      args=(robots_urdf, life_timeout, shared_mem.name, dbname, dbusername, dbpwd))
-    process.start()
-    process.join(timeout)
-    if process.exitcode is None:
-        raise RuntimeError(f"Simulation did not finish in {timeout} seconds")
-    remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=shared_mem.buf)
-    result[:] = remote_result[:]
-    shared_mem.close()
-    shared_mem.unlink()
+    try:
+        result = np.array([0 for _ in range(len(robots_urdf))], dtype=np.int64)
+        shared_mem = shared_memory.SharedMemory(create=True, size=result.nbytes)
+        process = Process(target=_inner_simulator_multiple_process,
+                          args=(robots_urdf, life_timeout, shared_mem.name, dbname, dbusername, dbpwd))
+        process.start()
+        process.join(timeout)
+        if process.exitcode is None:
+            raise RuntimeError(f"Simulation did not finish in {timeout} seconds")
+        remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=shared_mem.buf)
+        result[:] = remote_result[:]
+        shared_mem.close()
+        shared_mem.unlink()
+    except KeyboardInterrupt as e:
+        print("Keyboard interrupt: CTR-C Detected. Closing shared memory")
+        shared_mem.close()
+        shared_mem.unlink()
+        exit()
+    except Exception as e:
+        print(e)
     return result
 
 
