@@ -2,15 +2,28 @@ from __future__ import annotations
 import os
 
 from typing import TYPE_CHECKING
+
+from pyrevolve import SDF
+
 if TYPE_CHECKING:
-    from typing import Optional, List, Union
+    from typing import Optional, List, Union, Any
     from pyrevolve.revolve_bot import RevolveBot
     from pyrevolve.genotype import Genotype
-    from pyrevolve.evolution.speciation.species import Species
 
 
 class Individual:
-    def __init__(self, genotype: Genotype, phenotype: Optional[Union[RevolveBot, List[RevolveBot]]] = None):
+
+    genotype: Genotype
+    phenotype: Union[RevolveBot, List[RevolveBot]]
+    fitness: Optional[float]
+    parents: Optional[List[Individual]]
+    objectives: List[Any]
+    pose: SDF.math.Vector3
+
+    def __init__(self,
+                 genotype: Genotype,
+                 phenotype: Optional[Union[RevolveBot, List[RevolveBot]]] = None,
+                 pose: Optional[SDF.math.Vector3] = None):
         """
         Creates an Individual object with the given genotype and optionally the phenotype.
 
@@ -22,6 +35,7 @@ class Individual:
         self.fitness: Optional[float] = None
         self.parents: Optional[List[Individual]] = None
         self.objectives = []
+        self.pose: SDF.math.Vector3 = SDF.math.Vector3(0, 0, 0) if pose is None else pose
 
     def clone(self) -> Individual:
         """
@@ -33,6 +47,7 @@ class Individual:
         other = Individual(
             genotype=self.genotype.clone(),
             phenotype=cloned_phenotype,
+            pose=self.pose.copy()
         )
 
         other.fitness = self.fitness
@@ -42,10 +57,11 @@ class Individual:
 
     def develop(self) -> None:
         """
-        Develops genotype into a intermediate phenotype
+        Develops genotype into an intermediate phenotype
         """
         if self.phenotype is None:
             self.phenotype = self.genotype.develop()
+            self.phenotype.pose = self.pose
 
     @property
     def id(self) -> int:

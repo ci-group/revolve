@@ -1,14 +1,16 @@
 import copy
+from typing import Union, List
+from pyrevolve.revolve_bot import RevolveBot
 
 
 class Genotype:
     def clone(self):
         """
-        Create an returns deep copy of the genotype
+        Create and returns deep copy of the genotype
         """
         return copy.deepcopy(self)
 
-    def develop(self):
+    def develop(self) -> Union[RevolveBot, List[RevolveBot]]:
         """
         Develops the genome into a revolve_bot (proto-phenotype)
 

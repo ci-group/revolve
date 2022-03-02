@@ -33,6 +33,12 @@ class Population:
     It is the central component for robot evolution in this framework.
     """
 
+    config: PopulationConfig
+    individual: List[Individual]
+    analyzer_queue: Optional[AnalyzerQueue]
+    SimulatorQueue: SimulatorQueue
+    next_robot_id: int
+
     def __init__(self,
                  config: PopulationConfig,
                  simulator_queue: SimulatorQueue,

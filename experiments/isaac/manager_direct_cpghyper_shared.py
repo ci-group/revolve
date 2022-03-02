@@ -23,9 +23,11 @@ from pyrevolve.genotype.tree_body_hyperneat_brain import DirectTreeCPGHyperNEATG
     DirectTreeCPGHyperNEATGenotype
 from pyrevolve.util.supervisor import CeleryQueue
 from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig, BrainType
+from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
 from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
+from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
 INTERNAL_WORKERS = False
 
@@ -44,15 +46,73 @@ def environment_constructor(gym: gymapi.Gym,
     sphere_asset = gym.create_sphere(sim, radius, asset_options)
 
 
+class PositionedPopulation(Population):
+
+    def __init__(self,
+                 config: PopulationConfig,
+                 simulator_queue: SimulatorQueue,
+                 analyzer_queue: Optional[AnalyzerQueue] = None,
+                 next_robot_id: int = 1,
+                 grid_cell_size: float = 0.5):
+        super().__init__(config, simulator_queue, analyzer_queue, next_robot_id)
+        self.grid_cell_size: float = grid_cell_size
+
+    def _new_individual(self,
+                        genotype,
+                        parents: Optional[List[Individual]] = None,
+                        pose: Optional[SDF.math.Vector3] = None):
+        individual = Individual(genotype, pose=pose)
+        individual.develop()
+        if isinstance(individual.phenotype, list):
+            for alternative in individual.phenotype:
+                alternative.update_substrate()
+                alternative.measure_phenotype()
+                alternative.export_phenotype_measurements(self.config.experiment_management.data_folder)
+        else:
+            individual.phenotype.update_substrate()
+            individual.phenotype.measure_phenotype()
+            individual.phenotype.export_phenotype_measurements(self.config.experiment_management.data_folder)
+        if parents is not None:
+            individual.parents = parents
+
+        self.config.experiment_management.export_genotype(individual)
+        self.config.experiment_management.export_phenotype(individual)
+        self.config.experiment_management.export_phenotype_images(individual)
+
+        return individual
+
+    async def initialize(self, recovered_individuals: Optional[List[Individual]] = None) -> None:
+        """
+        Populates the population (individuals list) with Individual objects that contains their respective genotype.
+        """
+        recovered_individuals = [] if recovered_individuals is None else recovered_individuals
+        n_new_individuals = self.config.population_size-len(recovered_individuals)
+
+        # TODO there are recovery problems here,
+        # but I will ignore them (recovered robots and new robots positions are initialized independently)
+        area_size: float = math.sqrt(n_new_individuals)
+        for i in range(n_new_individuals):
+            x: float = math.floor(i % area_size)
+            y: float = i // area_size
+            pose = SDF.math.Vector3(x, y, 0) * self.grid_cell_size
+            new_genotype = self.config.genotype_constructor(self.config.genotype_conf, self.next_robot_id)
+            individual = self._new_individual(new_genotype, pose=pose)
+            self.individuals.append(individual)
+            self.next_robot_id += 1
+
+        await self.evaluate(self.individuals, 0)
+        self.individuals = recovered_individuals + self.individuals
+
+
 async def run():
     """
     The main coroutine, which is started below.
     """
 
     # experiment params #
-    num_generations = 100
-    population_size = 100
-    offspring_size = 50
+    num_generations = 200
+    population_size = 30
+    offspring_size = 30
 
     morph_single_mutation_prob = 0.2
     morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8
@@ -173,7 +233,7 @@ async def run():
     analyzer_queue = None
 
     # INITIAL POPULATION OBJECT
-    population = Population(population_conf, simulator_queue, analyzer_queue, next_robot_id)
+    population = PositionedPopulation(population_conf, simulator_queue, analyzer_queue, next_robot_id)
 
     if do_recovery:
         # loading a previous state of the experiment

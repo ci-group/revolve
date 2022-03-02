@@ -14,8 +14,11 @@ class UserManagedService(ServiceBase):
         return self._is_running
 
     async def start(self) -> None:
+        self.start_sync()
+
+    def start_sync(self) -> None:
         logger.warning(f'Ensure the service "{self._name}" is running then press ENTER')
-        sys.stdin.readline()  # TODO async
+        sys.stdin.readline()
         self._is_running = True
 
     async def stop(self) -> None:
