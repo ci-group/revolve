@@ -48,6 +48,7 @@ class RevolveBot:
         self.simulation_boundaries = None
         self.failed_eval_attempt_count: int = 0
         self.pose: SDF.math.Vector3 = SDF.math.Vector3(0, 0, 0) if pose is None else pose
+        self.database_id: Optional[int] = None
 
     @property
     def id(self) -> int:

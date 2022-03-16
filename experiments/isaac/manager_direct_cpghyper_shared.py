@@ -2,32 +2,29 @@
 from __future__ import annotations
 
 import os
-from typing import List, Optional
+from typing import List, Dict
 
 import math
 from isaacgym import gymapi
 
-from pyrevolve.evolution.individual import Individual
-from pyrevolve.genotype.tree_body_hyperneat_brain.crossover import standard_crossover
-from pyrevolve.genotype.tree_body_hyperneat_brain.mutation import standard_mutation
-from pyrevolve import parser, SDF
+from experiments.isaac.positioned_population import PositionedPopulation
+from pyrevolve import parser
+from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
-from pyrevolve.evolution.selection import multiple_selection, tournament_selection
-from pyrevolve.evolution.population.population import Population
+from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
-from pyrevolve.evolution.population.population_management import generational_population_management, \
-    steady_state_population_management
+from pyrevolve.evolution.population.population_management import generational_population_management
+from pyrevolve.evolution.selection import best_selection
 from pyrevolve.experiment_management import ExperimentManagement
-from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotype, DirectTreeGenotypeConfig
+from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotypeConfig
+from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig, BrainType
 from pyrevolve.genotype.tree_body_hyperneat_brain import DirectTreeCPGHyperNEATGenotypeConfig, \
     DirectTreeCPGHyperNEATGenotype
-from pyrevolve.util.supervisor import CeleryQueue
-from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig, BrainType
-from pyrevolve.util.supervisor.analyzer_queue import AnalyzerQueue
-from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor
-from pyrevolve.custom_logging.logger import logger
+from pyrevolve.genotype.tree_body_hyperneat_brain.crossover import standard_crossover
+from pyrevolve.genotype.tree_body_hyperneat_brain.mutation import standard_mutation
+from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor, PostgreSQLDatabase, RobotEvaluation, \
+    RobotState
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
-from pyrevolve.util.supervisor.simulator_queue import SimulatorQueue
 
 INTERNAL_WORKERS = False
 
@@ -46,62 +43,49 @@ def environment_constructor(gym: gymapi.Gym,
     sphere_asset = gym.create_sphere(sim, radius, asset_options)
 
 
-class PositionedPopulation(Population):
+def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQLDatabase) -> None:
+    ids: List[int] = [int(individual.phenotype.database_id) for individual in population.individuals]
+    individual_map: Dict[int, Individual] = {int(individual.phenotype.database_id): individual for individual in population.individuals }
 
-    def __init__(self,
-                 config: PopulationConfig,
-                 simulator_queue: SimulatorQueue,
-                 analyzer_queue: Optional[AnalyzerQueue] = None,
-                 next_robot_id: int = 1,
-                 grid_cell_size: float = 0.5):
-        super().__init__(config, simulator_queue, analyzer_queue, next_robot_id)
-        self.grid_cell_size: float = grid_cell_size
+    # Using a set for candidates to avoid repetitions
+    # TODO if a robot is seen more, should it get more chances?
+    for individual in population.individuals:
+        individual.candidate_partners = set()
 
-    def _new_individual(self,
-                        genotype,
-                        parents: Optional[List[Individual]] = None,
-                        pose: Optional[SDF.math.Vector3] = None):
-        individual = Individual(genotype, pose=pose)
-        individual.develop()
-        if isinstance(individual.phenotype, list):
-            for alternative in individual.phenotype:
-                alternative.update_substrate()
-                alternative.measure_phenotype()
-                alternative.export_phenotype_measurements(self.config.experiment_management.data_folder)
-        else:
-            individual.phenotype.update_substrate()
-            individual.phenotype.measure_phenotype()
-            individual.phenotype.export_phenotype_measurements(self.config.experiment_management.data_folder)
-        if parents is not None:
-            individual.parents = parents
+    with db.session() as session:
+        last_eval: RobotEvaluation = session \
+            .query(RobotEvaluation) \
+            .filter(RobotEvaluation.robot_id == ids[0]) \
+            .order_by(RobotEvaluation.n.desc()) \
+            .one()
+        last_eval_n = last_eval.n
+        # assert that there was only one eval
+        assert last_eval_n == 0
 
-        self.config.experiment_management.export_genotype(individual)
-        self.config.experiment_management.export_phenotype(individual)
-        self.config.experiment_management.export_phenotype_images(individual)
+        times_query = session.query(RobotState.time_sec, RobotState.time_nsec) \
+            .filter(RobotState.evaluation_n == last_eval_n) \
+            .order_by(RobotState.time_sec, RobotState.time_nsec) \
+            .distinct()
 
-        return individual
+        times = [time for time in times_query]
 
-    async def initialize(self, recovered_individuals: Optional[List[Individual]] = None) -> None:
-        """
-        Populates the population (individuals list) with Individual objects that contains their respective genotype.
-        """
-        recovered_individuals = [] if recovered_individuals is None else recovered_individuals
-        n_new_individuals = self.config.population_size-len(recovered_individuals)
+        for time_sec, time_nsec in times:
+            positions_query = session \
+                .query(RobotState.evaluation_robot_id, RobotState.pos_x, RobotState.pos_y) \
+                .filter(RobotState.evaluation_n == last_eval_n) \
+                .filter(RobotState.evaluation_robot_id.in_(ids)) \
+                .filter(RobotState.time_sec == time_sec, RobotState.time_nsec == time_nsec)
 
-        # TODO there are recovery problems here,
-        # but I will ignore them (recovered robots and new robots positions are initialized independently)
-        area_size: float = math.sqrt(n_new_individuals)
-        for i in range(n_new_individuals):
-            x: float = math.floor(i % area_size)
-            y: float = i // area_size
-            pose = SDF.math.Vector3(x, y, 0) * self.grid_cell_size
-            new_genotype = self.config.genotype_constructor(self.config.genotype_conf, self.next_robot_id)
-            individual = self._new_individual(new_genotype, pose=pose)
-            self.individuals.append(individual)
-            self.next_robot_id += 1
-
-        await self.evaluate(self.individuals, 0)
-        self.individuals = recovered_individuals + self.individuals
+            for robot_mother, x, y in positions_query:
+                for robot_father, x_f, y_f in positions_query:
+                    if robot_mother == robot_father:
+                        continue
+                    dx: float = x - x_f
+                    dy: float = y - y_f
+                    distance: float = math.sqrt(dx*dx + dy*dy)
+                    if distance < 0.45:
+                        print(f'MATCH! MOTHER({robot_mother})+FATHER({robot_father}) dist({distance:+2.4f})')
+                        individual_map[robot_mother].candidate_partners.add(individual_map[robot_father])
 
 
 async def run():
@@ -188,10 +172,10 @@ async def run():
         mutation_conf=genotype_conf,
         crossover_operator=lambda parents, gen_conf, _: standard_crossover(parents, gen_conf),
         crossover_conf=None,
-        selection=lambda individuals: tournament_selection(individuals, 2),
-        parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
-        population_management=steady_state_population_management,
-        population_management_selector=tournament_selection,  # must be none for generational management function
+        selection=best_selection,
+        parent_selection=None,
+        population_management=generational_population_management,
+        population_management_selector=None,
         evaluation_time=args.evaluation_time,
         grace_time=args.grace_time,
         offspring_size=offspring_size,
@@ -259,6 +243,7 @@ async def run():
 
     while gen_num < num_generations - 1:
         gen_num += 1
+        generate_candidate_partners(population, simulator_queue._db)
         population = await population.next_generation(gen_num)
         experiment_management.export_snapshots(population.individuals, gen_num)
 

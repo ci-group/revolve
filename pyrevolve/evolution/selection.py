@@ -16,6 +16,19 @@ def _compare_maj_fitness(indiv_1, indiv_2):
     return fit_1 > fit_2
 
 
+def best_selection(population: List[Individual]) -> Individual:
+    """
+    Returns the best individual (by fitness) of the given list of individuals
+    :param population: list to select from
+    :return: reference to be the best individual of the list
+    """
+    best_individual = None
+    for individual in population:
+        if (best_individual is None) or (_compare_maj_fitness(individual, best_individual)):
+            best_individual = individual
+    return best_individual
+
+
 def tournament_selection(population: List[Individual], k=2) -> Individual:
     """
     Perform tournament selection and return best individual

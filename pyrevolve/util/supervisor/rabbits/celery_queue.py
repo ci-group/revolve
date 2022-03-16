@@ -387,6 +387,7 @@ class CeleryPopulationQueue:
                 robots_behaviour: List[BehaviouralMeasurements] = []
 
                 for robot, robot_id in zip(robots, robot_ids):
+                    robot.database_id = robot_id
                     robot_manager = DBRobotManager(self._db, robot_id, robot,
                                                    evaluation_time=conf.evaluation_time,
                                                    warmup_time=conf.grace_time)
