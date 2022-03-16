@@ -137,7 +137,7 @@ async def run():
         offspring_size=offspring_size,
         experiment_name=args.experiment_name,
         experiment_management=experiment_management,
-        environment_constructor=environment_constructor, #TODO IMPLEMENT THIS!!!! pass it to isaacqueue that passes it to the manage_isaac_multiple
+        environment_constructor=environment_constructor,
     )
 
     n_cores = args.n_cores

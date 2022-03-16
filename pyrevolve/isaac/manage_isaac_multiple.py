@@ -4,7 +4,7 @@ Loading and testing
 import math
 import os
 import tempfile
-from typing import AnyStr, List, Optional
+from typing import AnyStr, List, Optional, Callable
 
 import numpy as np
 from isaacgym import gymapi
@@ -21,7 +21,8 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                        life_timeout: float,
                        dbname: AnyStr,
                        dbusername: AnyStr,
-                       dbpwd: AnyStr = '') \
+                       dbpwd: AnyStr = '',
+                       env_constructor: Optional[Callable[[gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env], None]] = None) \
         -> List[int]:
     """
     Simulate the robot in isaac gym
@@ -30,6 +31,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
     :param dbname: name of the database
     :param dbusername: database access username
     :param dbpwd: database access password (optional)
+    :param env_constructor: function to build up the environment
     :return: database id of the robot
     """
     mydb = db
@@ -45,7 +47,8 @@ def simulator_multiple(robots_urdf: List[AnyStr],
 
     gym: IsaacSim
     sim_params: gymapi.SimParams
-    gym, sim_params = init_sym(args, len(robots_urdf) if isolated_environments else 1, mydb)
+    gym, sim_params = init_sym(args, len(robots_urdf) if isolated_environments else 1, mydb, None, env_constructor)
+    gym.build_environment = env_constructor
 
     # Load robot asset
     asset_options = gymapi.AssetOptions()
@@ -157,7 +160,8 @@ def simulator_multiple_process(robots_urdf: List[AnyStr],
                                dbname: AnyStr,
                                dbusername: AnyStr,
                                dbpwd: AnyStr = '',
-                               timeout: Optional[float] = None) -> List[int]:
+                               timeout: Optional[float] = None,
+                               environment_constructor: Optional[Callable[[gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env], None]] = None) -> List[int]:
     """
     Simulate the robot in isaac gym
     :param robots_urdf: URDF describing the robot
@@ -166,13 +170,15 @@ def simulator_multiple_process(robots_urdf: List[AnyStr],
     :param dbusername: database access username
     :param dbpwd: database access password (optional)
     :param timeout: fail the run if the simulator takes too much time (None means wait indefinitely)
+    :param environment_constructor: optional function that gets called whenever a gym environment is initialized
+    Function signature is `environment_constructor(gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env) -> None`
     :return: database id of the robot
     """
     try:
         result = np.array([0 for _ in range(len(robots_urdf))], dtype=np.int64)
         shared_mem = shared_memory.SharedMemory(create=True, size=result.nbytes)
         process = Process(target=_inner_simulator_multiple_process,
-                          args=(robots_urdf, life_timeout, shared_mem.name, dbname, dbusername, dbpwd))
+                          args=(robots_urdf, life_timeout, shared_mem.name, dbname, dbusername, dbpwd, environment_constructor))
         process.start()
         process.join(timeout)
         if process.exitcode is None:
@@ -196,8 +202,9 @@ def _inner_simulator_multiple_process(robots_urdf: List[AnyStr],
                                       shared_mem_name: AnyStr,
                                       dbname: AnyStr,
                                       dbusername: AnyStr,
-                                      dbpwd: AnyStr = '') -> int:
-    robot_ids: List[int] = simulator_multiple(robots_urdf, life_timeout, dbname, dbusername, dbpwd)
+                                      dbpwd: AnyStr = '',
+                                      environment_constructor: Optional[Callable[[gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env], None]] = None) -> int:
+    robot_ids: List[int] = simulator_multiple(robots_urdf, life_timeout, dbname, dbusername, dbpwd, environment_constructor)
     robot_ids = np.array(robot_ids)
     existing_shared_mem = shared_memory.SharedMemory(name=shared_mem_name)
     remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=existing_shared_mem.buf)
