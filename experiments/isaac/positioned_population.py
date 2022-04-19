@@ -82,9 +82,9 @@ class PositionedPopulation(Population):
         assert self.config.offspring_size == len(self.individuals)
         for individual in self.individuals:
             # Selection operator (based on fitness perceived by the individuals)
-            mother = individual
+            mother: Individual = individual
             if len(mother.candidate_partners) > 0:
-                father = self.config.selection(mother.candidate_partners)
+                father: Individual = self.config.selection(mother.candidate_partners)
                 parents = (mother, father)
                 child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf, self.config.crossover_conf)
                 child = Individual(child_genotype)
@@ -99,7 +99,7 @@ class PositionedPopulation(Population):
             # Mutation operator
             child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
             # Insert individual in new population
-            individual = self._new_individual(child_genotype, parents)
+            individual = self._new_individual(child_genotype, parents, mother.pose)
             new_individuals.append(individual)
 
         # evaluate new individuals

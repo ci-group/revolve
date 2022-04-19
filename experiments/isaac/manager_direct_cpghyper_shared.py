@@ -91,7 +91,7 @@ def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQL
                     dy: float = y - y_f
                     distance: float = math.sqrt(dx*dx + dy*dy)
                     if distance < 0.45:
-                        print(f'MATCH! MOTHER({robot_mother})+FATHER({robot_father}) dist({distance:+2.4f})')
+                        # print(f'MATCH! MOTHER({robot_mother})+FATHER({robot_father}) dist({distance:+2.4f})')
                         individual_map[robot_mother].candidate_partners.add(individual_map[robot_father])
 
 
@@ -246,15 +246,98 @@ async def run():
         # starting a new experiment
         experiment_management.create_exp_folders()
         await population.initialize()
+        update_robot_pose(population.individuals, simulator_queue._db)
+        # generate_candidate_partners(population, simulator_queue._db, args.grace_time)
         experiment_management.export_snapshots(population.individuals, gen_num)
+        # export_special_data(population.individuals, [], gen_num, simulator_queue._db)
 
     while gen_num < num_generations - 1:
         gen_num += 1
-        generate_candidate_partners(population, simulator_queue._db)
-        population = await population.next_generation(gen_num)
+        generate_candidate_partners(population, simulator_queue._db, args.grace_time)
+        new_population = await population.next_generation(gen_num)
+        update_robot_pose(population.individuals, simulator_queue._db)
         experiment_management.export_snapshots(population.individuals, gen_num)
+        with open(f'{experiment_management.generation_folder(gen_num-1)}/extra.tsv', 'w') as extra_data_file:
+            export_special_data(extra_data_file, population.individuals, new_population.individuals, gen_num, simulator_queue._db)
+        population = new_population
 
     # CLEANUP
     for celery_worker in celery_workers:
         await celery_worker.stop()
     await simulator_queue.stop()
+
+
+def update_robot_pose(individuals: List[Individual], db: PostgreSQLDatabase) -> None:
+
+    with db.session() as session:
+
+        last_eval: RobotEvaluation = session \
+            .query(RobotEvaluation) \
+            .filter(RobotEvaluation.robot_id == individuals[0].id) \
+            .order_by(RobotEvaluation.n.desc()) \
+            .one()
+        last_eval_n = last_eval.n
+        assert last_eval_n == 0
+
+        for individual in individuals:
+            dbid = int(individual.phenotype.database_id)
+            final_position = session \
+                .query(RobotState.pos_x, RobotState.pos_y) \
+                .filter(RobotState.evaluation_n == last_eval_n) \
+                .filter(RobotState.evaluation_robot_id == dbid) \
+                .order_by(RobotState.time_sec.desc(), RobotState.time_nsec.desc()) \
+                .first()
+            print(f"DB:{individual} ({final_position})")
+            individual.pose.x = final_position[0]
+            individual.pose.y = final_position[1]
+
+
+def export_special_data(file, individuals: List[Individual], offspring_list: List[Individual], gen_num: int, db: PostgreSQLDatabase) -> None:
+    # write header
+    file.write('individual_id\tinitial_position\tfinal_position\tcandidates_best\tcandidates\toffspring_id\n')
+
+    with db.session() as session:
+        for individual in individuals:
+            dbid = int(individual.phenotype.database_id)
+
+            last_eval: RobotEvaluation = session \
+                .query(RobotEvaluation) \
+                .filter(RobotEvaluation.robot_id == dbid) \
+                .order_by(RobotEvaluation.n.desc()) \
+                .one()
+
+            # assert that there was only one eval
+            assert last_eval.n == 0
+
+            # Save initial and final positions
+            initial_position = session \
+                .query(RobotState.pos_x, RobotState.pos_y) \
+                .filter(RobotState.evaluation == last_eval) \
+                .order_by(RobotState.time_sec.asc(), RobotState.time_nsec.asc()) \
+                .first()
+
+            final_position = session \
+                .query(RobotState.pos_x, RobotState.pos_y) \
+                .filter(RobotState.evaluation == last_eval) \
+                .order_by(RobotState.time_sec.desc(), RobotState.time_nsec.desc()) \
+                .first()
+
+            # Save candidate lists
+            candidates = individual.candidate_partners
+
+            # Save chosen candidate IDs
+            # find main offspring
+            offspring = None
+            for offspring in offspring_list:
+                if offspring.parents[0] == individual:
+                    break
+            assert offspring is not None
+
+            candidates_best = None
+            if len(offspring.parents) > 1:
+                candidates_best = offspring.parents[1]
+
+            # Write data
+            file.write(f'{individual.id}\t{initial_position}\t{final_position}\t{candidates_best}\t{candidates}\t{offspring}\n')
+
+    return
