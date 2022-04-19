@@ -43,7 +43,7 @@ def environment_constructor(gym: gymapi.Gym,
     sphere_asset = gym.create_sphere(sim, radius, asset_options)
 
 
-def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQLDatabase) -> None:
+def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQLDatabase, grace_time: float = 0.) -> None:
     ids: List[int] = [int(individual.phenotype.database_id) for individual in population.individuals]
     individual_map: Dict[int, Individual] = {int(individual.phenotype.database_id): individual for individual in population.individuals }
 
@@ -70,6 +70,13 @@ def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQL
         times = [time for time in times_query]
 
         for time_sec, time_nsec in times:
+            # Account for grace time
+            time = float(time_sec) + float(time_nsec) / 1_000_000_000.
+            if time <= grace_time:
+                continue
+
+            #TODO only do this check every N seconds instead of every single sample
+
             positions_query = session \
                 .query(RobotState.evaluation_robot_id, RobotState.pos_x, RobotState.pos_y) \
                 .filter(RobotState.evaluation_n == last_eval_n) \
