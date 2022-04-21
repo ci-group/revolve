@@ -115,7 +115,7 @@ class SystemdService(ServiceBase):
             # - The job object path
 
             if unit_name == self._service_name:
-                self._is_running = (unit_active == 'active' and unit_running == 'running')
+                self._is_running = (unit_active == 'active')
                 break
         else:
             self._is_running = False
