@@ -47,6 +47,7 @@ class IsaacSim:
         self.build_environment = environment_constructor
         self.robot_handles = []
         self.envs = []
+        self.envs_height = {}
         self.robots = []
 
         self._gym = gymapi.acquire_gym()
@@ -121,7 +122,9 @@ class IsaacSim:
             env, robot.handle, gymapi.STATE_ALL)
         min_z = np.min(body_states["pose"]['p']['z'])
 
-        pose.p.z -= (min_z - 0.08)  # 0.08m (8cm) it's an estimated half max-size of all modules
+        env_height = self._environment_height(env_i)
+
+        pose.p.z -= (min_z - env_height - 0.08)  # 0.08m (8cm) it's an estimated half max-size of all modules
         # WARNING: we are passing an actor handle as a rigid body handle, things may not work properly
         self._gym.set_rigid_transform(env, robot.handle, pose)
 
@@ -230,14 +233,20 @@ class IsaacSim:
             if env is None:
                 env = self._gym.create_env(self._sim, self._env_lower, self._env_upper, self._num_per_row)
                 if callable(self.build_environment):
-                    self.build_environment(self._gym, self._sim, self._env_lower, self._env_upper, self._num_per_row, env)
+                    z_height = self.build_environment(self._gym, self._sim, self._env_lower, self._env_upper, self._num_per_row, env)
+                else:
+                    z_height = 0
                 self.envs[index] = env
+                self.envs_height[index] = z_height
         else:
             index: int = self.envs.index(env)
 
         if not isinstance(env, gymapi.Env):
             raise RuntimeError("Wrong argument passed to function")
         return index, env
+
+    def _environment_height(self, env_index: int):
+        return self.envs_height[env_index]
 
     def update_robots(self, time: float, delta: float) -> None:
         if len(self.robots) == 0:
