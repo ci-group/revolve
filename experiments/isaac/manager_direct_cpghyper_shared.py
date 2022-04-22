@@ -34,13 +34,14 @@ def environment_constructor(gym: gymapi.Gym,
                             _env_lower: gymapi.Vec3,
                             _env_upper: gymapi.Vec3,
                             _num_per_row: int,
-                            env: gymapi.Env) -> None:
+                            env: gymapi.Env) -> float:
     radius: float = 0.2
     asset_options: gymapi.AssetOptions = gymapi.AssetOptions()
     asset_options.density = 1.0
     asset_options.linear_damping = 0.5
     asset_options.angular_damping = 0.5
     sphere_asset = gym.create_sphere(sim, radius, asset_options)
+    return 0
 
 
 def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQLDatabase, grace_time: float = 0.) -> None:
