@@ -114,6 +114,12 @@ class IsaacSim:
 
         robot_asset = self._gym.load_urdf(self._sim, self._asset_root, urdf_path, robot_asset_options)
 
+        # Optimizes the simulator and removes robot self collision
+        num_bodies = self._gym.get_asset_rigid_body_count(robot_asset)
+        num_shapes = self._gym.get_asset_rigid_shape_count(robot_asset)
+        enable_self_collision = False
+        self._gym.begin_aggregate(env, num_bodies, num_shapes, enable_self_collision)
+
         # calculate correct z height
         robot.handle = self._gym.create_actor(env, robot_asset, pose, robot_name, group, filter_, segmentation_id)
         self.robot_handles.append(robot.handle)
@@ -138,6 +144,8 @@ class IsaacSim:
         robot.create_actuator_map(self._gym.get_actor_dof_dict(env, robot.handle))
 
         robot.born_time = self.get_sim_time()
+
+        self._gym.end_aggregate(env)
 
         return robot.handle
 

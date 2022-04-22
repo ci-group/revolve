@@ -113,7 +113,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                 gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
             else:
                 # shared physics collision group
-                gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", -1, -1, 0)
+                gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 0, 0)
             isaac_logger.info(f"Loaded {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
 
             # Insert robot in the database

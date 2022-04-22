@@ -12,6 +12,7 @@ env/
 /build/
 cmake-build-*/
 cmake-multineat-*/
+cmake-python-bindings-*/
 /output*/
 develop-eggs/
 dist/
