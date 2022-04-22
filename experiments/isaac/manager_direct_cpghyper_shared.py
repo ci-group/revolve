@@ -90,10 +90,12 @@ def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQL
                     dx: float = x - x_f
                     dy: float = y - y_f
                     distance: float = math.sqrt(dx*dx + dy*dy)
-                    if distance < 0.45:
+                    if distance < MATING_RANGE:
                         # print(f'MATCH! MOTHER({robot_mother})+FATHER({robot_father}) dist({distance:+2.4f})')
                         individual_map[robot_mother].candidate_partners.add(individual_map[robot_father])
 
+# MATING_RANGE = 0.45
+MATING_RANGE = 45
 
 async def run():
     """
@@ -113,8 +115,8 @@ async def run():
     brain_single_mutation_prob = 0.5
 
     tree_genotype_conf: DirectTreeGenotypeConfig = DirectTreeGenotypeConfig(
-        max_parts=50,
-        min_parts=10,
+        max_parts=25,
+        min_parts=5,
         max_oscillation=5,
         init_n_parts_mu=10,
         init_n_parts_sigma=4,
