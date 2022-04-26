@@ -105,8 +105,8 @@ async def run():
 
     # experiment params #
     num_generations = 200
-    population_size = 30
-    offspring_size = 30
+    population_size = 200
+    offspring_size = population_size
 
     morph_single_mutation_prob = 0.2
     morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8
@@ -240,7 +240,7 @@ async def run():
             logger.info(f'Recovered unfinished offspring {gen_num}')
 
             if gen_num == 0:
-                await population.initialize(individuals)
+                await population.initialize_from_single_individual(individuals)
             else:
                 population = await population.next_generation(gen_num, individuals)
 
@@ -248,7 +248,7 @@ async def run():
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-        await population.initialize()
+        await population.initialize_from_single_individual()
         update_robot_pose(population.individuals, simulator_queue._db)
         # generate_candidate_partners(population, simulator_queue._db, args.grace_time)
         experiment_management.export_snapshots(population.individuals, gen_num)
