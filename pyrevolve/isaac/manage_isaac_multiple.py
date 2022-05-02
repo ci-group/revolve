@@ -135,7 +135,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
     db_robots_id = [robot.db_robot_id for robot in gym.robots]
 
     # %% Simulate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    controller_update_time = sim_params.dt * 10
+    controller_update_time = sim_params.dt * 10  # TODO check this is the same as config.py
     # Simulate until all robots died
     simulator_main_loop(gym, controller_update_time)
 
@@ -192,8 +192,6 @@ def simulator_multiple_process(robots_urdf: List[AnyStr],
         shared_mem.close()
         shared_mem.unlink()
         exit()
-    except Exception as e:
-        print(e)
     return result
 
 

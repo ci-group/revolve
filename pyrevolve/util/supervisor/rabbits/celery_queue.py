@@ -352,14 +352,19 @@ class CeleryPopulationQueue:
             import xml.dom.minidom
 
             reparsed = xml.dom.minidom.parseString(robot_xml)
-            robot_name: AnyStr = ''
-            for model in reparsed.documentElement.getElementsByTagName('model'):
-                robot_name = model.getAttribute('name')
-                if str(robot_name).isdigit():
-                    error_message = f'Inserting robot with invalid name: {robot_name}'
-                    logger.critical(error_message)
-                    raise RuntimeError(error_message)
-                logger.info(f"Inserting robot {robot_name}.")
+            model = None
+            if reparsed.documentElement.nodeName == 'robot':  # URDF
+                model = reparsed.documentElement
+            else:
+                for model in reparsed.documentElement.getElementsByTagName('model'):  # SDF
+                    break
+            assert model is not None
+            robot_name: AnyStr = model.getAttribute('name')
+            if str(robot_name).isdigit():
+                error_message = f'Inserting robot with invalid name: {robot_name}'
+                logger.critical(error_message)
+                raise RuntimeError(error_message)
+            logger.info(f"Inserting robot {robot_name}.")
 
             xml_robots.append(robot_xml)
             robot_names.append(robot_name)
@@ -373,12 +378,23 @@ class CeleryPopulationQueue:
                                                                      xml_robots,
                                                                      max_age,
                                                                      self.EVALUATION_TIMEOUT)
-                except (celery.exceptions.TimeoutError, RuntimeError):
-                    logger.warning(f'Giving up on robot population after {self.EVALUATION_TIMEOUT} seconds. '
-                                   f'population:{robot_names}')
+                except (celery.exceptions.TimeoutError, RuntimeError) as e:
+                    logger.exception(f'Giving up on robot population after {self.EVALUATION_TIMEOUT} seconds. '
+                                     f'population:{robot_names}')
                     if attempt < self.MAX_ATTEMPTS:
-                        #TODO clear database of last generation
                         logger.warning(f'Retrying')
+                        #clear database of last generation to restart the simulator
+                        dbids = [robot.database_id for robot in robots]
+                        with self._db.session() as session:
+                            db_states = session.query(DBRobotState).filter(DBRobotState.evaluation_robot_id.in_(dbids))
+                            db_states.delete()
+                            session.commit()
+                            db_evals = session.query(DBRobotEvaluation).filter(DBRobotEvaluation.robot_id.in_(dbids))
+                            db_evals.delete()
+                            session.commit()
+                            db_robot = session.query(DBRobot).filter(DBRobot.id.in_(dbids))
+                            db_robot.delete()
+                            session.commit()
                     continue
 
                 assert len(robot_ids) == len(robots)

@@ -105,7 +105,7 @@ async def run():
 
     # experiment params #
     num_generations = 200
-    population_size = 200
+    population_size = 32
     offspring_size = population_size
 
     morph_single_mutation_prob = 0.2
