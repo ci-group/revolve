@@ -149,6 +149,33 @@ class Population:
         await self.evaluate(self.individuals, 0)
         self.individuals = recovered_individuals + self.individuals
 
+    async def initialize_from_single_individual(self, progenitor: Optional[Individual] = None) -> None:
+        """
+        Populates the population (individuals list) with Individual objects that contains their respective genotype.
+        All individuals are based on a single random individual (one progenitor for all solutions)
+        """
+        progenitor_genotype = None
+        for i in range(self.config.population_size):
+            if progenitor_genotype is None:
+                # first loop iteration
+                if progenitor is None:
+                    # generate random progenitor
+                    progenitor_genotype = self.config.genotype_constructor(self.config.genotype_conf, self.next_robot_id)
+                    progenitor = self._new_individual(progenitor_genotype)
+                else:
+                    # use the one provided as parameter
+                    progenitor_genotype = progenitor.genotype
+                individual = progenitor
+            else:
+                # all remaining loop iterations
+                new_genotype = self.config.mutation_operator(progenitor_genotype, self.config.mutation_conf)
+                new_genotype.id = self.next_robot_id
+                individual = self._new_individual(new_genotype, [progenitor])
+            self.individuals.append(individual)
+            self.next_robot_id += 1
+
+        await self.evaluate(self.individuals, 0)
+
     async def next_generation(self,
                               gen_num: int,
                               recovered_individuals: Optional[List[Individual]] = None) -> Population:
