@@ -7,10 +7,10 @@ from typing import List
 import math
 from isaacgym import gymapi
 
-from evolution.population.population import Population
 from pyrevolve import parser
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
+from pyrevolve.evolution.population.population import Population
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.evolution.population.population_management import generational_population_management
 from pyrevolve.evolution.selection import tournament_selection, multiple_selection
