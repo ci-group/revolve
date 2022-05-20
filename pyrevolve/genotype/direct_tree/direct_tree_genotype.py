@@ -7,7 +7,7 @@ from pyrevolve.genotype.direct_tree import direct_tree_random_generator
 from pyrevolve.genotype.direct_tree.direct_tree_config import DirectTreeGenotypeConfig
 from pyrevolve.genotype.direct_tree.direct_tree_utils import duplicate_subtree
 from pyrevolve.revolve_bot import RevolveBot
-from pyrevolve.revolve_bot.brain import BrainNN, brain_nn
+from pyrevolve.revolve_bot.brain import BrainNN, brain_nn, BrainCPPNCPG
 from pyrevolve.revolve_bot.revolve_module import ActiveHingeModule
 from pyrevolve.revolve_bot.revolve_module import CoreModule
 
@@ -53,18 +53,23 @@ class DirectTreeGenotype(Genotype):
         revolvebot.load_file(genotype_filename, conf_type='yaml')
         self._load_genotype_from_revolvebot(revolvebot)
 
-    def _load_genotype_from_lines(self, genotype_lines: List[AnyStr]) -> None:
+    def _load_genotype_from_lines(self, genotype_lines: List[AnyStr], only_body=False) -> None:
         revolvebot: RevolveBot = RevolveBot()
         revolvebot.load('\n'.join(genotype_lines), conf_type='yaml')
-        self._load_genotype_from_revolvebot(revolvebot)
+        if only_body:
+            self._load_genotype_only_body(revolvebot)
+        else:
+            self._load_genotype_from_revolvebot(revolvebot)
 
-    def _load_genotype_from_revolvebot(self, revolvebot: RevolveBot) -> None:
+    def _load_genotype_only_body(self, revolvebot: RevolveBot) -> None:
         self.id = revolvebot.id
-        self.representation = revolvebot._body
+        self.representation = revolvebot._body        
 
+    def _load_genotype_only_brain(self, revolvebot: RevolveBot) -> None:
         # load brain params into the modules
         brain = revolvebot._brain
-        assert isinstance(brain, BrainNN)
+        
+        assert isinstance(brain, BrainCPPNCPG)
 
         module_map = {}
         for module in revolvebot.iter_all_elements():
@@ -80,7 +85,9 @@ class DirectTreeGenotype(Genotype):
         for module in revolvebot.iter_all_elements():
             assert module_map[module.id] == module
 
-        return
+    def _load_genotype_from_revolvebot(self, revolvebot: RevolveBot) -> None:
+        self._load_genotype_only_body(revolvebot=revolvebot)
+        self._load_genotype_only_brain(revolvebot=revolvebot)
 
     def export_genotype(self, filepath: str) -> None:
         self.develop()
@@ -94,7 +101,7 @@ class DirectTreeGenotype(Genotype):
     def develop(self) -> RevolveBot:
         if self.phenotype is None:
             self.phenotype: RevolveBot = RevolveBot(self.id)
-            self.phenotype._body: CoreModule = self.representation
+            self.phenotype._body = self.representation
             self.phenotype._brain = self._develop_brain(self.representation)
         return self.phenotype
 

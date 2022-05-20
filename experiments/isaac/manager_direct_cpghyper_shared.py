@@ -45,8 +45,8 @@ def environment_constructor(gym: gymapi.Gym,
 
 
 def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQLDatabase, grace_time: float = 0.) -> None:
-    ids: List[int] = [int(individual.phenotype.database_id) for individual in population.individuals]
-    individual_map: Dict[int, Individual] = {int(individual.phenotype.database_id): individual for individual in population.individuals }
+    ids: List[int] = [int(individual.phenotype.id) for individual in population.individuals]
+    individual_map: Dict[int, Individual] = {int(individual.phenotype.id): individual for individual in population.individuals }
 
     # Using a set for candidates to avoid repetitions
     # TODO if a robot is seen more, should it get more chances?
@@ -129,7 +129,7 @@ async def run():
         mutation_p_generate_subtree=morph_single_mutation_prob,
         mutation_p_swap_subtree=morph_single_mutation_prob,
         mutation_p_mutate_oscillators=brain_single_mutation_prob,
-        mutation_p_mutate_oscillator=0.5,
+        mutation_p_mutate_oscillator=0,
         mutate_oscillator_amplitude_sigma=0.3,
         mutate_oscillator_period_sigma=0.3,
         mutate_oscillator_phase_sigma=0.3,
@@ -202,7 +202,7 @@ async def run():
     # CELERY CONNECTION (includes database connection)
     # simulator_queue = CeleryQueue(args, args.port_start, dbname='revolve', db_addr='127.0.0.1', use_isaacgym=True)
     simulator_queue = CeleryPopulationQueue(args, use_isaacgym=True, local_computing=True)
-    await simulator_queue.start(cleanup_database=True)
+    await simulator_queue.start(cleanup_database=(not do_recovery))
 
     # CELERY GAZEBO WORKER
     celery_workers: List[GazeboCeleryWorkerSupervisor] = []
@@ -242,7 +242,7 @@ async def run():
             if gen_num == 0:
                 await population.initialize_from_single_individual(individuals)
             else:
-                population = await population.next_generation(gen_num, individuals)
+                population = await population.next_generation(gen_num)
 
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
@@ -283,7 +283,7 @@ def update_robot_pose(individuals: List[Individual], db: PostgreSQLDatabase) -> 
         assert last_eval_n == 0
 
         for individual in individuals:
-            dbid = int(individual.phenotype.database_id)
+            dbid = int(individual.phenotype.id)
             final_position = session \
                 .query(RobotState.pos_x, RobotState.pos_y) \
                 .filter(RobotState.evaluation_n == last_eval_n) \
@@ -301,7 +301,7 @@ def export_special_data(file, individuals: List[Individual], offspring_list: Lis
 
     with db.session() as session:
         for individual in individuals:
-            dbid = int(individual.phenotype.database_id)
+            dbid = int(individual.phenotype.id)
 
             last_eval: RobotEvaluation = session \
                 .query(RobotEvaluation) \
