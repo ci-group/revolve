@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from typing import List, Dict
+import yaml
 
 import math
 from isaacgym import gymapi
@@ -45,8 +46,8 @@ def environment_constructor(gym: gymapi.Gym,
 
 
 def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQLDatabase, grace_time: float = 0.) -> None:
-    ids: List[int] = [int(individual.phenotype.id) for individual in population.individuals]
-    individual_map: Dict[int, Individual] = {int(individual.phenotype.id): individual for individual in population.individuals }
+    ids: List[int] = [int(individual.phenotype.database_id) for individual in population.individuals]
+    individual_map: Dict[int, Individual] = {int(individual.phenotype.database_id): individual for individual in population.individuals }
 
     # Using a set for candidates to avoid repetitions
     # TODO if a robot is seen more, should it get more chances?
@@ -232,9 +233,11 @@ async def run():
     if do_recovery:
         # loading a previous state of the experiment
         population.load_snapshot(gen_num, multi_development=True)
+        load_database_ids(gen_num, experiment_management,population.individuals)
         if gen_num >= 0:
             logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.individuals)} individuals')
         if has_offspring:
+            assert False
             individuals = population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
             gen_num += 1
             logger.info(f'Recovered unfinished offspring {gen_num}')
@@ -259,6 +262,8 @@ async def run():
         generate_candidate_partners(population, simulator_queue._db, args.grace_time)
         new_population = await population.next_generation(gen_num)
         update_robot_pose(population.individuals, simulator_queue._db)
+        with open(f'{experiment_management.generation_folder(gen_num-1)}/database_ids.yml', 'w') as database_id_file:
+            save_db_ids(database_id_file, population.individuals)
         experiment_management.export_snapshots(population.individuals, gen_num)
         with open(f'{experiment_management.generation_folder(gen_num-1)}/extra.tsv', 'w') as extra_data_file:
             export_special_data(extra_data_file, population.individuals, new_population.individuals, gen_num, simulator_queue._db)
@@ -269,6 +274,18 @@ async def run():
         await celery_worker.stop()
     await simulator_queue.stop()
 
+def save_db_ids(outfile, individuals: List[Individual]):
+    database_ids = {}
+    for ind in individuals:
+        database_ids[ind.phenotype.id] = int(ind.phenotype.database_id)
+    yaml.dump(database_ids, outfile)
+
+def load_database_ids(gen_num: int, experiment_management: ExperimentManagement, individuals: List[Individual]):
+    database_ids = {}
+    with open(f'{experiment_management.generation_folder(gen_num-1)}/database_ids.yml', 'r') as database_id_file:
+        database_ids = yaml.safe_load(database_id_file)
+    for ind in individuals:
+        ind.phenotype.database_id = database_ids[ind.phenotype.id]
 
 def update_robot_pose(individuals: List[Individual], db: PostgreSQLDatabase) -> None:
 
