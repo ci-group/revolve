@@ -300,7 +300,7 @@ def update_robot_pose(individuals: List[Individual], db: PostgreSQLDatabase) -> 
         assert last_eval_n == 0
 
         for individual in individuals:
-            dbid = int(individual.phenotype._database_id)
+            dbid = int(individual.phenotype.database_id)
             final_position = session \
                 .query(RobotState.pos_x, RobotState.pos_y) \
                 .filter(RobotState.evaluation_n == last_eval_n) \
