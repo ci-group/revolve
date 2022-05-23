@@ -92,7 +92,7 @@ class DirectTreeCPGHyperNEATGenotype(Genotype):
             # remove first element - it's the number of brain genomes
             number_of_brain_genomes = int(lines.pop(0))
             # read the body genome
-            self._body_genome._load_genotype_from_lines(lines[:-number_of_brain_genomes])
+            self._body_genome._load_genotype_from_lines(lines[:-number_of_brain_genomes], only_body=True)
             # read the brain genomes
             for brain_i in range(number_of_brain_genomes):
                 i = -number_of_brain_genomes + brain_i

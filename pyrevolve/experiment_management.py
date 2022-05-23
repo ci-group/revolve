@@ -11,7 +11,7 @@ from pyrevolve.revolve_bot.revolve_bot import RevolveBot
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import List, AnyStr, Optional
+    from typing import List, AnyStr, Optional, Tuple
     from pyrevolve.tol.manage.measures import BehaviouralMeasurements
     from pyrevolve.evolution.speciation.genus import Genus
     from pyrevolve.evolution.speciation.species import Species
@@ -301,7 +301,7 @@ class ExperimentManagement:
                             population_size: int,
                             offspring_size: int,
                             species=False,
-                            n_developments: int = 1) -> (int, bool, int):
+                            n_developments: int = 1) -> Tuple[int, bool, int]:
         """
         Read the saved data to determine how many generations have been completed and
         if the last generation has partially started evaluating.
