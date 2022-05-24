@@ -121,7 +121,8 @@ def simulator_main_loop(gym: IsaacSim, controller_update_time: float):
             life_cycle(gym, time)
             if len(gym.robots) == 0:
                 break
-            gym.update_robots(time, controller_update_time)
+            # comment below
+            #gym.update_robots(time, controller_update_time)
 
         # Step the physics
         gym.simulate()

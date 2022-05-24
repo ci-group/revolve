@@ -269,6 +269,12 @@ parser.add_argument(
          "\nDefault \"False\"."
 )
 
+parser.add_argument(
+    '--generation',
+    default=0, type=int,
+    help="Generation to replay"
+)
+
 
 def make_revolve_config(conf):
     """

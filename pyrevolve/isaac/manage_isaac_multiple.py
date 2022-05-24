@@ -37,7 +37,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
     mydb = db
     # Parse arguments
     # args = gymutil.parse_arguments(description="Loading and testing")
-    args = Arguments()
+    args = Arguments(headless=False, use_gpu=True)
     isolated_environments = True
 
     manual_db_session = False
@@ -115,19 +115,23 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                 # shared physics collision group
                 gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 0, 0)
             isaac_logger.info(f"Loaded {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
-
-            # Insert robot in the database
+        
+            # Insert robot in the database TODO do nor insert for replay
             with mydb.session() as session2:
                 robot.db_robot = DBRobot(name=robot.name)
-                session2.add(robot.db_robot)
-                session2.commit()
+                # comment two lines below
+                #session2.add(robot.db_robot)
+                #session2.commit()
                 # this line actually queries the database while the session is still active
                 robot.db_robot_id = robot.db_robot.id
-
+            
+            
             db_eval = DBRobotEvaluation(robot=robot.db_robot, n=0)
             robot.evals.append(db_eval)
             # Write first evaluations in database
-            session.add(db_eval)
+            # comment below
+            #session.add(db_eval)
+            
 
         # end for loop
         session.commit()
