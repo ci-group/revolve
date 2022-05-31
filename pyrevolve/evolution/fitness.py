@@ -161,6 +161,7 @@ def panoramic_rotation(robot_manager, robot: RevolveBot, vertical_angle_limit: f
 
     for i in range(1, len(robot_manager._orientation_vecs)):
         # from: https://code-examples.net/en/q/d6a4f5
+        # webarchive: https://web.archive.org/web/20210818154647/https://code-examples.net/en/q/d6a4f5
         # more info: https://en.wikipedia.org/wiki/Atan2
         # Just like the dot product is proportional to the cosine of the angle,
         # the determinant is proportional to its sine. So you can compute the angle like this:
