@@ -65,6 +65,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
 
     with mydb.session() as session:
         for i, robot_urdf in enumerate(robots_urdf):
+            isaac_logger.debug(f'Loading Robot "{i}"')
             # Create temporary file for the robot urdf. The file will be removed when the file is closed.
             # TODO place the tempfiles in a separate temporary folder for all assets.
             #  I.e. `tmp_asset_dir = tempfile.TemporaryDirectory(prefix='revolve_')`
@@ -83,8 +84,10 @@ def simulator_multiple(robots_urdf: List[AnyStr],
             robot_asset_file.flush()
 
             # Parse URDF(xml) locally, we need to extract some data
+            isaac_logger.debug(f'Loading ISAACBot "{i}"')
             robot: ISAACBot = ISAACBot(robot_urdf, ground_offset=0.04, life_duration=life_timeout)
             env_index: int = i if isolated_environments else 0
+            isaac_logger.debug(f'Loading ISAACBot "{i}" [DONE]')
 
             # Controller
             controller_type = robot.controller_desc().getAttribute('type')
@@ -116,6 +119,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                 gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 0, 0)
             isaac_logger.info(f"Loaded {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
 
+            isaac_logger.debug(f'Loading robot "{i}" on the database')
             # Insert robot in the database
             with mydb.session() as session2:
                 robot.db_robot = DBRobot(name=robot.name)
@@ -123,14 +127,17 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                 session2.commit()
                 # this line actually queries the database while the session is still active
                 robot.db_robot_id = robot.db_robot.id
+            isaac_logger.debug(f'Loading robot "{i}" on the database [DONE]')
 
             db_eval = DBRobotEvaluation(robot=robot.db_robot, n=0)
             robot.evals.append(db_eval)
             # Write first evaluations in database
             session.add(db_eval)
+            isaac_logger.debug(f'Loading robot evaluation "{i}" on the database')
 
         # end for loop
         session.commit()
+        isaac_logger.debug(f'Loading all robot evaluations on the database [DONE]')
 
     db_robots_id = [robot.db_robot_id for robot in gym.robots]
 
