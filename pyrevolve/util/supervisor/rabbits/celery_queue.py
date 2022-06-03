@@ -244,7 +244,7 @@ class CeleryQueue:
 
 
 class CeleryPopulationQueue:
-    EVALUATION_TIMEOUT = 6000  # REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
+    EVALUATION_TIMEOUT = 600  # 10 minutes - REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
     MAX_ATTEMPTS = 3
 
     def __init__(self,
@@ -370,68 +370,50 @@ class CeleryPopulationQueue:
             robot_names.append(robot_name)
 
         for attempt in range(self.MAX_ATTEMPTS):
+            robot_ids: List[int]
             try:
-                robot_ids: List[int]
-                try:
-                    robot_ids = await self._call_evaluate_population(conf,
-                                                                     robot_names,
-                                                                     xml_robots,
-                                                                     max_age,
-                                                                     self.EVALUATION_TIMEOUT)
-                except (celery.exceptions.TimeoutError, RuntimeError) as e:
-                    logger.exception(f'Giving up on robot population after {self.EVALUATION_TIMEOUT} seconds. '
-                                     f'population:{robot_names}')
-                    if attempt < self.MAX_ATTEMPTS:
-                        logger.warning(f'Retrying')
-                        #clear database of last generation to restart the simulator
-                        dbids = [robot.database_id for robot in robots]
-                        with self._db.session() as session:
-                            db_states = session.query(DBRobotState).filter(DBRobotState.evaluation_robot_id.in_(dbids))
-                            db_states.delete()
-                            session.commit()
-                            db_evals = session.query(DBRobotEvaluation).filter(DBRobotEvaluation.robot_id.in_(dbids))
-                            db_evals.delete()
-                            session.commit()
-                            db_robot = session.query(DBRobot).filter(DBRobot.id.in_(dbids))
-                            db_robot.delete()
-                            session.commit()
-                    continue
+                robot_ids = await self._call_evaluate_population(conf,
+                                                                 robot_names,
+                                                                 xml_robots,
+                                                                 max_age,
+                                                                 self.EVALUATION_TIMEOUT)
+            except (celery.exceptions.TimeoutError, RuntimeError) as e:
+                logger.exception(f'Giving up on robot population after {self.EVALUATION_TIMEOUT} seconds. '
+                                 f'population:{robot_names}')
+                if attempt < self.MAX_ATTEMPTS:
+                    logger.warning(f'Retrying')
+                    #clear database of last generation to restart the simulator
+                    dbids = [robot.database_id for robot in robots]
+                    with self._db.session() as session:
+                        db_states = session.query(DBRobotState).filter(DBRobotState.evaluation_robot_id.in_(dbids))
+                        db_states.delete()
+                        session.commit()
+                        db_evals = session.query(DBRobotEvaluation).filter(DBRobotEvaluation.robot_id.in_(dbids))
+                        db_evals.delete()
+                        session.commit()
+                        db_robot = session.query(DBRobot).filter(DBRobot.id.in_(dbids))
+                        db_robot.delete()
+                        session.commit()
+                continue
 
-                assert len(robot_ids) == len(robots)
+            assert len(robot_ids) == len(robots)
 
-                robots_fitness: List[float] = []
-                robots_behaviour: List[BehaviouralMeasurements] = []
+            robots_fitness: List[float] = []
+            robots_behaviour: List[BehaviouralMeasurements] = []
 
-                for robot, robot_id in zip(robots, robot_ids):
-                    robot.database_id = robot_id
-                    robot_manager = DBRobotManager(self._db, robot_id, robot,
-                                                   evaluation_time=conf.evaluation_time,
-                                                   warmup_time=conf.grace_time)
-                    robot_fitness = fitness_fun(robot_manager, robot)
+            for robot, robot_id in zip(robots, robot_ids):
+                robot.database_id = robot_id
+                robot_manager = DBRobotManager(self._db, robot_id, robot,
+                                               evaluation_time=conf.evaluation_time,
+                                               warmup_time=conf.grace_time)
+                robot_fitness = fitness_fun(robot_manager, robot)
 
-                    logger.info(f'Robot {robot_id} evaluation finished with fitness={robot_fitness}')
-                    robots_fitness.append(robot_fitness)
-                    robots_behaviour.append(BehaviouralMeasurements(robot_manager, robot))
-                return robots_fitness, robots_behaviour
-            except Exception:
-                # try:
-                #     with self._db.session() as session:
-                #         db_robot = session.query(DBRobot).filter(DBRobot.name == f'robot_{robot.id}').one()
-                #         db_evals = session.query(DBRobotEvaluation).filter(DBRobotEvaluation.robot == db_robot)
-                #         db_states = session.query(DBRobotState).filter(DBRobotEvaluation.robot == db_robot)
-                #         db_evals.delete()
-                #         db_states.delete()
-                #         db_robot.delete()
-                #         session.commit()
-                # except sqlalchemy.sxc.SQLAchemyError as e:
-                #     logger.exception(
-                #         f"Exception thrown when trying to remove failed robot:\"{robot.id}\" at attempt #{attempt}.")
-
-                logger.exception(
-                    f"Exception thrown when trying to simulate a population:\"{robot_names}\" at attempt #{attempt}.")
-
-        logger.warning(f'Population:{robot_names} evaluation failed (reached max attempt of {self.MAX_ATTEMPTS}),'
-                       ' fitness set to None.')
+                logger.info(f'Robot {robot_id} evaluation finished with fitness={robot_fitness}')
+                robots_fitness.append(robot_fitness)
+                robots_behaviour.append(BehaviouralMeasurements(robot_manager, robot))
+            return robots_fitness, robots_behaviour
+        logger.fatal(f'Population:{robot_names} evaluation failed (reached max attempt of {self.MAX_ATTEMPTS}),'
+                       ' fitness set to None.', exc_info=42)
         robot_fitness_none = [None for _ in robots]
         measurements_none = [None for _ in robots]
         return robot_fitness_none, measurements_none
