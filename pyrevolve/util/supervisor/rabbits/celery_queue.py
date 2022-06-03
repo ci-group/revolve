@@ -244,7 +244,7 @@ class CeleryQueue:
 
 
 class CeleryPopulationQueue:
-    EVALUATION_TIMEOUT = 600  # 10 minutes - REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
+    EVALUATION_TIMEOUT = 2400  # 40 minutes - REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
     MAX_ATTEMPTS = 3
 
     def __init__(self,
