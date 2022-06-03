@@ -64,6 +64,7 @@ class NeatBrainGenomeConfig:
         if brain_type is BrainType.CPG:
             params.MutateRemLinkProb = 0.02
             params.RecurrentProb = 0.0
+            params.RecurrentLoopProb = 0.0
             params.OverallMutationRate = 0.15
             params.MutateAddLinkProb = 0.08
             params.MutateAddNeuronProb = 0.01
@@ -95,9 +96,14 @@ class NeatBrainGenomeConfig:
             params.MutateNeuronTraitsProb = 0.0
             params.MutateLinkTraitsProb = 0.0
 
+            params.SplitRecurrent = False
+            params.SplitLoopedRecurrent = False
             params.AllowLoops = False
+
+            params.NeuronRecursionLimit = 1
         elif brain_type is BrainType.NN:
-            params.RecurrentProb = 0.0
+            #params.RecurrentProb = 0.0
+            #params.RecurrentLoopProb = 0.0
             params.OverallMutationRate = 1.0
 
             params.ArchiveEnforcement = False
@@ -130,6 +136,7 @@ class NeatBrainGenomeConfig:
             params.AllowLoops = True
             params.AllowClones = True
 
+            params.NeuronRecursionLimit = 1024
         else:
             raise NotImplementedError(f"{brain_type} not supported")
 
