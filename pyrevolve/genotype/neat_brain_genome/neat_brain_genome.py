@@ -99,8 +99,8 @@ class NeatBrainGenomeConfig:
             params.SplitRecurrent = False
             params.SplitLoopedRecurrent = False
             params.AllowLoops = False
+            params.NeuronRecursionLimit = 64
 
-            params.NeuronRecursionLimit = 1
         elif brain_type is BrainType.NN:
             #params.RecurrentProb = 0.0
             #params.RecurrentLoopProb = 0.0
@@ -136,7 +136,7 @@ class NeatBrainGenomeConfig:
             params.AllowLoops = True
             params.AllowClones = True
 
-            params.NeuronRecursionLimit = 1024
+            params.NeuronRecursionLimit = 2048
         else:
             raise NotImplementedError(f"{brain_type} not supported")
 
