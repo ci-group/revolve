@@ -282,6 +282,7 @@ class ISAACBot:
         return weight_matrix
 
     def _create_cpg_cppn_weights(self) -> List[float]:
+        isaac_logger.debug('_create_cpg_cppn_weights')
         # Extract CPPN from URDF
         controller_urdf: xml.dom.minidom.Element = self.controller_desc()
         genome_urdf: xml.dom.minidom.Element = controller_urdf.getElementsByTagName('rv:genome')[0]
@@ -292,29 +293,39 @@ class ISAACBot:
         genome_string = genome_string.replace('inf', str(sys.float_info.max))
         genome: NEAT.Genome = NEAT.Genome()
         try:
+            isaac_logger.debug('_create_cpg_cppn_weights Deserialize CPPN genome')
             genome.Deserialize(genome_string)
+            isaac_logger.debug('_create_cpg_cppn_weights Deserialize CPPN genome [DONE]')
         except RuntimeError as e:
+            isaac_logger.debug('_create_cpg_cppn_weights')
             isaac_logger.exception(f'error parsing CPPN genome: "{genome_string}"')
             raise
 
         # Generate weigths from the CPPN
+        isaac_logger.debug('_create_cpg_cppn_weights Create CPPN')
         net: NEAT.NeuralNetwork = NEAT.NeuralNetwork()
         genome.BuildPhenotype(net)
+        isaac_logger.debug('_create_cpg_cppn_weights Create CPPN [depth]')
         genome.CalculateDepth()
         nn_depth: int = genome.GetDepth()
+        isaac_logger.debug(f'_create_cpg_cppn_weights Create CPPN [DONE] [depth={nn_depth}]')
 
         weights: List[float] = [0.0 for _ in range(self.n_weights)]
 
         # First step, motor oscillator coordinates
+        isaac_logger.debug('_create_cpg_cppn_weights Activate CPPN')
         for index, coordinates in self.connection_map.items():
             net.Flush()
             nn_input: List[float] = coordinates[0] + coordinates[1]
+            isaac_logger.debug(f'_create_cpg_cppn_weights Activate CPPN: {nn_input}')
             net.Input(nn_input)
             for _ in range(nn_depth):
                 net.Activate()
             weight: float = net.Output()[0]
             weights[index] = weight
+        isaac_logger.debug('_create_cpg_cppn_weights Activate CPPN [DONE]')
 
+        isaac_logger.debug('_create_cpg_cppn_weights [DONE]')
         return weights
 
     def learner_desc(self) -> xml.dom.minidom.Element:
