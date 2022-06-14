@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ..direct_tree.direct_tree_genotype import DirectTreeGenotype, DirectTreeGenotypeConfig
 from ..direct_tree.direct_tree_mutation import mutate as directtree_mutate
-from ..neat_brain_genome.mutation import mutation_complexify as neat_mutation
+from ..neat_brain_genome.mutation import mutation_blended as neat_mutation_blended
 from ..neat_brain_genome import NeatBrainGenomeConfig
 
 from typing import TYPE_CHECKING
@@ -35,5 +35,5 @@ def standard_mutation(genotype: DirectTreeCPGHyperNEATGenotype,
     return composite_mutation(
         genotype,
         lambda g: directtree_mutate(g, mutation_conf.direct_tree, in_place=False),
-        lambda g: neat_mutation(g, mutation_conf.neat),
+        lambda g: neat_mutation_blended(g, mutation_conf.neat),
     )

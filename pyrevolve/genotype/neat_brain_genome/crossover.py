@@ -27,12 +27,12 @@ def standard_crossover(parents, NeatCrossoverConf: NEATCrossoverConf, crossover_
     else:
         mother = parents[0]._neat_genome
         father = parents[1]._neat_genome
-        new_genotype = mother.Mate(father,
-                                   NeatCrossoverConf.mate_average,
-                                   NeatCrossoverConf.interspecies_crossover,
-                                   lsystem_conf.neat.rng,
-                                   lsystem_conf.neat.multineat_params
-                                   )
+        new_genotype = mother.MateWithConstraints(father,
+                                                  NeatCrossoverConf.mate_average,
+                                                  NeatCrossoverConf.interspecies_crossover,
+                                                  lsystem_conf.neat.rng,
+                                                  lsystem_conf.neat.multineat_params
+                                                  )
     child_genome = NeatBrainGenome()
     child_genome._brain_type = parents[0]._brain_type
     child_genome._neat_genome = new_genotype
