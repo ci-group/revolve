@@ -2,13 +2,15 @@ import multineat
 
 
 def _mutation(genotype, baby_is_clone: bool, search_mode: multineat.SearchMode, genotype_conf):
-    return genotype._neat_genome.MutateWithConstraints(
+    new_genotype = genotype.clone()
+    new_genotype._neat_genome = new_genotype._neat_genome.MutateWithConstraints(
         baby_is_clone,
         search_mode,
         genotype_conf.innov_db,
         genotype_conf.multineat_params,
         genotype_conf.rng
     )
+    return new_genotype
 
 
 def mutation_complexify(genotype, genotype_conf):

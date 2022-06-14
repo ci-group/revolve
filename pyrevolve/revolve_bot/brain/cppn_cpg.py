@@ -72,7 +72,7 @@ class BrainCPPNCPG(BrainCPG):
         params.WeightDiffCoeff = 0.1
         params.CompatTreshold = 2.0
         params.YoungAgeTreshold = 15
-        params.SpeciesMaxStagnation = 15
+        params.SpeciesDropoffAge = 15
         params.OldAgeTreshold = 35
         params.MinSpecies = 2
         params.MaxSpecies = 10
