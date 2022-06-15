@@ -24,7 +24,7 @@ from pyrevolve.genotype.tree_body_hyperneat_brain import DirectTreeCPGHyperNEATG
 from pyrevolve.genotype.tree_body_hyperneat_brain.crossover import standard_crossover
 from pyrevolve.genotype.tree_body_hyperneat_brain.mutation import standard_mutation
 from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor, PostgreSQLDatabase, RobotEvaluation, \
-    RobotState
+    RobotState, Robot as DBRobot
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
 
 INTERNAL_WORKERS = False
@@ -234,6 +234,19 @@ async def run():
         # loading a previous state of the experiment
         population.load_snapshot(gen_num, multi_development=True)
         load_database_ids(gen_num, experiment_management,population.individuals)
+
+        # drop unfinished db elements
+        with simulator_queue._db.session() as session:
+            extra_robots = session.query(DBRobot).filter(DBRobot.id >= next_robot_id)
+            robot_ids: List[int] = [r.id for r in extra_robots]
+            if len(robot_ids) > 0:
+                print(f'Dropping unfinished robots (DBIDs={robot_ids})')
+                session.query(RobotState).filter(RobotState.evaluation_robot_id.in_(robot_ids)).delete()
+                session.commit()
+                session.query(RobotEvaluation).filter(RobotEvaluation.robot_id.in_(robot_ids)).delete()
+                session.commit()
+                extra_robots.delete()
+                session.commit()
         if gen_num >= 0:
             logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.individuals)} individuals')
         if has_offspring:
