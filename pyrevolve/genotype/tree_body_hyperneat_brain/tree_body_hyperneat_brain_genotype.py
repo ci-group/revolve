@@ -23,6 +23,8 @@ class DirectTreeCPGHyperNEATGenotypeConfig:
 
 
 class DirectTreeCPGHyperNEATGenotype(Genotype):
+    GENOME_SEPARATOR_TEXT = '--------GENOME-SEPARATOR--------\n'
+
     def __init__(self,
                  conf: Optional[DirectTreeCPGHyperNEATGenotypeConfig] = None,
                  robot_id: Optional[int] = None,
@@ -81,9 +83,10 @@ class DirectTreeCPGHyperNEATGenotype(Genotype):
             # the first element is the number of brain genomes
             f.write(f'{len(self._brain_genomes)}\n')
             # write the body genome
-            self._body_genome._export_genotype_open_file(f)
+            self._body_genome._export_genotype_open_file(f, onlyBody=True)
             # write the brain genomes
             for brain_genome in self._brain_genomes:
+                f.write(DirectTreeCPGHyperNEATGenotype.GENOME_SEPARATOR_TEXT)
                 brain_genome._export_genotype_open_file(f)
 
     def load_genotype(self, file_path: str) -> None:
@@ -91,12 +94,23 @@ class DirectTreeCPGHyperNEATGenotype(Genotype):
             lines = f.readlines()
             # remove first element - it's the number of brain genomes
             number_of_brain_genomes = int(lines.pop(0))
+
+            # search for genome segments
+            separators = []
+            for i, line in enumerate(lines):
+                if line == DirectTreeCPGHyperNEATGenotype.GENOME_SEPARATOR_TEXT:
+                    separators.append(i)
+            assert len(separators) > 0
+
             # read the body genome
-            self._body_genome._load_genotype_from_lines(lines[:-number_of_brain_genomes], only_body=True)
+            self._body_genome._load_genotype_from_lines(lines[:separators[0]], only_body=True)
+
             # read the brain genomes
-            for brain_i in range(number_of_brain_genomes):
-                i = -number_of_brain_genomes + brain_i
-                self._brain_genomes[brain_i]._load_genotype_from(lines[i].strip())
+            assert len(separators) == number_of_brain_genomes
+            separators.append(len(lines))
+            for i in range(number_of_brain_genomes):
+                text = ''.join(lines[separators[i]+1:separators[i+1]]).strip()
+                self._brain_genomes[i]._load_genotype_from(text)
 
     def clone(self) -> DirectTreeCPGHyperNEATGenotype:
         clone = DirectTreeCPGHyperNEATGenotype()

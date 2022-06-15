@@ -189,7 +189,7 @@ class RevolveBot:
         return URDF.revolve_bot_to_urdf(self, self.pose + pose, nice_format,
                                         self_collide=self.self_collide, enable_visuals=enable_visuals)
 
-    def to_yaml(self) -> AnyStr:
+    def to_yaml(self, onlyBody = False) -> AnyStr:
         """
         Converts robot data structure to yaml
         :return:
@@ -197,7 +197,7 @@ class RevolveBot:
         yaml_dict = OrderedDict()
         yaml_dict['id'] = self._id
         yaml_dict['body'] = self._body.to_yaml()
-        if self._brain is not None:
+        if not onlyBody and self._brain is not None:
             yaml_dict['brain'] = self._brain.to_yaml()
 
         return yaml.dump(yaml_dict)

@@ -37,7 +37,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
     mydb = db
     # Parse arguments
     # args = gymutil.parse_arguments(description="Loading and testing")
-    args = Arguments()
+    args = Arguments(headless=True, use_gpu=False)
     isolated_environments = True
 
     manual_db_session = False

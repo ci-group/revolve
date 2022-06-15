@@ -93,9 +93,9 @@ class DirectTreeGenotype(Genotype):
         self.develop()
         self.phenotype.save_file(filepath, conf_type='yaml')
 
-    def _export_genotype_open_file(self, open_file: TextIO) -> None:
+    def _export_genotype_open_file(self, open_file: TextIO, onlyBody:bool = False) -> None:
         self.develop()
-        serialized_yaml = self.phenotype.to_yaml()
+        serialized_yaml = self.phenotype.to_yaml(onlyBody=onlyBody)
         open_file.write(serialized_yaml)
 
     def develop(self) -> RevolveBot:
