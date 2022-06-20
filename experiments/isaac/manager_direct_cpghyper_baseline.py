@@ -35,7 +35,7 @@ async def run():
 
     # experiment params #
     num_generations = 100
-    population_size = 32
+    population_size = 30
     offspring_size = population_size
 
     morph_single_mutation_prob = 0.2
@@ -59,7 +59,7 @@ async def run():
         mutation_p_generate_subtree=morph_single_mutation_prob,
         mutation_p_swap_subtree=morph_single_mutation_prob,
         mutation_p_mutate_oscillators=brain_single_mutation_prob,
-        mutation_p_mutate_oscillator=0.5,
+        mutation_p_mutate_oscillator=0,
         mutate_oscillator_amplitude_sigma=0.3,
         mutate_oscillator_period_sigma=0.3,
         mutate_oscillator_phase_sigma=0.3,
@@ -168,12 +168,13 @@ async def run():
             robot_ids: List[int] = [r.id for r in extra_robots]
             if len(robot_ids) > 0:
                 print(f'Dropping unfinished robots (DBIDs={robot_ids})')
-                session.query(RobotState).filter(RobotState.evaluation_robot_id.in_(robot_ids)).delete()
-                session.commit()
-                session.query(RobotEvaluation).filter(RobotEvaluation.robot_id.in_(robot_ids)).delete()
-                session.commit()
-                extra_robots.delete()
-                session.commit()
+                #
+                #session.query(RobotState).filter(RobotState.evaluation_robot_id.in_(robot_ids)).delete()
+                #session.commit()
+                #session.query(RobotEvaluation).filter(RobotEvaluation.robot_id.in_(robot_ids)).delete()
+                #session.commit()
+                #extra_robots.delete()
+                #session.commit()
         if gen_num >= 0:
             logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.individuals)} individuals')
         if has_offspring:
@@ -183,7 +184,7 @@ async def run():
 
             if gen_num == 0:
                 assert len(individuals) == 0
-                await population.initialize_from_single_individual()
+                await population.initialize()
             else:
                 population = await population.next_generation(gen_num, individuals)
 
@@ -191,7 +192,8 @@ async def run():
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-        await population.initialize_from_single_individual()
+        await population.initialize()
+        #await population.initialize_from_single_individual()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     while gen_num < num_generations - 1:

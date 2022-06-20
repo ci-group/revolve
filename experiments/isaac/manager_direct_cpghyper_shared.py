@@ -98,7 +98,7 @@ def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQL
                         individual_map[robot_mother].candidate_partners.add(individual_map[robot_father])
 
 # MATING_RANGE = 0.45
-MATING_RANGE = 45
+MATING_RANGE = 1
 
 async def run():
     """
@@ -132,9 +132,9 @@ async def run():
         mutation_p_swap_subtree=morph_single_mutation_prob,
         mutation_p_mutate_oscillators=brain_single_mutation_prob,
         mutation_p_mutate_oscillator=0,
-        mutate_oscillator_amplitude_sigma=0.3,
-        mutate_oscillator_period_sigma=0.3,
-        mutate_oscillator_phase_sigma=0.3,
+        mutate_oscillator_amplitude_sigma=0,
+        mutate_oscillator_period_sigma=0,
+        mutate_oscillator_phase_sigma=0,
     )
 
     neat_conf: NeatBrainGenomeConfig = NeatBrainGenomeConfig(
