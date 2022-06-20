@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Optional, List, Union
     from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotypeConfig
+    from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
     from pyrevolve.revolve_bot import RevolveBot
 
 
@@ -15,11 +16,13 @@ class DirectTreeCPGHyperNEATGenotypeConfig:
     def __init__(self,
                  direct_tree_conf: DirectTreeGenotypeConfig,
                  neat_conf: NeatBrainGenomeConfig,
+                 neat_crossover_conf: NEATCrossoverConf,
                  number_of_brains: int = 1):
         assert number_of_brains > 0
         self.direct_tree = direct_tree_conf
         self.number_of_brains: int = number_of_brains
         self.neat: NeatBrainGenomeConfig = neat_conf
+        self.neat_crossover: NEATCrossoverConf = neat_crossover_conf
 
 
 class DirectTreeCPGHyperNEATGenotype(Genotype):
@@ -32,7 +35,7 @@ class DirectTreeCPGHyperNEATGenotype(Genotype):
 
         self._id: int = robot_id
 
-        self._brain_genomes = []
+        self._brain_genomes: List[NeatBrainGenome] = []
         if conf is None:
             self._body_genome = None
         else:

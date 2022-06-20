@@ -18,7 +18,10 @@ class BrainType(enum.Enum):
 
 
 class NeatBrainGenomeConfig:
-    def __init__(self, brain_type: BrainType = BrainType.CPG, random_seed=None):
+    def __init__(self,
+                 brain_type: BrainType = BrainType.CPG,
+                 apply_mutation_constraints: bool = True,
+                 random_seed=None):
         self._brain_type = brain_type
         self.innov_db = multineat.InnovationDatabase()
         # TODO self.innov_db.Init_with_genome(a)
@@ -44,6 +47,8 @@ class NeatBrainGenomeConfig:
         self.signal_factor_mid = 2.5
         self.signal_factor_left_right = 2.5
         self.abs_output_bound = 1.0
+
+        self.apply_constraints: bool = apply_mutation_constraints
 
     @property
     def brain_type(self):

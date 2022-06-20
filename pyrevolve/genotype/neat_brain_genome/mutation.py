@@ -1,10 +1,8 @@
 import multineat
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from genotype.plasticoding.mutation.mutation import MutationConfig
+from pyrevolve.genotype.neat_brain_genome import NeatBrainGenomeConfig
 
 
-def _mutation(genotype, baby_is_clone: bool, search_mode: multineat.SearchMode, genotype_conf: MutationConfig):
+def _mutation(genotype, baby_is_clone: bool, search_mode: multineat.SearchMode, genotype_conf: NeatBrainGenomeConfig):
     new_genotype = genotype.clone()
     if genotype_conf.apply_constraints:
         new_genotype._neat_genome = new_genotype._neat_genome.MutateWithConstraints(

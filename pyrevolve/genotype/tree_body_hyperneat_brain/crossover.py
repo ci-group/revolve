@@ -19,12 +19,12 @@ class CrossoverConfig:
 
 
 def standard_crossover(parents: List[Individual],
-                       direc_tree_cpg_hyperneat_conf: DirectTreeCPGHyperNEATGenotypeConfig):
+                       direct_tree_cpg_hyperneat_conf: DirectTreeCPGHyperNEATGenotypeConfig):
     """
     Creates an child (individual) through crossover with two parents
 
     :param parents: Parents type Individual
-    :param direc_tree_cpg_hyperneat_conf: DirectTreeCPGHyperNEATGenotypeConfig type with config for DirectTree and NEAT
+    :param direct_tree_cpg_hyperneat_conf: DirectTreeCPGHyperNEATGenotypeConfig type with config for DirectTree and NEAT
     :return: brain and body crossover (Only body right now)
     """
     assert len(parents) == 2
@@ -34,13 +34,12 @@ def standard_crossover(parents: List[Individual],
                                zip(parents[0].genotype._brain_genomes, parents[1].genotype._brain_genomes)]
 
     child_genotype = DirectTreeCPGHyperNEATGenotype()
-    Neatconf = NEATCrossoverConf()
 
-    new_body = direct_tree_crossover(parents_body_genotype, direc_tree_cpg_hyperneat_conf.direct_tree)
+    new_body = direct_tree_crossover(parents_body_genotype, direct_tree_cpg_hyperneat_conf.direct_tree)
     new_brain = []
     crossover_conf = CrossoverConfig(1.0)
     for g1, g2 in parents_brain_genotypes:
-        new_brain.append(NEATBrainCrossover([g1, g2], Neatconf, crossover_conf, direc_tree_cpg_hyperneat_conf))
+        new_brain.append(NEATBrainCrossover([g1, g2], direct_tree_cpg_hyperneat_conf.neat, crossover_conf, direct_tree_cpg_hyperneat_conf))
 
     child_genotype._body_genome = new_body
     child_genotype._brain_genomes = new_brain

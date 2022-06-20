@@ -9,6 +9,7 @@ import math
 from isaacgym import gymapi
 
 from experiments.isaac.positioned_population import PositionedPopulation
+from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
 from pyrevolve import parser
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
@@ -105,8 +106,8 @@ async def run():
     """
 
     # experiment params #
-    num_generations = 200
-    population_size = 32
+    num_generations = 100
+    population_size = 30
     offspring_size = population_size
 
     morph_single_mutation_prob = 0.2
@@ -138,14 +139,27 @@ async def run():
 
     neat_conf: NeatBrainGenomeConfig = NeatBrainGenomeConfig(
         brain_type=BrainType.CPG,
-        random_seed=None
+        random_seed=None,
+        apply_mutation_constraints=False,
+    )
+
+    neat_crossover_conf: NEATCrossoverConf = NEATCrossoverConf(
+        apply_constraints=False,
     )
 
     genotype_conf: DirectTreeCPGHyperNEATGenotypeConfig = DirectTreeCPGHyperNEATGenotypeConfig(
         direct_tree_conf=tree_genotype_conf,
         neat_conf=neat_conf,
+        neat_crossover_conf=neat_crossover_conf,
         number_of_brains=1,
     )
+
+    def genotype_test_fun(candidate_genotype: DirectTreeCPGHyperNEATGenotype) -> bool:
+        for brain_gen in candidate_genotype._brain_genomes:
+            if brain_gen._neat_genome.FailsConstraints():
+                return False
+        return True
+
 
     # Parse command line / file input arguments
     args = parser.parse_args()
@@ -182,7 +196,8 @@ async def run():
         mutation_operator=lambda genotype, gen_conf: standard_mutation(genotype, gen_conf),
         mutation_conf=genotype_conf,
         crossover_operator=lambda parents, gen_conf, _: standard_crossover(parents, gen_conf),
-        crossover_conf=None,
+        crossover_conf=genotype_conf,
+        genotype_test=genotype_test_fun,
         selection=best_selection,
         parent_selection=None,
         population_management=generational_population_management,

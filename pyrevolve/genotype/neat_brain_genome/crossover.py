@@ -4,11 +4,15 @@ from pyrevolve.genotype.neat_brain_genome import NeatBrainGenome
 
 
 class NEATCrossoverConf:
-    def __init__(self):
-        self.mate_average = True
-        self.interspecies_crossover = True
-        self.speciation = True
-        self.apply_constraints: bool = True
+    def __init__(self,
+                 mate_average: bool = True,
+                 interspecies_crossover: bool = True,
+                 speciation: bool = True,
+                 apply_constraints: bool = True):
+        self.mate_average: bool = mate_average
+        self.interspecies_crossover: bool = interspecies_crossover
+        self.speciation: bool = speciation
+        self.apply_constraints: bool = apply_constraints
 
 
 def standard_crossover(parents, neat_crossover_conf: NEATCrossoverConf, crossover_conf, lsystem_conf):
