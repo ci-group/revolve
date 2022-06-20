@@ -156,7 +156,7 @@ async def run():
 
     def genotype_test_fun(candidate_genotype: DirectTreeCPGHyperNEATGenotype) -> bool:
         for brain_gen in candidate_genotype._brain_genomes:
-            if brain_gen._neat_genome.FailsConstraints():
+            if brain_gen._neat_genome.FailsConstraints(neat_conf.multineat_params):
                 return False
         return True
 

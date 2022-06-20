@@ -36,7 +36,7 @@ class NeatBrainGenomeConfig:
         self.n_outputs = 1
 
         # generate multineat params object
-        self.multineat_params = self._generate_multineat_params(brain_type)
+        self.multineat_params: multineat.Parameters = self._generate_multineat_params(brain_type)
 
         # CPG parameters
         self.reset_neuron_random = False
