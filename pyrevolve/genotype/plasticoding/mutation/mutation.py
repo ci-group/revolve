@@ -10,3 +10,4 @@ class MutationConfig:
         """
         self.mutation_prob = mutation_prob
         self.genotype_conf = genotype_conf
+        self.apply_constraints: bool = True

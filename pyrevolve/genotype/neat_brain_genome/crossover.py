@@ -8,14 +8,15 @@ class NEATCrossoverConf:
         self.mate_average = True
         self.interspecies_crossover = True
         self.speciation = True
+        self.apply_constraints: bool = True
 
 
-def standard_crossover(parents, NeatCrossoverConf: NEATCrossoverConf, crossover_conf, lsystem_conf):
+def standard_crossover(parents, neat_crossover_conf: NEATCrossoverConf, crossover_conf, lsystem_conf):
     """
     Creates an child (genotype) through crossover with two parents
 
     :param parents: parents brain genome to be used for crossover
-    :param NeatCrossoverConf: NEAT genotype configuration object
+    :param neat_crossover_conf: NEAT genotype configuration object
     :param crossover_conf: CrossoverConfig
     :return: genotype result of the crossover
     """
@@ -27,12 +28,20 @@ def standard_crossover(parents, NeatCrossoverConf: NEATCrossoverConf, crossover_
     else:
         mother = parents[0]._neat_genome
         father = parents[1]._neat_genome
-        new_genotype = mother.MateWithConstraints(father,
-                                                  NeatCrossoverConf.mate_average,
-                                                  NeatCrossoverConf.interspecies_crossover,
-                                                  lsystem_conf.neat.rng,
-                                                  lsystem_conf.neat.multineat_params
-                                                  )
+        if neat_crossover_conf.apply_constraints:
+            new_genotype = mother.MateWithConstraints(father,
+                                                      neat_crossover_conf.mate_average,
+                                                      neat_crossover_conf.interspecies_crossover,
+                                                      lsystem_conf.neat.rng,
+                                                      lsystem_conf.neat.multineat_params
+                                                      )
+        else:
+            new_genotype = mother.Mate(father,
+                                       neat_crossover_conf.mate_average,
+                                       neat_crossover_conf.interspecies_crossover,
+                                       lsystem_conf.neat.rng,
+                                       lsystem_conf.neat.multineat_params
+                                       )
     child_genome = NeatBrainGenome()
     child_genome._brain_type = parents[0]._brain_type
     child_genome._neat_genome = new_genotype

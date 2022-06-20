@@ -1,15 +1,27 @@
 import multineat
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from genotype.plasticoding.mutation.mutation import MutationConfig
 
 
-def _mutation(genotype, baby_is_clone: bool, search_mode: multineat.SearchMode, genotype_conf):
+def _mutation(genotype, baby_is_clone: bool, search_mode: multineat.SearchMode, genotype_conf: MutationConfig):
     new_genotype = genotype.clone()
-    new_genotype._neat_genome = new_genotype._neat_genome.MutateWithConstraints(
-        baby_is_clone,
-        search_mode,
-        genotype_conf.innov_db,
-        genotype_conf.multineat_params,
-        genotype_conf.rng
-    )
+    if genotype_conf.apply_constraints:
+        new_genotype._neat_genome = new_genotype._neat_genome.MutateWithConstraints(
+            baby_is_clone,
+            search_mode,
+            genotype_conf.innov_db,
+            genotype_conf.multineat_params,
+            genotype_conf.rng
+        )
+    else:
+        new_genotype._neat_genome.Mutate(
+            baby_is_clone,
+            search_mode,
+            genotype_conf.innov_db,
+            genotype_conf.multineat_params,
+            genotype_conf.rng
+        )
     return new_genotype
 
 
