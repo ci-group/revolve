@@ -39,7 +39,7 @@ def standard_crossover(parents: List[Individual],
     new_brain = []
     crossover_conf = CrossoverConfig(1.0)
     for g1, g2 in parents_brain_genotypes:
-        new_brain.append(NEATBrainCrossover([g1, g2], direct_tree_cpg_hyperneat_conf.neat, crossover_conf, direct_tree_cpg_hyperneat_conf))
+        new_brain.append(NEATBrainCrossover([g1, g2], direct_tree_cpg_hyperneat_conf.neat_crossover, crossover_conf, direct_tree_cpg_hyperneat_conf))
 
     child_genotype._body_genome = new_body
     child_genotype._brain_genomes = new_brain
