@@ -114,26 +114,34 @@ class PositionedPopulation(Population):
 
         assert self.config.offspring_size == len(self.individuals)
         for individual in self.individuals:
-            # Selection operator (based on fitness perceived by the individuals)
-            mother: Individual = individual
-            if len(mother.candidate_partners) > 0:
-                father: Individual = self.config.selection(mother.candidate_partners)
-                parents = (mother, father)
-                child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf, self.config.crossover_conf)
-                child = Individual(child_genotype)
+            for i in range(1000):
+                # Selection operator (based on fitness perceived by the individuals)
+                mother: Individual = individual
+                if len(mother.candidate_partners) > 0:
+                    father: Individual = self.config.selection(mother.candidate_partners)
+                    parents = (mother, father)
+                    child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf, self.config.crossover_conf)
+                    child = Individual(child_genotype)
+                else:
+                    child = mother
+                    parents = (mother,)
+                child.parents = parents
+
+                child.genotype.id = self.next_robot_id
+                self.next_robot_id += 1
+
+                # Mutation operator
+                child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
+
+                if self.config.genotype_test(child_genotype):
+                    # valid individual found, exit infinite loop
+                    # Insert individual in new population
+                    individual = self._new_individual(child_genotype, parents, mother.pose)
+                    new_individuals.append(individual)
+                    break
             else:
-                child = mother
-                parents = (mother,)
-            child.parents = parents
-
-            child.genotype.id = self.next_robot_id
-            self.next_robot_id += 1
-
-            # Mutation operator
-            child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
-            # Insert individual in new population
-            individual = self._new_individual(child_genotype, parents, mother.pose)
-            new_individuals.append(individual)
+                # genotype test not passed
+                raise RuntimeError("New individual not found, crashing now :)")
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)

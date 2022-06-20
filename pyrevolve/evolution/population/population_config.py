@@ -19,6 +19,7 @@ class PopulationConfig:
                  mutation_conf: object,
                  crossover_operator: Callable[[List[Individual], object, object], Genotype],
                  crossover_conf: object,
+                 genotype_test: Callable[[Genotype], bool],
                  selection: Callable[[List[Individual]], Individual],
                  parent_selection: Callable[[List[Individual]], List[Individual]],
                  population_management: Callable[
@@ -52,6 +53,7 @@ class PopulationConfig:
             First parameter is the list of parents (usually 2).
             Second parameter is the Genotype Conf
             Third parameter is Crossover Conf
+        :param genotype_test: Test for the genotype
         :param selection: selection type
         :param parent_selection: selection type during parent selection
         :param population_management: type of population management ie. steady state or generational
@@ -76,8 +78,9 @@ class PopulationConfig:
         self.mutation_conf = mutation_conf
         self.crossover_operator = crossover_operator
         self.crossover_conf = crossover_conf
-        self.parent_selection = parent_selection
+        self.genotype_test = genotype_test
         self.selection = selection
+        self.parent_selection = parent_selection
         self.population_management = population_management
         self.population_management_selector = population_management_selector
         self.evaluation_time: float = evaluation_time

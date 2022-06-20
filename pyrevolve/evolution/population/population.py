@@ -191,29 +191,36 @@ class Population:
         new_individuals = []
 
         for _i in range(self.config.offspring_size-len(recovered_individuals)):
-            # Selection operator (based on fitness)
-            # Crossover
-            parents: Optional[List[Individual]] = None
-            if self.config.crossover_operator is not None:
-                parents = self.config.parent_selection(self.individuals)
-                child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf, self.config.crossover_conf)
-                # temporary individual that will be used for mutation
-                child = Individual(child_genotype)
-                child.parents = parents
-            else:
-                # fake child
-                child = self.config.selection(self.individuals)
-                parents = [child]
+            for i in range(1000):
+                # Selection operator (based on fitness)
+                # Crossover
+                parents: Optional[List[Individual]] = None
+                if self.config.crossover_operator is not None:
+                    parents = self.config.parent_selection(self.individuals)
+                    child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf, self.config.crossover_conf)
+                    # temporary individual that will be used for mutation
+                    child = Individual(child_genotype)
+                    child.parents = parents
+                else:
+                    # fake child
+                    child = self.config.selection(self.individuals)
+                    parents = [child]
 
-            child.genotype.id = self.next_robot_id
-            self.next_robot_id += 1
+                child.genotype.id = self.next_robot_id
+                self.next_robot_id += 1
 
-            # Mutation operator
-            child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
-            # Insert individual in new population
-            individual = self._new_individual(child_genotype, parents)
+                # Mutation operator
+                child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
 
-            new_individuals.append(individual)
+                if self.config.genotype_test(child_genotype):
+                    # valid individual found, exit infinite loop
+                    # Insert individual in new population
+                    individual = self._new_individual(child_genotype, parents)
+                    new_individuals.append(individual)
+                    break
+        else:
+            # genotype test not passed
+            raise RuntimeError("New individual not found, crashing now :)")
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
