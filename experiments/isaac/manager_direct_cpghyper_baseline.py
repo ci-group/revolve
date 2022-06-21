@@ -17,6 +17,7 @@ from pyrevolve.evolution.selection import tournament_selection, multiple_selecti
 from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.genotype.direct_tree.direct_tree_genotype import DirectTreeGenotypeConfig
 from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGenomeConfig, BrainType
+from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
 from pyrevolve.genotype.tree_body_hyperneat_brain import DirectTreeCPGHyperNEATGenotypeConfig, \
     DirectTreeCPGHyperNEATGenotype
 from pyrevolve.genotype.tree_body_hyperneat_brain.crossover import standard_crossover
@@ -67,14 +68,26 @@ async def run():
 
     neat_conf: NeatBrainGenomeConfig = NeatBrainGenomeConfig(
         brain_type=BrainType.CPG,
-        random_seed=None
+        random_seed=None,
+        apply_mutation_constraints=False,
+    )
+
+    neat_crossover_conf: NEATCrossoverConf = NEATCrossoverConf(
+        apply_constraints=False,
     )
 
     genotype_conf: DirectTreeCPGHyperNEATGenotypeConfig = DirectTreeCPGHyperNEATGenotypeConfig(
         direct_tree_conf=tree_genotype_conf,
         neat_conf=neat_conf,
+        neat_crossover_conf=neat_crossover_conf,
         number_of_brains=1,
     )
+
+    def genotype_test_fun(candidate_genotype: DirectTreeCPGHyperNEATGenotype) -> bool:
+        for brain_gen in candidate_genotype._brain_genomes:
+            if brain_gen._neat_genome.FailsConstraints(neat_conf.multineat_params):
+                return False
+        return True
 
     # Parse command line / file input arguments
     args = parser.parse_args()
@@ -112,6 +125,7 @@ async def run():
         mutation_conf=genotype_conf,
         crossover_operator=lambda parents, gen_conf, _: standard_crossover(parents, gen_conf),
         crossover_conf=None,
+        genotype_test=genotype_test_fun,
         selection=lambda pop: tournament_selection(pop, k=2),
         parent_selection=lambda potential_parents: multiple_selection(potential_parents, 2, tournament_selection),
         population_management=generational_population_management,
