@@ -37,7 +37,11 @@ def simulator_multiple(robots_urdf: List[AnyStr],
     mydb = db
     # Parse arguments
     # args = gymutil.parse_arguments(description="Loading and testing")
-    args = Arguments(headless=True, use_gpu=True)
+    try:
+        gpu = int(os.environ['GPU_ID'])
+    except:
+        gpu = 0
+    args = Arguments(headless=True, use_gpu=True, compute_device_id=gpu, graphics_device_id=gpu)
     isolated_environments = True
 
     manual_db_session = False
