@@ -27,6 +27,7 @@ from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor, Post
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
 
 INTERNAL_WORKERS = False
+PROGENITOR = False
 
 
 async def run():
@@ -197,7 +198,10 @@ async def run():
 
             if gen_num == 0:
                 assert len(individuals) == 0
-                await population.initialize_from_single_individual()
+                if PROGENITOR:
+                    await population.initialize_from_single_individual()
+                else:
+                    await population.initialize()
             else:
                 population = await population.next_generation(gen_num, individuals)
 
@@ -205,7 +209,10 @@ async def run():
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-        await population.initialize_from_single_individual()
+        if PROGENITOR:
+            await population.initialize_from_single_individual()
+        else:
+            await population.initialize()
         experiment_management.export_snapshots(population.individuals, gen_num)
 
     while gen_num < num_generations - 1:

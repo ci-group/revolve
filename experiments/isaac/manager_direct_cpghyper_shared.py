@@ -29,6 +29,7 @@ from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor, Post
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
 
 INTERNAL_WORKERS = False
+PROGENITOR = False
 
 
 def environment_constructor(gym: gymapi.Gym,
@@ -271,7 +272,10 @@ async def run():
             logger.info(f'Recovered unfinished offspring {gen_num}')
 
             if gen_num == 0:
-                await population.initialize_from_single_individual(individuals)
+                if PROGENITOR:
+                    await population.initialize_from_single_individual(individuals)
+                else:
+                    await population.initialize(individuals)
             else:
                 population = await population.next_generation(gen_num)
 
@@ -279,7 +283,10 @@ async def run():
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()
-        await population.initialize_from_single_individual()
+        if PROGENITOR:
+            await population.initialize_from_single_individual()
+        else:
+            await population.initialize()
         update_robot_pose(population.individuals, simulator_queue._db)
         # generate_candidate_partners(population, simulator_queue._db, args.grace_time)
         experiment_management.export_snapshots(population.individuals, gen_num)
