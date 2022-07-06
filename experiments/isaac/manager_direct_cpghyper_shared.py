@@ -13,6 +13,7 @@ from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
 from pyrevolve import parser
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
+from pyrevolve.tol.manage import measures
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.evolution.population.population_management import generational_population_management
@@ -27,9 +28,12 @@ from pyrevolve.genotype.tree_body_hyperneat_brain.mutation import standard_mutat
 from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor, PostgreSQLDatabase, RobotEvaluation, \
     RobotState, Robot as DBRobot
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
+from pyrevolve.revolve_bot import RevolveBot
+from pyrevolve.tol.manage.robotmanager import RobotManager
 
 INTERNAL_WORKERS = False
 PROGENITOR = False
+FITNESS = 'z_depth'
 
 
 def environment_constructor(gym: gymapi.Gym,
@@ -188,11 +192,27 @@ async def run():
     if next_robot_id < 0:
         next_robot_id = 1
 
+    def fitness_function(robot_manager: RobotManager, robot: RevolveBot):
+        if FITNESS == 'displacement_velocity':
+            return fitness.displacement_velocity(robot_manager, robot)
+        elif FITNESS == 'migration':
+            # Displacement only on the y axis, signed
+            # (so fitness raises when moving on the y axis positively,
+            # therefore the population should migrate over time)
+            return measures.displacement_velocity_hill(robot_manager)
+        elif FITNESS == 'z_depth':
+            # No behaviour in fitness, behaviour here influences only mate selection and not explicit fitness
+            robot.measure_phenotype()
+            return robot._morphological_measurements.z_depth
+        else:
+            raise RuntimeError(f"FITNESS {FITNESS} not found")
+
+
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=lambda conf, _id: DirectTreeCPGHyperNEATGenotype(conf, _id, random_init_body=True),
         genotype_conf=genotype_conf,
-        fitness_function=fitness.displacement_velocity,
+        fitness_function=fitness_function,
         objective_functions=None,
         mutation_operator=lambda genotype, gen_conf: standard_mutation(genotype, gen_conf),
         mutation_conf=genotype_conf,
