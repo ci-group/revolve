@@ -192,6 +192,7 @@ async def run():
     if next_robot_id < 0:
         next_robot_id = 1
 
+    global FITNESS
     try:
         FITNESS = os.environ['FITNESS']
     except KeyError:
