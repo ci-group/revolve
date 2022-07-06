@@ -33,7 +33,7 @@ from pyrevolve.tol.manage.robotmanager import RobotManager
 
 INTERNAL_WORKERS = False
 PROGENITOR = False
-FITNESS = 'z_depth'
+FITNESS = 'displacement_velocity'
 
 
 def environment_constructor(gym: gymapi.Gym,
@@ -191,6 +191,13 @@ async def run():
 
     if next_robot_id < 0:
         next_robot_id = 1
+
+    try:
+        FITNESS = os.environ['FITNESS']
+    except KeyError:
+        pass
+
+    logger.info(f"Evolving using fitness {FITNESS}.")
 
     def fitness_function(robot_manager: RobotManager, robot: RevolveBot):
         if FITNESS == 'displacement_velocity':
