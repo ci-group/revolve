@@ -30,6 +30,7 @@ from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor, Post
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
 from pyrevolve.revolve_bot import RevolveBot
 from pyrevolve.tol.manage.robotmanager import RobotManager
+from pyrevolve.isaac import manage_isaac_multiple
 
 INTERNAL_WORKERS = False
 PROGENITOR = False
@@ -114,6 +115,8 @@ async def run():
     num_generations = 100
     population_size = 30
     offspring_size = population_size
+
+    manage_isaac_multiple.ISOLATED_ENVIRONMENTS = True
 
     morph_single_mutation_prob = 0.2
     morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8

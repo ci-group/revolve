@@ -22,6 +22,7 @@ from pyrevolve.genotype.tree_body_hyperneat_brain import DirectTreeCPGHyperNEATG
     DirectTreeCPGHyperNEATGenotype
 from pyrevolve.genotype.tree_body_hyperneat_brain.crossover import standard_crossover
 from pyrevolve.genotype.tree_body_hyperneat_brain.mutation import standard_mutation
+from pyrevolve.isaac import manage_isaac_multiple
 from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor, PostgreSQLDatabase, RobotEvaluation, \
     RobotState, Robot as DBRobot
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
@@ -39,6 +40,8 @@ async def run():
     num_generations = 100
     population_size = 100
     offspring_size = 50
+
+    manage_isaac_multiple.ISOLATED_ENVIRONMENTS = False
 
     morph_single_mutation_prob = 0.2
     morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8

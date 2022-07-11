@@ -16,6 +16,7 @@ from . import isaac_logger
 from .IsaacSim import IsaacSim
 from .common import init_sym, simulator_main_loop, init_worker, shutdown_worker, Arguments, db
 
+ISOLATED_ENVIRONMENTS: bool = False
 
 def simulator_multiple(robots_urdf: List[AnyStr],
                        life_timeout: float,
@@ -42,7 +43,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
     except:
         gpu = 0
     args = Arguments(headless=True, use_gpu=True, compute_device_id=gpu, graphics_device_id=gpu)
-    isolated_environments = True
+    ISOLATED_ENVIRONMENTS = True
 
     manual_db_session = False
     if mydb is None:
@@ -51,7 +52,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
 
     gym: IsaacSim
     sim_params: gymapi.SimParams
-    gym, sim_params = init_sym(args, len(robots_urdf) if isolated_environments else 1, mydb, None, env_constructor)
+    gym, sim_params = init_sym(args, len(robots_urdf) if ISOLATED_ENVIRONMENTS else 1, mydb, None, env_constructor)
     gym.build_environment = env_constructor
 
     # Load robot asset
@@ -60,7 +61,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
     asset_options.flip_visual_attachments = True
     asset_options.armature = 0.01
 
-    num_envs = len(robots_urdf) if isolated_environments else 1
+    num_envs = len(robots_urdf) if ISOLATED_ENVIRONMENTS else 1
     assert (num_envs > 0)
 
     robots: List[ISAACBot] = []
@@ -90,7 +91,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
             # Parse URDF(xml) locally, we need to extract some data
             isaac_logger.debug(f'Loading ISAACBot "{i}"')
             robot: ISAACBot = ISAACBot(robot_urdf, ground_offset=0.04, life_duration=life_timeout)
-            env_index: int = i if isolated_environments else 0
+            env_index: int = i if ISOLATED_ENVIRONMENTS else 0
             isaac_logger.debug(f'Loading ISAACBot "{i}" [DONE]')
 
             # Controller
@@ -108,7 +109,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
 
             # Load in the simulator
             isaac_logger.info(f"Loading {robot.name} asset '{robot_asset_filepath}' from '{asset_root}', #'{i}'")
-            if isolated_environments:
+            if ISOLATED_ENVIRONMENTS:
                 env_index = i
             else:
                 env_index = 0
@@ -116,7 +117,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                 x: float = math.floor(i % area_size)
                 y: float = i // area_size
                 robot.pose.p += gymapi.Vec3(x, y, 0)
-            if isolated_environments:
+            if ISOLATED_ENVIRONMENTS:
                 gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
             else:
                 # shared physics collision group
