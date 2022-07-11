@@ -218,9 +218,9 @@ class Population:
                     individual = self._new_individual(child_genotype, parents)
                     new_individuals.append(individual)
                     break
-        else:
-            # genotype test not passed
-            raise RuntimeError("New individual not found, crashing now :)")
+            else:
+                # genotype test not passed
+                raise RuntimeError("New individual not found, crashing now :)")
 
         # evaluate new individuals
         await self.evaluate(new_individuals, gen_num)
