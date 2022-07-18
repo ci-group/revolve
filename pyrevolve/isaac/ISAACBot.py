@@ -235,17 +235,13 @@ class ISAACBot:
         elif controller_type == 'cpg':
             params: DifferentialCPG_ControllerParams = self._extract_cpg_urdf_params()
             if not params.weights:
-                isaac_logger.warning('Controller did not initialized weights correctly, initializing randomly')
-                params.weights = [random.uniform(0, 1) for _ in range(self.n_weights)]
-            params.weights = [random.uniform(0, 1) for _ in range(self.n_weights)]
+                isaac_logger.fatal('Controller did not initialized weights correctly, initializing randomly')
             controller = DifferentialCPG(params, self.actuators)
         elif controller_type == 'cppn-cpg':
             params: DifferentialCPG_ControllerParams = self._extract_cpg_urdf_params()
             params.weights = self._create_cpg_cppn_weights()
             if not params.weights or len(params.weights) != self.n_weights:
-                isaac_logger.warning('Controller did not initialized weights correctly, initializing randomly')
-                params.weights = [random.uniform(0, 1) for _ in range(self.n_weights)]
-            params.weights = [random.uniform(0, 1) for _ in range(self.n_weights)]
+                isaac_logger.fatal('Controller did not initialized weights correctly, initializing randomly')
             controller = DifferentialCPG(params, self.actuators)
         else:
             raise RuntimeError(f'unsupported controller "{controller_type}"')
