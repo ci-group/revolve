@@ -41,7 +41,7 @@ async def run():
     population_size = 30
     offspring_size = population_size
 
-    manage_isaac_multiple.ISOLATED_ENVIRONMENTS = False
+    manage_isaac_multiple.ISOLATED_ENVIRONMENTS = True
 
     morph_single_mutation_prob = 0.2
     morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8

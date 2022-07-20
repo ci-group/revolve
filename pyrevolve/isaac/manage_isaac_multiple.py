@@ -16,7 +16,7 @@ from . import isaac_logger
 from .IsaacSim import IsaacSim
 from .common import init_sym, simulator_main_loop, init_worker, shutdown_worker, Arguments, db
 
-ISOLATED_ENVIRONMENTS: bool = False
+ISOLATED_ENVIRONMENTS: bool = True
 
 def simulator_multiple(robots_urdf: List[AnyStr],
                        life_timeout: float,
