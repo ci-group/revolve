@@ -32,6 +32,9 @@ class DBRobotManager(RvRobotManager):
         self.starting_position = None
         self.starting_time = None
 
+        if db is None:
+            return
+
         with db.session() as session:
             last_eval: RobotEvaluation = session \
                 .query(RobotEvaluation) \

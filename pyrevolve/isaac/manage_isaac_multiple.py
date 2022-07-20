@@ -12,6 +12,7 @@ from isaacgym import gymapi
 from pyrevolve.isaac.ISAACBot import ISAACBot
 from pyrevolve.util.supervisor.rabbits import Robot as DBRobot
 from pyrevolve.util.supervisor.rabbits import RobotEvaluation as DBRobotEvaluation
+from pyrevolve.util.supervisor.rabbits.fakedb import create_fakedb
 from . import isaac_logger
 from .IsaacSim import IsaacSim
 from .common import init_sym, simulator_main_loop, init_worker, shutdown_worker, Arguments, db
@@ -42,13 +43,15 @@ def simulator_multiple(robots_urdf: List[AnyStr],
         gpu = int(os.environ['GPU_ID'])
     except:
         gpu = 0
-    args = Arguments(headless=True, use_gpu=True, compute_device_id=gpu, graphics_device_id=gpu)
+    args = Arguments(headless=False, use_gpu=True, compute_device_id=gpu, graphics_device_id=gpu)
     global ISOLATED_ENVIRONMENTS
 
     manual_db_session = False
-    if mydb is None:
+    if mydb is None and dbname != 'disabled':
         manual_db_session = True
         mydb = init_worker(dbname, dbusername, dbpwd)
+    else:
+        mydb = create_fakedb()
 
     gym: IsaacSim
     sim_params: gymapi.SimParams

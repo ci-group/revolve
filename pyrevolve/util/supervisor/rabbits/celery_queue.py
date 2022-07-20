@@ -251,13 +251,17 @@ class CeleryPopulationQueue:
                  args,
                  queue_name: AnyStr = 'celery',
                  use_isaacgym: bool = False,
-                 local_computing: bool = False):
+                 local_computing: bool = False,
+                 use_db: bool = True):
         self._queue_name: AnyStr = queue_name
         self._args = args
-        self._db: PostgreSQLDatabase = PostgreSQLDatabase(address='localhost',
-                                                          dbname=self._args.dbname,
-                                                          username=self._args.dbusername,
-                                                          password=self._args.dbpassword)
+        if use_db:
+            self._db: PostgreSQLDatabase = PostgreSQLDatabase(address='localhost',
+                                                              dbname=self._args.dbname,
+                                                              username=self._args.dbusername,
+                                                              password=self._args.dbpassword)
+        else:
+            self._db = None
         self._use_isaacgym: bool = use_isaacgym
         self._local_computing: bool = local_computing
         atexit.register(
@@ -267,16 +271,18 @@ class CeleryPopulationQueue:
             self._process_pool_executor = ProcessPoolExecutor()
 
     async def start(self, cleanup_database=False):
-        await self._db.start()
-        if cleanup_database:
-            self._db.destroy()
-        self._db.init_db(first_time=False)
+        if self._db is not None:
+            await self._db.start()
+            if cleanup_database:
+                self._db.destroy()
+            self._db.init_db(first_time=False)
 
     async def stop(self, wait: Union[float, bool] = True):
         # if self._db is not None:
         #     self._db.disconnect()
         #     self._db.destroy()
-        self._db: Optional[PostgreSQLDatabase] = None
+        if self._db is not None:
+            self._db: Optional[PostgreSQLDatabase] = None
         if not self._local_computing:
             if type(wait) is float:
                 raise NotImplementedError("call shutdown but wait only N seconds not implemented yet")
