@@ -114,30 +114,49 @@ class PositionedPopulation(Population):
 
         assert self.config.offspring_size == len(self.individuals)
         for individual in self.individuals:
-            for i in range(1000):
+            next_robot_id = self.next_robot_id
+            self.next_robot_id += 1
+            found = False
+
+            mother: Individual = individual
+            mother_candidates = [candidate for candidate in mother.candidate_partners]
+
+            for i in range(100):
                 # Selection operator (based on fitness perceived by the individuals)
-                mother: Individual = individual
-                if len(mother.candidate_partners) > 0:
-                    father: Individual = self.config.selection(mother.candidate_partners)
+                if len(mother_candidates) > 0:
+                    father: Optional[Individual] = self.config.selection(mother_candidates)
                     parents = (mother, father)
                     child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf, self.config.crossover_conf)
                     child = Individual(child_genotype)
                 else:
+                    father = None
                     child = mother
                     parents = (mother,)
                 child.parents = parents
+                child.genotype.id = next_robot_id
 
-                child.genotype.id = self.next_robot_id
-                self.next_robot_id += 1
+                for j in range(100):
+                    # Mutation operator
+                    child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
 
-                # Mutation operator
-                child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
+                    if self.config.genotype_test(child_genotype):
+                        # valid individual found, exit infinite loop
+                        # Insert individual in new population
+                        individual = self._new_individual(child_genotype, parents, mother.pose)
+                        new_individuals.append(individual)
+                        found = True
+                        break
+                else:
+                    # Candidate individual not found after 100 random mutations
+                    # this crossover does not work: remove father from candidate list
+                    logger.info(f'Mother:{mother} failed to generate valid offspring in 100 trials - removing Father:"{father}" from list:{mother_candidates}')
+                    if len(mother_candidates) == 0:
+                        raise RuntimeError("No father left to remove, crashing now :)")
+                    assert father is not None
+                    mother_candidates.remove(father)
+                    assert not found
 
-                if self.config.genotype_test(child_genotype):
-                    # valid individual found, exit infinite loop
-                    # Insert individual in new population
-                    individual = self._new_individual(child_genotype, parents, mother.pose)
-                    new_individuals.append(individual)
+                if found:
                     break
             else:
                 # genotype test not passed
