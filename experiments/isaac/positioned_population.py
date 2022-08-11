@@ -33,7 +33,7 @@ class PositionedPopulation(Population):
             assert len(parents) > 0
             pose = parents[0].pose
 
-        individual = Individual(genotype, pose=pose)
+        individual = Individual(genotype, pose=pose.copy())
         individual.develop()
         if isinstance(individual.phenotype, list):
             for alternative in individual.phenotype:
@@ -62,9 +62,9 @@ class PositionedPopulation(Population):
 
         # TODO there are recovery problems here,
         # but I will ignore them (recovered robots and new robots positions are initialized independently)
-        area_size: float = math.sqrt(n_new_individuals)
+        area_size: float = math.floor(math.sqrt(n_new_individuals))
         for i in range(n_new_individuals):
-            x: float = math.floor(i % area_size)
+            x: float = i % area_size
             y: float = i // area_size
             pose = SDF.math.Vector3(x, y, 0) * self.grid_cell_size
             new_genotype = self.config.genotype_constructor(self.config.genotype_conf, self.next_robot_id)

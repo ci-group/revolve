@@ -116,10 +116,6 @@ def simulator_multiple(robots_urdf: List[AnyStr],
                 env_index = i
             else:
                 env_index = 0
-                area_size = math.sqrt(len(robots_urdf))
-                x: float = math.floor(i % area_size)
-                y: float = i // area_size
-                robot.pose.p += gymapi.Vec3(x, y, 0)
             if ISOLATED_ENVIRONMENTS:
                 gym.insert_robot(env_index, robot, robot_asset_filename, asset_options, robot.pose, f"{robot.name} #{i}", 1, 2, 0)
             else:

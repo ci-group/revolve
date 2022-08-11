@@ -275,7 +275,7 @@ async def run():
     analyzer_queue = None
 
     # INITIAL POPULATION OBJECT
-    population = PositionedPopulation(population_conf, simulator_queue, analyzer_queue, next_robot_id)
+    population = PositionedPopulation(population_conf, simulator_queue, analyzer_queue, next_robot_id, grid_cell_size=1)
 
     if do_recovery:
         # loading a previous state of the experiment
@@ -374,6 +374,7 @@ def update_robot_pose(individuals: List[Individual], db: PostgreSQLDatabase) -> 
                 .order_by(RobotState.time_sec.desc(), RobotState.time_nsec.desc()) \
                 .first()
             print(f"DB:{individual} ({final_position})")
+            individual.pose = individual.pose.copy()
             individual.pose.x = final_position[0]
             individual.pose.y = final_position[1]
 
