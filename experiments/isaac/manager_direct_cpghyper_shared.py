@@ -116,7 +116,7 @@ async def run():
 
     # experiment params #
     num_generations = 100
-    population_size = 30
+    population_size = 100
     offspring_size = population_size
 
     manage_isaac_multiple.ISOLATED_ENVIRONMENTS = False
