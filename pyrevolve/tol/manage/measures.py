@@ -41,7 +41,7 @@ class BehaviouralMeasurements:
             self.head_balance = None
             self.contacts = None
 
-    def items(self):
+    def measurements_to_dict(self):
         return {
             'velocity': self.velocity,
             #'displacement': self.displacement,
@@ -49,8 +49,10 @@ class BehaviouralMeasurements:
             'displacement_velocity_hill': self.displacement_velocity_hill,
             'head_balance': self.head_balance,
             'contacts': self.contacts
-        }.items()
+        }
 
+    def items(self):
+        return self.measurements_to_dict().items()
 
 
 def velocity(robot_manager: RvRobotManager):

@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import os
 from typing import List, Dict
+
+import numpy as np
 import yaml
 import wandb
 
@@ -472,22 +474,29 @@ def export_special_data(file, individuals: List[Individual], offspring_list: Lis
 
 
 def export_wandb_data(gen_num: int, new_population: PositionedPopulation):
-    import numpy
-    fitness_list: List[float] = numpy.array([i.fitness for i in new_population.individuals])
-    fitness_mean = numpy.mean(fitness_list)
-    fitness_median = numpy.median(fitness_list)
+    c_measures = [{
+        **i.phenotype._morphological_measurements.measurements_to_dict(),
+        **i.phenotype._behavioural_measurements.measurements_to_dict(),
+        "fitness": i.fitness,
+        "pose_x": i.pose[0],
+        "pose_y": i.pose[1],
+        "pose_z": i.pose[2],
+    }
+        for i in new_population.individuals]
 
-    from pyrevolve.revolve_bot.measure.measure_body_3d import MeasureBody3D
-    measures: List[MeasureBody3D] = [i.phenotype._morphological_measurements for i in new_population.individuals]
-    sizes: List[int] = [m.absolute_size for m in measures]
-    sizes_mean = numpy.mean(sizes)
+    names = c_measures[0].keys()
 
-    wandb.log({
-        "fitness/data": fitness_list,
-        "fitness/hist": wandb.Histogram(fitness_list),
-        "fitness/mean": fitness_mean,
-        "fitness/median": fitness_median,
-        "size/data": sizes,
-        "size/hist": wandb.Histogram(sizes),
-        "size/mean": sizes_mean,
-    })
+    for name in names:
+        data = np.array([m[name] for m in c_measures])
+        wandb.log({
+            f'{name}/data': data,
+            f'{name}/hist': wandb.Histogram(data),
+            f'{name}/mean': np.mean(data),
+            f'{name}/median': np.median(data),
+            f'{name}/quantile_05%': np.quantile(data, 0.05),
+            f'{name}/quantile_25%': np.quantile(data, 0.25),
+            f'{name}/quantile_75%': np.quantile(data, 0.75),
+            f'{name}/quantile_95%': np.quantile(data, 0.95),
+        }, commit=False)
+
+    wandb.log({"generation": gen_num})
