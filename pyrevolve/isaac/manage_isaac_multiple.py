@@ -43,7 +43,7 @@ def simulator_multiple(robots_urdf: List[AnyStr],
         gpu = int(os.environ['GPU_ID'])
     except:
         gpu = 0
-    args = Arguments(headless=False, use_gpu=True, compute_device_id=gpu, graphics_device_id=gpu)
+    args = Arguments(headless=True, use_gpu=True, compute_device_id=gpu, graphics_device_id=gpu)
     global ISOLATED_ENVIRONMENTS
 
     manual_db_session = False
