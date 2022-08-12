@@ -18,6 +18,7 @@ brotli # Otherwise it may cause importing issue because high quality python quir
 sqlalchemy>=1.3.23
 psycopg2>=2.8.6
 dbus-python
+wandb
 
 # Non PIP packages
 -e git+https://github.com/ci-group/pygazebo.git@master#egg=pygazebo

@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 from typing import List, Dict
 import yaml
+import wandb
 
 import math
 from isaacgym import gymapi
@@ -175,6 +176,8 @@ async def run():
     has_offspring = False
     do_recovery = args.recovery_enabled and not experiment_management.experiment_is_new()
 
+    wandb.init(project=f'{args.experiment_name}', entity='revolve', name=f'{args.experiment_name}-{args.run}')
+
     logger.info(f'Activated run {args.run} of experiment {args.experiment_name}')
 
     if do_recovery:
@@ -247,6 +250,41 @@ async def run():
     def worker_crash(process, exit_code) -> None:
         logger.fatal(f'GazeboCeleryWorker died with code: {exit_code} ({process})')
 
+    wandb.config = {
+        "experiment": args.experiment_name,
+        "run": args.run,
+        "recovery": do_recovery,
+        "start_generation": gen_num,
+        "generations": num_generations,
+        "population": population_size,
+        "fitness_fun": FITNESS,
+        "grace_time": args.grace_time,
+        "evaluation_time": args.evaluation_time,
+        "dbname": args.dbname,
+        "body_morph_single_mutation_prob": morph_single_mutation_prob,
+        "body_morph_no_single_mutation_prob": morph_no_single_mutation_prob,
+        "body_morph_no_all_mutation_prob": morph_no_all_mutation_prob,
+        "body_morph_at_least_one_mutation_prob": morph_at_least_one_mutation_prob,
+        "brain_single_mutation_prob": brain_single_mutation_prob,
+        "body_max_parts": tree_genotype_conf.max_parts,
+        "body_min_parts": tree_genotype_conf.min_parts,
+        "body_max_oscillation": tree_genotype_conf.max_oscillation,
+        "body_init_n_parts_mu": tree_genotype_conf.init.n_parts_mu,
+        "body_init_n_parts_sigma": tree_genotype_conf.init.n_parts_sigma,
+        "body_init_prob_no_child": tree_genotype_conf.init.prob_no_child,
+        "body_init_prob_child_block": tree_genotype_conf.init.prob_child_block,
+        "body_init_prob_child_active_joint": tree_genotype_conf.init.prob_child_active_joint,
+        "body_mutation_p_duplicate_subtree": morph_single_mutation_prob,
+        "body_mutation_p_delete_subtree": morph_single_mutation_prob,
+        "body_mutation_p_generate_subtree": morph_single_mutation_prob,
+        "body_mutation_p_swap_subtree": morph_single_mutation_prob,
+        "body_mutation_p_mutate_oscillators": brain_single_mutation_prob,
+        "body_mutation_p_mutate_oscillator": tree_genotype_conf.mutation.p_mutate_oscillator,
+        "body_mutate_oscillator_amplitude_sigma": tree_genotype_conf.mutation.mutate_oscillator_amplitude_sigma,
+        "body_mutate_oscillator_period_sigma": tree_genotype_conf.mutation.mutate_oscillator_period_sigma,
+        "body_mutate_oscillator_phase_sigma": tree_genotype_conf.mutation.mutate_oscillator_phase_sigma,
+    }
+
     # CELERY CONNECTION (includes database connection)
     # simulator_queue = CeleryQueue(args, args.port_start, dbname='revolve', db_addr='127.0.0.1', use_isaacgym=True)
     simulator_queue = CeleryPopulationQueue(args, use_isaacgym=True, local_computing=True)
@@ -310,6 +348,7 @@ async def run():
             else:
                 population = await population.next_generation(gen_num)
 
+            update_robot_pose(population.individuals, simulator_queue._db)
             experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
@@ -322,17 +361,19 @@ async def run():
         # generate_candidate_partners(population, simulator_queue._db, args.grace_time)
         experiment_management.export_snapshots(population.individuals, gen_num)
         # export_special_data(population.individuals, [], gen_num, simulator_queue._db)
+    export_wandb_data(gen_num, population)
 
     while gen_num < num_generations - 1:
         gen_num += 1
         generate_candidate_partners(population, simulator_queue._db, args.grace_time)
         new_population = await population.next_generation(gen_num)
-        update_robot_pose(population.individuals, simulator_queue._db)
+        update_robot_pose(new_population.individuals, simulator_queue._db)
         with open(f'{experiment_management.generation_folder(gen_num-1)}/database_ids.yml', 'w') as database_id_file:
             save_db_ids(database_id_file, population.individuals)
         experiment_management.export_snapshots(population.individuals, gen_num)
         with open(f'{experiment_management.generation_folder(gen_num-1)}/extra.tsv', 'w') as extra_data_file:
             export_special_data(extra_data_file, population.individuals, new_population.individuals, gen_num, simulator_queue._db)
+        export_wandb_data(gen_num, new_population)
         population = new_population
 
     # CLEANUP
@@ -428,3 +469,25 @@ def export_special_data(file, individuals: List[Individual], offspring_list: Lis
             file.write(f'{individual.id}\t{initial_position}\t{final_position}\t{candidates_best}\t{candidates}\t{offspring}\n')
 
     return
+
+
+def export_wandb_data(gen_num: int, new_population: PositionedPopulation):
+    import numpy
+    fitness_list: List[float] = numpy.array([i.fitness for i in new_population.individuals])
+    fitness_mean = numpy.mean(fitness_list)
+    fitness_median = numpy.median(fitness_list)
+
+    from pyrevolve.revolve_bot.measure.measure_body_3d import MeasureBody3D
+    measures: List[MeasureBody3D] = [i.phenotype._morphological_measurements for i in new_population.individuals]
+    sizes: List[int] = [m.absolute_size for m in measures]
+    sizes_mean = numpy.mean(sizes)
+
+    wandb.log({
+        "fitness/data": fitness_list,
+        "fitness/hist": wandb.Histogram(fitness_list),
+        "fitness/mean": fitness_mean,
+        "fitness/median": fitness_median,
+        "size/data": sizes,
+        "size/hist": wandb.Histogram(sizes),
+        "size/mean": sizes_mean,
+    })
