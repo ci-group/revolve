@@ -403,7 +403,6 @@ class ExperimentManagement:
         """
         genotype: Genotype = config.genotype_constructor(config.genotype_conf, _id)
         genotype.load_genotype(genotype_file)
-        genotype.id = _id
 
         individual = Individual(genotype)
         individual.develop()

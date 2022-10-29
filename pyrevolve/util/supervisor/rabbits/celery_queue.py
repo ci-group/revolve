@@ -245,7 +245,7 @@ class CeleryQueue:
 
 class CeleryPopulationQueue:
     EVALUATION_TIMEOUT = 2400  # 40 minutes - REAL SECONDS TO WAIT A RESPONSE FROM THE SIMULATOR
-    MAX_ATTEMPTS = 3
+    MAX_ATTEMPTS = 1
 
     def __init__(self,
                  args,
@@ -384,7 +384,7 @@ class CeleryPopulationQueue:
                                                                  max_age,
                                                                  self.EVALUATION_TIMEOUT)
             except (celery.exceptions.TimeoutError, RuntimeError) as e:
-                logger.exception(f'Giving up on robot population after {self.EVALUATION_TIMEOUT} seconds. '
+                logger.exception(f'Either giving up on robot population after {self.EVALUATION_TIMEOUT} seconds or RuntimeError. '
                                  f'population:{robot_names}')
                 if attempt < self.MAX_ATTEMPTS:
                     logger.warning(f'Retrying')

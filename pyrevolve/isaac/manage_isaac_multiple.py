@@ -194,6 +194,8 @@ def simulator_multiple_process(robots_urdf: List[AnyStr],
         process.join(timeout)
         if process.exitcode is None:
             raise RuntimeError(f"Simulation did not finish in {timeout} seconds")
+        if process.exitcode != 0:
+            raise RuntimeError(f'Simulation exited with code {process.exitcode}')
         remote_result = np.ndarray((len(robots_urdf),), dtype=np.int64, buffer=shared_mem.buf)
         result[:] = remote_result[:]
         shared_mem.close()

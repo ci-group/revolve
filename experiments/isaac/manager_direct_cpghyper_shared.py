@@ -357,7 +357,7 @@ async def run():
     elif START_FROM_PREVIOUS_POPULATION:
         experiment_management.create_exp_folders()
         await population.initialize_from_previous_population(
-            "/home/matteo/projects/revolve/experiments/isaac/data/base_test_5_120/1", 99)
+            f"/home/matteo/projects/revolve/experiments/isaac/data/base_test_5_120/{args.run}", 99)
         update_robot_pose(population.individuals, simulator_queue._db)
         experiment_management.export_snapshots(population.individuals, gen_num)
     else:

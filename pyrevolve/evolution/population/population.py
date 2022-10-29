@@ -119,7 +119,7 @@ class Population:
         """
         generation_folder_path = os.path.join(run_folder, ExperimentManagement.GENERATIONS_FOLDER, f"generation_{gen_num}")
         data_folder_path = os.path.join(run_folder, ExperimentManagement.DATA_FOLDER)
-        new_id = 1
+        counter = 0
         for r, d, f in os.walk(generation_folder_path):
             for filename in f:
                 if 'body' in filename:
@@ -132,12 +132,12 @@ class Population:
                     assert _id is not None
                     _id = _id.group(1)
                     genotype_file = os.path.join(data_folder_path, 'genotypes', f'genotype_{_id}.txt')
-                    individual = self.config.experiment_management.load_external_individual(genotype_file, new_id,
+                    individual = self.config.experiment_management.load_external_individual(genotype_file, _id,
                                                                                             self.config)
                     self.individuals.append(individual)
-                    new_id += 1
-        self.next_robot_id = new_id
-        return new_id-1
+                    self.next_robot_id = max(self.next_robot_id, int(_id))
+                    counter += 1
+        return counter
 
     def load_offspring(self,
                        last_snapshot: int,

@@ -92,6 +92,7 @@ class PositionedPopulation(Population):
             pose = SDF.math.Vector3(x, y, 0) * self.grid_cell_size
             print(f"####### Creating robot {i} at pose {pose} - {area_size}")
             individual.pose = pose
+            individual.phenotype.pose = pose
 
         await self.evaluate(self.individuals, 0)
 
