@@ -137,6 +137,7 @@ class Population:
                     self.individuals.append(individual)
                     self.next_robot_id = max(self.next_robot_id, int(_id))
                     counter += 1
+        self.next_robot_id += 1
         return counter
 
     def load_offspring(self,
