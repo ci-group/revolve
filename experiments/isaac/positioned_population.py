@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, List
+from typing import Optional, List, AnyStr
 
 import math
 
@@ -67,6 +67,7 @@ class PositionedPopulation(Population):
             x: float = i % area_size
             y: float = i // area_size
             pose = SDF.math.Vector3(x, y, 0) * self.grid_cell_size
+            print(f"####### Creating robot {i} at pose {pose} - {area_size}")
             new_genotype = self.config.genotype_constructor(self.config.genotype_conf, self.next_robot_id)
             individual = self._new_individual(new_genotype, pose=pose)
             self.individuals.append(individual)
@@ -74,6 +75,25 @@ class PositionedPopulation(Population):
 
         await self.evaluate(self.individuals, 0)
         self.individuals = recovered_individuals + self.individuals
+
+    async def initialize_from_previous_population(self, data_path: AnyStr, gen_num: int) -> None:
+        """
+        Populates the population (individuals list) with Individuals from the previous population
+        """
+        n_new_individuals = self.load_external_snapshot(data_path, gen_num, multi_development=True)
+        print(f"Loaded {n_new_individuals} individuals from snapshot")
+
+        # TODO there are recovery problems here,
+        # but I will ignore them (recovered robots and new robots positions are initialized independently)
+        area_size: float = math.floor(math.sqrt(n_new_individuals))
+        for i, individual in enumerate(self.individuals):
+            x: float = i % area_size
+            y: float = i // area_size
+            pose = SDF.math.Vector3(x, y, 0) * self.grid_cell_size
+            print(f"####### Creating robot {i} at pose {pose} - {area_size}")
+            individual.pose = pose
+
+        await self.evaluate(self.individuals, 0)
 
     async def initialize_from_single_individual(self, progenitor: Optional[Individual] = None) -> None:
         """

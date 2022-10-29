@@ -38,6 +38,7 @@ from pyrevolve.isaac import manage_isaac_multiple
 INTERNAL_WORKERS = False
 PROGENITOR = False
 FITNESS = 'displacement_velocity'
+START_FROM_PREVIOUS_POPULATION = True
 
 
 def environment_constructor(gym: gymapi.Gym,
@@ -318,40 +319,47 @@ async def run():
     population = PositionedPopulation(population_conf, simulator_queue, analyzer_queue, next_robot_id, grid_cell_size=1)
 
     if do_recovery:
-        # loading a previous state of the experiment
-        population.load_snapshot(gen_num, multi_development=True)
-        load_database_ids(gen_num, experiment_management,population.individuals)
-
-        # drop unfinished db elements
-        with simulator_queue._db.session() as session:
-            extra_robots = session.query(DBRobot).filter(DBRobot.id >= next_robot_id)
-            robot_ids: List[int] = [r.id for r in extra_robots]
-            if len(robot_ids) > 0:
-                print(f'Dropping unfinished robots (DBIDs={robot_ids})')
-                session.query(RobotState).filter(RobotState.evaluation_robot_id.in_(robot_ids)).delete()
-                session.commit()
-                session.query(RobotEvaluation).filter(RobotEvaluation.robot_id.in_(robot_ids)).delete()
-                session.commit()
-                extra_robots.delete()
-                session.commit()
-        if gen_num >= 0:
-            logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.individuals)} individuals')
-        if has_offspring:
-            assert False
-            individuals = population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
-            gen_num += 1
-            logger.info(f'Recovered unfinished offspring {gen_num}')
-
-            if gen_num == 0:
-                if PROGENITOR:
-                    await population.initialize_from_single_individual(individuals)
-                else:
-                    await population.initialize(individuals)
-            else:
-                population = await population.next_generation(gen_num)
-
-            update_robot_pose(population.individuals, simulator_queue._db)
-            experiment_management.export_snapshots(population.individuals, gen_num)
+        assert False
+        # # loading a previous state of the experiment
+        # population.load_snapshot(gen_num, multi_development=True)
+        # load_database_ids(gen_num, experiment_management,population.individuals)
+        #
+        # # drop unfinished db elements
+        # with simulator_queue._db.session() as session:
+        #     extra_robots = session.query(DBRobot).filter(DBRobot.id >= next_robot_id)
+        #     robot_ids: List[int] = [r.id for r in extra_robots]
+        #     if len(robot_ids) > 0:
+        #         print(f'Dropping unfinished robots (DBIDs={robot_ids})')
+        #         session.query(RobotState).filter(RobotState.evaluation_robot_id.in_(robot_ids)).delete()
+        #         session.commit()
+        #         session.query(RobotEvaluation).filter(RobotEvaluation.robot_id.in_(robot_ids)).delete()
+        #         session.commit()
+        #         extra_robots.delete()
+        #         session.commit()
+        # if gen_num >= 0:
+        #     logger.info(f'Recovered snapshot {gen_num}, pop with {len(population.individuals)} individuals')
+        # if has_offspring:
+        #     assert False
+        #     individuals = population.load_offspring(gen_num, population_size, offspring_size, next_robot_id)
+        #     gen_num += 1
+        #     logger.info(f'Recovered unfinished offspring {gen_num}')
+        #
+        #     if gen_num == 0:
+        #         if PROGENITOR:
+        #             await population.initialize_from_single_individual(individuals)
+        #         else:
+        #             await population.initialize(individuals)
+        #     else:
+        #         population = await population.next_generation(gen_num)
+        #
+        #     update_robot_pose(population.individuals, simulator_queue._db)
+        #     experiment_management.export_snapshots(population.individuals, gen_num)
+    elif START_FROM_PREVIOUS_POPULATION:
+        experiment_management.create_exp_folders()
+        await population.initialize_from_previous_population(
+            "/home/matteo/projects/revolve/experiments/isaac/data/base_test_5_120/1", 99)
+        update_robot_pose(population.individuals, simulator_queue._db)
+        experiment_management.export_snapshots(population.individuals, gen_num)
     else:
         # starting a new experiment
         experiment_management.create_exp_folders()

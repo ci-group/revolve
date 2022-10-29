@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from pyrevolve.evolution.speciation.genus import Genus
     from pyrevolve.evolution.speciation.species import Species
     from pyrevolve.evolution.population.population_config import PopulationConfig
+    from pyrevolve.genotype import Genotype
 
 
 class ExperimentManagement:
@@ -387,6 +388,40 @@ class ExperimentManagement:
         # last complete generation, the next generation already has some data, next robot id
         #TODO return also last species ID
         return last_complete_generation, has_offspring, last_id_with_fitness+1, last_species_id+1,
+
+    @staticmethod
+    def load_external_individual(genotype_file: AnyStr,
+                                 _id: AnyStr,
+                                 config: PopulationConfig,
+                                 ) -> Individual:
+        """
+        Loads an individual from disk
+        :param genotype_file: file where to load the genotype from
+        :param _id: new ID of the individual
+        :param config: population config, needed to know which genome to load
+        :return: the Individual loaded from the file system
+        """
+        genotype: Genotype = config.genotype_constructor(config.genotype_conf, _id)
+        genotype.load_genotype(genotype_file)
+        genotype.id = _id
+
+        individual = Individual(genotype)
+        individual.develop()
+        if isinstance(individual.phenotype, RevolveBot):
+            phenotypes = [individual.phenotype]
+        elif isinstance(individual.phenotype, list):
+            phenotypes = individual.phenotype
+        else:
+            raise RuntimeError(f"individual.phenotype is of wrong type: {type(individual.phenotype)}")
+
+        for phenotype in phenotypes:
+            phenotype.update_substrate()
+            phenotype.measure_phenotype()
+
+        individual.fitness = None
+        individual.objectives = None
+
+        return individual
 
     def load_individual(self,
                         _id: AnyStr,

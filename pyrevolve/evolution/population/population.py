@@ -6,6 +6,7 @@ import re
 
 import asyncio
 
+from pyrevolve.experiment_management import ExperimentManagement
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.evolution import fitness
 from pyrevolve.evolution.individual import Individual
@@ -13,7 +14,8 @@ from pyrevolve.evolution.population.population_config import PopulationConfig
 from pyrevolve.revolve_bot.revolve_bot import RevolveBot
 from pyrevolve.tol.manage.measures import BehaviouralMeasurements
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, AnyStr
+
 if TYPE_CHECKING:
     from typing import List, Optional, Callable, Tuple
     from pyrevolve.tol.manage.robotmanager import RobotManager
@@ -104,6 +106,38 @@ class Population:
                     _id = _id.group(1)
                     self.individuals.append(
                         self.config.experiment_management.load_individual(_id, self.config))
+
+    def load_external_snapshot(self, run_folder: AnyStr, gen_num: int, multi_development=True) -> int:
+        """
+        Reads and loads all genotypes of robots in the population found in the data folder.
+        Fitness values are zero by default.
+
+        :param run_folder: folder where to load the data from (run folder)
+        :param gen_num: generation number
+        :param multi_development: if multiple developments are created by the same individual
+        :return: number of individuals loaded
+        """
+        generation_folder_path = os.path.join(run_folder, ExperimentManagement.GENERATIONS_FOLDER, f"generation_{gen_num}")
+        data_folder_path = os.path.join(run_folder, ExperimentManagement.DATA_FOLDER)
+        new_id = 1
+        for r, d, f in os.walk(generation_folder_path):
+            for filename in f:
+                if 'body' in filename:
+                    if multi_development:
+                        _id = MULTI_DEV_BODY_PNG_REGEX.search(filename)
+                        if int(_id.group(2)) != 0:
+                            continue
+                    else:
+                        _id = BODY_PNG_REGEX.search(filename)
+                    assert _id is not None
+                    _id = _id.group(1)
+                    genotype_file = os.path.join(data_folder_path, 'genotypes', f'genotype_{_id}.txt')
+                    individual = self.config.experiment_management.load_external_individual(genotype_file, new_id,
+                                                                                            self.config)
+                    self.individuals.append(individual)
+                    new_id += 1
+        self.next_robot_id = new_id
+        return new_id-1
 
     def load_offspring(self,
                        last_snapshot: int,
