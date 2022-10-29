@@ -408,9 +408,14 @@ def update_robot_pose(individuals: List[Individual], db: PostgreSQLDatabase) -> 
 
     with db.session() as session:
 
+        robot: DBRobot = session \
+            .query(DBRobot) \
+            .filter(DBRobot.name == f'robot_{individuals[0].id}') \
+            .one()
+
         last_eval: RobotEvaluation = session \
             .query(RobotEvaluation) \
-            .filter(RobotEvaluation.robot_id == individuals[0].id) \
+            .filter(RobotEvaluation.robot == robot) \
             .order_by(RobotEvaluation.n.desc()) \
             .one()
         last_eval_n = last_eval.n
