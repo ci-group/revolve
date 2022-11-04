@@ -40,7 +40,8 @@ class DBRobotManager(RvRobotManager):
                 .query(RobotEvaluation) \
                 .filter(RobotEvaluation.robot_id == int(robot_id)) \
                 .order_by(RobotEvaluation.n.desc()) \
-                .one()
+                .first()
+            assert last_eval is not None
             last_eval_n = last_eval.n
 
             # behaviour = [s for s in session.query(RobotState).filter(RobotState.evaluation_robot_id == robot_id)]

@@ -138,7 +138,7 @@ class PositionedPopulation(Population):
         if SURVIVAL_SELECTION == 'RANKING_BASED':
             # remove the lower (fitness) half of the population
             survival_cutoff = len(self.individuals)//4
-            survivors = [i.clone() for i in survivors[:survival_cutoff]]
+            survivors = survivors[:survival_cutoff]
         elif SURVIVAL_SELECTION == 'AVG_FITNESS':
             average_fitness = 0.0
             for individual in self.individuals:
@@ -170,12 +170,13 @@ class PositionedPopulation(Population):
             # individuals are sorted high -> low
             for i, (parent, n_offspring) in enumerate(zip(survivors, allocated_offspring)):
                 for _ in range(n_offspring):
-                    offspring = self.attempt_new_individual_with_placement(parent,
+                    next_robot_id = self.next_robot_id
+                    offspring = self.attempt_new_individual_with_placement(next_robot_id,
+                                                                           parent,
                                                                            population_alive=offsprings+survivors,
                                                                            offspring_range=offspring_range)
                     if offspring is not None:
                         # new offspring generated!
-                        offspring.genotype.id = self.next_robot_id
                         self.next_robot_id += 1
                         offsprings.append(offspring)
                         new_population_size += 1
@@ -184,7 +185,7 @@ class PositionedPopulation(Population):
             # maybe not done yet, prepare for next loop with increased range (linear increase)
             offspring_range *= 2
 
-        new_individuals: List[Individual] = survivors + offsprings
+        new_individuals: List[Individual] = [i.clone() for i in survivors] + offsprings
         assert len(self.individuals) == len(new_individuals)
 
         # evaluate new individuals
@@ -201,6 +202,7 @@ class PositionedPopulation(Population):
         return new_population
 
     def attempt_new_individual_with_placement(self,
+                                              new_robot_id,
                                               mother: Individual,
                                               population_alive: List[Individual],
                                               offspring_range: float = 2.0) -> Optional[Individual]:
@@ -245,7 +247,7 @@ class PositionedPopulation(Population):
             child = mother
             parents = (mother,)
         child.parents = parents
-        child.genotype.id = self.next_robot_id
+        child.genotype.id = new_robot_id
 
         # Attempt to make new genome that is viable
         N_MUTATION_ATTEMPTS = 10

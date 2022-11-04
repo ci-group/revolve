@@ -38,7 +38,10 @@ from pyrevolve.isaac import manage_isaac_multiple
 INTERNAL_WORKERS = False
 PROGENITOR = False
 FITNESS = 'displacement_velocity'
-START_FROM_PREVIOUS_POPULATION = True
+START_FROM_PREVIOUS_POPULATION = False
+
+# MATING_RANGE = 0.45
+MATING_RANGE = 2
 
 
 def environment_constructor(gym: gymapi.Gym,
@@ -70,13 +73,13 @@ def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQL
             .query(RobotEvaluation) \
             .filter(RobotEvaluation.robot_id == ids[0]) \
             .order_by(RobotEvaluation.n.desc()) \
-            .one()
+            .first()
+        assert last_eval is not None
         last_eval_n = last_eval.n
-        # assert that there was only one eval
-        assert last_eval_n == 0
 
+        # this assumes all runs have the same number of steps
         times_query = session.query(RobotState.time_sec, RobotState.time_nsec) \
-            .filter(RobotState.evaluation_n == last_eval_n) \
+            .filter(RobotState.evaluation_n == 0) \
             .order_by(RobotState.time_sec, RobotState.time_nsec) \
             .distinct()
 
@@ -90,11 +93,34 @@ def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQL
 
             #TODO only do this check every N seconds instead of every single sample
 
-            positions_query = session \
-                .query(RobotState.evaluation_robot_id, RobotState.pos_x, RobotState.pos_y) \
-                .filter(RobotState.evaluation_n == last_eval_n) \
-                .filter(RobotState.evaluation_robot_id.in_(ids)) \
-                .filter(RobotState.time_sec == time_sec, RobotState.time_nsec == time_nsec)
+            positions_query = []
+            for r_id in ids:
+                r_eval = session \
+                    .query(RobotEvaluation) \
+                    .filter(RobotEvaluation.robot_id == int(r_id)) \
+                    .order_by(RobotEvaluation.n.desc()) \
+                    .first()
+                assert r_eval is not None
+                # r_eval includes the id
+
+                r_positions_query = session \
+                    .query(RobotState.evaluation_robot_id, RobotState.pos_x, RobotState.pos_y) \
+                    .filter(RobotState.evaluation == r_eval) \
+                    .filter(RobotState.time_sec == time_sec, RobotState.time_nsec == time_nsec) \
+                    .one_or_none()
+
+                if r_positions_query is not None:
+                    positions_query.append((
+                        r_positions_query[0],  # robot id
+                        r_positions_query[1],  # pos_x
+                        r_positions_query[2],  # pos_y
+                    ))
+
+            # positions_query = session \
+            #     .query(RobotState.evaluation_robot_id, RobotState.pos_x, RobotState.pos_y) \
+            #     .filter(RobotState.evaluation_n == last_eval_n) \
+            #     .filter(RobotState.evaluation_robot_id.in_(ids)) \
+            #     .filter(RobotState.time_sec == time_sec, RobotState.time_nsec == time_nsec)
 
             for robot_mother, x, y in positions_query:
                 for robot_father, x_f, y_f in positions_query:
@@ -107,8 +133,6 @@ def generate_candidate_partners(population: PositionedPopulation, db: PostgreSQL
                         # print(f'MATCH! MOTHER({robot_mother})+FATHER({robot_father}) dist({distance:+2.4f})')
                         individual_map[robot_mother].candidate_partners.add(individual_map[robot_father])
 
-# MATING_RANGE = 0.45
-MATING_RANGE = 1
 
 async def run():
     """
@@ -404,31 +428,28 @@ def load_database_ids(gen_num: int, experiment_management: ExperimentManagement,
     for ind in individuals:
         ind.phenotype.database_id = database_ids[ind.phenotype.id]
 
+
 def update_robot_pose(individuals: List[Individual], db: PostgreSQLDatabase) -> None:
-
     with db.session() as session:
-
-        robot: DBRobot = session \
-            .query(DBRobot) \
-            .filter(DBRobot.name == f'robot_{individuals[0].id}') \
-            .one()
-
-        last_eval: RobotEvaluation = session \
-            .query(RobotEvaluation) \
-            .filter(RobotEvaluation.robot == robot) \
-            .order_by(RobotEvaluation.n.desc()) \
-            .one()
-        last_eval_n = last_eval.n
-        assert last_eval_n == 0
-
         for individual in individuals:
-            dbid = int(individual.phenotype.database_id)
+            robot: DBRobot = session \
+                .query(DBRobot) \
+                .filter(DBRobot.name == f'robot_{individuals[0].id}') \
+                .one()
+
+            last_eval: RobotEvaluation = session \
+                .query(RobotEvaluation) \
+                .filter(RobotEvaluation.robot == robot) \
+                .order_by(RobotEvaluation.n.desc()) \
+                .first()
+            assert last_eval is not None
+
             final_position = session \
                 .query(RobotState.pos_x, RobotState.pos_y) \
-                .filter(RobotState.evaluation_n == last_eval_n) \
-                .filter(RobotState.evaluation_robot_id == dbid) \
+                .filter(RobotState.evaluation == last_eval) \
                 .order_by(RobotState.time_sec.desc(), RobotState.time_nsec.desc()) \
                 .first()
+            assert final_position is not None
             print(f"DB:{individual} ({final_position})")
             individual.pose = individual.pose.copy()
             individual.pose.x = final_position[0]
@@ -437,7 +458,7 @@ def update_robot_pose(individuals: List[Individual], db: PostgreSQLDatabase) -> 
 
 def export_special_data(file, individuals: List[Individual], offspring_list: List[Individual], gen_num: int, db: PostgreSQLDatabase) -> None:
     # write header
-    file.write('individual_id\tinitial_position\tfinal_position\tcandidates_best\tcandidates\toffspring_id\n')
+    file.write('individual_id\tinitial_position\tfinal_position\tcandidates_best\tcandidates\toffspring_mother_id\toffspring_father_id\n')
 
     with db.session() as session:
         for individual in individuals:
@@ -447,10 +468,8 @@ def export_special_data(file, individuals: List[Individual], offspring_list: Lis
                 .query(RobotEvaluation) \
                 .filter(RobotEvaluation.robot_id == dbid) \
                 .order_by(RobotEvaluation.n.desc()) \
-                .one()
-
-            # assert that there was only one eval
-            assert last_eval.n == 0
+                .first()
+            assert last_eval is not None
 
             # Save initial and final positions
             initial_position = session \
@@ -470,18 +489,22 @@ def export_special_data(file, individuals: List[Individual], offspring_list: Lis
 
             # Save chosen candidate IDs
             # find main offspring
-            offspring = None
+            offspring_mother_list = []
+            offspring_father_list = []
             for offspring in offspring_list:
+                if offspring.parents is None:
+                    continue
                 if offspring.parents[0] == individual:
-                    break
-            assert offspring is not None
+                    offspring_mother_list.append(offspring)
+                if len(offspring.parents) > 1 and offspring.parents[1] == individual:
+                    offspring_father_list.append(offspring)
 
             candidates_best = None
             if len(offspring.parents) > 1:
                 candidates_best = offspring.parents[1]
 
             # Write data
-            file.write(f'{individual.id}\t{initial_position}\t{final_position}\t{candidates_best}\t{candidates}\t{offspring}\n')
+            file.write(f'{individual.id}\t{initial_position}\t{final_position}\t{candidates_best}\t{candidates}\t{offspring_mother_list}\t{offspring_father_list}\n')
 
     return
 

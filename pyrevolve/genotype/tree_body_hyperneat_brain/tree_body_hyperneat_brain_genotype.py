@@ -131,7 +131,14 @@ class DirectTreeCPGHyperNEATGenotype(Genotype):
         phenotypes = []
         for i, brain_genome in enumerate(self._brain_genomes):
             phenotype: RevolveBot = self._body_genome.develop()
-            phenotype._id += i * 10000000
+            _id = phenotype._id
+            if type(_id) == int:
+                phenotype._id += i * 10000000
+            elif type(_id) == str:
+                phenotype._id = str(int(_id) + i * 10000000)
+            else:
+                raise RuntimeError(f"unsupported ID type {type(_id)}")
+
             phenotype._brain = brain_genome.develop()
             phenotypes.append(phenotype)
 

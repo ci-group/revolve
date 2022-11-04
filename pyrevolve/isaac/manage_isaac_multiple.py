@@ -126,14 +126,33 @@ def simulator_multiple(robots_urdf: List[AnyStr],
             isaac_logger.debug(f'Loading robot "{i}" on the database')
             # Insert robot in the database
             with mydb.session() as session2:
-                robot.db_robot = DBRobot(name=robot.name)
-                session2.add(robot.db_robot)
-                session2.commit()
+                # check if robot is already present
+                robot.db_robot = session2.query(DBRobot) \
+                                         .filter(DBRobot.name == robot.name) \
+                                         .one_or_none()
+                if robot.db_robot is None:
+                    isaac_logger.debug(f"Creating DB robot {robot.name}")
+                    robot.db_robot = DBRobot(name=robot.name)
+                    session2.add(robot.db_robot)
+                    session2.commit()
+                    evaluation_id = 0
+                else:
+                    isaac_logger.debug(f"Found DB robot {robot.name} with ID {robot.db_robot.id}")
+                    last_eval_n = session2 \
+                        .query(DBRobotEvaluation.n) \
+                        .filter(DBRobotEvaluation.robot == robot.db_robot) \
+                        .order_by(DBRobotEvaluation.n.desc()) \
+                        .first()
+                    if last_eval_n is None:
+                        raise RuntimeError(f"last_eval for robot {robot.db_robot.name}:{robot.db_robot.id} is None")
+                    evaluation_id = last_eval_n[0] + 1
+
                 # this line actually queries the database while the session is still active
                 robot.db_robot_id = robot.db_robot.id
-            isaac_logger.debug(f'Loading robot "{i}" on the database [DONE]')
+            isaac_logger.debug(f'Loading robot "{i} - {robot.name}:{robot.db_robot_id}" on the database (evaluation: {evaluation_id}) [DONE]')
 
-            db_eval = DBRobotEvaluation(robot=robot.db_robot, n=0)
+            isaac_logger.debug(f"Creating Robot Evaluation for {robot.name}:{robot.db_robot_id} with ID {evaluation_id}")
+            db_eval = DBRobotEvaluation(robot=robot.db_robot, n=evaluation_id)
             robot.evals.append(db_eval)
             # Write first evaluations in database
             session.add(db_eval)

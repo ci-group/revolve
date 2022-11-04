@@ -42,10 +42,12 @@ class Individual:
         Creates a cloned copy of this individual
         :return: a cloned copy of the individual
         """
-        cloned_phenotype = None if self.genotype is None else self.genotype.clone()
+        genotype = self.genotype.clone()
+        genotype.id = self.id
+        cloned_phenotype = None  # TODO if self.phenotype is None else self.phenotype.clone()
 
         other = Individual(
-            genotype=self.genotype.clone(),
+            genotype=genotype,
             phenotype=cloned_phenotype,
             pose=self.pose.copy()
         )
