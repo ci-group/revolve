@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional, List, AnyStr
 
 import math
+import random
 
 from pyrevolve import SDF
 from pyrevolve.custom_logging.logger import logger
@@ -27,7 +28,7 @@ class PositionedPopulation(Population):
     def _new_individual(self,
                         genotype,
                         parents: Optional[List[Individual]] = None,
-                        pose: Optional[SDF.math.Vector3] = None):
+                        pose: Optional[SDF.math.Vector3] = None) -> Individual:
         if pose is None:
             assert parents is not None
             assert len(parents) > 0
@@ -128,9 +129,145 @@ class PositionedPopulation(Population):
 
         await self.evaluate(self.individuals, 0)
 
+    async def next_generation(self, gen_num: int) -> PositionedPopulation:
+        # rank individuals based on fitness, high to low
+        from operator import attrgetter
+        survivors = sorted(self.individuals, key=attrgetter('fitness'), reverse=True)
 
-    async def next_generation(self,
-                              gen_num: int) -> PositionedPopulation:
+        SURVIVAL_SELECTION = 'RANKING_BASED'
+        if SURVIVAL_SELECTION == 'RANKING_BASED':
+            # remove the lower (fitness) half of the population
+            survival_cutoff = len(self.individuals)//4
+            survivors = [i.clone() for i in survivors[:survival_cutoff]]
+        elif SURVIVAL_SELECTION == 'AVG_FITNESS':
+            average_fitness = 0.0
+            for individual in self.individuals:
+                assert individual.fitness is not None
+                average_fitness += individual.fitness
+            average_fitness /= len(self.individuals)
+
+            new_survivors = []
+            # kill bad individuals
+            for individual in self.individuals:
+                if individual >= average_fitness:
+                    new_survivors.append(individual.clone())
+            survivors = new_survivors
+
+        assert len(survivors) < len(self.individuals)
+
+        # generate new population
+        offsprings = []
+        new_population_size = len(survivors)
+        offspring_range: float = 3.0
+        missing_offpsring = len(self.individuals) - new_population_size
+        # 5 to first, 1 to last, linear scaling (y=-x/4 + 5), 75 offspring total
+        allocated_offspring = [int(round((-i/5.99)+5)) for i in range(len(survivors))]
+        # 7 to first, because of approximation errors
+        allocated_offspring[0] += missing_offpsring - sum(allocated_offspring)
+        assert sum(allocated_offspring) == missing_offpsring
+
+        while new_population_size < len(self.individuals):
+            # individuals are sorted high -> low
+            for i, (parent, n_offspring) in enumerate(zip(survivors, allocated_offspring)):
+                for _ in range(n_offspring):
+                    offspring = self.attempt_new_individual_with_placement(parent,
+                                                                           population_alive=offsprings+survivors,
+                                                                           offspring_range=offspring_range)
+                    if offspring is not None:
+                        # new offspring generated!
+                        offspring.genotype.id = self.next_robot_id
+                        self.next_robot_id += 1
+                        offsprings.append(offspring)
+                        new_population_size += 1
+                        allocated_offspring[i] -= 1
+
+            # maybe not done yet, prepare for next loop with increased range (linear increase)
+            offspring_range *= 2
+
+        new_individuals: List[Individual] = survivors + offsprings
+        assert len(self.individuals) == len(new_individuals)
+
+        # evaluate new individuals
+        await self.evaluate(new_individuals, gen_num)
+
+        # create next population
+        new_population = PositionedPopulation(self.config,
+                                              self.simulator_queue,
+                                              self.analyzer_queue,
+                                              self.next_robot_id,
+                                              self.grid_cell_size)
+        new_population.individuals = new_individuals
+        logger.info(f"new generation({gen_num} created")
+        return new_population
+
+    def attempt_new_individual_with_placement(self,
+                                              mother: Individual,
+                                              population_alive: List[Individual],
+                                              offspring_range: float = 2.0) -> Optional[Individual]:
+        """
+        Attempt to generate offspring from mother (and its internal list)
+
+        if generated genotype is not viable, return None
+        if generated offspring has no space were to be generated (using population_alive to test), return None
+        """
+        mother_candidates = [candidate for candidate in mother.candidate_partners]
+
+        # find pose
+        ROBOT_RADIUS = 2.0
+        suggested_pose: SDF.math.Vector3
+        # Test 100 random location
+        for _ in range(100):
+            random_direction = SDF.math.Vector3(random.random(), random.random(), random.random())
+            random_direction.normalize()
+            suggested_pose = mother.pose + random_direction * offspring_range * random.random()
+            # Test random location against the robots already alive
+            for i_alive in population_alive:
+                distance: SDF.math.Vector3 = i_alive.pose - suggested_pose
+                if distance.magnitude() < ROBOT_RADIUS*2:
+                    # One conflict found
+                    break
+            else:
+                # Location Found!
+                break
+            # if you are here, one conflict was found, try again with another random pose
+        else:
+            logger.info(f'Mother:{mother} failed to find empty spot to generate new individual. Skipping to next potential parent')
+            return None
+
+        # Selection operator (based on fitness perceived by the individuals)
+        if len(mother_candidates) > 0:
+            father: Optional[Individual] = self.config.selection(mother_candidates)
+            parents = (mother, father)
+            child_genotype = self.config.crossover_operator(parents, self.config.genotype_conf, self.config.crossover_conf)
+            child = Individual(child_genotype)
+        else:
+            father = None
+            child = mother
+            parents = (mother,)
+        child.parents = parents
+        child.genotype.id = self.next_robot_id
+
+        # Attempt to make new genome that is viable
+        N_MUTATION_ATTEMPTS = 10
+        for j in range(N_MUTATION_ATTEMPTS):
+            # Mutation operator
+            child_genotype = self.config.mutation_operator(child.genotype, self.config.mutation_conf)
+
+            if self.config.genotype_test(child_genotype):
+                # valid individual found, exit infinite loop
+                # Insert individual in new population
+                child = self._new_individual(child_genotype, parents, suggested_pose)
+                return child
+        # Candidate individual not found after 10 random mutations
+        # this crossover does not work: remove father from candidate list
+        logger.info(f'Mother:{mother} failed to generate valid offspring in {N_MUTATION_ATTEMPTS} mutation attempts. Skipping to next potential parent')
+        return None
+
+    async def next_generation_one_offspring(self, gen_num: int) -> PositionedPopulation:
+        """
+        Generate new generation where every individual is replaced by its offspring (as mother).
+        Every individual can be father multiple times.
+        """
         new_individuals = []
 
         assert self.config.offspring_size == len(self.individuals)
@@ -170,7 +307,8 @@ class PositionedPopulation(Population):
                 else:
                     # Candidate individual not found after 100 random mutations
                     # this crossover does not work: remove father from candidate list
-                    logger.info(f'Mother:{mother} failed to generate valid offspring in 100 trials - removing Father:"{father}" from list:{mother_candidates}')
+                    logger.info(f'Mother:{mother} failed to generate valid offspring in 100 mutation attempts '
+                                f'- removing Father:"{father}" from list:{mother_candidates}')
                     if len(mother_candidates) == 0:
                         raise RuntimeError("No father left to remove, crashing now :)")
                     assert father is not None

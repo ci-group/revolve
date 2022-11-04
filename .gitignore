@@ -66,6 +66,9 @@ target/
 # PyCharm project files
 .idea
 
+# Kdevelop
+*.kdev4
+
 # Visual Studio Code
 /.vscode/
 
@@ -74,6 +77,9 @@ target/
 .python-version
 Pipfile
 Pipfile.lock
+
+# wandb
+/wandb/
 
 # Revolve related
 *.sdf

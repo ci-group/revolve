@@ -389,7 +389,7 @@ class CeleryPopulationQueue:
                 if attempt < self.MAX_ATTEMPTS:
                     logger.warning(f'Retrying')
                     #clear database of last generation to restart the simulator
-                    dbids = [robot.database_id for robot in robots]
+                    dbids = [int(robot.database_id) for robot in robots]
                     with self._db.session() as session:
                         db_states = session.query(DBRobotState).filter(DBRobotState.evaluation_robot_id.in_(dbids))
                         db_states.delete()
