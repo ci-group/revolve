@@ -185,7 +185,9 @@ class PositionedPopulation(Population):
             # maybe not done yet, prepare for next loop with increased range (linear increase)
             offspring_range *= 2
 
-        new_individuals: List[Individual] = [i.clone() for i in survivors] + offsprings
+        # Individual.clone() seems to have issues with the pose of the robot, resetting it to (0,0,0)
+        # new_individuals: List[Individual] = [i.clone() for i in survivors] + offsprings
+        new_individuals: List[Individual] = survivors + offsprings
         assert len(self.individuals) == len(new_individuals)
 
         # evaluate new individuals
@@ -219,12 +221,13 @@ class PositionedPopulation(Population):
         suggested_pose: SDF.math.Vector3
         # Test 100 random location
         for _ in range(100):
-            random_direction = SDF.math.Vector3(random.random(), random.random(), random.random())
+            random_direction = SDF.math.Vector3(random.random(), random.random(), 0)
             random_direction.normalize()
             suggested_pose = mother.pose + random_direction * offspring_range * random.random()
             # Test random location against the robots already alive
             for i_alive in population_alive:
                 distance: SDF.math.Vector3 = i_alive.pose - suggested_pose
+                distance.z = 0
                 if distance.magnitude() < ROBOT_RADIUS*2:
                     # One conflict found
                     break
