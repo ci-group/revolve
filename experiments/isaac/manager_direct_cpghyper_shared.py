@@ -11,7 +11,7 @@ import wandb
 import math
 from isaacgym import gymapi
 
-from experiments.isaac.positioned_population import PositionedPopulation
+from experiments.isaac.positioned_population import PositionedPopulation, SpawnStrategy
 from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
 from pyrevolve import parser
 from pyrevolve.custom_logging.logger import logger
@@ -248,7 +248,6 @@ async def run():
         else:
             raise RuntimeError(f"FITNESS {FITNESS} not found")
 
-
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=lambda conf, _id: DirectTreeCPGHyperNEATGenotype(conf, _id, random_init_body=True),
@@ -340,7 +339,13 @@ async def run():
     analyzer_queue = None
 
     # INITIAL POPULATION OBJECT
-    population = PositionedPopulation(population_conf, simulator_queue, analyzer_queue, next_robot_id, grid_cell_size=1)
+    population = PositionedPopulation(config=population_conf,
+                                      simulator_queue=simulator_queue,
+                                      analyzer_queue=analyzer_queue,
+                                      next_robot_id=next_robot_id,
+                                      grid_cell_size=1,
+                                      spawn_location_method=SpawnStrategy.SQUARE_AREA,
+                                      )
 
     if do_recovery:
         assert False
