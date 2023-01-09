@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import os
-from typing import List, Optional
+from typing import List, Optional, AnyStr
 
 import math
 import numpy as np
 from isaacgym import gymapi
 
+from pyrevolve.genotype.neat_brain_genome.crossover import NEATCrossoverConf
 from pyrevolve.evolution.individual import Individual
 from pyrevolve.genotype.tree_body_hyperneat_brain.crossover import standard_crossover
 from pyrevolve.genotype.tree_body_hyperneat_brain.mutation import standard_mutation
@@ -27,8 +28,12 @@ from pyrevolve.genotype.neat_brain_genome.neat_brain_genome import NeatBrainGeno
 from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
+from pyrevolve.revolve_bot import RevolveBot
+from pyrevolve.tol.manage.robotmanager import RobotManager
 
 INTERNAL_WORKERS = False
+
+CONFIG_PATH: Optional[AnyStr] = None
 
 
 def environment_constructor(gym: gymapi.Gym,
@@ -44,8 +49,10 @@ def environment_constructor(gym: gymapi.Gym,
     asset_options.angular_damping = 0.5
     pose = gymapi.Transform()
 
-    if os.path.exists('experiments/isaac/env_config.txt'):
-        with open('experiments/isaac/env_config.txt', "r") as file:
+    assert CONFIG_PATH is not None
+
+    if os.path.exists(CONFIG_PATH):
+        with open(os.path.join(CONFIG_PATH, 'env_config.txt'), "r") as file:
             for line in file.readlines():
                 var, val = line.rsplit('\n')[0].split(":")
                 if var == 'ball_r':
@@ -101,7 +108,10 @@ def environment_constructor(gym: gymapi.Gym,
                 gym.create_actor(env, ball_asset, pose, None, 1, 0)
         env_height = ball_spacing * n_layers
         # gym.end_aggregate(env)
+        print(f"Loaded {n_layers * xmap.size} balls")
         return env_height
+    else:
+        raise ValueError(f"Could not find {CONFIG_PATH}")
 
 
 async def run():
@@ -111,8 +121,8 @@ async def run():
 
     # experiment params #
     num_generations = 100
-    population_size = 1
-    offspring_size = 1
+    population_size = 50
+    offspring_size = 50
 
     morph_single_mutation_prob = 0.2
     morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8
@@ -122,8 +132,8 @@ async def run():
     brain_single_mutation_prob = 0.5
 
     tree_genotype_conf: DirectTreeGenotypeConfig = DirectTreeGenotypeConfig(
-        max_parts=50,
-        min_parts=10,
+        max_parts=20,
+        min_parts=5,
         max_oscillation=5,
         init_n_parts_mu=10,
         init_n_parts_sigma=4,
@@ -143,20 +153,37 @@ async def run():
 
     neat_conf: NeatBrainGenomeConfig = NeatBrainGenomeConfig(
         brain_type=BrainType.CPG,
-        random_seed=None
+        random_seed=None,
+        apply_mutation_constraints=False,
+    )
+
+    neat_crossover_conf: NEATCrossoverConf = NEATCrossoverConf(
+        apply_constraints=False,
     )
 
     genotype_conf: DirectTreeCPGHyperNEATGenotypeConfig = DirectTreeCPGHyperNEATGenotypeConfig(
         direct_tree_conf=tree_genotype_conf,
         neat_conf=neat_conf,
+        neat_crossover_conf=neat_crossover_conf,
         number_of_brains=1,
     )
+
+    def genotype_test_fun(candidate_genotype: DirectTreeCPGHyperNEATGenotype) -> bool:
+        # TODO test if the robot is bigger than the pool!
+        for brain_gen in candidate_genotype._brain_genomes:
+            if brain_gen._neat_genome.FailsConstraints(neat_conf.multineat_params):
+                return False
+        return True
+
 
     # Parse command line / file input arguments
     args = parser.parse_args()
     experiment_management = ExperimentManagement(args)
     has_offspring = False
     do_recovery = args.recovery_enabled and not experiment_management.experiment_is_new()
+
+    global CONFIG_PATH
+    CONFIG_PATH = os.path.join(experiment_management._experiment_folder, '..', f'logs_{args.run}')
 
     logger.info(f'Activated run {args.run} of experiment {args.experiment_name}')
 
@@ -178,16 +205,30 @@ async def run():
     if next_robot_id < 0:
         next_robot_id = 1
 
+    def fitness_fun(robot_manager: RobotManager, robot: RevolveBot) -> float:
+        # TODO test for the z-height of the lowest point
+        # integrate the "z-height of the lowest point" in time.
+        # (need to change the simulator manager part, it needs to report the position of the lowest block, not the center)
+
+        lowest_pos_integrate = 0.0
+        for pos, t in zip(robot_manager._positions, robot_manager._times):
+            dt = 1.0  # TODO maybe calculate this?
+            lowest_pos_integrate += pos*dt
+
+        # we want to maximize this value
+        return lowest_pos_integrate
+
     population_conf = PopulationConfig(
         population_size=population_size,
         genotype_constructor=lambda conf, _id: DirectTreeCPGHyperNEATGenotype(conf, _id, random_init_body=True),
         genotype_conf=genotype_conf,
-        fitness_function=fitness.displacement_velocity,
+        fitness_function=fitness_fun,
         objective_functions=None,
         mutation_operator=lambda genotype, gen_conf: standard_mutation(genotype, gen_conf),
         mutation_conf=genotype_conf,
         crossover_operator=lambda parents, gen_conf, _: standard_crossover(parents, gen_conf),
         crossover_conf=None,
+        genotype_test=genotype_test_fun,
         selection=lambda individuals: tournament_selection(individuals, 2),
         parent_selection=lambda individuals: multiple_selection(individuals, 2, tournament_selection),
         population_management=steady_state_population_management,
