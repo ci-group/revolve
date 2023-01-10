@@ -8,7 +8,7 @@ exp_folder="experiments/ballpit"
 run=1
 echo "Experimental folder: ${exp_folder}"
 fr=0.01
-for ball_r in 0.03
+for ball_r in 0.03 #0.015 0.02 0.025 0.035 0.05 0.1 0.2 0.5
   do
     exp_name="${fr}_${ball_r}"
     data_folder="${exp_folder}/data/${exp_name}/logs_${run}"

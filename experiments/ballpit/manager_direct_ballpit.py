@@ -29,6 +29,7 @@ from pyrevolve.util.supervisor.rabbits import GazeboCeleryWorkerSupervisor
 from pyrevolve.custom_logging.logger import logger
 from pyrevolve.util.supervisor.rabbits.celery_queue import CeleryPopulationQueue
 from pyrevolve.revolve_bot import RevolveBot
+from pyrevolve.isaac import manage_isaac_multiple
 from pyrevolve.tol.manage.robotmanager import RobotManager
 
 INTERNAL_WORKERS = False
@@ -121,8 +122,10 @@ async def run():
 
     # experiment params #
     num_generations = 100
-    population_size = 25
-    offspring_size = 20
+    population_size = 100
+    offspring_size = 50
+
+    manage_isaac_multiple.ISOLATED_ENVIRONMENTS = True
 
     morph_single_mutation_prob = 0.2
     morph_no_single_mutation_prob = 1 - morph_single_mutation_prob  # 0.8
@@ -239,6 +242,7 @@ async def run():
         experiment_name=args.experiment_name,
         experiment_management=experiment_management,
         environment_constructor=environment_constructor,
+        population_batch_size=1,
     )
 
     n_cores = args.n_cores

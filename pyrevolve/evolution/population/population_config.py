@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Callable, Optional, List
@@ -33,7 +34,8 @@ class PopulationConfig:
                  offspring_size: Optional[int] = None,
                  grace_time: float = 0.0,
                  objective_functions: Optional[List[Callable[[RobotManager, RevolveBot], float]]] = None,
-                 environment_constructor: Optional[Callable[[gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env], None]] = None):
+                 environment_constructor: Optional[Callable[[gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env], None]] = None,
+                 population_batch_size: int = sys.maxsize):
         """
         Creates a PopulationConfig object that sets the particular configuration for the population
 
@@ -63,6 +65,7 @@ class PopulationConfig:
         :param offspring_size (optional): size of offspring (for steady state)
         :param grace_time: time to wait before starting the evaluation (experiment_time = grace_time + evaluation_time), default to 0.0
         :param environment_constructor: optional function that gets called whenever a gym environment is initialized (exclusive to isaac gym)
+        :param population_batch_size:
         Function signature is `environment_constructor(gymapi.Gym, gymapi.Sim, gymapi.Vec3, gymapi.Vec3, int, gymapi.Env) -> None`
         """
         # Test if at least one of them is set
@@ -90,3 +93,4 @@ class PopulationConfig:
         self.offspring_size = offspring_size
         self.objective_functions = objective_functions
         self.environment_constructor = environment_constructor
+        self.population_batch_size = population_batch_size

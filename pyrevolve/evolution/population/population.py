@@ -447,7 +447,14 @@ class Population:
             del population[i]
             del phenotypes[i]
 
-        fitnesses, behaviours = await self.simulator_queue.test_population(population, phenotypes, self.config, fitness_fun)
+        fitnesses = []
+        behaviours = []
+        from pyrevolve.util.iterables import iter_group
+        for phenotype_batch in iter_group(phenotypes, self.config.population_batch_size):
+            fitnesses_, behaviours_ = await self.simulator_queue.test_population(population, phenotype_batch, self.config, fitness_fun)
+            fitnesses += fitnesses_
+            behaviours += behaviours_
+
 
         # TODO verify that these are correctly positioned
         for i in skip:
