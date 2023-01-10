@@ -402,7 +402,8 @@ class CeleryPopulationQueue:
                         session.commit()
                 continue
 
-            assert len(robot_ids) == len(robots)
+            assert len(robot_ids) == len(xml_robots)
+            assert len(robot_ids) == len(robot_names)
 
             robots_fitness: List[float] = []
             robots_behaviour: List[BehaviouralMeasurements] = []
