@@ -342,6 +342,7 @@ class CeleryPopulationQueue:
         """
         max_age: float = conf.evaluation_time + conf.grace_time
 
+        assert len(robots) > 0
         poses = []
         xml_robots: List[AnyStr] = []
         robot_names: List[AnyStr] = []
@@ -378,6 +379,8 @@ class CeleryPopulationQueue:
         for attempt in range(self.MAX_ATTEMPTS):
             robot_ids: List[int]
             try:
+                assert len(xml_robots) > 0
+                assert len(robot_names) > 0
                 robot_ids = await self._call_evaluate_population(conf,
                                                                  robot_names,
                                                                  xml_robots,
@@ -402,6 +405,7 @@ class CeleryPopulationQueue:
                         session.commit()
                 continue
 
+            assert len(robot_ids) == len(robots)
             assert len(robot_ids) == len(xml_robots)
             assert len(robot_ids) == len(robot_names)
 

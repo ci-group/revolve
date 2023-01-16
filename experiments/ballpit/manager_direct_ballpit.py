@@ -216,7 +216,7 @@ async def run():
         lowest_pos_integrate = 0.0
         for pos, t in zip(robot_manager._positions, robot_manager._times):
             dt = 1.0  # TODO maybe calculate this?
-            lowest_pos_integrate += pos*dt
+            lowest_pos_integrate += pos.z*dt
 
         # we want to maximize this value
         return lowest_pos_integrate

@@ -450,11 +450,17 @@ class Population:
         fitnesses = []
         behaviours = []
         from pyrevolve.util.iterables import iter_group
-        for phenotype_batch in iter_group(phenotypes, self.config.population_batch_size):
+        for i, phenotype_batch in enumerate(iter_group(phenotypes, self.config.population_batch_size)):
+            phenotype_batch = [ind for ind in phenotype_batch]
+            logger.info(f'Evaluating batch ({i}): {phenotype_batch}')
+            if len(phenotype_batch) == 0:
+                break
+            assert len(phenotype_batch) == self.config.population_batch_size
             fitnesses_, behaviours_ = await self.simulator_queue.test_population(population, phenotype_batch, self.config, fitness_fun)
             fitnesses += fitnesses_
             behaviours += behaviours_
 
+        assert len(fitnesses) == len(phenotypes)
 
         # TODO verify that these are correctly positioned
         for i in skip:

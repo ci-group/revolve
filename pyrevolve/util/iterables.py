@@ -7,6 +7,6 @@ def iter_group(iterable, batch_size:int):
         start += batch_size
         end += batch_size
         if iterable_type == list:
-            yield (iterable[i] for i in range(start,min(length-1,end)))
+            yield (iterable[i] for i in range(start, min(length, end)))
         else:
             yield iterable[start:end]

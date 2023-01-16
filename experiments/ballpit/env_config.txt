@@ -1,4 +1,4 @@
-ball_r:0.03
+ball_r:0.05
 density:10
 friction:0.1
 lin_damp:1
